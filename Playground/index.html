@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>NUI Component Playground</title>
+		<link rel="stylesheet" href="css/main.css">
+		<link rel="stylesheet" href="NUI/css/nui-defaults.css">
+		<script type="module" src="js/main.js"></script>
+	</head>
+	<body class="dark">
+		<nui-app nui-vars-sidebar_width="15rem" nui-vars-sidebar_force-breakpoint="75rem">
+            <nui-top-nav>
+                <header class="top-nav">
+                    <layout>
+                        <item>
+                            <h1>NUI Playground</h1>
+                        </item>
+                        <item>
+							<nui-icon-button icon="moon" toggleable>
+                            	<button type="button">Dark/Light</button>
+							</nui-icon-button>
+                        </item>
+                    </layout>
+                </header>
+            </nui-top-nav>
+
+            <nui-side-nav nui-vars-sidenav_mode="tree">
+                <nav>
+                    <section>
+                        <h2>Item Group 1</h2>
+                        <ul>
+                            <li><a href="index.html">Home</a></li>
+                            <li><a href="buttons.html">Buttons</a></li>
+                        </ul>
+                    </section>
+                    <section>
+                        <h2>Item Group 2</h2>
+                        <ul>
+                            <li><a href="cards.html">Cards</a></li>
+                            <li><a href="modals.html">Modals</a></li>
+                        </ul>
+                    </section>
+                </nav>
+            </nui-side-nav>
+
+            <nui-content>
+                <main>
+                    <header>
+                        <h1>NUI Component Playground</h1>
+                        <p>Explore and test NUI web components in this interactive playground.</p>
+                    </header>
+
+                    <section>
+                        <p>Welcome to the NUI Component Playground! Here you can test and interact with various NUI web components.</p>
+                    </section>
+                </main>
+            
+                <nui-content-footer>
+                    <footer>
+                        <layout>
+                            <item>
+                                <h1>NUI Component Playground</h1>
+                            </item>
+                            <item>
+                                <p>&copy; 2025 NUI Playground. All rights reserved.</p>
+                            </item>
+                        </layout>
+                    </footer>
+                </nui-content-footer>
+            </nui-content>
+            <nui-footer>
+                <footer>App Footer</footer>
+            </nui-footer>
+		</nui-app>
+	</body>
+</html>

@@ -1,56 +1,198 @@
 # nui_wc2 - DOM-First UI Component Library
 
-A lightweight, performant UI component library built on custom elements and vanilla JavaScript. Zero framework dependencies, pure DOM manipulation, external CSS styling.
+A lightweight, performant UI component library built on web standards and progressive enhancement. Zero framework dependencies, DOM-first approach, CSS-driven styling.
 
 ## Philosophy
 
 **DOM-First Architecture**
-- Direct DOM manipulation using native APIs
-- Custom elements for semantic structure (no Shadow DOM complexity)
-- JavaScript enhancement pattern for progressive behavior
-- External CSS only - clean separation of concerns
+- Work directly with the DOM using web platform APIs
+- HTML markup generates the DOM - we enhance the DOM, not the markup
+- Progressive enhancement via custom elements and external CSS
+- Semantic HTML elements inside custom element containers
+- Works perfectly with screen readers and assistive technology
 - Zero dependencies except companion [UT library](./UT)
 
-**Performance & Reliability**
-- Simplicity over cleverness - iterate to find straightforward solutions
+**Performance & Reliability**  
+- Web platform fundamentals over framework abstractions
 - Functional paradigm - pure functions, minimal state
 - Measurable performance - test, don't assume
 - 10-50x smaller bundles than framework-based solutions
-- Direct browser API usage for maximum speed
+- Direct browser API usage for maximum control and speed
 
 **Development Approach**
-- Element-centric components (logic + presentation together)
-- Event-driven communication using native CustomEvent
-- Explicit state management - predictable, traceable updates
-- CSS Variables for reactive styling
-- Browser DevTools for debugging - no framework abstractions
+- Start with semantic HTML that generates a working DOM
+- Custom elements as layout containers and behavior attachment points
+- Direct DOM manipulation and event-driven communication using native CustomEvent
+- External CSS with CSS Variables for theming
+- Browser DevTools for debugging - no framework complexity
 
 ## Architecture
 
-### Core Concept
+### Dual-Mode Layout System
 
-Components are built using three layers:
+The library supports two distinct layout modes based on the presence of a `<nui-app>` container:
 
-1. **Custom Element** - Semantic HTML structure
+#### App Mode (with `<nui-app>`)
 ```html
-<nui-button type="primary">Click Me</nui-button>
+<nui-app>
+    <nui-top-nav>
+        <header><!-- Navigation content --></header>
+    </nui-top-nav>
+    <nui-side-nav>
+        <nav><!-- Sidebar navigation --></nav>
+    </nui-side-nav>
+    <nui-content>
+        <main><!-- Main content --></main>
+    </nui-content>
+    <nui-footer>
+        <footer><!-- App footer --></footer>
+    </nui-footer>
+</nui-app>
 ```
 
-2. **JavaScript Enhancement** - Behavior attached via `customElements.define()`
+**Behavior**: CSS Grid layout with fixed application structure (sidebar, topbar, content grid)
+**Use Case**: Desktop applications, admin panels, dashboards
+
+#### Page Mode (without `<nui-app>`)
+```html
+<nui-top-nav>
+    <header><!-- Page header --></header>
+</nui-top-nav>
+<nui-content>
+    <main><!-- Page content flows naturally --></main>
+</nui-content>
+<nui-footer>
+    <footer><!-- Page footer --></footer>
+</nui-footer>
+```
+
+**Behavior**: Normal document flow, responsive design patterns
+**Use Case**: Marketing sites, documentation, blogs
+
+### Component Pattern
+
+Components follow a hybrid HTML-first approach:
+
+1. **Semantic HTML Foundation**
+```html
+<nui-button>
+    <button type="button">Click Me</button>
+</nui-button>
+```
+
+2. **Custom Element Enhancement**
 ```javascript
 class NuiButton extends HTMLElement {
 	connectedCallback() {
-		this.addEventListener('click', this.handleClick);
-	}
-	
-	handleClick(e) {
-		this.dispatchEvent(new CustomEvent('nui-click', {
-			bubbles: true,
-			detail: { source: this }
-		}));
+		setupButtonBehavior(this);
 	}
 }
+
+function setupButtonBehavior(element) {
+	const button = element.querySelector('button');
+	button.addEventListener('click', (e) => {
+		element.dispatchEvent(new CustomEvent('nui-click', {
+			bubbles: true,
+			detail: { source: element }
+		}));
+	});
+}
 customElements.define('nui-button', NuiButton);
+```
+
+3. **Layout Elements (Optional)**
+
+For flexible positioning, use `<layout>` and `<item>` elements:
+
+```html
+<nui-top-nav>
+    <header>
+        <layout>
+            <item><h1>Title</h1></item>
+            <item><button>Action</button></item>
+        </layout>
+    </header>
+</nui-top-nav>
+```
+
+**Screen Reader Optimization:**
+```css
+/* Make layout containers transparent to accessibility tree */
+layout, item {
+    display: contents;
+}
+
+/* Context-specific styling */
+header layout {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+```
+
+**Philosophy**: Use layout elements sparingly. Prefer semantic HTML directly when possible. Layout elements exist for flexible positioning without adding unnecessary DOM depth that could affect screen readers.
+
+### Interaction Patterns
+
+The library provides two approaches for adding interactivity, emphasizing **DOM-first** as the primary pattern:
+
+#### DOM-First Approach (Recommended)
+
+**Direct JavaScript Enhancement** - Full control and platform knowledge
+```javascript
+// Find elements and enhance them directly
+const themeButton = document.querySelector('[data-theme-toggle]');
+themeButton.addEventListener('click', () => {
+    document.body.classList.toggle('dark');
+    localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+});
+
+// Component interaction
+const sidebar = document.querySelector('nui-side-nav');
+const menuButton = document.querySelector('[data-menu-toggle]');
+menuButton.addEventListener('click', () => {
+    const isOpen = sidebar.hasAttribute('data-open');
+    sidebar.toggleAttribute('data-open', !isOpen);
+    menuButton.setAttribute('aria-expanded', !isOpen);
+});
+```
+
+#### Attribute System (Quick Setup)
+
+**Declarative Actions** - Limited but convenient for simple interactions
+```html
+<button nui-event-click="toggle-theme" data-theme-toggle>Dark/Light</button>
+<button nui-event-click="toggle@nui-side-nav" data-menu-toggle>Menu</button>
+```
+
+**When to use each approach:**
+- **DOM-First**: Complex logic, custom behavior, learning web standards, full control
+- **Attribute System**: Rapid prototyping, simple toggles, getting started quickly
+
+**Advanced Pattern Example:**
+```javascript
+// Custom component enhancement with complex logic
+class NuiDataTable extends HTMLElement {
+    connectedCallback() {
+        this.setupSorting();
+        this.setupFiltering();
+        this.setupPagination();
+    }
+    
+    setupSorting() {
+        const headers = this.querySelectorAll('[data-sortable]');
+        headers.forEach(header => {
+            header.addEventListener('click', (e) => {
+                const column = e.target.dataset.column;
+                const direction = this.getSortDirection(column);
+                this.sortData(column, direction);
+                this.updateSortUI(column, direction);
+            });
+        });
+    }
+    
+    // More advanced logic...
+}
 ```
 
 3. **External CSS** - All styling via external stylesheets
@@ -81,40 +223,141 @@ nui-button {
 - Standard event bubbling and capturing
 - No complex state management required
 
+## CSS Architecture and Theming
+
+**CSS Variables with Light-Dark Support**
+- Components use CSS custom properties (variables) for all styling
+- Variables have sensible fallback values for graceful degradation
+- **Light-dark() function** provides automatic theme switching
+- No internal styles - complete external CSS control
+- Users can override any aspect of the design system
+
+**Why This Approach?**
+We chose CSS variables with `light-dark()` over class-based switching to maximize user control and modern CSS capabilities:
+
+- **Automatic Theme Switching**: Respects user's system color scheme preference
+- **Custom Design Systems**: Users can override any aspect globally or per-component
+- **Progressive Enhancement**: Components work with minimal CSS or complete custom styling
+- **No Lock-in**: Library CSS is optional - use your own design system entirely
+- **Maintainability**: Single source of truth for design tokens
+- **Performance**: No CSS-in-JS overhead or style injection
+
+### Theming Examples
+
+**Global Theme Override**
+```css
+:root {
+  --button-color-background: #ff6b6b;
+  --border-radius0: 8px;
+  --color-text: #333;
+}
+```
+
+**Component-Specific Customization**
+```css
+nui-button {
+  --nui-button-bg: linear-gradient(45deg, #ff6b6b, #ffa500);
+  --nui-button-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+}
+```
+
+**Complete Custom Styling (No Library CSS)**
+```css
+nui-button {
+  background: #your-brand-color;
+  border-radius: 12px;
+  /* Full control over appearance */
+}
+```
+
+### Light-Dark Function
+
+The `light-dark()` function automatically switches values based on color scheme:
+
+```css
+/* Automatic light/dark switching */
+--color-shade0: light-dark(255,255,255, 0,0,0); /* white in light, black in dark */
+--border-shade1: light-dark(rgb(220,220,220), rgb(55,55,55)); /* light gray / dark gray */
+```
+
+**Manual Override** (optional utility classes):
+```css
+body.light { color-scheme: light; }
+body.dark { color-scheme: dark; }
+```
+
+### CSS Variable Patterns
+
+Components follow consistent variable naming and fallback patterns:
+
+```css
+/* Component uses variables with library defaults as fallbacks */
+nui-button {
+  background: var(--nui-button-bg, var(--nui-primary, #007acc));
+  border-radius: var(--nui-border-radius, 4px);
+  transition: var(--nui-transition, 0.2s ease);
+}
+```
+
+This ensures components are styleable without requiring library CSS while providing sensible defaults when the library styles are used.
+
+## Configuration System
+
+### nui-* Attribute Namespace
+
+Components use a structured attribute system for declarative configuration:
+
+#### CSS Variables (`nui-vars-*`)
+```html
+<nui-app nui-vars-sidebar_width="15rem" nui-vars-sidebar_force-breakpoint="75rem">
+<nui-side-nav nui-vars-sidenav_mode="tree">
+```
+
+**Processing**: Attributes are converted to CSS custom properties on the element
+- `nui-vars-sidebar_width="15rem"` → `--nui-sidebar-width: 15rem`
+- `nui-vars-sidenav_mode="tree"` → `--nui-sidenav-mode: tree`
+
+#### State Management (`nui-state-*`)
+```html
+<nui-sidebar nui-state-visible="false">
+<nui-modal nui-state-open="true">
+```
+
+#### Event Handling (`nui-event-*`)
+```html
+<button nui-event-click="toggle-theme">Dark/Light</button>
+<button nui-event-click="toggle@nui-side-nav">Menu</button>
+```
+
+#### Other Namespaces
+- `nui-url-*`: Resource references and API endpoints  
+- `nui-data-*`: Data binding and content sources
+
+**Philosophy**: DOM as configuration system - variables live in elements, events attach to elements, components read their own attributes to configure behavior.
+
 ## Project Structure
 
 ```
 nui_wc2/
-├── UT/                          # Companion utility library (submodule)
-├── lib/                         # Component library
-│   ├── nui.js                  # Main library entry point
-│   ├── components/             # Individual components
-│   │   ├── button.js
-│   │   ├── navbar.js
-│   │   ├── modal.js
-│   │   └── ...
-│   └── core/                   # Core utilities
-│       ├── component.js        # Base component class
-│       └── registry.js         # Component registration
-├── css/                        # Component styles
-│   ├── nui-main.css           # Core CSS variables & utilities
-│   ├── nui-button.css
-│   ├── nui-navbar.css
-│   └── ...
+├── UT/                          # Companion utility library  
+├── NUI/                         # Main library folder
+│   ├── lib/                    # Component library
+│   │   └── core/              # Core UI components
+│   │       └── nui-button.js  # First component implementation
+│   └── css/                   # Styling (optional - users can provide their own)
+│       ├── nui-defaults.css   # Default CSS variable values
+│       └── core/              # Core component styles
+│           └── nui-button.css
 ├── playground/                 # Interactive demo/testing environment
 │   ├── index.html             # Demo application
-│   ├── playground.js          # Demo app logic
-│   ├── playground.css         # Demo styling
-│   └── examples/              # Component examples by category
-│       ├── buttons.js
-│       ├── navigation.js
-│       └── ...
-├── docs/                       # Documentation
+│   ├── css/                   # Demo styles
+│   └── js/                    # Demo scripts
 └── .github/                    # GitHub configuration
     └── copilot-instructions.md
 
 reference/                      # Reference materials (not tracked)
-├── nui/                       # Original NUI library (git clone)
+├── nui/                       # Original NUI library (reference only)
+├── nui_screenshots/           # Visual reference from old library
 └── dom-first.md              # Philosophy paper
 ```
 
@@ -123,13 +366,13 @@ reference/                      # Reference materials (not tracked)
 **UT Library** (`./UT/`)
 - Core utilities for DOM manipulation, data handling, CSS variables
 - Independent library, can be used standalone
-- Provides foundational functions: `ut.el()`, `ut.createElement()`, `ut.getCssVar()`, etc.
-- Zero dependencies, ~24KB minified
+- Provides foundational functions for web development
+- Zero dependencies, lightweight
 
 **Relationship**
 - UT = Core utilities (element creation, selection, data manipulation)
-- nui_wc2 = UI components (buttons, navbars, modals, forms)
-- Both follow DOM-first principles
+- nui_wc2 = UI components (buttons, navbars, layouts, forms)
+- Both follow HTML-first principles
 - Both can be used independently or together
 
 ## Design Goals
@@ -152,229 +395,119 @@ reference/                      # Reference materials (not tracked)
 ❌ No Shadow DOM complexity  
 ❌ No CSS-in-JS  
 
-## Usage Example
+## Usage Examples
+
+### HTML-First Foundation
 
 ```html
 <!DOCTYPE html>
 <html>
 <head>
-	<link rel="stylesheet" href="css/nui-main.css">
-	<link rel="stylesheet" href="css/nui-button.css">
-	<link rel="stylesheet" href="css/nui-navbar.css">
+	<link rel="stylesheet" href="NUI/css/nui-defaults.css">
+	<style>
+		/* Optional: Custom theme overrides */
+		:root {
+			--nui-primary: #ff6b6b;
+			--nui-border-radius: 8px;
+		}
+	</style>
 </head>
 <body>
+	<!-- App Mode Layout -->
+	<nui-app nui-vars-sidebar_width="15rem">
+		<nui-top-nav>
+			<header>
+				<h1>My App</h1>
+				<button type="button">Menu</button>
+			</header>
+		</nui-top-nav>
+		
+		<nui-side-nav>
+			<nav>
+				<section>
+					<h2>Navigation</h2>
+					<ul>
+						<li><a href="/">Home</a></li>
+						<li><a href="/about">About</a></li>
+					</ul>
+				</section>
+			</nav>
+		</nui-side-nav>
+		
+		<nui-content>
+			<main>
+				<h1>Welcome</h1>
+				<nui-button>
+					<button type="button">Click Me</button>
+				</nui-button>
+			</main>
+		</nui-content>
+	</nui-app>
 	
-	<nui-navbar>
-		<nui-button slot="left" icon="menu">Menu</nui-button>
-		<span slot="title">My App</span>
-		<nui-button slot="right" icon="settings">Settings</nui-button>
-	</nui-navbar>
-	
-	<main>
-		<nui-button type="primary">Primary Action</nui-button>
-		<nui-button type="secondary">Secondary Action</nui-button>
-	</main>
-	
-	<script type="module" src="UT/nui_ut.js"></script>
-	<script type="module" src="lib/nui.js"></script>
-	
-	<script>
-		document.addEventListener('nui-click', (e) => {
-			console.log('Button clicked:', e.detail);
-		});
-	</script>
-	
+	<script type="module" src="NUI/lib/core/nui-button.js"></script>
 </body>
 </html>
 ```
 
-## Performance Targets
-
-- **Bundle Size**: < 15KB minified (components only, excluding UT)
-- **Load Time**: < 50ms to interactive (on modern hardware)
-- **Memory**: Minimal overhead, no duplicate trees
-- **Render Speed**: Direct DOM updates, no diffing overhead
-
-## Migration from Original NUI
-
-This library is a complete rework of the original NUI library with significant architectural changes. Here are the key differences:
-
-### CSS Architecture Changes
-
-**Theme System: `light-dark()` Function**
-
-The original NUI used class-based theme switching (`.dark` class), but nui_wc2 uses the modern CSS `light-dark()` function for automatic theme detection.
-
-**Old approach (reference/nui):**
-```css
-body {
-	--color-text: rgb(0, 0, 0);
-}
-body.dark {
-	--color-text: rgb(255, 255, 255);
-}
-```
-
-**New approach (nui_wc2):**
-```css
-:root {
-	color-scheme: light dark;
-}
-
-body {
-	--color-text: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));
-	--color-bg: light-dark(rgb(255, 255, 255), rgb(26, 26, 26));
-	--color-border: light-dark(rgb(220, 220, 220), rgb(60, 60, 60));
-}
-```
-
-**Benefits:**
-- Automatic theme detection based on system preferences
-- No JavaScript required for theme switching
-- Single variable declaration instead of duplicates
-- More performant - browser-native feature
-- Respects user's OS/browser theme settings
-
-**Browser Support:** All modern browsers (Chrome 123+, Firefox 120+, Safari 17.5+)
-
-### Component Architecture Changes
-
-**Two Component Patterns**
-
-The new library uses two distinct patterns for different use cases:
-
-**1. Custom Element Components (Persistent/Declarative)**
-- For persistent UI elements defined in HTML markup
-- Long-lived in the DOM structure
-- Enhanced via `customElements.define()`
-- Examples: buttons, navbars, cards, inputs, forms
+### Page Mode (No nui-app wrapper)
 
 ```html
-<!-- Declarative usage in HTML -->
-<nui-button type="primary">Click Me</nui-button>
-<nui-navbar>
-	<span slot="title">My App</span>
-</nui-navbar>
-```
-
-```javascript
-// Component definition
-class NuiButton extends HTMLElement {
-	connectedCallback() {
-		this.addEventListener('click', this.handleClick);
-	}
-}
-customElements.define('nui-button', NuiButton);
-```
-
-**2. Dynamic Components (Temporary/Imperative)**
-- For temporary UI elements created programmatically
-- Short-lived, destroyed after use
-- Created via JavaScript functions on the `nui` namespace
-- Examples: alerts, prompts, dialogs, loaders, toasts, notifications
-
-```javascript
-// Imperative usage in JavaScript
-nui.alert('Operation complete!');
-nui.confirm('Delete this item?').then(result => { ... });
-nui.loaderShow(target, 'Loading data...');
-
-// Example implementation
-nui.alert = function(message, options) {
-	let overlay = ut.createElement('div', { classes: 'nui-overlay' });
-	let dialog = ut.createElement('div', { classes: 'nui-alert' });
+<!DOCTYPE html>
+<html>
+<head>
+	<link rel="stylesheet" href="NUI/css/nui-defaults.css">
+</head>
+<body>
+	<!-- Natural document flow -->
+	<header>
+		<h1>My Website</h1>
+		<nav>
+			<ul>
+				<li><a href="/">Home</a></li>
+				<li><a href="/about">About</a></li>
+			</ul>
+		</nav>
+	</header>
 	
-	overlay.kill = () => { ut.killMe(overlay); };
-	document.body.appendChild(overlay);
-	return overlay;
-}
+	<main>
+		<h1>Page Content</h1>
+		<nui-button>
+			<button type="button">Action Button</button>
+		</nui-button>
+	</main>
+	
+	<script type="module" src="NUI/lib/core/nui-button.js"></script>
+</body>
+</html>
 ```
-
-**Why Two Patterns?**
-- **Custom Elements**: Semantic, persistent, part of page structure
-- **Dynamic Components**: Temporary overlays, don't pollute markup, programmatic control
-- **Performance**: Dynamic components can be created/destroyed efficiently
-- **Developer Experience**: Each pattern fits its use case naturally
-
-### Storage System
-
-**Built-in Storage Management**
-
-The new library includes a core storage system (`nui.storage`) as base functionality, used internally for theme preferences and available for application state management.
-
-**Features:**
-- **IndexedDB primary** with localStorage fallback
-- **Persistent storage** support (when available)
-- **Reactive updates** - storage changes trigger events
-- **Clean data handling** - automatic serialization
-- **Multiple instances** - separate storage contexts
-
-**Use Cases:**
-- Theme preference persistence (light/dark mode)
-- User settings and preferences
-- Application state between sessions
-- Form data persistence
-
-```javascript
-// Internal usage for theme
-nui.storage.set('theme', 'dark');
-let theme = await nui.storage.get('theme');
-
-// Available for application use
-let userPrefs = nui.storage.create('userPreferences');
-await userPrefs.set('sidebarCollapsed', true);
-```
-
-**Why Built-in:**
-Modern web applications need persistent state. Rather than requiring external dependencies, the storage system is part of the base library, ensuring consistent behavior and zero additional overhead.
 
 ## Development Status
 
-🚧 **Early Development** - Architecture design phase
+🚧 **Early Development** - Architecture established, first implementation in progress
 
-Current work focused on:
-- Core component base class
-- Custom element registration system
-- CSS variable architecture
-- **Storage system** (`nui.storage`) - IndexedDB/localStorage wrapper for theme preferences and app state
-- **Priority components**: Button, Select (custom dropdown), Input fields
-- **Interactive playground/demo** for component testing and showcase
+### Current Architecture Status
+✅ **HTML-First Foundation**: Semantic HTML that works without CSS/JS  
+✅ **Dual-Mode Layout**: App mode vs Page mode system designed  
+✅ **CSS Variable System**: `light-dark()` theming with nui-defaults.css  
+✅ **Component Pattern**: Thin classes + pure functions established  
+✅ **Attribute Namespace**: `nui-vars-*`, `nui-event-*`, `nui-state-*` system  
 
-### Component Priority
+### Implemented Components
+✅ **nui-button**: First component with complete pattern implementation
+🚧 **Layout system**: Basic structure defined, CSS implementation in progress
 
-**Phase 1 - Foundation:**
-1. **Storage System** - Base library functionality for persisting theme preferences and user settings
-2. **Button** - Primary interactive element with variants (primary, secondary, outline, disabled, delete)
-3. **Select** - Custom select/dropdown component (replacing native `<select>`)
-4. **Input Fields** - Text inputs, textareas with consistent styling
+### Next Priority
+1. **Dual-mode CSS implementation**: App/Page mode layout CSS
+2. **Screen reader optimization**: `display: contents` for layout elements
+3. **Attribute processing**: `nui-vars-*` to CSS custom properties
+4. **Event system**: `nui-event-*` declarative actions (optional convenience layer)
 
-**Phase 2 - Core UI:**
-- Navbar/Topbar
-- Sidebar navigation
-- Card containers
-- Modal dialogs
-- Alert/Prompt (dynamic components)
+### Playground Status
+✅ **Clean HTML structure**: Works without CSS enhancement  
+✅ **Component examples**: Real usage patterns demonstrated  
+✅ **Reference integration**: Links to original NUI playground and screenshots
 
-**Phase 3 - Advanced:**
-- Media Player (specialized component from original library)
-- List components (SuperList from original library)
-- Additional specialized components as needed
-
-### Playground Demo
-
-The project includes an interactive playground application that serves as both:
-- **Live Documentation** - See components in action with real examples
-- **Testing Environment** - Test components directly in the browser
-- **Design Showcase** - Demonstrates the library's aesthetic and capabilities
-
-Inspired by the [original NUI playground](https://herrbasan.github.io/n000b_ui_playground/), the demo features:
-- Sidebar navigation organizing components by category
-- Live component examples with interactive functionality
-- Clean, modern interface matching component aesthetic
-- Dark/light theme support
-- Direct browser testing via Live Server
-
-**Philosophy**: The playground's look and feel is as important as the code ethics - demonstrating that DOM-first development produces beautiful, performant interfaces.
+The foundation is solid. Focus now shifts to CSS implementation of the dual-mode layout system and completing the attribute processing systems.
 
 ## Credits
 

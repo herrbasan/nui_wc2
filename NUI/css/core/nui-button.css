@@ -1,0 +1,63 @@
+/* NUI Button Component Styles */
+
+/* Component-specific variables with light-dark support */
+:root {
+	--nui-button-display: inline-flex;
+	--nui-button-align-items: center;
+	--nui-button-justify-content: center;
+	--nui-button-padding: var(--input-padding, 0.8rem 1rem);
+	--nui-button-border: solid var(--border-thickness) var(--border-shade1);
+	--nui-button-border-radius: var(--button-border-radius, var(--border-radius0));
+	--nui-button-bg: var(--button-color-background);
+	--nui-button-color: var(--button-color-text);
+	--nui-button-cursor: pointer;
+	--nui-button-transition: 0.2s ease;
+	--nui-button-font-family: var(--system-ui);
+	--nui-button-font-size: var(--button-font-size);
+	--nui-button-user-select: none;
+
+	/* Interactive states */
+	--nui-button-hover-bg: var(--button-color-highlight);
+	--nui-button-hover-color: var(--button-color-text-hi);
+	--nui-button-hover-border: var(--nui-button-border);
+	--nui-button-focus-outline: 2px solid var(--color-highlight);
+	--nui-button-active-bg: var(--button-color-highlight);
+}
+
+/* Component styles */
+nui-button {
+	display: var(--nui-button-display);
+	align-items: var(--nui-button-align-items);
+	justify-content: var(--nui-button-justify-content);
+	padding: var(--nui-button-padding);
+	border: var(--nui-button-border);
+	border-radius: var(--nui-button-border-radius);
+	background-color: var(--nui-button-bg);
+	color: var(--nui-button-color);
+	cursor: var(--nui-button-cursor);
+	transition: var(--nui-button-transition);
+	font-family: var(--nui-button-font-family);
+	font-size: var(--nui-button-font-size);
+	user-select: var(--nui-button-user-select);
+	min-height: var(--button-min-height);
+	min-width: var(--button-min-width);
+	box-sizing: border-box;
+}
+
+/* Hover state */
+nui-button:hover {
+	background-color: var(--nui-button-hover-bg);
+	color: var(--nui-button-hover-color);
+	border: var(--nui-button-hover-border);
+}
+
+/* Focus state */
+nui-button:focus {
+	outline: var(--nui-button-focus-outline);
+	outline-offset: 2px;
+}
+
+/* Active state */
+nui-button:active {
+	background-color: var(--nui-button-active-bg);
+}
