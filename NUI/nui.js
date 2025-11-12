@@ -349,6 +349,113 @@ actions['remove-attr'] = (target, source, event, attrName) => {
 
 
 // =============================================================================
+// ACCESSIBILITY UTILITIES
+// Intelligent context detection and automatic ARIA attribute upgrades
+// =============================================================================
+
+function upgradeAccessibility(element) {
+	// Check if button has accessible name
+	function ensureButtonLabel(button) {
+		// Skip if already has label
+		if (button.hasAttribute('aria-label') || 
+		    button.hasAttribute('aria-labelledby') ||
+		    button.getAttribute('title')) {
+			return;
+		}
+		
+		// Check if button has visible text
+		const visibleText = Array.from(button.childNodes)
+			.filter(node => node.nodeType === Node.TEXT_NODE)
+			.map(node => node.textContent.trim())
+			.join(' ');
+		
+		if (visibleText) {
+			// Has text content, accessible by default
+			return;
+		}
+		
+		// Icon-only button - try to infer label from context
+		const icon = button.querySelector('nui-icon');
+		if (icon) {
+			const iconName = icon.getAttribute('name');
+			if (iconName) {
+				// Check parent context for hints
+				const parentNav = button.closest('nui-top-nav, nui-side-nav, nav, header');
+				const parentAction = button.closest('[data-action], [id]');
+				
+				// Generate descriptive label from icon name
+				const label = iconName
+					.split(/[_-]/)
+					.map(word => word.charAt(0).toUpperCase() + word.slice(1))
+					.join(' ');
+				
+				let contextLabel = label;
+				
+				// Add context hints
+				if (parentNav) {
+					contextLabel = `${label} navigation`;
+				}
+				
+				// Warn developer but add label anyway
+				console.warn(
+					`nui-button: Icon-only button missing aria-label. Auto-generated: "${contextLabel}". ` +
+					`Consider adding explicit aria-label for better UX.`,
+					button
+				);
+				
+				button.setAttribute('aria-label', contextLabel);
+			}
+		}
+	}
+	
+	// Check if interactive element needs role
+	function ensureRole(element) {
+		const clickableElements = element.querySelectorAll('[onclick], [nui-event-click]');
+		clickableElements.forEach(el => {
+			if (el.tagName === 'BUTTON' || el.tagName === 'A') return; // Already semantic
+			
+			if (!el.hasAttribute('role')) {
+				console.warn(
+					`Clickable element without semantic tag or role. Adding role="button".`,
+					el
+				);
+				el.setAttribute('role', 'button');
+				el.setAttribute('tabindex', '0');
+			}
+		});
+	}
+	
+	// Ensure landmarks have labels
+	function ensureLandmarkLabels(element) {
+		const landmarks = element.querySelectorAll('nav, [role="navigation"]');
+		landmarks.forEach(landmark => {
+			if (!landmark.hasAttribute('aria-label') && !landmark.hasAttribute('aria-labelledby')) {
+				// Try to infer from heading
+				const heading = landmark.querySelector('h1, h2, h3, h4, h5, h6');
+				if (heading) {
+					const id = heading.id || `nav-${Math.random().toString(36).substr(2, 9)}`;
+					if (!heading.id) heading.id = id;
+					landmark.setAttribute('aria-labelledby', id);
+				} else {
+					// Generic label
+					console.warn(
+						`Navigation landmark missing aria-label. Adding generic label.`,
+						landmark
+					);
+					landmark.setAttribute('aria-label', 'Navigation');
+				}
+			}
+		});
+	}
+	
+	// Run all checks
+	const buttons = element.querySelectorAll('button');
+	buttons.forEach(ensureButtonLabel);
+	ensureRole(element);
+	ensureLandmarkLabels(element);
+}
+
+// =============================================================================
 // COMPONENT REGISTRATION
 // =============================================================================
 
@@ -356,6 +463,9 @@ actions['remove-attr'] = (target, source, event, attrName) => {
 registerComponent('nui-button', (element) => {
 	const button = element.querySelector('button');
 	if (!button) return;
+	
+	// Accessibility: Ensure button has proper label
+	upgradeAccessibility(element);
 	
 	button.addEventListener('click', (e) => {
 		element.dispatchEvent(new CustomEvent('nui-click', {
@@ -372,6 +482,10 @@ registerComponent('nui-icon', (element) => {
 		return;
 	}
 	
+	// Accessibility: Icons are decorative by default (hidden from screen readers)
+	// Parent button/link should have proper aria-label
+	element.setAttribute('aria-hidden', 'true');
+	
 	// Remove placeholder text content (for plain HTML fallback)
 	if (element.textContent.trim()) {
 		element.textContent = '';
@@ -385,6 +499,9 @@ registerComponent('nui-icon', (element) => {
 		svg.setAttribute('height', '24');
 		svg.setAttribute('viewBox', '0 0 24 24');
 		svg.setAttribute('fill', 'currentColor');
+		// Accessibility: Mark SVG as decorative
+		svg.setAttribute('aria-hidden', 'true');
+		svg.setAttribute('focusable', 'false');
 		element.appendChild(svg);
 	}
 	
@@ -498,16 +615,72 @@ registerComponent('nui-app', (element) => {
 });
 
 registerComponent('nui-top-nav', (element) => {
-	// Future: Handle sticky behavior, custom events, etc.
+	// Accessibility: Ensure proper landmark structure
+	const header = element.querySelector('header');
+	if (header) {
+		// Header should have banner role or be inside a banner
+		if (!header.hasAttribute('role') && !header.closest('[role="banner"]')) {
+			// Check if it's the main site header
+			const isMainHeader = !header.closest('article, section, aside, main');
+			if (isMainHeader) {
+				header.setAttribute('role', 'banner');
+			}
+		}
+		
+		// Upgrade accessibility for all buttons
+		upgradeAccessibility(header);
+	}
 });
 
 registerComponent('nui-side-nav', (element) => {
-	// Container only - all list/tree logic delegated to nui-link-list
+	// Accessibility: Ensure navigation landmark
+	const nav = element.querySelector('nav, nui-link-list');
+	if (nav) {
+		if (nav.tagName !== 'NAV' && !nav.hasAttribute('role')) {
+			nav.setAttribute('role', 'navigation');
+		}
+		
+		// Ensure label if missing
+		if (!nav.hasAttribute('aria-label') && !nav.hasAttribute('aria-labelledby')) {
+			console.warn(
+				`nui-side-nav: Navigation missing aria-label. Adding generic label.`,
+				nav
+			);
+			nav.setAttribute('aria-label', 'Sidebar navigation');
+		}
+		
+		upgradeAccessibility(nav);
+	}
 });
 
 registerComponent('nui-link-list', (element) => {
 	const mode = element.getAttribute('mode') || 'list';
 	const accordion = element.hasAttribute('accordion');
+	
+	// Accessibility: Set navigation landmark role
+	if (!element.hasAttribute('role')) {
+		element.setAttribute('role', 'navigation');
+	}
+	
+	// Accessibility: Ensure label - check parent context
+	if (!element.hasAttribute('aria-label') && !element.hasAttribute('aria-labelledby')) {
+		// Try to infer from parent or heading
+		const parentLabel = element.closest('[aria-label]')?.getAttribute('aria-label');
+		const heading = element.querySelector('h1, h2, h3, h4, h5, h6');
+		
+		if (heading) {
+			const id = heading.id || `nav-${Math.random().toString(36).substr(2, 9)}`;
+			if (!heading.id) heading.id = id;
+			element.setAttribute('aria-labelledby', id);
+		} else if (parentLabel) {
+			element.setAttribute('aria-label', parentLabel);
+		} else {
+			// Check context - sidebar, top nav, etc.
+			const isSidebar = element.closest('nui-side-nav, aside, [role="complementary"]');
+			const label = isSidebar ? 'Sidebar navigation' : 'Navigation menu';
+			element.setAttribute('aria-label', label);
+		}
+	}
 	
 	// Build index of items for findItem and setActive functionality
 	const itemIndex = new Map();
@@ -553,8 +726,22 @@ registerComponent('nui-link-list', (element) => {
 			
 			if (!itemEl || !subEl) return;
 			
+			// Accessibility: Setup ARIA attributes for tree structure
+			const spanText = itemEl.querySelector('span');
+			const groupLabel = spanText ? spanText.textContent.trim() : 'Menu section';
+			
+			// Make the group item a button with ARIA
+			itemEl.setAttribute('role', 'button');
+			itemEl.setAttribute('aria-label', `${groupLabel} menu`);
+			itemEl.setAttribute('tabindex', '0');
+			
 			// Set initial state
 			const isOpen = group.classList.contains('open');
+			itemEl.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+			
+			// Sub container is a list
+			subEl.setAttribute('role', 'list');
+			subEl.setAttribute('aria-label', `${groupLabel} items`);
 			
 			if (isOpen) {
 				subEl.style.height = subEl.scrollHeight + 'px';
@@ -579,9 +766,12 @@ registerComponent('nui-link-list', (element) => {
 					groups.forEach(otherGroup => {
 						if (otherGroup !== group) {
 							const otherSub = otherGroup.querySelector('.sub');
-							if (otherSub) {
+							const otherItem = otherGroup.querySelector('.item');
+							if (otherSub && otherItem) {
 								otherGroup.classList.remove('open');
 								otherSub.style.height = '0px';
+								// Update ARIA state
+								otherItem.setAttribute('aria-expanded', 'false');
 							}
 						}
 					});
@@ -591,14 +781,24 @@ registerComponent('nui-link-list', (element) => {
 				if (isCurrentlyOpen) {
 					group.classList.remove('open');
 					subEl.style.height = '0px';
+					itemEl.setAttribute('aria-expanded', 'false');
 				} else {
 					group.classList.add('open');
 					// Recalculate height in case content changed
 					subEl.style.height = subEl.scrollHeight + 'px';
+					itemEl.setAttribute('aria-expanded', 'true');
 				}
 			};
 			
 			itemEl.addEventListener('click', toggleGroup);
+			
+			// Keyboard support: Enter and Space to toggle
+			itemEl.addEventListener('keydown', (e) => {
+				if (e.key === 'Enter' || e.key === ' ') {
+					e.preventDefault();
+					toggleGroup(e);
+				}
+			});
 			
 			// Store cleanup
 			if (!group._cleanup) {
@@ -608,12 +808,29 @@ registerComponent('nui-link-list', (element) => {
 			}
 		});
 		
-		// Setup sub-item clicks
+		// Setup sub-item clicks with ARIA
 		const subItems = element.querySelectorAll('.sub-item');
 		subItems.forEach(subItem => {
+			// Accessibility: Make sub-items list items with roles
+			subItem.setAttribute('role', 'listitem');
+			subItem.setAttribute('tabindex', '0');
+			
+			const spanText = subItem.querySelector('span');
+			if (spanText) {
+				subItem.setAttribute('aria-label', spanText.textContent.trim());
+			}
+			
 			subItem.addEventListener('click', (e) => {
 				e.stopPropagation();
 				handleNavClick(subItem, e);
+			});
+			
+			// Keyboard support
+			subItem.addEventListener('keydown', (e) => {
+				if (e.key === 'Enter' || e.key === ' ') {
+					e.preventDefault();
+					handleNavClick(subItem, e);
+				}
 			});
 		});
 		
@@ -622,9 +839,25 @@ registerComponent('nui-link-list', (element) => {
 		regularItems.forEach(item => {
 			const itemEl = item.querySelector('.item');
 			if (itemEl) {
+				itemEl.setAttribute('role', 'button');
+				itemEl.setAttribute('tabindex', '0');
+				
+				const spanText = itemEl.querySelector('span');
+				if (spanText) {
+					itemEl.setAttribute('aria-label', spanText.textContent.trim());
+				}
+				
 				itemEl.addEventListener('click', (e) => {
 					e.stopPropagation();
 					handleNavClick(item, e);
+				});
+				
+				// Keyboard support
+				itemEl.addEventListener('keydown', (e) => {
+					if (e.key === 'Enter' || e.key === ' ') {
+						e.preventDefault();
+						handleNavClick(item, e);
+					}
 				});
 			}
 		});
@@ -637,14 +870,20 @@ registerComponent('nui-link-list', (element) => {
 		// Set this item as active
 		item.classList.add('active');
 		
+		// Accessibility: Update aria-current for active navigation
+		const clickableEl = item.querySelector('.item') || item;
+		clickableEl.setAttribute('aria-current', 'page');
+		
 		// If it's a sub-item, ensure parent is open
 		if (item.classList.contains('sub-item')) {
 			const parent = item.closest('.nui-sidebar-item.group');
 			if (parent) {
 				const subEl = parent.querySelector('.sub');
-				if (subEl) {
+				const parentItem = parent.querySelector('.item');
+				if (subEl && parentItem) {
 					parent.classList.add('open');
 					subEl.style.height = subEl.scrollHeight + 'px';
+					parentItem.setAttribute('aria-expanded', 'true');
 				}
 			}
 		}
@@ -673,15 +912,21 @@ registerComponent('nui-link-list', (element) => {
 	function clearActive() {
 		element.querySelectorAll('.nui-sidebar-item, .sub-item').forEach(item => {
 			item.classList.remove('active');
+			// Accessibility: Remove aria-current from all items
+			const clickableEl = item.querySelector('.item') || item;
+			clickableEl.removeAttribute('aria-current');
 		});
 	}
 	
 	function clearSubs() {
 		element.querySelectorAll('.nui-sidebar-item.group').forEach(group => {
 			const subEl = group.querySelector('.sub');
-			if (subEl) {
+			const itemEl = group.querySelector('.item');
+			if (subEl && itemEl) {
 				group.classList.remove('open');
 				subEl.style.height = '0px';
+				// Accessibility: Update ARIA expanded state
+				itemEl.setAttribute('aria-expanded', 'false');
 			}
 		});
 	}
@@ -744,8 +989,43 @@ registerComponent('nui-content', (element) => {
 	// Future: Handle scrolling, content loading, etc.
 });
 
+registerComponent('nui-content', (element) => {
+	// Accessibility: Ensure main landmark
+	const main = element.querySelector('main');
+	if (main) {
+		// Main should have main role or be the main element
+		if (!main.hasAttribute('role')) {
+			main.setAttribute('role', 'main');
+		}
+		
+		// Check for skip link target
+		if (!main.hasAttribute('id')) {
+			main.setAttribute('id', 'main-content');
+		}
+		
+		upgradeAccessibility(main);
+	} else {
+		// If no main element, check if this should be main
+		const isMainContent = !element.closest('article, section, aside');
+		if (isMainContent) {
+			console.warn(
+				`nui-content: Consider wrapping content in <main> element for accessibility.`,
+				element
+			);
+		}
+	}
+});
+
 registerComponent('nui-app-footer', (element) => {
-	// Future: Handle footer-specific behavior
+	// Accessibility: Ensure contentinfo landmark
+	const footer = element.querySelector('footer');
+	if (footer) {
+		// Footer should have contentinfo role if it's the main site footer
+		const isMainFooter = !footer.closest('article, section, aside, main');
+		if (isMainFooter && !footer.hasAttribute('role')) {
+			footer.setAttribute('role', 'contentinfo');
+		}
+	}
 });
 
 // Stub components

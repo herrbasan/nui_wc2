@@ -132,6 +132,57 @@
 	color-scheme: light dark;
 }
 
+/* =============================================================================
+   ACCESSIBILITY FOUNDATIONS
+   ============================================================================= */
+
+/* Respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
+}
+
+/* Skip link for keyboard navigation (optional, can be added to HTML) */
+.skip-link {
+	position: absolute;
+	top: -40px;
+	left: 0;
+	background: var(--color-highlight);
+	color: var(--color-white);
+	padding: 8px;
+	text-decoration: none;
+	z-index: 100;
+}
+
+.skip-link:focus {
+	top: 0;
+}
+
+/* Ensure focus is visible for keyboard users */
+:focus-visible {
+	outline: 2px solid var(--color-highlight);
+	outline-offset: 2px;
+}
+
+/* Screen reader only content */
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border-width: 0;
+}
+
 layout, item {
 	display: contents;
 }
@@ -350,6 +401,20 @@ nui-app[data-layout="app"].has-footer nui-side-nav {
 .nui-sidebar-item .item:hover {
 	color: var(--color-highlight);
 	background-color: light-dark(rgba(0,0,0,0.05), rgba(255,255,255,0.05));
+}
+
+/* Accessibility: Focus styles for keyboard navigation */
+.nui-sidebar-item .item:focus,
+.nui-sidebar-item .sub .sub-item:focus {
+	outline: 2px solid var(--color-highlight);
+	outline-offset: -2px;
+	background-color: light-dark(rgba(0,0,0,0.08), rgba(255,255,255,0.08));
+}
+
+/* Skip focus outline on mouse click, but keep for keyboard */
+.nui-sidebar-item .item:focus:not(:focus-visible),
+.nui-sidebar-item .sub .sub-item:focus:not(:focus-visible) {
+	outline: none;
 }
 
 .nui-sidebar-item.active {
