@@ -1,5 +1,4 @@
 // NUI/nui.js - DOM-First UI Component Library
-// Single-file library with all core components and initialization
 
 // =============================================================================
 // COMPONENT FACTORY
@@ -9,34 +8,23 @@ const components = {};
 const actions = {};
 const config = {
 	sanitizeActions: true,
-	iconSpritePath: '/NUI/assets/material-icons-sprite.svg'  // Absolute path from root
+	iconSpritePath: '/NUI/assets/material-icons-sprite.svg'
 };
 
 // =============================================================================
-// THE KNOWER - Cross-component state observation (opt-in, zero overhead when unused)
-// 
-// Philosophy: Components tell the Knower their state. Other components watch.
-// Zero overhead: No Maps created until first tell() or watch() call.
-// 
-// Usage:
-//   knower.tell('sidebar', { open: true });        // Component reports state
-//   knower.watch('sidebar', (state) => { ... });   // Component watches state
-//   const state = knower.know('sidebar');          // Query current state
-// 
+// THE KNOWER
 // =============================================================================
 
 const knower = {
-	_states: null,     // Lazy: Map created on first tell()
-	_hooks: null,      // Lazy: Map created on first watch()
+	_states: null,
+	_hooks: null,
 	
-	// Component reports state - only creates Map if needed
 	tell(id, state) {
 		if (!this._states) this._states = new Map();
 		
 		const oldState = this._states.get(id);
 		this._states.set(id, state);
 		
-		// Only notify if hooks exist
 		if (this._hooks) {
 			const hooks = this._hooks.get(id);
 			if (hooks) {
@@ -45,12 +33,10 @@ const knower = {
 		}
 	},
 	
-	// Query current state - returns undefined if never told
 	know(id) {
 		return this._states?.get(id);
 	},
 	
-	// Watch for changes - only creates structures if needed
 	watch(id, handler) {
 		if (!this._hooks) this._hooks = new Map();
 		if (!this._hooks.has(id)) {
@@ -58,35 +44,29 @@ const knower = {
 		}
 		this._hooks.get(id).add(handler);
 		
-		// Call immediately with current state (if exists)
 		const currentState = this._states?.get(id);
 		if (currentState !== undefined) {
 			handler(currentState, undefined);
 		}
 		
-		// Return unwatch function
 		return () => this.unwatch(id, handler);
 	},
 	
-	// Stop watching
 	unwatch(id, handler) {
 		if (!this._hooks) return;
 		const hooks = this._hooks.get(id);
 		if (hooks) {
 			hooks.delete(handler);
-			// Cleanup empty Sets
 			if (hooks.size === 0) {
 				this._hooks.delete(id);
 			}
 		}
 	},
 	
-	// Debug: Get all known states
 	knowAll() {
 		return this._states ? Object.fromEntries(this._states) : {};
 	},
 	
-	// Testing: Clear everything
 	forget() {
 		this._states = null;
 		this._hooks = null;
@@ -95,69 +75,44 @@ const knower = {
 
 // =============================================================================
 // ATTRIBUTE PROXY SYSTEM
-// Standard pattern for reactive attributes - more efficient than MutationObserver
-// 
-// Usage in components:
+// =============================================================================
 //   setupAttributeProxy(element, {
 //     'attribute-name': (newValue, oldValue) => { /* handle change */ }
 //   });
 //
 // Supported attribute changes:
 //   element.setAttribute('name', 'value')     ✅ Caught
-//   element.removeAttribute('name')           ✅ Caught
-//   element.toggleAttribute('name')           ✅ Caught
-//   element.iconName = 'value' (if defined)   ✅ Caught (via property setter)
-//
-// Unsupported (extremely rare in practice):
-//   element.attributes['name'].value = 'x'    ❌ Direct mutation - don't do this
-//   element.setAttributeNode(attrNode)        ❌ Rare API - not covered
-//   element.setAttributeNS(ns, name, value)   ❌ Namespaced - not needed
-//
-// Benefits:
-//   - Zero overhead when attributes don't change
-//   - Synchronous and immediate
-//   - Clear stack traces for debugging
-//   - LLM-friendly pattern
-//   - Covers 99.9% of real-world usage
-// =============================================================================
 
 function setupAttributeProxy(element, handlers = {}) {
-	// Store original methods
 	const original = {
 		setAttribute: element.setAttribute.bind(element),
 		removeAttribute: element.removeAttribute.bind(element),
 		toggleAttribute: element.toggleAttribute.bind(element)
 	};
 	
-	// Override setAttribute
 	element.setAttribute = function(name, value) {
 		const oldValue = this.getAttribute(name);
 		original.setAttribute(name, value);
 		
-		// Call handler if registered for this attribute
 		if (handlers[name]) {
 			handlers[name](value, oldValue);
 		}
 	};
 	
-	// Override removeAttribute
 	element.removeAttribute = function(name) {
 		const oldValue = this.getAttribute(name);
 		original.removeAttribute(name);
 		
-		// Call handler with null/undefined value
 		if (handlers[name]) {
 			handlers[name](null, oldValue);
 		}
 	};
 	
-	// Override toggleAttribute
 	element.toggleAttribute = function(name, force) {
 		const oldValue = this.hasAttribute(name);
 		const result = original.toggleAttribute(name, force);
 		const newValue = this.hasAttribute(name);
 		
-		// Call handler if state changed
 		if (handlers[name] && oldValue !== newValue) {
 			handlers[name](newValue ? '' : null, oldValue ? '' : null);
 		}
@@ -165,13 +120,11 @@ function setupAttributeProxy(element, handlers = {}) {
 		return result;
 	};
 	
-	// Store originals for cleanup
 	element._originalAttributeMethods = original;
 	
 	return original;
 }
 
-// Create property descriptors for attributes (optional convenience)
 function defineAttributeProperty(element, propName, attrName = propName) {
 	Object.defineProperty(element, propName, {
 		get() {
@@ -196,7 +149,6 @@ function createComponent(tagName, setupFn, cleanupFn) {
 			setupFn?.(this);
 		}
 		disconnectedCallback() {
-			// Restore original attribute methods if they were proxied
 			if (this._originalAttributeMethods) {
 				this.setAttribute = this._originalAttributeMethods.setAttribute;
 				this.removeAttribute = this._originalAttributeMethods.removeAttribute;
@@ -233,9 +185,9 @@ function sanitizeInput(input) {
 	if (!config.sanitizeActions) return input;
 	// Remove potentially dangerous characters and patterns
 	return input
-		.replace(/[<>'"]/g, '')  // Remove HTML/JS injection chars
-		.replace(/javascript:/gi, '')  // Remove javascript: protocol
-		.replace(/on\w+=/gi, '')  // Remove event handler attributes
+		.replace(/[<>'"]/g, '')
+		.replace(/javascript:/gi, '')
+		.replace(/on\w+=/gi, '')
 		.trim();
 }
 
@@ -350,48 +302,39 @@ actions['remove-attr'] = (target, source, event, attrName) => {
 
 // =============================================================================
 // ACCESSIBILITY UTILITIES
-// Centralized, reusable accessibility helpers
 // =============================================================================
 
 const a11y = {
-	// Check if element already has accessible label
 	hasLabel(element) {
 		return element.hasAttribute('aria-label') || 
 		       element.hasAttribute('aria-labelledby') ||
 		       element.hasAttribute('title');
 	},
 	
-	// Check if element has native focusable child
 	hasFocusableChild(element) {
 		return element.querySelector('button, a[href], input, select, textarea, [tabindex]');
 	},
 	
-	// Get text content from span or element
 	getTextLabel(element) {
 		const span = element.querySelector('span');
 		return span ? span.textContent.trim() : element.textContent.trim();
 	},
 	
-	// Make element interactive if not already
 	makeInteractive(element, label = null) {
 		const nativeButton = element.querySelector('button');
 		const nativeLink = element.querySelector('a[href]');
 		const hasFocusable = this.hasFocusableChild(element);
 		
-		// Target is either the native element or the container
 		const target = nativeButton || nativeLink || element;
 		
-		// Add role only to non-semantic elements
 		if (!nativeButton && !nativeLink && !element.hasAttribute('role')) {
 			element.setAttribute('role', 'button');
 		}
 		
-		// Add tabindex only if no focusable child
 		if (!hasFocusable && !element.hasAttribute('tabindex')) {
 			element.setAttribute('tabindex', '0');
 		}
 		
-		// Add label to the focusable element
 		if (label && !this.hasLabel(target)) {
 			target.setAttribute('aria-label', label);
 		}
@@ -399,7 +342,6 @@ const a11y = {
 		return target;
 	},
 	
-	// Generate label from icon name with context
 	generateIconLabel(iconName, element) {
 		const label = iconName
 			.split(/[_-]/)
@@ -410,19 +352,16 @@ const a11y = {
 		return parentNav ? `${label} navigation` : label;
 	},
 	
-	// Ensure button has accessible label
 	ensureButtonLabel(button) {
 		if (this.hasLabel(button)) return;
 		
-		// Check for visible text
 		const visibleText = Array.from(button.childNodes)
 			.filter(node => node.nodeType === Node.TEXT_NODE)
 			.map(node => node.textContent.trim())
 			.join(' ');
 		
-		if (visibleText) return; // Has text, accessible by default
+		if (visibleText) return;
 		
-		// Icon-only button - generate label
 		const icon = button.querySelector('nui-icon');
 		if (icon) {
 			const iconName = icon.getAttribute('name');
@@ -438,11 +377,9 @@ const a11y = {
 		}
 	},
 	
-	// Ensure landmark has label
 	ensureLandmarkLabel(landmark, fallbackLabel = 'Navigation') {
 		if (this.hasLabel(landmark)) return;
 		
-		// Try to use heading as label
 		const heading = landmark.querySelector('h1, h2, h3, h4, h5, h6');
 		if (heading) {
 			const id = heading.id || `nav-${Math.random().toString(36).substr(2, 9)}`;
@@ -454,7 +391,6 @@ const a11y = {
 		}
 	},
 	
-	// Main upgrade function - scans element for accessibility issues
 	upgrade(element) {
 		// Ensure all buttons have labels
 		element.querySelectorAll('button').forEach(btn => this.ensureButtonLabel(btn));
@@ -491,7 +427,6 @@ registerComponent('nui-button', (element) => {
 	const button = element.querySelector('button');
 	if (!button) return;
 	
-	// Accessibility: Ensure button has proper label
 	upgradeAccessibility(element);
 	
 	button.addEventListener('click', (e) => {
@@ -509,8 +444,6 @@ registerComponent('nui-icon', (element) => {
 		return;
 	}
 	
-	// Accessibility: Icons are decorative by default (hidden from screen readers)
-	// Parent button/link should have proper aria-label
 	element.setAttribute('aria-hidden', 'true');
 	
 	// Remove placeholder text content (for plain HTML fallback)
