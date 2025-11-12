@@ -100,6 +100,133 @@ function setupButtonBehavior(element) {
 customElements.define('nui-button', NuiButton);
 ```
 
+### Reactive Attribute System
+
+Components use an efficient attribute proxy pattern instead of MutationObserver for reactive updates:
+
+**Standard Pattern:**
+```javascript
+registerComponent('nui-icon', (element) => {
+    // Setup component DOM
+    const svg = createSVG();
+    element.appendChild(svg);
+    
+    // Define attribute handlers - called when attributes change
+    setupAttributeProxy(element, {
+        'name': (newValue, oldValue) => {
+            updateIcon(newValue);
+        }
+    });
+    
+    // Optional: Create property accessors
+    defineAttributeProperty(element, 'iconName', 'name');
+});
+```
+
+**Usage:**
+```javascript
+// Via attribute (proxied for reactivity)
+icon.setAttribute('name', 'settings');  // Handler called automatically
+
+// Via property (if defined)
+icon.iconName = 'settings';  // Calls setAttribute internally
+
+// Direct property access
+const currentIcon = icon.iconName;  // Returns getAttribute('name')
+```
+
+**Supported Methods:**
+- ✅ `setAttribute(name, value)` - Standard and recommended
+- ✅ `removeAttribute(name)` - Triggers handler with null
+- ✅ `toggleAttribute(name)` - Triggers handler on change
+- ✅ Property setters (if defined) - Maps to setAttribute
+
+**Unsupported (rare in practice):**
+- ❌ `element.attributes['name'].value = 'x'` - Direct mutation, use setAttribute instead
+- ❌ `setAttributeNode(attrNode)` - Rare API, not needed
+- ❌ `setAttributeNS(ns, name, value)` - Namespaced attributes, not needed
+
+**Why not MutationObserver?**
+- ✅ Zero overhead when attributes don't change
+- ✅ Synchronous and predictable
+- ✅ Clear stack traces for debugging
+- ✅ More LLM-friendly pattern
+- ✅ Covers 99.9% of real-world usage
+- ❌ MutationObserver: constant polling, async callbacks, cleanup complexity
+
+### The Knower (Cross-Component State)
+
+For components that need to know about each other's state, use the **Knower** - a lightweight, opt-in state observation system:
+
+**Basic Usage:**
+```javascript
+import { nui } from './NUI/nui.js';
+
+// Component reports its state
+nui.knower.tell('sidebar', { open: true, mode: 'tree' });
+
+// Other components can watch
+nui.knower.watch('sidebar', (state, oldState) => {
+    console.log('Sidebar changed:', state);
+    overlay.style.display = state.open ? 'block' : 'none';
+});
+
+// Query current state
+const sidebarState = nui.knower.know('sidebar');
+if (sidebarState?.open) {
+    // Do something
+}
+```
+
+**Component Integration:**
+```javascript
+registerComponent('nui-side-nav', (element) => {
+    const id = element.id || 'side-nav';
+    
+    // Report state changes
+    const setState = (newState) => {
+        nui.knower.tell(id, newState);
+    };
+    
+    // Initialize
+    setState({ open: false, mode: 'tree' });
+    
+    // Update on interaction
+    element.addEventListener('toggle', () => {
+        const current = nui.knower.know(id);
+        setState({ ...current, open: !current.open });
+    });
+});
+
+// Other components react
+registerComponent('nui-overlay', (element) => {
+    const unwatch = nui.knower.watch('side-nav', (state) => {
+        element.classList.toggle('visible', state?.open);
+    });
+    
+    // Cleanup
+    element._cleanup = unwatch;
+});
+```
+
+**Zero Overhead Design:**
+- ✅ No Maps created until first use
+- ✅ No background polling or timers
+- ✅ Automatic cleanup of empty Sets
+- ✅ Tree-shakeable if unused
+- ✅ Returns unwatch function for easy cleanup
+
+**When to use:**
+- Components need to react to other component state
+- Cross-component coordination (sidebar → overlay → content)
+- Debugging state across the application
+- Avoiding tight coupling between components
+
+**When NOT to use:**
+- Simple DOM events work fine (use CustomEvent instead)
+- Component only cares about its own state
+- Parent-child relationships (use props/attributes)
+
 3. **Layout Elements (Optional)**
 
 For flexible positioning, use `<layout>` and `<item>` elements:

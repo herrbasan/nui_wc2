@@ -3,45 +3,136 @@
 	<head>
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta name="color-scheme" content="light dark">
 		<title>NUI Component Playground</title>
 		<link rel="stylesheet" href="css/main.css">
-		<link rel="stylesheet" href="NUI/css/nui-defaults.css">
+		<link rel="stylesheet" href="../NUI/css/nui-theme-slate.css">
 		<script type="module" src="js/main.js"></script>
 	</head>
-	<body class="dark">
+	<body>
 		<nui-app nui-vars-sidebar_width="15rem" nui-vars-sidebar_force-breakpoint="75rem">
             <nui-top-nav>
-                <header class="top-nav">
-                    <layout>
-                        <item>
-                            <h1>NUI Playground</h1>
-                        </item>
-                        <item>
-							<nui-icon-button icon="moon" toggleable>
-                            	<button type="button">Dark/Light</button>
-							</nui-icon-button>
-                        </item>
-                    </layout>
-                </header>
+                    <header>
+                        <layout>
+                            <item>
+                                <nui-button>
+                                    <button type="button">
+                                        <nui-icon name="menu">☰</nui-icon>
+                                    </button>
+                                </nui-button>
+                            </item>
+                            <item>
+                                <h1>NUI Playground</h1>
+                            </item>
+                            <item>
+                                <nui-button nui-event-click="toggle-theme">
+                                    <button type="button">
+                                        <nui-icon name="brightness">☀</nui-icon>
+                                    </button>
+                                </nui-button>
+                            </item>
+                        </layout>
+                    </header>
             </nui-top-nav>
 
-            <nui-side-nav nui-vars-sidenav_mode="tree">
-                <nav>
-                    <section>
-                        <h2>Item Group 1</h2>
-                        <ul>
-                            <li><a href="index.html">Home</a></li>
-                            <li><a href="buttons.html">Buttons</a></li>
-                        </ul>
-                    </section>
-                    <section>
-                        <h2>Item Group 2</h2>
-                        <ul>
-                            <li><a href="cards.html">Cards</a></li>
-                            <li><a href="modals.html">Modals</a></li>
-                        </ul>
-                    </section>
-                </nav>
+            <nui-side-nav>
+                <nui-link-list mode="tree" accordion>
+                    
+                    <div class="nui-sidebar-item group open">
+                        <div class="item">
+                            <div class="nui-icon-container"><nui-icon name="aspect_ratio">▣</nui-icon></div>
+                            <span>Content & Windows</span>
+                        </div>
+                        <div class="sub">
+                            <div class="hline"></div>
+                            <div class="sub-item"><div class="nui-icon-container">›</div><span>Containers</span></div>
+                            <div class="sub-item"><div class="nui-icon-container">›</div><span>Windows</span></div>
+                            <div class="sub-item"><div class="nui-icon-container">›</div><span>Dialogs</span></div>
+                            <div class="hline"></div>
+                        </div>
+                    </div>
+
+                    <div class="nui-sidebar-item group">
+                        <div class="item">
+                            <div class="nui-icon-container"><nui-icon name="filter_list">≡</nui-icon></div>
+                            <span>Interaction</span>
+                        </div>
+                        <div class="sub">
+                            <div class="hline"></div>
+                            <div class="sub-item"><div class="nui-icon-container">›</div><span>Buttons</span></div>
+                            <div class="sub-item"><div class="nui-icon-container">›</div><span>Forms</span></div>
+                            <div class="sub-item"><div class="nui-icon-container">›</div><span>Menus</span></div>
+                            <div class="hline"></div>
+                        </div>
+                    </div>
+
+                    <div class="nui-sidebar-item group">
+                        <div class="item">
+                            <div class="nui-icon-container"><nui-icon name="play">▶</nui-icon></div>
+                            <span>Media Elements</span>
+                        </div>
+                        <div class="sub">
+                            <div class="hline"></div>
+                            <div class="sub-item"><div class="nui-icon-container">›</div><span>Images</span></div>
+                            <div class="sub-item"><div class="nui-icon-container">›</div><span>Video</span></div>
+                            <div class="sub-item"><div class="nui-icon-container">›</div><span>Audio</span></div>
+                            <div class="hline"></div>
+                        </div>
+                    </div>
+
+                    <div class="nui-sidebar-item group">
+                        <div class="item">
+                            <div class="nui-icon-container"><nui-icon name="play"></nui-icon></div>
+                            <span>Media Players</span>
+                        </div>
+                        <div class="sub">
+                            <div class="hline"></div>
+                            <div class="sub-item"><div class="nui-icon-container">›</div><span>Basic Player</span></div>
+                            <div class="sub-item"><div class="nui-icon-container">›</div><span>Advanced Player</span></div>
+                            <div class="hline"></div>
+                        </div>
+                    </div>
+
+                    <div class="nui-sidebar-item group">
+                        <div class="item">
+                            <div class="nui-icon-container"><nui-icon name="arrow"></nui-icon></div>
+                            <span>SuperSlide</span>
+                        </div>
+                        <div class="sub">
+                            <div class="hline"></div>
+                            <div class="sub-item"><div class="nui-icon-container">›</div><span>Carousel</span></div>
+                            <div class="sub-item"><div class="nui-icon-container">›</div><span>Gallery</span></div>
+                            <div class="hline"></div>
+                        </div>
+                    </div>
+
+                    <div class="nui-sidebar-item group">
+                        <div class="item">
+                            <div class="nui-icon-container"><nui-icon name="aspect_ratio"></nui-icon></div>
+                            <span>SuperList</span>
+                        </div>
+                        <div class="sub">
+                            <div class="hline"></div>
+                            <div class="sub-item"><div class="nui-icon-container">›</div><span>Basic List</span></div>
+                            <div class="sub-item"><div class="nui-icon-container">›</div><span>Sortable List</span></div>
+                            <div class="hline"></div>
+                        </div>
+                    </div>
+
+                    <div class="nui-sidebar-item group">
+                        <div class="item">
+                            <div class="nui-icon-container"><nui-icon name="layers"></nui-icon></div>
+                            <span>Misc</span>
+                        </div>
+                        <div class="sub">
+                            <div class="hline"></div>
+                            <div class="sub-item"><div class="nui-icon-container">›</div><span>Utilities</span></div>
+                            <div class="sub-item"><div class="nui-icon-container">›</div><span>Helpers</span></div>
+                            <div class="hline"></div>
+                        </div>
+                    </div>
+                    
+                </nui-link-list>
             </nui-side-nav>
 
             <nui-content>
@@ -53,6 +144,130 @@
 
                     <section>
                         <p>Welcome to the NUI Component Playground! Here you can test and interact with various NUI web components.</p>
+                        
+                        <h2>Testing Modes (URL Parameters)</h2>
+                        <p>Use URL parameters to test different scenarios:</p>
+                        <ul style="margin: 1rem 0; padding-left: 2rem; line-height: 1.8;">
+                            <li><strong>Normal mode:</strong> <code>index.html</code> - Components initialized and enhanced</li>
+                            <li><strong>Plain HTML mode:</strong> <code>index.html?skip-init</code> - No component initialization, test semantic HTML structure</li>
+                        </ul>
+                        <p style="font-size: 0.9em; color: var(--color-text-dim); margin-top: 0.5rem;">
+                            <em>Plain HTML mode tests progressive enhancement - the page should still be usable without JavaScript.</em>
+                        </p>
+                        
+                        <h2>Button Examples</h2>
+                        
+                        <h3>Standard Event</h3>
+                        <nui-button>
+                            <button type="button">Standard Button (nui-click event)</button>
+                        </nui-button>
+                        
+                        <h3>Built-in Actions</h3>
+                        <nui-button nui-event-click="toggle-theme">
+                            <button type="button">Toggle Dark Mode</button>
+                        </nui-button>
+                        
+                        <nui-button nui-event-click="toggle-class:highlight">
+                            <button type="button">Add Highlight (self)</button>
+                        </nui-button>
+                        
+                        <h3>Custom Actions</h3>
+                        <nui-button nui-event-click="show-alert">
+                            <button type="button">Custom Alert Action</button>
+                        </nui-button>
+                        
+                        <h2>Icon Examples</h2>
+                        
+                        <h3>Basic Icons</h3>
+                        <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin: 1rem 0;">
+                            <nui-icon name="menu"></nui-icon>
+                            <nui-icon name="settings"></nui-icon>
+                            <nui-icon name="search"></nui-icon>
+                            <nui-icon name="person"></nui-icon>
+                            <nui-icon name="notifications"></nui-icon>
+                            <nui-icon name="mail"></nui-icon>
+                        </div>
+                        
+                        <h3>Icons with Labels</h3>
+                        <div style="display: flex; gap: 1rem; margin: 1rem 0;">
+                            <span style="display: flex; align-items: center; gap: 0.5rem;">
+                                <nui-icon name="folder"></nui-icon>
+                                Files
+                            </span>
+                            <span style="display: flex; align-items: center; gap: 0.5rem;">
+                                <nui-icon name="analytics"></nui-icon>
+                                Analytics
+                            </span>
+                            <span style="display: flex; align-items: center; gap: 0.5rem;">
+                                <nui-icon name="security"></nui-icon>
+                                Security
+                            </span>
+                        </div>
+                        
+                        <h3>Icons in Buttons</h3>
+                        <div style="display: flex; gap: 1rem; margin: 1rem 0;">
+                            <nui-button>
+                                <button type="button" style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <nui-icon name="add"></nui-icon>
+                                    Add Item
+                                </button>
+                            </nui-button>
+                            <nui-button>
+                                <button type="button" style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <nui-icon name="edit"></nui-icon>
+                                    Edit
+                                </button>
+                            </nui-button>
+                            <nui-button>
+                                <button type="button" style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <nui-icon name="delete"></nui-icon>
+                                    Delete
+                                </button>
+                            </nui-button>
+                        </div>
+                        
+                        <h3>Dynamic Icon Example (JavaScript)</h3>
+                        <div style="margin: 1rem 0;">
+                            <nui-icon name="play" id="dynamic-icon"></nui-icon>
+                            <nui-button nui-event-click="toggle-media">
+                                <button type="button">Toggle Play/Pause</button>
+                            </nui-button>
+                            <p style="font-size: 0.9em; color: #888; margin-top: 0.5rem;">
+                                <em>Dynamic icons require custom JavaScript for real functionality</em>
+                            </p>
+                        </div>
+                        
+                        <h2>Sidebar Navigation Tests</h2>
+                        <p>Test the sidebar navigation functionality:</p>
+                        
+                        <h3>Test Accordion Behavior</h3>
+                        <p>Click on any sidebar group header to expand/collapse. With accordion mode enabled, opening one section closes others.</p>
+                        
+                        <h3>Test Active State (Programmatic)</h3>
+                        <div style="display: flex; gap: 1rem; margin: 1rem 0; flex-wrap: wrap;">
+                            <nui-button id="test-active-0">
+                                <button type="button">Set First Group Active</button>
+                            </nui-button>
+                            <nui-button id="test-active-sub">
+                                <button type="button">Set Sub-item Active</button>
+                            </nui-button>
+                            <nui-button id="test-clear-active">
+                                <button type="button">Clear Active States</button>
+                            </nui-button>
+                        </div>
+                        
+                        <h2>All Available Icons</h2>
+                        <div id="icon-grid" style="
+                            display: grid; 
+                            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); 
+                            gap: 1rem; 
+                            margin: 1rem 0; 
+                            padding: 1rem; 
+                            background: #2a2a2a; 
+                            border-radius: 8px;
+                        ">
+                            <!-- Icons will be populated by JavaScript -->
+                        </div>
                     </section>
                 </main>
             
@@ -69,9 +284,9 @@
                     </footer>
                 </nui-content-footer>
             </nui-content>
-            <nui-footer>
+            <nui-app-footer>
                 <footer>App Footer</footer>
-            </nui-footer>
+            </nui-app-footer>
 		</nui-app>
 	</body>
 </html>

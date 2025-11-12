@@ -1,0 +1,523 @@
+:root {
+	--nui-theme: "slate";
+	--nui-version: "3.0.0";
+	
+	/* Foundation: body font-size defines what 1rem equals throughout the system */
+	--nui-rem-base: 14px;
+	
+	--nui-space: 1rem;
+	--nui-space-eighth: calc(var(--nui-space) / 8);
+	--nui-space-quarter: calc(var(--nui-space) / 4);
+	--nui-space-half: calc(var(--nui-space) / 2);
+	--nui-space-double: calc(var(--nui-space) * 2);
+	--nui-space-triple: calc(var(--nui-space) * 3);
+	--nui-space-quadruple: calc(var(--nui-space) * 4);
+	
+	--space-scrollbar-width: 0.7rem;
+	--space-page-maxwidth: 62rem;
+
+	--icon-size: var(--nui-space-double);
+
+	--color-highlight: light-dark(rgb(76, 132, 229), rgb(76, 132, 229));
+	--color-highlight-dim: light-dark(rgb(67, 112, 191), rgb(67, 112, 191));
+
+	--shadow-color: rgba(0, 0, 0, 0.2);
+	--shadow-radius0: var(--nui-space-half);
+	--shadow-radius1: var(--nui-space);
+
+	accent-color: var(--color-highlight);
+	--system-ui: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+}
+
+:root {
+	--color-base: light-dark(rgb(255,255,255), rgb(0,0,0));
+	--color-contrast: light-dark(rgb(0,0,0), rgb(255,255,255));
+	--color-shade1: light-dark(rgb(250,250,250), rgb(25,25,25));
+	--color-shade2: light-dark(rgb(240,240,240), rgb(40,40,40));
+	--color-shade3: light-dark(rgb(230,230,230), rgb(60,60,60));
+	--color-shade4: light-dark(rgb(210,210,210), rgb(80,80,80));
+	--color-shade5: light-dark(rgb(128,128,128), rgb(128,128,128));
+	--color-shade6: light-dark(rgb(100,100,100), rgb(160,160,160));
+	--color-shade7: light-dark(rgb(80,80,80), rgb(180,180,180));
+	--color-shade8: light-dark(rgb(60,60,60), rgb(200,200,200));
+	--color-shade9: light-dark(rgb(40,40,40), rgb(220,220,220));
+	--color-white: light-dark(rgb(255,255,255), rgb(255,255,255));
+	--color-black: light-dark(rgb(0,0,0), rgb(0,0,0));
+
+	--border-thickness: thin;
+	--border-radius1: var(--nui-space-eighth);
+	--border-radius2: var(--nui-space-quarter);
+	--border-radius3: var(--nui-space-half);
+	--border-shade1: light-dark(rgb(235,235,235), rgb(45,45,45));
+	--border-shade2: light-dark(rgb(220,220,220), rgb(55,55,55));
+	--border-shade3: light-dark(rgb(190,190,190), rgb(70,70,70));
+	--border-shade4: light-dark(rgb(120,120,120), rgb(80,80,80));
+
+	--color-text: var(--color-contrast);
+	--color-text-dim: var(--color-shade7);
+	--color-text-muted: var(--color-shade6);
+	--color-text-subtle: var(--color-shade5);
+}
+
+:root {
+	--side-nav-width: 21rem;
+	--side-nav-background: var(--color-shade2);
+	--side-nav-item-height: var(--nui-space-quadruple);
+	--side-nav-shadow: 0 0 var(--shadow-radius1) var(--shadow-color);
+	--side-nav-text: var(--color-contrast);
+	--side-nav-padding: var(--nui-space);
+
+	--top-nav-height: var(--nui-space-quadruple);
+	--top-nav-background: var(--color-shade3);
+	--top-nav-border: solid var(--border-thickness) var(--border-shade2);
+	--top-nav-shadow: 0 0 var(--shadow-radius1) 0 var(--shadow-color);
+	--top-nav-text: var(--color-base);
+	--top-nav-padding: var(--nui-space-half) var(--nui-space);
+
+	--footer-height: var(--nui-space);
+	--footer-background: var(--color-shade3);
+	--footer-text: var(--color-text-muted);
+	--footer-padding: var(--nui-space-half) var(--nui-space);
+	--footer-border: solid var(--border-thickness) var(--border-shade2);
+
+	--card-padding: var(--nui-space-double);
+	--card-border: solid var(--border-thickness) var(--border-shade1);
+	--card-border-radius: var(--border-radius1);
+	--card-background: var(--color-base);
+	--card-shadow: 0 0 var(--shadow-radius0) 0 var(--shadow-color);
+	--card-margin-bottom: var(--nui-space);
+
+	--input-background: var(--color-base);
+	--input-background-focus: var(--color-shade1);
+	--input-border: solid var(--border-thickness) var(--color-shade4);
+	--input-border-focus: solid var(--border-thickness) var(--color-shade6);
+	--input-text: var(--color-text-dim);
+	--input-text-focus: var(--color-text);
+	--input-label-text: var(--color-text-muted);
+	--input-min-height: calc(var(--nui-space) * 2.5);
+	--input-min-width: calc(var(--nui-space) * 5);
+	--input-padding: var(--nui-space);
+
+	--button-color-background: var(--color-highlight-dim);
+	--button-color-highlight: var(--color-highlight);
+	--button-color-text: var(--color-white);
+	--button-color-text-hi: var(--color-white);
+	--button-border-radius: var(--border-radius1);
+	--button-border: solid var(--border-thickness) rgba(255,255,255,0.1);
+	--button-margin: var(--nui-space);
+	--button-font-size: 0.8rem;
+	--button-min-width: var(--nui-space-double);
+	--button-min-height: var(--nui-space-double);
+	--button-padding: var(--nui-space-quarter) var(--nui-space-half);
+
+	--overlay-background: var(--color-shade2);
+	--contextmenu-background: var(--color-shade4);
+	--contextmenu-background-hi: var(--color-shade3);
+	--contextmenu-text: var(--color-contrast);
+	--contextmenu-text-hi: var(--color-contrast);
+	--contextmenu-padding: var(--nui-space-half) var(--nui-space);
+
+	--palette-gray: light-dark(rgb(100,100,100), rgb(130,130,130));
+	--palette-gray-hi: light-dark(rgb(120,120,120), rgb(150,150,150));
+	--palette-mark: light-dark(rgb(180, 160, 40), rgb(203, 184, 55));
+	--palette-mark-hi: light-dark(rgb(170, 150, 60), rgb(197, 181, 83));
+	--palette-activate: light-dark(rgb(40, 120, 30), rgb(54, 137, 43));
+	--palette-activate-hi: light-dark(rgb(60, 150, 50), rgb(74, 178, 60));
+	--palette-alert: light-dark(rgb(160, 25, 25), rgb(181, 36, 36));
+	--palette-alert-hi: light-dark(rgb(200, 50, 50), rgb(222, 61, 61));
+}
+
+/* Color scheme preference - defaults to user's system preference */
+:root {
+	color-scheme: light dark;
+}
+
+layout, item {
+	display: contents;
+}
+
+body {
+	margin: 0;
+	padding: 0;
+	font-family: var(--system-ui);
+	font-size: var(--nui-rem-base);
+	background: var(--color-shade2);
+	color: var(--color-contrast);
+	line-height: 1.6;
+}
+
+nui-button {
+	display: inline-block;
+	margin: 0;
+}
+
+nui-button button {
+	min-width: var(--button-min-width);
+	min-height: var(--button-min-height);
+	padding: var(--button-padding);
+	margin: 0;
+	font-size: var(--button-font-size);
+	font-family: var(--system-ui);
+	background: var(--button-color-background);
+	color: var(--button-color-text);
+	border: var(--button-border);
+	border-radius: var(--button-border-radius);
+	cursor: pointer;
+	transition: all 0.2s ease;
+	text-transform: uppercase;
+}
+
+nui-button button:hover {
+	background: var(--button-color-highlight);
+	color: var(--button-color-text-hi);
+}
+
+nui-button button:active {
+	transform: translateY(1px);
+}
+
+nui-button button:focus {
+	outline: 2px solid var(--color-highlight);
+	outline-offset: 2px;
+}
+
+/* =============================================================================
+   ICON UTILITIES
+   ============================================================================= */
+
+.nui-icon-container {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+}
+
+/* =============================================================================
+   ICON COMPONENT
+   ============================================================================= */
+
+nui-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: var(--icon-size, 24px);
+	height: var(--icon-size, 24px);
+	color: currentColor;
+	flex-shrink: 0;
+	font-size: 1.2rem;
+	font-weight: bold;
+}
+
+/* Placeholder text shown in plain HTML mode (removed by JavaScript) */
+nui-icon:empty::before {
+	content: '◆';
+	opacity: 0.5;
+}
+
+nui-icon svg {
+	width: 100%;
+	height: 100%;
+	fill: currentColor;
+	display: block;
+}
+
+/* =============================================================================
+   APP LAYOUT
+   ============================================================================= */
+
+nui-app[data-layout="app"] {
+	position: absolute;
+	inset: 0;
+	overflow: hidden;
+}
+
+nui-app[data-layout="app"] nui-top-nav {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: var(--top-nav-height);
+	background: var(--top-nav-background);
+	border: var(--top-nav-border);
+	color: var(--top-nav-text);
+	padding: var(--top-nav-padding);
+	box-shadow: var(--top-nav-shadow);
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	z-index: 10;
+}
+
+nui-top-nav header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
+}
+
+nui-top-nav ul {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	align-items: center;
+	gap: var(--nui-space);
+}
+
+nui-top-nav li {
+	margin: 0;
+	padding: 0;
+}
+
+/* =============================================================================
+   SIDEBAR - Container styles (nui-side-nav)
+   ============================================================================= */
+
+nui-app[data-layout="app"] nui-side-nav {
+	position: absolute;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	width: var(--side-nav-width);
+	background: var(--side-nav-background);
+	color: var(--side-nav-text);
+	padding: 0;
+	overflow-y: auto;
+	overflow-x: hidden;
+	box-shadow: var(--side-nav-shadow);
+	border-right: var(--border-thickness) solid var(--border-shade1);
+	display: grid;
+	grid-template-rows: 1fr auto;
+	transition: transform 0.3s ease;
+}
+
+/* Side nav offset when top nav present */
+nui-app[data-layout="app"].has-top-nav nui-side-nav {
+	top: var(--top-nav-height);
+}
+
+/* Side nav offset when footer present */
+nui-app[data-layout="app"].has-footer nui-side-nav {
+	bottom: var(--footer-height);
+}
+
+/* =============================================================================
+   LINK LIST - Complete original sidebar item structure
+   Based on reference/nui/css/nui_main.css .nui-sidebar-item styles
+   ============================================================================= */
+
+/* Group/Parent items (.nui-sidebar-item) */
+.nui-sidebar-item {
+	display: table;
+	width: 100%;
+	height: var(--side-nav-item-height);
+	cursor: pointer;
+	color: var(--side-nav-text);
+	border-left: 0.3rem solid rgba(0,0,0,0);
+}
+
+.nui-sidebar-item .item {
+	position: relative;
+	display: table;
+	width: 100%;
+	height: var(--side-nav-item-height);
+	cursor: pointer;
+	border-left: 0.3rem solid transparent;
+}
+
+.nui-sidebar-item .item .nui-icon-container {
+	display: table-cell;
+	vertical-align: middle;
+	color: var(--side-nav-text);
+	width: 4rem;
+	height: var(--side-nav-item-height);
+	margin-left: -0.3rem;
+}
+
+.nui-sidebar-item .item .nui-icon {
+	width: 1.8rem;
+}
+
+.nui-sidebar-item .item span {
+	display: table-cell;
+	width: 100%;
+	vertical-align: middle;
+	padding-right: 1.2rem;
+	padding-left: unset;
+	font-size: 0.9rem;
+	line-height: 1rem;
+}
+
+.nui-sidebar-item .item:hover {
+	color: var(--color-highlight);
+	background-color: light-dark(rgba(0,0,0,0.05), rgba(255,255,255,0.05));
+}
+
+.nui-sidebar-item.active {
+	background-color: light-dark(rgba(0,0,0,0.1), rgba(255,255,255,0.1));
+	color: var(--color-contrast);
+	border-left: 0.3rem solid var(--color-highlight);
+}
+
+.nui-sidebar-item.active .item:hover {
+	color: inherit;
+}
+
+/* Special buttons (optional right-side action buttons) */
+.nui-sidebar-item .item .special {
+	display: none;
+}
+
+.nui-sidebar-item.open .item .special {
+	position: absolute;
+	right: 0;
+	top: 0;
+	width: 5rem;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: light-dark(rgba(0,0,0,0.3), rgba(255,255,255,0.3));
+}
+
+.nui-sidebar-item .item .special:hover .nui-icon,
+.nui-sidebar-item .item .special:hover i {
+	fill: var(--color-highlight);
+	color: var(--color-highlight);
+}
+
+.nui-sidebar-item.open .item:hover .special {
+	color: light-dark(rgba(0,0,0,0.3), rgba(255,255,255,0.3));
+}
+
+.nui-sidebar-item.open .item .special:hover {
+	color: var(--color-highlight);
+}
+
+/* Submenu container */
+.nui-sidebar-item .sub {
+	overflow: hidden;
+	background-color: light-dark(rgba(255,255,255,0.15), rgba(0,0,0,0.15));
+}
+
+/* When JavaScript is active, sub elements are collapsed by default and animated */
+nui-link-list.nui-enhanced .nui-sidebar-item.group .sub {
+	height: 0;
+	transition: height 0.2s;
+}
+
+/* When group is open, height is set dynamically via JavaScript: element.style.height = scrollHeight + 'px' */
+
+/* Separator lines in submenu */
+.nui-sidebar-item .sub .hline {
+	height: 0;
+	border-bottom: solid var(--border-thickness) var(--border-shade2);
+}
+
+/* Sub-items */
+.nui-sidebar-item .sub .sub-item {
+	display: table;
+	width: 100%;
+	height: var(--side-nav-item-height);
+	cursor: pointer;
+	color: var(--side-nav-text);
+	border-left: 0.3rem solid rgba(255,255,255,0);
+}
+
+.nui-sidebar-item .sub .sub-item:hover {
+	color: var(--color-highlight);
+	background-color: light-dark(rgba(0,0,0,0.03), rgba(255,255,255,0.03));
+}
+
+.nui-sidebar-item .sub .sub-item.active {
+	background-color: light-dark(rgba(0,0,0,0.08), rgba(255,255,255,0.08));
+	color: var(--color-contrast);
+	border-left: 0.3rem solid var(--color-highlight);
+}
+
+.nui-sidebar-item .sub .sub-item .nui-icon-container {
+	display: table-cell;
+	vertical-align: middle;
+	line-height: 1rem;
+	fill: light-dark(rgba(0,0,0,0.3), rgba(255,255,255,0.3));
+	padding-left: var(--nui-space);
+	padding-right: calc(var(--nui-space) * 0.6);
+	width: 1.7rem;
+}
+
+.nui-sidebar-item .sub .sub-item span {
+	display: table-cell;
+	vertical-align: middle;
+	font-size: 0.9rem;
+	line-height: 1rem;
+}
+
+/* =============================================================================
+   CONTENT AREA
+   ============================================================================= */
+
+nui-content {
+	padding: var(--nui-space-double);
+}
+
+nui-app[data-layout="app"] nui-content {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: var(--color-shade1);
+	overflow-y: auto;
+	overflow-x: hidden;
+	transition: left 0.3s ease;
+}
+
+/* Content offset when top nav present */
+nui-app[data-layout="app"].has-top-nav nui-content {
+	top: var(--top-nav-height);
+}
+
+/* Content offset when footer present */
+nui-app[data-layout="app"].has-footer nui-content {
+	bottom: var(--footer-height);
+}
+
+/* Content offset when side nav forced */
+nui-app[data-layout="app"].has-side-nav.sidenav-forced nui-content {
+	left: var(--side-nav-width);
+}
+
+nui-app[data-layout="app"] nui-app-footer {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	height: var(--footer-height);
+	background: var(--footer-background);
+	color: var(--footer-text);
+	padding: var(--footer-padding);
+	border-top: var(--footer-border);
+	display: flex;
+	align-items: center;
+	z-index: 10;
+}
+
+nui-app[data-layout="app"].sidenav-closed nui-side-nav {
+	transform: translateX(-100%);
+}
+
+nui-app[data-layout="app"].sidenav-open nui-side-nav {
+	transform: translateX(0);
+	z-index: 100;
+}
+
+nui-app[data-layout="app"].sidenav-open::before {
+	content: '';
+	position: fixed;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.5);
+	z-index: 99;
+}
+
+nui-app[data-layout="app"].sidenav-forced nui-side-nav {
+	transform: translateX(0);
+}
