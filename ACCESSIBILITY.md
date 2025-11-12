@@ -262,15 +262,27 @@ Provides full ARIA tree navigation:
 - `role="list"` and `role="listitem"` on sub-items
 
 **Keyboard Support:**
-- Tab: Navigate between items
+- Tab: Navigate between items (auto-expands collapsed groups on focus)
 - Enter/Space: Activate item or toggle expansion
 - Arrow keys: Navigate within list (future enhancement)
+
+**Auto-Expand on Focus:**
+When a keyboard user tabs into a sub-item within a collapsed group, the group automatically expands. This ensures keyboard-only users can access all navigation items without requiring visual confirmation of group state.
+
+```javascript
+// Triggered when sub-item receives focus via Tab key
+subItem.addEventListener('focus', () => {
+	// Automatically expand parent group if collapsed
+	// Ensures keyboard navigation reveals content
+});
+```
 
 **Screen Reader:**
 - Navigation landmark announced
 - Expanded/collapsed state announced
 - Current page indicator announced
 - Item labels from `<span>` text content
+- Focus events maintain synchronization with visual state
 
 ### Focus Management
 

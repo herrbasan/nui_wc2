@@ -350,109 +350,136 @@ actions['remove-attr'] = (target, source, event, attrName) => {
 
 // =============================================================================
 // ACCESSIBILITY UTILITIES
-// Intelligent context detection and automatic ARIA attribute upgrades
+// Centralized, reusable accessibility helpers
 // =============================================================================
 
-function upgradeAccessibility(element) {
-	// Check if button has accessible name
-	function ensureButtonLabel(button) {
-		// Skip if already has label
-		if (button.hasAttribute('aria-label') || 
-		    button.hasAttribute('aria-labelledby') ||
-		    button.getAttribute('title')) {
-			return;
+const a11y = {
+	// Check if element already has accessible label
+	hasLabel(element) {
+		return element.hasAttribute('aria-label') || 
+		       element.hasAttribute('aria-labelledby') ||
+		       element.hasAttribute('title');
+	},
+	
+	// Check if element has native focusable child
+	hasFocusableChild(element) {
+		return element.querySelector('button, a[href], input, select, textarea, [tabindex]');
+	},
+	
+	// Get text content from span or element
+	getTextLabel(element) {
+		const span = element.querySelector('span');
+		return span ? span.textContent.trim() : element.textContent.trim();
+	},
+	
+	// Make element interactive if not already
+	makeInteractive(element, label = null) {
+		const nativeButton = element.querySelector('button');
+		const nativeLink = element.querySelector('a[href]');
+		const hasFocusable = this.hasFocusableChild(element);
+		
+		// Target is either the native element or the container
+		const target = nativeButton || nativeLink || element;
+		
+		// Add role only to non-semantic elements
+		if (!nativeButton && !nativeLink && !element.hasAttribute('role')) {
+			element.setAttribute('role', 'button');
 		}
 		
-		// Check if button has visible text
+		// Add tabindex only if no focusable child
+		if (!hasFocusable && !element.hasAttribute('tabindex')) {
+			element.setAttribute('tabindex', '0');
+		}
+		
+		// Add label to the focusable element
+		if (label && !this.hasLabel(target)) {
+			target.setAttribute('aria-label', label);
+		}
+		
+		return target;
+	},
+	
+	// Generate label from icon name with context
+	generateIconLabel(iconName, element) {
+		const label = iconName
+			.split(/[_-]/)
+			.map(word => word.charAt(0).toUpperCase() + word.slice(1))
+			.join(' ');
+		
+		const parentNav = element.closest('nui-top-nav, nui-side-nav, nav, header');
+		return parentNav ? `${label} navigation` : label;
+	},
+	
+	// Ensure button has accessible label
+	ensureButtonLabel(button) {
+		if (this.hasLabel(button)) return;
+		
+		// Check for visible text
 		const visibleText = Array.from(button.childNodes)
 			.filter(node => node.nodeType === Node.TEXT_NODE)
 			.map(node => node.textContent.trim())
 			.join(' ');
 		
-		if (visibleText) {
-			// Has text content, accessible by default
-			return;
-		}
+		if (visibleText) return; // Has text, accessible by default
 		
-		// Icon-only button - try to infer label from context
+		// Icon-only button - generate label
 		const icon = button.querySelector('nui-icon');
 		if (icon) {
 			const iconName = icon.getAttribute('name');
 			if (iconName) {
-				// Check parent context for hints
-				const parentNav = button.closest('nui-top-nav, nui-side-nav, nav, header');
-				const parentAction = button.closest('[data-action], [id]');
-				
-				// Generate descriptive label from icon name
-				const label = iconName
-					.split(/[_-]/)
-					.map(word => word.charAt(0).toUpperCase() + word.slice(1))
-					.join(' ');
-				
-				let contextLabel = label;
-				
-				// Add context hints
-				if (parentNav) {
-					contextLabel = `${label} navigation`;
-				}
-				
-				// Warn developer but add label anyway
+				const label = this.generateIconLabel(iconName, button);
+				button.setAttribute('aria-label', label);
 				console.warn(
-					`nui-button: Icon-only button missing aria-label. Auto-generated: "${contextLabel}". ` +
-					`Consider adding explicit aria-label for better UX.`,
+					`Icon-only button missing aria-label. Auto-generated: "${label}". ` +
+					`Consider adding explicit aria-label.`,
 					button
 				);
-				
-				button.setAttribute('aria-label', contextLabel);
 			}
 		}
-	}
+	},
 	
-	// Check if interactive element needs role
-	function ensureRole(element) {
-		const clickableElements = element.querySelectorAll('[onclick], [nui-event-click]');
-		clickableElements.forEach(el => {
-			if (el.tagName === 'BUTTON' || el.tagName === 'A') return; // Already semantic
-			
-			if (!el.hasAttribute('role')) {
-				console.warn(
-					`Clickable element without semantic tag or role. Adding role="button".`,
-					el
-				);
-				el.setAttribute('role', 'button');
-				el.setAttribute('tabindex', '0');
-			}
-		});
-	}
+	// Ensure landmark has label
+	ensureLandmarkLabel(landmark, fallbackLabel = 'Navigation') {
+		if (this.hasLabel(landmark)) return;
+		
+		// Try to use heading as label
+		const heading = landmark.querySelector('h1, h2, h3, h4, h5, h6');
+		if (heading) {
+			const id = heading.id || `nav-${Math.random().toString(36).substr(2, 9)}`;
+			if (!heading.id) heading.id = id;
+			landmark.setAttribute('aria-labelledby', id);
+		} else {
+			landmark.setAttribute('aria-label', fallbackLabel);
+			console.warn(`Landmark missing aria-label. Adding: "${fallbackLabel}"`, landmark);
+		}
+	},
 	
-	// Ensure landmarks have labels
-	function ensureLandmarkLabels(element) {
-		const landmarks = element.querySelectorAll('nav, [role="navigation"]');
-		landmarks.forEach(landmark => {
-			if (!landmark.hasAttribute('aria-label') && !landmark.hasAttribute('aria-labelledby')) {
-				// Try to infer from heading
-				const heading = landmark.querySelector('h1, h2, h3, h4, h5, h6');
-				if (heading) {
-					const id = heading.id || `nav-${Math.random().toString(36).substr(2, 9)}`;
-					if (!heading.id) heading.id = id;
-					landmark.setAttribute('aria-labelledby', id);
-				} else {
-					// Generic label
-					console.warn(
-						`Navigation landmark missing aria-label. Adding generic label.`,
-						landmark
-					);
-					landmark.setAttribute('aria-label', 'Navigation');
+	// Main upgrade function - scans element for accessibility issues
+	upgrade(element) {
+		// Ensure all buttons have labels
+		element.querySelectorAll('button').forEach(btn => this.ensureButtonLabel(btn));
+		
+		// Ensure clickable non-semantic elements have role
+		element.querySelectorAll('[onclick], [nui-event-click]').forEach(el => {
+			if (el.tagName !== 'BUTTON' && el.tagName !== 'A' && !this.hasFocusableChild(el)) {
+				if (!el.hasAttribute('role')) {
+					el.setAttribute('role', 'button');
+					el.setAttribute('tabindex', '0');
+					console.warn('Non-semantic clickable element. Adding role="button".', el);
 				}
 			}
 		});
+		
+		// Ensure landmarks have labels
+		element.querySelectorAll('nav, [role="navigation"]').forEach(nav => {
+			this.ensureLandmarkLabel(nav);
+		});
 	}
-	
-	// Run all checks
-	const buttons = element.querySelectorAll('button');
-	buttons.forEach(ensureButtonLabel);
-	ensureRole(element);
-	ensureLandmarkLabels(element);
+};
+
+// Legacy wrapper for backward compatibility
+function upgradeAccessibility(element) {
+	a11y.upgrade(element);
 }
 
 // =============================================================================
@@ -717,7 +744,6 @@ registerComponent('nui-link-list', (element) => {
 	function setupTreeMode() {
 		const groups = element.querySelectorAll('.nui-sidebar-item.group');
 		
-		// Add class to indicate JavaScript has initialized
 		element.classList.add('nui-enhanced');
 		
 		groups.forEach(group => {
@@ -726,30 +752,20 @@ registerComponent('nui-link-list', (element) => {
 			
 			if (!itemEl || !subEl) return;
 			
-			// Accessibility: Setup ARIA attributes for tree structure
-			const spanText = itemEl.querySelector('span');
-			const groupLabel = spanText ? spanText.textContent.trim() : 'Menu section';
+			const groupLabel = a11y.getTextLabel(itemEl) || 'Menu section';
 			
-			// Make the group item a button with ARIA
-			itemEl.setAttribute('role', 'button');
-			itemEl.setAttribute('aria-label', `${groupLabel} menu`);
-			itemEl.setAttribute('tabindex', '0');
+			// Make item interactive and get the focusable target
+			const target = a11y.makeInteractive(itemEl, `${groupLabel} menu`);
 			
-			// Set initial state
+			// Set initial expanded state
 			const isOpen = group.classList.contains('open');
-			itemEl.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+			target.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
 			
 			// Sub container is a list
 			subEl.setAttribute('role', 'list');
 			subEl.setAttribute('aria-label', `${groupLabel} items`);
+			subEl.style.height = isOpen ? subEl.scrollHeight + 'px' : '0px';
 			
-			if (isOpen) {
-				subEl.style.height = subEl.scrollHeight + 'px';
-			} else {
-				subEl.style.height = '0px';
-			}
-			
-			// Make item clickable for expand/collapse
 			itemEl.style.cursor = 'pointer';
 			
 			const toggleGroup = (e) => {
@@ -808,17 +824,46 @@ registerComponent('nui-link-list', (element) => {
 			}
 		});
 		
-		// Setup sub-item clicks with ARIA
+		// Setup sub-item accessibility and interactions
 		const subItems = element.querySelectorAll('.sub-item');
 		subItems.forEach(subItem => {
-			// Accessibility: Make sub-items list items with roles
 			subItem.setAttribute('role', 'listitem');
-			subItem.setAttribute('tabindex', '0');
 			
-			const spanText = subItem.querySelector('span');
-			if (spanText) {
-				subItem.setAttribute('aria-label', spanText.textContent.trim());
+			const label = a11y.getTextLabel(subItem);
+			if (label && !a11y.hasFocusableChild(subItem)) {
+				subItem.setAttribute('tabindex', '0');
+				subItem.setAttribute('aria-label', label);
 			}
+			
+			// Auto-expand parent group on focus
+			subItem.addEventListener('focus', () => {
+				const parent = subItem.closest('.nui-sidebar-item.group');
+				if (parent && !parent.classList.contains('open')) {
+					const subEl = parent.querySelector('.sub');
+					const parentItem = parent.querySelector('.item');
+					
+					if (subEl && parentItem) {
+						parent.classList.add('open');
+						subEl.style.height = subEl.scrollHeight + 'px';
+						parentItem.setAttribute('aria-expanded', 'true');
+						
+						// Accordion mode - close other groups
+						if (accordion) {
+							groups.forEach(otherGroup => {
+								if (otherGroup !== parent) {
+									const otherSub = otherGroup.querySelector('.sub');
+									const otherItem = otherGroup.querySelector('.item');
+									if (otherSub && otherItem) {
+										otherGroup.classList.remove('open');
+										otherSub.style.height = '0px';
+										otherItem.setAttribute('aria-expanded', 'false');
+									}
+								}
+							});
+						}
+					}
+				}
+			});
 			
 			subItem.addEventListener('click', (e) => {
 				e.stopPropagation();
@@ -834,18 +879,13 @@ registerComponent('nui-link-list', (element) => {
 			});
 		});
 		
-		// Setup regular (non-group) item clicks
+		// Setup regular (non-group) items
 		const regularItems = element.querySelectorAll('.nui-sidebar-item:not(.group)');
 		regularItems.forEach(item => {
 			const itemEl = item.querySelector('.item');
 			if (itemEl) {
-				itemEl.setAttribute('role', 'button');
-				itemEl.setAttribute('tabindex', '0');
-				
-				const spanText = itemEl.querySelector('span');
-				if (spanText) {
-					itemEl.setAttribute('aria-label', spanText.textContent.trim());
-				}
+				const label = a11y.getTextLabel(itemEl);
+				a11y.makeInteractive(itemEl, label);
 				
 				itemEl.addEventListener('click', (e) => {
 					e.stopPropagation();
