@@ -36,102 +36,201 @@
             </nui-top-nav>
 
             <nui-side-nav>
-                <nui-link-list mode="tree" accordion>
-                    
-                    <div class="nui-sidebar-item group open">
-                        <div class="item">
-                            <div class="nui-icon-container"><nui-icon name="aspect_ratio">▣</nui-icon></div>
-                            <span>Content & Windows</span>
-                        </div>
-                        <div class="sub">
-                            <div class="hline"></div>
-                            <div class="sub-item"><div class="nui-icon-container">›</div><span>Containers</span></div>
-                            <div class="sub-item"><div class="nui-icon-container">›</div><span>Windows</span></div>
-                            <div class="sub-item"><div class="nui-icon-container">›</div><span>Dialogs</span></div>
-                            <div class="hline"></div>
-                        </div>
-                    </div>
-
-                    <div class="nui-sidebar-item group">
-                        <div class="item">
-                            <div class="nui-icon-container"><nui-icon name="filter_list">≡</nui-icon></div>
-                            <span>Interaction</span>
-                        </div>
-                        <div class="sub">
-                            <div class="hline"></div>
-                            <div class="sub-item"><div class="nui-icon-container">›</div><span>Buttons</span></div>
-                            <div class="sub-item"><div class="nui-icon-container">›</div><span>Forms</span></div>
-                            <div class="sub-item"><div class="nui-icon-container">›</div><span>Menus</span></div>
-                            <div class="hline"></div>
-                        </div>
-                    </div>
-
-                    <div class="nui-sidebar-item group">
-                        <div class="item">
-                            <div class="nui-icon-container"><nui-icon name="play">▶</nui-icon></div>
-                            <span>Media Elements</span>
-                        </div>
-                        <div class="sub">
-                            <div class="hline"></div>
-                            <div class="sub-item"><div class="nui-icon-container">›</div><span>Images</span></div>
-                            <div class="sub-item"><div class="nui-icon-container">›</div><span>Video</span></div>
-                            <div class="sub-item"><div class="nui-icon-container">›</div><span>Audio</span></div>
-                            <div class="hline"></div>
-                        </div>
-                    </div>
-
-                    <div class="nui-sidebar-item group">
-                        <div class="item">
-                            <div class="nui-icon-container"><nui-icon name="play"></nui-icon></div>
-                            <span>Media Players</span>
-                        </div>
-                        <div class="sub">
-                            <div class="hline"></div>
-                            <div class="sub-item"><div class="nui-icon-container">›</div><span>Basic Player</span></div>
-                            <div class="sub-item"><div class="nui-icon-container">›</div><span>Advanced Player</span></div>
-                            <div class="hline"></div>
-                        </div>
-                    </div>
-
-                    <div class="nui-sidebar-item group">
-                        <div class="item">
-                            <div class="nui-icon-container"><nui-icon name="arrow"></nui-icon></div>
-                            <span>SuperSlide</span>
-                        </div>
-                        <div class="sub">
-                            <div class="hline"></div>
-                            <div class="sub-item"><div class="nui-icon-container">›</div><span>Carousel</span></div>
-                            <div class="sub-item"><div class="nui-icon-container">›</div><span>Gallery</span></div>
-                            <div class="hline"></div>
-                        </div>
-                    </div>
-
-                    <div class="nui-sidebar-item group">
-                        <div class="item">
-                            <div class="nui-icon-container"><nui-icon name="aspect_ratio"></nui-icon></div>
-                            <span>SuperList</span>
-                        </div>
-                        <div class="sub">
-                            <div class="hline"></div>
-                            <div class="sub-item"><div class="nui-icon-container">›</div><span>Basic List</span></div>
-                            <div class="sub-item"><div class="nui-icon-container">›</div><span>Sortable List</span></div>
-                            <div class="hline"></div>
-                        </div>
-                    </div>
-
-                    <div class="nui-sidebar-item group">
-                        <div class="item">
-                            <div class="nui-icon-container"><nui-icon name="layers"></nui-icon></div>
-                            <span>Misc</span>
-                        </div>
-                        <div class="sub">
-                            <div class="hline"></div>
-                            <div class="sub-item"><div class="nui-icon-container">›</div><span>Utilities</span></div>
-                            <div class="sub-item"><div class="nui-icon-container">›</div><span>Helpers</span></div>
-                            <div class="hline"></div>
-                        </div>
-                    </div>
-                    
+                <nui-link-list>
+                    <ul>
+                        <li class="group-header">
+                            <span>
+                                <nui-icon name="wysiwyg">📝</nui-icon>
+                                <span>Content & Windows</span>
+                            </span>
+                            <button type="button" class="action" nui-event-click="edit-section:content">
+                                <nui-icon name="settings">⚙</nui-icon>
+                            </button>
+                        </li>
+                        <li>
+                            <a href="#content" nui-event-click="navigate:content">
+                                <span>Content</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#windows" nui-event-click="navigate:windows">
+                                <span>Windows</span>
+                            </a>
+                        </li>
+                    </ul>
+                    <ul>
+                        <li class="group-header">
+                            <span>
+                                <nui-icon name="empty_dashboard">🔲</nui-icon>
+                                <span>Buttons & Fields</span>
+                            </span>
+                        </li>
+                        <li>
+                            <a href="#buttons" nui-event-click="navigate:buttons">
+                                <span>Buttons</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#fields" nui-event-click="navigate:fields">
+                                <span>Fields</span>
+                            </a>
+                        </li>
+                    </ul>
+                    <ul>
+                        <li>
+                            <a href="#misc" nui-event-click="navigate:misc">
+                                <nui-icon name="label">🏷️</nui-icon>
+                                <span>Misc</span>
+                            </a>
+                        </li>
+                    </ul>
+                    <ul>
+                        <li class="group-header">
+                            <span>
+                                <nui-icon name="folder">📁</nui-icon>
+                                <span>Group</span>
+                            </span>
+                        </li>
+                        <li>
+                            <a href="#some">
+                                <span>Some Item</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#another">
+                                <span>Another Item</span>
+                            </a>
+                        </li>
+                        <ul>
+                            <li class="group-header">
+                                <span>
+                                    <nui-icon name="calendar">📅</nui-icon>
+                                    <span>Sub Group</span>
+                                </span>
+                            </li>
+                            <li>
+                                <a href="#sub1">
+                                    <span>Subgroup Item 1</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#sub2">
+                                    <span>Subgroup Item 2</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </ul>
+                    <ul>
+                        <li class="group-header">
+                            <span>
+                                <nui-icon name="filter_list">☰</nui-icon>
+                                <span>Functions & Objects</span>
+                            </span>
+                        </li>
+                        <li>
+                            <a href="#fnc1" nui-event-click="navigate:fnc1">
+                                <span>Function Item 1</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#fnc2" nui-event-click="navigate:fnc2">
+                                <span>Function Item 2</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#fnc3" nui-event-click="navigate:fnc3">
+                                <span>Function Item 3</span>
+                            </a>
+                        </li>
+                        <li class="separator"><hr></li>
+                        <li>
+                            <a href="#obj1" nui-event-click="navigate:obj1">
+                                <span>Object Item 1</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#obj2" nui-event-click="navigate:obj2">
+                                <span>Object Item 2</span>
+                            </a>
+                        </li>
+                    </ul>
+                    <ul>
+                        <li class="group-header">
+                            <span>
+                                <nui-icon name="monitor">🖥️</nui-icon>
+                                <span>Developer Tools</span>
+                            </span>
+                        </li>
+                        <li>
+                            <a href="#devtools-overview" nui-event-click="navigate:devtools-overview">
+                                <span>Overview</span>
+                            </a>
+                        </li>
+                        <ul>
+                            <li class="group-header">
+                                <span>
+                                    <nui-icon name="settings">⚙</nui-icon>
+                                    <span>Build Tools</span>
+                                </span>
+                            </li>
+                            <li>
+                                <a href="#build-config" nui-event-click="navigate:build-config">
+                                    <span>Configuration</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#build-scripts" nui-event-click="navigate:build-scripts">
+                                    <span>Scripts</span>
+                                </a>
+                            </li>
+                            <ul>
+                                <li class="group-header">
+                                    <span>
+                                        <nui-icon name="layers">📚</nui-icon>
+                                        <span>Plugins</span>
+                                    </span>
+                                </li>
+                                <li>
+                                    <a href="#plugin-babel" nui-event-click="navigate:plugin-babel">
+                                        <span>Babel</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="#plugin-webpack" nui-event-click="navigate:plugin-webpack">
+                                        <span>Webpack</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="#plugin-eslint" nui-event-click="navigate:plugin-eslint">
+                                        <span>ESLint</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </ul>
+                        <ul>
+                            <li class="group-header">
+                                <span>
+                                    <nui-icon name="search">🔍</nui-icon>
+                                    <span>Testing</span>
+                                </span>
+                            </li>
+                            <li>
+                                <a href="#test-unit" nui-event-click="navigate:test-unit">
+                                    <span>Unit Tests</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#test-integration" nui-event-click="navigate:test-integration">
+                                    <span>Integration Tests</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#test-e2e" nui-event-click="navigate:test-e2e">
+                                    <span>E2E Tests</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </ul>
                 </nui-link-list>
             </nui-side-nav>
 
@@ -141,7 +240,7 @@
                         <h1>NUI Component Playground</h1>
                         <p>Explore and test NUI web components in this interactive playground.</p>
                     </header>
-
+                    
                     <section>
                         <p>Welcome to the NUI Component Playground! Here you can test and interact with various NUI web components.</p>
                         
@@ -177,6 +276,16 @@
                         </nui-button>
                         
                         <h2>Icon Examples</h2>
+                        
+                        <h3>Icons in Text Flow</h3>
+                        <p>
+                            Icons align naturally with text when placed inline. For example, 
+                            <nui-icon name="empty_dashboard"></nui-icon> <span>Home</span> and 
+                            <nui-icon name="settings"></nui-icon> <span>Settings</span> appear 
+                            with proper optical alignment. You can also use them in sentences like 
+                            "Click the <nui-icon name="search"></nui-icon> <span>search icon</span> to find content" 
+                            or "Navigate to <nui-icon name="folder"></nui-icon> <span>Documents</span> to view files."
+                        </p>
                         
                         <h3>Basic Icons</h3>
                         <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin: 1rem 0;">
@@ -268,6 +377,7 @@
                         ">
                             <!-- Icons will be populated by JavaScript -->
                         </div>
+                        
                     </section>
                 </main>
             

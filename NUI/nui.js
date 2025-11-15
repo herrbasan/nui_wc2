@@ -1,19 +1,53 @@
 // NUI/nui.js - DOM-First UI Component Library
 
-// =============================================================================
-// COMPONENT FACTORY
-// =============================================================================
+// ################################# CORE SYSTEMS
 
 const components = {};
-const actions = {};
 const config = {
 	sanitizeActions: true,
 	iconSpritePath: '/NUI/assets/material-icons-sprite.svg'
 };
 
-// =============================================================================
-// THE KNOWER
-// =============================================================================
+// ################################# THE DOER
+
+const doer = {
+	_actions: {},
+	
+	register(name, fn) {
+		this._actions[name] = fn;
+	},
+	
+	do(name, target, element, event, param) {
+		if (this._actions[name]) {
+			return this._actions[name](target, element, event, param);
+		} else {
+			const customEvent = new CustomEvent(`nui-${name}`, {
+				bubbles: true,
+				cancelable: true,
+				detail: {
+					element: element,
+					target: target,
+					param: param,
+					originalEvent: event
+				}
+			});
+			element.dispatchEvent(customEvent);
+			
+			knower.tell(`action:${name}`, {
+				param: param,
+				element: element,
+				target: target,
+				timestamp: Date.now()
+			});
+		}
+	},
+	
+	listActions() {
+		return Object.keys(this._actions);
+	}
+};
+
+// ################################# THE KNOWER
 
 const knower = {
 	_states: null,
@@ -67,21 +101,24 @@ const knower = {
 		return this._states ? Object.fromEntries(this._states) : {};
 	},
 	
+	listKnown() {
+		const all = this.knowAll();
+		return {
+			states: all,
+			watchers: this._hooks ? Array.from(this._hooks.keys()).map(id => ({
+				id,
+				count: this._hooks.get(id).size
+			})) : []
+		};
+	},
+	
 	forget() {
 		this._states = null;
 		this._hooks = null;
 	}
 };
 
-// =============================================================================
-// ATTRIBUTE PROXY SYSTEM
-// =============================================================================
-//   setupAttributeProxy(element, {
-//     'attribute-name': (newValue, oldValue) => { /* handle change */ }
-//   });
-//
-// Supported attribute changes:
-//   element.setAttribute('name', 'value')     ✅ Caught
+// ################################# ATTRIBUTE PROXY SYSTEM
 
 function setupAttributeProxy(element, handlers = {}) {
 	const original = {
@@ -142,6 +179,8 @@ function defineAttributeProperty(element, propName, attrName = propName) {
 	});
 }
 
+// ################################# COMPONENT FACTORY
+
 function createComponent(tagName, setupFn, cleanupFn) {
 	return class extends HTMLElement {
 		connectedCallback() {
@@ -176,14 +215,11 @@ function registerLayoutComponent(tagName) {
 	};
 }
 
-// =============================================================================
-// ATTRIBUTE SYSTEM - EVENT ACTIONS
-// =============================================================================
+// ################################# EVENT ACTIONS
 
 function sanitizeInput(input) {
 	if (!input) return '';
 	if (!config.sanitizeActions) return input;
-	// Remove potentially dangerous characters and patterns
 	return input
 		.replace(/[<>'"]/g, '')
 		.replace(/javascript:/gi, '')
@@ -197,7 +233,6 @@ function processEventAttributes(element) {
 			const eventType = sanitizeInput(attr.name.replace('nui-event-', ''));
 			const actionSpec = sanitizeInput(attr.value);
 			
-			// Skip if sanitization removed everything
 			if (!eventType || !actionSpec) return;
 			
 			element.addEventListener(eventType, (e) => {
@@ -208,16 +243,13 @@ function processEventAttributes(element) {
 }
 
 function executeAction(actionSpec, element, event) {
-	// Parse: "action" or "action:param" or "action:param@selector"
 	const [actionPart, selector] = actionSpec.split('@');
 	const [actionName, param] = actionPart.split(':');
 	
-	// Sanitize components
 	const safeActionName = sanitizeInput(actionName);
 	const safeParam = sanitizeInput(param);
 	const safeSelector = sanitizeInput(selector);
 	
-	// Validate selector is safe (basic CSS selector only)
 	if (config.sanitizeActions && safeSelector && !/^[a-zA-Z0-9\s\-_.#\[\]=,>+~:()]+$/.test(safeSelector)) {
 		console.warn(`Invalid selector: "${selector}"`);
 		return;
@@ -225,58 +257,55 @@ function executeAction(actionSpec, element, event) {
 	
 	const target = safeSelector ? document.querySelector(safeSelector) : element;
 	
-	if (actions[safeActionName]) {
-		actions[safeActionName](target, element, event, safeParam);
-	} else {
-		console.warn(`Action "${safeActionName}" not registered`);
-	}
+	doer.do(safeActionName, target, element, event, safeParam);
 }
 
-// =============================================================================
-// BUILT-IN ACTIONS
-// =============================================================================
+// ################################# BUILT-IN ACTIONS
 
-actions['toggle-theme'] = (target, source, event, param) => {
+doer.register('toggle-theme', (target, source, event, param) => {
 	const root = document.documentElement;
 	const currentScheme = root.style.colorScheme || 
 		getComputedStyle(root).colorScheme || 'light dark';
 	
-	// Toggle between light and dark (forcing explicit preference)
+	let newTheme;
+	
 	if (currentScheme.includes('dark') && !currentScheme.includes('light')) {
-		// Currently forced dark → switch to light
 		root.style.colorScheme = 'light';
 		localStorage.setItem('nui-theme', 'light');
+		newTheme = 'light';
 	} else if (currentScheme.includes('light') && !currentScheme.includes('dark')) {
-		// Currently forced light → switch to dark
 		root.style.colorScheme = 'dark';
 		localStorage.setItem('nui-theme', 'dark');
+		newTheme = 'dark';
 	} else {
-		// Auto mode → force dark (most common toggle behavior)
 		const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 		root.style.colorScheme = prefersDark ? 'light' : 'dark';
 		localStorage.setItem('nui-theme', prefersDark ? 'light' : 'dark');
+		newTheme = prefersDark ? 'light' : 'dark';
 	}
-};
+	
+	knower.tell('theme', newTheme);
+});
 
-actions['toggle-class'] = (target, source, event, className) => {
+doer.register('toggle-class', (target, source, event, className) => {
 	if (target && className) {
 		target.classList.toggle(className);
 	}
-};
+});
 
-actions['add-class'] = (target, source, event, className) => {
+doer.register('add-class', (target, source, event, className) => {
 	if (target && className) {
 		target.classList.add(className);
 	}
-};
+});
 
-actions['remove-class'] = (target, source, event, className) => {
+doer.register('remove-class', (target, source, event, className) => {
 	if (target && className) {
 		target.classList.remove(className);
 	}
-};
+});
 
-actions['toggle-attr'] = (target, source, event, attrName) => {
+doer.register('toggle-attr', (target, source, event, attrName) => {
 	if (target && attrName) {
 		if (target.hasAttribute(attrName)) {
 			target.removeAttribute(attrName);
@@ -284,25 +313,22 @@ actions['toggle-attr'] = (target, source, event, attrName) => {
 			target.setAttribute(attrName, '');
 		}
 	}
-};
+});
 
-actions['set-attr'] = (target, source, event, attrSpec) => {
+doer.register('set-attr', (target, source, event, attrSpec) => {
 	if (target && attrSpec) {
 		const [name, value] = attrSpec.split('=');
 		target.setAttribute(name, value || '');
 	}
-};
+});
 
-actions['remove-attr'] = (target, source, event, attrName) => {
+doer.register('remove-attr', (target, source, event, attrName) => {
 	if (target && attrName) {
 		target.removeAttribute(attrName);
 	}
-};
+});
 
-
-// =============================================================================
-// ACCESSIBILITY UTILITIES
-// =============================================================================
+// ################################# ACCESSIBILITY
 
 const a11y = {
 	hasLabel(element) {
@@ -413,16 +439,12 @@ const a11y = {
 	}
 };
 
-// Legacy wrapper for backward compatibility
 function upgradeAccessibility(element) {
 	a11y.upgrade(element);
 }
 
-// =============================================================================
-// COMPONENT REGISTRATION
-// =============================================================================
+// ################################# COMPONENT REGISTRATION
 
-// Core components
 registerComponent('nui-button', (element) => {
 	const button = element.querySelector('button');
 	if (!button) return;
@@ -446,12 +468,10 @@ registerComponent('nui-icon', (element) => {
 	
 	element.setAttribute('aria-hidden', 'true');
 	
-	// Remove placeholder text content (for plain HTML fallback)
 	if (element.textContent.trim()) {
 		element.textContent = '';
 	}
 	
-	// Create SVG element if it doesn't exist
 	let svg = element.querySelector('svg');
 	if (!svg) {
 		svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -459,20 +479,17 @@ registerComponent('nui-icon', (element) => {
 		svg.setAttribute('height', '24');
 		svg.setAttribute('viewBox', '0 0 24 24');
 		svg.setAttribute('fill', 'currentColor');
-		// Accessibility: Mark SVG as decorative
 		svg.setAttribute('aria-hidden', 'true');
 		svg.setAttribute('focusable', 'false');
 		element.appendChild(svg);
 	}
 	
-	// Create or update use element
 	let use = svg.querySelector('use');
 	if (!use) {
 		use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
 		svg.appendChild(use);
 	}
 	
-	// Function to update icon
 	const updateIcon = (iconName) => {
 		if (iconName) {
 			use.setAttribute('href', `${config.iconSpritePath}#${iconName}`);
@@ -481,21 +498,17 @@ registerComponent('nui-icon', (element) => {
 		}
 	};
 	
-	// Set initial icon
 	updateIcon(name);
 	
-	// Setup attribute proxy - standard pattern for all components
 	setupAttributeProxy(element, {
 		'name': (newValue, oldValue) => {
 			updateIcon(newValue);
 		}
 	});
 	
-	// Optional: Create property accessor for convenience
 	defineAttributeProperty(element, 'iconName', 'name');
 });
 
-// App layout components
 registerComponent('nui-app', (element) => {
 	function getBreakpoint(element) {
 		const sideNav = element.querySelector('nui-side-nav');
@@ -527,10 +540,14 @@ registerComponent('nui-app', (element) => {
 		if (isForced) {
 			element.classList.remove('sidenav-open', 'sidenav-closed');
 			element.classList.add('sidenav-forced');
+			knower.tell('side-nav', { state: 'forced', forced: true, viewportWidth, breakpoint });
 		} else {
 			element.classList.remove('sidenav-forced');
 			if (!element.classList.contains('sidenav-open')) {
 				element.classList.add('sidenav-closed');
+				knower.tell('side-nav', { state: 'closed', forced: false, viewportWidth, breakpoint });
+			} else {
+				knower.tell('side-nav', { state: 'open', forced: false, viewportWidth, breakpoint });
 			}
 		}
 	}
@@ -538,12 +555,16 @@ registerComponent('nui-app', (element) => {
 	function toggleSideNav(element) {
 		if (element.classList.contains('sidenav-forced')) return;
 		
-		if (element.classList.contains('sidenav-open')) {
+		const isOpen = element.classList.contains('sidenav-open');
+		
+		if (isOpen) {
 			element.classList.remove('sidenav-open');
 			element.classList.add('sidenav-closed');
+			knower.tell('side-nav', { state: 'closed', forced: false });
 		} else {
 			element.classList.remove('sidenav-closed');
 			element.classList.add('sidenav-open');
+			knower.tell('side-nav', { state: 'open', forced: false });
 		}
 	}
 	
@@ -564,421 +585,68 @@ registerComponent('nui-app', (element) => {
 	
 	element.toggleSideNav = () => toggleSideNav(element);
 	
+	let resizeTimeout;
 	const resizeObserver = new ResizeObserver(() => {
-		updateLayoutClasses(element);
+		clearTimeout(resizeTimeout);
+		resizeTimeout = setTimeout(() => {
+			updateLayoutClasses(element);
+		}, 150);
 	});
 	resizeObserver.observe(element);
 	
 	return () => {
+		clearTimeout(resizeTimeout);
 		resizeObserver.disconnect();
 	};
 });
 
 registerComponent('nui-top-nav', (element) => {
-	// Accessibility: Ensure proper landmark structure
 	const header = element.querySelector('header');
 	if (header) {
-		// Header should have banner role or be inside a banner
 		if (!header.hasAttribute('role') && !header.closest('[role="banner"]')) {
-			// Check if it's the main site header
 			const isMainHeader = !header.closest('article, section, aside, main');
 			if (isMainHeader) {
 				header.setAttribute('role', 'banner');
 			}
 		}
 		
-		// Upgrade accessibility for all buttons
 		upgradeAccessibility(header);
 	}
 });
 
 registerComponent('nui-side-nav', (element) => {
-	// Accessibility: Ensure navigation landmark
-	const nav = element.querySelector('nav, nui-link-list');
-	if (nav) {
-		if (nav.tagName !== 'NAV' && !nav.hasAttribute('role')) {
-			nav.setAttribute('role', 'navigation');
-		}
-		
-		// Ensure label if missing
-		if (!nav.hasAttribute('aria-label') && !nav.hasAttribute('aria-labelledby')) {
-			console.warn(
-				`nui-side-nav: Navigation missing aria-label. Adding generic label.`,
-				nav
-			);
-			nav.setAttribute('aria-label', 'Sidebar navigation');
-		}
-		
-		upgradeAccessibility(nav);
+	const linkList = element.querySelector('nui-link-list');
+	if (linkList && !linkList.hasAttribute('mode')) {
+		linkList.setAttribute('mode', 'fold');
+	}
+	
+	if (linkList) {
+		element.setActive = (action) => linkList.setActive?.(action);
+		element.clearActive = () => linkList.clearActive?.();
+		element.clearSubs = () => linkList.clearSubs?.();
 	}
 });
 
 registerComponent('nui-link-list', (element) => {
-	const mode = element.getAttribute('mode') || 'list';
-	const accordion = element.hasAttribute('accordion');
+	const listContainer = element.querySelector('ul');
+	if (!listContainer) return;
 	
-	// Accessibility: Set navigation landmark role
-	if (!element.hasAttribute('role')) {
-		element.setAttribute('role', 'navigation');
-	}
-	
-	// Accessibility: Ensure label - check parent context
-	if (!element.hasAttribute('aria-label') && !element.hasAttribute('aria-labelledby')) {
-		// Try to infer from parent or heading
-		const parentLabel = element.closest('[aria-label]')?.getAttribute('aria-label');
-		const heading = element.querySelector('h1, h2, h3, h4, h5, h6');
-		
-		if (heading) {
-			const id = heading.id || `nav-${Math.random().toString(36).substr(2, 9)}`;
-			if (!heading.id) heading.id = id;
-			element.setAttribute('aria-labelledby', id);
-		} else if (parentLabel) {
-			element.setAttribute('aria-label', parentLabel);
-		} else {
-			// Check context - sidebar, top nav, etc.
-			const isSidebar = element.closest('nui-side-nav, aside, [role="complementary"]');
-			const label = isSidebar ? 'Sidebar navigation' : 'Navigation menu';
-			element.setAttribute('aria-label', label);
-		}
-	}
-	
-	// Build index of items for findItem and setActive functionality
-	const itemIndex = new Map();
-	const items = element.querySelectorAll('.nui-sidebar-item');
-	
-	items.forEach((item, idx) => {
-		const itemData = {
-			element: item,
-			index: idx,
-			isSub: item.classList.contains('sub-item'),
-			isGroup: item.classList.contains('group')
-		};
-		
-		// Index by position (for backward compatibility with original)
-		itemIndex.set(`sidebar_${idx}`, itemData);
-		
-		// Index by ID if present
-		if (item.id) {
-			itemIndex.set(item.id, itemData);
-		}
-		
-		// Index sub-items
-		if (itemData.isSub) {
-			const parent = item.closest('.nui-sidebar-item.group');
-			if (parent) {
-				const parentIdx = Array.from(element.querySelectorAll('.nui-sidebar-item')).indexOf(parent);
-				const subItems = parent.querySelectorAll('.sub-item');
-				const subIdx = Array.from(subItems).indexOf(item);
-				itemIndex.set(`sidebar_${parentIdx}_${subIdx}`, itemData);
-			}
-		}
-	});
-	
-	function setupTreeMode() {
-		const groups = element.querySelectorAll('.nui-sidebar-item.group');
-		
-		element.classList.add('nui-enhanced');
-		
-		groups.forEach(group => {
-			const itemEl = group.querySelector('.item');
-			const subEl = group.querySelector('.sub');
-			
-			if (!itemEl || !subEl) return;
-			
-			const groupLabel = a11y.getTextLabel(itemEl) || 'Menu section';
-			
-			// Make item interactive and get the focusable target
-			const target = a11y.makeInteractive(itemEl, `${groupLabel} menu`);
-			
-			// Set initial expanded state
-			const isOpen = group.classList.contains('open');
-			target.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-			
-			// Sub container is a list
-			subEl.setAttribute('role', 'list');
-			subEl.setAttribute('aria-label', `${groupLabel} items`);
-			subEl.style.height = isOpen ? subEl.scrollHeight + 'px' : '0px';
-			
-			itemEl.style.cursor = 'pointer';
-			
-			const toggleGroup = (e) => {
-				// Don't toggle if clicking special button
-				if (e.target.closest('.special')) {
-					return;
-				}
-				
-				e.stopPropagation();
-				const isCurrentlyOpen = group.classList.contains('open');
-				
-				// Accordion mode - close other groups
-				if (accordion && !isCurrentlyOpen) {
-					groups.forEach(otherGroup => {
-						if (otherGroup !== group) {
-							const otherSub = otherGroup.querySelector('.sub');
-							const otherItem = otherGroup.querySelector('.item');
-							if (otherSub && otherItem) {
-								otherGroup.classList.remove('open');
-								otherSub.style.height = '0px';
-								// Update ARIA state
-								otherItem.setAttribute('aria-expanded', 'false');
-							}
-						}
-					});
-				}
-				
-				// Toggle this group
-				if (isCurrentlyOpen) {
-					group.classList.remove('open');
-					subEl.style.height = '0px';
-					itemEl.setAttribute('aria-expanded', 'false');
-				} else {
-					group.classList.add('open');
-					// Recalculate height in case content changed
-					subEl.style.height = subEl.scrollHeight + 'px';
-					itemEl.setAttribute('aria-expanded', 'true');
-				}
-			};
-			
-			itemEl.addEventListener('click', toggleGroup);
-			
-			// Keyboard support: Enter and Space to toggle
-			itemEl.addEventListener('keydown', (e) => {
-				if (e.key === 'Enter' || e.key === ' ') {
-					e.preventDefault();
-					toggleGroup(e);
-				}
-			});
-			
-			// Store cleanup
-			if (!group._cleanup) {
-				group._cleanup = () => {
-					itemEl.removeEventListener('click', toggleGroup);
-				};
-			}
-		});
-		
-		// Setup sub-item accessibility and interactions
-		const subItems = element.querySelectorAll('.sub-item');
-		subItems.forEach(subItem => {
-			subItem.setAttribute('role', 'listitem');
-			
-			const label = a11y.getTextLabel(subItem);
-			if (label && !a11y.hasFocusableChild(subItem)) {
-				subItem.setAttribute('tabindex', '0');
-				subItem.setAttribute('aria-label', label);
-			}
-			
-			// Auto-expand parent group on focus
-			subItem.addEventListener('focus', () => {
-				const parent = subItem.closest('.nui-sidebar-item.group');
-				if (parent && !parent.classList.contains('open')) {
-					const subEl = parent.querySelector('.sub');
-					const parentItem = parent.querySelector('.item');
-					
-					if (subEl && parentItem) {
-						parent.classList.add('open');
-						subEl.style.height = subEl.scrollHeight + 'px';
-						parentItem.setAttribute('aria-expanded', 'true');
-						
-						// Accordion mode - close other groups
-						if (accordion) {
-							groups.forEach(otherGroup => {
-								if (otherGroup !== parent) {
-									const otherSub = otherGroup.querySelector('.sub');
-									const otherItem = otherGroup.querySelector('.item');
-									if (otherSub && otherItem) {
-										otherGroup.classList.remove('open');
-										otherSub.style.height = '0px';
-										otherItem.setAttribute('aria-expanded', 'false');
-									}
-								}
-							});
-						}
-					}
-				}
-			});
-			
-			subItem.addEventListener('click', (e) => {
-				e.stopPropagation();
-				handleNavClick(subItem, e);
-			});
-			
-			// Keyboard support
-			subItem.addEventListener('keydown', (e) => {
-				if (e.key === 'Enter' || e.key === ' ') {
-					e.preventDefault();
-					handleNavClick(subItem, e);
-				}
-			});
-		});
-		
-		// Setup regular (non-group) items
-		const regularItems = element.querySelectorAll('.nui-sidebar-item:not(.group)');
-		regularItems.forEach(item => {
-			const itemEl = item.querySelector('.item');
-			if (itemEl) {
-				const label = a11y.getTextLabel(itemEl);
-				a11y.makeInteractive(itemEl, label);
-				
-				itemEl.addEventListener('click', (e) => {
-					e.stopPropagation();
-					handleNavClick(item, e);
-				});
-				
-				// Keyboard support
-				itemEl.addEventListener('keydown', (e) => {
-					if (e.key === 'Enter' || e.key === ' ') {
-						e.preventDefault();
-						handleNavClick(item, e);
-					}
-				});
-			}
-		});
-	}
-	
-	function handleNavClick(item, event) {
-		// Clear all active states
-		clearActive();
-		
-		// Set this item as active
-		item.classList.add('active');
-		
-		// Accessibility: Update aria-current for active navigation
-		const clickableEl = item.querySelector('.item') || item;
-		clickableEl.setAttribute('aria-current', 'page');
-		
-		// If it's a sub-item, ensure parent is open
-		if (item.classList.contains('sub-item')) {
-			const parent = item.closest('.nui-sidebar-item.group');
-			if (parent) {
-				const subEl = parent.querySelector('.sub');
-				const parentItem = parent.querySelector('.item');
-				if (subEl && parentItem) {
-					parent.classList.add('open');
-					subEl.style.height = subEl.scrollHeight + 'px';
-					parentItem.setAttribute('aria-expanded', 'true');
-				}
-			}
-		}
-		
-		// Dispatch custom event for application logic
-		element.dispatchEvent(new CustomEvent('nui-nav-click', {
-			bubbles: true,
-			detail: { 
-				item: item,
-				event: event,
-				id: item.id,
-				href: item.querySelector('a')?.getAttribute('href')
-			}
-		}));
-		
-		// Toggle sidebar on mobile (delegate to nui-app)
-		const app = element.closest('nui-app');
-		if (app && app.toggleSideNav) {
-			// Only toggle if not in forced mode
-			if (!app.classList.contains('sidenav-forced')) {
-				app.toggleSideNav();
-			}
-		}
-	}
-	
-	function clearActive() {
-		element.querySelectorAll('.nui-sidebar-item, .sub-item').forEach(item => {
-			item.classList.remove('active');
-			// Accessibility: Remove aria-current from all items
-			const clickableEl = item.querySelector('.item') || item;
-			clickableEl.removeAttribute('aria-current');
-		});
-	}
-	
-	function clearSubs() {
-		element.querySelectorAll('.nui-sidebar-item.group').forEach(group => {
-			const subEl = group.querySelector('.sub');
-			const itemEl = group.querySelector('.item');
-			if (subEl && itemEl) {
-				group.classList.remove('open');
-				subEl.style.height = '0px';
-				// Accessibility: Update ARIA expanded state
-				itemEl.setAttribute('aria-expanded', 'false');
-			}
-		});
-	}
-	
-	// Public API methods (attach to element)
-	element.findItem = (topId, subId) => {
-		if (subId) {
-			// Find by composed ID
-			const key = `${topId}_${subId}`;
-			const data = itemIndex.get(key) || itemIndex.get(`sidebar_${key}`);
-			return data?.element;
-		} else {
-			// Find by single ID
-			const data = itemIndex.get(topId) || itemIndex.get(`sidebar_${topId}`);
-			return data?.element;
-		}
-	};
-	
-	element.setActive = (topId, subId) => {
-		clearActive();
-		clearSubs();
-		
-		const item = element.findItem(topId, subId);
-		if (!item) return;
-		
-		item.classList.add('active');
-		
-		// If it's a sub-item, open parent
-		if (item.classList.contains('sub-item')) {
-			const parent = item.closest('.nui-sidebar-item.group');
-			if (parent) {
-				const subEl = parent.querySelector('.sub');
-				if (subEl) {
-					parent.classList.add('open');
-					subEl.style.height = subEl.scrollHeight + 'px';
-				}
-			}
-		}
-	};
-	
-	element.clearActive = clearActive;
-	element.clearSubs = clearSubs;
-	
-	// Initialize based on mode
-	if (mode === 'tree') {
-		setupTreeMode();
-	}
-	
-	// Cleanup
-	return () => {
-		items.forEach(item => {
-			if (item._cleanup) {
-				item._cleanup();
-			}
-		});
-	};
+	const mode = element.getAttribute('mode') || 'tree';
 });
 
 registerComponent('nui-content', (element) => {
-	// Future: Handle scrolling, content loading, etc.
-});
-
-registerComponent('nui-content', (element) => {
-	// Accessibility: Ensure main landmark
 	const main = element.querySelector('main');
 	if (main) {
-		// Main should have main role or be the main element
 		if (!main.hasAttribute('role')) {
 			main.setAttribute('role', 'main');
 		}
 		
-		// Check for skip link target
 		if (!main.hasAttribute('id')) {
 			main.setAttribute('id', 'main-content');
 		}
 		
 		upgradeAccessibility(main);
 	} else {
-		// If no main element, check if this should be main
 		const isMainContent = !element.closest('article, section, aside');
 		if (isMainContent) {
 			console.warn(
@@ -990,10 +658,8 @@ registerComponent('nui-content', (element) => {
 });
 
 registerComponent('nui-app-footer', (element) => {
-	// Accessibility: Ensure contentinfo landmark
 	const footer = element.querySelector('footer');
 	if (footer) {
-		// Footer should have contentinfo role if it's the main site footer
 		const isMainFooter = !footer.closest('article, section, aside, main');
 		if (isMainFooter && !footer.hasAttribute('role')) {
 			footer.setAttribute('role', 'contentinfo');
@@ -1001,37 +667,29 @@ registerComponent('nui-app-footer', (element) => {
 	}
 });
 
-// Stub components
 registerLayoutComponent('nui-icon-button');
 
-// =============================================================================
-// PUBLIC API
-// =============================================================================
+// ################################# PUBLIC API
 
 export const nui = {
 	config,
-	knower,  // Export the Knower for cross-component state (opt-in)
+	knower,
 	
 	init(options) {
-		// Merge user options with defaults (only if options provided)
 		if (options) {
 			Object.assign(config, options);
 		}
 		
-		// Initialize theme from localStorage or system preference
 		const savedTheme = localStorage.getItem('nui-theme');
 		if (savedTheme) {
 			document.documentElement.style.colorScheme = savedTheme;
 		}
-		// If no saved preference, CSS will use system preference via :root { color-scheme: light dark; }
 		
-		// Calculate base font size as integer for JS calculations
 		const baseValue = getComputedStyle(document.documentElement)
 			.getPropertyValue('--nui-rem-base')
 			.trim();
 		config.baseFontSize = parseFloat(baseValue) || 14;
 		
-		// Register all components
 		Object.entries(components).forEach(([tagName, { class: ComponentClass }]) => {
 			if (!customElements.get(tagName)) {
 				customElements.define(tagName, ComponentClass);
@@ -1040,20 +698,20 @@ export const nui = {
 	},
 	
 	registerAction(name, handler) {
-		actions[name] = handler;
+		doer.register(name, handler);
 	},
 	
 	configure(options) {
 		Object.assign(config, options);
-	}
+	},
+	
+	knower: knower,
+	doer: doer
 };
 
-// =============================================================================
-// AUTO-INITIALIZATION FOR DIRECT SCRIPT LOADING
-// =============================================================================
+// ################################# AUTO-INITIALIZATION
 
 if (typeof window !== 'undefined' && !window.nuiInitialized) {
-	// Check for skip-init URL parameter
 	const urlParams = new URLSearchParams(window.location.search);
 	const skipInit = urlParams.has('skip-init');
 	

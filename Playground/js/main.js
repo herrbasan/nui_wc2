@@ -2,8 +2,12 @@
 console.log('main.js loading...');
 
 import { nui } from '../../NUI/nui.js';
+import { createMonitor } from '../../NUI/lib/modules/nui-monitor.js';
 
 console.log('nui imported');
+
+// Development-only: Enable monitoring
+const monitor = createMonitor(nui);
 
 // Parse URL parameters
 const urlParams = new URLSearchParams(window.location.search);
@@ -127,16 +131,6 @@ if (document.readyState === 'loading') {
 	populateIconGrid();
 }
 
-// Listen for button clicks to test component behavior
-document.addEventListener('nui-click', (e) => {
-	console.log('Button clicked:', e.detail.source);
-});
-
-// Listen for navigation clicks
-document.addEventListener('nui-nav-click', (e) => {
-	console.log('Navigation clicked:', e.detail);
-});
-
 // Sidebar API tests
 document.addEventListener('DOMContentLoaded', () => {
 	const linkList = document.querySelector('nui-link-list');
@@ -150,7 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	const testActive0 = document.getElementById('test-active-0');
 	if (testActive0) {
 		testActive0.addEventListener('click', () => {
-			const firstItem = linkList.querySelector('.nui-sidebar-item');
+			const firstItem = linkList.querySelector('.nui-list-item');
 			if (firstItem) {
 				linkList.clearActive();
 				firstItem.classList.add('active');
@@ -163,7 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	const testActiveSub = document.getElementById('test-active-sub');
 	if (testActiveSub) {
 		testActiveSub.addEventListener('click', () => {
-			const groups = linkList.querySelectorAll('.nui-sidebar-item.group');
+			const groups = linkList.querySelectorAll('.nui-list-item.group');
 			if (groups.length >= 2) {
 				const secondGroup = groups[1];
 				const firstSubItem = secondGroup.querySelector('.sub-item');
@@ -193,3 +187,54 @@ document.addEventListener('DOMContentLoaded', () => {
 		});
 	}
 });
+
+// =============================================================================
+// AUTO-REGISTERED CUSTOM ACTION LISTENERS
+// =============================================================================
+
+// Pattern 1: Event-driven (immediate response)
+document.addEventListener('nui-navigate', (e) => {
+	const { param, element } = e.detail;
+	console.log('Navigate action triggered (event):', param);
+	
+	// In real app: load content, update URL, etc.
+	// window.location.hash = param;
+	// loadContent(param);
+});
+
+// Pattern 2: State-driven via Knower (reactive, queryable)
+nui.knower.watch('action:navigate', (state, oldState) => {
+	console.log('Navigate action triggered (knower):', state.param);
+	console.log('  Previous:', oldState?.param, '→ New:', state.param);
+	
+	// Bonus: Can query last navigation anytime
+	// const lastNav = nui.knower.know('action:navigate');
+});
+
+// Listen for edit-section actions (event pattern)
+document.addEventListener('nui-edit-section', (e) => {
+	const { param, element } = e.detail;
+	console.log('Edit section action triggered:', param);
+	
+	// In real app: open editor modal for section
+	// openEditor(param);
+});
+
+// Listen for custom-action (no param)
+document.addEventListener('nui-custom-action', (e) => {
+	const { element } = e.detail;
+	console.log('Custom action triggered (no param)');
+	
+	// In real app: perform custom logic
+	alert('Custom action executed! Check console for details.');
+});
+
+// Listen for load-data actions (knower pattern)
+nui.knower.watch('action:load-data', (state) => {
+	console.log('Load data action triggered:', state.param);
+	console.log('  Timestamp:', new Date(state.timestamp).toLocaleTimeString());
+	
+	// In real app: fetch data from API
+	// fetchData(state.param).then(data => displayData(data));
+});
+

@@ -147,7 +147,7 @@ NUI components run accessibility checks during initialization:
 <!-- Input -->
 <nui-side-nav>
 	<nui-link-list>
-		<div class="nui-sidebar-item">
+		<div class="nui-list-item">
 			<div class="item"><span>Home</span></div>
 		</div>
 	</nui-link-list>
@@ -156,7 +156,7 @@ NUI components run accessibility checks during initialization:
 <!-- Upgraded to -->
 <nui-side-nav>
 	<nui-link-list role="navigation" aria-label="Sidebar navigation">
-		<div class="nui-sidebar-item">
+		<div class="nui-list-item">
 			<div class="item" role="button" tabindex="0" aria-label="Home">
 				<span>Home</span>
 			</div>
@@ -240,7 +240,7 @@ Provides full ARIA tree navigation:
 
 ```html
 <nui-link-list mode="tree" accordion aria-label="Main navigation">
-	<div class="nui-sidebar-item group">
+	<div class="nui-list-item group">
 		<div class="item">
 			<nui-icon name="folder"></nui-icon>
 			<span>Components</span>

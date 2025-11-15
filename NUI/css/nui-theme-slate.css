@@ -16,7 +16,7 @@
 	--space-scrollbar-width: 0.7rem;
 	--space-page-maxwidth: 62rem;
 
-	--icon-size: var(--nui-space-double);
+	--icon-size: 1.2rem;
 
 	--color-highlight: light-dark(rgb(76, 132, 229), rgb(76, 132, 229));
 	--color-highlight-dim: light-dark(rgb(67, 112, 191), rgb(67, 112, 191));
@@ -197,6 +197,91 @@ body {
 	line-height: 1.6;
 }
 
+nui-side-nav nui-link-list {
+	margin-right: var(--nui-space);
+	margin-left: var(--nui-space);
+	padding: 0;
+}
+
+nui-link-list li {
+	color: currentColor;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+nui-link-list li:hover {
+	color: var(--color-highlight);
+	background-color: var(--color-shade3);
+}
+
+
+
+ul {
+	padding-left: 0;
+}
+
+ul ul {
+	padding-left: var(--nui-space-double);
+}
+
+ul li {
+	list-style: none;
+	padding-left: var(--nui-space-half);
+	padding-right: var(--nui-space-half);
+	padding-top: var(--nui-space-quarter);
+	padding-bottom: var(--nui-space-quarter);
+	line-height: normal;
+}
+
+ul li.group-header {
+	display: flex;
+	align-items: center;
+	gap: var(--nui-space-half);
+}
+
+ul li a,
+ul li.group-header > span:first-child {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	gap: var(--nui-space-half);
+	text-decoration: none;
+	color: inherit;
+}
+
+ul li a nui-icon,
+ul li.group-header > span > nui-icon {
+	flex-shrink: 0;
+}
+
+ul li span {
+	flex: 1;
+	cursor: inherit;
+}
+
+ul li button.action {
+	background: none;
+	border: none;
+	color: inherit;
+	padding: var(--nui-space-quarter);
+	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+}
+
+ul li button.action:hover {
+	background-color: var(--color-shade4);
+	border-radius: var(--nui-radius);
+}	
+
+
+/* =============================================================================
+   BUTTON COMPONENT
+   ============================================================================= */
+
 nui-button {
 	display: inline-block;
 	margin: 0;
@@ -232,15 +317,6 @@ nui-button button:focus {
 	outline-offset: 2px;
 }
 
-/* =============================================================================
-   ICON UTILITIES
-   ============================================================================= */
-
-.nui-icon-container {
-	display: inline-flex;
-	justify-content: center;
-	align-items: center;
-}
 
 /* =============================================================================
    ICON COMPONENT
@@ -250,12 +326,19 @@ nui-icon {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	width: var(--icon-size, 24px);
-	height: var(--icon-size, 24px);
+	width: var(--icon-size);
+	height: var(--icon-size);
 	color: currentColor;
 	flex-shrink: 0;
-	font-size: 1.2rem;
-	font-weight: bold;
+}
+
+/* Icon in text flow - optically align with baseline when followed by text */
+nui-icon:has(+ span),
+nui-icon:has(+ p),
+nui-icon:has(+ a) {
+	vertical-align: middle;
+	position: relative;
+	top: -0.1rem;
 }
 
 /* Placeholder text shown in plain HTML mode (removed by JavaScript) */
@@ -296,6 +379,7 @@ nui-app[data-layout="app"] nui-top-nav {
 	align-items: center;
 	justify-content: space-between;
 	z-index: 10;
+	box-sizing: border-box;
 }
 
 nui-top-nav header {
@@ -339,6 +423,7 @@ nui-app[data-layout="app"] nui-side-nav {
 	display: grid;
 	grid-template-rows: 1fr auto;
 	transition: transform 0.3s ease;
+	box-sizing: border-box;
 }
 
 /* Side nav offset when top nav present */
@@ -351,170 +436,7 @@ nui-app[data-layout="app"].has-footer nui-side-nav {
 	bottom: var(--footer-height);
 }
 
-/* =============================================================================
-   LINK LIST - Complete original sidebar item structure
-   Based on reference/nui/css/nui_main.css .nui-sidebar-item styles
-   ============================================================================= */
 
-/* Group/Parent items (.nui-sidebar-item) */
-.nui-sidebar-item {
-	display: table;
-	width: 100%;
-	height: var(--side-nav-item-height);
-	cursor: pointer;
-	color: var(--side-nav-text);
-	border-left: 0.3rem solid rgba(0,0,0,0);
-}
-
-.nui-sidebar-item .item {
-	position: relative;
-	display: table;
-	width: 100%;
-	height: var(--side-nav-item-height);
-	cursor: pointer;
-	border-left: 0.3rem solid transparent;
-}
-
-.nui-sidebar-item .item .nui-icon-container {
-	display: table-cell;
-	vertical-align: middle;
-	color: var(--side-nav-text);
-	width: 4rem;
-	height: var(--side-nav-item-height);
-	margin-left: -0.3rem;
-}
-
-.nui-sidebar-item .item .nui-icon {
-	width: 1.8rem;
-}
-
-.nui-sidebar-item .item span {
-	display: table-cell;
-	width: 100%;
-	vertical-align: middle;
-	padding-right: 1.2rem;
-	padding-left: unset;
-	font-size: 0.9rem;
-	line-height: 1rem;
-}
-
-.nui-sidebar-item .item:hover {
-	color: var(--color-highlight);
-	background-color: light-dark(rgba(0,0,0,0.05), rgba(255,255,255,0.05));
-}
-
-/* Accessibility: Focus styles for keyboard navigation */
-.nui-sidebar-item .item:focus,
-.nui-sidebar-item .sub .sub-item:focus {
-	outline: 2px solid var(--color-highlight);
-	outline-offset: -2px;
-	background-color: light-dark(rgba(0,0,0,0.08), rgba(255,255,255,0.08));
-}
-
-/* Skip focus outline on mouse click, but keep for keyboard */
-.nui-sidebar-item .item:focus:not(:focus-visible),
-.nui-sidebar-item .sub .sub-item:focus:not(:focus-visible) {
-	outline: none;
-}
-
-.nui-sidebar-item.active {
-	background-color: light-dark(rgba(0,0,0,0.1), rgba(255,255,255,0.1));
-	color: var(--color-contrast);
-	border-left: 0.3rem solid var(--color-highlight);
-}
-
-.nui-sidebar-item.active .item:hover {
-	color: inherit;
-}
-
-/* Special buttons (optional right-side action buttons) */
-.nui-sidebar-item .item .special {
-	display: none;
-}
-
-.nui-sidebar-item.open .item .special {
-	position: absolute;
-	right: 0;
-	top: 0;
-	width: 5rem;
-	height: 100%;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	color: light-dark(rgba(0,0,0,0.3), rgba(255,255,255,0.3));
-}
-
-.nui-sidebar-item .item .special:hover .nui-icon,
-.nui-sidebar-item .item .special:hover i {
-	fill: var(--color-highlight);
-	color: var(--color-highlight);
-}
-
-.nui-sidebar-item.open .item:hover .special {
-	color: light-dark(rgba(0,0,0,0.3), rgba(255,255,255,0.3));
-}
-
-.nui-sidebar-item.open .item .special:hover {
-	color: var(--color-highlight);
-}
-
-/* Submenu container */
-.nui-sidebar-item .sub {
-	overflow: hidden;
-	background-color: light-dark(rgba(255,255,255,0.15), rgba(0,0,0,0.15));
-}
-
-/* When JavaScript is active, sub elements are collapsed by default and animated */
-nui-link-list.nui-enhanced .nui-sidebar-item.group .sub {
-	height: 0;
-	transition: height 0.2s;
-}
-
-/* When group is open, height is set dynamically via JavaScript: element.style.height = scrollHeight + 'px' */
-
-/* Separator lines in submenu */
-.nui-sidebar-item .sub .hline {
-	height: 0;
-	border-bottom: solid var(--border-thickness) var(--border-shade2);
-}
-
-/* Sub-items */
-.nui-sidebar-item .sub .sub-item {
-	display: table;
-	width: 100%;
-	height: var(--side-nav-item-height);
-	cursor: pointer;
-	color: var(--side-nav-text);
-	border-left: 0.3rem solid rgba(255,255,255,0);
-}
-
-.nui-sidebar-item .sub .sub-item:hover {
-	color: var(--color-highlight);
-	background-color: light-dark(rgba(0,0,0,0.03), rgba(255,255,255,0.03));
-}
-
-.nui-sidebar-item .sub .sub-item.active {
-	background-color: light-dark(rgba(0,0,0,0.08), rgba(255,255,255,0.08));
-	color: var(--color-contrast);
-	border-left: 0.3rem solid var(--color-highlight);
-}
-
-.nui-sidebar-item .sub .sub-item .nui-icon-container {
-	display: table-cell;
-	vertical-align: middle;
-	line-height: 1rem;
-	fill: light-dark(rgba(0,0,0,0.3), rgba(255,255,255,0.3));
-	padding-left: var(--nui-space);
-	padding-right: calc(var(--nui-space) * 0.6);
-	width: 1.7rem;
-}
-
-.nui-sidebar-item .sub .sub-item span {
-	display: table-cell;
-	vertical-align: middle;
-	font-size: 0.9rem;
-	line-height: 1rem;
-}
 
 /* =============================================================================
    CONTENT AREA
@@ -522,6 +444,7 @@ nui-link-list.nui-enhanced .nui-sidebar-item.group .sub {
 
 nui-content {
 	padding: var(--nui-space-double);
+	box-sizing: border-box;
 }
 
 nui-app[data-layout="app"] nui-content {
@@ -564,6 +487,7 @@ nui-app[data-layout="app"] nui-app-footer {
 	display: flex;
 	align-items: center;
 	z-index: 10;
+	box-sizing: border-box;
 }
 
 nui-app[data-layout="app"].sidenav-closed nui-side-nav {
@@ -586,3 +510,19 @@ nui-app[data-layout="app"].sidenav-open::before {
 nui-app[data-layout="app"].sidenav-forced nui-side-nav {
 	transform: translateX(0);
 }
+
+/* =================================
+   nui-side-nav Component Styles
+   ================================= */
+
+nui-side-nav {
+	display: block;
+	width: var(--nui-sidebar-width, 16rem);
+	height: 100%;
+	background: var(--nui-sidebar-bg, rgb(40, 40, 40));
+	color: var(--nui-sidebar-text, rgb(200, 200, 200));
+	overflow-x: hidden;
+	overflow-y: auto;
+}
+
+

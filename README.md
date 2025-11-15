@@ -154,28 +154,36 @@ const currentIcon = icon.iconName;  // Returns getAttribute('name')
 - ✅ Covers 99.9% of real-world usage
 - ❌ MutationObserver: constant polling, async callbacks, cleanup complexity
 
-### The Knower (Cross-Component State)
+### The Knower & Doer Systems
 
-For components that need to know about each other's state, use the **Knower** - a lightweight, opt-in state observation system:
+The library provides two complementary systems for managing application state and actions, using plain language naming for better discoverability and teaching:
+
+#### The Knower (State Management)
+
+**Philosophy**: "Knower knows things" - A lightweight, opt-in state observation system for cross-component communication.
 
 **Basic Usage:**
 ```javascript
 import { nui } from './NUI/nui.js';
 
-// Component reports its state
+// Tell the Knower something changed
 nui.knower.tell('sidebar', { open: true, mode: 'tree' });
 
-// Other components can watch
+// Watch for changes
 nui.knower.watch('sidebar', (state, oldState) => {
     console.log('Sidebar changed:', state);
     overlay.style.display = state.open ? 'block' : 'none';
 });
 
-// Query current state
+// Ask the Knower what it knows
 const sidebarState = nui.knower.know('sidebar');
 if (sidebarState?.open) {
     // Do something
 }
+
+// Stop watching
+const unwatch = nui.knower.watch('sidebar', handler);
+unwatch(); // Cleanup when done
 ```
 
 **Component Integration:**
@@ -183,12 +191,12 @@ if (sidebarState?.open) {
 registerComponent('nui-side-nav', (element) => {
     const id = element.id || 'side-nav';
     
-    // Report state changes
+    // Report state changes to Knower
     const setState = (newState) => {
         nui.knower.tell(id, newState);
     };
     
-    // Initialize
+    // Initialize state
     setState({ open: false, mode: 'tree' });
     
     // Update on interaction
@@ -198,13 +206,13 @@ registerComponent('nui-side-nav', (element) => {
     });
 });
 
-// Other components react
+// Other components react to state changes
 registerComponent('nui-overlay', (element) => {
     const unwatch = nui.knower.watch('side-nav', (state) => {
         element.classList.toggle('visible', state?.open);
     });
     
-    // Cleanup
+    // Cleanup in disconnectedCallback
     element._cleanup = unwatch;
 });
 ```
@@ -226,6 +234,173 @@ registerComponent('nui-overlay', (element) => {
 - Simple DOM events work fine (use CustomEvent instead)
 - Component only cares about its own state
 - Parent-child relationships (use props/attributes)
+
+#### The Doer (Action System)
+
+**Philosophy**: "Doer does things" - Centralized action execution with auto-registration for custom events.
+
+**Basic Usage:**
+```javascript
+import { nui } from './NUI/nui.js';
+
+// Register a custom action
+nui.doer.register('show-notification', (target, source, event, message) => {
+    const notification = document.createElement('div');
+    notification.className = 'notification';
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), 3000);
+});
+
+// Use via declarative attributes
+// <button nui-event-click="show-notification:Hello!">Notify</button>
+
+// Or execute programmatically
+nui.doer.do('show-notification', element, element, null, 'Hello!');
+```
+
+**Auto-Registration Pattern:**
+When an unknown action is triggered, the Doer automatically:
+1. Dispatches a custom event (`nui-{actionName}`)
+2. Tells the Knower about the action execution
+3. Allows listening via standard event handlers
+
+```javascript
+// Listen for unregistered actions
+document.addEventListener('nui-custom-action', (e) => {
+    console.log('Custom action triggered:', e.detail);
+    // { element, target, param, originalEvent }
+});
+
+// Or watch via Knower
+nui.knower.watch('action:custom-action', (state) => {
+    console.log('Action executed at:', state.timestamp);
+});
+```
+
+**Built-in Actions:**
+- `toggle-theme` - Switch between light/dark mode
+- `toggle-class:className` - Toggle CSS class on target
+- `add-class:className` - Add CSS class to target
+- `remove-class:className` - Remove CSS class from target
+- `toggle-attr:attrName` - Toggle attribute on target
+- `set-attr:name=value` - Set attribute on target
+- `remove-attr:attrName` - Remove attribute from target
+
+**Action Syntax:**
+```html
+<!-- Simple action -->
+<button nui-event-click="toggle-theme">Theme</button>
+
+<!-- Action with parameter -->
+<button nui-event-click="toggle-class:active">Toggle</button>
+
+<!-- Action with target selector -->
+<button nui-event-click="toggle-class:open@#sidebar">Open Sidebar</button>
+```
+
+### Knower/Doer: Potential Dangers & Mitigation
+
+**The Problem**: Reactive systems like Knower can encourage sprawl in larger teams, similar to React hooks or Vue composables. Each developer adds "just one more watcher" leading to:
+- Entangled observers and duplicated state
+- Multiple state variables describing the same thing
+- Performance degradation from unnecessary re-renders
+- Difficult debugging and maintenance
+
+**Mitigation Strategies:**
+
+**1. Enforce Design Discipline**
+```javascript
+// ❌ BAD: Global watch for component-specific state
+nui.knower.watch('button-clicked', handleButtonClick);
+
+// ✅ GOOD: Use DOM queries for component-specific state
+const button = document.querySelector('#my-button');
+button.addEventListener('click', handleButtonClick);
+
+// ✅ GOOD: Knower only for cross-component coordination
+nui.knower.watch('sidebar-state', (state) => {
+    // Multiple components need to know about sidebar
+    updateOverlay(state);
+    updateContentPadding(state);
+});
+```
+
+**2. Functional Purity as Guardrail**
+```javascript
+// Treat state changes as pure functions
+function updateSidebarState(currentState, action) {
+    // Input → Output, no side effects
+    switch (action.type) {
+        case 'toggle':
+            return { ...currentState, open: !currentState.open };
+        case 'setMode':
+            return { ...currentState, mode: action.mode };
+        default:
+            return currentState;
+    }
+}
+
+// Single source of truth
+nui.knower.tell('sidebar', updateSidebarState(
+    nui.knower.know('sidebar'),
+    { type: 'toggle' }
+));
+```
+
+**3. Performance Monitoring**
+```javascript
+// Use the NUI Monitor module during development
+import { createMonitor } from './NUI/lib/modules/nui-monitor.js';
+const monitor = createMonitor(nui);
+
+// Check for issues
+monitor.diagnose();
+// Warnings for:
+// - High watcher counts (possible memory leak)
+// - Frequently used unregistered actions
+// - High state churn (performance impact)
+```
+
+**4. Team Practices & Code Review**
+- Document that Knower is for **shared state only**, not per-component caching
+- Code reviews should flag over-subscription patterns
+- Use Doer for commands, Knower for queries (CQRS-lite)
+- Encourage direct DOM manipulation for simple cases
+
+**5. Bounded Contexts**
+```javascript
+// Namespace your state to avoid collisions
+nui.knower.tell('sidebar:main', state);      // Main sidebar
+nui.knower.tell('sidebar:settings', state);  // Settings sidebar
+nui.knower.tell('modal:confirm', state);     // Specific modal
+
+// Not just generic names that could clash
+nui.knower.tell('sidebar', state);  // ❌ Which sidebar?
+```
+
+**6. Development Tools**
+The NUI Monitor provides real-time visibility:
+```javascript
+// Check current state snapshot
+monitor.printKnower();
+// Shows: states, watchers, total counts
+
+// Find duplicate subscriptions
+monitor.diagnose();
+// Warns about high watcher counts
+
+// Track action frequency
+monitor.printActionLog();
+// Shows which actions fire frequently
+```
+
+**Best Practice Summary:**
+- **Knower**: Cross-component state only, single source of truth per ID
+- **Doer**: Command execution, auto-registration for extensibility
+- **DOM-First**: Prefer direct manipulation for component-local concerns
+- **Monitor**: Use during development to catch issues early
+- **Review**: Check watcher counts and state churn in code reviews
 
 3. **Layout Elements (Optional)**
 

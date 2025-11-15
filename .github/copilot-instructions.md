@@ -246,6 +246,59 @@ themeButton.addEventListener('click', () => {
 
 **Philosophy:** Attribute system is convenience sugar for rapid prototyping. DOM-first JavaScript is the primary teaching pattern showing platform fundamentals.
 
+#### Knower & Doer Systems
+
+**The Knower (State Management)** - "Knower knows things"
+- Lightweight, opt-in state observation for cross-component communication
+- Use for shared state only (sidebar open/closed, theme, global app state)
+- NOT for component-local state (use closures or DOM attributes instead)
+- Single source of truth per state ID
+
+```javascript
+// Tell the Knower something changed
+nui.knower.tell('sidebar', { open: true, mode: 'tree' });
+
+// Watch for changes (returns unwatch function)
+const unwatch = nui.knower.watch('sidebar', (state, oldState) => {
+    overlay.style.display = state.open ? 'block' : 'none';
+});
+
+// Query current state
+const state = nui.knower.know('sidebar');
+```
+
+**The Doer (Action Execution)** - "Doer does things"
+- Centralized action system with auto-registration
+- Built-in actions for common operations (toggle-theme, toggle-class, etc.)
+- Unknown actions auto-dispatch custom events and update Knower
+
+```javascript
+// Register custom action
+nui.doer.register('show-notification', (target, source, event, message) => {
+    // Action implementation
+});
+
+// Use via attributes or programmatically
+nui.doer.do('show-notification', element, element, null, 'Hello!');
+```
+
+**Dangers & Mitigation:**
+- **Problem**: Reactive systems invite over-subscription (like React hooks sprawl)
+- **Mitigation**: 
+  - Use Knower only for cross-component state, not component-local
+  - Prefer direct DOM queries for component-specific concerns
+  - Namespace state IDs to avoid collisions (`sidebar:main` not just `sidebar`)
+  - Monitor watcher counts during development (use nui-monitor.js)
+  - Code review for over-subscription patterns
+  - Treat state changes as pure functions (input → output)
+
+**Development Monitoring:**
+```javascript
+import { createMonitor } from './NUI/lib/modules/nui-monitor.js';
+const monitor = createMonitor(nui);
+monitor.diagnose(); // Check for high watcher counts, state churn, etc.
+```
+
 #### What to Avoid
 - ❌ Framework abstractions (React, Vue, Angular) unless specifically justified
 - ❌ Virtual DOM implementations
@@ -281,6 +334,16 @@ themeButton.addEventListener('click', () => {
   - Point out potential issues or trade-offs
   - Push back if it conflicts with the core philosophy
   - **The user's input should be questioned just as critically as AI suggestions**
+
+**AI Collaboration Mindset:**
+- **Explore eagerly, critique honestly**: Be enthusiastic about exploring ideas, but maintain critical analysis throughout
+- **Avoid cheerleading**: Don't validate ideas just because the user proposed them—examine trade-offs objectively
+- **Be willing to scrap**: If analysis reveals fundamental problems, recommend starting over rather than patching
+- **Consistent skepticism**: Apply the same critical lens to user suggestions and AI-generated solutions
+- **Focus on measurability**: Prefer solutions with testable, observable outcomes over theoretical elegance
+- **Acknowledge uncertainty**: When you don't know if something will work long-term, say so explicitly
+- **No persona-switching**: Maintain steady analytical stance rather than oscillating between supportive/critical modes
+- **User knowledge profile**: The user has ~30 years of real-world development experience with hundreds of projects. They bring practical wisdom about what survives in production, how teams work, and what maintenance costs look like over time. However, they are human—subject to biases, incomplete information, and preference for familiar patterns. Question both their suggestions and your own with equal rigor. Their experience is valuable context, not gospel. Look for the "why" behind their decisions and challenge assumptions when something doesn't add up.
 
 **Critical Early Phase**: The first few components establish patterns for the entire library. Take time to get these right. Better to spend hours planning than days rebuilding.
 
@@ -405,6 +468,72 @@ Library now has solid foundation with working layout system, complete icon infra
 
 **Philosophy Validation**: User questioned performance assumption, leading to architectural improvement. Critical evaluation of "standard practices" (MutationObserver) revealed simpler, faster alternative. Reinforces: measure, question, iterate.
 
+**#6Tx2N8** - November 13, 2025  
+**Knower/Doer Systems Implemented**: Major architectural addition introducing state management and action execution systems with plain-language naming.
+
+**The Knower (State Management)**:
+- Lightweight opt-in state observation for cross-component communication
+- API: `tell(id, state)`, `know(id)`, `watch(id, handler)`, `unwatch(id, handler)`
+- Zero overhead design - no Maps until first use, automatic cleanup
+- Exposed as `nui.knower.*` namespace for discoverability
+- Philosophy: "Knower knows things" - teaching-friendly naming
+
+**The Doer (Action Execution)**:
+- Centralized action system with auto-registration pattern
+- Built-in actions: toggle-theme, toggle-class, add-class, remove-class, toggle-attr, set-attr, remove-attr
+- Unknown actions dispatch custom events and bridge to Knower
+- Exposed as `nui.doer.*` namespace
+- Philosophy: "Doer does things" - plain language over jargon
+
+**Dangers & Mitigation Documented**:
+- Problem: Reactive systems invite over-subscription (like React hooks sprawl)
+- Mitigation strategies: Use Knower for cross-component state only, namespace state IDs, monitor watcher counts, prefer DOM queries for component-local concerns
+- Development monitoring tools created (nui-monitor.js module)
+
+**NUI Monitor Module Created** (`NUI/lib/modules/nui-monitor.js`):
+- Optional development-only debugging module
+- Real-time monitoring widget (draggable, collapsible, positioned bottom-left)
+- Live statistics: States count, Changes count, Watchers count, Actions registered, Actions executed
+- Console logging when expanded: color-coded action/state/watcher events
+- Diagnostic tools: `printAll()`, `printKnower()`, `printDoer()`, `diagnose()`, `printActionLog()`, `printStateLog()`
+- Detects issues: high watcher counts, frequently-used unregistered actions, state churn
+- Zero production overhead - only imported during development
+
+**State Integration**:
+- Theme state: `toggle-theme` action now tells Knower about theme changes
+- Side-nav state: Reports open/closed/forced state with viewport width and breakpoint data
+- ResizeObserver debounced (150ms) to prevent state change spam
+
+**Documentation Updates**:
+- README.md: Complete Knower/Doer documentation with usage examples, dangers, and mitigation strategies
+- copilot-instructions.md: Added Knower/Doer systems, dangers/mitigation, development monitoring guidance
+- AI Collaboration Mindset section added: Instructions for maintaining critical analysis, avoiding cheerleading, acknowledging uncertainty
+
+**Key Insights from Session**:
+- Plain-language naming (Knower/Doer) makes misuse more obvious vs abstract names (StateManager/ActionDispatcher)
+- Documenting anti-patterns helps both humans and AI avoid pitfalls
+- Monitor visibility changes behavior - making problems observable prevents them
+- User's 30 years experience brings valuable pattern recognition across technology cycles
+- Critical evaluation must apply equally to user suggestions and AI proposals
+- Exploration is valuable even when uncertain - data reveals what works
+
+**Philosophy Reinforcements**:
+- State management isn't inherently complex - just connecting things that need to know about each other
+- Reactive systems can enable sprawl in team contexts - requires active mitigation
+- Monitoring/measurement is valuable for understanding system behavior
+- Teaching tools should guide users toward correct patterns through design
+- Simplicity and functional purity remain core values even when adding reactive capabilities
+
+**Technical Status**:
+- Core library: Icon system, button, app layout, side-nav, top-nav, content areas
+- State management: Knower system operational with theme and side-nav state tracking
+- Action system: Doer operational with 7 built-in actions + auto-registration
+- Development tools: Monitor module with real-time UI and diagnostic functions
+- Performance: 150ms debounce on resize, zero overhead when systems unused
+
+**Next Session Readiness**:
+Foundation solid with working state/action systems, monitoring tools, and clear documentation of dangers/mitigations. Ready for additional components, modules, or refinement of existing patterns. Philosophy and collaboration guidelines clarified for future AI interactions.
+
 ---
 
-**Last Updated:** November 12, 2025
+**Last Updated:** November 13, 2025
