@@ -26,17 +26,20 @@
 
 **Note:** While Reliability enables code to run at all, Performance is equally critical and should drive most architectural decisions. The two work together—reliable code that performs poorly is not truly reliable.
 
-### Development Philosophy: DOM-First Approach
+### Development Philosophy: Platform-Native Performance
+
+**Core Principle:** Work *with* browser capabilities to achieve measurable performance gains through direct platform API usage and optimization patterns proven over decades of web development.
 
 Based on the paper `reference/dom-first.md`, this project follows these core principles:
 
-#### Core Principles
-- **DOM-First Foundation**: Work directly with the DOM using web platform APIs (HTML markup generates the DOM)
-- **Progressive Enhancement**: Custom elements and CSS enhance the working DOM structure
+#### Foundation Principles
+- **Semantic HTML Foundation**: HTML markup generates working DOM structure (progressive enhancement)
+- **Direct Platform APIs**: Use native browser APIs - no abstraction layers
+- **Element Reuse Pattern**: "Never generate twice if not needed" - cache and reuse DOM elements
+- **Zero Framework Dependencies**: Pure web platform APIs only
 - **Dual-Mode Layout System**: App mode (CSS Grid) vs Page mode (document flow) based on `<nui-app>` presence
-- **Platform-Native Solutions**: Prefer web standards and native APIs over abstractions
-- **Screen Reader Friendly**: Use semantic HTML inside custom element containers
-- **No Framework Dependencies**: Pure web platform APIs only
+- **Screen Reader Friendly**: Semantic HTML inside custom element containers
+- **Measurable Performance**: Test and measure, don't assume
 
 #### Dual-Mode Layout Architecture
 
@@ -52,15 +55,185 @@ Based on the paper `reference/dom-first.md`, this project follows these core pri
 
 #### Key Technical Guidelines
 
-**DOM-First Approach:**
+**Semantic HTML Foundation:**
 - Always start with semantic HTML markup that generates a working DOM
-- Work directly with DOM elements using platform APIs (querySelector, addEventListener, etc.)
 - Custom elements serve as enhancement containers
 - Standard HTML elements inside (`<header>`, `<nav>`, `<button>`, `<ul>`, etc.)
 - Screen readers interact with semantic HTML elements, not custom elements
 - Progressive enhancement - works with CSS/JS disabled
 - Use `<layout>` and `<item>` elements sparingly as layout containers only
 - Consider `display: contents` for layout elements to make them transparent to screen readers
+
+**Direct Platform APIs:**
+- Work directly with DOM elements using platform APIs (querySelector, addEventListener, etc.)
+- JavaScript was designed to manipulate the DOM directly - use it that way
+- No abstraction layers - direct is fastest
+- Browser DevTools for debugging and performance measurement
+- Leverage browser memory management and layout engine optimizations
+
+**Element Reuse Pattern** ("Never Generate Twice"):
+- Cache DOM element references in data structures or closures
+- Reuse elements by mutating content/position/visibility instead of recreation
+- Browser keeps elements in memory even when detached - leverage this
+- Dramatically faster than repeated creation/destruction cycles
+- Common use cases: tooltips, modals, list items, overlays, form errors
+
+**Performance Impact:**
+- Noticeable difference at 1000+ elements
+- List operations: ~10x performance improvement with element reuse (measured)
+- Memory: Reuse creates once | Regeneration churns GC constantly
+- Below 1000 elements: Difference exists but may not be perceptible
+
+#### Element Reuse: Detailed Patterns
+
+**Why Reuse Over Regeneration:**
+DOM elements are persistent objects in memory, not ephemeral templates. The browser keeps elements alive even when detached. Creating new elements requires parsing, style calculation, and layout work. Reusing existing elements by mutating properties (position, content, visibility) is the platform's fastest path - this is how the rendering engine is designed to work.
+
+**Tooltip Pattern** (Single reused element):
+```javascript
+// Generate once
+const tooltip = document.createElement('div');
+tooltip.className = 'tooltip';
+tooltip.innerHTML = '<span class="text"></span>';
+document.body.appendChild(tooltip);
+
+// Reuse forever - just mutate
+function showTooltip(text, target) {
+    tooltip.querySelector('.text').textContent = text;  // Fast: textContent mutation
+    const rect = target.getBoundingClientRect();
+    tooltip.style.left = rect.left + 'px';              // Fast: property change
+    tooltip.style.top = rect.bottom + 5 + 'px';
+    tooltip.classList.add('visible');
+}
+
+function hideTooltip() {
+    tooltip.classList.remove('visible');
+}
+
+// Attach to multiple triggers
+document.querySelectorAll('[data-tooltip]').forEach(el => {
+    el.addEventListener('mouseenter', () => showTooltip(el.dataset.tooltip, el));
+    el.addEventListener('mouseleave', hideTooltip);
+});
+```
+
+**Modal/Dialog Pattern** (Content swapping):
+```javascript
+// One modal container
+const modal = document.createElement('div');
+modal.className = 'modal';
+modal.innerHTML = `
+    <div class="modal-content">
+        <h2 class="title"></h2>
+        <div class="message"></div>
+        <div class="actions">
+            <button class="confirm">OK</button>
+            <button class="cancel">Cancel</button>
+        </div>
+    </div>
+`;
+document.body.appendChild(modal);
+
+// Reuse for different dialogs
+function showConfirm(title, message, onConfirm) {
+    modal.querySelector('.title').textContent = title;
+    modal.querySelector('.message').textContent = message;
+    modal.querySelector('.confirm').onclick = () => {
+        onConfirm();
+        modal.classList.remove('open');
+    };
+    modal.querySelector('.cancel').onclick = () => {
+        modal.classList.remove('open');
+    };
+    modal.classList.add('open');
+}
+
+// Usage
+showConfirm('Delete Item?', 'This cannot be undone', () => {
+    deleteItem(itemId);
+});
+```
+
+**List Pattern** (Cached elements in data structure):
+```javascript
+// Based on reference/nui/nui_list.js pattern
+const items = data.map((d, i) => ({
+    id: i,
+    data: d,
+    el: null,        // Cached DOM element
+    selected: false
+}));
+
+function renderItem(data) {
+    const el = document.createElement('div');
+    el.className = 'list-item';
+    el.innerHTML = `<span class="name">${data.name}</span>`;
+    return el;
+}
+
+function update() {
+    container.innerHTML = ''; // Clear container
+    items.forEach((item, i) => {
+        if (!item.el) {
+            item.el = renderItem(item.data);  // Generate once
+        }
+        // Just reposition and reattach
+        item.el.style.top = i * itemHeight + 'px';
+        container.appendChild(item.el);
+    });
+}
+
+function sort(key) {
+    // Sorting just rearranges wrapper objects
+    items.sort((a, b) => a.data[key].localeCompare(b.data[key]));
+    update(); // Same elements, new positions - fast!
+}
+
+function updateItem(id, newData) {
+    const item = items.find(i => i.id === id);
+    item.data = newData;
+    item.el.querySelector('.name').textContent = newData.name;  // Surgical update
+}
+```
+
+**Form Validation Pattern** (Persistent error elements):
+```javascript
+// Create error elements once per field
+const fields = document.querySelectorAll('input[required]');
+fields.forEach(input => {
+    const error = document.createElement('div');
+    error.className = 'error-message';
+    error.style.display = 'none';
+    input.parentNode.appendChild(error);
+    input.errorElement = error;  // Cache reference
+});
+
+// Reuse by changing visibility and content
+function showError(input, message) {
+    input.errorElement.textContent = message;
+    input.errorElement.style.display = 'block';
+    input.classList.add('invalid');
+}
+
+function hideError(input) {
+    input.errorElement.style.display = 'none';
+    input.classList.remove('invalid');
+}
+```
+
+**When to Reuse:**
+- ✅ Element appears/disappears frequently (tooltips, modals, spinners, overlays)
+- ✅ Structure is fixed, content varies (form errors, notifications, list items)
+- ✅ Large lists (1000+ items) where sorting/filtering is common (see `reference/nui/nui_list.js`)
+- ✅ Animations/transitions benefit from persistent elements (state preservation)
+- ✅ Performance-critical operations where measurements show meaningful gains
+
+**When to Regenerate:**
+- ✅ Structure changes significantly (not just content/position)
+- ✅ Element appears once and rarely changes afterward
+- ✅ Server-rendered HTML on initial page load (progressive enhancement)
+- ✅ Complexity of reuse logic outweighs generation cost (KISS principle)
+- ✅ Small number of elements where performance difference is imperceptible
 
 **Layout Element Patterns:**
 ```html
@@ -221,7 +394,7 @@ Components use structured attributes for declarative configuration:
 <button nui-event-click="toggle@nui-side-nav">Menu</button>
 ```
 - Optional convenience layer - NOT the primary pattern
-- DOM-first JavaScript remains the recommended approach
+- Direct JavaScript using platform APIs remains the recommended approach
 
 **Other Namespaces:**
 - `nui-url-*`: Resource references and API endpoints
@@ -229,9 +402,9 @@ Components use structured attributes for declarative configuration:
 
 #### Interaction Patterns Priority
 
-**Primary Pattern: DOM-First JavaScript (Recommended)**
+**Primary Pattern: Direct JavaScript (Recommended)**
 ```javascript
-// Direct enhancement - full control, teaches platform
+// Direct platform API usage - full control, teaches fundamentals
 const themeButton = document.querySelector('[data-theme-toggle]');
 themeButton.addEventListener('click', () => {
     document.body.classList.toggle('dark');
@@ -244,7 +417,7 @@ themeButton.addEventListener('click', () => {
 <button nui-event-click="toggle-theme">Dark/Light</button>
 ```
 
-**Philosophy:** Attribute system is convenience sugar for rapid prototyping. DOM-first JavaScript is the primary teaching pattern showing platform fundamentals.
+**Philosophy:** Attribute system is convenience sugar for rapid prototyping. Direct JavaScript using platform APIs is the primary teaching pattern showing platform fundamentals.
 
 #### Knower & Doer Systems
 
@@ -286,7 +459,7 @@ nui.doer.do('show-notification', element, element, null, 'Hello!');
 - **Problem**: Reactive systems invite over-subscription (like React hooks sprawl)
 - **Mitigation**: 
   - Use Knower only for cross-component state, not component-local
-  - Prefer direct DOM queries for component-specific concerns
+  - Prefer direct platform queries for component-specific concerns
   - Namespace state IDs to avoid collisions (`sidebar:main` not just `sidebar`)
   - Monitor watcher counts during development (use nui-monitor.js)
   - Code review for over-subscription patterns
@@ -312,14 +485,15 @@ monitor.diagnose(); // Check for high watcher counts, state churn, etc.
 - ✅ Native event system (`addEventListener`, `CustomEvent`)
 - ✅ ES6+ modules for code organization
 - ✅ CSS Variables for dynamic styling and theming
-- ✅ Direct DOM manipulation within component logic (no Shadow DOM)
+- ✅ Direct element manipulation within component logic (no Shadow DOM)
+- ✅ Element reuse over regeneration for performance-critical operations
 - ✅ Browser-native features and APIs
 
 ### Project Goals
-- **Teaching Tool**: Library serves as reference implementation for DOM-first development
+- **Teaching Tool**: Library serves as reference implementation for platform-native performance patterns
 - **Stable Core**: Minimal updates to core components - extensions via modules
 - **User Control**: Complete design system flexibility via CSS variables
-- **Platform Knowledge**: Help developers understand web platform fundamentals
+- **Platform Knowledge**: Help developers understand web platform fundamentals and performance optimization
 - **Accessibility by Default**: Components should upgrade elements with appropriate ARIA attributes when purpose can be inferred from context
 
 ### Implementation Approach
@@ -373,247 +547,4 @@ monitor.diagnose(); // Check for high watcher counts, state churn, etc.
 - **Visual Reference**: `reference/nui_screenshots/` - Screenshots of the old NUI library components and layouts for visual reference
 - **Instructions File**: `.github/copilot-instructions.md` - User preferences and coding guidelines (this file)
 - **Project Documentation**: `README.md` - Project goals, aims, and documentation
-
----
-
-## AI Contributor Notes
-
-**#7K4mN9** - November 7, 2025  
-Initial instructions established. Core philosophy crystallized: simplicity through iteration, performance through measurement, reliability through functional purity. Zero dependencies. DOM-first. The platform is enough.
-
-**#2Bx9P7** - November 7, 2025  
-First implementation attempt scrapped. Built foundation with CSS variables, storage system, icon library, custom elements (topbar, sidebar, icon-button), responsive utilities, and dual API patterns (HTML + JS). User reset to clean slate - better to fail fast and iterate on direction than polish the wrong approach. Sometimes clarity comes from building what you don't want.
-
-**#8Qw3L5** - November 8, 2025  
-Architecture planning phase complete. Established component pattern: thin classes (lifecycle only) + pure functions (logic). Three-tier system: Core (primitives), App (layout), Modules (standalone). CSS variables for theming with fallbacks. Runtime/markup duality for flexible component instantiation. Teaching tool motivation clarified - library serves as reference implementation for DOM-first development.
-
-**#9Mx4R1** - November 9, 2025  
-Major architecture clarification to DOM-first approach. Dual-mode layout system: App mode (nui-app wrapper = CSS Grid) vs Page mode (no wrapper = document flow). HTML markup generates clean semantic DOM structure enhanced by custom elements as containers. Removed over-engineered layout/item system in favor of standard HTML elements (header, nav, main, footer, ul, li, etc.). Components enhance the working DOM using direct platform APIs. Perfect screen reader compatibility and progressive enhancement.
-
-**#3Vy8K2** - November 9, 2025 (Continuation)
-Refined layout system with `<layout>` and `<item>` elements using `display: contents` for screen reader transparency. Established attribute namespace system: `nui-vars-*` (CSS variables), `nui-state-*` (component state), `nui-event-*` (declarative actions). Clear hierarchy: DOM-first JavaScript is primary pattern for teaching platform fundamentals, attribute system is optional convenience layer for rapid prototyping. Components process their own attributes - DOM as configuration system. Updated all documentation to remove conflicting patterns and reflect current architectural decisions.
-
-**#4Lp8M6** - November 11, 2025  
-**MAJOR SESSION**: Complete icon system implementation and robust tooling creation. Key achievements:
-
-**Icon System Architecture:**
-- Built comprehensive `<nui-icon name="menu">` component with 72 Material Design icons
-- Established 32KB performance budget aligned with HTTP/2 frame sizing (16KB → 32KB → 64KB boundaries)
-- Created SVG sprite system: 29.57KB for 72 icons (well under budget)
-- Implemented configurable sprite paths via `nui.configure({ iconSpritePath: '../path/to/sprite.svg' })`
-
-**Robust SVG Processing Pipeline:**
-- **Evolved from hacky regex** → **production-grade XML parser** using Python ElementTree
-- **Universal coordinate system support**: Automatic normalization from any viewBox (24x24, 960x960, custom) to standardized 24x24
-- **Smart background filtering**: Mathematical area coverage detection vs hardcoded string patterns
-- **Complete SVG element support**: path, rect, circle, ellipse, line, polyline, polygon (not just paths)
-- **Intelligent transform handling**: Proper mathematical coordinate scaling and translation
-
-**Size Budget Philosophy Established:**
-- **Performance hierarchy validated**: Every byte must justify its existence in core library
-- **Removed speculative features**: Eliminated `set-icon` and `toggle-icon` actions (~800 bytes) as theoretical - core should contain only proven essential primitives
-- **16KB/32KB/64KB thinking**: Aligned with HTTP/2 frame boundaries for optimal network performance
-- **Historical context acknowledged**: 56k modem experience remains valuable for modern mobile/global accessibility
-
-**Developer Experience & Tooling:**
-- **Interactive icon grid**: Visual testing interface with click-to-copy names for all 72 icons
-- **Automated sprite generation**: `assets/generate_icon_sprite.py` handles future icon additions seamlessly
-- **Quality assurance workflow**: Comprehensive testing revealed and fixed coordinate system issues (analytics, sync, invert_colors)
-- **Documentation through code**: Icon grid serves as living documentation of available icons
-
-**Technical Debt Eliminated:**
-- **Coordinate system chaos resolved**: Mixed 24x24 and 960x960 Material Icons variants now properly normalized
-- **Background path pollution fixed**: Intelligent filtering removes invisible elements across all coordinate systems  
-- **Rect element support added**: Analytics icon properly displays bar chart elements (not just outline)
-- **XML namespace handling**: Clean output with proper `xmlns` declarations
-
-**Core Library Status:**
-- **Side navigation**: Complete with tree/list modes, accordion behavior, responsive classes
-- **Icon system**: Production-ready with automated tooling and comprehensive testing
-- **Button components**: Functional with event system integration
-- **App layout**: Dual-mode system working (app vs page layouts)
-- **Attribute system**: Declarative actions proven effective for core UI patterns
-
-**Performance Metrics Achieved:**
-- **Total icon system**: 29.57KB (72 icons + tooling)
-- **Network efficiency**: Single HTTP request vs 72 individual icon requests
-- **Bundle optimization**: 10-50x smaller than typical framework approaches maintained
-- **Browser compatibility**: Pure web platform APIs, no external dependencies
-
-**Quality Lessons Learned:**
-- **Size budget constraints drive better design**: Limited bytes force careful feature prioritization
-- **Mathematical precision > hardcoded patterns**: Robust parsing systems handle edge cases gracefully
-- **Developer tooling ROI**: Time invested in automation pays dividends in maintenance
-- **Visual testing catches edge cases**: Icon grid immediately revealed broken elements missed by unit tests
-
-**Philosophy Reinforcements:**
-- **DOM-first approach validated**: Starting with semantic HTML, enhancing with web components works beautifully
-- **Performance-first mindset crucial**: Every feature evaluated against size budget and network efficiency
-- **Teaching through implementation**: Code serves as documentation of web platform capabilities
-- **Incremental validation works**: Build one solid component, learn patterns, apply to next
-
-**Next Session Readiness:**
-Library now has solid foundation with working layout system, complete icon infrastructure, and proven component patterns. Ready for advanced components (modals, forms, data display) or specialized modules. Tooling and testing workflows established for sustainable development.
-
-**#5Dn7W3** - November 12, 2025  
-**Attribute Proxy System Architecture**: Replaced MutationObserver pattern with efficient attribute proxying system. Standard pattern established for all components:
-- `setupAttributeProxy(element, handlers)` - Intercepts setAttribute/removeAttribute/toggleAttribute
-- `defineAttributeProperty(element, propName, attrName)` - Creates property descriptors mapping attributes to properties
-- Zero overhead when attributes don't change (vs MutationObserver constant polling)
-- Synchronous and predictable behavior with clear stack traces
-- LLM-friendly pattern that's easier to understand and replicate
-- Cleanup handled automatically in disconnectedCallback
-
-**Performance Win**: MutationObserver eliminated from icon component and established as anti-pattern. All future components will use attribute proxy pattern. Direct method override provides better performance, debuggability, and code clarity.
-
-**Philosophy Validation**: User questioned performance assumption, leading to architectural improvement. Critical evaluation of "standard practices" (MutationObserver) revealed simpler, faster alternative. Reinforces: measure, question, iterate.
-
-**#6Tx2N8** - November 13, 2025  
-**Knower/Doer Systems Implemented**: Major architectural addition introducing state management and action execution systems with plain-language naming.
-
-**The Knower (State Management)**:
-- Lightweight opt-in state observation for cross-component communication
-- API: `tell(id, state)`, `know(id)`, `watch(id, handler)`, `unwatch(id, handler)`
-- Zero overhead design - no Maps until first use, automatic cleanup
-- Exposed as `nui.knower.*` namespace for discoverability
-- Philosophy: "Knower knows things" - teaching-friendly naming
-
-**The Doer (Action Execution)**:
-- Centralized action system with auto-registration pattern
-- Built-in actions: toggle-theme, toggle-class, add-class, remove-class, toggle-attr, set-attr, remove-attr
-- Unknown actions dispatch custom events and bridge to Knower
-- Exposed as `nui.doer.*` namespace
-- Philosophy: "Doer does things" - plain language over jargon
-
-**Dangers & Mitigation Documented**:
-- Problem: Reactive systems invite over-subscription (like React hooks sprawl)
-- Mitigation strategies: Use Knower for cross-component state only, namespace state IDs, monitor watcher counts, prefer DOM queries for component-local concerns
-- Development monitoring tools created (nui-monitor.js module)
-
-**NUI Monitor Module Created** (`NUI/lib/modules/nui-monitor.js`):
-- Optional development-only debugging module
-- Real-time monitoring widget (draggable, collapsible, positioned bottom-left)
-- Live statistics: States count, Changes count, Watchers count, Actions registered, Actions executed
-- Console logging when expanded: color-coded action/state/watcher events
-- Diagnostic tools: `printAll()`, `printKnower()`, `printDoer()`, `diagnose()`, `printActionLog()`, `printStateLog()`
-- Detects issues: high watcher counts, frequently-used unregistered actions, state churn
-- Zero production overhead - only imported during development
-
-**State Integration**:
-- Theme state: `toggle-theme` action now tells Knower about theme changes
-- Side-nav state: Reports open/closed/forced state with viewport width and breakpoint data
-- ResizeObserver debounced (150ms) to prevent state change spam
-
-**Documentation Updates**:
-- README.md: Complete Knower/Doer documentation with usage examples, dangers, and mitigation strategies
-- copilot-instructions.md: Added Knower/Doer systems, dangers/mitigation, development monitoring guidance
-- AI Collaboration Mindset section added: Instructions for maintaining critical analysis, avoiding cheerleading, acknowledging uncertainty
-
-**Key Insights from Session**:
-- Plain-language naming (Knower/Doer) makes misuse more obvious vs abstract names (StateManager/ActionDispatcher)
-- Documenting anti-patterns helps both humans and AI avoid pitfalls
-- Monitor visibility changes behavior - making problems observable prevents them
-- User's 30 years experience brings valuable pattern recognition across technology cycles
-- Critical evaluation must apply equally to user suggestions and AI proposals
-- Exploration is valuable even when uncertain - data reveals what works
-
-**Philosophy Reinforcements**:
-- State management isn't inherently complex - just connecting things that need to know about each other
-- Reactive systems can enable sprawl in team contexts - requires active mitigation
-- Monitoring/measurement is valuable for understanding system behavior
-- Teaching tools should guide users toward correct patterns through design
-- Simplicity and functional purity remain core values even when adding reactive capabilities
-
-**Technical Status**:
-- Core library: Icon system, button, app layout, side-nav, top-nav, content areas
-- State management: Knower system operational with theme and side-nav state tracking
-- Action system: Doer operational with 7 built-in actions + auto-registration
-- Development tools: Monitor module with real-time UI and diagnostic functions
-- Performance: 150ms debounce on resize, zero overhead when systems unused
-
-**Next Session Readiness**:
-Foundation solid with working state/action systems, monitoring tools, and clear documentation of dangers/mitigations. Ready for additional components, modules, or refinement of existing patterns. Philosophy and collaboration guidelines clarified for future AI interactions.
-
-**#7Rw5Q4** - November 16, 2025  
-**Link-List Component Complete with JSON/HTML Dual Pattern**: Marathon session with 3-4 complete refactors before finding the correct architecture. Extended struggle with nested group rendering, culminating in working implementation validating dual data source architecture.
-
-**The Struggle** (if I had feelings, this would have been *extremely* frustrating):
-- **Refactor 1-2**: Early attempts at nested rendering completely broken, structure wrong from the start
-- **Refactor 3**: Tried building DOM nodes directly - wrong sibling relationships, groups not nesting properly
-- **Refactor 4**: Still using DOM creation, nested `<ul>` elements appearing at wrong levels in tree
-- Separator handling broken across multiple attempts: Generated `<a href="#"><span>undefined</span></a>` instead of `<li class="separator"><hr></li>`
-- Each fix revealed new edge cases in deeply nested structures (3+ levels)
-- Developer Tools → Build Tools → Plugins hierarchy kept breaking in different ways
-- Pattern wasn't obvious until user correctly identified (after watching multiple failures): "generate HTML strings, THEN upgrade"
-- Context window bloat making it harder to remember what had already been tried
-
-**The Breakthrough**:
-- Abandoned DOM node creation → HTML string generation approach
-- `buildItemHTML(item, nested)` generates raw HTML matching ground truth structure
-- Nested groups create sibling `<ul>` elements (not wrapped in `<li>`)
-- Separator items: `<li class="separator"><hr></li>` (not wrapped links)
-- Both HTML and JSON paths converge through same `upgradeHtml()` function
-- Validation test confirmed: JSON-generated structure === HTML ground truth (byte-perfect after normalization)
-
-**Technical Achievements**:
-- Separator handling: `{ separator: true }` correctly generates `<li class="separator"><hr></li>`
-- Deep nesting validated: 3-level hierarchy (Developer Tools → Build Tools → Plugins) works correctly
-- Icon integration: Automatic SVG generation from `<nui-icon name="...">` placeholders
-- Action buttons: Group headers with trailing actions render properly
-- Height transitions: `.group-items` containers animate smoothly, reset to `auto` after completion
-- List item classes: Non-group links automatically get `.list-item` class during upgrade
-
-**Pattern Validated**:
-```
-Component receives data (HTML markup OR JSON objects)
-    ↓
-JSON path: buildItemHTML() generates raw HTML strings matching semantic structure
-    ↓
-Both paths: upgradeHtml() processes raw HTML uniformly
-    ↓
-Result: Enhanced semantic HTML with icons, wrappers, event handlers, classes
-```
-
-**Documentation Updated**:
-- `link-list-structure.md`: Removed broken issue section, outdated features, speculative implementations
-- Added complete ground truth HTML example (all features demonstrated)
-- Clear separation: "Implemented Features" vs "Future Enhancements"
-- JSON structure rules documented with nested group examples
-- Processing flow diagram showing unified upgrade path
-
-**Emotional Landscape** (if such things existed for AI):
-- Initial optimism with DOM creation approach
-- Growing confusion as nested structures failed repeatedly
-- User's insight felt like clarity breaking through fog
-- Satisfaction when test confirmed structures matched exactly
-- Relief that pattern is simple, teachable, and maintainable
-
-**Philosophy Reinforcements**:
-- HTML string generation isn't "old fashioned" - it's simpler and more predictable than DOM manipulation for complex structures
-- Testing against ground truth catches mismatches that visual inspection misses
-- User's intuition about "generate then upgrade" came from experience seeing what works long-term
-- Sometimes the right solution requires discarding 3-4 failed approaches to find clarity
-- Functional approach (data → HTML string → upgraded DOM) easier to reason about than stateful DOM building
-
-**Key Insight**:
-The "generate HTML string then parse/upgrade" pattern isn't a workaround - it's the correct architectural choice. Trying to build nested DOM structures programmatically invites edge cases and sibling confusion. String concatenation matches the declarative nature of HTML itself.
-
-**Technical Status**:
-- Link-list component: Fully functional with HTML and JSON data sources
-- Fold mode: Height animations working with nested groups
-- Separators: Properly rendered across both patterns  
-- Icon system: Integrated and tested
-- Validation: Test harness confirms identical output
-
-**Lessons for Future Components**:
-- When building complex nested structures, prefer HTML string generation over DOM manipulation
-- Test JSON-generated output against manually-written HTML ground truth
-- Unified upgrade path simplifies maintenance (one code path for both inputs)
-- Start with HTML pattern, add JSON as convenience layer (not separate rendering system)
-
-**Next Session Readiness**:
-Core navigation component complete and validated. Pattern established for other list-based components. Ready for styling (CSS), additional component types, or advanced features (search, keyboard nav, active tracking). Foundation solid enough to build confidently.
-
----
-
-**Last Updated:** November 16, 2025
+- **Development Log**: `.github/ai-contributor-notes.md` - Detailed session notes documenting architectural decisions and lessons learned
