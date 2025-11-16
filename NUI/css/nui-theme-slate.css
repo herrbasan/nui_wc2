@@ -29,6 +29,12 @@
 	--system-ui: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
 }
 
+/* ################################# UTILITY CLASSES */
+
+.nui-hidden {
+	display: none !important;
+}
+
 :root {
 	--color-base: light-dark(rgb(255,255,255), rgb(0,0,0));
 	--color-contrast: light-dark(rgb(0,0,0), rgb(255,255,255));
@@ -220,24 +226,69 @@ ul {
 	padding-left: 0;
 }
 
-ul ul {
-	padding-left: var(--nui-space-double);
+/* Container for collapsible group items */
+.group-items {
+	overflow: hidden;
+	transition: height 0.2s ease-out;
+	height: 0;
+}
+
+/* Background for expanded group container */
+.group-header[aria-expanded="true"] + .group-items {
+	background-color: light-dark(rgb(235, 235, 235), rgb(45, 45, 45));
+}
+
+/* Indentation for items in expanded groups */
+.group-items > li {
+	padding-left: calc(var(--nui-space) * 2);
 }
 
 ul li {
-	list-style: none;
-	padding-left: var(--nui-space-half);
-	padding-right: var(--nui-space-half);
-	padding-top: var(--nui-space-quarter);
-	padding-bottom: var(--nui-space-quarter);
-	line-height: normal;
-}
-
-ul li.group-header {
 	display: flex;
 	align-items: center;
 	gap: var(--nui-space-half);
+	min-height: var(--nui-space-double);
+	padding-left: var(--nui-space);
+	padding-right: var(--nui-space);
+	padding-top: var(--nui-space-quarter);
+	padding-bottom: var(--nui-space-half);
+	cursor: pointer;
+	user-select: none;
+	color: var(--text-color);
+	opacity: 0.7;
+	transition: opacity 0.2s, background-color 0.2s;
 }
+
+ul li.group-header:hover {
+	opacity: 1;
+	background-color: light-dark(rgb(245, 245, 245), rgb(50, 50, 50));
+}
+
+ul li.group-header[aria-expanded="true"] {
+	opacity: 1;
+	background-color: light-dark(rgb(240, 240, 240), rgb(48, 48, 48));
+}
+
+ul li.group-header[aria-expanded="true"] + ul > li a:hover {
+	background-color: light-dark(rgb(240, 240, 240), rgb(55, 55, 55));
+}
+
+ul li.group-header[aria-expanded="true"] + ul > li a.active {
+	background-color: light-dark(rgb(230, 235, 240), rgb(60, 65, 70));
+	border-left: 0.3rem solid var(--color-highlight);
+}
+
+ul li.group-header > span:first-child {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	gap: var(--nui-space-half);
+	text-decoration: none;
+	color: inherit;
+}
+
+/* Remove chevron styling */
 
 ul li a,
 ul li.group-header > span:first-child {

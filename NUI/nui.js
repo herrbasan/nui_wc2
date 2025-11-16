@@ -179,6 +179,39 @@ function defineAttributeProperty(element, propName, attrName = propName) {
 	});
 }
 
+// ################################# DOM UTILITIES
+
+const dom = {
+	create(tag, attributes = {}, children = []) {
+		const element = document.createElement(tag);
+		Object.entries(attributes).forEach(([key, value]) => {
+			if (value !== null && value !== undefined) {
+				element.setAttribute(key, value);
+			}
+		});
+		children.forEach(child => {
+			if (typeof child === 'string') {
+				element.appendChild(document.createTextNode(child));
+			} else if (child) {
+				element.appendChild(child);
+			}
+		});
+		return element;
+	},
+	
+	icon(name) {
+		const icon = document.createElement('nui-icon');
+		icon.setAttribute('name', name);
+		return icon;
+	},
+	
+	span(text) {
+		const span = document.createElement('span');
+		if (text) span.textContent = text;
+		return span;
+	}
+};
+
 // ################################# COMPONENT FACTORY
 
 function createComponent(tagName, setupFn, cleanupFn) {
@@ -628,10 +661,312 @@ registerComponent('nui-side-nav', (element) => {
 });
 
 registerComponent('nui-link-list', (element) => {
-	const listContainer = element.querySelector('ul');
-	if (!listContainer) return;
-	
 	const mode = element.getAttribute('mode') || 'tree';
+	let activeItem = null;
+	let searchCache = null;
+	
+	element.loadData = (data) => {
+		element.innerHTML = '';
+		data.forEach(item => {
+			element.innerHTML += buildItemHTML(item);
+		});
+		upgradeHtml();
+		if (mode === 'fold') {
+			element.querySelectorAll('.group-header').forEach(header => {
+				header.setAttribute('tabindex', '0');
+				header.setAttribute('role', 'button');
+				initialCollapseGroup(header);
+			});
+		}
+	};
+	
+	function buildItemHTML(item, nested = false) {
+		if (item.separator) {
+			return '<li class="separator"><hr></li>';
+		}
+		
+		if (item.items) {
+			let html = nested ? '<ul>' : '<ul>';
+			html += buildGroupHeaderHTML(item);
+			
+			item.items.forEach(child => {
+				if (child.separator) {
+					html += buildItemHTML(child, true);
+				} else if (child.items) {
+					html += buildItemHTML(child, true);
+				} else {
+					html += buildLinkItemHTML(child);
+				}
+			});
+			
+			html += nested ? '</ul>' : '</ul>';
+			return html;
+		} else {
+			return nested ? buildLinkItemHTML(item) : '<ul>' + buildLinkItemHTML(item) + '</ul>';
+		}
+	}
+	
+	function buildGroupHeaderHTML(item) {
+		let html = '<li class="group-header"><span>';
+		if (item.icon) html += `<nui-icon name="${item.icon}"></nui-icon>`;
+		html += `<span>${item.label}</span>`;
+		html += '</span>';
+		
+		if (item.action) {
+			html += `<button type="button" class="action" nui-event-click="${item.action}">`;
+			html += '<nui-icon name="settings"></nui-icon>';
+			html += '</button>';
+		}
+		
+		html += '</li>';
+		return html;
+	}
+	
+	function buildLinkItemHTML(item) {
+		let html = '<li>';
+		html += `<a href="${item.href || '#'}"`;
+		if (item.event) html += ` nui-event-click="${item.event}"`;
+		html += '>';
+		if (item.icon) html += `<nui-icon name="${item.icon}"></nui-icon>`;
+		html += `<span>${item.label}</span>`;
+		html += '</a>';
+		html += '</li>';
+		return html;
+	}
+	
+	// ##### FEATURE 2: ACTIVE ITEM TRACKING & FOLD MODE
+	
+	element.setActiveItem = (selector) => {
+		const item = typeof selector === 'string' ? element.querySelector(selector) : selector;
+		if (!item) return;
+		
+		if (activeItem) activeItem.classList.remove('active');
+		activeItem = item;
+		item.classList.add('active');
+		
+		let parent = item.closest('ul');
+		while (parent && element.contains(parent)) {
+			const header = parent.querySelector(':scope > .group-header');
+			if (header) setGroupState(header, true);
+			parent = parent.parentElement?.closest('ul');
+		}
+	};
+	
+	element.clearActive = () => {
+		if (activeItem) {
+			activeItem.classList.remove('active');
+			activeItem = null;
+		}
+	};
+	
+	function setGroupState(header, expand) {
+		header.setAttribute('aria-expanded', expand);
+		const container = header.nextElementSibling;
+		if (!container?.classList.contains('group-items')) return;
+		
+		if (expand) {
+			container.style.height = container.scrollHeight + 'px';
+		} else {
+			if (container.style.height === '' || container.style.height === 'auto') {
+				container.style.height = container.scrollHeight + 'px';
+				container.offsetHeight;
+			}
+			container.style.height = '0px';
+		}
+		
+		if (container._nuiHeightHandler) {
+			container.removeEventListener('transitionend', container._nuiHeightHandler);
+		}
+		container._nuiHeightHandler = (e) => {
+			if (e.target !== container || e.propertyName !== 'height') return;
+			container.style.height = header.getAttribute('aria-expanded') === 'true' ? 'auto' : '0px';
+			container.removeEventListener('transitionend', container._nuiHeightHandler);
+			container._nuiHeightHandler = null;
+		};
+		container.addEventListener('transitionend', container._nuiHeightHandler);
+	}
+	
+	function toggleGroup(header) {
+		const expanded = header.getAttribute('aria-expanded') === 'true';
+		if (expanded) {
+			setGroupState(header, false);
+		} else {
+			if (mode === 'fold' && !header.closest('ul ul')) {
+				element.querySelectorAll(':scope > ul > .group-header').forEach(h => {
+					if (h !== header) setGroupState(h, false);
+				});
+			}
+			setGroupState(header, true);
+		}
+	}
+	
+	// ##### FEATURE 3: SEARCH/FILTER
+	
+	element.search = (query) => {
+		if (!searchCache) buildSearchCache();
+		
+		const q = query.toLowerCase().trim();
+		if (!q) {
+			element.clearSearch();
+			return;
+		}
+		
+		let visibleCount = 0;
+		
+		searchCache.forEach(entry => {
+			const matches = entry.text.includes(q);
+			entry.element.classList.toggle('nui-hidden', !matches);
+			
+			if (matches) {
+				visibleCount++;
+				// Show parent groups
+				let parent = entry.element.closest('ul');
+				while (parent && element.contains(parent)) {
+					parent.classList.remove('nui-hidden');
+					const header = parent.querySelector(':scope > .group-header');
+					if (header && mode === 'fold') setGroupState(header, true);
+					parent = parent.parentElement?.closest('ul');
+				}
+			}
+		});
+		
+		// Hide empty groups
+		element.querySelectorAll('.group-header').forEach(header => {
+			const ul = header.parentElement.querySelector(':scope > ul');
+			if (ul) {
+				const hasVisible = ul.querySelector('li:not(.nui-hidden)');
+				header.classList.toggle('nui-hidden', !hasVisible);
+			}
+		});
+		
+		element.setAttribute('data-search-active', 'true');
+		element.setAttribute('data-search-query', query);
+	};
+	
+	element.clearSearch = () => {
+		element.querySelectorAll('.nui-hidden').forEach(el => {
+			el.classList.remove('nui-hidden');
+		});
+		element.removeAttribute('data-search-active');
+		element.removeAttribute('data-search-query');
+	};
+	
+	element.getSearchStats = () => {
+		const total = searchCache?.length || 0;
+		const visible = element.querySelectorAll('li:not(.nui-hidden) a, li:not(.nui-hidden) .group-header').length;
+		return {
+			total,
+			visible,
+			query: element.getAttribute('data-search-query') || ''
+		};
+	};
+	
+	function buildSearchCache() {
+		searchCache = [];
+		element.querySelectorAll('li').forEach(li => {
+			const text = li.textContent.toLowerCase();
+			searchCache.push({ element: li, text });
+		});
+	}
+	
+	// ##### FEATURE 4: KEYBOARD NAVIGATION
+	
+	function handleKeyboard(e) {
+		const target = e.target.closest('a, .group-header');
+		if (!target) return;
+		
+		if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+			e.preventDefault();
+			const all = Array.from(element.querySelectorAll('a:not(.nui-hidden), .group-header:not(.nui-hidden)'));
+			const idx = all.indexOf(target);
+			const next = e.key === 'ArrowDown' ? all[idx + 1] : all[idx - 1];
+			if (next) {
+				if (next.tagName === 'A') next.focus();
+				else next.querySelector('span')?.focus();
+			}
+		} else if (e.key === 'Home') {
+			e.preventDefault();
+			const first = element.querySelector('a, .group-header span');
+			first?.focus();
+		} else if (e.key === 'End') {
+			e.preventDefault();
+			const all = element.querySelectorAll('a:not(.nui-hidden), .group-header:not(.nui-hidden) span');
+			all[all.length - 1]?.focus();
+		}
+	}
+	
+	// ##### INITIALIZATION
+	
+	function upgradeHtml() {
+		element.querySelectorAll('.group-header').forEach(header => {
+			if (header.nextElementSibling?.classList.contains('group-items')) return;
+			
+			const items = [];
+			let sibling = header.nextElementSibling;
+			while (sibling && !sibling.classList?.contains('group-header')) {
+				if (sibling.tagName === 'LI' || sibling.tagName === 'UL') {
+					if (sibling.tagName === 'LI') sibling.classList.add('list-item');
+					items.push(sibling);
+				}
+				sibling = sibling.nextElementSibling;
+			}
+			
+			if (items.length) {
+				const container = document.createElement('div');
+				container.className = 'group-items';
+				items.forEach(item => container.appendChild(item));
+				header.parentElement.insertBefore(container, header.nextElementSibling);
+			}
+		});
+	}
+	
+	function initialCollapseGroup(header) {
+		// Set initial collapsed state without triggering parent updates
+		header.setAttribute('aria-expanded', 'false');
+		const container = header.nextElementSibling;
+		if (container && container.classList.contains('group-items')) {
+			container.style.height = '0px';
+		}
+	}
+	
+	function init() {
+		// Upgrade HTML structure first
+		upgradeHtml();
+		
+		// Make group headers interactive in fold mode
+		if (mode === 'fold') {
+			element.querySelectorAll('.group-header').forEach(header => {
+				header.setAttribute('tabindex', '0');
+				header.setAttribute('role', 'button');
+				initialCollapseGroup(header);
+			});
+		}
+		
+		// Group header click handlers
+		element.addEventListener('click', (e) => {
+			const header = e.target.closest('.group-header');
+			if (header && mode === 'fold') {
+				toggleGroup(header);
+			}
+		});
+		
+		// Keyboard navigation
+		element.addEventListener('keydown', handleKeyboard);
+		
+		// Search input binding
+		const searchInput = document.querySelector(`[nui-search-target="${element.id}"]`);
+		if (searchInput) {
+			let debounce;
+			searchInput.addEventListener('input', (e) => {
+				clearTimeout(debounce);
+				debounce = setTimeout(() => {
+					element.search(e.target.value);
+				}, 150);
+			});
+		}
+	}
+	
+	init();
 });
 
 registerComponent('nui-content', (element) => {

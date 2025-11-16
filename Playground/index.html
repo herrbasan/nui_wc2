@@ -36,201 +36,8 @@
             </nui-top-nav>
 
             <nui-side-nav>
-                <nui-link-list>
-                    <ul>
-                        <li class="group-header">
-                            <span>
-                                <nui-icon name="wysiwyg">📝</nui-icon>
-                                <span>Content & Windows</span>
-                            </span>
-                            <button type="button" class="action" nui-event-click="edit-section:content">
-                                <nui-icon name="settings">⚙</nui-icon>
-                            </button>
-                        </li>
-                        <li>
-                            <a href="#content" nui-event-click="navigate:content">
-                                <span>Content</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="#windows" nui-event-click="navigate:windows">
-                                <span>Windows</span>
-                            </a>
-                        </li>
-                    </ul>
-                    <ul>
-                        <li class="group-header">
-                            <span>
-                                <nui-icon name="empty_dashboard">🔲</nui-icon>
-                                <span>Buttons & Fields</span>
-                            </span>
-                        </li>
-                        <li>
-                            <a href="#buttons" nui-event-click="navigate:buttons">
-                                <span>Buttons</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="#fields" nui-event-click="navigate:fields">
-                                <span>Fields</span>
-                            </a>
-                        </li>
-                    </ul>
-                    <ul>
-                        <li>
-                            <a href="#misc" nui-event-click="navigate:misc">
-                                <nui-icon name="label">🏷️</nui-icon>
-                                <span>Misc</span>
-                            </a>
-                        </li>
-                    </ul>
-                    <ul>
-                        <li class="group-header">
-                            <span>
-                                <nui-icon name="folder">📁</nui-icon>
-                                <span>Group</span>
-                            </span>
-                        </li>
-                        <li>
-                            <a href="#some">
-                                <span>Some Item</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="#another">
-                                <span>Another Item</span>
-                            </a>
-                        </li>
-                        <ul>
-                            <li class="group-header">
-                                <span>
-                                    <nui-icon name="calendar">📅</nui-icon>
-                                    <span>Sub Group</span>
-                                </span>
-                            </li>
-                            <li>
-                                <a href="#sub1">
-                                    <span>Subgroup Item 1</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#sub2">
-                                    <span>Subgroup Item 2</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </ul>
-                    <ul>
-                        <li class="group-header">
-                            <span>
-                                <nui-icon name="filter_list">☰</nui-icon>
-                                <span>Functions & Objects</span>
-                            </span>
-                        </li>
-                        <li>
-                            <a href="#fnc1" nui-event-click="navigate:fnc1">
-                                <span>Function Item 1</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="#fnc2" nui-event-click="navigate:fnc2">
-                                <span>Function Item 2</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="#fnc3" nui-event-click="navigate:fnc3">
-                                <span>Function Item 3</span>
-                            </a>
-                        </li>
-                        <li class="separator"><hr></li>
-                        <li>
-                            <a href="#obj1" nui-event-click="navigate:obj1">
-                                <span>Object Item 1</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="#obj2" nui-event-click="navigate:obj2">
-                                <span>Object Item 2</span>
-                            </a>
-                        </li>
-                    </ul>
-                    <ul>
-                        <li class="group-header">
-                            <span>
-                                <nui-icon name="monitor">🖥️</nui-icon>
-                                <span>Developer Tools</span>
-                            </span>
-                        </li>
-                        <li>
-                            <a href="#devtools-overview" nui-event-click="navigate:devtools-overview">
-                                <span>Overview</span>
-                            </a>
-                        </li>
-                        <ul>
-                            <li class="group-header">
-                                <span>
-                                    <nui-icon name="settings">⚙</nui-icon>
-                                    <span>Build Tools</span>
-                                </span>
-                            </li>
-                            <li>
-                                <a href="#build-config" nui-event-click="navigate:build-config">
-                                    <span>Configuration</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#build-scripts" nui-event-click="navigate:build-scripts">
-                                    <span>Scripts</span>
-                                </a>
-                            </li>
-                            <ul>
-                                <li class="group-header">
-                                    <span>
-                                        <nui-icon name="layers">📚</nui-icon>
-                                        <span>Plugins</span>
-                                    </span>
-                                </li>
-                                <li>
-                                    <a href="#plugin-babel" nui-event-click="navigate:plugin-babel">
-                                        <span>Babel</span>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="#plugin-webpack" nui-event-click="navigate:plugin-webpack">
-                                        <span>Webpack</span>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="#plugin-eslint" nui-event-click="navigate:plugin-eslint">
-                                        <span>ESLint</span>
-                                    </a>
-                                </li>
-                            </ul>
-                        </ul>
-                        <ul>
-                            <li class="group-header">
-                                <span>
-                                    <nui-icon name="search">🔍</nui-icon>
-                                    <span>Testing</span>
-                                </span>
-                            </li>
-                            <li>
-                                <a href="#test-unit" nui-event-click="navigate:test-unit">
-                                    <span>Unit Tests</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#test-integration" nui-event-click="navigate:test-integration">
-                                    <span>Integration Tests</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#test-e2e" nui-event-click="navigate:test-e2e">
-                                    <span>E2E Tests</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </ul>
+                <nui-link-list mode="fold">
+                    <!-- Navigation loaded from JSON via JavaScript -->
                 </nui-link-list>
             </nui-side-nav>
 
@@ -242,6 +49,208 @@
                     </header>
                     
                     <section>
+                        <h2>Link List Structure Reference (Tree Mode)</h2>
+                        <p>This shows the complete HTML structure for <code>mode="tree"</code> - all groups can be open simultaneously.</p>
+                        
+                        <div style="max-width: 400px; margin: 2rem 0; padding: 1rem; background: var(--color-bg-elevated); border-radius: 8px;">
+                            <nui-link-list mode="fold">
+                                <ul>
+                                    <li class="group-header">
+                                        <span>
+                                            <nui-icon name="wysiwyg"></nui-icon>
+                                            <span>Content & Windows</span>
+                                        </span>
+                                        <button type="button" class="action" nui-event-click="edit-section:content">
+                                            <nui-icon name="settings"></nui-icon>
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <a href="#content" nui-event-click="navigate:content">
+                                            <span>Content</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="#windows" nui-event-click="navigate:windows">
+                                            <span>Windows</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                                <ul>
+                                    <li class="group-header">
+                                        <span>
+                                            <nui-icon name="empty_dashboard"></nui-icon>
+                                            <span>Buttons & Fields</span>
+                                        </span>
+                                    </li>
+                                    <li>
+                                        <a href="#buttons" nui-event-click="navigate:buttons">
+                                            <span>Buttons</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="#fields" nui-event-click="navigate:fields">
+                                            <span>Fields</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                                <ul>
+                                    <li>
+                                        <a href="#misc" nui-event-click="navigate:misc">
+                                            <nui-icon name="label"></nui-icon>
+                                            <span>Misc</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                                <ul>
+                                    <li class="group-header">
+                                        <span>
+                                            <nui-icon name="folder"></nui-icon>
+                                            <span>Group</span>
+                                        </span>
+                                    </li>
+                                    <li>
+                                        <a href="#some">
+                                            <span>Some Item</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="#another">
+                                            <span>Another Item</span>
+                                        </a>
+                                    </li>
+                                    <ul>
+                                        <li class="group-header">
+                                            <span>
+                                                <nui-icon name="calendar"></nui-icon>
+                                                <span>Sub Group</span>
+                                            </span>
+                                        </li>
+                                        <li>
+                                            <a href="#sub1">
+                                                <span>Subgroup Item 1</span>
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="#sub2">
+                                                <span>Subgroup Item 2</span>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </ul>
+                                <ul>
+                                    <li class="group-header">
+                                        <span>
+                                            <nui-icon name="filter_list"></nui-icon>
+                                            <span>Functions & Objects</span>
+                                        </span>
+                                    </li>
+                                    <li>
+                                        <a href="#fnc1" nui-event-click="navigate:fnc1">
+                                            <span>Function Item 1</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="#fnc2" nui-event-click="navigate:fnc2">
+                                            <span>Function Item 2</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="#fnc3" nui-event-click="navigate:fnc3">
+                                            <span>Function Item 3</span>
+                                        </a>
+                                    </li>
+                                    <li class="separator"><hr></li>
+                                    <li>
+                                        <a href="#obj1" nui-event-click="navigate:obj1">
+                                            <span>Object Item 1</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="#obj2" nui-event-click="navigate:obj2">
+                                            <span>Object Item 2</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                                <ul>
+                                    <li class="group-header">
+                                        <span>
+                                            <nui-icon name="monitor"></nui-icon>
+                                            <span>Developer Tools</span>
+                                        </span>
+                                    </li>
+                                    <li>
+                                        <a href="#devtools-overview" nui-event-click="navigate:devtools-overview">
+                                            <span>Overview</span>
+                                        </a>
+                                    </li>
+                                    <ul>
+                                        <li class="group-header">
+                                            <span>
+                                                <nui-icon name="settings"></nui-icon>
+                                                <span>Build Tools</span>
+                                            </span>
+                                        </li>
+                                        <li>
+                                            <a href="#build-config" nui-event-click="navigate:build-config">
+                                                <span>Configuration</span>
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="#build-scripts" nui-event-click="navigate:build-scripts">
+                                                <span>Scripts</span>
+                                            </a>
+                                        </li>
+                                        <ul>
+                                            <li class="group-header">
+                                                <span>
+                                                    <nui-icon name="layers"></nui-icon>
+                                                    <span>Plugins</span>
+                                                </span>
+                                            </li>
+                                            <li>
+                                                <a href="#plugin-babel" nui-event-click="navigate:plugin-babel">
+                                                    <span>Babel</span>
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="#plugin-webpack" nui-event-click="navigate:plugin-webpack">
+                                                    <span>Webpack, a tool I truly hate, so I give it a title that reflects my feelings</span>
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="#plugin-eslint" nui-event-click="navigate:plugin-eslint">
+                                                    <span>ESLint</span>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </ul>
+                                    <ul>
+                                        <li class="group-header">
+                                            <span>
+                                                <nui-icon name="search"></nui-icon>
+                                                <span>Testing</span>
+                                            </span>
+                                        </li>
+                                        <li>
+                                            <a href="#test-unit" nui-event-click="navigate:test-unit">
+                                                <span>Unit Tests</span>
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="#test-integration" nui-event-click="navigate:test-integration">
+                                                <span>Integration Tests</span>
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="#test-e2e" nui-event-click="navigate:test-e2e">
+                                                <span>E2E Tests</span>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </ul>
+                            </nui-link-list>
+                        </div>
+                        
                         <p>Welcome to the NUI Component Playground! Here you can test and interact with various NUI web components.</p>
                         
                         <h2>Testing Modes (URL Parameters)</h2>

@@ -41,6 +41,101 @@ nui.registerAction('toggle-media', (target, source, event, param) => {
 	// In real app: audio.play() or audio.pause()
 });
 
+// Navigation data (JSON) - mirrors the HTML structure
+const navigationData = [
+	{
+		label: 'Content & Windows',
+		icon: 'wysiwyg',
+		action: 'edit-section:content',
+		items: [
+			{ label: 'Content', href: '#content', event: 'navigate:content' },
+			{ label: 'Windows', href: '#windows', event: 'navigate:windows' }
+		]
+	},
+	{
+		label: 'Buttons & Fields',
+		icon: 'empty_dashboard',
+		items: [
+			{ label: 'Buttons', href: '#buttons', event: 'navigate:buttons' },
+			{ label: 'Fields', href: '#fields', event: 'navigate:fields' }
+		]
+	},
+	{
+		label: 'Misc',
+		icon: 'label',
+		href: '#misc',
+		event: 'navigate:misc'
+	},
+	{
+		label: 'Group',
+		icon: 'folder',
+		items: [
+			{ label: 'Some Item', href: '#some' },
+			{ label: 'Another Item', href: '#another' },
+			{
+				label: 'Sub Group',
+				icon: 'calendar',
+				items: [
+					{ label: 'Subgroup Item 1', href: '#sub1' },
+					{ label: 'Subgroup Item 2', href: '#sub2' }
+				]
+			}
+		]
+	},
+	{
+		label: 'Functions & Objects',
+		icon: 'filter_list',
+		items: [
+			{ label: 'Function Item 1', href: '#fnc1', event: 'navigate:fnc1' },
+			{ label: 'Function Item 2', href: '#fnc2', event: 'navigate:fnc2' },
+			{ label: 'Function Item 3', href: '#fnc3', event: 'navigate:fnc3' },
+			{ separator: true },
+			{ label: 'Object Item 1', href: '#obj1', event: 'navigate:obj1' },
+			{ label: 'Object Item 2', href: '#obj2', event: 'navigate:obj2' }
+		]
+	},
+	{
+		label: 'Developer Tools',
+		icon: 'monitor',
+		items: [
+			{ label: 'Overview', href: '#devtools-overview', event: 'navigate:devtools-overview' },
+			{
+				label: 'Build Tools',
+				icon: 'settings',
+				items: [
+					{ label: 'Configuration', href: '#build-config', event: 'navigate:build-config' },
+					{ label: 'Scripts', href: '#build-scripts', event: 'navigate:build-scripts' },
+					{
+						label: 'Plugins',
+						icon: 'layers',
+						items: [
+							{ label: 'Babel', href: '#plugin-babel', event: 'navigate:plugin-babel' },
+							{ label: 'Webpack, a tool I truly hate, so I give it a title that reflects my feelings', href: '#plugin-webpack', event: 'navigate:plugin-webpack' },
+							{ label: 'ESLint', href: '#plugin-eslint', event: 'navigate:plugin-eslint' }
+						]
+					}
+				]
+			},
+			{
+				label: 'Testing',
+				icon: 'search',
+				items: [
+					{ label: 'Unit Tests', href: '#test-unit', event: 'navigate:test-unit' },
+					{ label: 'Integration Tests', href: '#test-integration', event: 'navigate:test-integration' },
+					{ label: 'E2E Tests', href: '#test-e2e', event: 'navigate:test-e2e' }
+				]
+			}
+		]
+	}
+];
+
+// Load side navigation from JSON
+const sideNav = document.querySelector('nui-side-nav nui-link-list');
+if (sideNav && sideNav.loadData) {
+	sideNav.loadData(navigationData);
+	console.log('Side navigation loaded from JSON');
+}
+
 // All available icons (from sprite generation output)
 const availableIcons = [
 	'add', 'add_circle', 'analytics', 'arrow', 'article', 'aspect_ratio', 'assessment', 
