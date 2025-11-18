@@ -1,12 +1,13 @@
-# nui_wc2 - DOM-First UI Component Library
+# nui_wc2 - Platform-Native UI Component Library
 
-A lightweight, performant UI component library built on web standards and progressive enhancement. Zero framework dependencies, DOM-first approach, CSS-driven styling.
+A lightweight, performant UI component library built on web standards and progressive enhancement. Zero framework dependencies, platform-native approach, CSS-driven styling.
 
 ## Philosophy
 
-**DOM-First Architecture**
-- Work directly with the DOM using web platform APIs
-- HTML markup generates the DOM - we enhance the DOM, not the markup
+**Platform-Native Performance**
+- Work *with* browser capabilities using direct platform APIs
+- Element reuse pattern: "Never generate twice if not needed"
+- HTML markup generates semantic DOM - components enhance the structure
 - Progressive enhancement via custom elements and external CSS
 - Semantic HTML elements inside custom element containers
 - Works perfectly with screen readers and assistive technology
@@ -16,13 +17,15 @@ A lightweight, performant UI component library built on web standards and progre
 - Web platform fundamentals over framework abstractions
 - Functional paradigm - pure functions, minimal state
 - Measurable performance - test, don't assume
+- Element reuse pattern dramatically reduces rendering overhead
 - 10-50x smaller bundles than framework-based solutions
 - Direct browser API usage for maximum control and speed
 
 **Development Approach**
 - Start with semantic HTML that generates a working DOM
 - Custom elements as layout containers and behavior attachment points
-- Direct DOM manipulation and event-driven communication using native CustomEvent
+- Direct element manipulation and event-driven communication using native CustomEvent
+- Cache and reuse DOM elements instead of repeated creation/destruction
 - External CSS with CSS Variables for theming
 - Browser DevTools for debugging - no framework complexity
 
@@ -398,7 +401,7 @@ monitor.printActionLog();
 **Best Practice Summary:**
 - **Knower**: Cross-component state only, single source of truth per ID
 - **Doer**: Command execution, auto-registration for extensibility
-- **DOM-First**: Prefer direct manipulation for component-local concerns
+- **Platform APIs**: Prefer direct element manipulation for component-local concerns
 - **Monitor**: Use during development to catch issues early
 - **Review**: Check watcher counts and state churn in code reviews
 
@@ -436,9 +439,9 @@ header layout {
 
 ### Interaction Patterns
 
-The library provides two approaches for adding interactivity, emphasizing **DOM-first** as the primary pattern:
+The library provides two approaches for adding interactivity, emphasizing **direct platform APIs** as the primary pattern:
 
-#### DOM-First Approach (Recommended)
+#### Platform-Native Approach (Recommended)
 
 **Direct JavaScript Enhancement** - Full control and platform knowledge
 ```javascript
@@ -468,7 +471,7 @@ menuButton.addEventListener('click', () => {
 ```
 
 **When to use each approach:**
-- **DOM-First**: Complex logic, custom behavior, learning web standards, full control
+- **Platform-Native**: Complex logic, custom behavior, learning web standards, full control
 - **Attribute System**: Rapid prototyping, simple toggles, getting started quickly
 
 **Advanced Pattern Example:**
@@ -660,7 +663,7 @@ nui_wc2/
 reference/                      # Reference materials (not tracked)
 ├── nui/                       # Original NUI library (reference only)
 ├── nui_screenshots/           # Visual reference from old library
-└── dom-first.md              # Philosophy paper
+└── platform-native.md         # Philosophy paper
 ```
 
 ## Companion Libraries
@@ -815,7 +818,7 @@ The foundation is solid. Focus now shifts to CSS implementation of the dual-mode
 
 Built with [UT utility library](./UT) - Personal web dev utilities from 25+ years of development.
 
-Inspired by the [DOM-First philosophy](./reference/dom-first.md) - Challenging framework-centric web development.
+Inspired by platform-native performance principles - Challenging framework-centric web development.
 
 ---
 

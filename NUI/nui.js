@@ -1,4 +1,10 @@
 // NUI/nui.js - DOM-First UI Component Library
+//
+// IMPORTANT: Include this script in <head> with type="module" to avoid layout shifts
+// Example: <script type="module" src="path/to/nui.js"></script>
+//
+// The library auto-loads its default theme CSS if no theme is present.
+// Loading in <body> may cause visible layout shifts as styles load after content.
 
 // ################################# CORE SYSTEMS
 
@@ -663,7 +669,8 @@ registerComponent('nui-side-nav', (element) => {
 registerComponent('nui-link-list', (element) => {
 	const mode = element.getAttribute('mode') || 'tree';
 	let activeItem = null;
-	let searchCache = null;
+	
+	// ##### LOAD DATA FROM JAVASCRIPT OBJECTS
 	
 	element.loadData = (data) => {
 		element.innerHTML = '';
@@ -734,9 +741,9 @@ registerComponent('nui-link-list', (element) => {
 		return html;
 	}
 	
-	// ##### FEATURE 2: ACTIVE ITEM TRACKING & FOLD MODE
+	// ##### ACTIVE ITEM TRACKING & FOLD MODE
 	
-	element.setActiveItem = (selector) => {
+	element.setActive = (selector) => {
 		const item = typeof selector === 'string' ? element.querySelector(selector) : selector;
 		if (!item) return;
 		
@@ -744,6 +751,7 @@ registerComponent('nui-link-list', (element) => {
 		activeItem = item;
 		item.classList.add('active');
 		
+		// Expand parent groups
 		let parent = item.closest('ul');
 		while (parent && element.contains(parent)) {
 			const header = parent.querySelector(':scope > .group-header');
@@ -790,108 +798,30 @@ registerComponent('nui-link-list', (element) => {
 		const expanded = header.getAttribute('aria-expanded') === 'true';
 		if (expanded) {
 			setGroupState(header, false);
+			// Close all descendant groups
+			const container = header.nextElementSibling;
+			if (container) {
+				container.querySelectorAll('.group-header').forEach(childHeader => {
+					setGroupState(childHeader, false);
+				});
+			}
 		} else {
+			// Accordion: close other top-level groups
 			if (mode === 'fold' && !header.closest('ul ul')) {
 				element.querySelectorAll(':scope > ul > .group-header').forEach(h => {
-					if (h !== header) setGroupState(h, false);
+					if (h !== header) {
+						setGroupState(h, false);
+						// Close descendants
+						const c = h.nextElementSibling;
+						if (c) {
+							c.querySelectorAll('.group-header').forEach(ch => {
+								setGroupState(ch, false);
+							});
+						}
+					}
 				});
 			}
 			setGroupState(header, true);
-		}
-	}
-	
-	// ##### FEATURE 3: SEARCH/FILTER
-	
-	element.search = (query) => {
-		if (!searchCache) buildSearchCache();
-		
-		const q = query.toLowerCase().trim();
-		if (!q) {
-			element.clearSearch();
-			return;
-		}
-		
-		let visibleCount = 0;
-		
-		searchCache.forEach(entry => {
-			const matches = entry.text.includes(q);
-			entry.element.classList.toggle('nui-hidden', !matches);
-			
-			if (matches) {
-				visibleCount++;
-				// Show parent groups
-				let parent = entry.element.closest('ul');
-				while (parent && element.contains(parent)) {
-					parent.classList.remove('nui-hidden');
-					const header = parent.querySelector(':scope > .group-header');
-					if (header && mode === 'fold') setGroupState(header, true);
-					parent = parent.parentElement?.closest('ul');
-				}
-			}
-		});
-		
-		// Hide empty groups
-		element.querySelectorAll('.group-header').forEach(header => {
-			const ul = header.parentElement.querySelector(':scope > ul');
-			if (ul) {
-				const hasVisible = ul.querySelector('li:not(.nui-hidden)');
-				header.classList.toggle('nui-hidden', !hasVisible);
-			}
-		});
-		
-		element.setAttribute('data-search-active', 'true');
-		element.setAttribute('data-search-query', query);
-	};
-	
-	element.clearSearch = () => {
-		element.querySelectorAll('.nui-hidden').forEach(el => {
-			el.classList.remove('nui-hidden');
-		});
-		element.removeAttribute('data-search-active');
-		element.removeAttribute('data-search-query');
-	};
-	
-	element.getSearchStats = () => {
-		const total = searchCache?.length || 0;
-		const visible = element.querySelectorAll('li:not(.nui-hidden) a, li:not(.nui-hidden) .group-header').length;
-		return {
-			total,
-			visible,
-			query: element.getAttribute('data-search-query') || ''
-		};
-	};
-	
-	function buildSearchCache() {
-		searchCache = [];
-		element.querySelectorAll('li').forEach(li => {
-			const text = li.textContent.toLowerCase();
-			searchCache.push({ element: li, text });
-		});
-	}
-	
-	// ##### FEATURE 4: KEYBOARD NAVIGATION
-	
-	function handleKeyboard(e) {
-		const target = e.target.closest('a, .group-header');
-		if (!target) return;
-		
-		if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-			e.preventDefault();
-			const all = Array.from(element.querySelectorAll('a:not(.nui-hidden), .group-header:not(.nui-hidden)'));
-			const idx = all.indexOf(target);
-			const next = e.key === 'ArrowDown' ? all[idx + 1] : all[idx - 1];
-			if (next) {
-				if (next.tagName === 'A') next.focus();
-				else next.querySelector('span')?.focus();
-			}
-		} else if (e.key === 'Home') {
-			e.preventDefault();
-			const first = element.querySelector('a, .group-header span');
-			first?.focus();
-		} else if (e.key === 'End') {
-			e.preventDefault();
-			const all = element.querySelectorAll('a:not(.nui-hidden), .group-header:not(.nui-hidden) span');
-			all[all.length - 1]?.focus();
 		}
 	}
 	
@@ -921,7 +851,6 @@ registerComponent('nui-link-list', (element) => {
 	}
 	
 	function initialCollapseGroup(header) {
-		// Set initial collapsed state without triggering parent updates
 		header.setAttribute('aria-expanded', 'false');
 		const container = header.nextElementSibling;
 		if (container && container.classList.contains('group-items')) {
@@ -930,11 +859,8 @@ registerComponent('nui-link-list', (element) => {
 	}
 	
 	function init() {
-		// Upgrade HTML structure first
-		upgradeHtml();
-		
-		// Make group headers interactive in fold mode
 		if (mode === 'fold') {
+			upgradeHtml();
 			element.querySelectorAll('.group-header').forEach(header => {
 				header.setAttribute('tabindex', '0');
 				header.setAttribute('role', 'button');
@@ -942,7 +868,7 @@ registerComponent('nui-link-list', (element) => {
 			});
 		}
 		
-		// Group header click handlers
+		// Click handlers
 		element.addEventListener('click', (e) => {
 			const header = e.target.closest('.group-header');
 			if (header && mode === 'fold') {
@@ -951,19 +877,25 @@ registerComponent('nui-link-list', (element) => {
 		});
 		
 		// Keyboard navigation
-		element.addEventListener('keydown', handleKeyboard);
-		
-		// Search input binding
-		const searchInput = document.querySelector(`[nui-search-target="${element.id}"]`);
-		if (searchInput) {
-			let debounce;
-			searchInput.addEventListener('input', (e) => {
-				clearTimeout(debounce);
-				debounce = setTimeout(() => {
-					element.search(e.target.value);
-				}, 150);
-			});
-		}
+		element.addEventListener('keydown', (e) => {
+			const target = e.target.closest('a, .group-header');
+			if (!target) return;
+			
+			if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+				e.preventDefault();
+				const all = element.querySelectorAll('a, .group-header span');
+				const idx = Array.from(all).indexOf(target);
+				const next = e.key === 'ArrowDown' ? all[idx + 1] : all[idx - 1];
+				if (next) next.focus();
+			} else if (e.key === 'Home') {
+				e.preventDefault();
+				element.querySelector('a, .group-header span')?.focus();
+			} else if (e.key === 'End') {
+				e.preventDefault();
+				const all = element.querySelectorAll('a, .group-header span');
+				all[all.length - 1]?.focus();
+			}
+		});
 	}
 	
 	init();
@@ -1004,7 +936,63 @@ registerComponent('nui-app-footer', (element) => {
 
 registerLayoutComponent('nui-icon-button');
 
+// ################################# nui-column-flow COMPONENT
+
+registerComponent('nui-column-flow', (element) => {
+	const sort = element.getAttribute('sort');
+	const columns = element.getAttribute('columns');
+	const columnWidth = element.getAttribute('column-width');
+
+	// Apply attribute-based overrides
+	if (columns) {
+		element.style.columnCount = columns;
+	}
+	if (columnWidth) {
+		// Support fraction syntax: "/3" means 1/3 of container width
+		if (columnWidth.startsWith('/')) {
+			const divisor = parseInt(columnWidth.slice(1));
+			if (!isNaN(divisor) && divisor > 0) {
+				const containerWidth = element.offsetWidth;
+				const gapValue = parseFloat(getComputedStyle(element).columnGap) || 0;
+				const availableWidth = containerWidth - (gapValue * (divisor - 1));
+				element.style.columnWidth = `${availableWidth / divisor}px`;
+			}
+		} else {
+			element.style.columnWidth = columnWidth;
+		}
+	}
+
+	// Sort children by height if requested
+	if (sort && sort.includes('height')) {
+		const descending = !sort.startsWith('!');
+		const items = Array.from(element.children);
+		items.sort((a, b) => {
+			const diff = b.offsetHeight - a.offsetHeight;
+			return descending ? diff : -diff;
+		});
+		items.forEach(item => element.appendChild(item));
+	}
+});
+
 // ################################# PUBLIC API
+
+function ensureBaseStyles() {
+	const rootStyles = getComputedStyle(document.documentElement);
+	const hasBaseVariables = rootStyles.getPropertyValue('--nui-space').trim() !== '';
+	
+	if (!hasBaseVariables) {
+		const scriptPath = document.currentScript?.src || import.meta.url;
+		const basePath = scriptPath.substring(0, scriptPath.lastIndexOf('/'));
+		const cssPath = `${basePath}/css/nui-theme.css`;
+		
+		const link = document.createElement('link');
+		link.rel = 'stylesheet';
+		link.href = cssPath;
+		document.head.appendChild(link);
+		
+		console.warn('[NUI] Default theme auto-loaded from:', cssPath, '(Include nui.js in <head> to prevent layout shifts)');
+	}
+}
 
 export const nui = {
 	config,
@@ -1014,6 +1002,8 @@ export const nui = {
 		if (options) {
 			Object.assign(config, options);
 		}
+		
+		ensureBaseStyles();
 		
 		const savedTheme = localStorage.getItem('nui-theme');
 		if (savedTheme) {

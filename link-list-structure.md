@@ -1,43 +1,127 @@
 # nui-link-list Structure Documentation
 
-**Status**: ✅ Implemented (Nov 16, 2025)  
-**Component**: `NUI/nui.js` - `<nui-link-list>` element  
-**Features**: Dual data sources (HTML/JSON), accordion fold mode, nested groups, separators
+**Status**: 🔄 Architecture Refactor (Nov 16, 2025)  
+**Component**: `NUI/nui.js` - Core navigation component  
+**Type**: Core library component (not plugin)
 
 ---
 
-## Implementation Summary
+## Architecture Overview
 
-**Completed Features**:
-- ✅ HTML structure processing (Pattern A - DOM-first)
-- ✅ JSON data loading (Pattern B - generates matching HTML)
-- ✅ Accordion fold mode with height animations
-- ✅ Nested group support (unlimited depth)
-- ✅ Separator elements (`{ separator: true }`)
-- ✅ Unified upgrade path (both patterns use same HTML processing)
-- ✅ Icon integration with automatic SVG generation
-- ✅ Action buttons on group headers
-- ✅ Event attribute processing (`nui-event-click`)
+The `nui-link-list` component supports **three progressive usage patterns**, each building on semantic HTML with increasing JavaScript capability:
 
-**Fold Mode Behavior**:
-- Each group's items wrapped in `<div class="group-items">` for height transitions
-- Height animates from `0px` (collapsed) to `scrollHeight` (expanded)
-- After animation completes, height resets to `auto` for responsive nested content
-- Nested groups can all be open simultaneously (no nested accordion restriction)
+### Pattern A: Pure HTML + CSS (No JavaScript)
+```html
+<nav class="nui-link-list">
+	<ul>
+		<li class="group-header"><span>Content</span></li>
+		<li><a href="#page">Page</a></li>
+	</ul>
+</nav>
+```
+- Semantic HTML works immediately
+- Style with library CSS or custom CSS
+- **No custom element, no JavaScript required**
+- Progressive enhancement foundation
+
+### Pattern B: Enhanced HTML (Custom Element Upgrade)
+```html
+<nui-link-list mode="fold">
+	<ul>
+		<li class="group-header"><span>Content</span></li>
+		<li><a href="#page">Page</a></li>
+	</ul>
+</nui-link-list>
+
+<script type="module">
+	const nav = document.querySelector('nui-link-list');
+	nav.filter('page');  // Component API available
+</script>
+```
+- Custom element wraps existing HTML
+- Component parses HTML into internal structure with cached element references
+- Adds interactive behavior (fold, filter, search, reorder)
+- **HTML is source, component enhances it**
+
+### Pattern C: Factory Mode (JavaScript-Driven)
+```javascript
+import { createLinkList } from './NUI/nui.js';
+
+const nav = createLinkList({
+	target: document.querySelector('#sidebar'),
+	data: [
+		{
+			label: 'Content',
+			items: [
+				{ label: 'Page', href: '#page' }
+			]
+		}
+	],
+	mode: 'fold',
+	onSelect: (item) => console.log(item)
+});
+
+nav.filter('page');
+nav.reorder('item-1', 3);
+```
+- Pure JavaScript instantiation
+- Component generates DOM from data structure
+- Elements cached in internal structure
+- **Data is source, component generates and manages everything**
 
 ---
 
 ## Core Philosophy
 
-The `nui-link-list` component follows a DOM-first approach where semantic HTML provides the foundation, and JavaScript enhancement adds behavior. The structure is fully functional without JavaScript, semantically correct, and accessible by default.
+**Reference-Based Architecture**: All patterns converge on an internal data structure that holds **references** to both user data objects and cached DOM elements. This enables:
+
+- **Element reuse pattern**: DOM elements created once, cached, and mutated (never regenerated)
+- **Live data references**: User objects remain connected (no serialization/deserialization)
+- **Unified operations**: Filter, sort, reorder work identically across all patterns
+- **Performance**: Matches `nui_list.js` pattern for handling 1000+ items efficiently
+
+**Internal Structure** (shared by all patterns):
+```javascript
+{
+	_items: [
+		{
+			id: 'auto-gen-1',          // Stable ID for operations
+			type: 'group-header',      // Type: group-header, item, separator
+			label: 'Content',          // Display label
+			userData: userObject,      // REFERENCE to user's data (Pattern C)
+			element: <li>,             // Cached DOM element
+			containerElement: <div>,   // Cached wrapper (fold mode)
+			expanded: true,            // Component state
+			hidden: false,             // Filter state
+			active: false,             // Selection state
+			depth: 0,                  // Nesting level
+			parentId: null             // Parent reference
+		}
+	],
+	_filtered: [],  // References to visible items (after filter/search)
+	_mode: 'fold'
+}
+```
+
+**Three Sources, One Structure**:
+- **Pattern A**: No structure (CSS only)
+- **Pattern B**: Parse HTML → build structure with element references
+- **Pattern C**: User data → build structure, generate elements once
+
+**Shared Core Operations**:
+- `filter(searchTerm)` - Operates on `_items`, updates `_filtered`, mutates cached elements
+- `reorder(itemId, newIndex)` - Reorders `_items` array, repositions cached elements
+- `toggleFold(groupId)` - Mutates `expanded` state, animates cached `containerElement`
+- `setActive(itemId)` - Updates `active` flags, mutates cached element classes
+- `refresh()` - Re-renders from structure using cached elements
 
 ---
 
-## Basic Structure
+## HTML Structure Reference
 
-### Groups and Items
+### Basic Structure
 
-A **group** is defined by a `<ul>` that starts with a `<li class="group-header">` (the group header), followed by regular `<li>` elements (items).
+**Groups and Items**: A group is defined by a `<ul>` that starts with `<li class="group-header">`, followed by regular `<li>` elements (items).
 
 ```html
 <nui-link-list>
@@ -55,10 +139,7 @@ A **group** is defined by a `<ul>` that starts with a `<li class="group-header">
 </nui-link-list>
 ```
 
-### Standalone Items (No Group)
-
-Items can exist without a group header:
-
+**Standalone Items** (no group):
 ```html
 <nui-link-list>
 	<ul>
@@ -69,14 +150,9 @@ Items can exist without a group header:
 </nui-link-list>
 ```
 
----
+### Element Types
 
-## Universal Item Structure
-
-### Group Headers
-
-Group headers use `<span>` wrapper for content (fold mode adds `role="button"`):
-
+**Group Headers** (use `<span>` wrapper for content):
 ```html
 <li class="group-header">
 	<span>
@@ -89,10 +165,7 @@ Group headers use `<span>` wrapper for content (fold mode adds `role="button"`):
 </li>
 ```
 
-### Navigation Items
-
-Navigation items use `<a>` with `href` for proper links:
-
+**Navigation Items** (use `<a>` with `href`):
 ```html
 <li>
 	<a href="#section" [nui-event-click="action"]>
@@ -102,17 +175,14 @@ Navigation items use `<a>` with `href` for proper links:
 </li>
 ```
 
-### Separator
-
+**Separator**:
 ```html
 <li class="separator">
 	<hr>
 </li>
 ```
 
----
-
-## Nested Groups
+### Nested Groups
 
 Groups can contain other groups via nested `<ul>` elements. Nesting depth is unlimited:
 
@@ -120,18 +190,14 @@ Groups can contain other groups via nested `<ul>` elements. Nesting depth is unl
 <nui-link-list>
 	<ul>
 		<li class="group-header">
-			<span>
-				<span>Level 1 Group</span>
-			</span>
+			<span><span>Level 1 Group</span></span>
 		</li>
 		<li>
 			<a href="#item1"><span>Level 1 Item</span></a>
 		</li>
 		<ul>
 			<li class="group-header">
-				<span>
-					<span>Level 2 Group</span>
-				</span>
+				<span><span>Level 2 Group</span></span>
 			</li>
 			<li>
 				<a href="#item2"><span>Level 2 Item</span></a>
@@ -143,14 +209,13 @@ Groups can contain other groups via nested `<ul>` elements. Nesting depth is unl
 
 ---
 
-## Dual Data Source Pattern
+## Pattern Details
 
-### Pattern A: HTML Structure (DOM-First)
+### Pattern B: Enhanced HTML Structure
 
-Component reads existing semantic HTML markup in the DOM:
-
+**HTML Foundation**:
 ```html
-<nui-link-list>
+<nui-link-list mode="fold">
 	<ul>
 		<li class="group-header">
 			<span>
@@ -167,12 +232,29 @@ Component reads existing semantic HTML markup in the DOM:
 </nui-link-list>
 ```
 
-**Use case**: Server-rendered HTML, progressive enhancement, SEO-friendly content
+**Component Enhancement**:
+```javascript
+// On connectedCallback
+1. Parse HTML into internal structure
+   - Each element gets an ID and type classification
+   - Elements are cached as references in structure
+   - Extract labels, icons, hrefs, actions
+   
+2. Build relationships
+   - Track depth and parent/child relationships
+   - Flatten nested groups into single array
+   
+3. Setup behaviors
+   - Fold mode: wrap groups in containers
+   - Event handlers: attach to cached elements
+   - State management: expanded/collapsed tracking
+```
 
-### Pattern B: JSON Data Structure
+**Use cases**: Server-rendered HTML, progressive enhancement, SEO-friendly content
 
-Component generates HTML from JavaScript object:
+### Pattern C: Factory Mode (JavaScript-Driven)
 
+**JavaScript Object Structure**:
 ```javascript
 const data = [
 	{
@@ -211,42 +293,75 @@ const data = [
 	{ separator: true }
 ];
 
-const listElement = document.querySelector('nui-link-list');
-listElement.loadData(data);
+const nav = createLinkList({
+	target: document.querySelector('#sidebar'),
+	data: data,
+	mode: 'fold'
+});
 ```
 
-**JSON Structure Rules**:
-- Array of objects (each object = group or standalone item)
-- **Group**: Has `items` array → creates `<ul>` with `.group-header` and children
-- **Standalone item**: Has `href` → creates `<ul>` with single `<li><a>`
-- **Separator**: Has `separator: true` → creates `<li class="separator"><hr></li>`
+**Object Structure Rules**:
+- Array of JavaScript objects (live references, not serialized data)
+- **Group**: Has `items` array (nested array of objects)
+- **Standalone item**: Has `href` property
+- **Separator**: Has `separator: true` flag
 - **Optional properties**:
-  - `icon`: Icon name (adds `<nui-icon>`)
-  - `action`: Trailing action button (group headers only)
-  - `event`: Add `nui-event-click` attribute
+  - `icon`: Icon name (string)
+  - `action`: Trailing action button name (group headers only)
+  - `event`: Event name for `nui-event-click` attribute
   - `href`: Link destination (required for items, omitted for groups)
 - **Nested groups**: Items can have their own `items` array (unlimited depth)
+- **User data**: Objects remain as live references (mutations visible to component)
 
-**Use case**: Dynamic content, API-driven data, client-side rendering
+**Factory creates**:
+```javascript
+1. Build internal structure from user data
+   - Generate IDs for all items
+   - Store REFERENCES to user objects (userData property)
+   - Create DOM elements once, cache in structure
+   
+2. Render to container
+   - Mount elements from structure
+   - Setup fold containers and animations
+   - Attach event handlers
+   
+3. Return API object
+   {
+      element: <nui-link-list>,
+      filter: (term) => {},
+      reorder: (id, index) => {},
+      setActive: (id) => {},
+      refresh: () => {},
+      destroy: () => {}
+   }
+```
+
+**Use cases**: Dynamic content, API-driven data, client-side SPA navigation, live data binding
 
 ### Implementation Details
 
-**Unified Approach**: Both patterns produce identical DOM structure
-- HTML markup is processed via `upgradeHtml()` function
-- JSON generates raw HTML strings, then runs through same `upgradeHtml()` 
-- After upgrade, both paths result in enhanced semantic HTML with:
-  - Icons converted to full SVG markup
-  - Group items wrapped in `.group-items` containers (fold mode)
-  - List items get `.list-item` class for styling
-  - Event attributes processed and handlers attached
+**Converged Architecture**: Both patterns build the same internal structure
 
-**Processing Flow**:
+**Pattern B Flow**:
 ```
-HTML Pattern: Parse existing DOM → upgradeHtml() → Enhanced components
-JSON Pattern: Generate HTML strings → upgradeHtml() → Enhanced components
+HTML → Parse to structure with element refs → Setup behaviors → API available
 ```
 
-**Design Principle**: JSON is a convenience layer for generating HTML, not a separate rendering path
+**Pattern C Flow**:
+```
+User objects → Build structure with user refs → Generate elements → Mount → Return API
+```
+
+**Key Differences**:
+- **Pattern B**: Elements exist first, structure wraps them
+- **Pattern C**: Structure exists first, elements generated from it
+- **Both**: Same structure format, same operations, same element caching strategy
+
+**Reference Benefits**:
+- User can mutate their objects, call `refresh()` to update
+- Component holds element references, never regenerates DOM
+- Filter/sort operations rearrange references, not elements
+- 10x performance improvement for 1000+ items (proven in `nui_list.js`)
 
 ---
 
@@ -513,42 +628,128 @@ This HTML structure demonstrates all features working together - nested groups, 
 
 ---
 
-## Future Enhancements (Not Yet Implemented)
+## Component API (Patterns B & C)
 
-The following features are documented for future development but not currently part of the component:
+### Public Methods
 
-### Active Item Tracking
-- `.active` class management
-- `setActiveItem()` / `clearActive()` methods
-- Auto-expand ancestor groups when setting active item
+```javascript
+const nav = document.querySelector('nui-link-list'); // Pattern B
+// OR
+const nav = createLinkList({ ... }); // Pattern C
 
-### Search/Filter
-- Text-based filtering with `.nui-hidden` class
-- Search input auto-wiring via `nui-search-target` attribute
-- Match count and statistics
+// Filter/search operations
+nav.filter(searchTerm);        // Show only matching items
+nav.clearFilter();             // Reset filter
 
-### Keyboard Navigation  
+// Active item management
+nav.setActive(itemId);         // Set active item, scroll into view
+nav.clearActive();             // Clear active state
+
+// Fold state (mode="fold" only)
+nav.toggleFold(groupId);       // Toggle specific group
+nav.expandAll();               // Expand all groups
+nav.collapseAll();             // Collapse all groups
+
+// Data operations (live updates)
+nav.reorder(itemId, newIndex); // Reorder items
+nav.updateItem(itemId, props); // Update item properties
+nav.refresh();                 // Re-render from current structure
+
+// Structure access
+const items = nav.getItems();  // Get current item structure
+const filtered = nav.getFiltered(); // Get currently visible items
+
+// Cleanup
+nav.destroy();                 // Remove handlers, clear references
+```
+
+### Events
+
+```javascript
+// Selection events
+nav.addEventListener('nui-select', (e) => {
+	console.log('Selected:', e.detail.item);
+});
+
+// Fold state changes
+nav.addEventListener('nui-fold-change', (e) => {
+	console.log('Group:', e.detail.groupId, 'Expanded:', e.detail.expanded);
+});
+
+// Filter results
+nav.addEventListener('nui-filter-change', (e) => {
+	console.log('Visible items:', e.detail.count);
+});
+```
+
+---
+
+## Future Enhancements (Planned)
+
+### Search/Filter (Priority 1)
+- Real-time text filtering across all items
+- Match highlighting in results
+- Auto-expand groups containing matches
+- Match count statistics
+
+### Keyboard Navigation (Priority 2)
 - Arrow keys for item traversal
 - Home/End navigation
 - Enter/Space for expand/collapse
+- Type-ahead search
 
-### Tree Mode
+### Reordering (Priority 3)
+- Drag-and-drop reordering
+- Programmatic reorder API
+- Move between groups
+- Persist order changes
+
+### Tree Mode (Priority 4)
 - All groups visible simultaneously (no collapsing)
 - Visual hierarchy via CSS (backgrounds, borders)
-- Best for small lists and understanding context
+- Best for small lists showing full context
+
+---
+
+## Library Context
+
+**Component Type**: Core library component (ships with `nui.js`)
+
+**Relationship to Plugins**: 
+- Core library includes essential UI components (navigation, buttons, inputs, modals, tabs)
+- Advanced features come as separate plugins (data tables, charts, advanced forms)
+- Layout patterns (cards, grids) are CSS-only (no JavaScript)
+
+**Similar Core Components**:
+- `nui-button` - Button component
+- `nui-modal` - Modal/dialog component  
+- `nui-tabs` - Tab container component
+- `nui-input` - Form input component
+- `nui-top-nav` - Top navigation bar
+- `nui-side-nav` - Sidebar container
+
+**Plugin Examples** (separate files):
+- `nui-data-table.js` - Advanced sortable/filterable tables
+- `nui-chart.js` - Data visualization
+- `nui-rich-editor.js` - WYSIWYG editor
+
+**CSS Patterns** (no JavaScript):
+- Cards (`<div class="nui-card">`)
+- Grid layouts (`<div class="nui-grid">`)
+- Spacing utilities (`<div class="nui-space-4">`)
 
 ---
 
 ## Design Principles
 
-1. **Semantic First** - Use standard HTML elements correctly
-2. **Progressive Enhancement** - Full functionality without JavaScript, enhanced with JS
-3. **Keyboard Accessible** - All interactive elements are in tab order by default
-4. **Screen Reader Friendly** - Proper element semantics ensure correct announcements
-5. **Valid HTML** - Clean semantic structure
-6. **Flexibility** - Structure supports various configurations without code changes
-7. **Simplicity** - Avoid over-preparing for features that may never be needed
-8. **DOM-First** - Structure contains content and intent; JavaScript adds behavior
+1. **Three-Tier Progressive Enhancement** - Works as HTML+CSS, custom element, or factory
+2. **Reference-Based Architecture** - Cache elements and user data, never regenerate
+3. **Semantic HTML Foundation** - Use standard elements correctly
+4. **Platform Native APIs** - Direct DOM manipulation, no frameworks
+5. **Element Reuse Pattern** - Create once, mutate forever (10x performance for 1000+ items)
+6. **Keyboard Accessible** - All interactive elements in tab order by default
+7. **Screen Reader Friendly** - Proper semantic structure for assistive technology
+8. **Zero Dependencies** - Pure web platform APIs only
 
 ---
 
