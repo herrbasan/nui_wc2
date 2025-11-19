@@ -18,12 +18,28 @@ const config = {
 
 const doer = {
 	_actions: {},
+	_ownerCleanups: new Map(),
 	
-	register(name, fn) {
-		this._actions[name] = fn;
-	},
+register(name, fn, ownerId = null) {
+	this._actions[name] = fn;
 	
-	do(name, target, element, event, param) {
+	if (ownerId) {
+		// Warn if registering for disconnected component (common mistake)
+		const element = document.querySelector(`[nui-id="${ownerId}"]`);
+		if (!element || !element.isConnected) {
+			console.warn(`[DOER] Registering action "${name}" for disconnected component "${ownerId}". This may cause memory leaks. Register actions only for connected components.`);
+		}
+		
+		if (!this._ownerCleanups.has(ownerId)) {
+			this._ownerCleanups.set(ownerId, new Set());
+		}
+		this._ownerCleanups.get(ownerId).add(() => {
+			if (this._actions[name] === fn) {
+				delete this._actions[name];
+			}
+		});
+	}
+},	do(name, target, element, event, param) {
 		if (this._actions[name]) {
 			return this._actions[name](target, element, event, param);
 		} else {
@@ -39,7 +55,18 @@ const doer = {
 			});
 			element.dispatchEvent(customEvent);
 			
-			knower.tell(`action:${name}`, param || name, element);
+			// Lazy execution: only update state if someone is watching
+			const actionId = `action:${name}`;
+			if (knower.hasWatchers(actionId)) {
+				knower.tell(actionId, param || name, element);
+			}
+		}
+	},
+	
+	clean(ownerId) {
+		if (this._ownerCleanups.has(ownerId)) {
+			this._ownerCleanups.get(ownerId).forEach(fn => fn());
+			this._ownerCleanups.delete(ownerId);
 		}
 	},
 	
@@ -53,6 +80,7 @@ const doer = {
 const knower = {
 	_states: null,
 	_hooks: null,
+	_ownerCleanups: null,
 	
 	tell(id, state, source = null) {
 		if (!this._states) this._states = new Map();
@@ -61,36 +89,63 @@ const knower = {
 		
 		if (oldState === state) return;
 		
-		this._states.set(id, state);
-		
-		if (this._hooks) {
-			const hooks = this._hooks.get(id);
-			if (hooks) {
-				hooks.forEach(handler => handler(state, oldState, source));
-			}
-		}
-	},
+	this._states.set(id, state);
 	
-	know(id) {
+	if (this._hooks) {
+		const hooks = this._hooks.get(id);
+		if (hooks) {
+			// Iterate over a copy to allow watchers to modify the Set
+			Array.from(hooks).forEach(handler => {
+				try {
+					handler(state, oldState, source);
+				} catch (error) {
+					console.error('[KNOWER] Watcher error:', error);
+				}
+			});
+		}
+	}
+},	know(id) {
 		return this._states?.get(id);
 	},
 	
-	watch(id, handler) {
+	hasWatchers(id) {
+		return this._hooks?.has(id) && this._hooks.get(id).size > 0;
+	},
+	
+	watch(id, handler, ownerId = null) {
 		if (!this._hooks) this._hooks = new Map();
 		if (!this._hooks.has(id)) {
 			this._hooks.set(id, new Set());
 		}
 		this._hooks.get(id).add(handler);
 		
-		const currentState = this._states?.get(id);
-		if (currentState !== undefined) {
+	const currentState = this._states?.get(id);
+	if (currentState !== undefined) {
+		try {
 			handler(currentState, undefined, null);
+		} catch (error) {
+			console.error('[KNOWER] Watcher error during initial notification:', error);
+		}
+	}
+	
+	const unwatch = () => this.unwatch(id, handler);
+	
+	if (ownerId) {
+		// Warn if registering for disconnected component (common mistake)
+		const element = document.querySelector(`[nui-id="${ownerId}"]`);
+		if (!element || !element.isConnected) {
+			console.warn(`[KNOWER] Registering watcher for disconnected component "${ownerId}". This may cause memory leaks. Register watchers only for connected components.`);
 		}
 		
-		return () => this.unwatch(id, handler);
-	},
+		if (!this._ownerCleanups) this._ownerCleanups = new Map();
+		if (!this._ownerCleanups.has(ownerId)) {
+			this._ownerCleanups.set(ownerId, new Set());
+		}
+		this._ownerCleanups.get(ownerId).add(unwatch);
+	}
 	
-	unwatch(id, handler) {
+	return unwatch;
+},	unwatch(id, handler) {
 		if (!this._hooks) return;
 		const hooks = this._hooks.get(id);
 		if (hooks) {
@@ -101,6 +156,13 @@ const knower = {
 		}
 	},
 	
+	clean(ownerId) {
+		if (this._ownerCleanups && this._ownerCleanups.has(ownerId)) {
+			this._ownerCleanups.get(ownerId).forEach(fn => fn());
+			this._ownerCleanups.delete(ownerId);
+		}
+	},
+	
 	forget(id) {
 		if (id) {
 			this._states?.delete(id);
@@ -108,6 +170,7 @@ const knower = {
 		} else {
 			this._states = null;
 			this._hooks = null;
+			this._ownerCleanups = null;
 		}
 	},
 	
@@ -217,6 +280,16 @@ const dom = {
 		return element;
 	},
 	
+	svg(tag, attributes = {}) {
+		const element = document.createElementNS('http://www.w3.org/2000/svg', tag);
+		Object.entries(attributes).forEach(([key, value]) => {
+			if (value !== null && value !== undefined) {
+				element.setAttribute(key, value);
+			}
+		});
+		return element;
+	},
+	
 	icon(name) {
 		const icon = document.createElement('nui-icon');
 		icon.setAttribute('name', name);
@@ -236,15 +309,32 @@ function createComponent(tagName, setupFn, cleanupFn) {
 	return class extends HTMLElement {
 		connectedCallback() {
 			processEventAttributes(this);
-			setupFn?.(this);
+			const setupCleanup = setupFn?.(this);
+			if (typeof setupCleanup === 'function') {
+				this._setupCleanup = setupCleanup;
+			}
 		}
 		disconnectedCallback() {
+			// ID-based cleanup using nui-id attribute
+			const instanceId = this.getAttribute('nui-id');
+			if (instanceId) {
+				knower.clean(instanceId);
+				doer.clean(instanceId);
+			}
+			
 			if (this._originalAttributeMethods) {
 				this.setAttribute = this._originalAttributeMethods.setAttribute;
 				this.removeAttribute = this._originalAttributeMethods.removeAttribute;
 				this.toggleAttribute = this._originalAttributeMethods.toggleAttribute;
 				delete this._originalAttributeMethods;
 			}
+			
+			// Call setup's cleanup function if it returned one
+			if (this._setupCleanup) {
+				this._setupCleanup();
+				delete this._setupCleanup;
+			}
+			
 			cleanupFn?.(this);
 		}
 	};
@@ -541,19 +631,20 @@ registerComponent('nui-icon', (element) => {
 	
 	let svg = element.querySelector('svg');
 	if (!svg) {
-		svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-		svg.setAttribute('width', '24');
-		svg.setAttribute('height', '24');
-		svg.setAttribute('viewBox', '0 0 24 24');
-		svg.setAttribute('fill', 'currentColor');
-		svg.setAttribute('aria-hidden', 'true');
-		svg.setAttribute('focusable', 'false');
+		svg = dom.svg('svg', {
+			width: '24',
+			height: '24',
+			viewBox: '0 0 24 24',
+			fill: 'currentColor',
+			'aria-hidden': 'true',
+			focusable: 'false'
+		});
 		element.appendChild(svg);
 	}
 	
 	let use = svg.querySelector('use');
 	if (!use) {
-		use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+		use = dom.svg('use');
 		svg.appendChild(use);
 	}
 	
@@ -1033,6 +1124,7 @@ function ensureBaseStyles() {
 export const nui = {
 	config,
 	knower,
+	dom,
 	
 	init(options) {
 		if (options) {

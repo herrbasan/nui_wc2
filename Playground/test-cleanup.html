@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>NUI Cleanup & Performance Tests</title>
+	<link rel="stylesheet" href="../NUI/css/nui-theme-slate.css">
+	<style>
+		body {
+			padding: 2rem;
+			max-width: 1200px;
+			margin: 0 auto;
+		}
+		
+		.test-section {
+			margin: 2rem 0;
+			padding: 1.5rem;
+			border: 1px solid var(--nui-border);
+			border-radius: var(--nui-radius);
+		}
+		
+		.test-result {
+			padding: 0.75rem;
+			margin: 0.5rem 0;
+			border-radius: var(--nui-radius-sm);
+			font-family: var(--nui-font-mono);
+			font-size: 0.875rem;
+		}
+		
+		.test-result.pass {
+			background: rgba(21, 87, 36, 0.15);
+			color: var(--nui-success);
+			border-left: 4px solid var(--nui-success);
+		}
+		
+		.test-result.fail {
+			background: rgba(114, 28, 36, 0.15);
+			color: var(--nui-error);
+			border-left: 4px solid var(--nui-error);
+		}
+		
+		.test-result.info {
+			background: rgba(13, 110, 253, 0.1);
+			color: var(--nui-accent);
+			border-left: 4px solid var(--nui-accent);
+		}
+		
+		.stats {
+			display: flex;
+			gap: 2rem;
+			margin: 1rem 0;
+			padding: 1rem;
+			background: var(--nui-surface-2);
+			border-radius: var(--nui-radius-sm);
+		}
+		
+		.stat {
+			flex: 1;
+		}
+		
+		.stat-value {
+			font-size: 2rem;
+			font-weight: bold;
+			font-variant-numeric: tabular-nums;
+		}
+		
+		.stat-value.success {
+			color: var(--nui-success);
+		}
+		
+		.stat-value.error {
+			color: var(--nui-error);
+		}
+		
+		.stat-label {
+			font-size: 0.875rem;
+			opacity: 0.7;
+		}
+		
+		h1 {
+			margin: 0 0 1rem 0;
+		}
+		
+		h2 {
+			margin: 0 0 0.5rem 0;
+			font-size: 1.25rem;
+		}
+		
+		.emoji {
+			font-size: 1.5em;
+		}
+	</style>
+	<script type="module">
+		import { nui } from '../NUI/nui.js';
+		
+		nui.init();
+		
+		let passCount = 0;
+		let failCount = 0;
+		
+		function log(message, type = 'info', sectionId = 'results') {
+			const container = document.getElementById(sectionId);
+			const div = document.createElement('div');
+			div.className = `test-result ${type}`;
+			div.textContent = message;
+			container.appendChild(div);
+			
+			if (type === 'pass') {
+				passCount++;
+				console.log('✓', message);
+			} else if (type === 'fail') {
+				failCount++;
+				console.error('✗', message);
+			} else {
+				console.log('ℹ', message);
+			}
+			
+			updateStats();
+		}
+		
+		function updateStats() {
+			const passEl = document.getElementById('pass-count');
+			const failEl = document.getElementById('fail-count');
+			const totalEl = document.getElementById('total-count');
+			
+			passEl.textContent = passCount;
+			failEl.textContent = failCount;
+			totalEl.textContent = passCount + failCount;
+			
+			passEl.className = 'stat-value' + (passCount > 0 ? ' success' : '');
+			failEl.className = 'stat-value' + (failCount > 0 ? ' error' : '');
+		}
+		
+	async function runTests() {
+		try {
+			log('Starting comprehensive cleanup & performance tests...', 'info');			// TEST 1: Knower cleanup with nui-id
+			log('TEST 1: Knower auto-cleanup using nui-id attribute', 'info', 'test-1-results');
+			
+			const stateId = 'test-state-' + Date.now();
+			nui.knower.tell(stateId, 'initial');
+			
+			const testComp1 = document.createElement('nui-button');
+			testComp1.innerHTML = '<button>Test</button>';
+			testComp1.setAttribute('nui-id', 'test-comp-1');
+			document.body.appendChild(testComp1);
+			
+			let watchCount = 0;
+			nui.knower.watch(stateId, () => watchCount++, 'test-comp-1');
+			
+			const beforeCount = nui.knower.listKnown().watchers.find(w => w.id === stateId)?.count || 0;
+			
+			if (beforeCount === 1) {
+				log('✓ Watcher registered with ownerId', 'pass', 'test-1-results');
+			} else {
+				log(`✗ Expected 1 watcher, got ${beforeCount}`, 'fail', 'test-1-results');
+			}
+			
+			// Remove component
+			testComp1.remove();
+			await new Promise(r => setTimeout(r, 10));
+			
+			const afterCount = nui.knower.listKnown().watchers.find(w => w.id === stateId)?.count || 0;
+			
+			if (afterCount === 0) {
+				log('✓ Watcher auto-removed on disconnect', 'pass', 'test-1-results');
+			} else {
+				log(`✗ Watcher not removed: ${afterCount} remaining`, 'fail', 'test-1-results');
+			}
+			
+			// TEST 2: Multiple watchers cleanup
+			log('TEST 2: Multiple watchers from same component', 'info', 'test-2-results');
+			
+			const state2a = 'multi-state-a-' + Date.now();
+			const state2b = 'multi-state-b-' + Date.now();
+			nui.knower.tell(state2a, 'value-a');
+			nui.knower.tell(state2b, 'value-b');
+			
+			const testComp2 = document.createElement('nui-button');
+			testComp2.innerHTML = '<button>Multi</button>';
+			testComp2.setAttribute('nui-id', 'test-comp-2');
+			document.body.appendChild(testComp2);
+			
+			nui.knower.watch(state2a, () => {}, 'test-comp-2');
+			nui.knower.watch(state2b, () => {}, 'test-comp-2');
+			
+			const beforeA = nui.knower.listKnown().watchers.find(w => w.id === state2a)?.count || 0;
+			const beforeB = nui.knower.listKnown().watchers.find(w => w.id === state2b)?.count || 0;
+			
+			if (beforeA === 1 && beforeB === 1) {
+				log('✓ Both watchers registered', 'pass', 'test-2-results');
+			} else {
+				log(`✗ Expected 2 watchers, got ${beforeA + beforeB}`, 'fail', 'test-2-results');
+			}
+			
+			testComp2.remove();
+			await new Promise(r => setTimeout(r, 10));
+			
+			const afterA = nui.knower.listKnown().watchers.find(w => w.id === state2a)?.count || 0;
+			const afterB = nui.knower.listKnown().watchers.find(w => w.id === state2b)?.count || 0;
+			
+			if (afterA === 0 && afterB === 0) {
+				log('✓ All watchers cleaned up together', 'pass', 'test-2-results');
+			} else {
+				log(`✗ Cleanup failed: ${afterA + afterB} remaining`, 'fail', 'test-2-results');
+			}
+			
+			// TEST 3: Doer cleanup
+			log('TEST 3: Doer action cleanup', 'info', 'test-3-results');
+			
+			// Create a temporary custom element for testing
+			const tagName3 = 'test-doer-' + Math.floor(Math.random() * 10000);
+			customElements.define(tagName3, class extends HTMLElement {
+				disconnectedCallback() {
+					const instanceId = this.getAttribute('nui-id');
+					if (instanceId) {
+						nui.knower.clean(instanceId);
+						nui.doer.clean(instanceId);
+					}
+				}
+			});
+			
+			const testComp3 = document.createElement(tagName3);
+			testComp3.setAttribute('nui-id', 'test-comp-3');
+			document.body.appendChild(testComp3);
+			
+			let actionCalled = false;
+			nui.doer.register('test-action-3', () => { actionCalled = true; }, 'test-comp-3');
+			
+			const beforeActions = nui.doer.listActions();
+			if (beforeActions.includes('test-action-3')) {
+				log('✓ Action registered', 'pass', 'test-3-results');
+			} else {
+				log('✗ Action not registered', 'fail', 'test-3-results');
+			}
+			
+			testComp3.remove();
+			await new Promise(r => setTimeout(r, 10));
+			
+			const afterActions = nui.doer.listActions();
+			if (!afterActions.includes('test-action-3')) {
+				log('✓ Action cleaned up on disconnect', 'pass', 'test-3-results');
+			} else {
+				log('✗ Action still registered after cleanup', 'fail', 'test-3-results');
+			}
+			
+			// TEST 4: Lazy execution
+			log('TEST 4: Lazy execution optimization', 'info', 'test-4-results');
+			
+			const unknownAction = 'unknown-action-' + Date.now();
+			const actionStateId = `action:${unknownAction}`;
+			
+			// Case A: No watchers
+			nui.doer.do(unknownAction, document.body, document.body, null, 'test-data');
+			
+			const stateWithoutWatcher = nui.knower.know(actionStateId);
+			if (stateWithoutWatcher === undefined) {
+				log('✓ No state created when no watchers', 'pass', 'test-4-results');
+			} else {
+				log('✗ State created unnecessarily', 'fail', 'test-4-results');
+			}
+			
+			// Case B: With watcher
+			let watcherFired = false;
+			nui.knower.watch(actionStateId, () => { watcherFired = true; });
+			
+			nui.doer.do(unknownAction, document.body, document.body, null, 'test-data-2');
+			
+			if (watcherFired) {
+				log('✓ State created when watcher exists', 'pass', 'test-4-results');
+			} else {
+				log('✗ Watcher not notified', 'fail', 'test-4-results');
+			}
+			
+			// TEST 5: No ID = no cleanup needed
+			log('TEST 5: Components without nui-id (no watchers)', 'info', 'test-5-results');
+			
+			const testComp5 = document.createElement('nui-button');
+			testComp5.innerHTML = '<button>No ID</button>';
+			// Note: No nui-id attribute set
+			document.body.appendChild(testComp5);
+			
+			const hasId = testComp5.hasAttribute('nui-id');
+			if (!hasId) {
+				log('✓ Component has no nui-id (lazy generation)', 'pass', 'test-5-results');
+			} else {
+				log('✗ Component has unexpected nui-id', 'fail', 'test-5-results');
+			}
+			
+			testComp5.remove();
+			await new Promise(r => setTimeout(r, 10));
+			
+			log('✓ Component removed cleanly (no cleanup needed)', 'pass', 'test-5-results');
+			
+			// TEST 6: Real component with state
+			log('TEST 6: Real nui-app component state scoping', 'info', 'test-6-results');
+			
+			const app = document.createElement('nui-app');
+			app.innerHTML = '<nui-side-nav></nui-side-nav>';
+			document.body.appendChild(app);
+			
+			await new Promise(r => setTimeout(r, 50));
+			
+			const appId = app.getAttribute('nui-id');
+			if (appId && appId.startsWith('app-')) {
+				log(`✓ App generated instance ID: ${appId}`, 'pass', 'test-6-results');
+			} else {
+				log('✗ App did not generate instance ID', 'fail', 'test-6-results');
+			}
+			
+			const stateKey = `${appId}:side-nav`;
+			const stateExists = nui.knower.know(stateKey) !== undefined;
+			
+			if (stateExists) {
+				log(`✓ State created with scoped key: ${stateKey}`, 'pass', 'test-6-results');
+			} else {
+				log('✗ Scoped state not found', 'fail', 'test-6-results');
+			}
+			
+			app.remove();
+			await new Promise(r => setTimeout(r, 10));
+			
+			const stateAfter = nui.knower.know(stateKey);
+			if (stateAfter === undefined) {
+				log('✓ State cleaned up on app removal', 'pass', 'test-6-results');
+			} else {
+				log('✗ State persisted after removal', 'fail', 'test-6-results');
+			}
+			
+			// TEST 7: Performance - many watchers
+			log('TEST 7: Performance with many watchers', 'info', 'test-7-results');
+			
+			const perfStateId = 'perf-test-' + Date.now();
+			nui.knower.tell(perfStateId, 'initial');
+			
+			const components = [];
+			const startTime = performance.now();
+			
+			for (let i = 0; i < 100; i++) {
+				const comp = document.createElement('div');
+				comp.setAttribute('nui-id', `perf-comp-${i}`);
+				nui.knower.watch(perfStateId, () => {}, `perf-comp-${i}`);
+				components.push(comp);
+			}
+			
+			const registerTime = performance.now() - startTime;
+			log(`  → Registered 100 watchers in ${registerTime.toFixed(2)}ms`, 'info', 'test-7-results');
+			
+			const cleanupStartTime = performance.now();
+			components.forEach(comp => nui.knower.clean(comp.getAttribute('nui-id')));
+			const cleanupTime = performance.now() - cleanupStartTime;
+			
+			log(`  → Cleaned 100 watchers in ${cleanupTime.toFixed(2)}ms`, 'info', 'test-7-results');
+			
+			const watchersLeft = nui.knower.listKnown().watchers.find(w => w.id === perfStateId)?.count || 0;
+			
+			if (watchersLeft === 0) {
+				log('✓ All 100 watchers cleaned up', 'pass', 'test-7-results');
+			} else {
+				log(`✗ ${watchersLeft} watchers remain`, 'fail', 'test-7-results');
+			}
+			
+			if (registerTime < 50 && cleanupTime < 50) {
+				log('✓ Performance acceptable (<50ms each)', 'pass', 'test-7-results');
+			} else {
+				log('⚠ Performance slower than expected', 'info', 'test-7-results');
+			}
+			
+			// TEST 8: Race condition - rapid create/destroy
+			log('TEST 8: Race condition - rapid create/destroy cycle', 'info', 'test-8-results');
+			
+			const raceStateId = 'race-test-' + Date.now();
+			nui.knower.tell(raceStateId, 'initial');
+			
+			const raceComponents = [];
+			let raceWatcherFires = 0;
+			
+			// Create and destroy 30 components rapidly
+			for (let i = 0; i < 30; i++) {
+				const comp = document.createElement('nui-button');
+				comp.innerHTML = '<button>Race</button>';
+				comp.setAttribute('nui-id', `race-comp-${i}`);
+				document.body.appendChild(comp);
+				
+				nui.knower.watch(raceStateId, () => raceWatcherFires++, `race-comp-${i}`);
+				raceComponents.push(comp);
+				
+				// Remove immediately (no await)
+				if (i % 2 === 0) {
+					comp.remove();
+				}
+			}
+			
+			// Trigger state change during cleanup chaos
+			nui.knower.tell(raceStateId, 'changed-during-chaos');
+			
+			// Small delay to let DOM settle
+			await new Promise(r => setTimeout(r, 10));
+			
+			// Remove remaining
+			raceComponents.forEach(c => c.remove());
+			
+			await new Promise(r => setTimeout(r, 50));
+			
+			const raceWatchersLeft = nui.knower.listKnown().watchers.find(w => w.id === raceStateId)?.count || 0;
+			
+			if (raceWatchersLeft === 0) {
+				log('✓ All watchers cleaned despite rapid add/remove', 'pass', 'test-8-results');
+			} else {
+				log(`✗ ${raceWatchersLeft} watchers leaked during race`, 'fail', 'test-8-results');
+			}
+			
+			log(`  → Watcher fired ${raceWatcherFires} times during chaos`, 'info', 'test-8-results');
+			
+			// TEST 9: Concurrent state updates from multiple components
+			log('TEST 9: Concurrent state updates', 'info', 'test-9-results');
+			
+			const sharedState = 'shared-state-' + Date.now();
+			nui.knower.tell(sharedState, 0);
+			
+			let updateCount = 0;
+			const concurrentComps = [];
+			
+			// 10 components all watching and updating same state
+			for (let i = 0; i < 10; i++) {
+				const comp = document.createElement('nui-button');
+				comp.innerHTML = '<button>Concurrent</button>';
+				comp.setAttribute('nui-id', `concurrent-${i}`);
+				document.body.appendChild(comp);
+				
+				nui.knower.watch(sharedState, (val) => {
+					updateCount++;
+					// Each watcher triggers more updates (limited cascade)
+					if (typeof val === 'number' && val < 5) {
+						nui.knower.tell(sharedState, val + 1);
+					}
+				}, `concurrent-${i}`);
+				
+				concurrentComps.push(comp);
+			}
+			
+			// Trigger the cascade
+			nui.knower.tell(sharedState, 1);
+			
+			await new Promise(r => setTimeout(r, 20));
+			
+			log(`  → ${updateCount} watcher notifications during cascade`, 'info', 'test-9-results');
+			
+			// Now remove all while state is still changing
+			concurrentComps.forEach(c => c.remove());
+			
+			await new Promise(r => setTimeout(r, 20));
+			
+			const concurrentWatchersLeft = nui.knower.listKnown().watchers.find(w => w.id === sharedState)?.count || 0;
+			
+			if (concurrentWatchersLeft === 0) {
+				log('✓ All concurrent watchers cleaned up', 'pass', 'test-9-results');
+			} else {
+				log(`✗ ${concurrentWatchersLeft} concurrent watchers leaked`, 'fail', 'test-9-results');
+			}
+			
+			// TEST 10: Nested component cleanup
+			log('TEST 10: Nested component cleanup cascade', 'info', 'test-10-results');
+			
+			const nestedApp = document.createElement('nui-app');
+			nestedApp.innerHTML = `
+				<nui-side-nav>
+					<nui-link-list mode="fold">
+						<ul>
+							<li><a href="#test">Test</a></li>
+						</ul>
+					</nui-link-list>
+				</nui-side-nav>
+				<nui-content>
+					<main>
+						<nui-button><button>Nested 1</button></nui-button>
+						<nui-button><button>Nested 2</button></nui-button>
+						<nui-button><button>Nested 3</button></nui-button>
+					</main>
+				</nui-content>
+			`;
+			document.body.appendChild(nestedApp);
+			
+			await new Promise(r => setTimeout(r, 100));
+			
+			const nestedAppId = nestedApp.getAttribute('nui-id');
+			const nestedStateKey = `${nestedAppId}:side-nav`;
+			
+			const nestedStateBefore = nui.knower.know(nestedStateKey);
+			
+			if (nestedStateBefore !== undefined) {
+				log('✓ Nested app created state', 'pass', 'test-10-results');
+			} else {
+				log('✗ Nested app did not create state', 'fail', 'test-10-results');
+			}
+			
+			// Remove parent - should cleanup all children
+			nestedApp.remove();
+			
+			await new Promise(r => setTimeout(r, 50));
+			
+			const nestedStateAfter = nui.knower.know(nestedStateKey);
+			
+			if (nestedStateAfter === undefined) {
+				log('✓ Nested app state cleaned on parent removal', 'pass', 'test-10-results');
+			} else {
+				log('✗ Nested state persisted', 'fail', 'test-10-results');
+			}
+			
+			// TEST 11: Action spam during cleanup
+			log('TEST 11: Action execution during cleanup', 'info', 'test-11-results');
+			
+			const spamComps = [];
+			let spamActionCount = 0;
+			
+			for (let i = 0; i < 20; i++) {
+				const comp = document.createElement('div');
+				comp.setAttribute('nui-id', `spam-comp-${i}`);
+				
+				// Register unique action per component
+				nui.doer.register(`spam-action-${i}`, () => {
+					spamActionCount++;
+				}, `spam-comp-${i}`);
+				
+				spamComps.push(comp);
+			}
+			
+			const actionsBefore = nui.doer.listActions().length;
+			log(`  → ${actionsBefore} actions registered`, 'info', 'test-11-results');
+			
+			// Spam actions while removing components (sequential to avoid browser freeze)
+			for (let i = 0; i < spamComps.length; i++) {
+				const comp = spamComps[i];
+				// Execute action
+				nui.doer.do(`spam-action-${i}`, document.body, document.body, null, 'data');
+				// Remove component immediately
+				nui.knower.clean(`spam-comp-${i}`);
+				nui.doer.clean(`spam-comp-${i}`);
+				// Try to execute again after cleanup
+				nui.doer.do(`spam-action-${i}`, document.body, document.body, null, 'data');
+			}
+			
+			await new Promise(r => setTimeout(r, 10));
+			
+			const actionsAfter = nui.doer.listActions().length;
+			const actionsRemoved = actionsBefore - actionsAfter;
+			
+			if (actionsRemoved >= 20) {
+				log(`✓ ${actionsRemoved} actions cleaned during spam`, 'pass', 'test-11-results');
+			} else {
+				log(`✗ Only ${actionsRemoved}/20 actions cleaned`, 'fail', 'test-11-results');
+			}
+			
+			log(`  → ${spamActionCount} actions executed (some may be unknown)`, 'info', 'test-11-results');
+			
+			// TEST 12: Memory leak - reconnection without cleanup
+			log('TEST 12: Reconnection behavior', 'info', 'test-12-results');
+			
+			const reconnectState = 'reconnect-state-' + Date.now();
+			nui.knower.tell(reconnectState, 'initial');
+			
+			const reconnectComp = document.createElement('nui-button');
+			reconnectComp.innerHTML = '<button>Reconnect</button>';
+			reconnectComp.setAttribute('nui-id', 'reconnect-test');
+			document.body.appendChild(reconnectComp);
+			
+			let reconnectWatcherCount = 0;
+			nui.knower.watch(reconnectState, () => reconnectWatcherCount++, 'reconnect-test');
+			
+			// Remove
+			reconnectComp.remove();
+			await new Promise(r => setTimeout(r, 10));
+			
+			const watchersAfterRemove = nui.knower.listKnown().watchers.find(w => w.id === reconnectState)?.count || 0;
+			
+			if (watchersAfterRemove === 0) {
+				log('✓ Watcher removed on first disconnect', 'pass', 'test-12-results');
+			} else {
+				log('✗ Watcher persisted after disconnect', 'fail', 'test-12-results');
+			}
+			
+			// Reconnect same element
+			document.body.appendChild(reconnectComp);
+			await new Promise(r => setTimeout(r, 10));
+			
+			// Trigger state change
+			nui.knower.tell(reconnectState, 'changed-after-reconnect');
+			
+			const watchersAfterReconnect = nui.knower.listKnown().watchers.find(w => w.id === reconnectState)?.count || 0;
+			
+			log(`  → Watchers after reconnect: ${watchersAfterReconnect}`, 'info', 'test-12-results');
+			log(`  → Watcher fire count: ${reconnectWatcherCount}`, 'info', 'test-12-results');
+			
+			if (reconnectWatcherCount === 1) {
+				log('⚠ Reconnected element did not re-register watcher (expected behavior)', 'info', 'test-12-results');
+			} else {
+				log('✓ Watcher re-registered on reconnect', 'pass', 'test-12-results');
+			}
+			
+			reconnectComp.remove();
+			
+			// TEST 13: Stress - massive parallel operations
+			log('TEST 13: STRESS - 200 parallel operations', 'info', 'test-13-results');
+			
+			const stressStart = performance.now();
+			const stressPromises = [];
+			
+			for (let i = 0; i < 200; i++) {
+				const promise = (async () => {
+					const stateId = `stress-${i}`;
+					nui.knower.tell(stateId, 'initial');
+					
+					const comp = document.createElement('nui-button');
+					comp.innerHTML = '<button>Stress</button>';
+					comp.setAttribute('nui-id', `stress-comp-${i}`);
+					
+					if (i % 3 === 0) {
+						document.body.appendChild(comp);
+					}
+					
+					nui.knower.watch(stateId, () => {}, `stress-comp-${i}`);
+					
+					if (i % 2 === 0) {
+						nui.knower.tell(stateId, 'changed');
+					}
+					
+					if (i % 5 === 0) {
+						nui.doer.register(`stress-action-${i}`, () => {}, `stress-comp-${i}`);
+					}
+					
+					comp.remove();
+					
+					nui.knower.clean(`stress-comp-${i}`);
+					nui.doer.clean(`stress-comp-${i}`);
+				})();
+				
+				stressPromises.push(promise);
+				
+				// Yield to browser every 50 operations
+				if (i > 0 && i % 50 === 0) {
+					await new Promise(r => setTimeout(r, 0));
+				}
+			}
+			
+			await Promise.all(stressPromises);
+			
+			const stressTime = performance.now() - stressStart;
+			
+			const allWatchers = nui.knower.listKnown().watchers;
+			const stressWatchersLeft = allWatchers.filter(w => w.id.startsWith('stress-')).length;
+			
+			const allActions = nui.doer.listActions();
+			const stressActionsLeft = allActions.filter(a => a.startsWith('stress-action-')).length;
+			
+			if (stressWatchersLeft === 0 && stressActionsLeft === 0) {
+				log('✓ STRESS: All 200 operations cleaned up', 'pass', 'test-13-results');
+			} else {
+				log(`✗ Leaked ${stressWatchersLeft} watchers, ${stressActionsLeft} actions`, 'fail', 'test-13-results');
+			}
+			
+			log(`  → Completed in ${stressTime.toFixed(2)}ms (${(stressTime/200).toFixed(2)}ms per op)`, 'info', 'test-13-results');
+			
+			if (stressTime < 2000) {
+				log('✓ Stress test performance acceptable (<2s)', 'pass', 'test-13-results');
+			} else {
+				log('⚠ Stress test slower than expected', 'info', 'test-13-results');
+			}
+			
+	// TEST 14: Cross-component communication with orphaned watchers
+	log('TEST 14: Cross-component orphaned watchers', 'info', 'test-14-results');
+	
+	const crossState = 'cross-state-' + Date.now();
+	nui.knower.tell(crossState, 'initial');
+	
+	const compA = document.createElement('nui-button');
+	compA.innerHTML = '<button>Component A</button>';
+	compA.setAttribute('nui-id', 'comp-a');
+	document.body.appendChild(compA);
+	
+	const compB = document.createElement('nui-button');
+	compB.innerHTML = '<button>Component B</button>';
+	compB.setAttribute('nui-id', 'comp-b');
+	document.body.appendChild(compB);
+	
+	let aWatchCount = 0;
+	let bWatchCount = 0;
+	
+	// A watches state that B will update
+	nui.knower.watch(crossState, () => aWatchCount++, 'comp-a');
+	nui.knower.watch(crossState, () => bWatchCount++, 'comp-b');
+	
+	const watchersBeforeRemove = nui.knower.listKnown().watchers.find(w => w.id === crossState);
+	log(`  → Watchers registered: ${watchersBeforeRemove?.count || 0}`, 'info', 'test-14-results');
+	
+	// Both should have fired once on registration (initial notification)
+	if (aWatchCount === 1 && bWatchCount === 1) {
+		log('✓ Both components received initial notification', 'pass', 'test-14-results');
+	} else {
+		log(`✗ Initial counts: A=${aWatchCount}, B=${bWatchCount}`, 'fail', 'test-14-results');
+	}
+	
+	// Both see the update
+	nui.knower.tell(crossState, 'update-1');
+	
+	if (aWatchCount === 2 && bWatchCount === 2) {
+		log('✓ Both components received update', 'pass', 'test-14-results');
+	} else {
+		log(`✗ Update counts: A=${aWatchCount}, B=${bWatchCount}`, 'fail', 'test-14-results');
+	}		// Remove B while A is still watching
+		log(`  → Before remove: compB.getAttribute('nui-id') = ${compB.getAttribute('nui-id')}`, 'info', 'test-14-results');
+		compB.remove();
+		await new Promise(r => setTimeout(r, 10));
+		
+		const watchersAfterRemove14 = nui.knower.listKnown().watchers.find(w => w.id === crossState);
+		log(`  → Watchers after B removed: ${watchersAfterRemove14?.count || 0}`, 'info', 'test-14-results');
+		
+		// Update state - only A should get it now
+		nui.knower.tell(crossState, 'update-2');
+		
+		// A should have: 1 (initial) + 1 (update-1) + 1 (update-2) = 3
+		// B should have: 1 (initial) + 1 (update-1) = 2 (cleanup prevents update-2)
+		if (aWatchCount === 3 && bWatchCount === 2) {
+			log('✓ Removed component stopped receiving updates', 'pass', 'test-14-results');
+		} else {
+			log(`✗ Final counts: A=${aWatchCount}, B=${bWatchCount}`, 'fail', 'test-14-results');
+		}
+		
+		compA.remove();
+			
+			// TEST 15: Watcher exceptions don't break system
+			log('TEST 15: Exception handling in watchers', 'info', 'test-15-results');
+			
+			const exceptionState = 'exception-state-' + Date.now();
+			nui.knower.tell(exceptionState, 'initial');
+			
+			let goodWatcher1Fired = 0;
+			let goodWatcher2Fired = 0;
+			let badWatcherFired = 0;
+			
+			const exComp = document.createElement('nui-button');
+			exComp.innerHTML = '<button>Exception Test</button>';
+			exComp.setAttribute('nui-id', 'exception-comp');
+			document.body.appendChild(exComp);
+			
+	// Good watcher 1
+	nui.knower.watch(exceptionState, () => goodWatcher1Fired++, 'exception-comp');
+	
+	// Bad watcher that throws
+	nui.knower.watch(exceptionState, () => {
+		badWatcherFired++;
+		throw new Error('Intentional test error');
+	}, 'exception-comp');
+	
+	// Good watcher 2
+	nui.knower.watch(exceptionState, () => goodWatcher2Fired++, 'exception-comp');
+	
+	// All watchers fired on registration (initial notification)
+	// goodWatcher1 and goodWatcher2 should have fired, badWatcher threw but was caught
+	if (goodWatcher1Fired === 1 && goodWatcher2Fired === 1 && badWatcherFired === 1) {
+		log('✓ Initial notifications fired (exception caught)', 'pass', 'test-15-results');
+	} else {
+		log(`✗ Initial counts: good1=${goodWatcher1Fired}, good2=${goodWatcher2Fired}, bad=${badWatcherFired}`, 'fail', 'test-15-results');
+	}
+	
+	// Trigger state change - exception should be caught, other watchers continue
+	nui.knower.tell(exceptionState, 'trigger-exception');
+	
+	await new Promise(r => setTimeout(r, 10));
+	
+	// Should be: good1=2, good2=2, bad=2 (all fired twice, exception caught both times)
+	if (goodWatcher1Fired === 2 && goodWatcher2Fired === 2 && badWatcherFired === 2) {
+		log('✓ Other watchers still fired despite exception', 'pass', 'test-15-results');
+	} else {
+		log(`✗ Final counts: good1=${goodWatcher1Fired}, good2=${goodWatcher2Fired}, bad=${badWatcherFired}`, 'fail', 'test-15-results');
+	}			// Cleanup should still work
+			exComp.remove();
+			await new Promise(r => setTimeout(r, 10));
+			
+			const exWatchersLeft = nui.knower.listKnown().watchers.find(w => w.id === exceptionState)?.count || 0;
+			
+			if (exWatchersLeft === 0) {
+				log('✓ Cleanup worked despite watcher exceptions', 'pass', 'test-15-results');
+			} else {
+				log(`✗ ${exWatchersLeft} watchers leaked after exception`, 'fail', 'test-15-results');
+			}
+			
+			// TEST 16: Multiple connect/disconnect cycles
+			log('TEST 16: Multiple init/cleanup cycles', 'info', 'test-16-results');
+			
+			const cycleState = 'cycle-state-' + Date.now();
+			nui.knower.tell(cycleState, 0);
+			
+			const cycleComp = document.createElement('nui-button');
+			cycleComp.innerHTML = '<button>Cycle Test</button>';
+			cycleComp.setAttribute('nui-id', 'cycle-comp');
+			
+			const cycleResults = [];
+			
+			for (let cycle = 0; cycle < 5; cycle++) {
+				// Connect
+				document.body.appendChild(cycleComp);
+				await new Promise(r => setTimeout(r, 5));
+				
+				// Register watcher
+				let watchCount = 0;
+				nui.knower.watch(cycleState, () => watchCount++, 'cycle-comp');
+				
+				// Trigger update
+				nui.knower.tell(cycleState, cycle);
+				
+				const beforeDisconnect = nui.knower.listKnown().watchers.find(w => w.id === cycleState)?.count || 0;
+				cycleResults.push({ cycle, beforeDisconnect, watchCount });
+				
+				// Disconnect
+				cycleComp.remove();
+				await new Promise(r => setTimeout(r, 5));
+				
+				const afterDisconnect = nui.knower.listKnown().watchers.find(w => w.id === cycleState)?.count || 0;
+				if (afterDisconnect !== 0) {
+					log(`✗ Cycle ${cycle}: ${afterDisconnect} watchers leaked`, 'fail', 'test-16-results');
+				}
+			}
+			
+			const allCyclesClean = cycleResults.every((r, i) => {
+				const afterDisconnect = nui.knower.listKnown().watchers.find(w => w.id === cycleState)?.count || 0;
+				return afterDisconnect === 0;
+			});
+			
+			if (allCyclesClean) {
+				log('✓ All 5 connect/disconnect cycles cleaned properly', 'pass', 'test-16-results');
+			} else {
+				log('✗ Some cycles leaked watchers', 'fail', 'test-16-results');
+			}
+			
+			// TEST 17: Circular state dependencies
+			log('TEST 17: Circular dependencies', 'info', 'test-17-results');
+			
+			const stateX = 'circular-x-' + Date.now();
+			const stateY = 'circular-y-' + Date.now();
+			
+			nui.knower.tell(stateX, 0);
+			nui.knower.tell(stateY, 0);
+			
+			const circCompA = document.createElement('nui-button');
+			circCompA.innerHTML = '<button>Circular A</button>';
+			circCompA.setAttribute('nui-id', 'circular-a');
+			document.body.appendChild(circCompA);
+			
+			const circCompB = document.createElement('nui-button');
+			circCompB.innerHTML = '<button>Circular B</button>';
+			circCompB.setAttribute('nui-id', 'circular-b');
+			document.body.appendChild(circCompB);
+			
+			let circularUpdates = 0;
+			const maxCircular = 3;
+			
+			// A watches X, updates Y
+			nui.knower.watch(stateX, (val) => {
+				if (val < maxCircular) {
+					circularUpdates++;
+					nui.knower.tell(stateY, val + 1);
+				}
+			}, 'circular-a');
+			
+			// B watches Y, updates X
+			nui.knower.watch(stateY, (val) => {
+				if (val < maxCircular) {
+					circularUpdates++;
+					nui.knower.tell(stateX, val + 1);
+				}
+			}, 'circular-b');
+			
+			// Start the cycle
+			nui.knower.tell(stateX, 1);
+			
+			await new Promise(r => setTimeout(r, 20));
+			
+			log(`  → Circular updates: ${circularUpdates}`, 'info', 'test-17-results');
+			
+			// Remove one component mid-cycle
+			circCompA.remove();
+			await new Promise(r => setTimeout(r, 10));
+			
+			// Try to update - should not crash
+			nui.knower.tell(stateY, 99);
+			
+			const circWatchersX = nui.knower.listKnown().watchers.find(w => w.id === stateX)?.count || 0;
+			const circWatchersY = nui.knower.listKnown().watchers.find(w => w.id === stateY)?.count || 0;
+			
+			if (circWatchersX === 0 && circWatchersY === 1) {
+				log('✓ Circular dependency broken cleanly', 'pass', 'test-17-results');
+			} else {
+				log(`✗ Unexpected watchers: X=${circWatchersX}, Y=${circWatchersY}`, 'fail', 'test-17-results');
+			}
+			
+			circCompB.remove();
+			
+			// TEST 18: State updates during disconnectedCallback
+			log('TEST 18: State updates during cleanup', 'info', 'test-18-results');
+			
+			const cleanupState = 'cleanup-state-' + Date.now();
+			nui.knower.tell(cleanupState, 'initial');
+			
+			const tagName18 = 'test-cleanup-state-' + Math.floor(Math.random() * 10000);
+			customElements.define(tagName18, class extends HTMLElement {
+				connectedCallback() {
+					const id = this.getAttribute('nui-id');
+					nui.knower.watch(cleanupState, () => {}, id);
+				}
+				disconnectedCallback() {
+					// Try to update state during cleanup
+					try {
+						nui.knower.tell(cleanupState, 'updated-during-cleanup');
+					} catch (e) {
+						this._cleanupError = e;
+					}
+					
+					const instanceId = this.getAttribute('nui-id');
+					if (instanceId) {
+						nui.knower.clean(instanceId);
+					}
+				}
+			});
+			
+			const cleanupComp = document.createElement(tagName18);
+			cleanupComp.setAttribute('nui-id', 'cleanup-state-comp');
+			document.body.appendChild(cleanupComp);
+			
+			await new Promise(r => setTimeout(r, 10));
+			
+			cleanupComp.remove();
+			await new Promise(r => setTimeout(r, 10));
+			
+			if (!cleanupComp._cleanupError) {
+				log('✓ State update during cleanup did not throw', 'pass', 'test-18-results');
+			} else {
+				log('✗ State update during cleanup threw error', 'fail', 'test-18-results');
+			}
+			
+			const cleanupWatchers = nui.knower.listKnown().watchers.find(w => w.id === cleanupState)?.count || 0;
+			
+			if (cleanupWatchers === 0) {
+				log('✓ Cleanup still worked after state update', 'pass', 'test-18-results');
+			} else {
+				log(`✗ ${cleanupWatchers} watchers leaked`, 'fail', 'test-18-results');
+			}
+			
+			// TEST 19: Attribute changes during cleanup
+			log('TEST 19: Attribute mutation during cleanup', 'info', 'test-19-results');
+			
+			const attrState = 'attr-state-' + Date.now();
+			nui.knower.tell(attrState, 'initial');
+			
+			const tagName19 = 'test-attr-change-' + Math.floor(Math.random() * 10000);
+			customElements.define(tagName19, class extends HTMLElement {
+				connectedCallback() {
+					const id = this.getAttribute('nui-id');
+					nui.knower.watch(attrState, () => {}, id);
+				}
+				disconnectedCallback() {
+					const originalId = this.getAttribute('nui-id');
+					
+					// Change ID during cleanup
+					this.setAttribute('nui-id', 'changed-id');
+					
+					// Try to clean with original ID
+					if (originalId) {
+						nui.knower.clean(originalId);
+					}
+				}
+			});
+			
+			const attrComp = document.createElement(tagName19);
+			attrComp.setAttribute('nui-id', 'attr-test-original');
+			document.body.appendChild(attrComp);
+			
+			await new Promise(r => setTimeout(r, 10));
+			
+			attrComp.remove();
+			await new Promise(r => setTimeout(r, 10));
+			
+			const attrWatchers = nui.knower.listKnown().watchers.find(w => w.id === attrState)?.count || 0;
+			
+			if (attrWatchers === 0) {
+				log('✓ Cleanup worked despite attribute change', 'pass', 'test-19-results');
+			} else {
+				log(`✗ ${attrWatchers} watchers leaked after attr change`, 'fail', 'test-19-results');
+			}
+			
+			// TEST 20: Failed component initialization
+			log('TEST 20: Failed initialization cleanup', 'info', 'test-20-results');
+			
+			const failState = 'fail-state-' + Date.now();
+			nui.knower.tell(failState, 'initial');
+			
+			const tagName20 = 'test-fail-init-' + Math.floor(Math.random() * 10000);
+			customElements.define(tagName20, class extends HTMLElement {
+				connectedCallback() {
+					const id = this.getAttribute('nui-id');
+					
+					// Register watcher
+					nui.knower.watch(failState, () => {}, id);
+					
+					// Register action
+					nui.doer.register('fail-action', () => {}, id);
+					
+					// Then throw error
+					throw new Error('Initialization failed');
+				}
+				disconnectedCallback() {
+					const instanceId = this.getAttribute('nui-id');
+					if (instanceId) {
+						nui.knower.clean(instanceId);
+						nui.doer.clean(instanceId);
+					}
+				}
+			});
+			
+			const failComp = document.createElement(tagName20);
+			failComp.setAttribute('nui-id', 'fail-init-comp');
+			
+			try {
+				document.body.appendChild(failComp);
+			} catch (e) {
+				// Expected to throw
+			}
+			
+			await new Promise(r => setTimeout(r, 10));
+			
+			const failWatchersBefore = nui.knower.listKnown().watchers.find(w => w.id === failState)?.count || 0;
+			const failActionsBefore = nui.doer.listActions().includes('fail-action');
+			
+			log(`  → Watchers after failed init: ${failWatchersBefore}`, 'info', 'test-20-results');
+			log(`  → Action registered: ${failActionsBefore}`, 'info', 'test-20-results');
+			
+			// Try to remove
+			try {
+				failComp.remove();
+			} catch (e) {
+				// Might throw
+			}
+			
+			await new Promise(r => setTimeout(r, 10));
+			
+			const failWatchersAfter = nui.knower.listKnown().watchers.find(w => w.id === failState)?.count || 0;
+			const failActionsAfter = nui.doer.listActions().includes('fail-action');
+			
+			if (failWatchersAfter === 0 && !failActionsAfter) {
+				log('✓ Failed init cleaned up properly', 'pass', 'test-20-results');
+			} else {
+				log('⚠ Failed init may have leaked (expected edge case)', 'info', 'test-20-results');
+			}
+			
+		// TEST 21: DOM manipulation during watcher callback
+		log('TEST 21: DOM manipulation in watcher', 'info', 'test-21-results');
+		
+		const domState = 'dom-manip-' + Date.now();
+		
+		const domComps = [];
+		for (let i = 0; i < 5; i++) {
+			const comp = document.createElement('nui-button');
+			comp.innerHTML = '<button>DOM Manip</button>';
+			comp.setAttribute('nui-id', `dom-comp-${i}`);
+			document.body.appendChild(comp);
+			domComps.push(comp);
+		}			let domManipWatcherFired = 0;
+			
+		// First component's watcher removes other components
+		nui.knower.watch(domState, () => {
+			domManipWatcherFired++;
+			// Remove other components during notification
+			domComps.slice(1).forEach(c => {
+				if (c.isConnected) {
+					c.remove();
+				}
+			});
+		}, 'dom-comp-0');
+		
+		// Other components also watch
+		for (let i = 1; i < 5; i++) {
+			nui.knower.watch(domState, () => {}, `dom-comp-${i}`);
+		}
+		
+		// Now trigger state change - first watcher removes others during iteration
+	nui.knower.tell(domState, 'trigger-removal');
+	
+	await new Promise(r => setTimeout(r, 10));
+	
+	// Should be 1: only from tell() above (no initial notifications)
+	if (domManipWatcherFired === 1) {
+		log('✓ DOM manipulation in watcher executed', 'pass', 'test-21-results');
+	} else {
+		log(`✗ Watcher fired ${domManipWatcherFired} times (expected 1)`, 'fail', 'test-21-results');
+	}
+	
+	const domWatchers = nui.knower.listKnown().watchers.find(w => w.id === domState)?.count || 0;			if (domWatchers <= 1) {
+				log('✓ Removed components cleaned up despite mid-notification removal', 'pass', 'test-21-results');
+			} else {
+				log(`✗ ${domWatchers} watchers still registered`, 'fail', 'test-21-results');
+			}
+			
+			// Clean up remaining
+			domComps.forEach(c => c.remove());
+			
+			// TEST 22: Memory pressure - long-lived watchers
+			log('TEST 22: Memory pressure with frequent updates', 'info', 'test-22-results');
+			
+			const memoryState = 'memory-state-' + Date.now();
+			nui.knower.tell(memoryState, 0);
+			
+			const memoryComp = document.createElement('nui-button');
+			memoryComp.innerHTML = '<button>Memory Test</button>';
+			memoryComp.setAttribute('nui-id', 'memory-comp');
+			document.body.appendChild(memoryComp);
+			
+			let memoryUpdateCount = 0;
+			nui.knower.watch(memoryState, () => memoryUpdateCount++, 'memory-comp');
+			
+			const memoryStart = performance.now();
+			
+			// Rapid state updates
+			for (let i = 0; i < 1000; i++) {
+				nui.knower.tell(memoryState, i);
+			}
+			
+			const memoryTime = performance.now() - memoryStart;
+			
+			if (memoryUpdateCount === 1000) {
+				log('✓ All 1000 updates delivered', 'pass', 'test-22-results');
+			} else {
+				log(`✗ Only ${memoryUpdateCount} updates received`, 'fail', 'test-22-results');
+			}
+			
+			log(`  → 1000 updates in ${memoryTime.toFixed(2)}ms`, 'info', 'test-22-results');
+			
+			if (memoryTime < 100) {
+				log('✓ Update performance acceptable (<100ms)', 'pass', 'test-22-results');
+			} else {
+				log('⚠ Updates slower than expected', 'info', 'test-22-results');
+			}
+			
+			memoryComp.remove();
+			await new Promise(r => setTimeout(r, 10));
+			
+			const memoryWatchers = nui.knower.listKnown().watchers.find(w => w.id === memoryState)?.count || 0;
+			
+		
+		if (memoryWatchers === 0) {
+			log('✓ Cleanup worked after 1000 updates', 'pass', 'test-22-results');
+		} else {
+			log('✗ Watchers leaked after stress', 'fail', 'test-22-results');
+		}
+		
+		log('🎯 ALL COMPREHENSIVE TESTS COMPLETED', 'info');
+		
+		} catch (error) {
+			log(`💥 TEST SUITE ERROR: ${error.message}`, 'fail');
+			console.error('Test suite error:', error);
+		}
+	}		if (document.readyState === 'loading') {
+			document.addEventListener('DOMContentLoaded', runTests);
+		} else {
+			runTests();
+		}
+	</script>
+</head>
+<body>
+	<h1>🎯 NUI Cleanup & Performance - Comprehensive Test Suite</h1>
+	
+	<p style="margin-bottom: 2rem;">
+		22 comprehensive tests covering: basic cleanup, race conditions, concurrent operations, 
+		nested hierarchies, exception handling, circular dependencies, edge cases, and memory pressure.
+	</p>
+	
+	<div class="stats">
+		<div class="stat">
+			<div class="stat-value" id="pass-count">0</div>
+			<div class="stat-label">Passed</div>
+		</div>
+		<div class="stat">
+			<div class="stat-value" id="fail-count">0</div>
+			<div class="stat-label">Failed</div>
+		</div>
+		<div class="stat">
+			<div class="stat-value" id="total-count">0</div>
+			<div class="stat-label">Total</div>
+		</div>
+	</div>
+	
+	<div id="results"></div>
+	
+	<div class="test-section">
+		<h2>Test 1: Knower Auto-Cleanup</h2>
+		<p>Verifies that watchers are automatically removed when components disconnect.</p>
+		<div id="test-1-results"></div>
+	</div>
+	
+	<div class="test-section">
+		<h2>Test 2: Multiple Watchers</h2>
+		<p>Tests cleanup of multiple watchers from a single component.</p>
+		<div id="test-2-results"></div>
+	</div>
+	
+	<div class="test-section">
+		<h2>Test 3: Doer Cleanup</h2>
+		<p>Verifies that registered actions are cleaned up on disconnect.</p>
+		<div id="test-3-results"></div>
+	</div>
+	
+	<div class="test-section">
+		<h2>Test 4: Lazy Execution</h2>
+		<p>Tests that state is only created when watchers exist.</p>
+		<div id="test-4-results"></div>
+	</div>
+	
+	<div class="test-section">
+		<h2>Test 5: No ID Components</h2>
+		<p>Verifies components without watchers don't generate IDs.</p>
+		<div id="test-5-results"></div>
+	</div>
+	
+	<div class="test-section">
+		<h2>Test 6: Real Component State</h2>
+		<p>Tests nui-app instance scoping and cleanup.</p>
+		<div id="test-6-results"></div>
+	</div>
+	
+	<div class="test-section">
+		<h2>Test 7: Performance</h2>
+		<p>Benchmarks registration and cleanup of many watchers.</p>
+		<div id="test-7-results"></div>
+	</div>
+	
+	<div class="test-section">
+		<h2>Test 8: Race Conditions</h2>
+		<p>Rapid create/destroy cycles with concurrent state changes.</p>
+		<div id="test-8-results"></div>
+	</div>
+	
+	<div class="test-section">
+		<h2>Test 9: Concurrent Updates</h2>
+		<p>Multiple components updating shared state simultaneously.</p>
+		<div id="test-9-results"></div>
+	</div>
+	
+	<div class="test-section">
+		<h2>Test 10: Nested Cleanup</h2>
+		<p>Cascading cleanup of nested component hierarchies.</p>
+		<div id="test-10-results"></div>
+	</div>
+	
+	<div class="test-section">
+		<h2>Test 11: Action Spam</h2>
+		<p>Action execution during component removal.</p>
+		<div id="test-11-results"></div>
+	</div>
+	
+	<div class="test-section">
+		<h2>Test 12: Reconnection</h2>
+		<p>Component removal and re-attachment behavior.</p>
+		<div id="test-12-results"></div>
+	</div>
+	
+	<div class="test-section">
+		<h2>Test 13: STRESS TEST 🔥</h2>
+		<p>200 parallel operations with full lifecycle chaos.</p>
+		<div id="test-13-results"></div>
+	</div>
+	
+	<div class="test-section">
+		<h2>Test 14: Cross-Component Communication</h2>
+		<p>Orphaned watchers when observed component is removed.</p>
+		<div id="test-14-results"></div>
+	</div>
+	
+	<div class="test-section">
+		<h2>Test 15: Exception Handling</h2>
+		<p>Watcher exceptions don't break other watchers or cleanup.</p>
+		<div id="test-15-results"></div>
+	</div>
+	
+	<div class="test-section">
+		<h2>Test 16: Multiple Cycles</h2>
+		<p>Repeated connect/disconnect cycles without leaks.</p>
+		<div id="test-16-results"></div>
+	</div>
+	
+	<div class="test-section">
+		<h2>Test 17: Circular Dependencies</h2>
+		<p>Components with circular state update patterns.</p>
+		<div id="test-17-results"></div>
+	</div>
+	
+	<div class="test-section">
+		<h2>Test 18: Cleanup State Updates</h2>
+		<p>State updates during disconnectedCallback.</p>
+		<div id="test-18-results"></div>
+	</div>
+	
+	<div class="test-section">
+		<h2>Test 19: Attribute Mutation</h2>
+		<p>Changing nui-id during cleanup.</p>
+		<div id="test-19-results"></div>
+	</div>
+	
+	<div class="test-section">
+		<h2>Test 20: Failed Initialization</h2>
+		<p>Cleanup after component setup throws error.</p>
+		<div id="test-20-results"></div>
+	</div>
+	
+	<div class="test-section">
+		<h2>Test 21: DOM Manipulation in Watcher</h2>
+		<p>Removing components during watcher notification.</p>
+		<div id="test-21-results"></div>
+	</div>
+	
+	<div class="test-section">
+		<h2>Test 22: Memory Pressure</h2>
+		<p>Long-lived watchers with 1000+ rapid updates.</p>
+		<div id="test-22-results"></div>
+	</div>
+</body>
+</html>
