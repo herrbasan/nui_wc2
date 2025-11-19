@@ -39,12 +39,7 @@ const doer = {
 			});
 			element.dispatchEvent(customEvent);
 			
-			knower.tell(`action:${name}`, {
-				param: param,
-				element: element,
-				target: target,
-				timestamp: Date.now()
-			});
+			knower.tell(`action:${name}`, param || name, element);
 		}
 	},
 	
@@ -59,16 +54,19 @@ const knower = {
 	_states: null,
 	_hooks: null,
 	
-	tell(id, state) {
+	tell(id, state, source = null) {
 		if (!this._states) this._states = new Map();
 		
 		const oldState = this._states.get(id);
+		
+		if (oldState === state) return;
+		
 		this._states.set(id, state);
 		
 		if (this._hooks) {
 			const hooks = this._hooks.get(id);
 			if (hooks) {
-				hooks.forEach(handler => handler(state, oldState));
+				hooks.forEach(handler => handler(state, oldState, source));
 			}
 		}
 	},
@@ -86,7 +84,7 @@ const knower = {
 		
 		const currentState = this._states?.get(id);
 		if (currentState !== undefined) {
-			handler(currentState, undefined);
+			handler(currentState, undefined, null);
 		}
 		
 		return () => this.unwatch(id, handler);
@@ -103,6 +101,16 @@ const knower = {
 		}
 	},
 	
+	forget(id) {
+		if (id) {
+			this._states?.delete(id);
+			this._hooks?.delete(id);
+		} else {
+			this._states = null;
+			this._hooks = null;
+		}
+	},
+	
 	knowAll() {
 		return this._states ? Object.fromEntries(this._states) : {};
 	},
@@ -116,11 +124,6 @@ const knower = {
 				count: this._hooks.get(id).size
 			})) : []
 		};
-	},
-	
-	forget() {
-		this._states = null;
-		this._hooks = null;
 	}
 };
 
@@ -186,6 +189,15 @@ function defineAttributeProperty(element, propName, attrName = propName) {
 }
 
 // ################################# DOM UTILITIES
+
+function ensureInstanceId(element, prefix = 'nui') {
+	let instanceId = element.getAttribute('nui-id');
+	if (!instanceId) {
+		instanceId = `${prefix}-${Math.random().toString(36).substr(2, 9)}`;
+		element.setAttribute('nui-id', instanceId);
+	}
+	return instanceId;
+}
 
 const dom = {
 	create(tag, attributes = {}, children = []) {
@@ -490,6 +502,22 @@ registerComponent('nui-button', (element) => {
 	
 	upgradeAccessibility(element);
 	
+	const buttonNodes = Array.from(button.childNodes);
+	const nonEmptyNodes = buttonNodes.filter(node => {
+		if (node.nodeType === Node.TEXT_NODE) {
+			return node.textContent.trim() !== '';
+		}
+		return true;
+	});
+	
+	const hasOnlyIcon = nonEmptyNodes.length === 1 && 
+		nonEmptyNodes[0].nodeType === Node.ELEMENT_NODE && 
+		nonEmptyNodes[0].tagName === 'NUI-ICON';
+	
+	if (hasOnlyIcon) {
+		element.classList.add('icon-only');
+	}
+	
 	button.addEventListener('click', (e) => {
 		element.dispatchEvent(new CustomEvent('nui-click', {
 			bubbles: true,
@@ -549,6 +577,10 @@ registerComponent('nui-icon', (element) => {
 });
 
 registerComponent('nui-app', (element) => {
+	const instanceId = ensureInstanceId(element, 'app');
+	const stateKey = `${instanceId}:side-nav`;
+	let lastState = null;
+	
 	function getBreakpoint(element) {
 		const sideNav = element.querySelector('nui-side-nav');
 		if (!sideNav) return null;
@@ -576,19 +608,24 @@ registerComponent('nui-app', (element) => {
 		const viewportWidth = window.innerWidth;
 		const isForced = viewportWidth >= breakpoint;
 		
+		let newState;
+		
 		if (isForced) {
 			element.classList.remove('sidenav-open', 'sidenav-closed');
 			element.classList.add('sidenav-forced');
-			knower.tell('side-nav', { state: 'forced', forced: true, viewportWidth, breakpoint });
+			newState = 'forced';
 		} else {
 			element.classList.remove('sidenav-forced');
 			if (!element.classList.contains('sidenav-open')) {
 				element.classList.add('sidenav-closed');
-				knower.tell('side-nav', { state: 'closed', forced: false, viewportWidth, breakpoint });
+				newState = 'closed';
 			} else {
-				knower.tell('side-nav', { state: 'open', forced: false, viewportWidth, breakpoint });
+				newState = 'open';
 			}
 		}
+		
+		knower.tell(stateKey, newState, element);
+		lastState = newState;
 	}
 	
 	function toggleSideNav(element) {
@@ -599,11 +636,13 @@ registerComponent('nui-app', (element) => {
 		if (isOpen) {
 			element.classList.remove('sidenav-open');
 			element.classList.add('sidenav-closed');
-			knower.tell('side-nav', { state: 'closed', forced: false });
+			knower.tell(stateKey, 'closed', element);
+			lastState = 'closed';
 		} else {
 			element.classList.remove('sidenav-closed');
 			element.classList.add('sidenav-open');
-			knower.tell('side-nav', { state: 'open', forced: false });
+			knower.tell(stateKey, 'open', element);
+			lastState = 'open';
 		}
 	}
 	
@@ -624,18 +663,14 @@ registerComponent('nui-app', (element) => {
 	
 	element.toggleSideNav = () => toggleSideNav(element);
 	
-	let resizeTimeout;
 	const resizeObserver = new ResizeObserver(() => {
-		clearTimeout(resizeTimeout);
-		resizeTimeout = setTimeout(() => {
-			updateLayoutClasses(element);
-		}, 150);
+		updateLayoutClasses(element);
 	});
 	resizeObserver.observe(element);
 	
 	return () => {
-		clearTimeout(resizeTimeout);
 		resizeObserver.disconnect();
+		knower.forget(stateKey);
 	};
 });
 
@@ -953,6 +988,7 @@ registerComponent('nui-column-flow', (element) => {
 			const divisor = parseInt(columnWidth.slice(1));
 			if (!isNaN(divisor) && divisor > 0) {
 				const containerWidth = element.offsetWidth;
+				console.log('Container width:', containerWidth);
 				const gapValue = parseFloat(getComputedStyle(element).columnGap) || 0;
 				const availableWidth = containerWidth - (gapValue * (divisor - 1));
 				element.style.columnWidth = `${availableWidth / divisor}px`;

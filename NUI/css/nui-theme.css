@@ -302,7 +302,8 @@ nui-link-list li.separator hr {
 }
 
 nui-link-list li.separator {
-	border-bottom: solid var(--border-thickness) var(--border-shade4);
+	display: block;
+	border-top: solid var(--border-thickness) var(--border-shade4);
 	margin-top: var(--nui-space-half);
 	margin-bottom: var(--nui-space-half);
 	padding: 0;
@@ -417,7 +418,7 @@ nui-link-list[mode="fold"] li.separator {
 	margin-top: var(--nui-space-half);
 	margin-bottom: var(--nui-space-half);
 	padding: 0;
-	height: 1px;
+	height: 0;
 	min-height: 0;
 }
 
@@ -445,7 +446,8 @@ nui-button button {
 	min-width: var(--button-min-width);
 	min-height: var(--button-min-height);
 	padding: var(--button-padding);
-	margin: 0;
+	margin-bottom: var(--nui-space-eighth);
+	margin-right: var(--nui-space-eighth);
 	font-size: var(--button-font-size);
 	font-family: var(--system-ui);
 	background: var(--button-color-background);
@@ -455,6 +457,9 @@ nui-button button {
 	cursor: pointer;
 	transition: all 0.2s ease;
 	text-transform: uppercase;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 }
 
 nui-button button:hover {
@@ -466,9 +471,21 @@ nui-button button:active {
 	transform: translateY(1px);
 }
 
-nui-button button:focus {
+nui-button button:focus-visible {
 	outline: 2px solid var(--color-highlight);
 	outline-offset: 2px;
+}
+
+nui-button.icon-only {
+	padding: 0;
+}
+
+nui-button.icon-only button {
+	background-color: transparent;
+	border: none;
+	padding: 0;
+	width: var(--nui-space-double);
+	height: var(--nui-space-double);
 }
 
 

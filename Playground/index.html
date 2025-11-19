@@ -6,7 +6,7 @@
 		<meta name="color-scheme" content="light dark">
 		<title>NUI Component Playground</title>
 		<link rel="stylesheet" href="css/main.css">
-		<!--<link rel="stylesheet" href="../NUI/css/nui-theme-slate.css">-->
+		<link rel="stylesheet" href="../NUI/css/nui-theme.css">
 		<script type="module" src="js/main.js"></script>
 	</head>
 	<body>
@@ -257,11 +257,11 @@
                         
                         <h2>Testing Modes (URL Parameters)</h2>
                         <p>Use URL parameters to test different scenarios:</p>
-                        <ul style="margin: 1rem 0; padding-left: 2rem; line-height: 1.8;">
+                        <ul>
                             <li><strong>Normal mode:</strong> <code>index.html</code> - Components initialized and enhanced</li>
                             <li><strong>Plain HTML mode:</strong> <code>index.html?skip-init</code> - No component initialization, test semantic HTML structure</li>
                         </ul>
-                        <p style="font-size: 0.9em; color: var(--color-text-dim); margin-top: 0.5rem;">
+                        <p>
                             <em>Plain HTML mode tests progressive enhancement - the page should still be usable without JavaScript.</em>
                         </p>
                         
@@ -299,7 +299,7 @@
                         </p>
                         
                         <h3>Basic Icons</h3>
-                        <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin: 1rem 0;">
+                        <div>
                             <nui-icon name="menu"></nui-icon>
                             <nui-icon name="settings"></nui-icon>
                             <nui-icon name="search"></nui-icon>
@@ -309,37 +309,37 @@
                         </div>
                         
                         <h3>Icons with Labels</h3>
-                        <div style="display: flex; gap: 1rem; margin: 1rem 0;">
-                            <span style="display: flex; align-items: center; gap: 0.5rem;">
+                        <div>
+                            <span>
                                 <nui-icon name="folder"></nui-icon>
                                 Files
                             </span>
-                            <span style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span>
                                 <nui-icon name="analytics"></nui-icon>
                                 Analytics
                             </span>
-                            <span style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span>
                                 <nui-icon name="security"></nui-icon>
                                 Security
                             </span>
                         </div>
                         
                         <h3>Icons in Buttons</h3>
-                        <div style="display: flex; gap: 1rem; margin: 1rem 0;">
+                        <div>
                             <nui-button>
-                                <button type="button" style="display: flex; align-items: center; gap: 0.5rem;">
+                                <button type="button">
                                     <nui-icon name="add"></nui-icon>
                                     Add Item
                                 </button>
                             </nui-button>
                             <nui-button>
-                                <button type="button" style="display: flex; align-items: center; gap: 0.5rem;">
+                                <button type="button">
                                     <nui-icon name="edit"></nui-icon>
                                     Edit
                                 </button>
                             </nui-button>
                             <nui-button>
-                                <button type="button" style="display: flex; align-items: center; gap: 0.5rem;">
+                                <button type="button">
                                     <nui-icon name="delete"></nui-icon>
                                     Delete
                                 </button>
@@ -347,12 +347,12 @@
                         </div>
                         
                         <h3>Dynamic Icon Example (JavaScript)</h3>
-                        <div style="margin: 1rem 0;">
+                        <div>
                             <nui-icon name="play" id="dynamic-icon"></nui-icon>
                             <nui-button nui-event-click="toggle-media">
                                 <button type="button">Toggle Play/Pause</button>
                             </nui-button>
-                            <p style="font-size: 0.9em; color: #888; margin-top: 0.5rem;">
+                            <p>
                                 <em>Dynamic icons require custom JavaScript for real functionality</em>
                             </p>
                         </div>
@@ -364,7 +364,7 @@
                         <p>Click on any sidebar group header to expand/collapse. With accordion mode enabled, opening one section closes others.</p>
                         
                         <h3>Test Active State (Programmatic)</h3>
-                        <div style="display: flex; gap: 1rem; margin: 1rem 0; flex-wrap: wrap;">
+                        <div>
                             <nui-button id="test-active-0">
                                 <button type="button">Set First Group Active</button>
                             </nui-button>
