@@ -786,13 +786,17 @@ registerComponent('nui-side-nav', (element) => {
 	}
 	
 	if (linkList) {
-		element.setActive = (action) => linkList.setActive?.(action);
+		element.setActive = (selector) => linkList.setActive?.(selector);
+		element.getActive = () => linkList.getActive?.();
+		element.getActiveData = () => linkList.getActiveData?.();
 		element.clearActive = () => linkList.clearActive?.();
 		element.clearSubs = () => linkList.clearSubs?.();
 	}
 });
 
 registerComponent('nui-link-list', (element) => {
+	const instanceId = ensureInstanceId(element, 'link-list');
+	const stateKey = `${instanceId}:active`;
 	const mode = element.getAttribute('mode') || 'tree';
 	let activeItem = null;
 	
@@ -871,7 +875,7 @@ registerComponent('nui-link-list', (element) => {
 	
 	element.setActive = (selector) => {
 		const item = typeof selector === 'string' ? element.querySelector(selector) : selector;
-		if (!item) return;
+		if (!item) return false;
 		
 		if (activeItem) activeItem.classList.remove('active');
 		activeItem = item;
@@ -884,12 +888,37 @@ registerComponent('nui-link-list', (element) => {
 			if (header) setGroupState(header, true);
 			parent = parent.parentElement?.closest('ul');
 		}
+		
+		// Update state in Knower
+		const itemData = {
+			element: item,
+			href: item.getAttribute('href'),
+			text: item.textContent.trim(),
+			timestamp: Date.now()
+		};
+		knower.tell(stateKey, itemData, element);
+		
+		return true;
+	};
+	
+	element.getActive = () => {
+		return activeItem;
+	};
+	
+	element.getActiveData = () => {
+		if (!activeItem) return null;
+		return {
+			element: activeItem,
+			href: activeItem.getAttribute('href'),
+			text: activeItem.textContent.trim()
+		};
 	};
 	
 	element.clearActive = () => {
 		if (activeItem) {
 			activeItem.classList.remove('active');
 			activeItem = null;
+			knower.tell(stateKey, null, element);
 		}
 	};
 	
@@ -1025,6 +1054,11 @@ registerComponent('nui-link-list', (element) => {
 	}
 	
 	init();
+	
+	// Cleanup function
+	return () => {
+		knower.forget(stateKey);
+	};
 });
 
 registerComponent('nui-content', (element) => {
