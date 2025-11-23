@@ -873,6 +873,28 @@ registerComponent('nui-link-list', (element) => {
 
 	// ##### ACTIVE ITEM TRACKING & FOLD MODE
 
+	function getPathHeaders(startElement) {
+		const headers = new Set();
+		let curr = startElement;
+		while (curr && element.contains(curr)) {
+			if (curr.classList?.contains('group-items')) {
+				const header = curr.previousElementSibling;
+				if (header && header.classList.contains('group-header')) {
+					headers.add(header);
+				}
+			}
+			curr = curr.parentElement;
+		}
+		return headers;
+	}
+
+	function updateAccordionState(headersToKeepOpen) {
+		element.querySelectorAll('.group-header').forEach(header => {
+			const shouldBeOpen = headersToKeepOpen.has(header);
+			setGroupState(header, shouldBeOpen);
+		});
+	}
+
 	element.setActive = (selector) => {
 		const item = typeof selector === 'string' ? element.querySelector(selector) : selector;
 		if (!item) return false;
@@ -889,59 +911,13 @@ registerComponent('nui-link-list', (element) => {
 			item.parentElement.classList.add('active');
 		}
 
-		// 1. Identify the path of headers to expand
-		const headersToExpand = new Set();
-		let curr = item;
-		while (curr && element.contains(curr)) {
-			if (curr.classList?.contains('group-items')) {
-				const header = curr.previousElementSibling;
-				if (header && header.classList.contains('group-header')) {
-					headersToExpand.add(header);
-				}
-			}
-			curr = curr.parentElement;
-		}
+		const pathHeaders = getPathHeaders(item);
 
-		// 2. If in fold mode, close siblings of the path
 		if (mode === 'fold') {
-			headersToExpand.forEach(header => {
-				const parentUl = header.parentElement;
-				if (parentUl) {
-					// Special handling for top-level groups (which are in separate ULs)
-					if (parentUl.parentElement === element) {
-						const topLevelUls = Array.from(element.children).filter(child => child.tagName === 'UL');
-						topLevelUls.forEach(ul => {
-							if (ul !== parentUl) {
-								const otherHeader = ul.querySelector(':scope > .group-header');
-								if (otherHeader) {
-									setGroupState(otherHeader, false);
-									// Recursively close descendants
-									const container = otherHeader.nextElementSibling;
-									if (container && container.classList.contains('group-items')) {
-										container.querySelectorAll('.group-header').forEach(h => setGroupState(h, false));
-									}
-								}
-							}
-						});
-					}
-
-					const siblings = parentUl.querySelectorAll(':scope > .group-header');
-					siblings.forEach(sibling => {
-						if (sibling !== header) {
-							setGroupState(sibling, false);
-							// Recursively close descendants to ensure clean state
-							const container = sibling.nextElementSibling;
-							if (container && container.classList.contains('group-items')) {
-								container.querySelectorAll('.group-header').forEach(h => setGroupState(h, false));
-							}
-						}
-					});
-				}
-			});
+			updateAccordionState(pathHeaders);
+		} else {
+			pathHeaders.forEach(header => setGroupState(header, true));
 		}
-
-		// 3. Expand the path
-		headersToExpand.forEach(header => setGroupState(header, true));
 
 		// Update state in Knower
 		const itemData = {
@@ -1018,6 +994,7 @@ registerComponent('nui-link-list', (element) => {
 	
 	function toggleGroup(header) {
 		const expanded = header.getAttribute('aria-expanded') === 'true';
+		
 		if (expanded) {
 			setGroupState(header, false);
 			// Close all descendant groups
@@ -1028,22 +1005,13 @@ registerComponent('nui-link-list', (element) => {
 				});
 			}
 		} else {
-			// Accordion: close other top-level groups
-			if (mode === 'fold' && !header.closest('ul ul')) {
-				element.querySelectorAll(':scope > ul > .group-header').forEach(h => {
-					if (h !== header) {
-						setGroupState(h, false);
-						// Close descendants
-						const c = h.nextElementSibling;
-						if (c) {
-							c.querySelectorAll('.group-header').forEach(ch => {
-								setGroupState(ch, false);
-							});
-						}
-					}
-				});
+			if (mode === 'fold') {
+				const pathHeaders = getPathHeaders(header);
+				pathHeaders.add(header);
+				updateAccordionState(pathHeaders);
+			} else {
+				setGroupState(header, true);
 			}
-			setGroupState(header, true);
 		}
 	}
 
