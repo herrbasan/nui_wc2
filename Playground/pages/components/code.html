@@ -1,0 +1,686 @@
+<div class="page-code">
+	<header>
+		<h1>Code Component</h1>
+		<p class="lead">Lightweight syntax highlighting for documentation and code examples</p>
+	</header>
+	
+	<section>
+		<h2>Overview</h2>
+		<p>
+			The <code>&lt;nui-code&gt;</code> component provides minimal syntax highlighting (~6.8KB gzipped).
+			It's an optional module that lazy-loads only when needed. Perfect for documentation sites
+			that need basic code formatting without heavy dependencies.
+		</p>
+		
+		<h3>Features</h3>
+		<ul>
+			<li><strong>Automatic Language Detection</strong> - Detects HTML, CSS, JavaScript, TypeScript, and JSON</li>
+			<li><strong>Lazy Loading</strong> - Module loads only when <code>&lt;nui-code&gt;</code> elements exist</li>
+			<li><strong>Zero Configuration</strong> - Just wrap your code blocks, highlighting happens automatically</li>
+			<li><strong>Minimal Size</strong> - ~6.8KB total (JS + CSS), no dependencies</li>
+			<li><strong>Web-Focused</strong> - Optimized for the 5 core web languages, not a general-purpose highlighter</li>
+		</ul>
+	</section>
+	
+	<section>
+		<h2>Usage</h2>
+		<p>Wrap your code blocks with <code>&lt;nui-code&gt;</code>:</p>
+		<nui-code>
+			<pre><code>&lt;nui-code&gt;
+	&lt;pre&gt;&lt;code&gt;
+// Your code here
+	&lt;/code&gt;&lt;/pre&gt;
+&lt;/nui-code&gt;</code></pre>
+		</nui-code>
+		
+		<h3>Explicit Language Specification</h3>
+		<p>Use <code>data-lang</code> attribute to force a specific language:</p>
+		<nui-code>
+			<pre><code>&lt;nui-code&gt;
+	&lt;pre&gt;&lt;code data-lang="js"&gt;
+console.log('Explicitly JavaScript');
+	&lt;/code&gt;&lt;/pre&gt;
+&lt;/nui-code&gt;</code></pre>
+		</nui-code>
+	</section>
+	
+	<section>
+		<h2>Supported Languages</h2>
+		<p>Focused on the 5 core web development languages:</p>
+		
+		<h3>HTML</h3>
+		<p>Highlights tags, attributes, comments, and text content:</p>
+		<nui-code>
+			<pre><code>&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+	&lt;meta charset="UTF-8"&gt;
+	&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+	&lt;title&gt;Sample Page&lt;/title&gt;
+	&lt;link rel="stylesheet" href="styles.css"&gt;
+&lt;/head&gt;
+&lt;body&gt;
+	&lt;!-- Main content area --&gt;
+	&lt;main class="container"&gt;
+		&lt;h1 id="heading"&gt;Welcome&lt;/h1&gt;
+		&lt;p&gt;This is a &lt;strong&gt;sample&lt;/strong&gt; paragraph.&lt;/p&gt;
+		&lt;img src="image.jpg" alt="Description" /&gt;
+	&lt;/main&gt;
+	&lt;script src="app.js"&gt;&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+		</nui-code>
+		
+		<h3>CSS</h3>
+		<p>Highlights selectors, properties, values, and comments:</p>
+		<nui-code>
+			<pre><code>/* Base styles */
+:root {
+	--primary-color: #007bff;
+	--spacing: 1rem;
+}
+
+.container {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing);
+	padding: 1rem 2rem;
+	background: linear-gradient(to bottom, #fff, #f5f5f5);
+}
+
+#heading {
+	font-size: 2rem;
+	font-weight: bold;
+	color: var(--primary-color);
+}
+
+@media (min-width: 768px) {
+	.container {
+		flex-direction: row;
+		max-width: 1200px;
+		margin: 0 auto;
+	}
+}
+
+/* Pseudo-selectors and attribute selectors */
+a:hover,
+a:focus {
+	text-decoration: underline;
+}
+
+button[disabled] {
+	opacity: 0.5;
+	cursor: not-allowed;
+}</code></pre>
+		</nui-code>
+		
+		<h3>JavaScript</h3>
+		<p>Highlights keywords, strings, numbers, comments, and operators:</p>
+		<nui-code>
+			<pre><code>// ES6+ JavaScript examples
+import { Component } from './framework.js';
+export default class App extends Component {
+	constructor(config) {
+		super(config);
+		this.state = {
+			count: 0,
+			items: [],
+			enabled: true
+		};
+	}
+	
+	// Method with various syntax elements
+	async fetchData(url) {
+		try {
+			const response = await fetch(url);
+			const data = await response.json();
+			return data;
+		} catch (error) {
+			console.error('Failed to fetch:', error);
+			throw new Error(`Request failed: ${error.message}`);
+		}
+	}
+	
+	// Arrow functions and template literals
+	increment = () => {
+		this.setState({ count: this.state.count + 1 });
+		console.log(`Count is now: ${this.state.count}`);
+	};
+	
+	// Various operators and keywords
+	calculate(a, b) {
+		if (a === null || b === undefined) {
+			return 0;
+		}
+		
+		const result = (a + b) * 2 - 10 / 5;
+		const isValid = result > 0 && result < 100;
+		
+		return isValid ? result : null;
+	}
+	
+	// Loops and conditionals
+	processItems() {
+		for (let i = 0; i < this.state.items.length; i++) {
+			const item = this.state.items[i];
+			
+			if (item.enabled) {
+				continue;
+			}
+			
+			while (item.retries > 0) {
+				item.retries--;
+				break;
+			}
+		}
+		
+		// Modern array methods
+		const filtered = this.state.items
+			.filter(item => item.enabled)
+			.map(item => ({ ...item, processed: true }))
+			.reduce((acc, item) => acc + item.value, 0);
+		
+		return filtered;
+	}
+	
+	// RegExp and special cases
+	validateEmail(email) {
+		const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+		return regex.test(email);
+	}
+}
+
+/* Multi-line comment
+   covering multiple lines
+   with various content */
+const numbers = [1, 2, 3, 4.5, -10, 0xFF, 0b1010];
+const strings = ['single', "double", `template ${variable}`];
+const booleans = [true, false, null, undefined, NaN, Infinity];</code></pre>
+		</nui-code>
+		
+		<h3>TypeScript</h3>
+		<p>Extends JavaScript with type annotations and interfaces:</p>
+		<nui-code>
+			<pre><code>interface User {
+	id: number;
+	name: string;
+	email: string;
+	role: 'admin' | 'user';
+}
+
+type Callback<T> = (data: T) => void;
+
+class UserService {
+	private users: User[] = [];
+	
+	async fetchUser(id: number): Promise<User | null> {
+		const response = await fetch(`/api/users/${id}`);
+		if (!response.ok) return null;
+		return response.json() as Promise<User>;
+	}
+	
+	processUsers<T extends User>(callback: Callback<T[]>): void {
+		callback(this.users as T[]);
+	}
+}
+
+enum Status {
+	Active = 1,
+	Inactive = 0
+}</code></pre>
+		</nui-code>
+		
+		<h3>JSON</h3>
+		<p>Data interchange format with key-value pairs:</p>
+		<nui-code>
+			<pre><code>{
+	"name": "Example Project",
+	"version": "1.0.0",
+	"config": {
+		"debug": true,
+		"port": 3000,
+		"maxConnections": null
+	},
+	"features": ["auth", "api", "websockets"],
+	"dependencies": {
+		"express": "4.18.2",
+		"typescript": "5.0.0"
+	}
+}</code></pre>
+		</nui-code>
+		
+		<h3>Python</h3>
+		<p>Highlights keywords, decorators, strings, and comments:</p>
+		<nui-code>
+			<pre><code>from typing import List, Optional
+import asyncio
+
+class DataProcessor:
+	"""Process and analyze data"""
+	
+	def __init__(self, config: dict):
+		self.config = config
+		self.results = []
+	
+	@property
+	def count(self) -> int:
+		return len(self.results)
+	
+	async def fetch_data(self, url: str) -> Optional[dict]:
+		try:
+			response = await asyncio.get(url)
+			return response.json()
+		except Exception as e:
+			raise ValueError(f"Failed to fetch: {e}")
+	
+	def process(self, items: List[str]) -> None:
+		for item in items:
+			if item not in self.results:
+				self.results.append(item)
+		
+		# Filter and transform
+		filtered = [x for x in self.results if x.startswith('valid')]
+		return filtered
+
+# Usage
+processor = DataProcessor({'debug': True})
+data = processor.process(['valid1', 'invalid', 'valid2'])</code></pre>
+		</nui-code>
+		
+		<h3>Bash/Shell</h3>
+		<p>Shell scripting with variables and commands:</p>
+		<nui-code>
+			<pre><code>#!/bin/bash
+
+# Configuration
+APP_NAME="myapp"
+VERSION="1.0.0"
+BUILD_DIR="./build"
+
+# Functions
+function build() {
+	echo "Building ${APP_NAME} v${VERSION}..."
+	mkdir -p ${BUILD_DIR}
+	
+	if [ -d "src" ]; then
+		cp -r src/* ${BUILD_DIR}/
+		echo "Build complete!"
+	else
+		echo "Error: src directory not found" >&2
+		exit 1
+	fi
+}
+
+# Main
+for arg in "$@"; do
+	case $arg in
+		--clean)
+			rm -rf ${BUILD_DIR}
+			;;
+		--build)
+			build
+			;;
+		*)
+			echo "Unknown option: $arg"
+			;;
+	esac
+done</code></pre>
+		</nui-code>
+		
+		<h3>SQL</h3>
+		<p>Database queries with keywords and clauses:</p>
+		<nui-code>
+			<pre><code>-- User analytics query
+SELECT 
+	u.id,
+	u.name,
+	u.email,
+	COUNT(o.id) AS order_count,
+	SUM(o.total) AS total_spent
+FROM users u
+LEFT JOIN orders o ON u.id = o.user_id
+WHERE u.created_at >= '2024-01-01'
+	AND u.status = 'active'
+GROUP BY u.id, u.name, u.email
+HAVING COUNT(o.id) > 5
+ORDER BY total_spent DESC
+LIMIT 100;
+
+/* Create table */
+CREATE TABLE products (
+	id INT PRIMARY KEY,
+	name VARCHAR(255) NOT NULL,
+	price FLOAT,
+	created_at DATETIME DEFAULT NOW()
+);
+
+-- Insert data
+INSERT INTO products (name, price) 
+VALUES ('Widget', 19.99), ('Gadget', 29.99);</code></pre>
+		</nui-code>
+		
+		<h3>Markdown</h3>
+		<p>Lightweight markup for documentation:</p>
+		<nui-code>
+			<pre><code># Main Heading
+
+## Subheading
+
+This is a paragraph with **bold text** and *italic text*.
+
+Here's a `code snippet` and a [link](https://example.com).
+
+- List item 1
+- List item 2
+- List item 3
+
+### Code Block
+
+```javascript
+const greeting = 'Hello, World!';
+```</code></pre>
+		</nui-code>
+		
+		<h3>YAML</h3>
+		<p>Configuration format with key-value pairs:</p>
+		<nui-code>
+			<pre><code># Application configuration
+app:
+  name: "My Application"
+  version: "1.0.0"
+  debug: true
+
+database:
+  host: "localhost"
+  port: 5432
+  name: "mydb"
+  credentials:
+    user: "admin"
+    password: "secret"
+
+features:
+  - authentication
+  - api
+  - caching
+
+server:
+  ssl: yes
+  timeout: null</code></pre>
+		</nui-code>
+		
+		<h3>PHP</h3>
+		<p>Server-side scripting with variables and functions:</p>
+		<nui-code>
+			<pre><code><?php
+namespace App\Controllers;
+
+use App\Models\User;
+
+class UserController {
+	private $db;
+	
+	public function __construct($database) {
+		$this->db = $database;
+	}
+	
+	public function getUser($id) {
+		try {
+			$stmt = $this->db->prepare("SELECT * FROM users WHERE id = ?");
+			$stmt->execute([$id]);
+			return $stmt->fetch();
+		} catch (Exception $e) {
+			echo "Error: " . $e->getMessage();
+			return null;
+		}
+	}
+	
+	public static function validateEmail($email) {
+		return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
+	}
+}
+
+$controller = new UserController($db);
+$user = $controller->getUser(123);
+?></code></pre>
+		</nui-code>
+		
+		<h3>Ruby</h3>
+		<p>Dynamic language with symbols and blocks:</p>
+		<nui-code>
+			<pre><code>class User
+	attr_accessor :name, :email
+	
+	def initialize(name, email)
+		@name = name
+		@email = email
+		@created_at = Time.now
+	end
+	
+	def greet
+		puts "Hello, #{@name}!"
+	end
+	
+	def self.find_by_email(email)
+		users.find { |u| u.email == email }
+	end
+end
+
+# Symbols and hashes
+config = {
+	debug: true,
+	port: 3000,
+	features: [:auth, :api, :cache]
+}
+
+# Blocks and iterators
+users.each do |user|
+	user.greet if user.email.include?('@example.com')
+end
+
+result = [1, 2, 3].map { |n| n * 2 }.select { |n| n > 2 }</code></pre>
+		</nui-code>
+		
+		<h3>C/C++</h3>
+		<p>Systems programming with preprocessor and types:</p>
+		<nui-code>
+			<pre><code>#include <iostream>
+#include <vector>
+#include <string>
+
+#define MAX_SIZE 100
+
+class Person {
+private:
+	std::string name;
+	int age;
+	
+public:
+	Person(const std::string& n, int a) : name(n), age(a) {}
+	
+	virtual void introduce() const {
+		std::cout << "Name: " << name << ", Age: " << age << std::endl;
+	}
+	
+	static int count;
+};
+
+int Person::count = 0;
+
+template<typename T>
+class Stack {
+private:
+	std::vector<T> items;
+	
+public:
+	void push(const T& item) {
+		if (items.size() < MAX_SIZE) {
+			items.push_back(item);
+		}
+	}
+	
+	T pop() {
+		T item = items.back();
+		items.pop_back();
+		return item;
+	}
+};
+
+int main() {
+	Stack<int> numbers;
+	numbers.push(42);
+	return 0;
+}</code></pre>
+		</nui-code>
+		
+		<h3>Java</h3>
+		<p>Object-oriented with annotations and interfaces:</p>
+		<nui-code>
+			<pre><code>package com.example.app;
+
+import java.util.*;
+
+public class UserService implements Service {
+	private final Map<Integer, User> users;
+	
+	@Autowired
+	private DatabaseConnection db;
+	
+	public UserService() {
+		this.users = new HashMap<>();
+	}
+	
+	@Override
+	public User findById(int id) throws UserNotFoundException {
+		if (!users.containsKey(id)) {
+			throw new UserNotFoundException("User not found: " + id);
+		}
+		return users.get(id);
+	}
+	
+	public List<User> getActiveUsers() {
+		return users.values()
+			.stream()
+			.filter(u -> u.isActive())
+			.collect(Collectors.toList());
+	}
+	
+	public static void main(String[] args) {
+		UserService service = new UserService();
+		try {
+			User user = service.findById(123);
+			System.out.println(user.getName());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+}</code></pre>
+		</nui-code>
+		
+		<h3>XML</h3>
+		<p>Markup for data structure (uses HTML highlighting):</p>
+		<nui-code>
+			<pre><code>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;configuration&gt;
+	&lt;database&gt;
+		&lt;host&gt;localhost&lt;/host&gt;
+		&lt;port&gt;5432&lt;/port&gt;
+		&lt;name&gt;mydb&lt;/name&gt;
+	&lt;/database&gt;
+	&lt;features&gt;
+		&lt;feature name="auth" enabled="true" /&gt;
+		&lt;feature name="cache" enabled="false" /&gt;
+	&lt;/features&gt;
+	&lt;!-- Configuration comments --&gt;
+&lt;/configuration&gt;</code></pre>
+		</nui-code>
+	</section>
+	
+	<section>
+		<h2>Language Detection</h2>
+		<p>
+			The component uses pattern matching to automatically detect languages. You can also
+			explicitly specify the language using the <code>data-lang</code> attribute:
+		</p>
+		<nui-code>
+			<pre><code>&lt;pre&gt;&lt;code data-lang="typescript"&gt;
+interface User { name: string; }
+&lt;/code&gt;&lt;/pre&gt;</code></pre>
+		</nui-code>
+		
+		<h3>Supported Language Identifiers</h3>
+		<ul>
+			<li><code>html</code>, <code>xml</code></li>
+			<li><code>css</code></li>
+			<li><code>js</code>, <code>javascript</code></li>
+			<li><code>ts</code>, <code>typescript</code></li>
+			<li><code>json</code></li>
+		</ul>
+	</section>
+	
+	<section>
+		<h2>Implementation Details</h2>
+		
+		<h3>Automatic Detection</h3>
+		<p>The component detects languages based on content patterns:</p>
+		<nui-code>
+			<pre><code>// Detection logic (simplified)
+if (code.startsWith('<')) {
+	language = 'html';
+} else if (/"[\w-]+":\s*/.test(code)) {
+	language = 'json';
+} else if (/\b(interface|type|enum)\b/.test(code)) {
+	language = 'typescript';
+} else if (/[.#][\w-]+\s*{/.test(code)) {
+	language = 'css';
+} else if (/\b(const|let|var|function)\b/.test(code)) {
+	language = 'js';
+}</code></pre>
+		</nui-code>
+		
+		<h3>Token System</h3>
+		<p>Uses placeholder tokens to prevent nested span corruption during replacement:</p>
+		<nui-code>
+			<pre><code>// Placeholder prevents: &lt;span&gt;&lt;span&gt;&lt;span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;
+const token = `___TOKEN_${tokenId++}___`;
+tokens.push({ 
+	token, 
+	html: `&lt;span class="hl-keyword"&gt;${match}&lt;/span&gt;` 
+});
+return token;</code></pre>
+		</nui-code>
+		
+		<h3>Performance</h3>
+		<ul>
+			<li><strong>Lazy loading</strong> - Module loads only when needed</li>
+			<li><strong>One-time processing</strong> - Highlights on component connection only</li>
+			<li><strong>No runtime overhead</strong> - Static HTML output after highlighting</li>
+			<li><strong>Regex-based</strong> - Fast, simple, no complex parsing</li>
+		</ul>
+	</section>
+	
+	<section>
+		<h2>Theming</h2>
+		<p>
+			Colors automatically adapt to light/dark themes using <code>light-dark()</code> CSS function:
+		</p>
+		<nui-code>
+			<pre><code>.hl-keyword {
+	color: light-dark(#d73a49, #ff7b72);
+}
+
+.hl-string {
+	color: light-dark(#032f62, #a5d6ff);
+}</code></pre>
+		</nui-code>
+		<p>
+			Override colors with CSS custom properties for full control over appearance.
+		</p>
+	</section>
+	
+	<section class="next-steps">
+		<h2>Module Size</h2>
+		<p><strong>Current:</strong> ~6.8KB (5 languages: HTML, CSS, JavaScript, TypeScript, JSON)</p>
+		<p><strong>Budget remaining:</strong> ~3.2KB within 10KB target</p>
+		<p><strong>Philosophy:</strong> Focused quality over broad support - the 5 core web languages done exceptionally well</p>
+	</section>
+</div>

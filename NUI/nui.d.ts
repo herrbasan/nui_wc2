@@ -22,6 +22,9 @@ export interface PageModule {
 	
 	/** Called every time page is shown */
 	onShow?: (container: HTMLElement, params: Record<string, string>) => void;
+	
+	/** Called when page is hidden (navigating away) */
+	onHide?: (container: HTMLElement) => void;
 }
 
 export interface PageInfo {

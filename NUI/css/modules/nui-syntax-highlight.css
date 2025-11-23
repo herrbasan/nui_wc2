@@ -1,0 +1,63 @@
+/* Minimal syntax highlighting theme */
+
+nui-code {
+	display: block;
+}
+
+pre code {
+	display: block;
+	padding: var(--nui-space);
+	background: var(--color-shade1);
+	border: solid thin var(--border-shade1);
+	border-radius: var(--border-radius2);
+	overflow-x: auto;
+	line-height: 1.5;
+	font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+	font-size: 0.875rem;
+	tab-size: 4;
+}
+
+/* HTML */
+.hl-tag { color: light-dark(rgb(34, 134, 58), rgb(92, 214, 92)); }
+.hl-attr { color: light-dark(rgb(0, 92, 197), rgb(156, 220, 254)); }
+
+/* CSS */
+.hl-selector { color: light-dark(rgb(34, 134, 58), rgb(92, 214, 92)); }
+.hl-prop { color: light-dark(rgb(0, 92, 197), rgb(156, 220, 254)); font-weight: 500; }
+.hl-value { color: light-dark(rgb(163, 21, 21), rgb(253, 151, 31)); }
+
+/* JavaScript/TypeScript */
+.hl-keyword { color: light-dark(rgb(175, 0, 219), rgb(197, 134, 192)); font-weight: 600; }
+.hl-literal { color: light-dark(rgb(9, 134, 88), rgb(86, 156, 214)); }
+.hl-number { color: light-dark(rgb(9, 134, 88), rgb(181, 206, 168)); }
+.hl-builtin { color: light-dark(rgb(0, 92, 197), rgb(79, 193, 255)); font-weight: 500; }
+.hl-function { color: light-dark(rgb(121, 93, 163), rgb(220, 220, 170)); }
+.hl-template { color: light-dark(rgb(163, 21, 21), rgb(206, 145, 120)); }
+.hl-regex { color: light-dark(rgb(163, 21, 21), rgb(214, 157, 133)); font-style: italic; }
+.hl-type { color: light-dark(rgb(0, 92, 197), rgb(78, 201, 176)); }
+
+/* Python/Ruby */
+.hl-decorator { color: light-dark(rgb(175, 0, 219), rgb(220, 220, 170)); font-style: italic; }
+.hl-symbol { color: light-dark(rgb(9, 134, 88), rgb(86, 156, 214)); }
+.hl-docstring { color: light-dark(rgb(106, 115, 125), rgb(106, 153, 85)); font-style: italic; }
+.hl-class { color: light-dark(rgb(0, 92, 197), rgb(78, 201, 176)); font-weight: 600; }
+
+/* Bash/PHP */
+.hl-var { color: light-dark(rgb(0, 92, 197), rgb(156, 220, 254)); }
+
+/* C/C++ */
+.hl-preprocessor { color: light-dark(rgb(175, 0, 219), rgb(197, 134, 192)); font-weight: 600; }
+
+/* CSS */
+.hl-pseudo { color: light-dark(rgb(121, 93, 163), rgb(197, 134, 192)); }
+.hl-important { color: light-dark(rgb(175, 0, 219), rgb(255, 85, 85)); font-weight: bold; }
+
+/* Markdown */
+.hl-strong { font-weight: bold; }
+.hl-em { font-style: italic; }
+.hl-code { background: light-dark(rgb(240, 240, 240), rgb(40, 40, 40)); padding: 0.1em 0.3em; border-radius: 3px; }
+.hl-link { color: light-dark(rgb(0, 92, 197), rgb(156, 220, 254)); text-decoration: underline; }
+
+/* Common */
+.hl-string { color: light-dark(rgb(163, 21, 21), rgb(206, 145, 120)); }
+.hl-comment { color: light-dark(rgb(106, 115, 125), rgb(98, 98, 98)); font-style: italic; }

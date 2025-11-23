@@ -30,3 +30,60 @@ button {
 	background: yellow;
 	padding: 0.5rem;
 }
+
+/* Component demo page styles */
+.demo-container {
+	border: 1px solid var(--nui-border);
+	border-radius: 0.5rem;
+	padding: 1rem;
+	background: var(--nui-surface-1);
+	margin-bottom: 1rem;
+}
+
+.demo-actions {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	gap: 1rem;
+	margin: 1rem 0;
+}
+
+.state-display {
+	background: var(--nui-surface-2);
+	padding: 1rem;
+	border-radius: 0.5rem;
+	margin-bottom: 2rem;
+}
+
+.state-display h4 {
+	margin-top: 0;
+}
+
+.state-display pre {
+	margin: 0;
+	font-family: monospace;
+	font-size: 0.875rem;
+}
+
+.collapsible-section {
+	margin: 1rem 0;
+}
+
+.collapsible-section summary {
+	cursor: pointer;
+	font-weight: bold;
+	padding: 0.5rem;
+	background: var(--nui-surface-2);
+	border-radius: 0.25rem;
+}
+
+.collapsible-section > div {
+	padding: 1rem;
+	background: var(--nui-surface-1);
+	border-radius: 0 0 0.25rem 0.25rem;
+}
+
+.collapsible-section pre {
+	margin: 0;
+	overflow-x: auto;
+	font-size: 0.875rem;
+}

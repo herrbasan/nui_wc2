@@ -203,6 +203,14 @@ body {
 	color: var(--text-color);
 	line-height: 1.6;
 }
+pre {
+	font-family: monospace;
+	background: var(--color-shade2);
+	border-radius: var(--border-radius1);
+	border: solid var(--border-thickness) var(--border-shade2);
+	overflow-x: auto;
+	padding: var(--nui-space);
+}
 
 nui-side-nav nui-link-list {
 	margin-top: var(--nui-space);
@@ -246,13 +254,14 @@ nui-link-list:first-child ul li:first-child {
 
 nui-link-list ul li a,
 nui-link-list ul li.group-header > span:first-child {
-	width: 100%;
-	height: 100%;
+	flex: 1;
 	display: flex;
 	align-items: center;
+	align-self: stretch;
 	gap: var(--nui-space-half);
 	text-decoration: none;
 	color: inherit;
+	min-width: 0;
 }
 
 nui-link-list ul li a nui-icon,
@@ -323,6 +332,7 @@ nui-link-list[mode="fold"] {
 }
 
 nui-link-list[mode="fold"] li {
+	padding: 0;
 	color: currentColor;
 	text-decoration: none;
 	cursor: pointer;
@@ -348,7 +358,13 @@ nui-link-list[mode="fold"] li.list-item.active::after {
 	width: 0.3rem;
 	background-color: var(--color-highlight);
 	border-radius: var(--nui-radius);
+}
 
+nui-link-list[mode="fold"] li.list-item a {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
 }
 
 nui-link-list[mode="fold"] ul {
@@ -361,11 +377,7 @@ nui-link-list[mode="fold"] ul li {
 	display: flex;
 	align-items: center;
 	gap: var(--nui-space-half);
-	min-height: var(--nui-space-double);
-	padding-left: var(--nui-space);
-	padding-right: var(--nui-space);
-	padding-top: var(--nui-space-quarter);
-	padding-bottom: var(--nui-space-half);
+	min-height: var(--nui-space-triple);
 	cursor: pointer;
 	user-select: none;
 	color: var(--text-color-dim);
@@ -377,6 +389,8 @@ nui-link-list[mode="fold"] ul li.group-header::after {
 	font-size: 1.4rem;
 	opacity: 0.2;
 	transition: all 0.2s;
+	position: absolute;
+	right: var(--nui-space);
 }
 
 nui-link-list[mode="fold"] ul li.group-header[aria-expanded="true"]::after {
@@ -396,6 +410,15 @@ nui-link-list[mode="fold"] ul li.group-header > span:first-child {
 	color: inherit;
 }
 
+nui-link-list[mode="fold"] ul li.group-header {
+	position: relative;
+}
+nui-link-list[mode="fold"] ul li.group-header > span {
+	position: absolute;
+	inset: 0;
+	padding-left: var(--nui-space);
+}
+
 /* Container for collapsible group items - fold mode only */
 nui-link-list[mode="fold"] .group-items {
 	overflow: hidden;
@@ -412,7 +435,7 @@ nui-link-list[mode="fold"] .group-header[aria-expanded="true"] + .group-items {
 }
 
 /* Indentation for items in expanded groups - fold mode only */
-nui-link-list[mode="fold"] .group-items > li {
+nui-link-list[mode="fold"] .group-items > li a span {
 	padding-left: 2.7rem;
 }
 

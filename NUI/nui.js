@@ -848,6 +848,53 @@ registerComponent('nui-side-nav', (element) => {
 	}
 });
 
+registerComponent('nui-code', (element) => {
+	// Auto-highlight code blocks when component connects
+	import('./lib/modules/nui-syntax-highlight.js').then(module => {
+		const blocks = element.querySelectorAll('pre code');
+		blocks.forEach(block => {
+			let lang = block.getAttribute('data-lang');
+			
+			// Auto-detect language if not specified - supports HTML, CSS, JS, TS, JSON
+			if (!lang) {
+				const code = block.textContent.trim();
+				// Check for HTML first (most common in docs)
+				// Note: textContent decodes HTML entities, so we check for actual < characters
+				if (/^<[!/?\w]/.test(code) || /<!DOCTYPE/i.test(code)) {
+					lang = 'html';
+				}
+				// JSON (starts with { or [, has "key": pattern)
+				else if (/^\s*[{\[]/.test(code) && /"[\w-]+":\s*/.test(code)) {
+					lang = 'json';
+				}
+				// TypeScript (interface, type, or explicit types)
+				else if (/\b(interface|type|enum|namespace|declare)\b/.test(code) || /:\s*(string|number|boolean|any)\b/.test(code)) {
+					lang = 'typescript';
+				}
+				// CSS
+				else if (/[.#][\w-]+\s*{/.test(code) || /@media|@import/.test(code)) {
+					lang = 'css';
+				}
+				// JavaScript (fallback - const, let, var, function, etc.)
+				else if (/\b(const|let|var|function|import|export|class|=>)\b/.test(code)) {
+					lang = 'js';
+				}
+				
+				if (lang) {
+					block.setAttribute('data-lang', lang);
+				}
+			}
+			
+			if (lang) {
+				const code = block.textContent;
+				block.innerHTML = module.highlight(code, lang);
+			}
+		});
+	}).catch(() => {
+		// Syntax highlight module not available - that's fine
+	});
+});
+
 registerComponent('nui-link-list', (element) => {
 	const instanceId = ensureInstanceId(element, 'link-list');
 	const stateKey = `${instanceId}:active`;
@@ -857,7 +904,16 @@ registerComponent('nui-link-list', (element) => {
 	// ##### DATA LOADING & HTML GENERATION
 
 	element.loadData = (data) => {
-		element.innerHTML = data.map(item => buildItemHTML(item)).join('');
+		const html = data.map(item => buildItemHTML(item)).join('');
+		
+		// Check if there's a column-flow wrapper to preserve
+		const columnFlow = element.querySelector('nui-column-flow');
+		if (columnFlow) {
+			columnFlow.innerHTML = html;
+		} else {
+			element.innerHTML = html;
+		}
+		
 		upgradeHtml();
 		if (mode === 'fold') {
 			element.querySelectorAll('.group-header').forEach(h => {
@@ -874,7 +930,8 @@ registerComponent('nui-link-list', (element) => {
 			const children = item.items.map(i => buildItemHTML(i, true)).join('');
 			return `<ul>${buildGroupHeaderHTML(item)}${children}</ul>`;
 		}
-		const link = `<li><a href="${item.href || '#'}"${item.event ? ` nui-event-click="${item.event}"` : ''}>` +
+		const hrefAttr = item.href ? ` href="${item.href}"` : ' href=""';
+		const link = `<li><a${hrefAttr}${item.event ? ` nui-event-click="${item.event}"` : ''}>` +
 			`${item.icon ? `<nui-icon name="${item.icon}"></nui-icon>` : ''}<span>${item.label}</span></a></li>`;
 		return nested ? link : `<ul>${link}</ul>`;
 	}
@@ -977,10 +1034,13 @@ registerComponent('nui-link-list', (element) => {
 		text: activeItem.textContent.trim()
 	} : null;
 
-	element.clearActive = () => {
+	element.clearActive = (closeAll = false) => {
 		if (activeItem) {
 			updateActive(null);
 			knower.tell(stateKey, null, element);
+		}
+		if (closeAll) {
+			element.querySelectorAll('.group-header').forEach(h => setGroupState(h, false));
 		}
 	};
 
@@ -1028,33 +1088,54 @@ registerComponent('nui-link-list', (element) => {
 
 	element.addEventListener('click', (e) => {
 		const header = e.target.closest('.group-header');
-		if (!header) return;
+		if (header) {
+			const expand = header.getAttribute('aria-expanded') !== 'true';
+			if (mode === 'fold' && expand) {
+				const path = getPathHeaders(header);
+				path.add(header);
+				updateAccordionState(path);
+			} else {
+				setGroupState(header, expand);
+				if (!expand) { // Close descendants
+					header.nextElementSibling?.querySelectorAll('.group-header').forEach(h => setGroupState(h, false));
+				}
+			}
+			return;
+		}
 		
-		const expand = header.getAttribute('aria-expanded') !== 'true';
-		if (mode === 'fold' && expand) {
-			const path = getPathHeaders(header);
-			path.add(header);
-			updateAccordionState(path);
-		} else {
-			setGroupState(header, expand);
-			if (!expand) { // Close descendants
-				header.nextElementSibling?.querySelectorAll('.group-header').forEach(h => setGroupState(h, false));
+		// Handle link clicks - set active state
+		const link = e.target.closest('a');
+		if (link) {
+			const listItem = link.closest('li');
+			if (listItem) {
+				updateActive(listItem);
+				knower.tell(stateKey, {
+					element: listItem,
+					link: link,
+					href: link.getAttribute('href'),
+					text: link.textContent.trim()
+				}, element);
+			}
+			
+			// Prevent navigation if there's no href or it's empty
+			if (!link.getAttribute('href')) {
+				e.preventDefault();
 			}
 		}
 	});
 
 	element.addEventListener('focusin', (e) => {
-		if (isMouseDown) return;
-
 		if (mode === 'fold') {
 			const header = e.target.closest('.group-header');
 			if (header) {
+				if (isMouseDown) return; // Skip header focus during mouse clicks
 				const path = getPathHeaders(header);
 				path.add(header);
 				updateAccordionState(path);
 			} else {
 				const link = e.target.closest('a');
 				if (link) {
+					// Always expand parent groups for links, even during mouse clicks
 					const path = getPathHeaders(link);
 					updateAccordionState(path);
 				}
@@ -1290,17 +1371,18 @@ function createContentLoader(container, options = {}) {
 
 			container.appendChild(pageEl);
 
-			let module = null;
-			try {
-				module = await import(`${basePath}/${pageId}.js`);
-				if (module.init) {
-					await module.init(pageEl, nui, params);
-				}
-			} catch (e) {
-				// No module = pure HTML page (this is fine)
-			}
+			// Execute any <script> tags in the loaded HTML
+			const scripts = pageEl.querySelectorAll('script');
+			scripts.forEach(oldScript => {
+				const newScript = document.createElement('script');
+				Array.from(oldScript.attributes).forEach(attr => {
+					newScript.setAttribute(attr.name, attr.value);
+				});
+				newScript.textContent = oldScript.textContent;
+				oldScript.parentNode.replaceChild(newScript, oldScript);
+			});
 
-			pages.set(pageId, { element: pageEl, module, params });
+			pages.set(pageId, { element: pageEl, module: null, params });
 
 			hideLoading();
 			return show(pageId, params);
@@ -1346,8 +1428,16 @@ function createContentLoader(container, options = {}) {
 		const page = pages.get(pageId);
 		if (!page) return false;
 
-		pages.forEach(({ element }, id) => {
-			element.style.display = id === pageId ? 'block' : 'none';
+		pages.forEach(({ element, module }, id) => {
+			const isShowing = id === pageId;
+			const wasVisible = element.style.display !== 'none';
+			
+			// Call onHide for pages being hidden
+			if (wasVisible && !isShowing && module?.onHide) {
+				module.onHide(element);
+			}
+			
+			element.style.display = isShowing ? 'block' : 'none';
 		});
 
 		if (page.module?.onShow) {
@@ -1462,7 +1552,7 @@ function enableContentLoading(options = {}) {
 
 	const loader = createContentLoader(container, { 
 		basePath,
-		onError 
+		onError
 	});
 
 	const router = createRouter(loader, {
