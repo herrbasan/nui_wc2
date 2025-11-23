@@ -800,300 +800,195 @@ registerComponent('nui-link-list', (element) => {
 	const mode = element.getAttribute('mode') || 'tree';
 	let activeItem = null;
 
-	// ##### LOAD DATA FROM JAVASCRIPT OBJECTS
+	// ##### DATA LOADING & HTML GENERATION
 
 	element.loadData = (data) => {
-		element.innerHTML = '';
-		data.forEach(item => {
-			element.innerHTML += buildItemHTML(item);
-		});
+		element.innerHTML = data.map(item => buildItemHTML(item)).join('');
 		upgradeHtml();
 		if (mode === 'fold') {
-			element.querySelectorAll('.group-header').forEach(header => {
-				header.setAttribute('tabindex', '0');
-				header.setAttribute('role', 'button');
-				initialCollapseGroup(header);
+			element.querySelectorAll('.group-header').forEach(h => {
+				h.setAttribute('tabindex', '0');
+				h.setAttribute('role', 'button');
+				setGroupState(h, false);
 			});
 		}
 	};
 
 	function buildItemHTML(item, nested = false) {
-		if (item.separator) {
-			return '<li class="separator"><hr></li>';
-		}
-
+		if (item.separator) return '<li class="separator"><hr></li>';
 		if (item.items) {
-			let html = nested ? '<ul>' : '<ul>';
-			html += buildGroupHeaderHTML(item);
-
-			item.items.forEach(child => {
-				if (child.separator) {
-					html += buildItemHTML(child, true);
-				} else if (child.items) {
-					html += buildItemHTML(child, true);
-				} else {
-					html += buildLinkItemHTML(child);
-				}
-			});
-
-			html += nested ? '</ul>' : '</ul>';
-			return html;
-		} else {
-			return nested ? buildLinkItemHTML(item) : '<ul>' + buildLinkItemHTML(item) + '</ul>';
+			const children = item.items.map(i => buildItemHTML(i, true)).join('');
+			return `<ul>${buildGroupHeaderHTML(item)}${children}</ul>`;
 		}
+		const link = `<li><a href="${item.href || '#'}"${item.event ? ` nui-event-click="${item.event}"` : ''}>` +
+			`${item.icon ? `<nui-icon name="${item.icon}"></nui-icon>` : ''}<span>${item.label}</span></a></li>`;
+		return nested ? link : `<ul>${link}</ul>`;
 	}
 
 	function buildGroupHeaderHTML(item) {
-		let html = '<li class="group-header"><span>';
-		if (item.icon) html += `<nui-icon name="${item.icon}"></nui-icon>`;
-		html += `<span>${item.label}</span>`;
-		html += '</span>';
+		const action = item.action ? `<button type="button" class="action" nui-event-click="${item.action}"><nui-icon name="settings"></nui-icon></button>` : '';
+		return `<li class="group-header"><span>${item.icon ? `<nui-icon name="${item.icon}"></nui-icon>` : ''}<span>${item.label}</span></span>${action}</li>`;
+	}
 
-		if (item.action) {
-			html += `<button type="button" class="action" nui-event-click="${item.action}">`;
-			html += '<nui-icon name="settings"></nui-icon>';
-			html += '</button>';
+	// ##### STATE MANAGEMENT
+
+	function updateActive(newItem) {
+		if (activeItem) {
+			activeItem.classList.remove('active');
+			activeItem.parentElement?.classList.remove('active');
 		}
-
-		html += '</li>';
-		return html;
+		activeItem = newItem;
+		if (activeItem) {
+			activeItem.classList.add('active');
+			activeItem.parentElement?.classList.add('active');
+		}
 	}
 
-	function buildLinkItemHTML(item) {
-		let html = '<li>';
-		html += `<a href="${item.href || '#'}"`;
-		if (item.event) html += ` nui-event-click="${item.event}"`;
-		html += '>';
-		if (item.icon) html += `<nui-icon name="${item.icon}"></nui-icon>`;
-		html += `<span>${item.label}</span>`;
-		html += '</a>';
-		html += '</li>';
-		return html;
-	}
-
-	// ##### ACTIVE ITEM TRACKING & FOLD MODE
-
-	function getPathHeaders(startElement) {
+	function getPathHeaders(el) {
 		const headers = new Set();
-		let curr = startElement;
-		while (curr && element.contains(curr)) {
-			if (curr.classList?.contains('group-items')) {
-				const header = curr.previousElementSibling;
-				if (header && header.classList.contains('group-header')) {
-					headers.add(header);
-				}
-			}
-			curr = curr.parentElement;
+		let container = el.parentElement?.closest('.group-items');
+		while (container) {
+			headers.add(container.previousElementSibling);
+			container = container.parentElement.closest('.group-items');
 		}
 		return headers;
 	}
 
-	function updateAccordionState(headersToKeepOpen) {
+	function updateAccordionState(keepOpen) {
 		element.querySelectorAll('.group-header').forEach(header => {
-			const shouldBeOpen = headersToKeepOpen.has(header);
-			setGroupState(header, shouldBeOpen);
+			setGroupState(header, keepOpen.has(header));
 		});
 	}
 
-	element.setActive = (selector) => {
-		const item = typeof selector === 'string' ? element.querySelector(selector) : selector;
-		if (!item) return false;
-
-		if (activeItem) {
-			activeItem.classList.remove('active');
-			if (activeItem.parentElement?.tagName === 'LI') {
-				activeItem.parentElement.classList.remove('active');
-			}
-		}
-		activeItem = item;
-		item.classList.add('active');
-		if (item.parentElement?.tagName === 'LI') {
-			item.parentElement.classList.add('active');
-		}
-
-		const pathHeaders = getPathHeaders(item);
-
-		if (mode === 'fold') {
-			updateAccordionState(pathHeaders);
-		} else {
-			pathHeaders.forEach(header => setGroupState(header, true));
-		}
-
-		// Update state in Knower
-		const itemData = {
-			element: item,
-			href: item.getAttribute('href'),
-			text: item.textContent.trim(),
-			timestamp: Date.now()
-		};
-		knower.tell(stateKey, itemData, element);
-
-		return true;
-	};
-
-	element.getActive = () => {
-		return activeItem;
-	};
-
-	element.getActiveData = () => {
-		if (!activeItem) return null;
-		return {
-			element: activeItem,
-			href: activeItem.getAttribute('href'),
-			text: activeItem.textContent.trim()
-		};
-	};
-
-	element.clearActive = () => {
-		if (activeItem) {
-			activeItem.classList.remove('active');
-			if (activeItem.parentElement?.tagName === 'LI') {
-				activeItem.parentElement.classList.remove('active');
-			}
-			activeItem = null;
-			knower.tell(stateKey, null, element);
-		}
-	};
-
-	element.clearSubs = () => {
-		element.querySelectorAll('.group-header').forEach(header => {
-			setGroupState(header, false);
-		});
-	};
-	
 	function setGroupState(header, expand) {
 		header.setAttribute('aria-expanded', expand);
 		const container = header.nextElementSibling;
 		if (!container?.classList.contains('group-items')) return;
 
-		// Prevent stuck height on already-open groups (setActive recursion fix)
 		if (expand && container.style.height === 'auto') return;
 		if (!expand && container.style.height === '0px') return;
-		
-		if (expand) {
-			container.style.height = container.scrollHeight + 'px';
-		} else {
-			if (container.style.height === '' || container.style.height === 'auto') {
-				container.style.height = container.scrollHeight + 'px';
-				container.offsetHeight;
+
+		container.style.height = container.scrollHeight + 'px';
+		if (!expand) container.offsetHeight; // Force reflow
+		container.style.height = expand ? container.scrollHeight + 'px' : '0px';
+
+		const onEnd = (e) => {
+			if (e.target === container && e.propertyName === 'height') {
+				container.style.height = expand ? 'auto' : '0px';
+				container.removeEventListener('transitionend', onEnd);
 			}
-			container.style.height = '0px';
-		}
-		
-		if (container._nuiHeightHandler) {
-			container.removeEventListener('transitionend', container._nuiHeightHandler);
-		}
-		container._nuiHeightHandler = (e) => {
-			if (e.target !== container || e.propertyName !== 'height') return;
-			container.style.height = header.getAttribute('aria-expanded') === 'true' ? 'auto' : '0px';
-			container.removeEventListener('transitionend', container._nuiHeightHandler);
-			container._nuiHeightHandler = null;
 		};
-		container.addEventListener('transitionend', container._nuiHeightHandler);
+		container.addEventListener('transitionend', onEnd, { once: true });
 	}
-	
-	function toggleGroup(header) {
-		const expanded = header.getAttribute('aria-expanded') === 'true';
+
+	// ##### PUBLIC API
+
+	element.setActive = (selector) => {
+		const item = typeof selector === 'string' ? element.querySelector(selector) : selector;
+		if (!item) return false;
+
+		updateActive(item);
+		const path = getPathHeaders(item);
 		
-		if (expanded) {
-			setGroupState(header, false);
-			// Close all descendant groups
-			const container = header.nextElementSibling;
-			if (container) {
-				container.querySelectorAll('.group-header').forEach(childHeader => {
-					setGroupState(childHeader, false);
-				});
-			}
-		} else {
-			if (mode === 'fold') {
-				const pathHeaders = getPathHeaders(header);
-				pathHeaders.add(header);
-				updateAccordionState(pathHeaders);
-			} else {
-				setGroupState(header, true);
-			}
+		if (mode === 'fold') updateAccordionState(path);
+		else path.forEach(h => setGroupState(h, true));
+
+		knower.tell(stateKey, {
+			element: item,
+			href: item.getAttribute('href'),
+			text: item.textContent.trim(),
+			timestamp: Date.now()
+		}, element);
+		return true;
+	};
+
+	element.getActive = () => activeItem;
+	
+	element.getActiveData = () => activeItem ? {
+		element: activeItem,
+		href: activeItem.getAttribute('href'),
+		text: activeItem.textContent.trim()
+	} : null;
+
+	element.clearActive = () => {
+		if (activeItem) {
+			updateActive(null);
+			knower.tell(stateKey, null, element);
 		}
-	}
+	};
+
+	element.clearSubs = () => {
+		element.querySelectorAll('.group-header').forEach(h => setGroupState(h, false));
+	};
 
 	// ##### INITIALIZATION
 
 	function upgradeHtml() {
 		element.querySelectorAll('.group-header').forEach(header => {
 			if (header.nextElementSibling?.classList.contains('group-items')) return;
-
 			const items = [];
-			let sibling = header.nextElementSibling;
-			while (sibling && !sibling.classList?.contains('group-header')) {
-				if (sibling.tagName === 'LI' || sibling.tagName === 'UL') {
-					if (sibling.tagName === 'LI') sibling.classList.add('list-item');
-					items.push(sibling);
-				}
-				sibling = sibling.nextElementSibling;
+			let next = header.nextElementSibling;
+			while (next && !next.classList.contains('group-header')) {
+				if (next.tagName === 'LI') next.classList.add('list-item');
+				items.push(next);
+				next = next.nextElementSibling;
 			}
-
 			if (items.length) {
-				const container = document.createElement('div');
-				container.className = 'group-items';
-				items.forEach(item => container.appendChild(item));
-				header.parentElement.insertBefore(container, header.nextElementSibling);
+				const div = document.createElement('div');
+				div.className = 'group-items';
+				div.append(...items);
+				header.after(div);
 			}
 		});
 	}
 
-	function initialCollapseGroup(header) {
-		header.setAttribute('aria-expanded', 'false');
-		const container = header.nextElementSibling;
-		if (container && container.classList.contains('group-items')) {
-			container.style.height = '0px';
+	// Event Listeners
+	element.addEventListener('click', (e) => {
+		const header = e.target.closest('.group-header');
+		if (!header) return;
+		
+		const expand = header.getAttribute('aria-expanded') !== 'true';
+		if (mode === 'fold' && expand) {
+			const path = getPathHeaders(header);
+			path.add(header);
+			updateAccordionState(path);
+		} else {
+			setGroupState(header, expand);
+			if (!expand) { // Close descendants
+				header.nextElementSibling?.querySelectorAll('.group-header').forEach(h => setGroupState(h, false));
+			}
 		}
-	}
+	});
 
-	function init() {
-		if (mode === 'fold') {
-			upgradeHtml();
-			element.querySelectorAll('.group-header').forEach(header => {
-				header.setAttribute('tabindex', '0');
-				header.setAttribute('role', 'button');
-				initialCollapseGroup(header);
-			});
+	element.addEventListener('keydown', (e) => {
+		const target = e.target.closest('a, .group-header');
+		if (!target) return;
+
+		const items = Array.from(element.querySelectorAll('a, .group-header'));
+		const idx = items.indexOf(target);
+		
+		if (e.key === 'ArrowDown' && idx < items.length - 1) { e.preventDefault(); items[idx + 1].focus(); }
+		else if (e.key === 'ArrowUp' && idx > 0) { e.preventDefault(); items[idx - 1].focus(); }
+		else if (e.key === 'Home') { e.preventDefault(); items[0]?.focus(); }
+		else if (e.key === 'End') { e.preventDefault(); items[items.length - 1]?.focus(); }
+		else if (e.key === 'Enter' || e.key === ' ') {
+			if (target.classList.contains('group-header')) {
+				e.preventDefault();
+				target.click();
+			}
 		}
+	});
 
-		// Click handlers
-		element.addEventListener('click', (e) => {
-			const header = e.target.closest('.group-header');
-			if (header && mode === 'fold') {
-				toggleGroup(header);
-			}
-		});
-
-		// Keyboard navigation
-		element.addEventListener('keydown', (e) => {
-			const target = e.target.closest('a, .group-header');
-			if (!target) return;
-
-			if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-				e.preventDefault();
-				const all = element.querySelectorAll('a, .group-header span');
-				const idx = Array.from(all).indexOf(target);
-				const next = e.key === 'ArrowDown' ? all[idx + 1] : all[idx - 1];
-				if (next) next.focus();
-			} else if (e.key === 'Home') {
-				e.preventDefault();
-				element.querySelector('a, .group-header span')?.focus();
-			} else if (e.key === 'End') {
-				e.preventDefault();
-				const all = element.querySelectorAll('a, .group-header span');
-				all[all.length - 1]?.focus();
-			}
+	if (mode === 'fold') {
+		upgradeHtml();
+		element.querySelectorAll('.group-header').forEach(h => {
+			h.setAttribute('tabindex', '0');
+			h.setAttribute('role', 'button');
+			setGroupState(h, false);
 		});
 	}
 
-	init();
-
-	// Cleanup function
-	return () => {
-		knower.forget(stateKey);
-	};
+	return () => knower.forget(stateKey);
 });
 
 registerComponent('nui-content', (element) => {
