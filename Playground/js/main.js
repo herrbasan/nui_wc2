@@ -58,14 +58,8 @@ const navigationData = [
 			{ label: 'App Layout', href: '#page=components/app-layout' },
 			{ label: 'Link List', href: '#page=components/link-list' },
 			{ label: 'Code', href: '#page=components/code' },
-			{ label: 'Icon', href: '#page=components/icon' }
-		]
-	},
-	{
-		label: 'Archived',
-		icon: 'folder',
-		items: [
-			{ label: 'Legacy Demos', href: '#page=archived' }
+			{ label: 'Icon', href: '#page=components/icon' },
+			{ label: 'Button', href: '#page=components/button' }
 		]
 	}
 ];
