@@ -993,10 +993,8 @@ registerComponent('nui-link-list', (element) => {
 		else if (e.key === 'Home') { e.preventDefault(); items[0]?.focus(); }
 		else if (e.key === 'End') { e.preventDefault(); items[items.length - 1]?.focus(); }
 		else if (e.key === 'Enter' || e.key === ' ') {
-			if (target.classList.contains('group-header')) {
-				e.preventDefault();
-				target.click();
-			}
+			e.preventDefault();
+			target.click();
 		}
 	});
 
