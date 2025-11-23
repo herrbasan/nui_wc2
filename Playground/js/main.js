@@ -56,7 +56,8 @@ const navigationData = [
 		icon: 'empty_dashboard',
 		items: [
 			{ label: 'Link List', href: '#page=components/link-list' },
-			{ label: 'Code', href: '#page=components/code' }
+			{ label: 'Code', href: '#page=components/code' },
+			{ label: 'Icon', href: '#page=components/icon' }
 		]
 	},
 	{

@@ -63,6 +63,8 @@ export function highlight(code, lang) {
 		html = html.replace(/\b(true|false|null|undefined|NaN|Infinity)\b/g, (m) => wrap(m, 'literal'));
 		// Numbers (hex, binary, octal, decimal, floats, scientific)
 		html = html.replace(/\b(0x[0-9a-fA-F]+|0b[01]+|0o[0-7]+|\d+\.?\d*(?:[eE][+-]?\d+)?)\b/g, (m) => wrap(m, 'number'));
+		// Property names in object literals (word followed by colon, not inside strings)
+		html = html.replace(/\b([a-zA-Z_$][\w$]*)(?=\s*:(?!:))/g, (m) => wrap(m, 'prop'));
 		// Function calls (conservative: lowercase start, before parens)
 		html = html.replace(/\b([a-z_$][\w$]*)(?=\s*\()/g, (m) => wrap(m, 'function'));
 	} else if (lang === 'ts' || lang === 'typescript') {
@@ -87,6 +89,8 @@ export function highlight(code, lang) {
 		html = html.replace(/\b(0x[0-9a-fA-F]+|0b[01]+|0o[0-7]+|\d+\.?\d*(?:[eE][+-]?\d+)?)\b/g, (m) => wrap(m, 'number'));
 		// Generics in code
 		html = html.replace(/&lt;([A-Z][\w,\s|&lt;&gt;]*)&gt;/g, (m, p1) => '&lt;' + wrap(p1, 'type') + '&gt;');
+		// Property names in object literals (word followed by colon, not inside strings)
+		html = html.replace(/\b([a-zA-Z_$][\w$]*)(?=\s*:(?!:))/g, (m) => wrap(m, 'prop'));
 		// Function calls
 		html = html.replace(/\b([a-z_$][\w$]*)(?=\s*\()/g, (m) => wrap(m, 'function'));
 	} else if (lang === 'json') {

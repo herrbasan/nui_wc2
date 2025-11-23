@@ -1,5 +1,3 @@
-import { autoHighlight } from '../../../NUI/lib/modules/nui-syntax-highlight.js';
-
 // Navigation data structure from archived page demos
 const demoNavigationData = [
 	{
