@@ -531,6 +531,43 @@ console.warn = (function(originalWarn) {
 </nui-app>
 ```
 
+## Component Patterns & Decisions
+
+### Sidebar Navigation (`nui-link-list`)
+
+The sidebar navigation implements the **Tree View Pattern** (ARIA `role="tree"`), which is the standard for hierarchical navigation structures.
+
+#### Structure & Roles
+- **Container**: `role="tree"` - Identifies the root of the hierarchical list.
+- **Groups**: `role="group"` - Identifies a sub-list of items.
+- **Items**: `role="treeitem"` - Identifies individual links or group headers.
+- **Presentation**: `role="presentation"` - Used on wrapper `<div>`s to hide them from the accessibility tree, ensuring the hierarchy remains flat and logical (Tree -> Group -> Treeitem).
+
+#### Interaction Model
+We implemented a **Hybrid Navigation Model** that balances standard web navigation with application-like behavior:
+
+1.  **Tab Navigation**:
+    *   Users can Tab through the list naturally.
+    *   **Decision**: Unlike strict "roving tabindex" (where the whole tree is one tab stop), we allow tabbing to individual items. This is often more intuitive for web users who expect to tab through links.
+
+2.  **Arrow Keys**:
+    *   `Up/Down`: Move focus between visible items.
+    *   `Home/End`: Jump to start/end of the list.
+    *   **Decision**: This provides the efficiency of application menus without breaking the expected web tab flow.
+
+3.  **Activation**:
+    *   `Enter` or `Space`: Activates the link or toggles the group.
+    *   **Decision**: Standardizing on both keys ensures users coming from different operating system backgrounds (Windows vs Mac) find the interaction predictable.
+
+4.  **Auto-Expand on Focus (Fold Mode)**:
+    *   When tabbing into a collapsed group header in "fold" mode, it automatically expands.
+    *   **Why?**: This prevents keyboard users from getting "stuck" or having to manually expand every section to see if it contains what they need. It mimics the mouse "hover/click" discovery process but optimized for keyboard efficiency.
+
+#### State Management
+- **`aria-expanded`**: Clearly communicates whether a group is open or closed.
+- **`aria-selected="true"`**: Applied to the *parent* `<li>` of the active link.
+    *   **Why?**: Screen readers announce the state of the focused item. By placing it on the `treeitem` (the `li`), we ensure the user knows "This is the current page" when they navigate to it.
+
 ## Screen Reader Testing
 
 ### Windows (NVDA - Free)
