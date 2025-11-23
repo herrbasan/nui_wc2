@@ -399,13 +399,16 @@ nui-link-list[mode="fold"] ul li.group-header > span:first-child {
 /* Container for collapsible group items - fold mode only */
 nui-link-list[mode="fold"] .group-items {
 	overflow: hidden;
-	transition: height 0.2s ease-out;
+	transition: height 0.2s ease-out, visibility 0s 0.2s;
 	height: 0;
+	visibility: hidden;
 }
 
 /* Background for expanded group container - fold mode only */
 nui-link-list[mode="fold"] .group-header[aria-expanded="true"] + .group-items {
 	background-color: light-dark(rgb(255, 255, 255), rgb(30, 30, 30));
+	visibility: visible;
+	transition: height 0.2s ease-out, visibility 0s 0s;
 }
 
 /* Indentation for items in expanded groups - fold mode only */

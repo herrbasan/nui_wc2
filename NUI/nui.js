@@ -955,6 +955,12 @@ registerComponent('nui-link-list', (element) => {
 	}
 
 	// Event Listeners
+	let isMouseDown = false;
+	element.addEventListener('mousedown', () => {
+		isMouseDown = true;
+		setTimeout(() => isMouseDown = false, 500);
+	});
+
 	element.addEventListener('click', (e) => {
 		const header = e.target.closest('.group-header');
 		if (!header) return;
@@ -973,11 +979,21 @@ registerComponent('nui-link-list', (element) => {
 	});
 
 	element.addEventListener('focusin', (e) => {
-		const header = e.target.closest('.group-header');
-		if (header && mode === 'fold') {
-			const path = getPathHeaders(header);
-			path.add(header);
-			updateAccordionState(path);
+		if (isMouseDown) return;
+
+		if (mode === 'fold') {
+			const header = e.target.closest('.group-header');
+			if (header) {
+				const path = getPathHeaders(header);
+				path.add(header);
+				updateAccordionState(path);
+			} else {
+				const link = e.target.closest('a');
+				if (link) {
+					const path = getPathHeaders(link);
+					updateAccordionState(path);
+				}
+			}
 		}
 	});
 
@@ -985,7 +1001,10 @@ registerComponent('nui-link-list', (element) => {
 		const target = e.target.closest('a, .group-header');
 		if (!target) return;
 
-		const items = Array.from(element.querySelectorAll('a, .group-header'));
+		const items = Array.from(element.querySelectorAll('a, .group-header')).filter(el => {
+			// Only include visible items (skip collapsed groups)
+			return el.offsetParent !== null && getComputedStyle(el).visibility !== 'hidden';
+		});
 		const idx = items.indexOf(target);
 		
 		if (e.key === 'ArrowDown' && idx < items.length - 1) { e.preventDefault(); items[idx + 1].focus(); }
