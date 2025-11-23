@@ -2,12 +2,12 @@
 console.log('main.js loading...');
 
 import { nui } from '../../NUI/nui.js';
-import { createMonitor } from '../../NUI/lib/modules/nui-monitor.js';
+//import { createMonitor } from '../../NUI/lib/modules/nui-monitor.js';
 
 console.log('nui imported');
 
 // Development-only: Enable monitoring
-const monitor = createMonitor(nui);
+//const monitor = createMonitor(nui);
 
 // Parse URL parameters
 const urlParams = new URLSearchParams(window.location.search);
@@ -44,20 +44,28 @@ nui.registerAction('toggle-media', (target, source, event, param) => {
 // Navigation data (JSON) - mirrors the HTML structure
 const navigationData = [
 	{
+		label: 'Overview',
+		icon: 'empty_dashboard',
+		items: [
+			{ label: 'Introduction',  event: 'navigate:introduction' },
+			{ label: 'Getting Started', event: 'navigate:getting-started' }
+		]
+	},
+	{
 		label: 'Content & Windows',
 		icon: 'wysiwyg',
 		action: 'edit-section:content',
 		items: [
-			{ label: 'Content', href: '#content', event: 'navigate:content' },
-			{ label: 'Windows', href: '#windows', event: 'navigate:windows' }
+			{ label: 'Content', href: '#content' },
+			{ label: 'Windows', href: '#windows' }
 		]
 	},
 	{
 		label: 'Buttons & Fields',
 		icon: 'empty_dashboard',
 		items: [
-			{ label: 'Buttons', href: '#buttons', event: 'navigate:buttons' },
-			{ label: 'Fields', href: '#fields', event: 'navigate:fields' }
+			{ label: 'Buttons', href: '#buttons' },
+			{ label: 'Fields', href: '#fields' }
 		]
 	},
 	{
@@ -86,32 +94,32 @@ const navigationData = [
 		label: 'Functions & Objects',
 		icon: 'filter_list',
 		items: [
-			{ label: 'Function Item 1', href: '#fnc1', event: 'navigate:fnc1' },
-			{ label: 'Function Item 2', href: '#fnc2', event: 'navigate:fnc2' },
-			{ label: 'Function Item 3', href: '#fnc3', event: 'navigate:fnc3' },
+			{ label: 'Function Item 1', href: '#fnc1' },
+			{ label: 'Function Item 2', href: '#fnc2' },
+			{ label: 'Function Item 3', href: '#fnc3' },
 			{ separator: true },
-			{ label: 'Object Item 1', href: '#obj1', event: 'navigate:obj1' },
-			{ label: 'Object Item 2', href: '#obj2', event: 'navigate:obj2' }
+			{ label: 'Object Item 1', href: '#obj1' },
+			{ label: 'Object Item 2', href: '#obj2' }
 		]
 	},
 	{
 		label: 'Developer Tools',
 		icon: 'monitor',
 		items: [
-			{ label: 'Overview', href: '#devtools-overview', event: 'navigate:devtools-overview' },
+			{ label: 'Overview', href: '#devtools-overview' },
 			{
 				label: 'Build Tools',
 				icon: 'settings',
 				items: [
-					{ label: 'Configuration', href: '#build-config', event: 'navigate:build-config' },
-					{ label: 'Scripts', href: '#build-scripts', event: 'navigate:build-scripts' },
+					{ label: 'Configuration', href: '#build-config' },
+					{ label: 'Scripts', href: '#build-scripts' },
 					{
 						label: 'Plugins',
 						icon: 'layers',
 						items: [
-							{ label: 'Babel', href: '#plugin-babel', event: 'navigate:plugin-babel' },
-							{ label: 'Webpack, a tool I truly hate, so I give it a title that reflects my feelings', href: '#plugin-webpack', event: 'navigate:plugin-webpack' },
-							{ label: 'ESLint', href: '#plugin-eslint', event: 'navigate:plugin-eslint' }
+							{ label: 'Babel', href: '#plugin-babel' },
+							{ label: 'Webpack, a tool I truly hate, so I give it a title that reflects my feelings', href: '#plugin-webpack' },
+							{ label: 'ESLint', href: '#plugin-eslint' }
 						]
 					}
 				]
@@ -120,9 +128,9 @@ const navigationData = [
 				label: 'Testing',
 				icon: 'search',
 				items: [
-					{ label: 'Unit Tests', href: '#test-unit', event: 'navigate:test-unit' },
-					{ label: 'Integration Tests', href: '#test-integration', event: 'navigate:test-integration' },
-					{ label: 'E2E Tests', href: '#test-e2e', event: 'navigate:test-e2e' }
+					{ label: 'Unit Tests', href: '#test-unit' },
+					{ label: 'Integration Tests', href: '#test-integration' },
+					{ label: 'E2E Tests', href: '#test-e2e' }
 				]
 			}
 		]

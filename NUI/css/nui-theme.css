@@ -563,10 +563,9 @@ nui-app[data-layout="app"] nui-top-nav {
 	left: 0;
 	right: 0;
 	height: var(--top-nav-height);
-	background: var(--top-nav-background);
-	border: var(--top-nav-border);
-	color: var(--top-nav-text);
-	padding: var(--top-nav-padding);
+	background: light-dark(var(--color-shade6), var(--color-shade2));
+	border-bottom: solid var(--border-thickness) var(--border-shade2);
+	padding: var(--nui-space);
 	box-shadow: var(--top-nav-shadow);
 	display: flex;
 	align-items: center;
@@ -580,6 +579,15 @@ nui-top-nav header {
 	align-items: center;
 	justify-content: space-between;
 	width: 100%;
+}
+
+
+nui-top-nav header h1 {
+	margin: 0;
+	padding: 0;
+	font-size: 1rem;
+	font-weight: 200;
+	color: var(--color-white)
 }
 
 nui-top-nav ul {
@@ -607,7 +615,6 @@ nui-app[data-layout="app"] nui-side-nav {
 	bottom: 0;
 	width: var(--side-nav-width);
 	background: var(--side-nav-background);
-	color: var(--side-nav-text);
 	padding: 0;
 	overflow-y: auto;
 	overflow-x: hidden;

@@ -12,6 +12,73 @@ export interface NuiConfig {
 	iconSpritePath?: string;
 }
 
+// =============================================================================
+// Content Loader
+// =============================================================================
+
+export interface PageModule {
+	/** Called once when page is first loaded */
+	init?: (container: HTMLElement, nui: NuiAPI, params: Record<string, string>) => void | Promise<void>;
+	
+	/** Called every time page is shown */
+	onShow?: (container: HTMLElement, params: Record<string, string>) => void;
+}
+
+export interface PageInfo {
+	element: HTMLElement;
+	module: PageModule | null;
+	params: Record<string, string>;
+}
+
+export interface ContentLoader {
+	/** Load a page by ID, cache it, and show it */
+	load(pageId: string, params?: Record<string, string>): Promise<boolean>;
+	
+	/** Show a previously loaded page */
+	show(pageId: string, params?: Record<string, string>): boolean;
+	
+	/** Get the currently visible page ID */
+	getCurrent(): string | null;
+	
+	/** Get page info by ID */
+	getPage(pageId: string): PageInfo | undefined;
+}
+
+export interface ContentLoaderOptions {
+	/** Base path for page HTML and JS files (default: '/pages') */
+	basePath?: string;
+}
+
+// =============================================================================
+// Router
+// =============================================================================
+
+export interface Router {
+	/** Navigate to a page with optional parameters */
+	navigate(page: string, id?: string | null, otherParams?: Record<string, string>): void;
+	
+	/** Start listening to hash changes */
+	start(): void;
+	
+	/** Stop listening to hash changes */
+	stop(): void;
+	
+	/** Parse current URL hash into parameters */
+	parseHash(): Record<string, string> | null;
+}
+
+export interface RouterOptions {
+	/** Link list element for automatic active state sync */
+	linkList?: NuiLinkListElement | null;
+	
+	/** Default page to navigate to if no hash present */
+	defaultPage?: string | null;
+}
+
+// =============================================================================
+// Main NUI API
+// =============================================================================
+
 export interface NuiAPI {
 	/** Configure NUI library settings */
 	configure(config: NuiConfig): void;
@@ -31,6 +98,12 @@ export interface NuiAPI {
 		propName: string,
 		attrName: string
 	): void;
+
+	/** Create a content loader for managing page fragments */
+	createContentLoader(container: HTMLElement, options?: ContentLoaderOptions): ContentLoader;
+	
+	/** Create a router for URL-based navigation */
+	createRouter(loader: ContentLoader, options?: RouterOptions): Router;
 }
 
 declare global {

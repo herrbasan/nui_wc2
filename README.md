@@ -760,6 +760,113 @@ reference/                      # Reference materials (not tracked)
 ❌ No Shadow DOM complexity  
 ❌ No CSS-in-JS  
 
+## Content Loading & Routing
+
+NUI includes a built-in content loader and router for single-page application patterns. Pages are loaded as HTML fragments with optional JavaScript modules, cached in memory for instant switching.
+
+### Basic Setup
+
+```javascript
+import { nui } from './NUI/nui.js';
+
+// Create content loader
+const contentArea = document.querySelector('nui-content main');
+const loader = nui.createContentLoader(contentArea, {
+    basePath: '/pages'  // Where HTML fragments live
+});
+
+// Create router with navigation sync
+const sideNav = document.querySelector('nui-side-nav');
+const router = nui.createRouter(loader, {
+    linkList: sideNav,
+    defaultPage: 'home'
+});
+
+// Start routing
+router.start();
+
+// Programmatic navigation
+router.navigate('dashboard', 'overview');  // #page=dashboard&id=overview
+```
+
+### Page Structure
+
+**HTML Fragment** (`/pages/dashboard.html`):
+```html
+<div class="page-dashboard">
+    <h2>Dashboard</h2>
+    <div class="stats">
+        <div class="stat" id="users-count">Loading...</div>
+        <div class="stat" id="revenue-count">Loading...</div>
+    </div>
+</div>
+```
+
+**Optional JavaScript Module** (`/pages/dashboard.js`):
+```javascript
+// Called once when page first loads
+export async function init(container, nui, params) {
+    const stats = await fetch('/api/stats').then(r => r.json());
+    
+    container.querySelector('#users-count').textContent = stats.users;
+    container.querySelector('#revenue-count').textContent = stats.revenue;
+    
+    // Use shared nui context (knower/doer)
+    nui.knower.watch('theme', (theme) => {
+        container.classList.toggle('dark', theme === 'dark');
+    });
+}
+
+// Called every time page is shown (optional)
+export function onShow(container, params) {
+    console.log('Dashboard shown with params:', params);
+    // Refresh data, resume animations, etc.
+}
+```
+
+### URL Pattern
+
+The router uses hash-based navigation matching this pattern:
+
+```
+#page=content&id=windows
+#page=media&id=superslide  
+#page=devtools&id=eslint
+```
+
+**Navigation Integration:**
+```html
+<nui-link-list mode="fold">
+    <ul>
+        <li><a href="#page=home">Home</a></li>
+        <li><a href="#page=dashboard&id=overview">Dashboard</a></li>
+    </ul>
+</nui-link-list>
+```
+
+### Custom Navigation Actions
+
+```javascript
+// Register custom navigate action
+nui.registerAction('navigate', (target, source, event, param) => {
+    const [page, id] = param.split(':');
+    router.navigate(page, id);
+});
+```
+
+```html
+<!-- Use in HTML -->
+<a href="#" nui-event-click="navigate:dashboard:overview">Dashboard</a>
+```
+
+### Design Philosophy
+
+- **Pages stay alive**: Once loaded, pages remain in memory (hidden/shown, not destroyed)
+- **Idle-safe code**: Page scripts should pause when hidden, resume when shown
+- **No cleanup needed**: Encourage code that doesn't require teardown
+- **Fast switching**: Show/hide pattern provides instant page transitions
+- **Shared context**: All pages share the same nui.knower/doer instance
+
 ## Usage Examples
 
 ### HTML-First Foundation

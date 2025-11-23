@@ -908,6 +908,17 @@ registerComponent('nui-link-list', (element) => {
 		const item = typeof selector === 'string' ? element.querySelector(selector) : selector;
 		if (!item) return false;
 
+		const app = element.closest('nui-app');
+		const shouldOpen = app && !app.classList.contains('sidenav-forced') && 
+			!app.classList.contains('sidenav-open');
+		
+		if (shouldOpen) {
+			// Use setTimeout to avoid the click event that triggered this from closing it again
+			setTimeout(() => {
+				app.toggleSideNav?.();
+			}, 0);
+		}
+
 		updateActive(item);
 		const path = getPathHeaders(item);
 		
@@ -1182,8 +1193,157 @@ export const nui = {
 	},
 
 	knower: knower,
-	doer: doer
+	doer: doer,
+
+	createContentLoader(container, options = {}) {
+		return createContentLoader(container, options);
+	},
+
+	createRouter(loader, options = {}) {
+		return createRouter(loader, options);
+	}
 };
+
+// ################################# CONTENT LOADER
+
+function createContentLoader(container, options = {}) {
+	const basePath = options.basePath || '/pages';
+	const pages = new Map();
+	let currentPage = null;
+
+	async function load(pageId, params = {}) {
+		if (pages.has(pageId)) {
+			return show(pageId, params);
+		}
+
+		try {
+			const response = await fetch(`${basePath}/${pageId}.html`);
+			if (!response.ok) throw new Error(`Page ${pageId} not found`);
+			
+			const html = await response.text();
+
+			const pageEl = document.createElement('div');
+			pageEl.className = 'content-page';
+			pageEl.dataset.pageId = pageId;
+			pageEl.style.display = 'none';
+			pageEl.innerHTML = html;
+
+			container.appendChild(pageEl);
+
+			let module = null;
+			try {
+				module = await import(`${basePath}/${pageId}.js`);
+				if (module.init) {
+					await module.init(pageEl, nui, params);
+				}
+			} catch (e) {
+				// No module = pure HTML page
+			}
+
+			pages.set(pageId, { element: pageEl, module, params });
+
+			return show(pageId, params);
+		} catch (error) {
+			console.error(`[Content Loader] Failed to load page ${pageId}:`, error);
+			return false;
+		}
+	}
+
+	function show(pageId, params = {}) {
+		const page = pages.get(pageId);
+		if (!page) return false;
+
+		pages.forEach(({ element }, id) => {
+			element.style.display = id === pageId ? 'block' : 'none';
+		});
+
+		if (page.module?.onShow) {
+			page.module.onShow(page.element, params);
+		}
+
+		currentPage = pageId;
+		return true;
+	}
+
+	function getCurrent() {
+		return currentPage;
+	}
+
+	function getPage(pageId) {
+		return pages.get(pageId);
+	}
+
+	return {
+		load,
+		show,
+		getCurrent,
+		getPage
+	};
+}
+
+// ################################# ROUTER
+
+function createRouter(loader, options = {}) {
+	const linkList = options.linkList || null;
+	const defaultPage = options.defaultPage || null;
+	let isNavigating = false;
+
+	function parseHash() {
+		const hash = window.location.hash.slice(1);
+		if (!hash) return null;
+		
+		const params = new URLSearchParams(hash);
+		return Object.fromEntries(params);
+	}
+
+	async function handleRoute() {
+		if (isNavigating) return;
+		
+		const params = parseHash();
+		if (!params || !params.page) {
+			if (defaultPage) {
+				navigate(defaultPage);
+			}
+			return;
+		}
+
+		isNavigating = true;
+		
+		try {
+			await loader.load(params.page, params);
+			
+			if (params.id && linkList) {
+				const selector = `a[href*="${params.id}"]`;
+				linkList.setActive?.(selector);
+			}
+		} finally {
+			isNavigating = false;
+		}
+	}
+
+	function navigate(page, id = null, otherParams = {}) {
+		const params = new URLSearchParams({ page, ...otherParams });
+		if (id) params.set('id', id);
+		
+		window.location.hash = params.toString();
+	}
+
+	function start() {
+		window.addEventListener('hashchange', handleRoute);
+		handleRoute();
+	}
+
+	function stop() {
+		window.removeEventListener('hashchange', handleRoute);
+	}
+
+	return {
+		navigate,
+		start,
+		stop,
+		parseHash
+	};
+}
 
 // ################################# AUTO-INITIALIZATION
 
