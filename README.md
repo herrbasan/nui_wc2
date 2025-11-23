@@ -298,6 +298,7 @@ nui.knower.watch('action:custom-action', (state) => {
 
 **Built-in Actions:**
 - `toggle-theme` - Switch between light/dark mode
+- `toggle-sidebar` - Toggle side navigation open/closed (overlay mode only)
 - `toggle-class:className` - Toggle CSS class on target
 - `add-class:className` - Add CSS class to target
 - `remove-class:className` - Remove CSS class from target

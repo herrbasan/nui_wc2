@@ -469,6 +469,13 @@ doer.register('remove-attr', (target, source, event, attrName) => {
 	}
 });
 
+doer.register('toggle-sidebar', (target, source, event, param) => {
+	const app = document.querySelector('nui-app');
+	if (app && app.toggleSideNav) {
+		app.toggleSideNav();
+	}
+});
+
 // ################################# ACCESSIBILITY
 
 const a11y = {
@@ -753,6 +760,18 @@ registerComponent('nui-app', (element) => {
 	updateLayoutClasses(element);
 
 	element.toggleSideNav = () => toggleSideNav(element);
+
+	element.addEventListener('click', (e) => {
+		if (element.classList.contains('sidenav-open') && 
+			!element.classList.contains('sidenav-forced')) {
+			const sideNav = element.querySelector('nui-side-nav');
+			const topNav = element.querySelector('nui-top-nav');
+			
+			if (sideNav && !sideNav.contains(e.target) && !topNav?.contains(e.target)) {
+				toggleSideNav(element);
+			}
+		}
+	});
 
 	const resizeObserver = new ResizeObserver(() => {
 		updateLayoutClasses(element);
