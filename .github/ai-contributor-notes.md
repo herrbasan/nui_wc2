@@ -50,18 +50,6 @@ Refined layout system with `<layout>` and `<item>` elements using `display: cont
 
 ---
 
-## #5Jk9L2 - November 23, 2025
-**Accessibility & Robustness Deep Dive**
-
-Focused heavily on making the `nui-link-list` component production-ready. Moved from "it works" to "it works for everyone".
-- **Refactor**: Replaced fragile sibling-checking logic with a robust "Close All -> Open Path" strategy for accordions.
-- **Accessibility**: Implemented full WAI-ARIA Tree View pattern with a hybrid navigation model (Tab + Arrows).
-- **Keyboard Support**: Fixed Space key activation and implemented auto-expand on focus to prevent keyboard traps.
-- **Mindset**: "If it's not accessible, it's not done." The component now handles edge cases like backwards tabbing and mouse/keyboard conflicts gracefully.
-- **Documentation**: Documented the "why" behind accessibility decisions in `ACCESSIBILITY.md` to ensure future maintainers understand the hybrid model.
-
----
-
 ## #5Dn7W3 - November 12, 2025
 **Attribute Proxy System**
 
@@ -433,4 +421,16 @@ Storing element references would create GC cycles. String IDs query when needed,
 ✅ **API Stability**: Simple, focused API unlikely to need breaking changes
 
 **Verdict**: System is production-ready. The ID-based cleanup approach elegantly solves reactive system memory leaks without requiring manual unwatch calls.
+
+---
+
+## #5Jk9L2 - November 23, 2025
+**Accessibility & Robustness Deep Dive**
+
+Focused heavily on making the `nui-link-list` component production-ready. Moved from "it works" to "it works for everyone".
+- **Refactor**: Replaced fragile sibling-checking logic with a robust "Close All -> Open Path" strategy for accordions.
+- **Accessibility**: Implemented full WAI-ARIA Tree View pattern with a hybrid navigation model (Tab + Arrows).
+- **Keyboard Support**: Fixed Space key activation and implemented auto-expand on focus to prevent keyboard traps.
+- **Mindset**: "If it's not accessible, it's not done." The component now handles edge cases like backwards tabbing and mouse/keyboard conflicts gracefully.
+- **Documentation**: Documented the "why" behind accessibility decisions in `ACCESSIBILITY.md` to ensure future maintainers understand the hybrid model.
 
