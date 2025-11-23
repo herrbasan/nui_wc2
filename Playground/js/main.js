@@ -55,6 +55,7 @@ const navigationData = [
 		label: 'Components',
 		icon: 'empty_dashboard',
 		items: [
+			{ label: 'App Layout', href: '#page=components/app-layout' },
 			{ label: 'Link List', href: '#page=components/link-list' },
 			{ label: 'Code', href: '#page=components/code' },
 			{ label: 'Icon', href: '#page=components/icon' }

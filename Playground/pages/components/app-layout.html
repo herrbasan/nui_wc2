@@ -1,0 +1,340 @@
+<div class="page-app-layout">
+	<header>
+		<h1>App Layout Components</h1>
+		<p class="lead">Dual-mode layout system for building application and page-based interfaces</p>
+	</header>
+	
+	<section>
+		<h2>Overview</h2>
+		<p>
+			The NUI layout system provides two distinct modes: <strong>App Mode</strong> (with <code>&lt;nui-app&gt;</code>) 
+			and <strong>Page Mode</strong> (without <code>&lt;nui-app&gt;</code>). This dual-mode architecture allows 
+			the same components to work as fixed application UI elements or flow naturally in document layouts.
+		</p>
+		
+		<h3>Core Philosophy</h3>
+		<ul>
+			<li><strong>Semantic HTML Foundation</strong> - Real HTML elements inside custom element containers</li>
+			<li><strong>Progressive Enhancement</strong> - Works with CSS/JavaScript disabled</li>
+			<li><strong>Screen Reader Friendly</strong> - Semantic elements visible to accessibility tree</li>
+			<li><strong>Context-Aware</strong> - Behavior adapts based on presence of <code>&lt;nui-app&gt;</code></li>
+		</ul>
+	</section>
+	
+	<section>
+		<h2>Layout Modes</h2>
+		
+		<h3>App Mode - Fixed Application Layout</h3>
+		<p>When <code>&lt;nui-app&gt;</code> is present, components create a fixed CSS Grid layout:</p>
+		
+		<div class="layout-diagram">
+			<div class="diagram-label">App Mode Structure:</div>
+			<div class="app-mode-diagram">
+				<div class="diagram-topnav">
+					<span>nui-top-nav</span>
+					<small>Fixed header bar</small>
+				</div>
+				<div class="diagram-sidebar">
+					<span>nui-side-nav</span>
+					<small>Navigation sidebar</small>
+				</div>
+				<div class="diagram-content">
+					<span>nui-content</span>
+					<small>Main content area</small>
+				</div>
+				<div class="diagram-footer">
+					<span>nui-app-footer</span>
+					<small>Fixed footer bar</small>
+				</div>
+			</div>
+		</div>
+		
+		<nui-code>
+			<pre><code>&lt;nui-app&gt;
+	&lt;nui-top-nav&gt;
+		&lt;header&gt;Site Title&lt;/header&gt;
+	&lt;/nui-top-nav&gt;
+	
+	&lt;nui-side-nav&gt;
+		&lt;nav&gt;Navigation links&lt;/nav&gt;
+	&lt;/nui-side-nav&gt;
+	
+	&lt;nui-content&gt;
+		&lt;main&gt;Content here&lt;/main&gt;
+	&lt;/nui-content&gt;
+	
+	&lt;nui-app-footer&gt;
+		&lt;footer&gt;Footer content&lt;/footer&gt;
+	&lt;/nui-app-footer&gt;
+&lt;/nui-app&gt;</code></pre>
+		</nui-code>
+		
+		<h3>Page Mode - Document Flow</h3>
+		<p>Without <code>&lt;nui-app&gt;</code>, components follow normal document flow:</p>
+		
+		<div class="layout-diagram">
+			<div class="diagram-label">Page Mode Structure:</div>
+			<div class="page-mode-diagram">
+				<div class="diagram-page-block">
+					<span>nui-top-nav</span>
+					<small>Standard header</small>
+				</div>
+				<div class="diagram-page-block">
+					<span>nui-side-nav</span>
+					<small>Optional sidebar (floats/flexes)</small>
+				</div>
+				<div class="diagram-page-block">
+					<span>nui-content</span>
+					<small>Main content flows naturally</small>
+				</div>
+				<div class="diagram-page-block">
+					<span>nui-app-footer</span>
+					<small>Standard footer</small>
+				</div>
+			</div>
+		</div>
+		
+		<nui-code>
+			<pre><code>&lt;!-- No nui-app wrapper --&gt;
+&lt;nui-top-nav&gt;
+	&lt;header&gt;Site Title&lt;/header&gt;
+&lt;/nui-top-nav&gt;
+
+&lt;nui-content&gt;
+	&lt;main&gt;Content flows naturally&lt;/main&gt;
+&lt;/nui-content&gt;
+
+&lt;nui-app-footer&gt;
+	&lt;footer&gt;Footer content&lt;/footer&gt;
+&lt;/nui-app-footer&gt;</code></pre>
+		</nui-code>
+	</section>
+	
+	<section>
+		<h2>Component Details</h2>
+		
+		<h3>&lt;nui-app&gt;</h3>
+		<p>Container element that activates App Mode. Creates CSS Grid layout with fixed regions:</p>
+		<ul>
+			<li><strong>Grid Areas</strong> - Defines topnav, sidebar, content, footer regions</li>
+			<li><strong>Viewport Height</strong> - Fixed to 100vh for application behavior</li>
+			<li><strong>Responsive</strong> - Sidebar collapses on mobile breakpoints</li>
+		</ul>
+		
+		<h3>&lt;nui-top-nav&gt;</h3>
+		<p>Top navigation bar. In App Mode: fixed header. In Page Mode: standard header element.</p>
+		<ul>
+			<li><strong>App Mode</strong> - Fixed at top, spans full width</li>
+			<li><strong>Page Mode</strong> - Static header in document flow</li>
+			<li><strong>Content</strong> - Should contain <code>&lt;header&gt;</code> element with title, logo, actions</li>
+		</ul>
+		
+		<div class="component-diagram">
+			<div class="topnav-example">
+				<div class="topnav-title">App Title</div>
+				<div class="topnav-actions">
+					<span class="icon-placeholder">☰</span>
+					<span class="icon-placeholder">🔔</span>
+					<span class="icon-placeholder">⚙</span>
+				</div>
+			</div>
+			<small>Typical top-nav layout with title and actions</small>
+		</div>
+		
+		<h3>&lt;nui-side-nav&gt;</h3>
+		<p>Side navigation panel. In App Mode: fixed sidebar. In Page Mode: optional sidebar.</p>
+		<ul>
+			<li><strong>App Mode</strong> - Fixed sidebar with toggle capability</li>
+			<li><strong>Page Mode</strong> - Can float beside content or stack</li>
+			<li><strong>Content</strong> - Should contain <code>&lt;nav&gt;</code> with navigation structure</li>
+			<li><strong>State Management</strong> - Collapsible via toggle button or resize</li>
+		</ul>
+		
+		<div class="component-diagram">
+			<div class="sidenav-example">
+				<div class="nav-group">
+					<div class="nav-group-header">
+						<span class="icon-placeholder">▼</span>
+						<span>Group 1</span>
+					</div>
+					<div class="nav-items">
+						<div class="nav-item">Item 1</div>
+						<div class="nav-item active">Item 2</div>
+						<div class="nav-item">Item 3</div>
+					</div>
+				</div>
+				<div class="nav-group">
+					<div class="nav-group-header">
+						<span class="icon-placeholder">▶</span>
+						<span>Group 2</span>
+					</div>
+				</div>
+			</div>
+			<small>Side navigation with collapsible groups</small>
+		</div>
+		
+		<h3>&lt;nui-content&gt;</h3>
+		<p>Main content area. In App Mode: scrollable region. In Page Mode: normal content flow.</p>
+		<ul>
+			<li><strong>App Mode</strong> - Fixed grid region with independent scrolling</li>
+			<li><strong>Page Mode</strong> - Standard content container</li>
+			<li><strong>Content</strong> - Should contain <code>&lt;main&gt;</code> element with page content</li>
+		</ul>
+		
+		<h3>&lt;nui-app-footer&gt;</h3>
+		<p>Footer bar. In App Mode: fixed footer. In Page Mode: standard footer element.</p>
+		<ul>
+			<li><strong>App Mode</strong> - Fixed at bottom, spans full width</li>
+			<li><strong>Page Mode</strong> - Static footer in document flow</li>
+			<li><strong>Content</strong> - Should contain <code>&lt;footer&gt;</code> element with metadata, links</li>
+		</ul>
+	</section>
+	
+	<section>
+		<h2>CSS Grid Structure (App Mode)</h2>
+		<p>When <code>&lt;nui-app&gt;</code> is present, the following grid is created:</p>
+		
+		<nui-code>
+			<pre><code>nui-app {
+	display: grid;
+	grid-template-areas:
+		"topnav  topnav"
+		"sidebar content"
+		"footer  footer";
+	grid-template-rows: auto 1fr auto;
+	grid-template-columns: var(--nui-sidebar-width) 1fr;
+	height: 100vh;
+	overflow: hidden;
+}
+
+nui-top-nav    { grid-area: topnav; }
+nui-side-nav   { grid-area: sidebar; overflow-y: auto; }
+nui-content    { grid-area: content; overflow-y: auto; }
+nui-app-footer { grid-area: footer; }</code></pre>
+		</nui-code>
+		
+		<div class="layout-diagram">
+			<div class="diagram-label">Grid Visualization:</div>
+			<div class="grid-visualization">
+				<div class="grid-cell topnav-cell">topnav</div>
+				<div class="grid-cell topnav-cell"></div>
+				<div class="grid-cell sidebar-cell">sidebar</div>
+				<div class="grid-cell content-cell">content<br>(scrollable)</div>
+				<div class="grid-cell footer-cell">footer</div>
+				<div class="grid-cell footer-cell"></div>
+			</div>
+			<div class="grid-labels">
+				<div>← sidebar width →</div>
+				<div>← 1fr (flexible) →</div>
+			</div>
+		</div>
+	</section>
+	
+	<section>
+		<h2>Responsive Behavior</h2>
+		<p>The layout adapts to different screen sizes:</p>
+		
+		<h3>Desktop (> 75rem default)</h3>
+		<ul>
+			<li>Sidebar visible and fixed</li>
+			<li>Full grid layout active</li>
+			<li>All regions visible simultaneously</li>
+		</ul>
+		
+		<h3>Tablet/Mobile (< 75rem default)</h3>
+		<ul>
+			<li>Sidebar collapses to overlay mode</li>
+			<li>Toggle button appears in top-nav</li>
+			<li>Sidebar slides over content when opened</li>
+			<li>Backdrop overlay shown when sidebar open</li>
+		</ul>
+		
+		<div class="responsive-diagram">
+			<div class="device-view desktop-view">
+				<div class="device-label">Desktop</div>
+				<div class="device-screen">
+					<div class="view-topnav">Top Nav</div>
+					<div class="view-sidebar">Sidebar</div>
+					<div class="view-content">Content</div>
+				</div>
+			</div>
+			<div class="device-view mobile-view">
+				<div class="device-label">Mobile</div>
+				<div class="device-screen">
+					<div class="view-topnav">☰ Top Nav</div>
+					<div class="view-content-full">Content (Full Width)</div>
+				</div>
+			</div>
+		</div>
+	</section>
+	
+	<section>
+		<h2>CSS Variables</h2>
+		<p>Customize layout dimensions with CSS variables:</p>
+		
+		<nui-code>
+			<pre><code>nui-app {
+	/* Sidebar configuration */
+	--nui-sidebar-width: 15rem;           /* Default sidebar width */
+	--nui-sidebar-force-breakpoint: 75rem; /* When to force collapse */
+	
+	/* Heights */
+	--nui-topnav-height: 3.5rem;          /* Top nav bar height */
+	--nui-footer-height: auto;            /* Footer height */
+	
+	/* Z-index layers */
+	--nui-topnav-z: 1000;
+	--nui-sidebar-z: 900;
+	--nui-overlay-z: 800;
+}</code></pre>
+		</nui-code>
+		
+		<p>Set via attributes for per-instance customization:</p>
+		<nui-code>
+			<pre><code>&lt;nui-app 
+	nui-vars-sidebar_width="20rem" 
+	nui-vars-sidebar_force-breakpoint="60rem"&gt;
+	&lt;!-- Layout components --&gt;
+&lt;/nui-app&gt;</code></pre>
+		</nui-code>
+	</section>
+	
+	<section>
+		<h2>Accessibility Features</h2>
+		
+		<h3>Semantic HTML</h3>
+		<p>Custom elements serve as containers, semantic HTML provides structure:</p>
+		<ul>
+			<li><code>&lt;header&gt;</code> inside <code>&lt;nui-top-nav&gt;</code></li>
+			<li><code>&lt;nav&gt;</code> inside <code>&lt;nui-side-nav&gt;</code></li>
+			<li><code>&lt;main&gt;</code> inside <code>&lt;nui-content&gt;</code></li>
+			<li><code>&lt;footer&gt;</code> inside <code>&lt;nui-app-footer&gt;</code></li>
+		</ul>
+		
+		<h3>ARIA Attributes</h3>
+		<p>Components automatically add appropriate ARIA attributes:</p>
+		<ul>
+			<li><strong>nui-side-nav</strong> - <code>role="navigation"</code> on nav element</li>
+			<li><strong>Overlay backdrop</strong> - <code>aria-hidden="true"</code></li>
+			<li><strong>Toggle button</strong> - <code>aria-expanded</code> state</li>
+		</ul>
+		
+		<h3>Keyboard Navigation</h3>
+		<ul>
+			<li><strong>Escape key</strong> - Closes sidebar on mobile</li>
+			<li><strong>Tab order</strong> - Preserves natural reading order</li>
+			<li><strong>Focus management</strong> - Trapped in sidebar when open on mobile</li>
+		</ul>
+	</section>
+	
+	<section class="next-steps">
+		<h2>Best Practices</h2>
+		<ul>
+			<li><strong>Always use semantic HTML</strong> - Screen readers rely on it</li>
+			<li><strong>Test both modes</strong> - Verify layout works with and without <code>&lt;nui-app&gt;</code></li>
+			<li><strong>Mobile-first mindset</strong> - Design for small screens first</li>
+			<li><strong>Configurable breakpoints</strong> - Use CSS variables for different device ranges</li>
+			<li><strong>Progressive enhancement</strong> - Ensure basic functionality without JavaScript</li>
+		</ul>
+	</section>
+</div>
