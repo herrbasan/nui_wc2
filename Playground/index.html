@@ -10,6 +10,9 @@
 		<script type="module" src="js/main.js"></script>
 	</head>
 	<body>
+		<!-- Loading indicator (bar mode - top of page) -->
+		<nui-loading mode="bar"></nui-loading>
+		
 		<nui-app nui-vars-sidebar_width="15rem" nui-vars-sidebar_force-breakpoint="75rem">
             <nui-top-nav>
                     <header>
@@ -43,12 +46,9 @@
 
             <nui-content>
                 <main>
-                    <header>
-                        <h1>NUI Component Playground</h1>
-                        <p>Explore and test NUI web components in this interactive playground.</p>
-                    </header>
-                    
-                    <section>
+                    <!-- Content pages loaded here -->
+                </main>
+            </nui-content>                    <section>
                         <h2>Link List Structure Reference (Tree Mode)</h2>
                         <p>This shows the complete HTML structure for <code>mode="tree"</code> - all groups can be open simultaneously.</p>
                         

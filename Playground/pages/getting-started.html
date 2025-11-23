@@ -1,0 +1,86 @@
+<div class="page-getting-started">
+	<header>
+		<h1>Getting Started with NUI</h1>
+		<p class="lead">Build your first NUI application in minutes</p>
+	</header>
+	
+	<section>
+		<h2>Step 1: Include NUI</h2>
+		<p>Add NUI to your HTML file in the <code>&lt;head&gt;</code> section:</p>
+		<pre><code>&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+	&lt;meta charset="UTF-8"&gt;
+	&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+	&lt;link rel="stylesheet" href="NUI/css/nui-theme.css"&gt;
+	&lt;script type="module" src="NUI/nui.js"&gt;&lt;/script&gt;
+&lt;/head&gt;
+&lt;body&gt;
+	&lt;!-- Your content here --&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+	</section>
+	
+	<section>
+		<h2>Step 2: Choose Your Layout Mode</h2>
+		<p>NUI supports two layout modes:</p>
+		
+		<h3>App Mode (Desktop Applications)</h3>
+		<pre><code>&lt;nui-app&gt;
+	&lt;nui-top-nav&gt;
+		&lt;header&gt;&lt;h1&gt;My App&lt;/h1&gt;&lt;/header&gt;
+	&lt;/nui-top-nav&gt;
+	&lt;nui-side-nav&gt;
+		&lt;nav&gt;Navigation here&lt;/nav&gt;
+	&lt;/nui-side-nav&gt;
+	&lt;nui-content&gt;
+		&lt;main&gt;Content here&lt;/main&gt;
+	&lt;/nui-content&gt;
+&lt;/nui-app&gt;</code></pre>
+		
+		<h3>Page Mode (Websites)</h3>
+		<pre><code>&lt;nui-top-nav&gt;
+	&lt;header&gt;&lt;h1&gt;My Site&lt;/h1&gt;&lt;/header&gt;
+&lt;/nui-top-nav&gt;
+&lt;nui-content&gt;
+	&lt;main&gt;Content flows naturally&lt;/main&gt;
+&lt;/nui-content&gt;</code></pre>
+	</section>
+	
+	<section>
+		<h2>Step 3: Add Components</h2>
+		<p>Use NUI components by wrapping semantic HTML:</p>
+		<pre><code>&lt;nui-button&gt;
+	&lt;button type="button"&gt;Action&lt;/button&gt;
+&lt;/nui-button&gt;
+
+&lt;nui-link-list mode="tree"&gt;
+	&lt;ul&gt;
+		&lt;li&gt;&lt;a href="/home"&gt;Home&lt;/a&gt;&lt;/li&gt;
+		&lt;li&gt;&lt;a href="/about"&gt;About&lt;/a&gt;&lt;/li&gt;
+	&lt;/ul&gt;
+&lt;/nui-link-list&gt;</code></pre>
+	</section>
+	
+	<section>
+		<h2>Step 4: Add Interactivity</h2>
+		<p>Use the Doer system for actions:</p>
+		<pre><code>&lt;button nui-event-click="toggle-theme"&gt;
+	Dark/Light Mode
+&lt;/button&gt;
+
+&lt;script type="module"&gt;
+import { nui } from './NUI/nui.js';
+
+nui.registerAction('my-action', (target, source, event, param) =&gt; {
+	console.log('Custom action executed!');
+});
+&lt;/script&gt;</code></pre>
+	</section>
+	
+	<section class="next-steps">
+		<h2>What's Next?</h2>
+		<p>Explore the component documentation and examples in the sidebar to learn more about each component.</p>
+		<div id="page-load-time"></div>
+	</section>
+</div>

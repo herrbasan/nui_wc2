@@ -47,6 +47,9 @@ export interface ContentLoader {
 export interface ContentLoaderOptions {
 	/** Base path for page HTML and JS files (default: '/pages') */
 	basePath?: string;
+	
+	/** Custom error handler for page load failures */
+	onError?: (pageId: string, error: Error) => void;
 }
 
 // =============================================================================
@@ -73,6 +76,35 @@ export interface RouterOptions {
 	
 	/** Default page to navigate to if no hash present */
 	defaultPage?: string | null;
+	
+	/** Custom error handler for routing failures */
+	onError?: (pageId: string, error: Error) => void;
+}
+
+// =============================================================================
+// Content Loading Setup
+// =============================================================================
+
+export interface ContentLoadingOptions {
+	/** Container selector or element (default: 'nui-content main') */
+	container?: string | HTMLElement;
+	
+	/** Navigation selector or element for active sync (default: 'nui-side-nav') */
+	navigation?: string | HTMLElement | null;
+	
+	/** Base path for page files (default: '/pages') */
+	basePath?: string;
+	
+	/** Default page to load (default: null) */
+	defaultPage?: string | null;
+	
+	/** Custom error handler */
+	onError?: (pageId: string, error: Error) => void;
+}
+
+export interface ContentLoadingResult {
+	loader: ContentLoader;
+	router: Router;
 }
 
 // =============================================================================
@@ -104,6 +136,9 @@ export interface NuiAPI {
 	
 	/** Create a router for URL-based navigation */
 	createRouter(loader: ContentLoader, options?: RouterOptions): Router;
+	
+	/** Enable content loading with simplified setup (recommended) */
+	enableContentLoading(options?: ContentLoadingOptions): ContentLoadingResult | null;
 }
 
 declare global {
@@ -224,6 +259,18 @@ export interface NuiButtonElement extends HTMLElement {}
 export interface NuiIconElement extends HTMLElement {
 	/** Icon name from sprite */
 	name: string;
+}
+
+/**
+ * Loading indicator component
+ * Modes: "bar" (top of page) or "overlay" (full page)
+ */
+export interface NuiLoadingElement extends HTMLElement {
+	/** Display mode: "bar" | "overlay" */
+	mode: 'bar' | 'overlay';
+	
+	/** Active state (shown when present) */
+	active: boolean;
 }
 
 // =============================================================================

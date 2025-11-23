@@ -44,11 +44,11 @@ nui.registerAction('toggle-media', (target, source, event, param) => {
 // Navigation data (JSON) - mirrors the HTML structure
 const navigationData = [
 	{
-		label: 'Overview',
-		icon: 'empty_dashboard',
+		label: 'Pages',
+		icon: 'article',
 		items: [
-			{ label: 'Introduction',  event: 'navigate:introduction' },
-			{ label: 'Getting Started', event: 'navigate:getting-started' }
+			{ label: 'Introduction', href: '#page=introduction' },
+			{ label: 'Getting Started', href: '#page=getting-started' }
 		]
 	},
 	{
@@ -143,6 +143,14 @@ if (sideNav && sideNav.loadData) {
 	sideNav.loadData(navigationData);
 	console.log('Side navigation loaded from JSON');
 }
+
+// Setup content loading (simplified single call)
+nui.enableContentLoading({
+	container: 'nui-content main',
+	navigation: 'nui-side-nav',
+	basePath: '/Playground/pages',
+	defaultPage: 'introduction'
+});
 
 // All available icons (from sprite generation output)
 const availableIcons = [

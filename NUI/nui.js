@@ -674,6 +674,41 @@ registerComponent('nui-icon', (element) => {
 	defineAttributeProperty(element, 'iconName', 'name');
 });
 
+registerComponent('nui-loading', (element) => {
+	const mode = element.getAttribute('mode') || 'overlay';
+	
+	if (mode === 'bar') {
+		element.innerHTML = `
+			<div class="loading-bar">
+				<div class="loading-bar-progress"></div>
+			</div>
+		`;
+	} else if (mode === 'overlay') {
+		if (!element.querySelector('.loading-overlay')) {
+			element.innerHTML = `
+				<div class="loading-overlay">
+					<div class="loading-spinner"></div>
+					<div class="loading-text">Loading...</div>
+				</div>
+			`;
+		}
+	}
+	
+	setupAttributeProxy(element, {
+		'active': (newValue, oldValue) => {
+			if (newValue !== null) {
+				element.classList.add('active');
+			} else {
+				element.classList.remove('active');
+			}
+		}
+	});
+	
+	if (element.hasAttribute('active')) {
+		element.classList.add('active');
+	}
+});
+
 registerComponent('nui-app', (element) => {
 	const instanceId = ensureInstanceId(element, 'app');
 	const stateKey = `${instanceId}:side-nav`;
@@ -1201,6 +1236,10 @@ export const nui = {
 
 	createRouter(loader, options = {}) {
 		return createRouter(loader, options);
+	},
+
+	enableContentLoading(options = {}) {
+		return enableContentLoading(options);
 	}
 };
 
@@ -1208,17 +1247,38 @@ export const nui = {
 
 function createContentLoader(container, options = {}) {
 	const basePath = options.basePath || '/pages';
+	const onError = options.onError || null;
 	const pages = new Map();
 	let currentPage = null;
+	let loadingIndicator = null;
+
+	function showLoading() {
+		loadingIndicator = document.querySelector('nui-loading[mode="bar"]');
+		if (loadingIndicator) {
+			loadingIndicator.setAttribute('active', '');
+		}
+		knower.tell('content-loading', true);
+	}
+
+	function hideLoading() {
+		if (loadingIndicator) {
+			loadingIndicator.removeAttribute('active');
+		}
+		knower.tell('content-loading', false);
+	}
 
 	async function load(pageId, params = {}) {
 		if (pages.has(pageId)) {
 			return show(pageId, params);
 		}
 
+		showLoading();
+
 		try {
 			const response = await fetch(`${basePath}/${pageId}.html`);
-			if (!response.ok) throw new Error(`Page ${pageId} not found`);
+			if (!response.ok) {
+				throw new Error(`Page ${pageId} not found (${response.status})`);
+			}
 			
 			const html = await response.text();
 
@@ -1237,16 +1297,49 @@ function createContentLoader(container, options = {}) {
 					await module.init(pageEl, nui, params);
 				}
 			} catch (e) {
-				// No module = pure HTML page
+				// No module = pure HTML page (this is fine)
 			}
 
 			pages.set(pageId, { element: pageEl, module, params });
 
+			hideLoading();
 			return show(pageId, params);
 		} catch (error) {
+			hideLoading();
 			console.error(`[Content Loader] Failed to load page ${pageId}:`, error);
+			
+			if (onError) {
+				onError(pageId, error);
+			} else {
+				// Show default error page
+				showErrorPage(pageId, error);
+			}
+			
 			return false;
 		}
+	}
+
+	function showErrorPage(pageId, error) {
+		const errorEl = document.createElement('div');
+		errorEl.className = 'content-page error-page';
+		errorEl.innerHTML = `
+			<div style="padding: var(--nui-space-double); text-align: center;">
+				<h1>Page Not Found</h1>
+				<p>Could not load page: <code>${pageId}</code></p>
+				<p style="color: var(--color-text-dim);">${error.message}</p>
+				<button onclick="window.location.hash = ''">Go Home</button>
+			</div>
+		`;
+		
+		pages.forEach(({ element }) => {
+			element.style.display = 'none';
+		});
+		
+		container.appendChild(errorEl);
+		
+		setTimeout(() => {
+			errorEl.remove();
+		}, 5000);
 	}
 
 	function show(pageId, params = {}) {
@@ -1343,6 +1436,48 @@ function createRouter(loader, options = {}) {
 		stop,
 		parseHash
 	};
+}
+
+// ################################# CONTENT LOADING SETUP
+
+function enableContentLoading(options = {}) {
+	const containerSelector = options.container || 'nui-content main';
+	const navigationSelector = options.navigation || 'nui-side-nav';
+	const basePath = options.basePath || '/pages';
+	const defaultPage = options.defaultPage || null;
+	const onError = options.onError || null;
+
+	const container = typeof containerSelector === 'string' 
+		? document.querySelector(containerSelector) 
+		: containerSelector;
+
+	const navigation = typeof navigationSelector === 'string'
+		? document.querySelector(navigationSelector)
+		: navigationSelector;
+
+	if (!container) {
+		console.error('[NUI] Content container not found:', containerSelector);
+		return null;
+	}
+
+	const loader = createContentLoader(container, { 
+		basePath,
+		onError 
+	});
+
+	const router = createRouter(loader, {
+		linkList: navigation,
+		defaultPage,
+		onError
+	});
+
+	doer.register('navigate', (target, source, event, param) => {
+		router.navigate(param);
+	});
+
+	router.start();
+
+	return { loader, router };
 }
 
 // ################################# AUTO-INITIALIZATION
