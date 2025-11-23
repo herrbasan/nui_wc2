@@ -360,21 +360,59 @@
                         <h2>Sidebar Navigation Tests</h2>
                         <p>Test the sidebar navigation functionality:</p>
                         
-                        <h3>Test Accordion Behavior</h3>
-                        <p>Click on any sidebar group header to expand/collapse. With accordion mode enabled, opening one section closes others.</p>
+                        <h3>Active State Management</h3>
+                        <p>The link-list component tracks which item is currently active and provides methods to get/set this state.</p>
                         
-                        <h3>Test Active State (Programmatic)</h3>
-                        <div>
-                            <nui-button id="test-active-0">
-                                <button type="button">Set First Group Active</button>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1rem 0;">
+                            <nui-button id="btn-set-eslint">
+                                <button type="button">Set Active: ESLint</button>
                             </nui-button>
-                            <nui-button id="test-active-sub">
-                                <button type="button">Set Sub-item Active</button>
+                            <nui-button id="btn-set-sub1">
+                                <button type="button">Set Active: Subgroup Item 1</button>
                             </nui-button>
-                            <nui-button id="test-clear-active">
-                                <button type="button">Clear Active States</button>
+                            <nui-button id="btn-get-active">
+                                <button type="button">Get Active State</button>
+                            </nui-button>
+                            <nui-button id="btn-clear-active">
+                                <button type="button">Clear Active</button>
+                            </nui-button>
+                            <nui-button id="btn-clear-close-all">
+                                <button type="button">Clear Active & Close All</button>
                             </nui-button>
                         </div>
+                        
+                        <div style="background: var(--nui-surface-2); padding: 1rem; border-radius: 0.5rem; margin: 1rem 0;">
+                            <h4 style="margin-top: 0;">Current State:</h4>
+                            <pre id="active-state-display" style="margin: 0; font-family: monospace; font-size: 0.875rem;">No active item</pre>
+                        </div>
+                        
+                        <details style="margin: 1rem 0;">
+                            <summary style="cursor: pointer; font-weight: bold; padding: 0.5rem; background: var(--nui-surface-2); border-radius: 0.25rem;">
+                                View API Usage
+                            </summary>
+                            <div style="padding: 1rem; background: var(--nui-surface-1); border-radius: 0 0 0.25rem 0.25rem;">
+                                <pre style="margin: 0; overflow-x: auto;"><code>// Get the side navigation
+const sideNav = document.querySelector('nui-side-nav');
+
+// Set active item (auto-expands parent groups)
+sideNav.setActive('a[href="#overview"]');
+sideNav.setActive('[data-page="analytics"]');
+
+// Get current active element (returns &lt;li&gt;)
+const activeElement = sideNav.getActive();
+
+// Get active data (returns {element, link, href, text})
+const data = sideNav.getActiveData();
+console.log(data.href);  // "#overview"
+console.log(data.text);  // "Overview"
+
+// Clear active state
+sideNav.clearActive();</code></pre>
+                            </div>
+                        </details>
+                        
+                        <h3>Test Accordion Behavior</h3>
+                        <p>Click on any sidebar group header to expand/collapse. With accordion mode enabled, opening one section closes others.</p>
                         
                         <h2>All Available Icons</h2>
                         <div id="icon-grid" style="

@@ -228,59 +228,103 @@ if (document.readyState === 'loading') {
 
 // Sidebar API tests
 document.addEventListener('DOMContentLoaded', () => {
+	const sideNav = document.querySelector('nui-side-nav');
 	const linkList = document.querySelector('nui-link-list');
+	const stateDisplay = document.getElementById('active-state-display');
 	
-	if (!linkList) {
-		console.warn('nui-link-list not found');
+	if (!sideNav || !linkList) {
+		console.warn('nui-side-nav or nui-link-list not found');
 		return;
 	}
 	
-	// Test: Set first group active
-	const testActive0 = document.getElementById('test-active-0');
-	if (testActive0) {
-		testActive0.addEventListener('click', () => {
-			const firstItem = linkList.querySelector('.nui-list-item');
-			if (firstItem) {
-				linkList.clearActive();
-				firstItem.classList.add('active');
-				console.log('Set first item active');
-			}
+	// Function to update state display
+	function updateStateDisplay() {
+		if (!stateDisplay) return;
+		
+		const data = sideNav.getActiveData();
+		if (data) {
+			stateDisplay.textContent = `Active Item:
+  href: ${data.href}
+  text: ${data.text}
+  element: <li>
+  link: <a>`;
+		} else {
+			stateDisplay.textContent = 'No active item';
+		}
+	}
+	
+	// Set Active: ESLint
+	document.getElementById('btn-set-eslint')?.addEventListener('click', () => {
+		const result = sideNav.setActive('a[href="#plugin-eslint"]');
+		console.log('setActive(ESLint) result:', result);
+		updateStateDisplay();
+	});
+	
+	// Set Active: Subgroup Item 1
+	document.getElementById('btn-set-sub1')?.addEventListener('click', () => {
+		const result = sideNav.setActive('a[href="#sub1"]');
+		console.log('setActive(Subgroup Item 1) result:', result);
+		updateStateDisplay();
+	});
+	
+	// Get Active State
+	document.getElementById('btn-get-active')?.addEventListener('click', () => {
+		const active = sideNav.getActive();
+		const data = sideNav.getActiveData();
+		console.log('Active element:', active);
+		console.log('Active data:', data);
+		
+		if (data) {
+			alert(`Active Item:\n\nText: ${data.text}\nHref: ${data.href}`);
+		} else {
+			alert('No active item');
+		}
+		
+		updateStateDisplay();
+	});
+	
+	// Clear Active
+	document.getElementById('btn-clear-active')?.addEventListener('click', () => {
+		sideNav.clearActive();
+		console.log('Cleared active state');
+		updateStateDisplay();
+	});
+	
+	// Clear Active & Close All
+	document.getElementById('btn-clear-close-all')?.addEventListener('click', () => {
+		sideNav.clearActive();
+		sideNav.clearSubs();
+		console.log('Cleared active state and closed all groups');
+		updateStateDisplay();
+	});
+	
+	// Watch for state changes via Knower
+	const instanceId = linkList.getAttribute('nui-id');
+	if (instanceId) {
+		nui.knower.watch(`${instanceId}:active`, (state, oldState) => {
+			console.log('[WATCHER] Active state changed:', {
+				old: oldState?.text,
+				new: state?.text
+			});
+			updateStateDisplay();
 		});
 	}
 	
-	// Test: Set sub-item active (second group, first sub-item)
-	const testActiveSub = document.getElementById('test-active-sub');
-	if (testActiveSub) {
-		testActiveSub.addEventListener('click', () => {
-			const groups = linkList.querySelectorAll('.nui-list-item.group');
-			if (groups.length >= 2) {
-				const secondGroup = groups[1];
-				const firstSubItem = secondGroup.querySelector('.sub-item');
-				if (firstSubItem) {
-					linkList.clearActive();
-					linkList.clearSubs();
-					firstSubItem.classList.add('active');
-					
-					// Open parent group
-					const subEl = secondGroup.querySelector('.sub');
-					if (subEl) {
-						secondGroup.classList.add('open');
-						subEl.style.height = subEl.scrollHeight + 'px';
-					}
-					console.log('Set sub-item active and opened parent');
-				}
-			}
-		});
-	}
+	// Handle clicks on sidebar links
+	linkList.addEventListener('click', (e) => {
+		const link = e.target.closest('a');
+		if (link) {
+			e.preventDefault();
+			sideNav.setActive(link);
+			console.log('Link clicked:', link.getAttribute('href'));
+		}
+	});
 	
-	// Test: Clear all active states
-	const testClearActive = document.getElementById('test-clear-active');
-	if (testClearActive) {
-		testClearActive.addEventListener('click', () => {
-			linkList.clearActive();
-			console.log('Cleared all active states');
-		});
-	}
+	// Set initial active state
+	setTimeout(() => {
+		sideNav.setActive('a[href="#devtools-overview"]');
+		updateStateDisplay();
+	}, 100);
 });
 
 // =============================================================================

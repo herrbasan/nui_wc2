@@ -17,8 +17,8 @@ Sets the active item and automatically expands parent groups to reveal it.
 - `Boolean` - `true` if item was found and set, `false` if not found
 
 **Behavior:**
-1. Removes `active` class from previous active item
-2. Adds `active` class to new item
+1. Removes `active` class from previous active `<li>` element
+2. Adds `active` class to new `<li>` element
 3. Expands all parent groups in the hierarchy
 4. Updates Knower state with item data
 5. Triggers state change notifications
@@ -45,16 +45,17 @@ if (sideNav.setActive('#missing')) {
 
 ### `getActive()`
 
-Returns the currently active DOM element.
+Returns the currently active `<li>` element.
 
 **Returns:**
-- `Element|null` - Active `<a>` element or `null` if none active
+- `Element|null` - Active `<li>` element or `null` if none active
 
 **Example:**
 ```javascript
-const activeElement = sideNav.getActive();
-if (activeElement) {
-	console.log('Active href:', activeElement.getAttribute('href'));
+const activeLi = sideNav.getActive();
+if (activeLi) {
+	const link = activeLi.querySelector('a');
+	console.log('Active href:', link.getAttribute('href'));
 }
 ```
 
@@ -64,7 +65,8 @@ Returns structured data about the active item.
 
 **Returns:**
 - `Object|null` - Active item data or `null` if none active
-  - `element` (Element) - The active `<a>` element
+  - `element` (Element) - The active `<li>` element
+  - `link` (Element) - The `<a>` element within the `<li>`
   - `href` (String) - The link's href attribute
   - `text` (String) - The link's visible text content
 
@@ -102,7 +104,8 @@ Each `nui-link-list` component maintains state in the Knower system using a name
 **State Data Structure:**
 ```javascript
 {
-	element: <a>,           // DOM element reference
+	element: <li>,          // DOM <li> element reference
+	link: <a>,              // DOM <a> element reference
 	href: "#profile",       // Link href attribute
 	text: "Profile",        // Link text content
 	timestamp: 1700000000   // Unix timestamp of activation

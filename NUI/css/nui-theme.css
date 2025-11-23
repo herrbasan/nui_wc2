@@ -332,6 +332,24 @@ nui-link-list[mode="fold"] li:hover {
 	color: var(--color-highlight);
 	background-color: var(--color-shade3);
 }
+nui-link-list[mode="fold"] li.list-item {
+	position: relative;
+}
+nui-link-list[mode="fold"] li.list-item.active {
+	color: var(--color-white);
+	background-color: var(--color-shade3);
+}
+nui-link-list[mode="fold"] li.list-item.active::after {
+	content: '';
+	position: absolute;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	width: 0.3rem;
+	background-color: var(--color-highlight);
+	border-radius: var(--nui-radius);
+
+}
 
 nui-link-list[mode="fold"] ul {
 	margin: 0;

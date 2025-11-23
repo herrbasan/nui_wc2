@@ -19,27 +19,27 @@ const config = {
 const doer = {
 	_actions: {},
 	_ownerCleanups: new Map(),
-	
-register(name, fn, ownerId = null) {
-	this._actions[name] = fn;
-	
-	if (ownerId) {
-		// Warn if registering for disconnected component (common mistake)
-		const element = document.querySelector(`[nui-id="${ownerId}"]`);
-		if (!element || !element.isConnected) {
-			console.warn(`[DOER] Registering action "${name}" for disconnected component "${ownerId}". This may cause memory leaks. Register actions only for connected components.`);
-		}
-		
-		if (!this._ownerCleanups.has(ownerId)) {
-			this._ownerCleanups.set(ownerId, new Set());
-		}
-		this._ownerCleanups.get(ownerId).add(() => {
-			if (this._actions[name] === fn) {
-				delete this._actions[name];
+
+	register(name, fn, ownerId = null) {
+		this._actions[name] = fn;
+
+		if (ownerId) {
+			// Warn if registering for disconnected component (common mistake)
+			const element = document.querySelector(`[nui-id="${ownerId}"]`);
+			if (!element || !element.isConnected) {
+				console.warn(`[DOER] Registering action "${name}" for disconnected component "${ownerId}". This may cause memory leaks. Register actions only for connected components.`);
 			}
-		});
-	}
-},	do(name, target, element, event, param) {
+
+			if (!this._ownerCleanups.has(ownerId)) {
+				this._ownerCleanups.set(ownerId, new Set());
+			}
+			this._ownerCleanups.get(ownerId).add(() => {
+				if (this._actions[name] === fn) {
+					delete this._actions[name];
+				}
+			});
+		}
+	}, do(name, target, element, event, param) {
 		if (this._actions[name]) {
 			return this._actions[name](target, element, event, param);
 		} else {
@@ -54,7 +54,7 @@ register(name, fn, ownerId = null) {
 				}
 			});
 			element.dispatchEvent(customEvent);
-			
+
 			// Lazy execution: only update state if someone is watching
 			const actionId = `action:${name}`;
 			if (knower.hasWatchers(actionId)) {
@@ -62,14 +62,14 @@ register(name, fn, ownerId = null) {
 			}
 		}
 	},
-	
+
 	clean(ownerId) {
 		if (this._ownerCleanups.has(ownerId)) {
 			this._ownerCleanups.get(ownerId).forEach(fn => fn());
 			this._ownerCleanups.delete(ownerId);
 		}
 	},
-	
+
 	listActions() {
 		return Object.keys(this._actions);
 	}
@@ -81,71 +81,71 @@ const knower = {
 	_states: null,
 	_hooks: null,
 	_ownerCleanups: null,
-	
+
 	tell(id, state, source = null) {
 		if (!this._states) this._states = new Map();
-		
+
 		const oldState = this._states.get(id);
-		
+
 		if (oldState === state) return;
-		
-	this._states.set(id, state);
-	
-	if (this._hooks) {
-		const hooks = this._hooks.get(id);
-		if (hooks) {
-			// Iterate over a copy to allow watchers to modify the Set
-			Array.from(hooks).forEach(handler => {
-				try {
-					handler(state, oldState, source);
-				} catch (error) {
-					console.error('[KNOWER] Watcher error:', error);
-				}
-			});
+
+		this._states.set(id, state);
+
+		if (this._hooks) {
+			const hooks = this._hooks.get(id);
+			if (hooks) {
+				// Iterate over a copy to allow watchers to modify the Set
+				Array.from(hooks).forEach(handler => {
+					try {
+						handler(state, oldState, source);
+					} catch (error) {
+						console.error('[KNOWER] Watcher error:', error);
+					}
+				});
+			}
 		}
-	}
-},	know(id) {
+	}, know(id) {
 		return this._states?.get(id);
 	},
-	
+
 	hasWatchers(id) {
 		return this._hooks?.has(id) && this._hooks.get(id).size > 0;
 	},
-	
+
 	watch(id, handler, ownerId = null) {
 		if (!this._hooks) this._hooks = new Map();
 		if (!this._hooks.has(id)) {
 			this._hooks.set(id, new Set());
 		}
 		this._hooks.get(id).add(handler);
-		
-	const currentState = this._states?.get(id);
-	if (currentState !== undefined) {
-		try {
-			handler(currentState, undefined, null);
-		} catch (error) {
-			console.error('[KNOWER] Watcher error during initial notification:', error);
+
+		const currentState = this._states?.get(id);
+		if (currentState !== undefined) {
+			try {
+				handler(currentState, undefined, null);
+			} catch (error) {
+				console.error('[KNOWER] Watcher error during initial notification:', error);
+			}
 		}
-	}
-	
-	const unwatch = () => this.unwatch(id, handler);
-	
-	if (ownerId) {
-		// Warn if registering for disconnected component (common mistake)
-		const element = document.querySelector(`[nui-id="${ownerId}"]`);
-		if (!element || !element.isConnected) {
-			console.warn(`[KNOWER] Registering watcher for disconnected component "${ownerId}". This may cause memory leaks. Register watchers only for connected components.`);
+
+		const unwatch = () => this.unwatch(id, handler);
+
+		if (ownerId) {
+			// Warn if registering for disconnected component (common mistake)
+			const element = document.querySelector(`[nui-id="${ownerId}"]`);
+			if (!element || !element.isConnected) {
+				console.warn(`[KNOWER] Registering watcher for disconnected component "${ownerId}". This may cause memory leaks. Register watchers only for connected components.`);
+			}
+
+			if (!this._ownerCleanups) this._ownerCleanups = new Map();
+			if (!this._ownerCleanups.has(ownerId)) {
+				this._ownerCleanups.set(ownerId, new Set());
+			}
+			this._ownerCleanups.get(ownerId).add(unwatch);
 		}
-		
-		if (!this._ownerCleanups) this._ownerCleanups = new Map();
-		if (!this._ownerCleanups.has(ownerId)) {
-			this._ownerCleanups.set(ownerId, new Set());
-		}
-		this._ownerCleanups.get(ownerId).add(unwatch);
-	}
-	
-	return unwatch;
-},	unwatch(id, handler) {
+
+		return unwatch;
+	}, unwatch(id, handler) {
 		if (!this._hooks) return;
 		const hooks = this._hooks.get(id);
 		if (hooks) {
@@ -155,14 +155,14 @@ const knower = {
 			}
 		}
 	},
-	
+
 	clean(ownerId) {
 		if (this._ownerCleanups && this._ownerCleanups.has(ownerId)) {
 			this._ownerCleanups.get(ownerId).forEach(fn => fn());
 			this._ownerCleanups.delete(ownerId);
 		}
 	},
-	
+
 	forget(id) {
 		if (id) {
 			this._states?.delete(id);
@@ -173,11 +173,11 @@ const knower = {
 			this._ownerCleanups = null;
 		}
 	},
-	
+
 	knowAll() {
 		return this._states ? Object.fromEntries(this._states) : {};
 	},
-	
+
 	listKnown() {
 		const all = this.knowAll();
 		return {
@@ -198,39 +198,39 @@ function setupAttributeProxy(element, handlers = {}) {
 		removeAttribute: element.removeAttribute.bind(element),
 		toggleAttribute: element.toggleAttribute.bind(element)
 	};
-	
-	element.setAttribute = function(name, value) {
+
+	element.setAttribute = function (name, value) {
 		const oldValue = this.getAttribute(name);
 		original.setAttribute(name, value);
-		
+
 		if (handlers[name]) {
 			handlers[name](value, oldValue);
 		}
 	};
-	
-	element.removeAttribute = function(name) {
+
+	element.removeAttribute = function (name) {
 		const oldValue = this.getAttribute(name);
 		original.removeAttribute(name);
-		
+
 		if (handlers[name]) {
 			handlers[name](null, oldValue);
 		}
 	};
-	
-	element.toggleAttribute = function(name, force) {
+
+	element.toggleAttribute = function (name, force) {
 		const oldValue = this.hasAttribute(name);
 		const result = original.toggleAttribute(name, force);
 		const newValue = this.hasAttribute(name);
-		
+
 		if (handlers[name] && oldValue !== newValue) {
 			handlers[name](newValue ? '' : null, oldValue ? '' : null);
 		}
-		
+
 		return result;
 	};
-	
+
 	element._originalAttributeMethods = original;
-	
+
 	return original;
 }
 
@@ -279,7 +279,7 @@ const dom = {
 		});
 		return element;
 	},
-	
+
 	svg(tag, attributes = {}) {
 		const element = document.createElementNS('http://www.w3.org/2000/svg', tag);
 		Object.entries(attributes).forEach(([key, value]) => {
@@ -289,13 +289,13 @@ const dom = {
 		});
 		return element;
 	},
-	
+
 	icon(name) {
 		const icon = document.createElement('nui-icon');
 		icon.setAttribute('name', name);
 		return icon;
 	},
-	
+
 	span(text) {
 		const span = document.createElement('span');
 		if (text) span.textContent = text;
@@ -321,20 +321,20 @@ function createComponent(tagName, setupFn, cleanupFn) {
 				knower.clean(instanceId);
 				doer.clean(instanceId);
 			}
-			
+
 			if (this._originalAttributeMethods) {
 				this.setAttribute = this._originalAttributeMethods.setAttribute;
 				this.removeAttribute = this._originalAttributeMethods.removeAttribute;
 				this.toggleAttribute = this._originalAttributeMethods.toggleAttribute;
 				delete this._originalAttributeMethods;
 			}
-			
+
 			// Call setup's cleanup function if it returned one
 			if (this._setupCleanup) {
 				this._setupCleanup();
 				delete this._setupCleanup;
 			}
-			
+
 			cleanupFn?.(this);
 		}
 	};
@@ -351,8 +351,8 @@ function registerComponent(tagName, setupFn, cleanupFn = null) {
 function registerLayoutComponent(tagName) {
 	components[tagName] = {
 		class: createComponent(tagName),
-		setup: () => {},
-		cleanup: () => {}
+		setup: () => { },
+		cleanup: () => { }
 	};
 }
 
@@ -373,9 +373,9 @@ function processEventAttributes(element) {
 		if (attr.name.startsWith('nui-event-')) {
 			const eventType = sanitizeInput(attr.name.replace('nui-event-', ''));
 			const actionSpec = sanitizeInput(attr.value);
-			
+
 			if (!eventType || !actionSpec) return;
-			
+
 			element.addEventListener(eventType, (e) => {
 				executeAction(actionSpec, element, e);
 			});
@@ -386,18 +386,18 @@ function processEventAttributes(element) {
 function executeAction(actionSpec, element, event) {
 	const [actionPart, selector] = actionSpec.split('@');
 	const [actionName, param] = actionPart.split(':');
-	
+
 	const safeActionName = sanitizeInput(actionName);
 	const safeParam = sanitizeInput(param);
 	const safeSelector = sanitizeInput(selector);
-	
+
 	if (config.sanitizeActions && safeSelector && !/^[a-zA-Z0-9\s\-_.#\[\]=,>+~:()]+$/.test(safeSelector)) {
 		console.warn(`Invalid selector: "${selector}"`);
 		return;
 	}
-	
+
 	const target = safeSelector ? document.querySelector(safeSelector) : element;
-	
+
 	doer.do(safeActionName, target, element, event, safeParam);
 }
 
@@ -405,11 +405,11 @@ function executeAction(actionSpec, element, event) {
 
 doer.register('toggle-theme', (target, source, event, param) => {
 	const root = document.documentElement;
-	const currentScheme = root.style.colorScheme || 
+	const currentScheme = root.style.colorScheme ||
 		getComputedStyle(root).colorScheme || 'light dark';
-	
+
 	let newTheme;
-	
+
 	if (currentScheme.includes('dark') && !currentScheme.includes('light')) {
 		root.style.colorScheme = 'light';
 		localStorage.setItem('nui-theme', 'light');
@@ -424,7 +424,7 @@ doer.register('toggle-theme', (target, source, event, param) => {
 		localStorage.setItem('nui-theme', prefersDark ? 'light' : 'dark');
 		newTheme = prefersDark ? 'light' : 'dark';
 	}
-	
+
 	knower.tell('theme', newTheme);
 });
 
@@ -473,62 +473,62 @@ doer.register('remove-attr', (target, source, event, attrName) => {
 
 const a11y = {
 	hasLabel(element) {
-		return element.hasAttribute('aria-label') || 
-		       element.hasAttribute('aria-labelledby') ||
-		       element.hasAttribute('title');
+		return element.hasAttribute('aria-label') ||
+			element.hasAttribute('aria-labelledby') ||
+			element.hasAttribute('title');
 	},
-	
+
 	hasFocusableChild(element) {
 		return element.querySelector('button, a[href], input, select, textarea, [tabindex]');
 	},
-	
+
 	getTextLabel(element) {
 		const span = element.querySelector('span');
 		return span ? span.textContent.trim() : element.textContent.trim();
 	},
-	
+
 	makeInteractive(element, label = null) {
 		const nativeButton = element.querySelector('button');
 		const nativeLink = element.querySelector('a[href]');
 		const hasFocusable = this.hasFocusableChild(element);
-		
+
 		const target = nativeButton || nativeLink || element;
-		
+
 		if (!nativeButton && !nativeLink && !element.hasAttribute('role')) {
 			element.setAttribute('role', 'button');
 		}
-		
+
 		if (!hasFocusable && !element.hasAttribute('tabindex')) {
 			element.setAttribute('tabindex', '0');
 		}
-		
+
 		if (label && !this.hasLabel(target)) {
 			target.setAttribute('aria-label', label);
 		}
-		
+
 		return target;
 	},
-	
+
 	generateIconLabel(iconName, element) {
 		const label = iconName
 			.split(/[_-]/)
 			.map(word => word.charAt(0).toUpperCase() + word.slice(1))
 			.join(' ');
-		
+
 		const parentNav = element.closest('nui-top-nav, nui-side-nav, nav, header');
 		return parentNav ? `${label} navigation` : label;
 	},
-	
+
 	ensureButtonLabel(button) {
 		if (this.hasLabel(button)) return;
-		
+
 		const visibleText = Array.from(button.childNodes)
 			.filter(node => node.nodeType === Node.TEXT_NODE)
 			.map(node => node.textContent.trim())
 			.join(' ');
-		
+
 		if (visibleText) return;
-		
+
 		const icon = button.querySelector('nui-icon');
 		if (icon) {
 			const iconName = icon.getAttribute('name');
@@ -543,10 +543,10 @@ const a11y = {
 			}
 		}
 	},
-	
+
 	ensureLandmarkLabel(landmark, fallbackLabel = 'Navigation') {
 		if (this.hasLabel(landmark)) return;
-		
+
 		const heading = landmark.querySelector('h1, h2, h3, h4, h5, h6');
 		if (heading) {
 			const id = heading.id || `nav-${Math.random().toString(36).substr(2, 9)}`;
@@ -557,11 +557,11 @@ const a11y = {
 			console.warn(`Landmark missing aria-label. Adding: "${fallbackLabel}"`, landmark);
 		}
 	},
-	
+
 	upgrade(element) {
 		// Ensure all buttons have labels
 		element.querySelectorAll('button').forEach(btn => this.ensureButtonLabel(btn));
-		
+
 		// Ensure clickable non-semantic elements have role
 		element.querySelectorAll('[onclick], [nui-event-click]').forEach(el => {
 			if (el.tagName !== 'BUTTON' && el.tagName !== 'A' && !this.hasFocusableChild(el)) {
@@ -572,7 +572,7 @@ const a11y = {
 				}
 			}
 		});
-		
+
 		// Ensure landmarks have labels
 		element.querySelectorAll('nav, [role="navigation"]').forEach(nav => {
 			this.ensureLandmarkLabel(nav);
@@ -589,9 +589,9 @@ function upgradeAccessibility(element) {
 registerComponent('nui-button', (element) => {
 	const button = element.querySelector('button');
 	if (!button) return;
-	
+
 	upgradeAccessibility(element);
-	
+
 	const buttonNodes = Array.from(button.childNodes);
 	const nonEmptyNodes = buttonNodes.filter(node => {
 		if (node.nodeType === Node.TEXT_NODE) {
@@ -599,15 +599,15 @@ registerComponent('nui-button', (element) => {
 		}
 		return true;
 	});
-	
-	const hasOnlyIcon = nonEmptyNodes.length === 1 && 
-		nonEmptyNodes[0].nodeType === Node.ELEMENT_NODE && 
+
+	const hasOnlyIcon = nonEmptyNodes.length === 1 &&
+		nonEmptyNodes[0].nodeType === Node.ELEMENT_NODE &&
 		nonEmptyNodes[0].tagName === 'NUI-ICON';
-	
+
 	if (hasOnlyIcon) {
 		element.classList.add('icon-only');
 	}
-	
+
 	button.addEventListener('click', (e) => {
 		element.dispatchEvent(new CustomEvent('nui-click', {
 			bubbles: true,
@@ -622,13 +622,13 @@ registerComponent('nui-icon', (element) => {
 		console.warn('nui-icon: Missing "name" attribute');
 		return;
 	}
-	
+
 	element.setAttribute('aria-hidden', 'true');
-	
+
 	if (element.textContent.trim()) {
 		element.textContent = '';
 	}
-	
+
 	let svg = element.querySelector('svg');
 	if (!svg) {
 		svg = dom.svg('svg', {
@@ -641,13 +641,13 @@ registerComponent('nui-icon', (element) => {
 		});
 		element.appendChild(svg);
 	}
-	
+
 	let use = svg.querySelector('use');
 	if (!use) {
 		use = dom.svg('use');
 		svg.appendChild(use);
 	}
-	
+
 	const updateIcon = (iconName) => {
 		if (iconName) {
 			use.setAttribute('href', `${config.iconSpritePath}#${iconName}`);
@@ -655,15 +655,15 @@ registerComponent('nui-icon', (element) => {
 			use.setAttribute('href', '');
 		}
 	};
-	
+
 	updateIcon(name);
-	
+
 	setupAttributeProxy(element, {
 		'name': (newValue, oldValue) => {
 			updateIcon(newValue);
 		}
 	});
-	
+
 	defineAttributeProperty(element, 'iconName', 'name');
 });
 
@@ -671,36 +671,36 @@ registerComponent('nui-app', (element) => {
 	const instanceId = ensureInstanceId(element, 'app');
 	const stateKey = `${instanceId}:side-nav`;
 	let lastState = null;
-	
+
 	function getBreakpoint(element) {
 		const sideNav = element.querySelector('nui-side-nav');
 		if (!sideNav) return null;
-		
+
 		const forceBreakpoint = element.getAttribute('nui-vars-sidebar_force-breakpoint');
 		if (!forceBreakpoint) return 768;
-		
+
 		const match = forceBreakpoint.match(/^(\d+(?:\.\d+)?)(px|rem|em)?$/);
 		if (!match) return 768;
-		
+
 		const value = parseFloat(match[1]);
 		const unit = match[2] || 'px';
-		
+
 		if (unit === 'rem' || unit === 'em') {
 			return value * 16;
 		}
 		return value;
 	}
-	
+
 	function updateResponsiveState(element) {
 		const sideNav = element.querySelector('nui-side-nav');
 		if (!sideNav) return;
-		
+
 		const breakpoint = getBreakpoint(element);
 		const viewportWidth = window.innerWidth;
 		const isForced = viewportWidth >= breakpoint;
-		
+
 		let newState;
-		
+
 		if (isForced) {
 			element.classList.remove('sidenav-open', 'sidenav-closed');
 			element.classList.add('sidenav-forced');
@@ -714,16 +714,16 @@ registerComponent('nui-app', (element) => {
 				newState = 'open';
 			}
 		}
-		
+
 		knower.tell(stateKey, newState, element);
 		lastState = newState;
 	}
-	
+
 	function toggleSideNav(element) {
 		if (element.classList.contains('sidenav-forced')) return;
-		
+
 		const isOpen = element.classList.contains('sidenav-open');
-		
+
 		if (isOpen) {
 			element.classList.remove('sidenav-open');
 			element.classList.add('sidenav-closed');
@@ -736,29 +736,29 @@ registerComponent('nui-app', (element) => {
 			lastState = 'open';
 		}
 	}
-	
+
 	function updateLayoutClasses(element) {
 		const topNav = element.querySelector('nui-top-nav');
 		const sideNav = element.querySelector('nui-side-nav');
 		const footer = element.querySelector('nui-app-footer');
-		
+
 		element.classList.toggle('has-top-nav', !!topNav);
 		element.classList.toggle('has-side-nav', !!sideNav);
 		element.classList.toggle('has-footer', !!footer);
-		
+
 		updateResponsiveState(element);
 	}
-	
+
 	element.setAttribute('data-layout', 'app');
 	updateLayoutClasses(element);
-	
+
 	element.toggleSideNav = () => toggleSideNav(element);
-	
+
 	const resizeObserver = new ResizeObserver(() => {
 		updateLayoutClasses(element);
 	});
 	resizeObserver.observe(element);
-	
+
 	return () => {
 		resizeObserver.disconnect();
 		knower.forget(stateKey);
@@ -774,7 +774,7 @@ registerComponent('nui-top-nav', (element) => {
 				header.setAttribute('role', 'banner');
 			}
 		}
-		
+
 		upgradeAccessibility(header);
 	}
 });
@@ -784,7 +784,7 @@ registerComponent('nui-side-nav', (element) => {
 	if (linkList && !linkList.hasAttribute('mode')) {
 		linkList.setAttribute('mode', 'fold');
 	}
-	
+
 	if (linkList) {
 		element.setActive = (selector) => linkList.setActive?.(selector);
 		element.getActive = () => linkList.getActive?.();
@@ -799,9 +799,9 @@ registerComponent('nui-link-list', (element) => {
 	const stateKey = `${instanceId}:active`;
 	const mode = element.getAttribute('mode') || 'tree';
 	let activeItem = null;
-	
+
 	// ##### LOAD DATA FROM JAVASCRIPT OBJECTS
-	
+
 	element.loadData = (data) => {
 		element.innerHTML = '';
 		data.forEach(item => {
@@ -816,16 +816,16 @@ registerComponent('nui-link-list', (element) => {
 			});
 		}
 	};
-	
+
 	function buildItemHTML(item, nested = false) {
 		if (item.separator) {
 			return '<li class="separator"><hr></li>';
 		}
-		
+
 		if (item.items) {
 			let html = nested ? '<ul>' : '<ul>';
 			html += buildGroupHeaderHTML(item);
-			
+
 			item.items.forEach(child => {
 				if (child.separator) {
 					html += buildItemHTML(child, true);
@@ -835,30 +835,30 @@ registerComponent('nui-link-list', (element) => {
 					html += buildLinkItemHTML(child);
 				}
 			});
-			
+
 			html += nested ? '</ul>' : '</ul>';
 			return html;
 		} else {
 			return nested ? buildLinkItemHTML(item) : '<ul>' + buildLinkItemHTML(item) + '</ul>';
 		}
 	}
-	
+
 	function buildGroupHeaderHTML(item) {
 		let html = '<li class="group-header"><span>';
 		if (item.icon) html += `<nui-icon name="${item.icon}"></nui-icon>`;
 		html += `<span>${item.label}</span>`;
 		html += '</span>';
-		
+
 		if (item.action) {
 			html += `<button type="button" class="action" nui-event-click="${item.action}">`;
 			html += '<nui-icon name="settings"></nui-icon>';
 			html += '</button>';
 		}
-		
+
 		html += '</li>';
 		return html;
 	}
-	
+
 	function buildLinkItemHTML(item) {
 		let html = '<li>';
 		html += `<a href="${item.href || '#'}"`;
@@ -870,25 +870,79 @@ registerComponent('nui-link-list', (element) => {
 		html += '</li>';
 		return html;
 	}
-	
+
 	// ##### ACTIVE ITEM TRACKING & FOLD MODE
-	
+
 	element.setActive = (selector) => {
 		const item = typeof selector === 'string' ? element.querySelector(selector) : selector;
 		if (!item) return false;
-		
-		if (activeItem) activeItem.classList.remove('active');
+
+		if (activeItem) {
+			activeItem.classList.remove('active');
+			if (activeItem.parentElement?.tagName === 'LI') {
+				activeItem.parentElement.classList.remove('active');
+			}
+		}
 		activeItem = item;
 		item.classList.add('active');
-		
-		// Expand parent groups
-		let parent = item.closest('ul');
-		while (parent && element.contains(parent)) {
-			const header = parent.querySelector(':scope > .group-header');
-			if (header) setGroupState(header, true);
-			parent = parent.parentElement?.closest('ul');
+		if (item.parentElement?.tagName === 'LI') {
+			item.parentElement.classList.add('active');
 		}
-		
+
+		// 1. Identify the path of headers to expand
+		const headersToExpand = new Set();
+		let curr = item;
+		while (curr && element.contains(curr)) {
+			if (curr.classList?.contains('group-items')) {
+				const header = curr.previousElementSibling;
+				if (header && header.classList.contains('group-header')) {
+					headersToExpand.add(header);
+				}
+			}
+			curr = curr.parentElement;
+		}
+
+		// 2. If in fold mode, close siblings of the path
+		if (mode === 'fold') {
+			headersToExpand.forEach(header => {
+				const parentUl = header.parentElement;
+				if (parentUl) {
+					// Special handling for top-level groups (which are in separate ULs)
+					if (parentUl.parentElement === element) {
+						const topLevelUls = Array.from(element.children).filter(child => child.tagName === 'UL');
+						topLevelUls.forEach(ul => {
+							if (ul !== parentUl) {
+								const otherHeader = ul.querySelector(':scope > .group-header');
+								if (otherHeader) {
+									setGroupState(otherHeader, false);
+									// Recursively close descendants
+									const container = otherHeader.nextElementSibling;
+									if (container && container.classList.contains('group-items')) {
+										container.querySelectorAll('.group-header').forEach(h => setGroupState(h, false));
+									}
+								}
+							}
+						});
+					}
+
+					const siblings = parentUl.querySelectorAll(':scope > .group-header');
+					siblings.forEach(sibling => {
+						if (sibling !== header) {
+							setGroupState(sibling, false);
+							// Recursively close descendants to ensure clean state
+							const container = sibling.nextElementSibling;
+							if (container && container.classList.contains('group-items')) {
+								container.querySelectorAll('.group-header').forEach(h => setGroupState(h, false));
+							}
+						}
+					});
+				}
+			});
+		}
+
+		// 3. Expand the path
+		headersToExpand.forEach(header => setGroupState(header, true));
+
 		// Update state in Knower
 		const itemData = {
 			element: item,
@@ -897,14 +951,14 @@ registerComponent('nui-link-list', (element) => {
 			timestamp: Date.now()
 		};
 		knower.tell(stateKey, itemData, element);
-		
+
 		return true;
 	};
-	
+
 	element.getActive = () => {
 		return activeItem;
 	};
-	
+
 	element.getActiveData = () => {
 		if (!activeItem) return null;
 		return {
@@ -913,19 +967,32 @@ registerComponent('nui-link-list', (element) => {
 			text: activeItem.textContent.trim()
 		};
 	};
-	
+
 	element.clearActive = () => {
 		if (activeItem) {
 			activeItem.classList.remove('active');
+			if (activeItem.parentElement?.tagName === 'LI') {
+				activeItem.parentElement.classList.remove('active');
+			}
 			activeItem = null;
 			knower.tell(stateKey, null, element);
 		}
+	};
+
+	element.clearSubs = () => {
+		element.querySelectorAll('.group-header').forEach(header => {
+			setGroupState(header, false);
+		});
 	};
 	
 	function setGroupState(header, expand) {
 		header.setAttribute('aria-expanded', expand);
 		const container = header.nextElementSibling;
 		if (!container?.classList.contains('group-items')) return;
+
+		// Prevent stuck height on already-open groups (setActive recursion fix)
+		if (expand && container.style.height === 'auto') return;
+		if (!expand && container.style.height === '0px') return;
 		
 		if (expand) {
 			container.style.height = container.scrollHeight + 'px';
@@ -979,13 +1046,13 @@ registerComponent('nui-link-list', (element) => {
 			setGroupState(header, true);
 		}
 	}
-	
+
 	// ##### INITIALIZATION
-	
+
 	function upgradeHtml() {
 		element.querySelectorAll('.group-header').forEach(header => {
 			if (header.nextElementSibling?.classList.contains('group-items')) return;
-			
+
 			const items = [];
 			let sibling = header.nextElementSibling;
 			while (sibling && !sibling.classList?.contains('group-header')) {
@@ -995,7 +1062,7 @@ registerComponent('nui-link-list', (element) => {
 				}
 				sibling = sibling.nextElementSibling;
 			}
-			
+
 			if (items.length) {
 				const container = document.createElement('div');
 				container.className = 'group-items';
@@ -1004,7 +1071,7 @@ registerComponent('nui-link-list', (element) => {
 			}
 		});
 	}
-	
+
 	function initialCollapseGroup(header) {
 		header.setAttribute('aria-expanded', 'false');
 		const container = header.nextElementSibling;
@@ -1012,7 +1079,7 @@ registerComponent('nui-link-list', (element) => {
 			container.style.height = '0px';
 		}
 	}
-	
+
 	function init() {
 		if (mode === 'fold') {
 			upgradeHtml();
@@ -1022,7 +1089,7 @@ registerComponent('nui-link-list', (element) => {
 				initialCollapseGroup(header);
 			});
 		}
-		
+
 		// Click handlers
 		element.addEventListener('click', (e) => {
 			const header = e.target.closest('.group-header');
@@ -1030,12 +1097,12 @@ registerComponent('nui-link-list', (element) => {
 				toggleGroup(header);
 			}
 		});
-		
+
 		// Keyboard navigation
 		element.addEventListener('keydown', (e) => {
 			const target = e.target.closest('a, .group-header');
 			if (!target) return;
-			
+
 			if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
 				e.preventDefault();
 				const all = element.querySelectorAll('a, .group-header span');
@@ -1052,9 +1119,9 @@ registerComponent('nui-link-list', (element) => {
 			}
 		});
 	}
-	
+
 	init();
-	
+
 	// Cleanup function
 	return () => {
 		knower.forget(stateKey);
@@ -1067,11 +1134,11 @@ registerComponent('nui-content', (element) => {
 		if (!main.hasAttribute('role')) {
 			main.setAttribute('role', 'main');
 		}
-		
+
 		if (!main.hasAttribute('id')) {
 			main.setAttribute('id', 'main-content');
 		}
-		
+
 		upgradeAccessibility(main);
 	} else {
 		const isMainContent = !element.closest('article, section, aside');
@@ -1140,17 +1207,17 @@ registerComponent('nui-column-flow', (element) => {
 function ensureBaseStyles() {
 	const rootStyles = getComputedStyle(document.documentElement);
 	const hasBaseVariables = rootStyles.getPropertyValue('--nui-space').trim() !== '';
-	
+
 	if (!hasBaseVariables) {
 		const scriptPath = document.currentScript?.src || import.meta.url;
 		const basePath = scriptPath.substring(0, scriptPath.lastIndexOf('/'));
 		const cssPath = `${basePath}/css/nui-theme.css`;
-		
+
 		const link = document.createElement('link');
 		link.rel = 'stylesheet';
 		link.href = cssPath;
 		document.head.appendChild(link);
-		
+
 		console.warn('[NUI] Default theme auto-loaded from:', cssPath, '(Include nui.js in <head> to prevent layout shifts)');
 	}
 }
@@ -1159,39 +1226,39 @@ export const nui = {
 	config,
 	knower,
 	dom,
-	
+
 	init(options) {
 		if (options) {
 			Object.assign(config, options);
 		}
-		
+
 		ensureBaseStyles();
-		
+
 		const savedTheme = localStorage.getItem('nui-theme');
 		if (savedTheme) {
 			document.documentElement.style.colorScheme = savedTheme;
 		}
-		
+
 		const baseValue = getComputedStyle(document.documentElement)
 			.getPropertyValue('--nui-rem-base')
 			.trim();
 		config.baseFontSize = parseFloat(baseValue) || 14;
-		
+
 		Object.entries(components).forEach(([tagName, { class: ComponentClass }]) => {
 			if (!customElements.get(tagName)) {
 				customElements.define(tagName, ComponentClass);
 			}
 		});
 	},
-	
+
 	registerAction(name, handler) {
 		doer.register(name, handler);
 	},
-	
+
 	configure(options) {
 		Object.assign(config, options);
 	},
-	
+
 	knower: knower,
 	doer: doer
 };
@@ -1201,7 +1268,7 @@ export const nui = {
 if (typeof window !== 'undefined' && !window.nuiInitialized) {
 	const urlParams = new URLSearchParams(window.location.search);
 	const skipInit = urlParams.has('skip-init');
-	
+
 	if (!skipInit) {
 		nui.init();
 		window.nuiInitialized = true;
