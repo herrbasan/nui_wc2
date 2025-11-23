@@ -836,11 +836,13 @@ registerComponent('nui-link-list', (element) => {
 		if (activeItem) {
 			activeItem.classList.remove('active');
 			activeItem.parentElement?.classList.remove('active');
+			activeItem.parentElement?.removeAttribute('aria-selected');
 		}
 		activeItem = newItem;
 		if (activeItem) {
 			activeItem.classList.add('active');
 			activeItem.parentElement?.classList.add('active');
+			activeItem.parentElement?.setAttribute('aria-selected', 'true');
 		}
 	}
 
@@ -936,9 +938,19 @@ registerComponent('nui-link-list', (element) => {
 			if (items.length) {
 				const div = document.createElement('div');
 				div.className = 'group-items';
+				div.setAttribute('role', 'presentation');
 				div.append(...items);
 				header.after(div);
 			}
+		});
+	}
+
+	function upgradeAccessibility() {
+		if (!element.hasAttribute('role')) element.setAttribute('role', 'tree');
+		element.querySelectorAll('ul').forEach(ul => ul.setAttribute('role', 'group'));
+		element.querySelectorAll('li').forEach(li => {
+			li.setAttribute('role', 'treeitem');
+			if (li.classList.contains('active')) li.setAttribute('aria-selected', 'true');
 		});
 	}
 
@@ -957,6 +969,15 @@ registerComponent('nui-link-list', (element) => {
 			if (!expand) { // Close descendants
 				header.nextElementSibling?.querySelectorAll('.group-header').forEach(h => setGroupState(h, false));
 			}
+		}
+	});
+
+	element.addEventListener('focusin', (e) => {
+		const header = e.target.closest('.group-header');
+		if (header && mode === 'fold') {
+			const path = getPathHeaders(header);
+			path.add(header);
+			updateAccordionState(path);
 		}
 	});
 
@@ -987,6 +1008,8 @@ registerComponent('nui-link-list', (element) => {
 			setGroupState(h, false);
 		});
 	}
+	
+	upgradeAccessibility();
 
 	return () => knower.forget(stateKey);
 });
