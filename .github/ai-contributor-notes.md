@@ -48,42 +48,17 @@ Refined layout system with `<layout>` and `<item>` elements using `display: cont
 - Created SVG sprite system: 29.57KB for 72 icons (well under budget)
 - Implemented configurable sprite paths via `nui.configure({ iconSpritePath: '../path/to/sprite.svg' })`
 
-### Robust SVG Processing Pipeline
-- Evolved from hacky regex → production-grade XML parser using Python ElementTree
-- Universal coordinate system support: Automatic normalization from any viewBox (24x24, 960x960, custom) to standardized 24x24
-- Smart background filtering: Mathematical area coverage detection vs hardcoded string patterns
-- Complete SVG element support: path, rect, circle, ellipse, line, polyline, polygon (not just paths)
-- Intelligent transform handling: Proper mathematical coordinate scaling and translation
+---
 
-### Size Budget Philosophy Established
-- Performance hierarchy validated: Every byte must justify its existence in core library
-- Removed speculative features: Eliminated `set-icon` and `toggle-icon` actions (~800 bytes) as theoretical
-- 16KB/32KB/64KB thinking: Aligned with HTTP/2 frame boundaries for optimal network performance
-- Historical context acknowledged: 56k modem experience remains valuable for modern mobile/global accessibility
+## #5Jk9L2 - November 23, 2025
+**Accessibility & Robustness Deep Dive**
 
-### Developer Experience & Tooling
-- Interactive icon grid: Visual testing interface with click-to-copy names for all 72 icons
-- Automated sprite generation: `assets/generate_icon_sprite.py` handles future icon additions seamlessly
-- Quality assurance workflow: Comprehensive testing revealed and fixed coordinate system issues
-- Documentation through code: Icon grid serves as living documentation of available icons
-
-### Technical Debt Eliminated
-- Coordinate system chaos resolved: Mixed 24x24 and 960x960 Material Icons variants now properly normalized
-- Background path pollution fixed: Intelligent filtering removes invisible elements across all coordinate systems
-- Rect element support added: Analytics icon properly displays bar chart elements (not just outline)
-- XML namespace handling: Clean output with proper `xmlns` declarations
-
-### Performance Metrics Achieved
-- Total icon system: 29.57KB (72 icons + tooling)
-- Network efficiency: Single HTTP request vs 72 individual icon requests
-- Bundle optimization: 10-50x smaller than typical framework approaches maintained
-- Browser compatibility: Pure web platform APIs, no external dependencies
-
-### Lessons Learned
-- Size budget constraints drive better design: Limited bytes force careful feature prioritization
-- Mathematical precision > hardcoded patterns: Robust parsing systems handle edge cases gracefully
-- Developer tooling ROI: Time invested in automation pays dividends in maintenance
-- Visual testing catches edge cases: Icon grid immediately revealed broken elements missed by unit tests
+Focused heavily on making the `nui-link-list` component production-ready. Moved from "it works" to "it works for everyone".
+- **Refactor**: Replaced fragile sibling-checking logic with a robust "Close All -> Open Path" strategy for accordions.
+- **Accessibility**: Implemented full WAI-ARIA Tree View pattern with a hybrid navigation model (Tab + Arrows).
+- **Keyboard Support**: Fixed Space key activation and implemented auto-expand on focus to prevent keyboard traps.
+- **Mindset**: "If it's not accessible, it's not done." The component now handles edge cases like backwards tabbing and mouse/keyboard conflicts gracefully.
+- **Documentation**: Documented the "why" behind accessibility decisions in `ACCESSIBILITY.md` to ensure future maintainers understand the hybrid model.
 
 ---
 

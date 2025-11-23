@@ -371,6 +371,15 @@ customElements.define('nui-button', NuiButton);
 - Functions return values or undefined, minimal side effects
 - State lives on the element or in closures, not class properties
 
+#### Component Patterns
+
+**Tree View Pattern (`nui-link-list`):**
+- **Structure**: `role="tree"` > `role="group"` > `role="treeitem"`
+- **Navigation**: Hybrid model supporting both Tab (web standard) and Arrow keys (app standard)
+- **Behavior**: "Close All -> Open Path" strategy for reliable accordion behavior
+- **Accessibility**: Auto-expand on focus to prevent keyboard traps in collapsed sections
+- **Visibility**: Use `visibility: hidden` on collapsed items to remove them from tab order
+
 #### Attribute Namespace System
 
 Components use structured attributes for declarative configuration:

@@ -103,6 +103,21 @@ function setupButtonBehavior(element) {
 customElements.define('nui-button', NuiButton);
 ```
 
+### Accessibility First
+
+The library implements advanced accessibility patterns by default:
+
+- **Tree View Navigation**: `nui-link-list` implements the full WAI-ARIA Tree View pattern with keyboard support (Arrows, Home/End, Enter/Space).
+- **Hybrid Navigation**: Supports both application-style arrow navigation and web-style Tab navigation.
+- **Auto-Expand**: Smart focus management automatically expands collapsed sections when focused, preventing keyboard traps.
+- **Semantic Roles**: Automatic injection of `role="tree"`, `role="group"`, and `role="treeitem"` ensures screen readers understand the structure.
+
+## Documentation
+
+- [Accessibility Guide](./ACCESSIBILITY.md) - Detailed documentation of accessibility patterns and decisions.
+- [Link List Structure](./link-list-structure.md) - Documentation for the navigation component structure.
+- [Size Budget](./SIZE_BUDGET.md) - Performance constraints and goals.
+
 ### Reactive Attribute System
 
 Components use an efficient attribute proxy pattern instead of MutationObserver for reactive updates:
