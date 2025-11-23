@@ -880,7 +880,7 @@ registerComponent('nui-link-list', (element) => {
 				container.removeEventListener('transitionend', onEnd);
 			}
 		};
-		container.addEventListener('transitionend', onEnd, { once: true });
+		container.addEventListener('transitionend', onEnd);
 	}
 
 	// ##### PUBLIC API
