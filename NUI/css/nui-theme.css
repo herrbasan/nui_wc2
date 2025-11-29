@@ -1,10 +1,10 @@
 :root {
 	--nui-theme: "slate";
 	--nui-version: "3.0.0";
-	
+
 	/* Foundation: body font-size defines what 1rem equals throughout the system */
 	--nui-rem-base: 14px;
-	
+
 	--nui-space: 1rem;
 	--nui-space-eighth: calc(var(--nui-space) / 8);
 	--nui-space-quarter: calc(var(--nui-space) / 4);
@@ -12,7 +12,7 @@
 	--nui-space-double: calc(var(--nui-space) * 2);
 	--nui-space-triple: calc(var(--nui-space) * 3);
 	--nui-space-quadruple: calc(var(--nui-space) * 4);
-	
+
 	--space-scrollbar-width: 0.7rem;
 	--space-page-maxwidth: 62rem;
 
@@ -37,28 +37,28 @@
 }
 
 :root {
-	--color-base: light-dark(rgb(255,255,255), rgb(0,0,0));
-	--color-contrast: light-dark(rgb(0,0,0), rgb(255,255,255));
-	--color-shade1: light-dark(rgb(250,250,250), rgb(25,25,25));
-	--color-shade2: light-dark(rgb(240,240,240), rgb(40,40,40));
-	--color-shade3: light-dark(rgb(230,230,230), rgb(60,60,60));
-	--color-shade4: light-dark(rgb(210,210,210), rgb(80,80,80));
-	--color-shade5: light-dark(rgb(128,128,128), rgb(128,128,128));
-	--color-shade6: light-dark(rgb(100,100,100), rgb(160,160,160));
-	--color-shade7: light-dark(rgb(80,80,80), rgb(180,180,180));
-	--color-shade8: light-dark(rgb(60,60,60), rgb(200,200,200));
-	--color-shade9: light-dark(rgb(40,40,40), rgb(220,220,220));
-	--color-white: light-dark(rgb(255,255,255), rgb(255,255,255));
-	--color-black: light-dark(rgb(0,0,0), rgb(0,0,0));
+	--color-base: light-dark(rgb(255, 255, 255), rgb(0, 0, 0));
+	--color-contrast: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));
+	--color-shade1: light-dark(rgb(250, 250, 250), rgb(25, 25, 25));
+	--color-shade2: light-dark(rgb(240, 240, 240), rgb(40, 40, 40));
+	--color-shade3: light-dark(rgb(230, 230, 230), rgb(60, 60, 60));
+	--color-shade4: light-dark(rgb(210, 210, 210), rgb(80, 80, 80));
+	--color-shade5: light-dark(rgb(128, 128, 128), rgb(128, 128, 128));
+	--color-shade6: light-dark(rgb(100, 100, 100), rgb(160, 160, 160));
+	--color-shade7: light-dark(rgb(80, 80, 80), rgb(180, 180, 180));
+	--color-shade8: light-dark(rgb(60, 60, 60), rgb(200, 200, 200));
+	--color-shade9: light-dark(rgb(40, 40, 40), rgb(220, 220, 220));
+	--color-white: light-dark(rgb(255, 255, 255), rgb(255, 255, 255));
+	--color-black: light-dark(rgb(0, 0, 0), rgb(0, 0, 0));
 
 	--border-thickness: thin;
 	--border-radius1: var(--nui-space-eighth);
 	--border-radius2: var(--nui-space-quarter);
 	--border-radius3: var(--nui-space-half);
-	--border-shade1: light-dark(rgb(235,235,235), rgb(45,45,45));
-	--border-shade2: light-dark(rgb(220,220,220), rgb(55,55,55));
-	--border-shade3: light-dark(rgb(190,190,190), rgb(70,70,70));
-	--border-shade4: light-dark(rgb(120,120,120), rgb(80,80,80));
+	--border-shade1: light-dark(rgb(235, 235, 235), rgb(45, 45, 45));
+	--border-shade2: light-dark(rgb(220, 220, 220), rgb(55, 55, 55));
+	--border-shade3: light-dark(rgb(190, 190, 190), rgb(70, 70, 70));
+	--border-shade4: light-dark(rgb(120, 120, 120), rgb(80, 80, 80));
 
 	--color-text: var(--color-contrast);
 	--color-text-dim: var(--color-shade7);
@@ -110,7 +110,7 @@
 	--button-color-text: var(--color-white);
 	--button-color-text-hi: var(--color-white);
 	--button-border-radius: var(--border-radius1);
-	--button-border: solid var(--border-thickness) rgba(255,255,255,0.1);
+	--button-border: solid var(--border-thickness) rgba(255, 255, 255, 0.1);
 	--button-margin: var(--nui-space);
 	--button-font-size: 0.8rem;
 	--button-min-width: var(--nui-space-double);
@@ -124,8 +124,8 @@
 	--contextmenu-text-hi: var(--color-contrast);
 	--contextmenu-padding: var(--nui-space-half) var(--nui-space);
 
-	--palette-gray: light-dark(rgb(100,100,100), rgb(130,130,130));
-	--palette-gray-hi: light-dark(rgb(120,120,120), rgb(150,150,150));
+	--palette-gray: light-dark(rgb(100, 100, 100), rgb(130, 130, 130));
+	--palette-gray-hi: light-dark(rgb(120, 120, 120), rgb(150, 150, 150));
 	--palette-mark: light-dark(rgb(180, 160, 40), rgb(203, 184, 55));
 	--palette-mark-hi: light-dark(rgb(170, 150, 60), rgb(197, 181, 83));
 	--palette-activate: light-dark(rgb(40, 120, 30), rgb(54, 137, 43));
@@ -145,6 +145,7 @@
 
 /* Respect user's motion preferences */
 @media (prefers-reduced-motion: reduce) {
+
 	*,
 	*::before,
 	*::after {
@@ -190,7 +191,8 @@
 	border-width: 0;
 }
 
-layout, item {
+layout,
+item {
 	display: contents;
 }
 
@@ -203,6 +205,7 @@ body {
 	color: var(--text-color);
 	line-height: 1.6;
 }
+
 pre {
 	font-family: monospace;
 	background: var(--color-shade2);
@@ -230,7 +233,7 @@ nui-link-list ul {
 	border-radius: var(--nui-space-quarter);
 }
 
-nui-link-list nui-column-flow > ul {
+nui-link-list nui-column-flow>ul {
 	padding-left: 0;
 	padding: var(--nui-space);
 	border: solid var(--border-thickness) var(--border-shade3);
@@ -253,7 +256,7 @@ nui-link-list:first-child ul li:first-child {
 }
 
 nui-link-list ul li a,
-nui-link-list ul li.group-header > span:first-child {
+nui-link-list ul li.group-header>span:first-child {
 	flex: 1;
 	display: flex;
 	align-items: center;
@@ -265,7 +268,7 @@ nui-link-list ul li.group-header > span:first-child {
 }
 
 nui-link-list ul li a nui-icon,
-nui-link-list ul li.group-header > span > nui-icon {
+nui-link-list ul li.group-header>span>nui-icon {
 	flex-shrink: 0;
 }
 
@@ -277,8 +280,9 @@ nui-link-list nui-column-flow ul:last-of-type {
 nui-link-list ul {
 	position: relative;
 }
-nui-link-list ul > ul::before {
-	content:'⤷';
+
+nui-link-list ul>ul::before {
+	content: '⤷';
 	position: absolute;
 	left: 0;
 	color: var(--color-shade4);
@@ -342,13 +346,16 @@ nui-link-list[mode="fold"] li:hover {
 	color: var(--color-highlight);
 	background-color: var(--color-shade3);
 }
+
 nui-link-list[mode="fold"] li.list-item {
 	position: relative;
 }
+
 nui-link-list[mode="fold"] li.list-item.active {
 	color: var(--color-white);
 	background-color: var(--color-shade3);
 }
+
 nui-link-list[mode="fold"] li.list-item.active::after {
 	content: '';
 	position: absolute;
@@ -400,7 +407,7 @@ nui-link-list[mode="fold"] ul li.group-header[aria-expanded="true"]::after {
 }
 
 nui-link-list[mode="fold"] ul li a,
-nui-link-list[mode="fold"] ul li.group-header > span:first-child {
+nui-link-list[mode="fold"] ul li.group-header>span:first-child {
 	width: 100%;
 	height: 100%;
 	display: flex;
@@ -413,7 +420,8 @@ nui-link-list[mode="fold"] ul li.group-header > span:first-child {
 nui-link-list[mode="fold"] ul li.group-header {
 	position: relative;
 }
-nui-link-list[mode="fold"] ul li.group-header > span {
+
+nui-link-list[mode="fold"] ul li.group-header>span {
 	position: absolute;
 	inset: 0;
 	padding-left: var(--nui-space);
@@ -428,14 +436,14 @@ nui-link-list[mode="fold"] .group-items {
 }
 
 /* Background for expanded group container - fold mode only */
-nui-link-list[mode="fold"] .group-header[aria-expanded="true"] + .group-items {
+nui-link-list[mode="fold"] .group-header[aria-expanded="true"]+.group-items {
 	background-color: light-dark(rgb(255, 255, 255), rgb(30, 30, 30));
 	visibility: visible;
 	transition: height 0.2s ease-out, visibility 0s 0s;
 }
 
 /* Indentation for items in expanded groups - fold mode only */
-nui-link-list[mode="fold"] .group-items > li a span {
+nui-link-list[mode="fold"] .group-items>li a span {
 	padding-left: 2.7rem;
 }
 
@@ -445,11 +453,11 @@ nui-link-list[mode="fold"] ul li.group-header[aria-expanded="true"] {
 	background-color: light-dark(rgb(240, 240, 240), rgb(48, 48, 48));
 }
 
-nui-link-list[mode="fold"] ul li.group-header[aria-expanded="true"] + ul > li a:hover {
+nui-link-list[mode="fold"] ul li.group-header[aria-expanded="true"]+ul>li a:hover {
 	background-color: light-dark(rgb(240, 240, 240), rgb(55, 55, 55));
 }
 
-nui-link-list[mode="fold"] ul li.group-header[aria-expanded="true"] + ul > li a.active {
+nui-link-list[mode="fold"] ul li.group-header[aria-expanded="true"]+ul>li a.active {
 	background-color: light-dark(rgb(230, 235, 240), rgb(60, 65, 70));
 	border-left: 0.3rem solid var(--color-highlight);
 }
@@ -457,6 +465,7 @@ nui-link-list[mode="fold"] ul li.group-header[aria-expanded="true"] + ul > li a.
 nui-link-list[mode="fold"] li.separator hr {
 	display: none;
 }
+
 nui-link-list[mode="fold"] li.separator {
 	border-top: solid var(--border-thickness) var(--border-shade4);
 	margin-top: var(--nui-space-half);
@@ -466,7 +475,7 @@ nui-link-list[mode="fold"] li.separator {
 	min-height: 0;
 }
 
-ul li.group-header > span:first-child {
+ul li.group-header>span:first-child {
 	width: 100%;
 	height: 100%;
 	display: flex;
@@ -484,6 +493,10 @@ ul li.group-header > span:first-child {
 nui-button {
 	display: inline-block;
 	margin: 0;
+}
+
+nui-button-container>* {
+	margin: 0 !important;
 }
 
 nui-button button {
@@ -773,103 +786,106 @@ nui-column-flow {
 	column-fill: balance;
 }
 
-nui-column-flow > * {
+nui-column-flow>* {
 	break-inside: avoid;
 	margin-bottom: var(--nui-space, 1rem);
 }
+
 /* =================================
    nui-loading Component Styles
    ================================= */
 
 nui-loading {
-display: none;
+	display: none;
 }
 
 nui-loading.active {
-display: block;
+	display: block;
 }
 
 /* Loading Bar Mode (top of page) */
 nui-loading[mode="bar"] {
-position: fixed;
-top: 0;
-left: 0;
-right: 0;
-height: 3px;
-z-index: 9999;
-pointer-events: none;
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 3px;
+	z-index: 9999;
+	pointer-events: none;
 }
 
 nui-loading[mode="bar"] .loading-bar {
-width: 100%;
-height: 100%;
-background: transparent;
-overflow: hidden;
+	width: 100%;
+	height: 100%;
+	background: transparent;
+	overflow: hidden;
 }
 
 nui-loading[mode="bar"] .loading-bar-progress {
-height: 100%;
-background: var(--color-highlight);
-width: 0%;
-animation: loading-bar-progress 2s ease-in-out infinite;
+	height: 100%;
+	background: var(--color-highlight);
+	width: 0%;
+	animation: loading-bar-progress 2s ease-in-out infinite;
 }
 
 @keyframes loading-bar-progress {
-0% {
-width: 0%;
-margin-left: 0%;
-}
-50% {
-width: 70%;
-margin-left: 15%;
-}
-100% {
-width: 0%;
-margin-left: 100%;
-}
+	0% {
+		width: 0%;
+		margin-left: 0%;
+	}
+
+	50% {
+		width: 70%;
+		margin-left: 15%;
+	}
+
+	100% {
+		width: 0%;
+		margin-left: 100%;
+	}
 }
 
 /* Loading Overlay Mode (full page) */
 nui-loading[mode="overlay"] {
-position: fixed;
-inset: 0;
-z-index: 9999;
-pointer-events: all;
+	position: fixed;
+	inset: 0;
+	z-index: 9999;
+	pointer-events: all;
 }
 
 nui-loading[mode="overlay"] .loading-overlay {
-width: 100%;
-height: 100%;
-background: rgba(0, 0, 0, 0.7);
-display: flex;
-flex-direction: column;
-align-items: center;
-justify-content: center;
-gap: var(--nui-space);
+	width: 100%;
+	height: 100%;
+	background: rgba(0, 0, 0, 0.7);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: var(--nui-space);
 }
 
 nui-loading[mode="overlay"] .loading-spinner {
-width: 48px;
-height: 48px;
-border: 4px solid var(--color-shade4);
-border-top-color: var(--color-highlight);
-border-radius: 50%;
-animation: loading-spinner-rotate 0.8s linear infinite;
+	width: 48px;
+	height: 48px;
+	border: 4px solid var(--color-shade4);
+	border-top-color: var(--color-highlight);
+	border-radius: 50%;
+	animation: loading-spinner-rotate 0.8s linear infinite;
 }
 
 @keyframes loading-spinner-rotate {
-to {
-transform: rotate(360deg);
-}
+	to {
+		transform: rotate(360deg);
+	}
 }
 
 nui-loading[mode="overlay"] .loading-text {
-color: var(--color-white);
-font-size: 1rem;
-font-weight: 500;
+	color: var(--color-white);
+	font-size: 1rem;
+	font-weight: 500;
 }
 
 /* Hide when not active */
 nui-loading:not(.active) {
-display: none !important;
+	display: none !important;
 }

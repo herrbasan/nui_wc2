@@ -634,3 +634,11 @@ All tests pass. System is production-ready.
 - **Instructions File**: `.github/copilot-instructions.md` - User preferences and coding guidelines (this file)
 - **Project Documentation**: `README.md` - Project goals, aims, and documentation
 - **Development Log**: `.github/ai-contributor-notes.md` - Detailed session notes documenting architectural decisions and lessons learned
+
+### Playground Architecture
+The Playground is a Single Page Application (SPA) that uses a custom content loading system.
+- **Entry Point**: `Playground/index.html`
+- **Pages**: Located in `Playground/pages/` as HTML fragments
+- **Navigation**: JSON-based configuration in `Playground/js/main.js`
+- **Content Loading**: `nui.enableContentLoading()` handles fetching and injecting page content
+- **Script Execution**: Scripts in loaded pages are re-injected to ensure execution

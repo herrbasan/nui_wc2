@@ -676,7 +676,7 @@ registerComponent('nui-icon', (element) => {
 
 registerComponent('nui-loading', (element) => {
 	const mode = element.getAttribute('mode') || 'overlay';
-	
+
 	if (mode === 'bar') {
 		element.innerHTML = `
 			<div class="loading-bar">
@@ -693,7 +693,7 @@ registerComponent('nui-loading', (element) => {
 			`;
 		}
 	}
-	
+
 	setupAttributeProxy(element, {
 		'active': (newValue, oldValue) => {
 			if (newValue !== null) {
@@ -703,7 +703,7 @@ registerComponent('nui-loading', (element) => {
 			}
 		}
 	});
-	
+
 	if (element.hasAttribute('active')) {
 		element.classList.add('active');
 	}
@@ -797,11 +797,11 @@ registerComponent('nui-app', (element) => {
 	element.toggleSideNav = () => toggleSideNav(element);
 
 	element.addEventListener('click', (e) => {
-		if (element.classList.contains('sidenav-open') && 
+		if (element.classList.contains('sidenav-open') &&
 			!element.classList.contains('sidenav-forced')) {
 			const sideNav = element.querySelector('nui-side-nav');
 			const topNav = element.querySelector('nui-top-nav');
-			
+
 			if (sideNav && !sideNav.contains(e.target) && !topNav?.contains(e.target)) {
 				toggleSideNav(element);
 			}
@@ -849,47 +849,74 @@ registerComponent('nui-side-nav', (element) => {
 });
 
 registerComponent('nui-code', (element) => {
+	// Store original raw text before highlighting
+	const pre = element.querySelector('pre');
+	const codeBlock = element.querySelector('pre code');
+	if (!pre || !codeBlock) return;
+
+	const rawText = codeBlock.textContent;
+
+	// Add copy button
+	const copyButton = document.createElement('button');
+	copyButton.className = 'nui-code-copy';
+	copyButton.type = 'button';
+	copyButton.innerHTML = '<nui-icon name="content_copy"></nui-icon>';
+	copyButton.setAttribute('aria-label', 'Copy code to clipboard');
+	copyButton.title = 'Copy code';
+
+	copyButton.addEventListener('click', async () => {
+		try {
+			await navigator.clipboard.writeText(rawText);
+			copyButton.innerHTML = '<nui-icon name="check"></nui-icon>';
+			copyButton.classList.add('copied');
+			setTimeout(() => {
+				copyButton.innerHTML = '<nui-icon name="content_copy"></nui-icon>';
+				copyButton.classList.remove('copied');
+			}, 2000);
+		} catch (err) {
+			console.error('Failed to copy code:', err);
+		}
+	});
+
+	element.insertBefore(copyButton, pre);
+
 	// Auto-highlight code blocks when component connects
 	import('./lib/modules/nui-syntax-highlight.js').then(module => {
-		const blocks = element.querySelectorAll('pre code');
-		blocks.forEach(block => {
-			let lang = block.getAttribute('data-lang');
-			
-			// Auto-detect language if not specified - supports HTML, CSS, JS, TS, JSON
-			if (!lang) {
-				const code = block.textContent.trim();
-				// Check for HTML first (most common in docs)
-				// Note: textContent decodes HTML entities, so we check for actual < characters
-				if (/^<[!/?\w]/.test(code) || /<!DOCTYPE/i.test(code)) {
-					lang = 'html';
-				}
-				// JSON (starts with { or [, has "key": pattern)
-				else if (/^\s*[{\[]/.test(code) && /"[\w-]+":\s*/.test(code)) {
-					lang = 'json';
-				}
-				// TypeScript (interface, type, or explicit types)
-				else if (/\b(interface|type|enum|namespace|declare)\b/.test(code) || /:\s*(string|number|boolean|any)\b/.test(code)) {
-					lang = 'typescript';
-				}
-				// CSS
-				else if (/[.#][\w-]+\s*{/.test(code) || /@media|@import/.test(code)) {
-					lang = 'css';
-				}
-				// JavaScript (fallback - const, let, var, function, etc.)
-				else if (/\b(const|let|var|function|import|export|class|=>)\b/.test(code)) {
-					lang = 'js';
-				}
-				
-				if (lang) {
-					block.setAttribute('data-lang', lang);
-				}
+		let lang = codeBlock.getAttribute('data-lang');
+
+		// Auto-detect language if not specified - supports HTML, CSS, JS, TS, JSON
+		if (!lang) {
+			const code = codeBlock.textContent.trim();
+			// Check for HTML first (most common in docs)
+			// Note: textContent decodes HTML entities, so we check for actual < characters
+			if (/^<[!/?\w]/.test(code) || /<!DOCTYPE/i.test(code)) {
+				lang = 'html';
 			}
-			
+			// JSON (starts with { or [, has "key": pattern)
+			else if (/^\s*[{\[]/.test(code) && /"[\w-]+":\s*/.test(code)) {
+				lang = 'json';
+			}
+			// TypeScript (interface, type, or explicit types)
+			else if (/\b(interface|type|enum|namespace|declare)\b/.test(code) || /:\s*(string|number|boolean|any)\b/.test(code)) {
+				lang = 'typescript';
+			}
+			// CSS
+			else if (/[.#][\w-]+\s*{/.test(code) || /@media|@import/.test(code)) {
+				lang = 'css';
+			}
+			// JavaScript (fallback - const, let, var, function, etc.)
+			else if (/\b(const|let|var|function|import|export|class|=>)\b/.test(code)) {
+				lang = 'js';
+			}
+
 			if (lang) {
-				const code = block.textContent;
-				block.innerHTML = module.highlight(code, lang);
+				codeBlock.setAttribute('data-lang', lang);
 			}
-		});
+		}
+
+		if (lang) {
+			codeBlock.innerHTML = module.highlight(rawText, lang);
+		}
 	}).catch(() => {
 		// Syntax highlight module not available - that's fine
 	});
@@ -905,7 +932,7 @@ registerComponent('nui-link-list', (element) => {
 
 	element.loadData = (data) => {
 		const html = data.map(item => buildItemHTML(item)).join('');
-		
+
 		// Check if there's a column-flow wrapper to preserve
 		const columnFlow = element.querySelector('nui-column-flow');
 		if (columnFlow) {
@@ -913,7 +940,7 @@ registerComponent('nui-link-list', (element) => {
 		} else {
 			element.innerHTML = html;
 		}
-		
+
 		upgradeHtml();
 		if (mode === 'fold') {
 			element.querySelectorAll('.group-header').forEach(h => {
@@ -1001,9 +1028,9 @@ registerComponent('nui-link-list', (element) => {
 		if (!item) return false;
 
 		const app = element.closest('nui-app');
-		const shouldOpen = app && !app.classList.contains('sidenav-forced') && 
+		const shouldOpen = app && !app.classList.contains('sidenav-forced') &&
 			!app.classList.contains('sidenav-open');
-		
+
 		if (shouldOpen) {
 			// Use setTimeout to avoid the click event that triggered this from closing it again
 			setTimeout(() => {
@@ -1013,7 +1040,7 @@ registerComponent('nui-link-list', (element) => {
 
 		updateActive(item);
 		const path = getPathHeaders(item);
-		
+
 		if (mode === 'fold') updateAccordionState(path);
 		else path.forEach(h => setGroupState(h, true));
 
@@ -1027,7 +1054,7 @@ registerComponent('nui-link-list', (element) => {
 	};
 
 	element.getActive = () => activeItem;
-	
+
 	element.getActiveData = () => activeItem ? {
 		element: activeItem,
 		href: activeItem.getAttribute('href'),
@@ -1102,7 +1129,7 @@ registerComponent('nui-link-list', (element) => {
 			}
 			return;
 		}
-		
+
 		// Handle link clicks - set active state
 		const link = e.target.closest('a');
 		if (link) {
@@ -1116,7 +1143,7 @@ registerComponent('nui-link-list', (element) => {
 					text: link.textContent.trim()
 				}, element);
 			}
-			
+
 			// Prevent navigation if there's no href or it's empty
 			if (!link.getAttribute('href')) {
 				e.preventDefault();
@@ -1152,7 +1179,7 @@ registerComponent('nui-link-list', (element) => {
 			return el.offsetParent !== null && getComputedStyle(el).visibility !== 'hidden';
 		});
 		const idx = items.indexOf(target);
-		
+
 		if (e.key === 'ArrowDown' && idx < items.length - 1) { e.preventDefault(); items[idx + 1].focus(); }
 		else if (e.key === 'ArrowUp' && idx > 0) { e.preventDefault(); items[idx - 1].focus(); }
 		else if (e.key === 'Home') { e.preventDefault(); items[0]?.focus(); }
@@ -1171,7 +1198,7 @@ registerComponent('nui-link-list', (element) => {
 			setGroupState(h, false);
 		});
 	}
-	
+
 	upgradeAccessibility();
 
 	return () => knower.forget(stateKey);
@@ -1249,6 +1276,51 @@ registerComponent('nui-column-flow', (element) => {
 		});
 		items.forEach(item => element.appendChild(item));
 	}
+});
+
+// ################################# nui-button-container COMPONENT
+
+registerComponent('nui-button-container', (element) => {
+	const align = element.getAttribute('align') || 'start';
+	const gap = element.getAttribute('gap') || 'small';
+	const direction = element.getAttribute('direction') || 'row';
+
+	element.style.display = 'flex';
+
+	// Direction
+	element.style.flexDirection = direction;
+
+	// Alignment
+	if (direction === 'column') {
+		element.style.alignItems = {
+			'start': 'flex-start',
+			'center': 'center',
+			'end': 'flex-end',
+			'stretch': 'stretch'
+		}[align] || 'flex-start';
+	} else {
+		element.style.justifyContent = {
+			'start': 'flex-start',
+			'center': 'center',
+			'end': 'flex-end',
+			'between': 'space-between'
+		}[align] || 'flex-start';
+		element.style.flexWrap = 'wrap';
+		element.style.alignItems = 'center';
+	}
+
+	// Gap
+	const gapMap = {
+		'none': '0',
+		'small': 'var(--nui-space-half, 0.5rem)',
+		'medium': 'var(--nui-space, 1rem)',
+		'large': 'var(--nui-space-double, 2rem)',
+		// Aliases
+		'sm': 'var(--nui-space-half, 0.5rem)',
+		'md': 'var(--nui-space, 1rem)',
+		'lg': 'var(--nui-space-double, 2rem)'
+	};
+	element.style.gap = gapMap[gap] || gap;
 });
 
 // ################################# PUBLIC API
@@ -1349,6 +1421,7 @@ function createContentLoader(container, options = {}) {
 	}
 
 	async function load(pageId, params = {}) {
+		// 1. Check if page is already loaded
 		if (pages.has(pageId)) {
 			return show(pageId, params);
 		}
@@ -1360,48 +1433,82 @@ function createContentLoader(container, options = {}) {
 			if (!response.ok) {
 				throw new Error(`Page ${pageId} not found (${response.status})`);
 			}
-			
+
 			const html = await response.text();
 
+			// 2. Create wrapper element
 			const pageEl = document.createElement('div');
 			pageEl.className = 'content-page';
 			pageEl.dataset.pageId = pageId;
-			pageEl.style.display = 'none';
+			pageEl.style.display = 'none'; // Hidden by default
 			pageEl.innerHTML = html;
 
 			container.appendChild(pageEl);
 
-			// Execute any <script> tags in the loaded HTML
+			// 3. Execute scripts with element context
 			const scripts = pageEl.querySelectorAll('script');
 			scripts.forEach(oldScript => {
+				const scriptContent = oldScript.textContent;
 				const newScript = document.createElement('script');
+
+				// Copy attributes
 				Array.from(oldScript.attributes).forEach(attr => {
 					newScript.setAttribute(attr.name, attr.value);
 				});
-				newScript.textContent = oldScript.textContent;
-				oldScript.parentNode.replaceChild(newScript, oldScript);
+
+				// If it's an inline script, wrap it to provide 'element' context
+				if (!oldScript.src && scriptContent.trim()) {
+					// We can't easily use new Function() for module scripts or if we want to preserve scope perfectly,
+					// but for this requirement "executed with the created element as target", 
+					// we can try to wrap it in an IIFE passing the element.
+					// However, standard <script> tags don't work that way. 
+					// The user asked: "The scripts if present get executed with the created element as target."
+					// We'll assume they mean inline scripts.
+
+					// Option A: Eval/Function (cleanest for passing args)
+					try {
+						const func = new Function('element', scriptContent);
+						func(pageEl);
+					} catch (e) {
+						console.error(`Error executing script in page ${pageId}:`, e);
+					}
+				} else {
+					// External scripts or empty ones - just re-insert to trigger load
+					newScript.textContent = scriptContent;
+					oldScript.parentNode.replaceChild(newScript, oldScript);
+				}
+
+				// Remove the old script if we used the Function approach
+				if (!oldScript.src && scriptContent.trim()) {
+					oldScript.remove();
+				}
 			});
 
-			pages.set(pageId, { element: pageEl, module: null, params });
+			pages.set(pageId, { element: pageEl, params });
 
 			hideLoading();
 			return show(pageId, params);
 		} catch (error) {
 			hideLoading();
 			console.error(`[Content Loader] Failed to load page ${pageId}:`, error);
-			
+
 			if (onError) {
 				onError(pageId, error);
 			} else {
-				// Show default error page
 				showErrorPage(pageId, error);
 			}
-			
+
 			return false;
 		}
 	}
 
 	function showErrorPage(pageId, error) {
+		// Check if error page already exists
+		const errorId = `error-${pageId}`;
+		if (pages.has(errorId)) {
+			return show(errorId);
+		}
+
 		const errorEl = document.createElement('div');
 		errorEl.className = 'content-page error-page';
 		errorEl.innerHTML = `
@@ -1409,42 +1516,48 @@ function createContentLoader(container, options = {}) {
 				<h1>Page Not Found</h1>
 				<p>Could not load page: <code>${pageId}</code></p>
 				<p style="color: var(--color-text-dim);">${error.message}</p>
-				<button onclick="window.location.hash = ''">Go Home</button>
+				<button onclick="window.history.back()">Go Back</button>
 			</div>
 		`;
-		
-		pages.forEach(({ element }) => {
-			element.style.display = 'none';
-		});
-		
+
 		container.appendChild(errorEl);
-		
-		setTimeout(() => {
-			errorEl.remove();
-		}, 5000);
+		pages.set(errorId, { element: errorEl });
+		show(errorId);
 	}
 
 	function show(pageId, params = {}) {
 		const page = pages.get(pageId);
 		if (!page) return false;
 
-		pages.forEach(({ element, module }, id) => {
-			const isShowing = id === pageId;
-			const wasVisible = element.style.display !== 'none';
-			
-			// Call onHide for pages being hidden
-			if (wasVisible && !isShowing && module?.onHide) {
-				module.onHide(element);
+		// 4. Toggle visibility
+		pages.forEach(({ element }, id) => {
+			if (id === pageId) {
+				element.style.display = 'block';
+			} else {
+				element.style.display = 'none';
 			}
-			
-			element.style.display = isShowing ? 'block' : 'none';
 		});
 
-		if (page.module?.onShow) {
-			page.module.onShow(page.element, params);
+		currentPage = pageId;
+
+		// 5. Handle ID parameter (Deep Linking)
+		if (params.id) {
+			const targetEl = page.element.querySelector(`#${params.id}`) || document.getElementById(params.id);
+			if (targetEl) {
+				// Wait for display:block to take effect
+				requestAnimationFrame(() => {
+					targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+					// Optional: focus if interactive
+					if (targetEl.matches('a, button, input, [tabindex]')) {
+						targetEl.focus();
+					}
+				});
+			}
+		} else {
+			// Scroll to top if no specific ID requested
+			container.scrollTop = 0;
 		}
 
-		currentPage = pageId;
 		return true;
 	}
 
@@ -1474,14 +1587,14 @@ function createRouter(loader, options = {}) {
 	function parseHash() {
 		const hash = window.location.hash.slice(1);
 		if (!hash) return null;
-		
+
 		const params = new URLSearchParams(hash);
 		return Object.fromEntries(params);
 	}
 
 	async function handleRoute() {
 		if (isNavigating) return;
-		
+
 		const params = parseHash();
 		if (!params || !params.page) {
 			if (defaultPage) {
@@ -1491,13 +1604,19 @@ function createRouter(loader, options = {}) {
 		}
 
 		isNavigating = true;
-		
+
 		try {
 			await loader.load(params.page, params);
-			
-			if (params.id && linkList) {
-				const selector = `a[href*="${params.id}"]`;
-				linkList.setActive?.(selector);
+
+			if (linkList) {
+				const hash = window.location.hash;
+				// 1. Try exact match
+				let found = linkList.setActive?.(`a[href="${hash}"]`);
+
+				// 2. If not found (e.g. deep link), try matching the page parameter
+				if (!found && params.page) {
+					found = linkList.setActive?.(`a[href*="page=${params.page}"]`);
+				}
 			}
 		} finally {
 			isNavigating = false;
@@ -1507,7 +1626,7 @@ function createRouter(loader, options = {}) {
 	function navigate(page, id = null, otherParams = {}) {
 		const params = new URLSearchParams({ page, ...otherParams });
 		if (id) params.set('id', id);
-		
+
 		window.location.hash = params.toString();
 	}
 
@@ -1537,8 +1656,8 @@ function enableContentLoading(options = {}) {
 	const defaultPage = options.defaultPage || null;
 	const onError = options.onError || null;
 
-	const container = typeof containerSelector === 'string' 
-		? document.querySelector(containerSelector) 
+	const container = typeof containerSelector === 'string'
+		? document.querySelector(containerSelector)
 		: containerSelector;
 
 	const navigation = typeof navigationSelector === 'string'
@@ -1550,7 +1669,7 @@ function enableContentLoading(options = {}) {
 		return null;
 	}
 
-	const loader = createContentLoader(container, { 
+	const loader = createContentLoader(container, {
 		basePath,
 		onError
 	});

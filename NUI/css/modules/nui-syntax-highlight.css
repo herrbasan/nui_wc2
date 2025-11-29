@@ -1,20 +1,39 @@
 /* Minimal syntax highlighting theme */
 
+/* Copy button */
 nui-code {
-	display: block;
+	position: relative;
 }
 
-pre code {
-	display: block;
-	padding: var(--nui-space);
-	background: var(--color-shade1);
-	border: solid thin var(--border-shade1);
-	border-radius: var(--border-radius2);
-	overflow-x: auto;
-	line-height: 1.5;
-	font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-	font-size: 0.875rem;
-	tab-size: 4;
+nui-code .nui-code-copy {
+	position: absolute;
+	top: 0.5rem;
+	right: 0.5rem;
+	background: light-dark(rgba(255, 255, 255, 0.9), rgba(40, 40, 40, 0.9));
+	border: 1px solid light-dark(rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.1));
+	border-radius: 4px;
+	padding: 0.5rem;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	opacity: 0.7;
+	transition: opacity 0.2s, background 0.2s;
+}
+
+nui-code .nui-code-copy:hover {
+	opacity: 1;
+	background: light-dark(rgba(255, 255, 255, 1), rgba(50, 50, 50, 1));
+}
+
+nui-code .nui-code-copy.copied {
+	background: light-dark(rgba(76, 175, 80, 0.9), rgba(46, 125, 50, 0.9));
+	color: white;
+}
+
+nui-code .nui-code-copy nui-icon {
+	width: 1rem;
+	height: 1rem;
 }
 
 /* HTML */
