@@ -1,0 +1,125 @@
+<div class="nui-card">
+    <div class="nui-headline">Dialog Component</div>
+    <div class="nui-copy">
+        The <code>nui-dialog</code> component provides a native HTML dialog wrapper.
+        The <code>nui.dialog</code> system provides standardized helpers for common interactions.
+    </div>
+
+    <h3>System Dialogs</h3>
+    <nui-button-container gap="1rem">
+        <nui-button><button type="button"
+                onclick="nui.dialog.alert('Hello!', 'This is a standard system alert.')">Alert</button></nui-button>
+        <nui-button><button type="button" onclick="runConfirm()">Confirm</button></nui-button>
+        <nui-button><button type="button" onclick="runPrompt()">Prompt</button></nui-button>
+        <nui-button><button type="button" onclick="runLogin()">Login</button></nui-button>
+        <nui-button><button type="button" onclick="runConsent()">Consent</button></nui-button>
+        <nui-button><button type="button" onclick="runProgress()">Progress</button></nui-button>
+        <nui-button><button type="button" onclick="runModal()">Modal Page</button></nui-button>
+    </nui-button-container>
+
+    <div id="dialog-result"
+        style="margin-top: 1rem; padding: 1rem; background: var(--color-shade1); border-radius: var(--border-radius1);">
+        Result: -
+    </div>
+</div>
+
+<div class="nui-card">
+    <div class="nui-headline">Custom Declarative Dialog</div>
+    <nui-button><button type="button" onclick="document.getElementById('custom-dialog').showModal()">Open Custom
+            Dialog</button></nui-button>
+
+    <nui-dialog id="custom-dialog">
+        <dialog>
+            <div style="padding: 2rem; width: 400px;">
+                <h3>Custom Dialog</h3>
+                <p>This is a custom dialog defined in HTML.</p>
+                <nui-button><button type="button"
+                        onclick="document.getElementById('custom-dialog').close()">Close</button></nui-button>
+            </div>
+        </dialog>
+    </nui-dialog>
+</div>
+
+<script>
+    window.showResult = function (text) {
+        document.getElementById('dialog-result').textContent = 'Result: ' + JSON.stringify(text);
+    }
+
+    window.runConfirm = async function () {
+        const res = await nui.dialog.confirm('Confirmation', 'Are you sure you want to proceed?');
+        showResult(res);
+    }
+
+    window.runPrompt = async function () {
+        const res = await nui.dialog.prompt('Enter Details', [
+            { id: 'name', label: 'Name', value: 'John Doe' },
+            { id: 'email', label: 'Email', type: 'email' }
+        ]);
+        showResult(res);
+    }
+
+    window.runLogin = async function () {
+        const res = await nui.dialog.login({
+            title: 'System Login',
+            callback: (ctl) => {
+                // Simulate async check
+                setTimeout(() => {
+                    if (ctl.values.login === 'admin' && ctl.values.password === '1234') {
+                        ctl.close();
+                    } else {
+                        ctl.error('Invalid credentials (try admin/1234)');
+                    }
+                }, 500);
+            }
+        });
+        showResult(res);
+    }
+
+    window.runConsent = function () {
+        nui.dialog.consent({
+            text: 'We use cookies to improve your experience. Do you accept?',
+            btn_allow: 'Accept All',
+            btn_abort: 'Reject'
+        }, (action) => showResult(action));
+    }
+
+    window.runProgress = function () {
+        const prog = nui.dialog.progress('Processing...');
+        let val = 0;
+        const max = 100;
+
+        prog.onStop((close) => {
+            clearInterval(timer);
+            close();
+            showResult('Stopped');
+        });
+
+        const timer = setInterval(() => {
+            val += 5;
+            prog.update(val, max);
+            if (val >= max) {
+                clearInterval(timer);
+                prog.close();
+                showResult('Completed');
+            }
+        }, 200);
+    }
+
+    window.runModal = function () {
+        nui.dialog.modal({
+            header_title: 'My Modal Page',
+            content: '<p>This is a generic modal page with custom content.</p><p>It can contain anything.</p>',
+            maxWidth: '500px',
+            buttons: {
+                right: [
+                    { name: 'Close', action: 'close' },
+                    { name: 'Save', action: 'save', type: 'primary' }
+                ]
+            },
+            callback: (e) => {
+                showResult('Clicked: ' + e.type);
+                if (e.type === 'save') e.target.closest('nui-dialog').close();
+            }
+        });
+    }
+</script>

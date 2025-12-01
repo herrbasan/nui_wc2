@@ -483,3 +483,106 @@ button {
 	color: light-dark(#388e3c, #a5d6a7);
 	border-radius: 2px;
 }
+
+/* Animation page styles */
+.page-components-animation .animation-stage {
+	background: var(--color-shade2);
+	border-radius: var(--border-radius2);
+	padding: var(--nui-space-double);
+	margin-bottom: var(--nui-space);
+	min-height: 80px;
+	display: flex;
+	align-items: center;
+	overflow: hidden;
+}
+
+.page-animation .animation-stage.wide {
+	min-height: 80px;
+}
+
+.page-animation .animation-box {
+	width: 50px;
+	height: 50px;
+	background: var(--color-highlight);
+	border-radius: var(--border-radius2);
+	flex-shrink: 0;
+}
+
+.page-animation .animation-info {
+	display: flex;
+	gap: var(--nui-space-double);
+	margin-bottom: var(--nui-space);
+	font-size: 0.9rem;
+	color: var(--color-text-dim);
+}
+
+.page-animation .animation-info strong {
+	color: var(--color-highlight);
+	font-family: monospace;
+}
+
+.page-animation .easing-grid {
+	display: flex;
+	flex-direction: column;
+	gap: var(--nui-space-half);
+	margin-bottom: var(--nui-space);
+}
+
+.page-animation .easing-row {
+	display: flex;
+	align-items: center;
+	gap: var(--nui-space);
+}
+
+.page-animation .easing-label {
+	width: 80px;
+	font-size: 0.8rem;
+	font-family: monospace;
+	color: var(--color-text-dim);
+}
+
+.page-animation .easing-track {
+	flex: 1;
+	height: 24px;
+	background: var(--color-shade2);
+	border-radius: 12px;
+	position: relative;
+	overflow: hidden;
+}
+
+.page-animation .easing-ball {
+	position: absolute;
+	left: 4px;
+	top: 4px;
+	width: 16px;
+	height: 16px;
+	background: var(--color-highlight);
+	border-radius: 50%;
+}
+
+.page-animation .prop-table {
+	width: 100%;
+	border-collapse: collapse;
+	margin: var(--nui-space) 0;
+	font-size: 0.9rem;
+}
+
+.page-animation .prop-table th,
+.page-animation .prop-table td {
+	padding: var(--nui-space-half) var(--nui-space);
+	text-align: left;
+	border-bottom: solid var(--border-thickness) var(--border-shade2);
+}
+
+.page-animation .prop-table th {
+	background: var(--color-shade2);
+	font-weight: 600;
+	color: var(--color-text-dim);
+}
+
+.page-animation .prop-table code {
+	background: var(--color-shade3);
+	padding: 0.1em 0.4em;
+	border-radius: var(--border-radius1);
+	font-size: 0.85em;
+}

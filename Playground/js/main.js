@@ -6,6 +6,9 @@ import { nui } from '../../NUI/nui.js';
 
 console.log('nui imported');
 
+// Make nui globally accessible for demo pages
+window.nui = nui;
+
 // Development-only: Enable monitoring
 //const monitor = createMonitor(nui);
 
@@ -33,11 +36,11 @@ nui.registerAction('log-action', (target, source, event, param) => {
 nui.registerAction('toggle-media', (target, source, event, param) => {
 	const icon = document.getElementById('dynamic-icon');
 	const isPlaying = icon.getAttribute('name') === 'play';
-	
+
 	// Change icon AND simulate actual functionality
 	icon.setAttribute('name', isPlaying ? 'pause' : 'play');
 	console.log(isPlaying ? 'Starting playback...' : 'Pausing playback...');
-	
+
 	// In real app: audio.play() or audio.pause()
 });
 
@@ -59,7 +62,9 @@ const navigationData = [
 			{ label: 'Link List', href: '#page=components/link-list' },
 			{ label: 'Code', href: '#page=components/code' },
 			{ label: 'Icon', href: '#page=components/icon' },
-			{ label: 'Button', href: '#page=components/button' }
+			{ label: 'Button', href: '#page=components/button' },
+			{ label: 'Dialog', href: '#page=components/dialog' },
+			{ label: 'Animation', href: '#page=components/animation' }
 		]
 	}
 ];

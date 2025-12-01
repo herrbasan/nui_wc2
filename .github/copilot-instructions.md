@@ -626,6 +626,7 @@ All tests pass. System is production-ready.
 - **Comments**: Only use comments to structure and separate blocks of code, not for explanations
 - **Shell Commands**: Use PowerShell syntax (Windows environment in VS Code)
 - **Testing/Preview**: VS Code built-in Live Server functionality for testing
+- **Live Server Endpoint**: `http://127.0.0.1:5500/Playground/index.html` (Use this for browser testing)
 
 ### Project Context
 - **Reference Material**: `reference/` folder contains the NUI library for reference only (not part of repo)
@@ -642,3 +643,18 @@ The Playground is a Single Page Application (SPA) that uses a custom content loa
 - **Navigation**: JSON-based configuration in `Playground/js/main.js`
 - **Content Loading**: `nui.enableContentLoading()` handles fetching and injecting page content
 - **Script Execution**: Scripts in loaded pages are re-injected to ensure execution
+
+### Workflow: Adding New Components
+1. **Generate Component**: Create the component in `NUI/nui.js` following existing patterns (functional decomposition, `registerComponent`).
+2. **Integrate Features**: specific functionality should utilize:
+   - **Knower**: For cross-component state.
+   - **Doer**: For actions.
+   - **Attribute System**: For configuration (`nui-vars-*`, `nui-state-*`).
+   - **Accessibility**: Ensure proper ARIA roles and keyboard navigation.
+3. **Create Demo Page**: Add a live example page in `Playground/pages/components/[component-name].html`.
+   - Follow the pattern of existing component pages (header, examples, code snippets).
+4. **Update Navigation**: Add the new page to the `navigationData` array in `Playground/js/main.js` so it appears in the sidebar.
+
+### Backlog
+- [ ] Refactor `nui-link-list` and other interactive elements to expose standard API methods (`next`, `prev`, `activate`) and register generic `doer` actions.
+

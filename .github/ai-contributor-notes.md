@@ -434,3 +434,58 @@ Focused heavily on making the `nui-link-list` component production-ready. Moved 
 - **Mindset**: "If it's not accessible, it's not done." The component now handles edge cases like backwards tabbing and mouse/keyboard conflicts gracefully.
 - **Documentation**: Documented the "why" behind accessibility decisions in `ACCESSIBILITY.md` to ensure future maintainers understand the hybrid model.
 
+---
+
+## #7Qm3W8 - December 1, 2025
+**Router Architecture Design Session**
+
+Deep architectural session with herrbasan designing the content loading and routing system for the SPA pattern. No code written - pure design work resulting in comprehensive documentation.
+
+### The Process: "Rock Throwing"
+Rather than implementing first, we:
+1. Examined existing content loader implementation
+2. Established mental model: Router as central coordinator, URL as single source of truth
+3. Documented the design in `router-content-loading.md`
+4. Then deliberately attacked it - identified 15 potential issues ("rocks")
+5. Systematically addressed each rock through critical analysis
+6. Resulted in 4 design improvements, 6 dismissed non-issues, 5 resolved with clear decisions
+
+### Key Design Decisions
+
+**URL Syntax Separation:**
+- Hash (`#route`) = WHERE (routing, caching) - "Route is for routing"
+- Search (`?param=value`) = WHAT (element-specific data) - Always passed to handlers, never cached
+
+**Element First Pattern:**
+- Router creates wrapper element immediately (no race conditions)
+- Handler populates asynchronously
+- Lifecycle hooks: `element.show(params)` and `element.hide()` called by router
+- Handlers own their loading states (spinners, skeletons, etc.)
+
+**Accessibility:**
+- Hidden elements use `inert` attribute (removes from tab order, screen readers)
+- Focus management: router moves focus to visible content on navigation
+
+**Route Sanitization:**
+- Configurable via `sanitizeRoutes` option (default: on)
+- Prevents path traversal attacks (`../../../etc/passwd`)
+- Validates against registered routes
+
+### Artifacts Created
+- `NUI/docs/router-content-loading.md` - Main architecture specification
+- `NUI/docs/router-critique.md` - Critical analysis with all 15 rocks and resolutions
+
+### Philosophy Crystallized
+This session demonstrated the value of **formalizing tacit knowledge**. The patterns discussed weren't invented - they emerged from herrbasan's ~30 years of production experience. The LLM's role was interrogator and scribe: asking "why?", stress-testing assumptions, and crystallizing verbal explanations into documentation.
+
+The rock-throwing process was particularly valuable:
+- Forces examination of assumptions before they become code
+- Creates a "what we considered and rejected" record
+- Prevents re-debating settled questions in future sessions
+- Documentation emerges naturally from design discussion (not post-hoc chore)
+
+### Key Insight
+> "Documentation as crystallized thought rather than post-hoc chore."
+
+When thinking is rigorous, documentation is just transcription of the thinking process. The design work IS the documentation work.
+

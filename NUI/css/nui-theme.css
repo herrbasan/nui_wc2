@@ -64,66 +64,13 @@
 	--color-text-dim: var(--color-shade7);
 	--color-text-muted: var(--color-shade6);
 	--color-text-subtle: var(--color-shade5);
+
+	--side-nav-width: 21rem;
+	--top-nav-height: var(--nui-space-quadruple);
+	--footer-height: var(--nui-space-double);
 }
 
 :root {
-	--side-nav-width: 21rem;
-	--side-nav-background: var(--color-shade2);
-	--side-nav-item-height: var(--nui-space-quadruple);
-	--side-nav-shadow: 0 0 var(--shadow-radius1) var(--shadow-color);
-	--side-nav-text: var(--color-contrast);
-	--side-nav-padding: var(--nui-space);
-
-	--top-nav-height: var(--nui-space-quadruple);
-	--top-nav-background: var(--color-shade3);
-	--top-nav-border: solid var(--border-thickness) var(--border-shade2);
-	--top-nav-shadow: 0 0 var(--shadow-radius1) 0 var(--shadow-color);
-	--top-nav-text: var(--color-base);
-	--top-nav-padding: var(--nui-space-half) var(--nui-space);
-
-	--footer-height: var(--nui-space-double);
-	--footer-background: var(--color-shade3);
-	--footer-text: var(--color-text-muted);
-	--footer-padding: var(--nui-space-half) var(--nui-space);
-	--footer-border: solid var(--border-thickness) var(--border-shade2);
-
-	--card-padding: var(--nui-space-double);
-	--card-border: solid var(--border-thickness) var(--border-shade1);
-	--card-border-radius: var(--border-radius1);
-	--card-background: var(--color-base);
-	--card-shadow: 0 0 var(--shadow-radius0) 0 var(--shadow-color);
-	--card-margin-bottom: var(--nui-space);
-
-	--input-background: var(--color-base);
-	--input-background-focus: var(--color-shade1);
-	--input-border: solid var(--border-thickness) var(--color-shade4);
-	--input-border-focus: solid var(--border-thickness) var(--color-shade6);
-	--input-text: var(--color-text-dim);
-	--input-text-focus: var(--color-text);
-	--input-label-text: var(--color-text-muted);
-	--input-min-height: calc(var(--nui-space) * 2.5);
-	--input-min-width: calc(var(--nui-space) * 5);
-	--input-padding: var(--nui-space);
-
-	--button-color-background: var(--color-highlight-dim);
-	--button-color-highlight: var(--color-highlight);
-	--button-color-text: var(--color-white);
-	--button-color-text-hi: var(--color-white);
-	--button-border-radius: var(--border-radius1);
-	--button-border: solid var(--border-thickness) rgba(255, 255, 255, 0.1);
-	--button-margin: var(--nui-space);
-	--button-font-size: 0.8rem;
-	--button-min-width: var(--nui-space-double);
-	--button-min-height: var(--nui-space-double);
-	--button-padding: var(--nui-space-quarter) var(--nui-space-half);
-
-	--overlay-background: var(--color-shade2);
-	--contextmenu-background: var(--color-shade4);
-	--contextmenu-background-hi: var(--color-shade3);
-	--contextmenu-text: var(--color-contrast);
-	--contextmenu-text-hi: var(--color-contrast);
-	--contextmenu-padding: var(--nui-space-half) var(--nui-space);
-
 	--palette-gray: light-dark(rgb(100, 100, 100), rgb(130, 130, 130));
 	--palette-gray-hi: light-dark(rgb(120, 120, 120), rgb(150, 150, 150));
 	--palette-mark: light-dark(rgb(180, 160, 40), rgb(203, 184, 55));
@@ -495,33 +442,52 @@ nui-button {
 	margin: 0;
 }
 
-nui-button-container>* {
-	margin: 0 !important;
+nui-button-container {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: flex-start;
+	width: 100%;
+	gap: var(--nui-space-half);
 }
 
-nui-button button {
-	min-width: var(--button-min-width);
-	min-height: var(--button-min-height);
-	padding: var(--button-padding);
-	margin-bottom: var(--nui-space-eighth);
-	margin-right: var(--nui-space-eighth);
-	font-size: var(--button-font-size);
-	font-family: var(--system-ui);
-	background: var(--button-color-background);
-	color: var(--button-color-text);
-	border: var(--button-border);
-	border-radius: var(--button-border-radius);
-	cursor: pointer;
-	transition: all 0.2s ease;
-	text-transform: uppercase;
-	display: inline-flex;
-	align-items: center;
+nui-button-container.right {
+	justify-content: flex-end;
+}
+
+nui-button-container.center {
 	justify-content: center;
 }
 
+nui-button button {
+	position: relative;
+	min-width: var(--nui-space-double);
+	min-height: var(--nui-space-double);
+	padding: var(--nui-space-quarter) var(--nui-space);
+	margin: 0;
+	font-size: 0.8rem;
+	line-height: 0.8rem;
+	font-family: var(--system-ui);
+	background-color: var(--color-highlight-dim);
+	color: var(--color-white);
+	border: solid var(--border-thickness) light-dark(rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.1)	);
+	border-radius: var(--border-radius1);
+	cursor: pointer;
+	transition: background-color 0.2s ease, color 0.2s ease;
+	text-transform: uppercase;
+	white-space: nowrap;
+	user-select: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--nui-space-quarter);
+	appearance: none;
+	vertical-align: top;
+}
+
 nui-button button:hover {
-	background: var(--button-color-highlight);
-	color: var(--button-color-text-hi);
+	background-color: var(--color-highlight);
+	color: var(--color-white);
 }
 
 nui-button button:active {
@@ -533,16 +499,140 @@ nui-button button:focus-visible {
 	outline-offset: 2px;
 }
 
-nui-button.icon-only {
-	padding: 0;
+nui-button button:disabled {
+	opacity: 0.4;
+	pointer-events: none;
+	cursor: not-allowed;
 }
 
-nui-button.icon-only button {
+/* Button flash effect on click */
+nui-button button::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	background-color: white;
+	opacity: 0;
+	pointer-events: none;
+	border-radius: inherit;
+}
+
+nui-button button:active::after {
+	opacity: 0.2;
+}
+
+nui-button button:not(:active)::after {
+	transition: opacity 0.5s;
+}
+
+/* Button type variants */
+nui-button button[type="submit"],
+nui-button[variant="submit"] button {
+	background-color: var(--palette-activate);
+}
+
+nui-button button[type="submit"]:hover,
+nui-button[variant="submit"] button:hover {
+	background-color: var(--palette-activate-hi);
+}
+
+nui-button button[type="reset"],
+nui-button[variant="reset"] button {
+	background-color: var(--palette-gray);
+}
+
+nui-button button[type="reset"]:hover,
+nui-button[variant="reset"] button:hover {
+	background-color: var(--palette-gray-hi);
+}
+
+nui-button[variant="outline"] button {
+	background-color: transparent;
+	border: solid var(--border-thickness) var(--palette-gray);
+	color: var(--color-text-dim);
+}
+
+nui-button[variant="outline"] button:hover {
+	background-color: var(--palette-gray);
+	border-color: transparent;
+	color: var(--color-white);
+}
+
+nui-button[variant="delete"] button,
+nui-button[variant="danger"] button {
+	background-color: var(--palette-alert);
+}
+
+nui-button[variant="delete"] button:hover,
+nui-button[variant="danger"] button:hover {
+	background-color: var(--palette-alert-hi);
+}
+
+nui-button[variant="warning"] button {
+	background-color: var(--palette-mark);
+}
+
+nui-button[variant="warning"] button:hover {
+	background-color: var(--palette-mark-hi);
+}
+
+/* Icon-only button */
+nui-button.icon-only button,
+nui-button[variant="icon"] button {
 	background-color: transparent;
 	border: none;
-	padding: 0;
-	width: var(--nui-space-double);
-	height: var(--nui-space-double);
+	padding: var(--nui-space-quarter);
+	min-width: unset;
+	min-height: unset;
+	color: var(--color-text-dim);
+}
+
+nui-button.icon-only button:hover,
+nui-button[variant="icon"] button:hover {
+	color: var(--color-highlight);
+	background-color: transparent;
+}
+
+/* Ghost button (text only, subtle) */
+nui-button[variant="ghost"] button {
+	background-color: transparent;
+	border: none;
+	color: var(--color-text-dim);
+}
+
+nui-button[variant="ghost"] button:hover {
+	background-color: var(--color-shade3);
+	color: var(--color-text);
+}
+
+/* Icon styling within buttons */
+nui-button button nui-icon {
+	width: 1.2em;
+	height: 1.2em;
+	flex-shrink: 0;
+}
+
+/* Progress state */
+nui-button[state="loading"] button {
+	background: var(--color-shade4);
+	pointer-events: none;
+	color: transparent;
+}
+
+nui-button[state="loading"] button::before {
+	content: '';
+	position: absolute;
+	width: 1.2rem;
+	height: 1.2rem;
+	border: 2px solid var(--color-white);
+	border-top-color: transparent;
+	border-radius: 50%;
+	animation: nui-button-spin 0.8s linear infinite;
+}
+
+@keyframes nui-button-spin {
+	to {
+		transform: rotate(360deg);
+	}
 }
 
 
@@ -601,8 +691,8 @@ nui-app[data-layout="app"] nui-top-nav {
 	height: var(--top-nav-height);
 	background: light-dark(var(--color-shade6), var(--color-shade2));
 	border-bottom: solid var(--border-thickness) var(--border-shade2);
-	padding: var(--nui-space);
-	box-shadow: var(--top-nav-shadow);
+	padding: var(--nui-space-half) var(--nui-space);
+	box-shadow: 0 0 var(--shadow-radius1) 0 var(--shadow-color);
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
@@ -650,11 +740,11 @@ nui-app[data-layout="app"] nui-side-nav {
 	left: 0;
 	bottom: 0;
 	width: var(--side-nav-width);
-	background: var(--side-nav-background);
+	background: var(--color-shade2);
 	padding: 0;
 	overflow-y: auto;
 	overflow-x: hidden;
-	box-shadow: var(--side-nav-shadow);
+	box-shadow: 0 0 var(--shadow-radius1) var(--shadow-color);
 	border-right: var(--border-thickness) solid var(--border-shade1);
 	display: grid;
 	grid-template-rows: 1fr auto;
@@ -722,10 +812,10 @@ nui-app[data-layout="app"] nui-app-footer {
 	left: 0;
 	right: 0;
 	height: var(--footer-height);
-	background: var(--footer-background);
-	color: var(--footer-text);
-	padding: var(--footer-padding);
-	border-top: var(--footer-border);
+	background: var(--color-shade3);
+	color: var(--color-text-muted);
+	padding: var(--nui-space-half) var(--nui-space);
+	border-top: solid var(--border-thickness) var(--border-shade2);
 	display: flex;
 	align-items: center;
 	z-index: 10;
@@ -888,4 +978,253 @@ nui-loading[mode="overlay"] .loading-text {
 /* Hide when not active */
 nui-loading:not(.active) {
 	display: none !important;
+}
+/* =============================================================================
+   DIALOG COMPONENT
+   ============================================================================= */
+
+/* Overlay background */
+nui-dialog dialog::backdrop {
+	background-color: light-dark(rgba(240, 240, 240, 0.95), rgba(35, 35, 35, 0.95));
+}
+
+/* Base dialog styling */
+nui-dialog dialog {
+	padding: 0;
+	border: none;
+	border-radius: var(--border-radius1);
+	background: var(--color-base);
+	color: var(--text-color);
+	box-shadow: 0 0 var(--shadow-radius0) 0 var(--shadow-color);
+	max-width: 90vw;
+	max-height: 90vh;
+}
+
+.nui-dialog-content {
+	display: flex;
+	flex-direction: column;
+}
+
+/* Alert / Confirm Dialog */
+.nui-dialog-alert {
+	position: relative;
+	padding: var(--nui-space-double);
+	width: 50%;
+	max-width: 36rem;
+	min-width: 22rem;
+	border-radius: var(--border-radius2);
+}
+
+.nui-headline {
+	font-size: 1.4rem;
+	font-weight: 600;
+	margin-bottom: var(--nui-space);
+	color: var(--color-highlight);
+}
+
+.nui-copy {
+	display: block;
+	margin-bottom: var(--nui-space-double);
+	line-height: 1.6;
+	color: var(--text-color);
+}
+
+.nui-dialog-actions {
+	display: flex;
+	gap: var(--nui-space);
+	margin-top: var(--nui-space);
+}
+
+.nui-dialog-actions.right {
+	justify-content: flex-end;
+}
+
+/* Button styling in dialogs */
+.nui-dialog-actions button {
+	min-width: var(--nui-space-double);
+	min-height: var(--nui-space-double);
+	padding: var(--nui-space-quarter) var(--nui-space-half);
+	font-size: 0.8rem;
+	background: var(--color-highlight-dim);
+	color: var(--color-white);
+	border: solid var(--border-thickness) rgba(255, 255, 255, 0.1);
+	border-radius: var(--border-radius1);
+	cursor: pointer;
+	transition: all 0.2s ease;
+	text-transform: uppercase;
+}
+
+.nui-dialog-actions button.outline {
+	background: transparent;
+	color: var(--text-color);
+	border: solid var(--border-thickness) var(--border-shade3);
+}
+
+.nui-dialog-actions button.primary {
+	background: var(--color-highlight);
+	color: var(--color-white);
+}
+
+.nui-dialog-actions button:hover {
+	background: var(--color-highlight);
+	color: var(--color-white);
+}
+
+.nui-dialog-actions button.outline:hover {
+	background: var(--color-shade2);
+	border-color: var(--color-highlight);
+}
+
+/* Prompt Dialog */
+.nui-dialog-prompt {
+	padding: var(--nui-space-double);
+	width: 50%;
+	max-width: 36rem;
+	min-width: 22rem;
+}
+
+.nui-dialog-body {
+	display: flex;
+	flex-direction: column;
+	gap: var(--nui-space);
+	margin-bottom: var(--nui-space);
+}
+
+/* Input styling in dialogs */
+.nui-dialog-body .nui-input {
+	display: flex;
+	flex-direction: column;
+	gap: var(--nui-space-quarter);
+	margin-bottom: var(--nui-space);
+}
+
+.nui-dialog-body .nui-input label {
+	color: light-dark(rgba(0, 0, 0, 0.5), rgba(255, 255, 255, 0.5));
+	font-size: 0.8rem;
+	text-transform: uppercase;
+}
+
+.nui-dialog-body .nui-input input {
+	min-height: calc(var(--nui-space) * 2.5);
+	padding: var(--nui-space);
+	background: var(--color-base);
+	border: solid var(--border-thickness) var(--color-shade4);
+	border-radius: var(--border-radius1);
+	color: var(--color-text-dim);
+	font-family: var(--system-ui);
+	transition: all 0.2s;
+}
+
+.nui-dialog-body .nui-input input:focus {
+	background: var(--color-shade1);
+	border: solid var(--border-thickness) var(--color-shade6);
+	color: var(--color-text);
+	outline: none;
+}
+
+/* Login Dialog */
+.nui-dialog-login {
+	width: 50%;
+	max-width: 25rem;
+	min-width: 14rem;
+	padding: var(--nui-space-triple);
+	border-radius: var(--border-radius1);
+}
+
+.nui-dialog-login .nui-dialog-body {
+	padding-top: var(--nui-space-double);
+	padding-bottom: var(--nui-space);
+}
+
+.nui-dialog-login .nui-headline {
+	margin-bottom: calc(var(--nui-space) * 1.5);
+}
+
+.nui-dialog-login .nui-dialog-actions {
+	margin-top: var(--nui-space-double);
+}
+
+/* Consent Dialog */
+.nui-dialog-consent {
+	padding: var(--nui-space-double);
+	width: 50%;
+	max-width: 36rem;
+	min-width: 22rem;
+}
+
+/* Progress Dialog */
+.nui-dialog-progress {
+	padding: var(--nui-space-double);
+	width: 50%;
+	max-width: 36rem;
+	min-width: 22rem;
+}
+
+.nui-dialog-progress .nui-headline {
+	margin-bottom: calc(var(--nui-space-double) * 2);
+}
+
+.nui-progress-container {
+	width: 100%;
+	margin-bottom: calc(var(--nui-space) * 3);
+}
+
+.nui-progress-text {
+	margin-bottom: var(--nui-space-half);
+	color: light-dark(rgba(0, 0, 0, 0.5), rgba(255, 255, 255, 0.5));
+}
+
+.nui-progress-bar-track {
+	width: 100%;
+	height: 0.5rem;
+	background-color: light-dark(rgba(0, 0, 0, 0.07), rgba(255, 255, 255, 0.07));
+	overflow: hidden;
+	border-radius: var(--border-radius1);
+}
+
+.nui-progress-bar-fill {
+	height: 100%;
+	background: var(--color-highlight);
+	transition: width 0.2s ease;
+}
+
+/* Modal Page Layout */
+.nui-dialog-page {
+	display: flex;
+	flex-direction: column;
+	width: 600px;
+	height: 400px;
+	max-width: 100%;
+	max-height: 100%;
+}
+
+.nui-dialog-header {
+	padding: var(--nui-space);
+	border-bottom: var(--border-thickness) solid var(--border-shade1);
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.nui-dialog-header h2 {
+	margin: 0;
+	font-size: 1.1rem;
+	font-weight: 500;
+}
+
+.nui-dialog-footer {
+	padding: var(--nui-space);
+	border-top: var(--border-thickness) solid var(--border-shade1);
+	display: flex;
+	justify-content: space-between;
+	background: var(--color-shade1);
+}
+
+.nui-dialog-footer > div {
+	display: flex;
+	gap: var(--nui-space-half);
+}
+
+.nui-dialog-page.no-foot .nui-dialog-footer {
+	display: none;
 }

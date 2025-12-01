@@ -1323,6 +1323,372 @@ registerComponent('nui-button-container', (element) => {
 	element.style.gap = gapMap[gap] || gap;
 });
 
+// ################################# nui-dialog COMPONENT
+
+registerComponent('nui-dialog', (element) => {
+	const dialog = element.querySelector('dialog');
+	if (!dialog) return;
+
+	// Public API
+	element.showModal = () => {
+		dialog.showModal();
+		knower.tell(`dialog:${element.id}:open`, true);
+	};
+
+	element.close = (returnValue) => {
+		dialog.close(returnValue);
+		knower.tell(`dialog:${element.id}:open`, false);
+	};
+
+	element.isOpen = () => dialog.open;
+
+	// Events
+	dialog.addEventListener('close', () => {
+		element.dispatchEvent(new CustomEvent('nui-dialog-close', { bubbles: true, detail: { returnValue: dialog.returnValue } }));
+		knower.tell(`dialog:${element.id}:open`, false);
+	});
+
+	dialog.addEventListener('cancel', () => {
+		element.dispatchEvent(new CustomEvent('nui-dialog-cancel', { bubbles: true }));
+	});
+
+	// Backdrop click to close
+	dialog.addEventListener('click', (e) => {
+		const rect = dialog.getBoundingClientRect();
+		const isInDialog = (rect.top <= e.clientY && e.clientY <= rect.top + rect.height &&
+			rect.left <= e.clientX && e.clientX <= rect.left + rect.width);
+		if (!isInDialog) {
+			dialog.close('backdrop');
+		}
+	});
+
+	// Doer integration
+	const instanceId = ensureInstanceId(element, 'dialog');
+	doer.register('dialog-open', () => element.showModal(), instanceId);
+	doer.register('dialog-close', () => element.close(), instanceId);
+});
+
+// ################################# DIALOG SYSTEM
+
+const dialogSystem = {
+	_getSystemDialog() {
+		let dialog = document.getElementById('nui-system-dialog');
+		if (!dialog) {
+			dialog = document.createElement('nui-dialog');
+			dialog.id = 'nui-system-dialog';
+			dialog.innerHTML = '<dialog><div class="nui-dialog-content"></div></dialog>';
+			document.body.appendChild(dialog);
+		}
+		return dialog;
+	},
+
+	_show(htmlContent, classes = []) {
+		const dialog = this._getSystemDialog();
+		const content = dialog.querySelector('.nui-dialog-content');
+		const nativeDialog = dialog.querySelector('dialog');
+
+		// Reset classes
+		nativeDialog.className = '';
+		if (classes.length) nativeDialog.classList.add(...classes);
+
+		// Set content
+		if (typeof htmlContent === 'string') {
+			content.innerHTML = htmlContent;
+		} else {
+			content.innerHTML = '';
+			content.appendChild(htmlContent);
+		}
+
+		dialog.showModal();
+		return dialog;
+	},
+
+	alert(title, message) {
+		return new Promise((resolve) => {
+			const html = `
+				<div class="nui-dialog-alert">
+					<div class="nui-headline">${title}</div>
+					<div class="nui-copy">${message}</div>
+					<div class="nui-dialog-actions right">
+						<button class="primary" id="nui-dialog-ok">OK</button>
+					</div>
+				</div>
+			`;
+			const dialog = this._show(html, ['nui-alert']);
+
+			const onOk = () => {
+				dialog.close('ok');
+				resolve();
+			};
+
+			const btn = dialog.querySelector('#nui-dialog-ok');
+			if (btn) btn.addEventListener('click', onOk, { once: true });
+			dialog.querySelector('dialog').addEventListener('close', () => resolve(), { once: true });
+		});
+	},
+
+	confirm(title, message) {
+		return new Promise((resolve) => {
+			const html = `
+				<div class="nui-dialog-alert">
+					<div class="nui-headline">${title}</div>
+					<div class="nui-copy">${message}</div>
+					<div class="nui-dialog-actions right">
+						<button class="outline" id="nui-dialog-cancel">Cancel</button>
+						<button class="primary" id="nui-dialog-ok">OK</button>
+					</div>
+				</div>
+			`;
+			const dialog = this._show(html, ['nui-alert']);
+
+			const onOk = () => { dialog.close('ok'); resolve(true); };
+			const onCancel = () => { dialog.close('cancel'); resolve(false); };
+
+			dialog.querySelector('#nui-dialog-ok').addEventListener('click', onOk, { once: true });
+			dialog.querySelector('#nui-dialog-cancel').addEventListener('click', onCancel, { once: true });
+			dialog.querySelector('dialog').addEventListener('close', () => resolve(false), { once: true });
+		});
+	},
+
+	prompt(title, fields) {
+		return new Promise((resolve) => {
+			const inputsHtml = fields.map(f => `
+				<div class="nui-input">
+					<label>${f.label}</label>
+					<input id="${f.id}" value="${f.value || ''}" type="${f.type || 'text'}">
+				</div>
+			`).join('');
+
+			const html = `
+				<div class="nui-dialog-prompt">
+					<div class="nui-headline">${title}</div>
+					<div class="nui-dialog-body">${inputsHtml}</div>
+					<div class="nui-dialog-actions right">
+						<button class="outline" id="nui-dialog-cancel">Cancel</button>
+						<button class="primary" id="nui-dialog-ok">OK</button>
+					</div>
+				</div>
+			`;
+			const dialog = this._show(html, ['nui-prompt']);
+
+			const onOk = () => {
+				const values = {};
+				fields.forEach(f => {
+					const input = dialog.querySelector(`#${f.id}`);
+					if (input) values[f.id] = input.value;
+				});
+				dialog.close('ok');
+				resolve(values);
+			};
+
+			const onCancel = () => { dialog.close('cancel'); resolve(null); };
+
+			dialog.querySelector('#nui-dialog-ok').addEventListener('click', onOk, { once: true });
+			dialog.querySelector('#nui-dialog-cancel').addEventListener('click', onCancel, { once: true });
+			dialog.querySelector('dialog').addEventListener('close', () => resolve(null), { once: true });
+
+			// Focus first input
+			setTimeout(() => {
+				const first = dialog.querySelector('input');
+				if (first) first.focus();
+			}, 50);
+		});
+	},
+
+	login(options) {
+		return new Promise((resolve) => {
+			const html = `
+				<div class="nui-dialog-login">
+					<div class="nui-headline">${options.title || 'Enter Credentials:'}</div>
+					<div class="nui-dialog-body">
+						<div class="nui-input">
+							<label>${options.label_login || 'Login'}:</label>
+							<input id="login-user" autocomplete="username">
+						</div>
+						<div class="nui-input">
+							<label>${options.label_password || 'Password'}:</label>
+							<input id="login-pass" type="password" autocomplete="current-password">
+						</div>
+						<div id="login-error" class="nui-error-message" style="display:none; color:var(--palette-alert); margin-top:0.5rem;"></div>
+					</div>
+					<div class="nui-dialog-actions right">
+						<button class="primary" id="nui-dialog-enter">${options.label_button || 'Enter'}</button>
+					</div>
+				</div>
+			`;
+			const dialog = this._show(html, ['nui-login']);
+
+			const errorEl = dialog.querySelector('#login-error');
+			const userIn = dialog.querySelector('#login-user');
+			const passIn = dialog.querySelector('#login-pass');
+			const btn = dialog.querySelector('#nui-dialog-enter');
+
+			const showError = (msg) => {
+				errorEl.textContent = msg;
+				errorEl.style.display = 'block';
+				userIn.value = '';
+				passIn.value = '';
+				userIn.focus();
+				btn.classList.remove('progress');
+			};
+
+			const onEnter = async () => {
+				btn.classList.add('progress');
+				errorEl.style.display = 'none';
+
+				if (options.callback) {
+					// Pass a controller object to the callback
+					const controller = {
+						values: { login: userIn.value, password: passIn.value },
+						error: showError,
+						close: () => {
+							dialog.close('ok');
+							resolve({ login: userIn.value, password: passIn.value });
+						}
+					};
+					options.callback(controller);
+				} else {
+					dialog.close('ok');
+					resolve({ login: userIn.value, password: passIn.value });
+				}
+			};
+
+			btn.addEventListener('click', onEnter);
+			passIn.addEventListener('keydown', e => { if (e.key === 'Enter') onEnter(); });
+
+			setTimeout(() => userIn.focus(), 50);
+		});
+	},
+
+	consent(options, callback) {
+		let timer = null;
+		let counter = 15;
+
+		const html = `
+			<div class="nui-dialog-consent">
+				<div class="nui-copy">${options.text}</div>
+				<div class="nui-dialog-actions">
+					<button class="outline" id="nui-dialog-decline" style="margin-right:auto">
+						${options.btn_abort || 'Decline'} <span id="consent-timer">(15)</span>
+					</button>
+					<button class="primary" id="nui-dialog-allow">${options.btn_allow || 'Allow'}</button>
+				</div>
+			</div>
+		`;
+		const dialog = this._show(html, ['nui-consent']);
+
+		const timerSpan = dialog.querySelector('#consent-timer');
+
+		const close = (action) => {
+			if (timer) clearInterval(timer);
+			dialog.close(action);
+			if (callback) callback(action);
+		};
+
+		timer = setInterval(() => {
+			counter--;
+			if (counter < 0) {
+				close('abort');
+			} else {
+				timerSpan.textContent = `(${counter})`;
+			}
+		}, 1000);
+
+		dialog.querySelector('#nui-dialog-decline').addEventListener('click', () => close('abort'), { once: true });
+		dialog.querySelector('#nui-dialog-allow').addEventListener('click', () => close('allow'), { once: true });
+	},
+
+	progress(title) {
+		const html = `
+			<div class="nui-dialog-progress">
+				<div class="nui-headline">${title}</div>
+				<div class="nui-progress-container">
+					<div class="nui-progress-text">Starting...</div>
+					<div class="nui-progress-bar-track">
+						<div class="nui-progress-bar-fill" style="width: 0%"></div>
+					</div>
+				</div>
+				<div class="nui-dialog-actions right">
+					<button class="outline" id="nui-dialog-stop">Stop</button>
+				</div>
+			</div>
+		`;
+		const dialog = this._show(html, ['nui-progress']);
+
+		const textEl = dialog.querySelector('.nui-progress-text');
+		const fillEl = dialog.querySelector('.nui-progress-bar-fill');
+
+		return {
+			update(current, max) {
+				const pct = Math.min(100, Math.max(0, (current / max) * 100));
+				textEl.textContent = `${current} of ${max}`;
+				fillEl.style.width = `${pct}%`;
+			},
+			onStop(cb) {
+				dialog.querySelector('#nui-dialog-stop').addEventListener('click', () => {
+					cb(() => dialog.close('stop'));
+				});
+			},
+			close() {
+				dialog.close();
+			}
+		};
+	},
+
+	modal(options) {
+		const html = `
+			<div class="nui-dialog-page" style="${options.maxWidth ? 'max-width:' + options.maxWidth : ''}">
+				<div class="nui-dialog-header">
+					<h2>${options.header_title || ''}</h2>
+					<button class="icon-only close-btn"><nui-icon name="close"></nui-icon></button>
+				</div>
+				<div class="nui-dialog-body"></div>
+				<div class="nui-dialog-footer"></div>
+			</div>
+		`;
+		const dialog = this._show(html, ['nui-modal-page']);
+
+		// Content
+		const body = dialog.querySelector('.nui-dialog-body');
+		if (options.content instanceof Element) {
+			body.appendChild(options.content);
+		} else {
+			body.innerHTML = options.content || '';
+		}
+
+		// Buttons
+		if (options.buttons) {
+			const footer = dialog.querySelector('.nui-dialog-footer');
+			['left', 'center', 'right'].forEach(pos => {
+				if (options.buttons[pos]) {
+					const div = document.createElement('div');
+					div.className = pos;
+					options.buttons[pos].forEach(btn => {
+						const b = document.createElement('button');
+						b.textContent = btn.name;
+						if (btn.type) b.setAttribute('type', btn.type);
+						b.dataset.action = btn.action;
+						b.addEventListener('click', () => {
+							if (options.callback) options.callback({ type: btn.action, target: b });
+							if (btn.action === 'close') dialog.close();
+						});
+						div.appendChild(b);
+					});
+					footer.appendChild(div);
+				}
+			});
+		} else {
+			dialog.querySelector('.nui-dialog-page').classList.add('no-foot');
+		}
+
+		dialog.querySelector('.close-btn').addEventListener('click', () => dialog.close());
+
+		return {
+			close: () => dialog.close()
+		};
+	}
+};
+
 // ################################# PUBLIC API
 
 function ensureBaseStyles() {
@@ -1347,6 +1713,7 @@ export const nui = {
 	config,
 	knower,
 	dom,
+	animate,
 
 	init(options) {
 		if (options) {
@@ -1393,7 +1760,9 @@ export const nui = {
 
 	enableContentLoading(options = {}) {
 		return enableContentLoading(options);
-	}
+	},
+
+	dialog: dialogSystem
 };
 
 // ################################# CONTENT LOADER
@@ -1436,53 +1805,34 @@ function createContentLoader(container, options = {}) {
 
 			const html = await response.text();
 
-			// 2. Create wrapper element
+            // 2. Create wrapper element
 			const pageEl = document.createElement('div');
-			pageEl.className = 'content-page';
+			const pageClass = pageId.replace(/\//g, '-').replace(/[^a-z0-9-]/gi, '');
+			pageEl.className = `content-page page-${pageClass}`;
 			pageEl.dataset.pageId = pageId;
 			pageEl.style.display = 'none'; // Hidden by default
-			pageEl.innerHTML = html;
+			pageEl.innerHTML = html;			container.appendChild(pageEl);
 
-			container.appendChild(pageEl);
+			// 3. Upgrade custom elements in the loaded content
+			// This ensures dynamically loaded NUI components get initialized
+			customElements.upgrade(pageEl);
 
-			// 3. Execute scripts with element context
+			// 4. Execute scripts
 			const scripts = pageEl.querySelectorAll('script');
-			scripts.forEach(oldScript => {
-				const scriptContent = oldScript.textContent;
+			for (const oldScript of scripts) {
 				const newScript = document.createElement('script');
 
-				// Copy attributes
+				// Copy attributes (including type="module")
 				Array.from(oldScript.attributes).forEach(attr => {
 					newScript.setAttribute(attr.name, attr.value);
 				});
 
-				// If it's an inline script, wrap it to provide 'element' context
-				if (!oldScript.src && scriptContent.trim()) {
-					// We can't easily use new Function() for module scripts or if we want to preserve scope perfectly,
-					// but for this requirement "executed with the created element as target", 
-					// we can try to wrap it in an IIFE passing the element.
-					// However, standard <script> tags don't work that way. 
-					// The user asked: "The scripts if present get executed with the created element as target."
-					// We'll assume they mean inline scripts.
+				// Copy content
+				newScript.textContent = oldScript.textContent;
 
-					// Option A: Eval/Function (cleanest for passing args)
-					try {
-						const func = new Function('element', scriptContent);
-						func(pageEl);
-					} catch (e) {
-						console.error(`Error executing script in page ${pageId}:`, e);
-					}
-				} else {
-					// External scripts or empty ones - just re-insert to trigger load
-					newScript.textContent = scriptContent;
-					oldScript.parentNode.replaceChild(newScript, oldScript);
-				}
-
-				// Remove the old script if we used the Function approach
-				if (!oldScript.src && scriptContent.trim()) {
-					oldScript.remove();
-				}
-			});
+				// Replace old script with new one to trigger execution
+				oldScript.parentNode.replaceChild(newScript, oldScript);
+			}
 
 			pages.set(pageId, { element: pageEl, params });
 
@@ -1687,6 +2037,266 @@ function enableContentLoading(options = {}) {
 	router.start();
 
 	return { loader, router };
+}
+
+// ################################# ANIMATION
+
+const easePresets = {
+	sine: {
+		in: 'cubic-bezier(0.13, 0, 0.39, 0)',
+		out: 'cubic-bezier(0.61, 1, 0.87, 1)',
+		inOut: 'cubic-bezier(0.36, 0, 0.64, 1)'
+	},
+	quad: {
+		in: 'cubic-bezier(0.11, 0, 0.5, 0)',
+		out: 'cubic-bezier(0.5, 1, 0.89, 1)',
+		inOut: 'cubic-bezier(0.44, 0, 0.56, 1)'
+	},
+	cubic: {
+		in: 'cubic-bezier(0.32, 0, 0.67, 0)',
+		out: 'cubic-bezier(0.33, 1, 0.68, 1)',
+		inOut: 'cubic-bezier(0.66, 0, 0.34, 1)'
+	},
+	quart: {
+		in: 'cubic-bezier(0.5, 0, 0.75, 0)',
+		out: 'cubic-bezier(0.25, 1, 0.5, 1)',
+		inOut: 'cubic-bezier(0.78, 0, 0.22, 1)'
+	},
+	quint: {
+		in: 'cubic-bezier(0.64, 0, 0.78, 0)',
+		out: 'cubic-bezier(0.22, 1, 0.36, 1)',
+		inOut: 'cubic-bezier(0.86, 0, 0.14, 1)'
+	},
+	expo: {
+		in: 'cubic-bezier(0.7, 0, 0.84, 0)',
+		out: 'cubic-bezier(0.16, 1, 0.3, 1)',
+		inOut: 'cubic-bezier(0.9, 0, 0.1, 1)'
+	},
+	circ: {
+		in: 'cubic-bezier(0.55, 0, 1, 0.45)',
+		out: 'cubic-bezier(0, 0.55, 0.45, 1)',
+		inOut: 'cubic-bezier(0.85, 0.09, 0.15, 0.91)'
+	},
+	back: {
+		in: 'cubic-bezier(0.36, 0, 0.66, -0.56)',
+		out: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+		inOut: 'cubic-bezier(0.8, -0.4, 0.5, 1)'
+	}
+};
+
+const propTemplates = {
+	x: { template: 'translateX', transform: true, defaultMetric: 'px' },
+	y: { template: 'translateY', transform: true, defaultMetric: 'px' },
+	z: { template: 'translateZ', transform: true, defaultMetric: 'px' },
+	scaleX: { template: 'scaleX', transform: true, defaultMetric: false },
+	scaleY: { template: 'scaleY', transform: true, defaultMetric: false },
+	scale: { template: 'scale', transform: true, defaultMetric: false },
+	rotate: { template: 'rotate', transform: true, defaultMetric: 'deg' },
+	left: { defaultMetric: 'px' },
+	top: { defaultMetric: 'px' },
+	right: { defaultMetric: 'px' },
+	bottom: { defaultMetric: 'px' },
+	width: { defaultMetric: 'px' },
+	height: { defaultMetric: 'px' }
+};
+
+function addDefaultMetric(metric, value) {
+	if (!metric) return value;
+	if (isNaN(value)) return value;
+	return value.toString() + metric;
+}
+
+function getNestedEase(path) {
+	const parts = path.split('.');
+	let result = easePresets;
+	for (const part of parts) {
+		if (result && typeof result === 'object' && part in result) {
+			result = result[part];
+		} else {
+			return undefined;
+		}
+	}
+	return result;
+}
+
+function parseAnimationProp(props) {
+	const out = { transform: '' };
+
+	for (const key in props) {
+		if (key in propTemplates) {
+			const tmpl = propTemplates[key];
+			if (tmpl.transform) {
+				out.transform += tmpl.template + '(' + addDefaultMetric(tmpl.defaultMetric, props[key]) + ') ';
+			} else if (tmpl.template) {
+				out[tmpl.template] = addDefaultMetric(tmpl.defaultMetric, props[key]);
+			} else {
+				out[key] = addDefaultMetric(tmpl.defaultMetric, props[key]);
+			}
+		} else if (key === 'ease' || key === 'easing') {
+			out.easing = props[key];
+			const preset = getNestedEase(props[key]);
+			if (preset !== undefined) {
+				out.easing = preset;
+			}
+		} else {
+			if (key === 'transform') props[key] += ' ';
+			out[key] = props[key];
+		}
+	}
+
+	if (out.transform.length < 2) {
+		delete out.transform;
+	}
+
+	return out;
+}
+
+function parseAnimationProps(props) {
+	if (!Array.isArray(props)) {
+		return parseAnimationProp(props);
+	}
+	return props.map(p => parseAnimationProp(p));
+}
+
+function animate(el, duration, props, options = {}) {
+	const defaults = {
+		duration: duration || 1000,
+		fill: 'forwards',
+		composite: 'replace',
+		direction: 'normal',
+		delay: 0,
+		endDelay: 0,
+		iterationStart: 0,
+		iterations: 1
+	};
+
+	const opts = parseAnimationProp({ ...defaults, ...options });
+
+	if (!Array.isArray(props)) {
+		props = [{}, props];
+		if (props[1].easing) {
+			props[0].easing = props[1].easing;
+		}
+	}
+
+	const keyframes = new KeyframeEffect(el, parseAnimationProps(props), opts);
+	const animation = new Animation(keyframes, document.timeline);
+
+	let loopStop = true;
+
+	const ani = {
+		animation,
+		duration: opts.duration,
+		totalDuration: opts.duration + opts.delay + opts.endDelay,
+		stops: [],
+		lastTime: 0,
+		currentTime: 0,
+		currentFrame: 0,
+		state: 'init',
+		lastState: '',
+		currentKeyframe: 0,
+		progress: 0
+	};
+
+	// Calculate keyframe stops
+	for (let i = 0; i < props.length; i++) {
+		if (!props[i].offset) {
+			if (i === 0) props[i].offset = 0;
+			else if (i === props.length - 1) props[i].offset = 1;
+			else props[i].offset = i / (props.length - 1);
+		}
+		ani.stops.push((props[i].offset * opts.duration) + opts.delay);
+	}
+	if (opts.delay) ani.stops.unshift(0);
+	if (opts.endDelay) ani.stops.push(ani.totalDuration);
+
+	function fireEvent(type, data) {
+		if (opts.events) {
+			opts.events({ type, target: ani, ...data });
+		}
+	}
+
+	function checkKeyframe() {
+		let idx = 0;
+		for (let i = 0; i < ani.stops.length; i++) {
+			if (ani.currentTime >= ani.stops[i]) idx = i;
+		}
+		return idx;
+	}
+
+	function update() {
+		if (animation?.currentTime !== ani.lastTime) {
+			ani.currentTime = animation.currentTime;
+			ani.lastTime = ani.currentTime;
+			ani.progress = ani.currentTime / ani.totalDuration;
+		}
+		if (ani.lastState !== animation.playState) {
+			ani.lastState = animation.playState;
+			fireEvent(animation.playState);
+		}
+		const idx = checkKeyframe();
+		if (ani.currentKeyframe !== idx) {
+			ani.currentKeyframe = idx;
+			fireEvent('keyframe', { idx });
+		}
+		if (opts.update) opts.update(ani);
+	}
+
+	function loop() {
+		if (animation) update();
+		if (!loopStop) requestAnimationFrame(loop);
+	}
+
+	ani.play = (time) => {
+		fireEvent('start');
+		if (time !== undefined) animation.currentTime = time;
+		loopStop = false;
+		animation.play();
+		loop();
+	};
+
+	ani.pause = () => {
+		fireEvent('pause');
+		animation.pause();
+	};
+
+	ani.cancel = () => {
+		fireEvent('cancel');
+		animation.cancel();
+	};
+
+	ani.update = update;
+
+	animation.onfinish = () => {
+		fireEvent('finished');
+		loopStop = true;
+		if (opts.cb) opts.cb(ani);
+	};
+
+	animation.onremove = () => {
+		fireEvent('remove');
+		loopStop = true;
+	};
+
+	animation.oncancel = () => {
+		fireEvent('cancel');
+		loopStop = true;
+	};
+
+	// Auto-start unless paused
+	if (!opts.paused) {
+		loop();
+		ani.play();
+	}
+
+	return ani;
+}
+
+// Add animate method to Element prototype
+if (typeof Element !== 'undefined' && !Element.prototype.ani) {
+	Element.prototype.ani = function(duration, props, options) {
+		return animate(this, duration, props, options);
+	};
 }
 
 // ################################# AUTO-INITIALIZATION
