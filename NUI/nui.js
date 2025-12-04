@@ -359,18 +359,20 @@ function sanitizeInput(input) {
 }
 
 function processEventAttributes(element) {
-	Array.from(element.attributes).forEach(attr => {
+	// Optimization: Use loop instead of Array.from to avoid allocation
+	for (let i = 0; i < element.attributes.length; i++) {
+		const attr = element.attributes[i];
 		if (attr.name.startsWith('nui-event-')) {
 			const eventType = sanitizeInput(attr.name.replace('nui-event-', ''));
 			const actionSpec = sanitizeInput(attr.value);
 
-			if (!eventType || !actionSpec) return;
+			if (!eventType || !actionSpec) continue;
 
 			element.addEventListener(eventType, (e) => {
 				executeAction(actionSpec, element, e);
 			});
 		}
-	});
+	}
 }
 
 function executeAction(actionSpec, element, event) {
@@ -610,6 +612,16 @@ registerComponent('nui-button', (element) => {
 	});
 });
 
+const iconTemplate = dom.svg('svg', {
+	width: '24',
+	height: '24',
+	viewBox: '0 0 24 24',
+	fill: 'currentColor',
+	'aria-hidden': 'true',
+	focusable: 'false'
+});
+iconTemplate.appendChild(dom.svg('use'));
+
 registerComponent('nui-icon', (element) => {
 	const name = element.getAttribute('name');
 	if (!name) {
@@ -625,14 +637,7 @@ registerComponent('nui-icon', (element) => {
 
 	let svg = element.querySelector('svg');
 	if (!svg) {
-		svg = dom.svg('svg', {
-			width: '24',
-			height: '24',
-			viewBox: '0 0 24 24',
-			fill: 'currentColor',
-			'aria-hidden': 'true',
-			focusable: 'false'
-		});
+		svg = iconTemplate.cloneNode(true);
 		element.appendChild(svg);
 	}
 
@@ -701,23 +706,35 @@ registerComponent('nui-app', (element) => {
 	const stateKey = `${instanceId}:side-nav`;
 	let lastState = null;
 
+	let cachedBreakpoint = null;
+
 	function getBreakpoint(element) {
+		if (cachedBreakpoint !== null) return cachedBreakpoint;
+
 		const sideNav = element.querySelector('nui-side-nav');
 		if (!sideNav) return null;
 
 		const forceBreakpoint = element.getAttribute('nui-vars-sidebar_force-breakpoint');
-		if (!forceBreakpoint) return 768;
+		if (!forceBreakpoint) {
+			cachedBreakpoint = 768;
+			return 768;
+		}
 
 		const match = forceBreakpoint.match(/^(\d+(?:\.\d+)?)(px|rem|em)?$/);
-		if (!match) return 768;
+		if (!match) {
+			cachedBreakpoint = 768;
+			return 768;
+		}
 
 		const value = parseFloat(match[1]);
 		const unit = match[2] || 'px';
 
 		if (unit === 'rem' || unit === 'em') {
-			return value * 16;
+			cachedBreakpoint = value * 16;
+		} else {
+			cachedBreakpoint = value;
 		}
-		return value;
+		return cachedBreakpoint;
 	}
 
 	function updateResponsiveState(element) {
@@ -746,6 +763,10 @@ registerComponent('nui-app', (element) => {
 
 		knower.tell(stateKey, newState, element);
 		lastState = newState;
+
+		if (!element.classList.contains('nui-ready')) {
+			requestAnimationFrame(() => element.classList.add('nui-ready'));
+		}
 	}
 
 	function toggleSideNav(element) {
@@ -929,10 +950,11 @@ registerComponent('nui-link-list', (element) => {
 		if (item.separator) return '<li class="separator"><hr></li>';
 		if (item.items) {
 			const children = item.items.map(i => buildItemHTML(i, true)).join('');
-			return `<ul>${buildGroupHeaderHTML(item)}${children}</ul>`;
+			// Optimization: Pre-wrap children in group-items div to avoid upgradeHtml reflows
+			return `<ul>${buildGroupHeaderHTML(item)}<div class="group-items" role="presentation">${children}</div></ul>`;
 		}
 		const hrefAttr = item.href ? ` href="${item.href}"` : ' href=""';
-		const link = `<li><a${hrefAttr}${item.event ? ` nui-event-click="${item.event}"` : ''}>` +
+		const link = `<li class="list-item"><a${hrefAttr}${item.event ? ` nui-event-click="${item.event}"` : ''}>` +
 			`${item.icon ? `<nui-icon name="${item.icon}"></nui-icon>` : ''}<span>${item.label}</span></a></li>`;
 		return nested ? link : `<ul>${link}</ul>`;
 	}
@@ -1000,16 +1022,6 @@ registerComponent('nui-link-list', (element) => {
 	element.setActive = (selector) => {
 		const item = typeof selector === 'string' ? element.querySelector(selector) : selector;
 		if (!item) return false;
-
-		const app = element.closest('nui-app');
-		const shouldOpen = app && !app.classList.contains('sidenav-forced') &&
-			!app.classList.contains('sidenav-open');
-
-		if (shouldOpen) {
-			setTimeout(() => {
-				app.toggleSideNav?.();
-			}, 0);
-		}
 
 		updateActive(item);
 		const path = getPathHeaders(item);
@@ -1928,6 +1940,13 @@ function enableContentLoading(options = {}) {
 	if (navigation) {
 		knower.watch('route', (route) => {
 			if (!route) return;
+
+			// Close sidebar if open and not forced (overlay mode)
+			const app = navigation.closest('nui-app');
+			if (app && app.classList.contains('sidenav-open') && !app.classList.contains('sidenav-forced')) {
+				app.toggleSideNav();
+			}
+
 			const hash = location.hash;
 			let found = navigation.setActive?.(`a[href="${hash}"]`);
 			if (!found && route.id) {

@@ -796,9 +796,12 @@ nui-app[data-layout="app"] nui-side-nav {
 	border-right: var(--border-thickness) solid var(--border-shade1);
 	display: grid;
 	grid-template-rows: 1fr auto;
-	transition: transform 0.3s ease;
 	box-sizing: border-box;
 	z-index: 1;
+}
+
+nui-app[data-layout="app"].nui-ready nui-side-nav {
+	transition: transform 0.3s ease;
 }
 
 /* Side nav offset when top nav present */
