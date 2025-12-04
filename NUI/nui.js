@@ -1,16 +1,12 @@
-// NUI/nui.js - DOM-First UI Component Library
-//
-// IMPORTANT: Include this script in <head> with type="module" to avoid layout shifts
-// Example: <script type="module" src="path/to/nui.js"></script>
-//
-// The library auto-loads its default theme CSS if no theme is present.
-// Loading in <body> may cause visible layout shifts as styles load after content.
+// NUI - DOM-First UI Component Library
+// Include in <head> with type="module"
 
 // ################################# CORE SYSTEMS
 
 const components = {};
 const config = {
 	sanitizeActions: true,
+	sanitizeRoutes: true,
 	iconSpritePath: '/NUI/assets/material-icons-sprite.svg'
 };
 
@@ -24,7 +20,6 @@ const doer = {
 		this._actions[name] = fn;
 
 		if (ownerId) {
-			// Warn if registering for disconnected component (common mistake)
 			const element = document.querySelector(`[nui-id="${ownerId}"]`);
 			if (!element || !element.isConnected) {
 				console.warn(`[DOER] Registering action "${name}" for disconnected component "${ownerId}". This may cause memory leaks. Register actions only for connected components.`);
@@ -55,7 +50,6 @@ const doer = {
 			});
 			element.dispatchEvent(customEvent);
 
-			// Lazy execution: only update state if someone is watching
 			const actionId = `action:${name}`;
 			if (knower.hasWatchers(actionId)) {
 				knower.tell(actionId, param || name, element);
@@ -94,7 +88,6 @@ const knower = {
 		if (this._hooks) {
 			const hooks = this._hooks.get(id);
 			if (hooks) {
-				// Iterate over a copy to allow watchers to modify the Set
 				Array.from(hooks).forEach(handler => {
 					try {
 						handler(state, oldState, source);
@@ -131,7 +124,6 @@ const knower = {
 		const unwatch = () => this.unwatch(id, handler);
 
 		if (ownerId) {
-			// Warn if registering for disconnected component (common mistake)
 			const element = document.querySelector(`[nui-id="${ownerId}"]`);
 			if (!element || !element.isConnected) {
 				console.warn(`[KNOWER] Registering watcher for disconnected component "${ownerId}". This may cause memory leaks. Register watchers only for connected components.`);
@@ -315,7 +307,6 @@ function createComponent(tagName, setupFn, cleanupFn) {
 			}
 		}
 		disconnectedCallback() {
-			// ID-based cleanup using nui-id attribute
 			const instanceId = this.getAttribute('nui-id');
 			if (instanceId) {
 				knower.clean(instanceId);
@@ -329,7 +320,6 @@ function createComponent(tagName, setupFn, cleanupFn) {
 				delete this._originalAttributeMethods;
 			}
 
-			// Call setup's cleanup function if it returned one
 			if (this._setupCleanup) {
 				this._setupCleanup();
 				delete this._setupCleanup;
@@ -566,10 +556,8 @@ const a11y = {
 	},
 
 	upgrade(element) {
-		// Ensure all buttons have labels
 		element.querySelectorAll('button').forEach(btn => this.ensureButtonLabel(btn));
 
-		// Ensure clickable non-semantic elements have role
 		element.querySelectorAll('[onclick], [nui-event-click]').forEach(el => {
 			if (el.tagName !== 'BUTTON' && el.tagName !== 'A' && !this.hasFocusableChild(el)) {
 				if (!el.hasAttribute('role')) {
@@ -580,7 +568,6 @@ const a11y = {
 			}
 		});
 
-		// Ensure landmarks have labels
 		element.querySelectorAll('nav, [role="navigation"]').forEach(nav => {
 			this.ensureLandmarkLabel(nav);
 		});
@@ -849,14 +836,12 @@ registerComponent('nui-side-nav', (element) => {
 });
 
 registerComponent('nui-code', (element) => {
-	// Store original raw text before highlighting
 	const pre = element.querySelector('pre');
 	const codeBlock = element.querySelector('pre code');
 	if (!pre || !codeBlock) return;
 
 	const rawText = codeBlock.textContent;
 
-	// Add copy button
 	const copyButton = document.createElement('button');
 	copyButton.className = 'nui-code-copy';
 	copyButton.type = 'button';
@@ -880,31 +865,23 @@ registerComponent('nui-code', (element) => {
 
 	element.insertBefore(copyButton, pre);
 
-	// Auto-highlight code blocks when component connects
 	import('./lib/modules/nui-syntax-highlight.js').then(module => {
 		let lang = codeBlock.getAttribute('data-lang');
 
-		// Auto-detect language if not specified - supports HTML, CSS, JS, TS, JSON
 		if (!lang) {
 			const code = codeBlock.textContent.trim();
-			// Check for HTML first (most common in docs)
-			// Note: textContent decodes HTML entities, so we check for actual < characters
 			if (/^<[!/?\w]/.test(code) || /<!DOCTYPE/i.test(code)) {
 				lang = 'html';
 			}
-			// JSON (starts with { or [, has "key": pattern)
 			else if (/^\s*[{\[]/.test(code) && /"[\w-]+":\s*/.test(code)) {
 				lang = 'json';
 			}
-			// TypeScript (interface, type, or explicit types)
 			else if (/\b(interface|type|enum|namespace|declare)\b/.test(code) || /:\s*(string|number|boolean|any)\b/.test(code)) {
 				lang = 'typescript';
 			}
-			// CSS
 			else if (/[.#][\w-]+\s*{/.test(code) || /@media|@import/.test(code)) {
 				lang = 'css';
 			}
-			// JavaScript (fallback - const, let, var, function, etc.)
 			else if (/\b(const|let|var|function|import|export|class|=>)\b/.test(code)) {
 				lang = 'js';
 			}
@@ -917,9 +894,7 @@ registerComponent('nui-code', (element) => {
 		if (lang) {
 			codeBlock.innerHTML = module.highlight(rawText, lang);
 		}
-	}).catch(() => {
-		// Syntax highlight module not available - that's fine
-	});
+	}).catch(() => {});
 });
 
 registerComponent('nui-link-list', (element) => {
@@ -933,7 +908,6 @@ registerComponent('nui-link-list', (element) => {
 	element.loadData = (data) => {
 		const html = data.map(item => buildItemHTML(item)).join('');
 
-		// Check if there's a column-flow wrapper to preserve
 		const columnFlow = element.querySelector('nui-column-flow');
 		if (columnFlow) {
 			columnFlow.innerHTML = html;
@@ -1032,7 +1006,6 @@ registerComponent('nui-link-list', (element) => {
 			!app.classList.contains('sidenav-open');
 
 		if (shouldOpen) {
-			// Use setTimeout to avoid the click event that triggered this from closing it again
 			setTimeout(() => {
 				app.toggleSideNav?.();
 			}, 0);
@@ -1106,7 +1079,6 @@ registerComponent('nui-link-list', (element) => {
 		});
 	}
 
-	// Event Listeners
 	let isMouseDown = false;
 	element.addEventListener('mousedown', () => {
 		isMouseDown = true;
@@ -1130,7 +1102,6 @@ registerComponent('nui-link-list', (element) => {
 			return;
 		}
 
-		// Handle link clicks - set active state
 		const link = e.target.closest('a');
 		if (link) {
 			const listItem = link.closest('li');
@@ -1144,7 +1115,6 @@ registerComponent('nui-link-list', (element) => {
 				}, element);
 			}
 
-			// Prevent navigation if there's no href or it's empty
 			if (!link.getAttribute('href')) {
 				e.preventDefault();
 			}
@@ -1155,14 +1125,13 @@ registerComponent('nui-link-list', (element) => {
 		if (mode === 'fold') {
 			const header = e.target.closest('.group-header');
 			if (header) {
-				if (isMouseDown) return; // Skip header focus during mouse clicks
+				if (isMouseDown) return;
 				const path = getPathHeaders(header);
 				path.add(header);
 				updateAccordionState(path);
 			} else {
 				const link = e.target.closest('a');
 				if (link) {
-					// Always expand parent groups for links, even during mouse clicks
 					const path = getPathHeaders(link);
 					updateAccordionState(path);
 				}
@@ -1175,7 +1144,6 @@ registerComponent('nui-link-list', (element) => {
 		if (!target) return;
 
 		const items = Array.from(element.querySelectorAll('a, .group-header')).filter(el => {
-			// Only include visible items (skip collapsed groups)
 			return el.offsetParent !== null && getComputedStyle(el).visibility !== 'hidden';
 		});
 		const idx = items.indexOf(target);
@@ -1246,12 +1214,10 @@ registerComponent('nui-column-flow', (element) => {
 	const columns = element.getAttribute('columns');
 	const columnWidth = element.getAttribute('column-width');
 
-	// Apply attribute-based overrides
 	if (columns) {
 		element.style.columnCount = columns;
 	}
 	if (columnWidth) {
-		// Support fraction syntax: "/3" means 1/3 of container width
 		if (columnWidth.startsWith('/')) {
 			const divisor = parseInt(columnWidth.slice(1));
 			if (!isNaN(divisor) && divisor > 0) {
@@ -1266,7 +1232,6 @@ registerComponent('nui-column-flow', (element) => {
 		}
 	}
 
-	// Sort children by height if requested
 	if (sort && sort.includes('height')) {
 		const descending = !sort.startsWith('!');
 		const items = Array.from(element.children);
@@ -1285,42 +1250,9 @@ registerComponent('nui-button-container', (element) => {
 	const gap = element.getAttribute('gap') || 'small';
 	const direction = element.getAttribute('direction') || 'row';
 
-	element.style.display = 'flex';
-
-	// Direction
-	element.style.flexDirection = direction;
-
-	// Alignment
-	if (direction === 'column') {
-		element.style.alignItems = {
-			'start': 'flex-start',
-			'center': 'center',
-			'end': 'flex-end',
-			'stretch': 'stretch'
-		}[align] || 'flex-start';
-	} else {
-		element.style.justifyContent = {
-			'start': 'flex-start',
-			'center': 'center',
-			'end': 'flex-end',
-			'between': 'space-between'
-		}[align] || 'flex-start';
-		element.style.flexWrap = 'wrap';
-		element.style.alignItems = 'center';
-	}
-
-	// Gap
-	const gapMap = {
-		'none': '0',
-		'small': 'var(--nui-space-half, 0.5rem)',
-		'medium': 'var(--nui-space, 1rem)',
-		'large': 'var(--nui-space-double, 2rem)',
-		// Aliases
-		'sm': 'var(--nui-space-half, 0.5rem)',
-		'md': 'var(--nui-space, 1rem)',
-		'lg': 'var(--nui-space-double, 2rem)'
-	};
-	element.style.gap = gapMap[gap] || gap;
+	if (direction === 'column') element.classList.add('direction-column');
+	element.classList.add('align-' + align);
+	element.classList.add('gap-' + gap);
 });
 
 // ################################# nui-dialog COMPONENT
@@ -1329,40 +1261,80 @@ registerComponent('nui-dialog', (element) => {
 	const dialog = element.querySelector('dialog');
 	if (!dialog) return;
 
-	// Public API
+	let isAnimating = false;
+	let cancelDialogAni = null;
+	let cancelBackdropAni = null;
+	let fakeBackdrop = null;
+
+	const cleanup = () => {
+		if (cancelDialogAni) cancelDialogAni();
+		if (cancelBackdropAni) cancelBackdropAni();
+		cancelDialogAni = null;
+		cancelBackdropAni = null;
+		
+		if (fakeBackdrop) {
+			fakeBackdrop.remove();
+			fakeBackdrop = null;
+		}
+		
+		dialog.classList.remove('closing', 'ani-scale-in', 'ani-scale-out');
+		isAnimating = false;
+	};
+
 	element.showModal = () => {
+		if (dialog.open) return;
+		
+		cleanup(); // Cancel any pending close animation
 		dialog.showModal();
+		isAnimating = true;
+		cancelDialogAni = nui.cssAnimation(dialog, 'ani-scale-in', () => {
+			isAnimating = false;
+			cancelDialogAni = null;
+		});
 		knower.tell(`dialog:${element.id}:open`, true);
 	};
 
 	element.close = (returnValue) => {
-		dialog.close(returnValue);
+		if (!dialog.open || isAnimating && dialog.classList.contains('closing')) return; // Already closing
+		
+		cleanup(); // Cancel any pending open animation
+		isAnimating = true;
+		
+		dialog.classList.add('closing');
+		fakeBackdrop = document.createElement('div');
+		fakeBackdrop.className = 'nui-dialog-backdrop';
+		document.body.appendChild(fakeBackdrop);
+		
+		cancelBackdropAni = nui.cssAnimation(fakeBackdrop, 'ani-fade-out');
+		cancelDialogAni = nui.cssAnimation(dialog, 'ani-scale-out', () => {
+			cleanup();
+			dialog.close(returnValue);
+		});
 		knower.tell(`dialog:${element.id}:open`, false);
 	};
 
 	element.isOpen = () => dialog.open;
 
-	// Events
 	dialog.addEventListener('close', () => {
 		element.dispatchEvent(new CustomEvent('nui-dialog-close', { bubbles: true, detail: { returnValue: dialog.returnValue } }));
 		knower.tell(`dialog:${element.id}:open`, false);
 	});
 
-	dialog.addEventListener('cancel', () => {
+	dialog.addEventListener('cancel', (e) => {
+		e.preventDefault();
+		element.close('cancel');
 		element.dispatchEvent(new CustomEvent('nui-dialog-cancel', { bubbles: true }));
 	});
 
-	// Backdrop click to close
 	dialog.addEventListener('click', (e) => {
 		const rect = dialog.getBoundingClientRect();
 		const isInDialog = (rect.top <= e.clientY && e.clientY <= rect.top + rect.height &&
 			rect.left <= e.clientX && e.clientX <= rect.left + rect.width);
 		if (!isInDialog) {
-			dialog.close('backdrop');
+			element.close('backdrop');
 		}
 	});
 
-	// Doer integration
 	const instanceId = ensureInstanceId(element, 'dialog');
 	doer.register('dialog-open', () => element.showModal(), instanceId);
 	doer.register('dialog-close', () => element.close(), instanceId);
@@ -1387,11 +1359,9 @@ const dialogSystem = {
 		const content = dialog.querySelector('.nui-dialog-content');
 		const nativeDialog = dialog.querySelector('dialog');
 
-		// Reset classes
 		nativeDialog.className = '';
 		if (classes.length) nativeDialog.classList.add(...classes);
 
-		// Set content
 		if (typeof htmlContent === 'string') {
 			content.innerHTML = htmlContent;
 		} else {
@@ -1409,9 +1379,9 @@ const dialogSystem = {
 				<div class="nui-dialog-alert">
 					<div class="nui-headline">${title}</div>
 					<div class="nui-copy">${message}</div>
-					<div class="nui-dialog-actions right">
+					<nui-button-container align="end">
 						<button class="primary" id="nui-dialog-ok">OK</button>
-					</div>
+					</nui-button-container>
 				</div>
 			`;
 			const dialog = this._show(html, ['nui-alert']);
@@ -1433,10 +1403,10 @@ const dialogSystem = {
 				<div class="nui-dialog-alert">
 					<div class="nui-headline">${title}</div>
 					<div class="nui-copy">${message}</div>
-					<div class="nui-dialog-actions right">
+					<nui-button-container align="end">
 						<button class="outline" id="nui-dialog-cancel">Cancel</button>
 						<button class="primary" id="nui-dialog-ok">OK</button>
-					</div>
+					</nui-button-container>
 				</div>
 			`;
 			const dialog = this._show(html, ['nui-alert']);
@@ -1463,10 +1433,10 @@ const dialogSystem = {
 				<div class="nui-dialog-prompt">
 					<div class="nui-headline">${title}</div>
 					<div class="nui-dialog-body">${inputsHtml}</div>
-					<div class="nui-dialog-actions right">
+					<nui-button-container align="end">
 						<button class="outline" id="nui-dialog-cancel">Cancel</button>
 						<button class="primary" id="nui-dialog-ok">OK</button>
-					</div>
+					</nui-button-container>
 				</div>
 			`;
 			const dialog = this._show(html, ['nui-prompt']);
@@ -1487,7 +1457,6 @@ const dialogSystem = {
 			dialog.querySelector('#nui-dialog-cancel').addEventListener('click', onCancel, { once: true });
 			dialog.querySelector('dialog').addEventListener('close', () => resolve(null), { once: true });
 
-			// Focus first input
 			setTimeout(() => {
 				const first = dialog.querySelector('input');
 				if (first) first.focus();
@@ -1511,9 +1480,9 @@ const dialogSystem = {
 						</div>
 						<div id="login-error" class="nui-error-message" style="display:none; color:var(--palette-alert); margin-top:0.5rem;"></div>
 					</div>
-					<div class="nui-dialog-actions right">
+					<nui-button-container align="end">
 						<button class="primary" id="nui-dialog-enter">${options.label_button || 'Enter'}</button>
-					</div>
+					</nui-button-container>
 				</div>
 			`;
 			const dialog = this._show(html, ['nui-login']);
@@ -1537,7 +1506,6 @@ const dialogSystem = {
 				errorEl.style.display = 'none';
 
 				if (options.callback) {
-					// Pass a controller object to the callback
 					const controller = {
 						values: { login: userIn.value, password: passIn.value },
 						error: showError,
@@ -1567,12 +1535,12 @@ const dialogSystem = {
 		const html = `
 			<div class="nui-dialog-consent">
 				<div class="nui-copy">${options.text}</div>
-				<div class="nui-dialog-actions">
-					<button class="outline" id="nui-dialog-decline" style="margin-right:auto">
+				<nui-button-container align="between">
+					<button class="outline" id="nui-dialog-decline">
 						${options.btn_abort || 'Decline'} <span id="consent-timer">(15)</span>
 					</button>
 					<button class="primary" id="nui-dialog-allow">${options.btn_allow || 'Allow'}</button>
-				</div>
+				</nui-button-container>
 			</div>
 		`;
 		const dialog = this._show(html, ['nui-consent']);
@@ -1608,9 +1576,9 @@ const dialogSystem = {
 						<div class="nui-progress-bar-fill" style="width: 0%"></div>
 					</div>
 				</div>
-				<div class="nui-dialog-actions right">
+				<nui-button-container align="end">
 					<button class="outline" id="nui-dialog-stop">Stop</button>
-				</div>
+				</nui-button-container>
 			</div>
 		`;
 		const dialog = this._show(html, ['nui-progress']);
@@ -1648,7 +1616,6 @@ const dialogSystem = {
 		`;
 		const dialog = this._show(html, ['nui-modal-page']);
 
-		// Content
 		const body = dialog.querySelector('.nui-dialog-body');
 		if (options.content instanceof Element) {
 			body.appendChild(options.content);
@@ -1656,7 +1623,6 @@ const dialogSystem = {
 			body.innerHTML = options.content || '';
 		}
 
-		// Buttons
 		if (options.buttons) {
 			const footer = dialog.querySelector('.nui-dialog-footer');
 			['left', 'center', 'right'].forEach(pos => {
@@ -1689,7 +1655,301 @@ const dialogSystem = {
 	}
 };
 
-// ################################# PUBLIC API
+// ################################# CONTENT LOADER & ROUTER
+
+const registeredFeatures = new Map();
+const registeredTypes = new Map();
+
+function sanitizeRouteId(id) {
+	if (!config.sanitizeRoutes) return id;
+	return id
+		.replace(/\.\./g, '')
+		.replace(/[<>'"]/g, '')
+		.replace(/^\/+/, '')
+		.replace(/\/+/g, '/');
+}
+
+function parseUrl() {
+	const hash = location.hash.slice(1);
+	if (!hash) return null;
+
+	const hashParams = new URLSearchParams(hash);
+	const entries = [...hashParams.entries()];
+	if (entries.length === 0) return null;
+
+	const [type, id] = entries[0];
+	const searchParams = Object.fromEntries(new URLSearchParams(location.search));
+
+	return {
+		type,
+		id: sanitizeRouteId(id),
+		params: searchParams
+	};
+}
+
+function executePageScript(wrapper, params) {
+	const scriptEl = wrapper.querySelector('script[type="nui/page"]');
+	if (!scriptEl) return;
+
+	scriptEl.remove();
+
+	try {
+		const initFn = new Function(
+			'element',
+			'params',
+			'nui',
+			scriptEl.textContent + '\nif (typeof init === "function") init(element, params);'
+		);
+		initFn(wrapper, params, nui);
+	} catch (error) {
+		console.error('[NUI] Page script error:', error);
+	}
+}
+
+async function loadFragment(url, wrapper, params) {
+	try {
+		const response = await fetch(url);
+		if (!response.ok) {
+			throw new Error(`Failed to load ${url} (${response.status})`);
+		}
+
+		const html = await response.text();
+		wrapper.innerHTML = html;
+
+		customElements.upgrade(wrapper);
+		executePageScript(wrapper, params);
+
+	} catch (error) {
+		console.error('[NUI] Fragment load error:', error);
+		wrapper.innerHTML = `
+			<div class="error-page" style="padding: var(--nui-space-double); text-align: center;">
+				<h1>Page Not Found</h1>
+				<p>Could not load: <code>${url}</code></p>
+				<p style="color: var(--color-text-dim);">${error.message}</p>
+			</div>
+		`;
+	}
+}
+
+function pageContent(type, id, params, options = {}) {
+	const wrapper = document.createElement('div');
+	wrapper.className = `content-${type} content-${type}-${id.replace(/\//g, '-').replace(/[^a-z0-9-]/gi, '')}`;
+	wrapper.innerHTML = '<div class="loading">Loading...</div>';
+
+	if (type === 'page') {
+		const basePath = options.basePath || '/pages';
+		loadFragment(`${basePath}/${id}.html`, wrapper, params);
+	} else if (type === 'feature') {
+		const initFn = registeredFeatures.get(id);
+		if (initFn) {
+			wrapper.innerHTML = '';
+			try {
+				initFn(wrapper, params);
+			} catch (error) {
+				console.error(`[NUI] Feature init error (${id}):`, error);
+				wrapper.innerHTML = `<div class="error">Feature error: ${error.message}</div>`;
+			}
+		} else {
+			wrapper.innerHTML = `<div class="error">Unknown feature: ${id}</div>`;
+		}
+	} else {
+		const typeHandler = registeredTypes.get(type);
+		if (typeHandler) {
+			wrapper.innerHTML = '';
+			try {
+				typeHandler(id, params, wrapper);
+			} catch (error) {
+				console.error(`[NUI] Type handler error (${type}):`, error);
+				wrapper.innerHTML = `<div class="error">Handler error: ${error.message}</div>`;
+			}
+		} else {
+			wrapper.innerHTML = `<div class="error">Unknown route type: ${type}</div>`;
+		}
+	}
+
+	return wrapper;
+}
+
+function createRouter(container, options = {}) {
+	const cache = new Map();
+	const defaultRoute = options.default || null;
+	const basePath = options.basePath || '/pages';
+	let currentElement = null;
+	let currentRoute = null;
+	let isStarted = false;
+
+	container = typeof container === 'string'
+		? document.querySelector(container)
+		: container;
+
+	if (!container) {
+		console.error('[NUI Router] Container not found');
+		return null;
+	}
+
+	function getCacheKey(type, id) {
+		return `${type}:${id}`;
+	}
+
+	function hideElement(element) {
+		if (!element) return;
+		element.inert = true;
+		element.style.display = 'none';
+		element.hide?.();
+	}
+
+	function showElement(element, params) {
+		element.inert = false;
+		element.style.display = '';
+		element.show?.(params);
+
+		requestAnimationFrame(() => {
+			const focusTarget = element.querySelector('h1, h2, [autofocus], main') || element;
+			if (focusTarget.tabIndex < 0) focusTarget.tabIndex = -1;
+			focusTarget.focus({ preventScroll: true });
+		});
+	}
+
+	function handleDeepLink(element, params) {
+		if (params.id) {
+			const target = element.querySelector(`#${params.id}`);
+			if (target) {
+				requestAnimationFrame(() => {
+					target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+				});
+			}
+		} else {
+			container.scrollTop = 0;
+		}
+	}
+
+	function navigate(route) {
+		if (!route) {
+			if (defaultRoute) {
+				location.hash = defaultRoute;
+			}
+			return;
+		}
+
+		const { type, id, params } = route;
+		const cacheKey = getCacheKey(type, id);
+
+		hideElement(currentElement);
+
+		let element = cache.get(cacheKey);
+		if (!element) {
+			element = pageContent(type, id, params, { basePath });
+			cache.set(cacheKey, element);
+			container.appendChild(element);
+		}
+
+		showElement(element, params);
+		handleDeepLink(element, params);
+
+		currentElement = element;
+		currentRoute = { type, id, params, element };
+
+		knower.tell('route', currentRoute);
+	}
+
+	function handleHashChange() {
+		const route = parseUrl();
+		navigate(route);
+	}
+
+	function start() {
+		if (isStarted) return;
+		isStarted = true;
+		window.addEventListener('hashchange', handleHashChange);
+		handleHashChange();
+	}
+
+	function stop() {
+		if (!isStarted) return;
+		isStarted = false;
+		window.removeEventListener('hashchange', handleHashChange);
+	}
+
+	function go(type, id, params = {}) {
+		const hashValue = `${type}=${id}`;
+		const searchParams = new URLSearchParams(params);
+		const search = searchParams.toString();
+
+		if (search) {
+			history.pushState(null, '', `?${search}#${hashValue}`);
+		} else {
+			location.hash = hashValue;
+		}
+	}
+
+	function uncache(type, id) {
+		const cacheKey = getCacheKey(type, id);
+		const element = cache.get(cacheKey);
+		if (element) {
+			element.remove();
+			cache.delete(cacheKey);
+		}
+	}
+
+	return {
+		start,
+		stop,
+		go,
+		uncache,
+		get current() { return currentRoute; },
+		get cache() { return cache; }
+	};
+}
+
+function enableContentLoading(options = {}) {
+	const containerSelector = options.container || 'nui-content main';
+	const navigationSelector = options.navigation || 'nui-side-nav';
+	const basePath = options.basePath || '/pages';
+	const defaultPage = options.defaultPage || null;
+
+	const container = typeof containerSelector === 'string'
+		? document.querySelector(containerSelector)
+		: containerSelector;
+
+	if (!container) {
+		console.error('[NUI] Content container not found:', containerSelector);
+		return null;
+	}
+
+	const router = createRouter(container, {
+		default: defaultPage ? `page=${defaultPage}` : null,
+		basePath
+	});
+
+	const navigation = typeof navigationSelector === 'string'
+		? document.querySelector(navigationSelector)
+		: navigationSelector;
+
+	if (navigation) {
+		knower.watch('route', (route) => {
+			if (!route) return;
+			const hash = location.hash;
+			let found = navigation.setActive?.(`a[href="${hash}"]`);
+			if (!found && route.id) {
+				found = navigation.setActive?.(`a[href*="${route.type}=${route.id}"]`);
+			}
+		});
+	}
+
+	doer.register('navigate', (target, source, event, param) => {
+		if (param.includes('=')) {
+			location.hash = param;
+		} else {
+			router.go('page', param);
+		}
+	});
+
+	router.start();
+
+	return router;
+}
+
+// ################################# INIT & PUBLIC API
 
 function ensureBaseStyles() {
 	const rootStyles = getComputedStyle(document.documentElement);
@@ -1713,7 +1973,21 @@ export const nui = {
 	config,
 	knower,
 	dom,
-	animate,
+
+	cssAnimation(element, className, callback) {
+		const onEnd = () => {
+			element.removeEventListener('animationend', onEnd);
+			element.classList.remove(className);
+			if (callback) callback(element);
+		};
+		element.addEventListener('animationend', onEnd);
+		element.classList.add(className);
+		
+		return () => {
+			element.removeEventListener('animationend', onEnd);
+			element.classList.remove(className);
+		};
+	},
 
 	init(options) {
 		if (options) {
@@ -1743,6 +2017,14 @@ export const nui = {
 		doer.register(name, handler);
 	},
 
+	registerFeature(name, initFn) {
+		registeredFeatures.set(name, initFn);
+	},
+
+	registerType(type, handler) {
+		registeredTypes.set(type, handler);
+	},
+
 	configure(options) {
 		Object.assign(config, options);
 	},
@@ -1750,12 +2032,8 @@ export const nui = {
 	knower: knower,
 	doer: doer,
 
-	createContentLoader(container, options = {}) {
-		return createContentLoader(container, options);
-	},
-
-	createRouter(loader, options = {}) {
-		return createRouter(loader, options);
+	createRouter(container, options = {}) {
+		return createRouter(container, options);
 	},
 
 	enableContentLoading(options = {}) {
@@ -1765,551 +2043,21 @@ export const nui = {
 	dialog: dialogSystem
 };
 
-// ################################# CONTENT LOADER
-
-function createContentLoader(container, options = {}) {
-	const basePath = options.basePath || '/pages';
-	const onError = options.onError || null;
-	const pages = new Map();
-	let currentPage = null;
-	let loadingIndicator = null;
-
-	function showLoading() {
-		loadingIndicator = document.querySelector('nui-loading[mode="bar"]');
-		if (loadingIndicator) {
-			loadingIndicator.setAttribute('active', '');
-		}
-		knower.tell('content-loading', true);
-	}
-
-	function hideLoading() {
-		if (loadingIndicator) {
-			loadingIndicator.removeAttribute('active');
-		}
-		knower.tell('content-loading', false);
-	}
-
-	async function load(pageId, params = {}) {
-		// 1. Check if page is already loaded
-		if (pages.has(pageId)) {
-			return show(pageId, params);
-		}
-
-		showLoading();
-
-		try {
-			const response = await fetch(`${basePath}/${pageId}.html`);
-			if (!response.ok) {
-				throw new Error(`Page ${pageId} not found (${response.status})`);
-			}
-
-			const html = await response.text();
-
-            // 2. Create wrapper element
-			const pageEl = document.createElement('div');
-			const pageClass = pageId.replace(/\//g, '-').replace(/[^a-z0-9-]/gi, '');
-			pageEl.className = `content-page page-${pageClass}`;
-			pageEl.dataset.pageId = pageId;
-			pageEl.style.display = 'none'; // Hidden by default
-			pageEl.innerHTML = html;			container.appendChild(pageEl);
-
-			// 3. Upgrade custom elements in the loaded content
-			// This ensures dynamically loaded NUI components get initialized
-			customElements.upgrade(pageEl);
-
-			// 4. Execute scripts
-			const scripts = pageEl.querySelectorAll('script');
-			for (const oldScript of scripts) {
-				const newScript = document.createElement('script');
-
-				// Copy attributes (including type="module")
-				Array.from(oldScript.attributes).forEach(attr => {
-					newScript.setAttribute(attr.name, attr.value);
-				});
-
-				// Copy content
-				newScript.textContent = oldScript.textContent;
-
-				// Replace old script with new one to trigger execution
-				oldScript.parentNode.replaceChild(newScript, oldScript);
-			}
-
-			pages.set(pageId, { element: pageEl, params });
-
-			hideLoading();
-			return show(pageId, params);
-		} catch (error) {
-			hideLoading();
-			console.error(`[Content Loader] Failed to load page ${pageId}:`, error);
-
-			if (onError) {
-				onError(pageId, error);
-			} else {
-				showErrorPage(pageId, error);
-			}
-
-			return false;
-		}
-	}
-
-	function showErrorPage(pageId, error) {
-		// Check if error page already exists
-		const errorId = `error-${pageId}`;
-		if (pages.has(errorId)) {
-			return show(errorId);
-		}
-
-		const errorEl = document.createElement('div');
-		errorEl.className = 'content-page error-page';
-		errorEl.innerHTML = `
-			<div style="padding: var(--nui-space-double); text-align: center;">
-				<h1>Page Not Found</h1>
-				<p>Could not load page: <code>${pageId}</code></p>
-				<p style="color: var(--color-text-dim);">${error.message}</p>
-				<button onclick="window.history.back()">Go Back</button>
-			</div>
-		`;
-
-		container.appendChild(errorEl);
-		pages.set(errorId, { element: errorEl });
-		show(errorId);
-	}
-
-	function show(pageId, params = {}) {
-		const page = pages.get(pageId);
-		if (!page) return false;
-
-		// 4. Toggle visibility
-		pages.forEach(({ element }, id) => {
-			if (id === pageId) {
-				element.style.display = 'block';
-			} else {
-				element.style.display = 'none';
-			}
-		});
-
-		currentPage = pageId;
-
-		// 5. Handle ID parameter (Deep Linking)
-		if (params.id) {
-			const targetEl = page.element.querySelector(`#${params.id}`) || document.getElementById(params.id);
-			if (targetEl) {
-				// Wait for display:block to take effect
-				requestAnimationFrame(() => {
-					targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-					// Optional: focus if interactive
-					if (targetEl.matches('a, button, input, [tabindex]')) {
-						targetEl.focus();
-					}
-				});
-			}
-		} else {
-			// Scroll to top if no specific ID requested
-			container.scrollTop = 0;
-		}
-
-		return true;
-	}
-
-	function getCurrent() {
-		return currentPage;
-	}
-
-	function getPage(pageId) {
-		return pages.get(pageId);
-	}
-
-	return {
-		load,
-		show,
-		getCurrent,
-		getPage
-	};
-}
-
-// ################################# ROUTER
-
-function createRouter(loader, options = {}) {
-	const linkList = options.linkList || null;
-	const defaultPage = options.defaultPage || null;
-	let isNavigating = false;
-
-	function parseHash() {
-		const hash = window.location.hash.slice(1);
-		if (!hash) return null;
-
-		const params = new URLSearchParams(hash);
-		return Object.fromEntries(params);
-	}
-
-	async function handleRoute() {
-		if (isNavigating) return;
-
-		const params = parseHash();
-		if (!params || !params.page) {
-			if (defaultPage) {
-				navigate(defaultPage);
-			}
-			return;
-		}
-
-		isNavigating = true;
-
-		try {
-			await loader.load(params.page, params);
-
-			if (linkList) {
-				const hash = window.location.hash;
-				// 1. Try exact match
-				let found = linkList.setActive?.(`a[href="${hash}"]`);
-
-				// 2. If not found (e.g. deep link), try matching the page parameter
-				if (!found && params.page) {
-					found = linkList.setActive?.(`a[href*="page=${params.page}"]`);
-				}
-			}
-		} finally {
-			isNavigating = false;
-		}
-	}
-
-	function navigate(page, id = null, otherParams = {}) {
-		const params = new URLSearchParams({ page, ...otherParams });
-		if (id) params.set('id', id);
-
-		window.location.hash = params.toString();
-	}
-
-	function start() {
-		window.addEventListener('hashchange', handleRoute);
-		handleRoute();
-	}
-
-	function stop() {
-		window.removeEventListener('hashchange', handleRoute);
-	}
-
-	return {
-		navigate,
-		start,
-		stop,
-		parseHash
-	};
-}
-
-// ################################# CONTENT LOADING SETUP
-
-function enableContentLoading(options = {}) {
-	const containerSelector = options.container || 'nui-content main';
-	const navigationSelector = options.navigation || 'nui-side-nav';
-	const basePath = options.basePath || '/pages';
-	const defaultPage = options.defaultPage || null;
-	const onError = options.onError || null;
-
-	const container = typeof containerSelector === 'string'
-		? document.querySelector(containerSelector)
-		: containerSelector;
-
-	const navigation = typeof navigationSelector === 'string'
-		? document.querySelector(navigationSelector)
-		: navigationSelector;
-
-	if (!container) {
-		console.error('[NUI] Content container not found:', containerSelector);
-		return null;
-	}
-
-	const loader = createContentLoader(container, {
-		basePath,
-		onError
-	});
-
-	const router = createRouter(loader, {
-		linkList: navigation,
-		defaultPage,
-		onError
-	});
-
-	doer.register('navigate', (target, source, event, param) => {
-		router.navigate(param);
-	});
-
-	router.start();
-
-	return { loader, router };
-}
-
-// ################################# ANIMATION
-
-const easePresets = {
-	sine: {
-		in: 'cubic-bezier(0.13, 0, 0.39, 0)',
-		out: 'cubic-bezier(0.61, 1, 0.87, 1)',
-		inOut: 'cubic-bezier(0.36, 0, 0.64, 1)'
-	},
-	quad: {
-		in: 'cubic-bezier(0.11, 0, 0.5, 0)',
-		out: 'cubic-bezier(0.5, 1, 0.89, 1)',
-		inOut: 'cubic-bezier(0.44, 0, 0.56, 1)'
-	},
-	cubic: {
-		in: 'cubic-bezier(0.32, 0, 0.67, 0)',
-		out: 'cubic-bezier(0.33, 1, 0.68, 1)',
-		inOut: 'cubic-bezier(0.66, 0, 0.34, 1)'
-	},
-	quart: {
-		in: 'cubic-bezier(0.5, 0, 0.75, 0)',
-		out: 'cubic-bezier(0.25, 1, 0.5, 1)',
-		inOut: 'cubic-bezier(0.78, 0, 0.22, 1)'
-	},
-	quint: {
-		in: 'cubic-bezier(0.64, 0, 0.78, 0)',
-		out: 'cubic-bezier(0.22, 1, 0.36, 1)',
-		inOut: 'cubic-bezier(0.86, 0, 0.14, 1)'
-	},
-	expo: {
-		in: 'cubic-bezier(0.7, 0, 0.84, 0)',
-		out: 'cubic-bezier(0.16, 1, 0.3, 1)',
-		inOut: 'cubic-bezier(0.9, 0, 0.1, 1)'
-	},
-	circ: {
-		in: 'cubic-bezier(0.55, 0, 1, 0.45)',
-		out: 'cubic-bezier(0, 0.55, 0.45, 1)',
-		inOut: 'cubic-bezier(0.85, 0.09, 0.15, 0.91)'
-	},
-	back: {
-		in: 'cubic-bezier(0.36, 0, 0.66, -0.56)',
-		out: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
-		inOut: 'cubic-bezier(0.8, -0.4, 0.5, 1)'
-	}
-};
-
-const propTemplates = {
-	x: { template: 'translateX', transform: true, defaultMetric: 'px' },
-	y: { template: 'translateY', transform: true, defaultMetric: 'px' },
-	z: { template: 'translateZ', transform: true, defaultMetric: 'px' },
-	scaleX: { template: 'scaleX', transform: true, defaultMetric: false },
-	scaleY: { template: 'scaleY', transform: true, defaultMetric: false },
-	scale: { template: 'scale', transform: true, defaultMetric: false },
-	rotate: { template: 'rotate', transform: true, defaultMetric: 'deg' },
-	left: { defaultMetric: 'px' },
-	top: { defaultMetric: 'px' },
-	right: { defaultMetric: 'px' },
-	bottom: { defaultMetric: 'px' },
-	width: { defaultMetric: 'px' },
-	height: { defaultMetric: 'px' }
-};
-
-function addDefaultMetric(metric, value) {
-	if (!metric) return value;
-	if (isNaN(value)) return value;
-	return value.toString() + metric;
-}
-
-function getNestedEase(path) {
-	const parts = path.split('.');
-	let result = easePresets;
-	for (const part of parts) {
-		if (result && typeof result === 'object' && part in result) {
-			result = result[part];
-		} else {
-			return undefined;
-		}
-	}
-	return result;
-}
-
-function parseAnimationProp(props) {
-	const out = { transform: '' };
-
-	for (const key in props) {
-		if (key in propTemplates) {
-			const tmpl = propTemplates[key];
-			if (tmpl.transform) {
-				out.transform += tmpl.template + '(' + addDefaultMetric(tmpl.defaultMetric, props[key]) + ') ';
-			} else if (tmpl.template) {
-				out[tmpl.template] = addDefaultMetric(tmpl.defaultMetric, props[key]);
-			} else {
-				out[key] = addDefaultMetric(tmpl.defaultMetric, props[key]);
-			}
-		} else if (key === 'ease' || key === 'easing') {
-			out.easing = props[key];
-			const preset = getNestedEase(props[key]);
-			if (preset !== undefined) {
-				out.easing = preset;
-			}
-		} else {
-			if (key === 'transform') props[key] += ' ';
-			out[key] = props[key];
-		}
-	}
-
-	if (out.transform.length < 2) {
-		delete out.transform;
-	}
-
-	return out;
-}
-
-function parseAnimationProps(props) {
-	if (!Array.isArray(props)) {
-		return parseAnimationProp(props);
-	}
-	return props.map(p => parseAnimationProp(p));
-}
-
-function animate(el, duration, props, options = {}) {
-	const defaults = {
-		duration: duration || 1000,
-		fill: 'forwards',
-		composite: 'replace',
-		direction: 'normal',
-		delay: 0,
-		endDelay: 0,
-		iterationStart: 0,
-		iterations: 1
-	};
-
-	const opts = parseAnimationProp({ ...defaults, ...options });
-
-	if (!Array.isArray(props)) {
-		props = [{}, props];
-		if (props[1].easing) {
-			props[0].easing = props[1].easing;
-		}
-	}
-
-	const keyframes = new KeyframeEffect(el, parseAnimationProps(props), opts);
-	const animation = new Animation(keyframes, document.timeline);
-
-	let loopStop = true;
-
-	const ani = {
-		animation,
-		duration: opts.duration,
-		totalDuration: opts.duration + opts.delay + opts.endDelay,
-		stops: [],
-		lastTime: 0,
-		currentTime: 0,
-		currentFrame: 0,
-		state: 'init',
-		lastState: '',
-		currentKeyframe: 0,
-		progress: 0
-	};
-
-	// Calculate keyframe stops
-	for (let i = 0; i < props.length; i++) {
-		if (!props[i].offset) {
-			if (i === 0) props[i].offset = 0;
-			else if (i === props.length - 1) props[i].offset = 1;
-			else props[i].offset = i / (props.length - 1);
-		}
-		ani.stops.push((props[i].offset * opts.duration) + opts.delay);
-	}
-	if (opts.delay) ani.stops.unshift(0);
-	if (opts.endDelay) ani.stops.push(ani.totalDuration);
-
-	function fireEvent(type, data) {
-		if (opts.events) {
-			opts.events({ type, target: ani, ...data });
-		}
-	}
-
-	function checkKeyframe() {
-		let idx = 0;
-		for (let i = 0; i < ani.stops.length; i++) {
-			if (ani.currentTime >= ani.stops[i]) idx = i;
-		}
-		return idx;
-	}
-
-	function update() {
-		if (animation?.currentTime !== ani.lastTime) {
-			ani.currentTime = animation.currentTime;
-			ani.lastTime = ani.currentTime;
-			ani.progress = ani.currentTime / ani.totalDuration;
-		}
-		if (ani.lastState !== animation.playState) {
-			ani.lastState = animation.playState;
-			fireEvent(animation.playState);
-		}
-		const idx = checkKeyframe();
-		if (ani.currentKeyframe !== idx) {
-			ani.currentKeyframe = idx;
-			fireEvent('keyframe', { idx });
-		}
-		if (opts.update) opts.update(ani);
-	}
-
-	function loop() {
-		if (animation) update();
-		if (!loopStop) requestAnimationFrame(loop);
-	}
-
-	ani.play = (time) => {
-		fireEvent('start');
-		if (time !== undefined) animation.currentTime = time;
-		loopStop = false;
-		animation.play();
-		loop();
-	};
-
-	ani.pause = () => {
-		fireEvent('pause');
-		animation.pause();
-	};
-
-	ani.cancel = () => {
-		fireEvent('cancel');
-		animation.cancel();
-	};
-
-	ani.update = update;
-
-	animation.onfinish = () => {
-		fireEvent('finished');
-		loopStop = true;
-		if (opts.cb) opts.cb(ani);
-	};
-
-	animation.onremove = () => {
-		fireEvent('remove');
-		loopStop = true;
-	};
-
-	animation.oncancel = () => {
-		fireEvent('cancel');
-		loopStop = true;
-	};
-
-	// Auto-start unless paused
-	if (!opts.paused) {
-		loop();
-		ani.play();
-	}
-
-	return ani;
-}
-
-// Add animate method to Element prototype
-if (typeof Element !== 'undefined' && !Element.prototype.ani) {
-	Element.prototype.ani = function(duration, props, options) {
-		return animate(this, duration, props, options);
-	};
-}
-
 // ################################# AUTO-INITIALIZATION
 
-if (typeof window !== 'undefined' && !window.nuiInitialized) {
-	const urlParams = new URLSearchParams(window.location.search);
-	const skipInit = urlParams.has('skip-init');
+if (typeof window !== 'undefined') {
+	window.nui = nui;
 
-	if (!skipInit) {
-		nui.init();
-		window.nuiInitialized = true;
-	} else {
-		console.log('[NUI] Auto-initialization skipped (skip-init parameter present)');
-		window.nuiInitialized = false;
+	if (!window.nuiInitialized) {
+		const urlParams = new URLSearchParams(window.location.search);
+		const skipInit = urlParams.has('skip-init');
+
+		if (!skipInit) {
+			nui.init();
+			window.nuiInitialized = true;
+		} else {
+			console.log('[NUI] Auto-initialization skipped (skip-init parameter present)');
+			window.nuiInitialized = false;
+		}
 	}
 }

@@ -103,6 +103,12 @@
 	}
 }
 
+.content-page:focus {
+	outline: none;
+}
+
+
+
 /* Skip link for keyboard navigation (optional, can be added to HTML) */
 .skip-link {
 	position: absolute;
@@ -451,12 +457,53 @@ nui-button-container {
 	gap: var(--nui-space-half);
 }
 
-nui-button-container.right {
+nui-button-container.align-end {
 	justify-content: flex-end;
 }
 
-nui-button-container.center {
+nui-button-container.align-center {
 	justify-content: center;
+}
+
+nui-button-container.align-between {
+	justify-content: space-between;
+}
+
+nui-button-container.direction-column {
+	flex-direction: column;
+	flex-wrap: nowrap;
+}
+
+nui-button-container.direction-column.align-start {
+	align-items: flex-start;
+}
+
+nui-button-container.direction-column.align-center {
+	align-items: center;
+}
+
+nui-button-container.direction-column.align-end {
+	align-items: flex-end;
+}
+
+nui-button-container.direction-column.align-stretch {
+	align-items: stretch;
+}
+
+nui-button-container.gap-none {
+	gap: 0;
+}
+
+nui-button-container.gap-small {
+	gap: var(--nui-space-half);
+}
+
+nui-button-container.gap-medium {
+	gap: var(--nui-space);
+}
+
+nui-button-container.gap-large {
+	gap: var(--nui-space-double);
 }
 
 nui-button button {
@@ -483,6 +530,7 @@ nui-button button {
 	gap: var(--nui-space-quarter);
 	appearance: none;
 	vertical-align: top;
+	min-width: 6rem;
 }
 
 nui-button button:hover {
@@ -983,19 +1031,42 @@ nui-loading:not(.active) {
    DIALOG COMPONENT
    ============================================================================= */
 
-/* Overlay background */
+/* Overlay background with fade animation */
 nui-dialog dialog::backdrop {
-	background-color: light-dark(rgba(240, 240, 240, 0.95), rgba(35, 35, 35, 0.95));
+	background-color: light-dark(rgba(240, 240, 240, 0.95), rgba(20, 20, 20, 0.95));
+	opacity: 1;
+	transition: opacity 0.2s ease-out;
+}
+
+@starting-style {
+	nui-dialog dialog::backdrop {
+		opacity: 0;
+	}
+}
+
+/* Hide real backdrop during close animation */
+nui-dialog dialog.closing::backdrop {
+	opacity: 0;
+}
+
+/* Fake backdrop for close animation */
+.nui-dialog-backdrop {
+	position: fixed;
+	inset: 0;
+	background-color: light-dark(rgba(240, 240, 240, 0.95), rgba(20, 20, 20, 0.95));
+	z-index: 999;
+	pointer-events: none;
 }
 
 /* Base dialog styling */
 nui-dialog dialog {
 	padding: 0;
 	border: none;
-	border-radius: var(--border-radius1);
-	background: var(--color-base);
+	border-radius: var(--border-radius2);
+	border: solid var(--border-thickness) var(--border-shade1);
+	background: var(--color-shade1);
 	color: var(--text-color);
-	box-shadow: 0 0 var(--shadow-radius0) 0 var(--shadow-color);
+	box-shadow: 0 0 2rem 0 rgba(0, 0, 0, 0.2);
 	max-width: 90vw;
 	max-height: 90vh;
 }
@@ -1010,14 +1081,14 @@ nui-dialog dialog {
 	position: relative;
 	padding: var(--nui-space-double);
 	width: 50%;
-	max-width: 36rem;
-	min-width: 22rem;
+	max-width: 40rem;
+	min-width: 25rem;
 	border-radius: var(--border-radius2);
 }
 
 .nui-headline {
 	font-size: 1.4rem;
-	font-weight: 600;
+	font-weight: 200;
 	margin-bottom: var(--nui-space);
 	color: var(--color-highlight);
 }
@@ -1029,19 +1100,13 @@ nui-dialog dialog {
 	color: var(--text-color);
 }
 
-.nui-dialog-actions {
-	display: flex;
-	gap: var(--nui-space);
+dialog nui-button-container {
 	margin-top: var(--nui-space);
 }
 
-.nui-dialog-actions.right {
-	justify-content: flex-end;
-}
-
 /* Button styling in dialogs */
-.nui-dialog-actions button {
-	min-width: var(--nui-space-double);
+dialog nui-button-container button {
+	min-width: 5rem;
 	min-height: var(--nui-space-double);
 	padding: var(--nui-space-quarter) var(--nui-space-half);
 	font-size: 0.8rem;
@@ -1054,23 +1119,23 @@ nui-dialog dialog {
 	text-transform: uppercase;
 }
 
-.nui-dialog-actions button.outline {
+dialog nui-button-container button.outline {
 	background: transparent;
 	color: var(--text-color);
 	border: solid var(--border-thickness) var(--border-shade3);
 }
 
-.nui-dialog-actions button.primary {
+dialog nui-button-container button.primary {
 	background: var(--color-highlight);
 	color: var(--color-white);
 }
 
-.nui-dialog-actions button:hover {
+dialog nui-button-container button:hover {
 	background: var(--color-highlight);
 	color: var(--color-white);
 }
 
-.nui-dialog-actions button.outline:hover {
+dialog nui-button-container button.outline:hover {
 	background: var(--color-shade2);
 	border-color: var(--color-highlight);
 }
@@ -1140,7 +1205,7 @@ nui-dialog dialog {
 	margin-bottom: calc(var(--nui-space) * 1.5);
 }
 
-.nui-dialog-login .nui-dialog-actions {
+.nui-dialog-login nui-button-container {
 	margin-top: var(--nui-space-double);
 }
 
@@ -1228,3 +1293,36 @@ nui-dialog dialog {
 .nui-dialog-page.no-foot .nui-dialog-footer {
 	display: none;
 }
+
+/* =============================================================================
+   CSS ANIMATIONS
+   ============================================================================= */
+
+/* Fade */
+.ani-fade-in { animation: ani-fade-in 0.2s forwards ease-out; }
+.ani-fade-out { animation: ani-fade-out 0.2s forwards ease-in; }
+@keyframes ani-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ani-fade-out { from { opacity: 1; } to { opacity: 0; } }
+
+/* Scale */
+.ani-scale-in { animation: ani-scale-in 0.2s forwards ease-out; }
+.ani-scale-out { animation: ani-scale-out 0.2s forwards ease-out; }
+@keyframes ani-scale-in { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
+@keyframes ani-scale-out { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.85); } }
+
+/* Slide */
+.ani-slide-in { animation: ani-slide-in 0.2s forwards ease-out; }
+.ani-slide-out { animation: ani-slide-out 0.2s forwards ease-in; }
+@keyframes ani-slide-in { from { opacity: 0; transform: translateY(1rem); } to { opacity: 1; transform: translateY(0); } }
+@keyframes ani-slide-out { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(1rem); } }
+
+/* Left/Right */
+.ani-left-in { animation: ani-left-in 0.2s forwards ease-out; }
+.ani-left-out { animation: ani-left-out 0.2s forwards ease-in; }
+@keyframes ani-left-in { from { opacity: 0; transform: translateX(-10%); } to { opacity: 1; transform: translateX(0); } }
+@keyframes ani-left-out { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(-10%); } }
+
+.ani-right-in { animation: ani-right-in 0.2s forwards ease-out; }
+.ani-right-out { animation: ani-right-out 0.2s forwards ease-in; }
+@keyframes ani-right-in { from { opacity: 0; transform: translateX(10%); } to { opacity: 1; transform: translateX(0); } }
+@keyframes ani-right-out { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(10%); } }

@@ -1,355 +1,686 @@
 <header>
 	<h1>Animation</h1>
-	<p>Simplified Web Animations API wrapper with shorthand properties and easing presets</p>
+	<p>A thin wrapper around the Web Animations API with shorthand properties and easing presets</p>
 </header>
 
 <section>
 	<h2>Overview</h2>
-	<p>The animation system provides a cleaner interface to the native Web Animations API. It adds shorthand properties for common transforms, built-in easing presets, and progress tracking callbacks.</p>
+	<p>The <code>nui.animate()</code> function wraps the native Web Animations API, adding convenience features while maintaining direct platform access. Every element also gets an <code>.ani()</code> method for fluent chaining.</p>
+	
+	<nui-code><pre><code>// Two equivalent ways to animate
+element.ani(duration, properties, options);
+nui.animate(element, duration, properties, options);
+
+// Returns animation controller with play/pause/cancel
+const ani = element.ani(1000, { x: 200 });
+ani.pause();
+ani.play();</code></pre></nui-code>
 </section>
 
 <section>
-	<h2>Basic Usage</h2>
-	<p>Animate any element using the <code>.ani()</code> method or <code>nui.animate()</code>:</p>
-	<nui-code lang="js">
-// Element method
-element.ani(1000, { x: 200, opacity: 1 });
-
-// Via nui object
-nui.animate(element, 1000, { x: 200, opacity: 1 });
-	</nui-code>
-
-	<div class="demo-section">
-		<div class="animation-stage">
-			<div class="animation-box" id="basic-box"></div>
+	<h2>Transform Shorthands</h2>
+	<p>Common transforms use intuitive shorthand names with automatic unit handling:</p>
+	
+	<div class="demo-grid">
+		<div class="demo-card">
+			<div class="demo-label"><code>x</code> / <code>y</code></div>
+			<div class="demo-stage"><nui-icon name="arrow" class="anim-icon" id="demo-xy"></nui-icon></div>
+			<nui-button><button type="button" id="play-xy">Translate</button></nui-button>
 		</div>
-		<nui-button-container>
-			<nui-button><button type="button" id="basic-play">Play</button></nui-button>
-			<nui-button variant="outline"><button type="button" id="basic-reset">Reset</button></nui-button>
-		</nui-button-container>
+		<div class="demo-card">
+			<div class="demo-label"><code>scale</code></div>
+			<div class="demo-stage"><nui-icon name="fullscreen" class="anim-icon" id="demo-scale"></nui-icon></div>
+			<nui-button><button type="button" id="play-scale">Scale</button></nui-button>
+		</div>
+		<div class="demo-card">
+			<div class="demo-label"><code>rotate</code></div>
+			<div class="demo-stage"><nui-icon name="settings" class="anim-icon" id="demo-rotate"></nui-icon></div>
+			<nui-button><button type="button" id="play-rotate">Rotate</button></nui-button>
+		</div>
+		<div class="demo-card">
+			<div class="demo-label">Combined</div>
+			<div class="demo-stage"><nui-icon name="star_rate" class="anim-icon" id="demo-combined"></nui-icon></div>
+			<nui-button><button type="button" id="play-combined">All</button></nui-button>
+		</div>
 	</div>
-</section>
 
-<section>
-	<h2>Shorthand Properties</h2>
-	<p>Transform properties are simplified with automatic unit handling:</p>
-	<nui-code lang="js">
-element.ani(1000, {
-	x: 100,      // translateX(100px)
-	y: 50,       // translateY(50px)
-	scale: 1.5,  // scale(1.5)
-	rotate: 45,  // rotate(45deg)
-	opacity: 0.5
-});
-	</nui-code>
+	<nui-code><pre><code>// Shorthand → CSS transform
+{ x: 100 }      → translateX(100px)
+{ y: 50 }       → translateY(50px)
+{ scale: 1.5 }  → scale(1.5)
+{ rotate: 45 }  → rotate(45deg)
 
-	<table class="prop-table">
-		<thead>
-			<tr><th>Shorthand</th><th>CSS Property</th><th>Default Unit</th></tr>
-		</thead>
-		<tbody>
-			<tr><td><code>x</code></td><td>translateX</td><td>px</td></tr>
-			<tr><td><code>y</code></td><td>translateY</td><td>px</td></tr>
-			<tr><td><code>z</code></td><td>translateZ</td><td>px</td></tr>
-			<tr><td><code>scale</code></td><td>scale</td><td>—</td></tr>
-			<tr><td><code>scaleX</code></td><td>scaleX</td><td>—</td></tr>
-			<tr><td><code>scaleY</code></td><td>scaleY</td><td>—</td></tr>
-			<tr><td><code>rotate</code></td><td>rotate</td><td>deg</td></tr>
-			<tr><td><code>left, top, right, bottom</code></td><td>position</td><td>px</td></tr>
-			<tr><td><code>width, height</code></td><td>dimensions</td><td>px</td></tr>
-		</tbody>
-	</table>
+// Combine multiple transforms
+element.ani(800, { x: 100, y: 50, scale: 1.2, rotate: 15 });</code></pre></nui-code>
 </section>
 
 <section>
 	<h2>Easing Presets</h2>
-	<p>Use named easing functions with dot notation:</p>
-	<nui-code lang="js">
-element.ani(1000, { x: 200, ease: 'cubic.out' });
-element.ani(1000, { x: 200, ease: 'back.inOut' });
-	</nui-code>
-
-	<div class="demo-section">
-		<div class="easing-grid" id="easing-demo">
-			<div class="easing-row">
-				<span class="easing-label">sine.out</span>
-				<div class="easing-track"><div class="easing-ball" data-ease="sine.out"></div></div>
-			</div>
-			<div class="easing-row">
-				<span class="easing-label">quad.out</span>
-				<div class="easing-track"><div class="easing-ball" data-ease="quad.out"></div></div>
-			</div>
-			<div class="easing-row">
-				<span class="easing-label">cubic.out</span>
-				<div class="easing-track"><div class="easing-ball" data-ease="cubic.out"></div></div>
-			</div>
-			<div class="easing-row">
-				<span class="easing-label">quart.out</span>
-				<div class="easing-track"><div class="easing-ball" data-ease="quart.out"></div></div>
-			</div>
-			<div class="easing-row">
-				<span class="easing-label">expo.out</span>
-				<div class="easing-track"><div class="easing-ball" data-ease="expo.out"></div></div>
-			</div>
-			<div class="easing-row">
-				<span class="easing-label">back.out</span>
-				<div class="easing-track"><div class="easing-ball" data-ease="back.out"></div></div>
-			</div>
-		</div>
-		<nui-button-container>
-			<nui-button><button type="button" id="easing-play">Compare Easings</button></nui-button>
-		</nui-button-container>
+	<p>Named easing functions using dot notation. Each preset has <code>.in</code>, <code>.out</code>, and <code>.inOut</code> variants:</p>
+	
+	<div class="easing-comparison" id="easing-demo">
+		<div class="easing-row"><span class="easing-name">linear</span><div class="easing-track"><div class="easing-dot" data-ease="linear"></div></div></div>
+		<div class="easing-row"><span class="easing-name">sine.out</span><div class="easing-track"><div class="easing-dot" data-ease="sine.out"></div></div></div>
+		<div class="easing-row"><span class="easing-name">quad.out</span><div class="easing-track"><div class="easing-dot" data-ease="quad.out"></div></div></div>
+		<div class="easing-row"><span class="easing-name">cubic.out</span><div class="easing-track"><div class="easing-dot" data-ease="cubic.out"></div></div></div>
+		<div class="easing-row"><span class="easing-name">quart.out</span><div class="easing-track"><div class="easing-dot" data-ease="quart.out"></div></div></div>
+		<div class="easing-row"><span class="easing-name">expo.out</span><div class="easing-track"><div class="easing-dot" data-ease="expo.out"></div></div></div>
+		<div class="easing-row"><span class="easing-name">back.out</span><div class="easing-track"><div class="easing-dot" data-ease="back.out"></div></div></div>
 	</div>
+	<nui-button-container align="center">
+		<nui-button><button type="button" id="play-easing">Compare Easing</button></nui-button>
+	</nui-button-container>
 
-	<h3>Available Presets</h3>
-	<table class="prop-table">
-		<thead>
-			<tr><th>Family</th><th>Variants</th></tr>
-		</thead>
-		<tbody>
-			<tr><td><code>sine</code></td><td>.in, .out, .inOut</td></tr>
-			<tr><td><code>quad</code></td><td>.in, .out, .inOut</td></tr>
-			<tr><td><code>cubic</code></td><td>.in, .out, .inOut</td></tr>
-			<tr><td><code>quart</code></td><td>.in, .out, .inOut</td></tr>
-			<tr><td><code>quint</code></td><td>.in, .out, .inOut</td></tr>
-			<tr><td><code>expo</code></td><td>.in, .out, .inOut</td></tr>
-			<tr><td><code>circ</code></td><td>.in, .out, .inOut</td></tr>
-			<tr><td><code>back</code></td><td>.in, .out, .inOut</td></tr>
-		</tbody>
-	</table>
+	<nui-code><pre><code>// Available presets: sine, quad, cubic, quart, quint, expo, circ, back
+// Each has: .in (slow start), .out (slow end), .inOut (slow both)
+
+element.ani(600, { x: 200, ease: 'expo.out' });
+element.ani(400, { scale: 1.2, ease: 'back.out' });</code></pre></nui-code>
 </section>
 
 <section>
-	<h2>Keyframes</h2>
-	<p>Pass an array of keyframe objects for multi-step animations:</p>
-	<nui-code lang="js">
-element.ani(2000, [
-	{ x: 0, scale: 1 },
-	{ x: 100, scale: 1.2, offset: 0.3 },
-	{ x: 200, scale: 0.8, offset: 0.7 },
-	{ x: 300, scale: 1 }
-]);
-	</nui-code>
-
-	<div class="demo-section">
-		<div class="animation-stage wide">
-			<div class="animation-box" id="keyframe-box"></div>
-		</div>
-		<nui-button-container>
-			<nui-button><button type="button" id="keyframe-play">Play Keyframes</button></nui-button>
-		</nui-button-container>
+	<h2>Keyframe Sequences</h2>
+	<p>Pass an array of keyframes for multi-step animations. Use <code>offset</code> to control timing:</p>
+	
+	<div class="demo-stage-wide">
+		<nui-icon name="public" class="anim-icon" id="demo-keyframes"></nui-icon>
 	</div>
+	<nui-button-container align="center">
+		<nui-button><button type="button" id="play-keyframes">Play Sequence</button></nui-button>
+	</nui-button-container>
+
+	<nui-code><pre><code>element.ani(2000, [
+	{ x: 0, scale: 1, rotate: 0 },
+	{ x: 150, scale: 1.3, rotate: 0, offset: 0.3 },
+	{ x: 150, scale: 1.3, rotate: 180, offset: 0.6 },
+	{ x: 300, scale: 1, rotate: 360 }
+], { ease: 'cubic.inOut' });</code></pre></nui-code>
 </section>
 
 <section>
-	<h2>Options</h2>
-	<p>The third parameter accepts animation options:</p>
-	<nui-code lang="js">
-element.ani(1000, { x: 200 }, {
-	delay: 500,        // Start delay in ms
-	endDelay: 200,     // End delay before finish event
-	iterations: 3,     // Number of times to repeat
-	direction: 'alternate', // 'normal', 'reverse', 'alternate'
-	fill: 'forwards',  // 'none', 'forwards', 'backwards', 'both'
-	paused: true,      // Start paused
-	cb: (ani) => {},   // Callback on finish
-	update: (ani) => {},  // Called each frame
-	events: (e) => {}  // State change events
-});
-	</nui-code>
-
-	<div class="demo-section">
-		<div class="animation-stage">
-			<div class="animation-box" id="options-box"></div>
+	<h2>Animation Options</h2>
+	<p>Control timing, repetition, and direction through the options object:</p>
+	
+	<div class="options-demo">
+		<div class="option-row">
+			<div class="option-label">
+				<strong>delay / endDelay</strong>
+				<span>Wait before/after animation</span>
+			</div>
+			<div class="demo-stage"><nui-icon name="calendar" class="anim-icon" id="demo-delay"></nui-icon></div>
+			<nui-button><button type="button" id="play-delay">Play</button></nui-button>
 		</div>
-		<div class="animation-info" id="options-info">
-			<span>Progress: <strong id="options-progress">0%</strong></span>
-			<span>State: <strong id="options-state">idle</strong></span>
+		<div class="option-row">
+			<div class="option-label">
+				<strong>iterations</strong>
+				<span>Repeat count (Infinity for loop)</span>
+			</div>
+			<div class="demo-stage"><nui-icon name="sync" class="anim-icon" id="demo-iterations"></nui-icon></div>
+			<nui-button><button type="button" id="play-iterations">Play 3×</button></nui-button>
 		</div>
-		<nui-button-container>
-			<nui-button><button type="button" id="options-play">Play with Callbacks</button></nui-button>
-		</nui-button-container>
+		<div class="option-row">
+			<div class="option-label">
+				<strong>direction: alternate</strong>
+				<span>Reverse on repeat</span>
+			</div>
+			<div class="demo-stage"><nui-icon name="sort" class="anim-icon" id="demo-alternate"></nui-icon></div>
+			<nui-button><button type="button" id="play-alternate">Bounce</button></nui-button>
+		</div>
 	</div>
+
+	<nui-code><pre><code>// Delay start and end
+element.ani(500, { x: 200 }, { delay: 300, endDelay: 200 });
+
+// Repeat 3 times
+element.ani(400, { rotate: 360 }, { iterations: 3 });
+
+// Bounce back and forth
+element.ani(600, { x: 200 }, { iterations: 4, direction: 'alternate' });
+
+// Loop forever
+element.ani(1000, { rotate: 360 }, { iterations: Infinity });</code></pre></nui-code>
 </section>
 
 <section>
-	<h2>Control Methods</h2>
-	<p>The returned animation object provides control methods:</p>
-	<nui-code lang="js">
-const ani = element.ani(2000, { x: 300 }, { paused: true });
-
-ani.play();      // Start or resume
-ani.play(500);   // Jump to time and play
-ani.pause();     // Pause animation
-ani.cancel();    // Cancel and reset
-
-// Properties
-ani.progress     // 0-1 progress value
-ani.currentTime  // Current time in ms
-ani.state        // Animation state
-	</nui-code>
-
-	<div class="demo-section">
-		<div class="animation-stage wide">
-			<div class="animation-box" id="control-box"></div>
+	<h2>Playback Control</h2>
+	<p>The animation controller provides methods to pause, resume, cancel, and seek:</p>
+	
+	<div class="control-demo">
+		<div class="demo-stage-wide">
+			<nui-icon name="person" class="anim-icon" id="demo-control"></nui-icon>
 		</div>
-		<div class="animation-info" id="control-info">
+		<div class="control-info">
 			<span>Time: <strong id="control-time">0</strong>ms</span>
 			<span>Progress: <strong id="control-progress">0%</strong></span>
+			<span>State: <strong id="control-state">idle</strong></span>
 		</div>
-		<nui-button-container>
+		<nui-button-container align="center">
 			<nui-button><button type="button" id="control-play">Play</button></nui-button>
 			<nui-button variant="outline"><button type="button" id="control-pause">Pause</button></nui-button>
 			<nui-button variant="outline"><button type="button" id="control-cancel">Cancel</button></nui-button>
 		</nui-button-container>
 	</div>
+
+	<nui-code><pre><code>const ani = element.ani(3000, { x: 400 }, {
+	paused: true,  // Don't auto-start
+	update: (a) => {
+		console.log(a.currentTime, a.progress);
+	}
+});
+
+ani.play();          // Start/resume
+ani.pause();         // Pause
+ani.cancel();        // Stop and reset
+ani.play(1500);      // Seek to 1500ms and play</code></pre></nui-code>
+</section>
+
+<section>
+	<h2>Callbacks & Events</h2>
+	<p>React to animation lifecycle with callbacks and the events handler:</p>
+	
+	<div class="events-demo">
+		<div class="demo-stage-wide">
+			<nui-icon name="notifications" class="anim-icon" id="demo-events"></nui-icon>
+		</div>
+		<div class="event-log" id="event-log">Events will appear here...</div>
+		<nui-button-container align="center">
+			<nui-button><button type="button" id="play-events">Play with Events</button></nui-button>
+		</nui-button-container>
+	</div>
+
+	<nui-code><pre><code>element.ani(1500, [
+	{ x: 0, scale: 1 },
+	{ x: 150, scale: 1.5, offset: 0.5 },
+	{ x: 300, scale: 1 }
+], {
+	events: (e) => {
+		// e.type: 'start', 'running', 'keyframe', 'finished', etc.
+		console.log(e.type, e.idx);  // keyframe index when type='keyframe'
+	},
+	cb: (ani) => {
+		// Called when animation completes
+		console.log('Done!', ani.progress);
+	}
+});</code></pre></nui-code>
 </section>
 
 <section>
 	<h2>Chaining Animations</h2>
-	<p>Use the callback to chain sequential animations:</p>
-	<nui-code lang="js">
-element.ani(500, { scale: 1.2 }, {
-	cb: () => {
-		element.ani(500, { scale: 1, rotate: 360 }, {
+	<p>Use the <code>cb</code> callback to sequence animations:</p>
+	
+	<div class="demo-stage-wide">
+		<nui-icon name="stadia_controller" class="anim-icon" id="demo-chain"></nui-icon>
+	</div>
+	<nui-button-container align="center">
+		<nui-button><button type="button" id="play-chain">Run Sequence</button></nui-button>
+	</nui-button-container>
+
+	<nui-code><pre><code>// Chain with callbacks
+box.ani(300, { scale: 1.4, ease: 'back.out' }, {
+	cb: () => box.ani(400, { rotate: 180, ease: 'expo.out' }, {
+		cb: () => box.ani(300, { scale: 1, ease: 'back.out' }, {
+			cb: () => box.ani(400, { rotate: 360, x: 200, ease: 'expo.out' })
+		})
+	})
+});</code></pre></nui-code>
+</section>
+
+<section>
+	<h2>Practical Example: Button Feedback</h2>
+	<p>Micro-animations provide tactile feedback for user interactions:</p>
+	
+	<div class="practical-demo">
+		<nui-button><button type="button" class="feedback-btn" id="btn-success">Success</button></nui-button>
+		<nui-button><button type="button" class="feedback-btn" id="btn-error">Error</button></nui-button>
+		<nui-button><button type="button" class="feedback-btn" id="btn-loading">Submit</button></nui-button>
+	</div>
+
+	<nui-code><pre><code>// Success pulse
+btn.ani(150, { scale: 0.95 }, {
+	cb: () => btn.ani(300, { scale: 1, ease: 'back.out' })
+});
+
+// Error shake
+btn.ani(80, [
+	{ x: 0 }, { x: -8 }, { x: 8 }, { x: -8 }, { x: 8 }, { x: 0 }
+]);
+
+// Loading state with infinite rotation
+const spinner = btn.ani(800, { rotate: 360 }, { iterations: Infinity });
+// Later: spinner.cancel();</code></pre></nui-code>
+</section>
+
+<style>
+.demo-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+	gap: var(--nui-space);
+	margin: var(--nui-space) 0;
+}
+
+.demo-card {
+	background: var(--nui-surface);
+	border-radius: var(--nui-radius);
+	padding: var(--nui-space);
+	text-align: center;
+}
+
+.demo-label {
+	margin-bottom: var(--nui-space-half);
+	font-size: 0.875rem;
+}
+
+.demo-stage {
+	height: 80px;
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+	padding: 0 var(--nui-space);
+	background: var(--nui-surface-dim);
+	border-radius: var(--nui-radius-small);
+	margin-bottom: var(--nui-space-half);
+	overflow: hidden;
+}
+
+.demo-stage-wide {
+	height: 100px;
+	display: flex;
+	align-items: center;
+	padding: 0 var(--nui-space-double);
+	background: var(--nui-surface-dim);
+	border-radius: var(--nui-radius);
+	margin: var(--nui-space) 0;
+	overflow: hidden;
+}
+
+.anim-icon {
+	font-size: 2.5rem;
+	color: var(--nui-accent, #3b82f6);
+	flex-shrink: 0;
+}
+
+.easing-comparison {
+	background: var(--nui-surface-dim);
+	border-radius: var(--nui-radius);
+	padding: var(--nui-space);
+	margin: var(--nui-space) 0;
+}
+
+.easing-row {
+	display: flex;
+	align-items: center;
+	gap: var(--nui-space);
+	padding: 0.4rem 0;
+}
+
+.easing-name {
+	width: 80px;
+	font-size: 0.75rem;
+	font-family: var(--nui-font-mono);
+	color: var(--nui-text-dim);
+}
+
+.easing-track {
+	flex: 1;
+	height: 20px;
+	background: var(--nui-surface);
+	border-radius: 10px;
+	position: relative;
+	overflow: hidden;
+}
+
+.easing-dot {
+	width: 16px;
+	height: 16px;
+	background: var(--nui-accent, #3b82f6);
+	border-radius: 50%;
+	position: absolute;
+	top: 2px;
+	left: 2px;
+}
+
+.options-demo {
+	display: flex;
+	flex-direction: column;
+	gap: var(--nui-space);
+	margin: var(--nui-space) 0;
+}
+
+.option-row {
+	display: grid;
+	grid-template-columns: 200px 1fr auto;
+	gap: var(--nui-space);
+	align-items: center;
+	background: var(--nui-surface-dim);
+	padding: var(--nui-space);
+	border-radius: var(--nui-radius);
+}
+
+.option-label {
+	display: flex;
+	flex-direction: column;
+}
+
+.option-label span {
+	font-size: 0.75rem;
+	color: var(--nui-text-dim);
+}
+
+.control-demo {
+	background: var(--nui-surface-dim);
+	border-radius: var(--nui-radius);
+	padding: var(--nui-space);
+	margin: var(--nui-space) 0;
+}
+
+.control-info {
+	display: flex;
+	justify-content: center;
+	gap: var(--nui-space-double);
+	margin-bottom: var(--nui-space);
+	font-size: 0.875rem;
+}
+
+.control-info strong {
+	font-family: var(--nui-font-mono);
+	color: var(--nui-accent);
+}
+
+.events-demo {
+	background: var(--nui-surface-dim);
+	border-radius: var(--nui-radius);
+	padding: var(--nui-space);
+	margin: var(--nui-space) 0;
+}
+
+.event-log {
+	font-family: var(--nui-font-mono);
+	font-size: 0.75rem;
+	background: var(--nui-surface);
+	padding: var(--nui-space);
+	border-radius: var(--nui-radius-small);
+	margin-bottom: var(--nui-space);
+	height: 60px;
+	overflow-y: auto;
+	color: var(--nui-text-dim);
+}
+
+.practical-demo {
+	display: flex;
+	gap: var(--nui-space);
+	justify-content: center;
+	margin: var(--nui-space-double) 0;
+}
+
+.feedback-btn {
+	min-width: 100px;
+}
+
+@media (max-width: 600px) {
+	.option-row {
+		grid-template-columns: 1fr;
+	}
+	
+	.control-info {
+		flex-direction: column;
+		align-items: center;
+		gap: var(--nui-space-half);
+	}
+}
+</style>
+
+<script type="nui/page">
+function init(element, params) {
+	
+	// Helper to reset transform
+	function reset(el) {
+		el.style.transform = '';
+		el.style.opacity = '';
+	}
+
+	// ===== Transform Shorthands =====
+	
+	const xyBox = element.querySelector('#demo-xy');
+	element.querySelector('#play-xy').addEventListener('click', () => {
+		reset(xyBox);
+		xyBox.ani(600, { x: 120, y: 20, ease: 'quad.out' }, {
+			cb: () => xyBox.ani(600, { x: 0, y: 0, ease: 'quad.inOut' })
+		});
+	});
+
+	const scaleBox = element.querySelector('#demo-scale');
+	element.querySelector('#play-scale').addEventListener('click', () => {
+		reset(scaleBox);
+		scaleBox.ani(400, { scale: 1.6, ease: 'back.out' }, {
+			cb: () => scaleBox.ani(300, { scale: 1, ease: 'quad.out' })
+		});
+	});
+
+	const rotateBox = element.querySelector('#demo-rotate');
+	element.querySelector('#play-rotate').addEventListener('click', () => {
+		reset(rotateBox);
+		rotateBox.ani(800, { rotate: 360, ease: 'expo.out' });
+	});
+
+	const combinedBox = element.querySelector('#demo-combined');
+	element.querySelector('#play-combined').addEventListener('click', () => {
+		reset(combinedBox);
+		combinedBox.ani(800, { x: 80, scale: 1.3, rotate: 180, ease: 'cubic.out' }, {
+			cb: () => combinedBox.ani(600, { x: 0, scale: 1, rotate: 360, ease: 'cubic.inOut' })
+		});
+	});
+
+	// ===== Easing Comparison =====
+	
+	const easingDots = element.querySelectorAll('.easing-dot');
+	const easingAnimations = new Map();
+	element.querySelector('#play-easing').addEventListener('click', () => {
+		easingDots.forEach(dot => {
+			// Cancel any existing animation
+			if (easingAnimations.has(dot)) {
+				easingAnimations.get(dot).cancel();
+			}
+			dot.style.left = '2px';
+			const ease = dot.dataset.ease;
+			const trackWidth = dot.parentElement.offsetWidth;
+			const endPos = trackWidth - 18; // 16px dot + 2px padding
+			const ani = dot.ani(1200, { left: endPos }, { 
+				ease: ease === 'linear' ? undefined : ease 
+			});
+			easingAnimations.set(dot, ani);
+		});
+	});
+
+	// ===== Keyframe Sequence =====
+	
+	const keyframesBox = element.querySelector('#demo-keyframes');
+	element.querySelector('#play-keyframes').addEventListener('click', () => {
+		reset(keyframesBox);
+		keyframesBox.ani(2000, [
+			{ x: 0, scale: 1, rotate: 0 },
+			{ x: 150, scale: 1.3, rotate: 0, offset: 0.3 },
+			{ x: 150, scale: 1.3, rotate: 180, offset: 0.6 },
+			{ x: 350, scale: 1, rotate: 360 }
+		], { ease: 'cubic.inOut' });
+	});
+
+	// ===== Animation Options =====
+	
+	const delayBox = element.querySelector('#demo-delay');
+	element.querySelector('#play-delay').addEventListener('click', () => {
+		reset(delayBox);
+		delayBox.style.opacity = '0.4';
+		delayBox.ani(400, { x: 150, opacity: 1 }, { 
+			delay: 500, 
+			endDelay: 300,
+			ease: 'expo.out',
 			cb: () => {
-				element.ani(300, { opacity: 0 });
+				delayBox.ani(400, { x: 0, opacity: 0.4 }, { ease: 'expo.in' });
+			}
+		});
+	});
+
+	const iterBox = element.querySelector('#demo-iterations');
+	element.querySelector('#play-iterations').addEventListener('click', () => {
+		reset(iterBox);
+		iterBox.ani(300, { rotate: 360 }, { iterations: 3, ease: 'sine.inOut' });
+	});
+
+	const altBox = element.querySelector('#demo-alternate');
+	element.querySelector('#play-alternate').addEventListener('click', () => {
+		reset(altBox);
+		altBox.ani(400, { x: 150 }, { 
+			iterations: 4, 
+			direction: 'alternate',
+			ease: 'quad.inOut'
+		});
+	});
+
+	// ===== Playback Control =====
+	
+	const controlBox = element.querySelector('#demo-control');
+	const timeEl = element.querySelector('#control-time');
+	const progressEl = element.querySelector('#control-progress');
+	const stateEl = element.querySelector('#control-state');
+	let controlAni = null;
+
+	function createControlAnimation() {
+		reset(controlBox);
+		controlAni = controlBox.ani(3000, { x: 450 }, {
+			paused: true,
+			ease: 'sine.inOut',
+			update: (a) => {
+				timeEl.textContent = Math.round(a.currentTime);
+				progressEl.textContent = Math.round(a.progress * 100) + '%';
+			},
+			events: (e) => {
+				if (['running', 'paused', 'finished', 'idle'].includes(e.type)) {
+					stateEl.textContent = e.type;
+				}
 			}
 		});
 	}
-});
-	</nui-code>
+	createControlAnimation();
 
-	<div class="demo-section">
-		<div class="animation-stage">
-			<div class="animation-box" id="chain-box"></div>
-		</div>
-		<nui-button-container>
-			<nui-button><button type="button" id="chain-play">Play Chain</button></nui-button>
-		</nui-button-container>
-	</div>
-</section>
-
-<script>
-// nui is already available globally, Element.prototype.ani is set up
-
-// Basic animation
-const basicBox = document.getElementById('basic-box');
-document.getElementById('basic-play').addEventListener('click', () => {
-	basicBox.ani(800, { x: 200, ease: 'cubic.out' });
-});
-document.getElementById('basic-reset').addEventListener('click', () => {
-	basicBox.ani(400, { x: 0, ease: 'cubic.out' });
-});
-
-// Easing comparison
-document.getElementById('easing-play').addEventListener('click', () => {
-	document.querySelectorAll('.easing-ball').forEach(ball => {
-		ball.style.transform = 'translateX(0)';
-		const ease = ball.dataset.ease;
-		setTimeout(() => {
-			ball.ani(1500, { x: 220, ease });
-		}, 50);
-	});
-});
-
-// Keyframe animation
-const keyframeBox = document.getElementById('keyframe-box');
-document.getElementById('keyframe-play').addEventListener('click', () => {
-	keyframeBox.ani(2000, [
-		{ x: 0, scale: 1, rotate: 0, ease: 'cubic.inOut' },
-		{ x: 100, scale: 1.3, rotate: -10, offset: 0.25 },
-		{ x: 250, scale: 0.7, rotate: 10, offset: 0.5 },
-		{ x: 350, scale: 1.1, rotate: -5, offset: 0.75 },
-		{ x: 450, scale: 1, rotate: 0 }
-	]);
-});
-
-// Options with progress tracking
-const optionsBox = document.getElementById('options-box');
-const optionsProgress = document.getElementById('options-progress');
-const optionsState = document.getElementById('options-state');
-
-document.getElementById('options-play').addEventListener('click', () => {
-	optionsBox.style.transform = 'translateX(0)';
-	optionsBox.ani(2000, { x: 200, rotate: 180 }, {
-		ease: 'expo.inOut',
-		update: (ani) => {
-			optionsProgress.textContent = Math.round(ani.progress * 100) + '%';
-		},
-		events: (e) => {
-			optionsState.textContent = e.type;
-		},
-		cb: () => {
-			optionsState.textContent = 'finished';
+	element.querySelector('#control-play').addEventListener('click', () => {
+		if (!controlAni || controlAni.animation.playState === 'finished') {
+			createControlAnimation();
 		}
+		controlAni.play();
 	});
-});
 
-// Control methods
-const controlBox = document.getElementById('control-box');
-const controlTime = document.getElementById('control-time');
-const controlProgress = document.getElementById('control-progress');
-let controlAni = null;
-
-function initControlAnimation() {
-	controlBox.style.transform = 'translateX(0)';
-	controlAni = controlBox.ani(3000, { x: 450 }, {
-		paused: true,
-		ease: 'sine.inOut',
-		update: (ani) => {
-			controlTime.textContent = Math.round(ani.currentTime);
-			controlProgress.textContent = Math.round(ani.progress * 100) + '%';
-		}
+	element.querySelector('#control-pause').addEventListener('click', () => {
+		if (controlAni) controlAni.pause();
 	});
-}
-initControlAnimation();
 
-document.getElementById('control-play').addEventListener('click', () => {
-	if (!controlAni || controlAni.animation.playState === 'finished') {
-		initControlAnimation();
-	}
-	controlAni.play();
-});
+	element.querySelector('#control-cancel').addEventListener('click', () => {
+		if (controlAni) controlAni.cancel();
+		timeEl.textContent = '0';
+		progressEl.textContent = '0%';
+		stateEl.textContent = 'idle';
+		createControlAnimation();
+	});
 
-document.getElementById('control-pause').addEventListener('click', () => {
-	if (controlAni) controlAni.pause();
-});
-
-document.getElementById('control-cancel').addEventListener('click', () => {
-	if (controlAni) controlAni.cancel();
-	controlBox.style.transform = 'translateX(0)';
-	controlTime.textContent = '0';
-	controlProgress.textContent = '0%';
-	initControlAnimation();
-});
-
-// Chain animation
-const chainBox = document.getElementById('chain-box');
-document.getElementById('chain-play').addEventListener('click', () => {
-	chainBox.style.transform = '';
-	chainBox.style.opacity = '1';
+	// ===== Events Demo =====
 	
-	chainBox.ani(400, { scale: 1.3, ease: 'back.out' }, {
-		cb: () => {
-			chainBox.ani(600, { scale: 1, rotate: 360, ease: 'expo.out' }, {
-				cb: () => {
-					chainBox.ani(400, { y: -30, ease: 'quad.out' }, {
-						cb: () => {
-							chainBox.ani(300, { y: 0, ease: 'quad.in' }, {
-								cb: () => {
-									chainBox.ani(500, { scale: 0.8, opacity: 0.3, ease: 'expo.in' }, {
-										cb: () => {
-											chainBox.ani(400, { scale: 1, opacity: 1, ease: 'back.out' });
-										}
-									});
-								}
-							});
-						}
-					});
+	const eventsBox = element.querySelector('#demo-events');
+	const eventLog = element.querySelector('#event-log');
+
+	function log(msg) {
+		const time = new Date().toLocaleTimeString('en', { hour12: false });
+		eventLog.innerHTML = `<div>${time} — ${msg}</div>` + eventLog.innerHTML;
+	}
+
+	element.querySelector('#play-events').addEventListener('click', () => {
+		reset(eventsBox);
+		eventLog.innerHTML = '';
+		log('Animation started');
+		
+		eventsBox.ani(1500, [
+			{ x: 0, scale: 1 },
+			{ x: 150, scale: 1.5, offset: 0.5 },
+			{ x: 350, scale: 1 }
+		], {
+			ease: 'cubic.inOut',
+			events: (e) => {
+				if (e.type === 'keyframe') {
+					log(`Keyframe ${e.idx} reached`);
+				} else if (e.type === 'finished') {
+					log('Animation finished');
 				}
-			});
-		}
+			},
+			cb: (ani) => {
+				log(`Callback fired (progress: ${Math.round(ani.progress * 100)}%)`);
+			}
+		});
 	});
-});
+
+	// ===== Chain Animation =====
+	
+	const chainBox = element.querySelector('#demo-chain');
+	element.querySelector('#play-chain').addEventListener('click', () => {
+		reset(chainBox);
+		
+		chainBox.ani(300, { scale: 1.4, ease: 'back.out' }, {
+			cb: () => chainBox.ani(400, { rotate: 180, ease: 'expo.out' }, {
+				cb: () => chainBox.ani(300, { scale: 1, ease: 'back.out' }, {
+					cb: () => chainBox.ani(500, { x: 350, rotate: 360, ease: 'expo.out' }, {
+						cb: () => chainBox.ani(400, { x: 0, scale: 1, ease: 'cubic.inOut' })
+					})
+				})
+			})
+		});
+	});
+
+	// ===== Practical Examples =====
+	
+	element.querySelector('#btn-success').addEventListener('click', function() {
+		this.ani(100, { scale: 0.92 }, {
+			cb: () => this.ani(300, { scale: 1, ease: 'back.out' })
+		});
+	});
+
+	element.querySelector('#btn-error').addEventListener('click', function() {
+		this.ani(400, [
+			{ x: 0 }, { x: -6 }, { x: 6 }, { x: -6 }, { x: 6 }, { x: -4 }, { x: 4 }, { x: 0 }
+		]);
+	});
+
+	let loadingAni = null;
+	const submitBtn = element.querySelector('#btn-loading');
+	submitBtn.addEventListener('click', function() {
+		if (loadingAni) {
+			loadingAni.cancel();
+			loadingAni = null;
+			this.textContent = 'Submit';
+			this.style.transform = '';
+			return;
+		}
+		
+		this.textContent = '⟳';
+		loadingAni = this.ani(800, { rotate: 360 }, { iterations: Infinity });
+		
+		// Auto-stop after 3 seconds for demo
+		setTimeout(() => {
+			if (loadingAni) {
+				loadingAni.cancel();
+				loadingAni = null;
+				this.textContent = 'Submit';
+				this.style.transform = '';
+			}
+		}, 3000);
+	});
+
+	// Cleanup
+	element.hide = () => {
+		if (loadingAni) {
+			loadingAni.cancel();
+			loadingAni = null;
+		}
+		if (controlAni) {
+			controlAni.cancel();
+			controlAni = null;
+		}
+	};
+}
 </script>

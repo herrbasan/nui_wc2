@@ -489,3 +489,87 @@ The rock-throwing process was particularly valuable:
 
 When thinking is rigorous, documentation is just transcription of the thinking process. The design work IS the documentation work.
 
+---
+
+## #4Zp8K3 - December 4, 2025
+**Animation Module Extraction & Dialog Animations**
+
+Extracted animation functionality into optional module and implemented CSS-based dialog animations, including a creative hack for backdrop fade-out.
+
+### Animation Module Split
+- Created `NUI/lib/modules/nui-animation.js` as optional Web Animations API wrapper
+- Contains easing presets (cubic-bezier curves), property templates, and `nui.animation.animate()` API
+- Auto-initializes when imported after `nui.js` - no manual setup required
+- Core library stays lean; animation loaded only when needed
+
+### CSS Animation Helper
+Added `nui.cssAnimation(element, className, callback)` to core:
+```javascript
+// Applies class, waits for animationend, removes class, calls callback
+// Returns cancel function for cleanup
+const cancel = nui.cssAnimation(dialog, 'ani-scale-out', () => {
+    dialog.close();
+});
+```
+
+Simple but powerful - CSS keyframes handle the animation, JS just orchestrates.
+
+### Dialog Animation Implementation
+**The Problem:** CSS `::backdrop` pseudo-element can animate on open (via `@starting-style`) but NOT on close. Browser removes it instantly when dialog closes.
+
+**The Hack:** Create a fake backdrop div that matches the real one, animate IT out, then remove:
+```javascript
+// On close: hide real backdrop, animate fake backdrop, then clean up
+dialog.classList.add('closing');  // Hides real ::backdrop
+const fakeBackdrop = createMatchingBackdrop(dialog);
+nui.cssAnimation(fakeBackdrop, 'ani-fade-out', () => {
+    fakeBackdrop.remove();
+    dialog.classList.remove('closing');
+    dialog.close();
+});
+```
+
+### Race Condition Protection
+Dialog now tracks animation state to prevent rapid open/close conflicts:
+- `isAnimating` flag prevents overlapping animations
+- `cleanup()` function cancels pending animations before new ones
+- Cancel functions returned by `nui.cssAnimation()` enable proper cleanup
+
+### CSS Keyframes Added
+```css
+/* NUI/css/nui-theme.css */
+@keyframes ani-fade-in { from { opacity: 0; } }
+@keyframes ani-fade-out { to { opacity: 0; } }
+@keyframes ani-scale-in { from { transform: scale(0.9); opacity: 0; } }
+@keyframes ani-scale-out { to { transform: scale(0.9); opacity: 0; } }
+@keyframes ani-slide-in { from { transform: translateY(-1rem); opacity: 0; } }
+/* ... and more */
+```
+
+### Easing Demo Fixes
+Fixed animation demo page bugs:
+- `getNestedEase` was being called with undefined - added null check
+- Easing dots used `translateX` with percentages - doesn't work (relative to element, not container) - switched to `left` property
+- Dots not resetting - `fill: forwards` held final state - now cancel previous animations before restart
+
+### Bug Fix: Cached Page Functions
+Dialog demo page was deleting `window.showCustomDialog` in its `hide()` cleanup. This broke when page was cached and revisited. Removed unnecessary cleanup - functions can persist.
+
+### Lessons Learned
+- **Pseudo-element limitations are real**: `::backdrop` can't be animated on close, period. Fake element hack is the only way.
+- **CSS animations > JS animations for simple cases**: Let the browser optimize. JS just adds/removes classes.
+- **Race conditions multiply with animations**: Every async operation needs cancellation support.
+- **fill: forwards fights cleanup**: When using Web Animations API, track and cancel animations explicitly.
+- **translateX percentages are tricky**: They're relative to the element itself, not the parent. Use left/top for parent-relative positioning.
+
+### Files Modified
+- `NUI/lib/modules/nui-animation.js` - New file (extracted from core)
+- `NUI/nui.js` - Removed animation code, added `nui.cssAnimation()`, updated dialog component
+- `NUI/css/nui-theme.css` - Added keyframe animations, dialog backdrop styles
+- `Playground/js/main.js` - Import animation module
+- `Playground/pages/components/animation.html` - Fixed easing demo
+- `Playground/pages/components/dialog.html` - Removed broken hide() cleanup
+
+### Future Work Noted
+- `nui-dialog` should use `nui-button-container` instead of its own button structure
+

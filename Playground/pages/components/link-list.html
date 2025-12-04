@@ -1,5 +1,3 @@
-<script type="module" src="/Playground/pages/components/link-list.js"></script>
-
 <section>
 	<h1>Link List Component</h1>
 	<p>
@@ -404,3 +402,188 @@ linkList.loadData(navigationData);</code></pre>
 	</ul>
 	
 </section>
+
+<script type="nui/page">
+function init(element, params) {
+	// Navigation data structure
+	const demoNavigationData = [
+		{
+			label: 'Content & Windows',
+			icon: 'wysiwyg',
+			items: [
+				{ label: 'Content' },
+				{ label: 'Windows' }
+			]
+		},
+		{
+			label: 'Buttons & Fields',
+			icon: 'empty_dashboard',
+			items: [
+				{ label: 'Buttons' },
+				{ label: 'Fields' }
+			]
+		},
+		{
+			label: 'Group',
+			icon: 'folder',
+			items: [
+				{ label: 'Some Item' },
+				{ label: 'Another Item' },
+				{
+					label: 'Sub Group',
+					icon: 'calendar',
+					items: [
+						{ label: 'Subgroup Item 1' },
+						{ label: 'Subgroup Item 2' }
+					]
+				}
+			]
+		},
+		{
+			label: 'Functions & Objects',
+			icon: 'filter_list',
+			items: [
+				{ label: 'Function Item 1' },
+				{ label: 'Function Item 2' },
+				{ label: 'Function Item 3' },
+				{ separator: true },
+				{ label: 'Object Item 1' },
+				{ label: 'Object Item 2' }
+			]
+		},
+		{
+			label: 'Developer Tools',
+			icon: 'monitor',
+			items: [
+				{ label: 'Overview' },
+				{
+					label: 'Build Tools',
+					icon: 'settings',
+					items: [
+						{ label: 'Configuration' },
+						{ label: 'Scripts' },
+						{
+							label: 'Plugins',
+							icon: 'layers',
+							items: [
+								{ label: 'Babel' },
+								{ label: 'Webpack' },
+								{ label: 'ESLint' }
+							]
+						}
+					]
+				},
+				{
+					label: 'Testing',
+					icon: 'search',
+					items: [
+						{ label: 'Unit Tests' },
+						{ label: 'Integration Tests' },
+						{ label: 'E2E Tests' }
+					]
+				}
+			]
+		}
+	];
+
+	const demoFold = element.querySelector('#demo-fold');
+	const demoTree = element.querySelector('#demo-tree');
+	
+	if (demoFold && demoFold.loadData) {
+		demoFold.loadData(demoNavigationData);
+	}
+	
+	if (demoTree && demoTree.loadData) {
+		demoTree.loadData(demoNavigationData);
+	}
+	
+	const codeBlock = element.querySelector('#nav-structure-code');
+	if (codeBlock) {
+		codeBlock.textContent = JSON.stringify(demoNavigationData, null, 2);
+	}
+	
+	// Setup interactive testing
+	const foldStateDisplay = element.querySelector('#fold-state-display');
+	const treeStateDisplay = element.querySelector('#tree-state-display');
+	const instanceId = 'link-list-page-' + Date.now();
+	
+	function updateFoldStateDisplay() {
+		if (!foldStateDisplay || !demoFold) return;
+		const foldData = demoFold.getActiveData?.();
+		foldStateDisplay.textContent = foldData ? `Active Item:\n  ${foldData.text}` : 'No active item';
+	}
+	
+	function updateTreeStateDisplay() {
+		if (!treeStateDisplay || !demoTree) return;
+		const treeData = demoTree.getActiveData?.();
+		treeStateDisplay.textContent = treeData ? `Active Item:\n  ${treeData.text}` : 'No active item';
+	}
+	
+	// Fold Mode: Set Active: ESLint
+	element.querySelector('#btn-set-eslint')?.addEventListener('nui-click', () => {
+		const allLinks = Array.from(demoFold.querySelectorAll('a:has(span)'));
+		const eslintItem = allLinks.find(link => link.textContent.trim() === 'ESLint');
+		if (eslintItem) demoFold.setActive(eslintItem);
+		updateFoldStateDisplay();
+	});
+	
+	// Fold Mode: Get Active State
+	element.querySelector('#btn-get-active-fold')?.addEventListener('nui-click', () => {
+		const foldData = demoFold.getActiveData?.();
+		alert(foldData ? `Fold Mode Active:\n\nText: ${foldData.text}` : 'Fold Mode: No active item');
+		updateFoldStateDisplay();
+	});
+	
+	// Fold Mode: Clear Active
+	element.querySelector('#btn-clear-active-fold')?.addEventListener('nui-click', () => {
+		demoFold.clearActive?.(true);
+		updateFoldStateDisplay();
+	});
+	
+	// Tree Mode: Set Active: Subgroup Item 1
+	element.querySelector('#btn-set-sub1')?.addEventListener('nui-click', () => {
+		const allLinks = Array.from(demoTree.querySelectorAll('a:has(span)'));
+		const subItem = allLinks.find(link => link.textContent.trim() === 'Subgroup Item 1');
+		if (subItem) demoTree.setActive(subItem);
+		updateTreeStateDisplay();
+	});
+	
+	// Tree Mode: Get Active State
+	element.querySelector('#btn-get-active-tree')?.addEventListener('nui-click', () => {
+		const treeData = demoTree.getActiveData?.();
+		alert(treeData ? `Tree Mode Active:\n\nText: ${treeData.text}` : 'Tree Mode: No active item');
+		updateTreeStateDisplay();
+	});
+	
+	// Tree Mode: Clear Active
+	element.querySelector('#btn-clear-active-tree')?.addEventListener('nui-click', () => {
+		demoTree.clearActive?.();
+		updateTreeStateDisplay();
+	});
+	
+	// Watch for state changes
+	if (demoFold) {
+		const foldId = demoFold.getAttribute('nui-id');
+		if (foldId && nui.knower) {
+			nui.knower.watch(`${foldId}:active`, () => updateFoldStateDisplay(), instanceId);
+		}
+	}
+	
+	if (demoTree) {
+		const treeId = demoTree.getAttribute('nui-id');
+		if (treeId && nui.knower) {
+			nui.knower.watch(`${treeId}:active`, () => updateTreeStateDisplay(), instanceId);
+		}
+	}
+	
+	updateFoldStateDisplay();
+	updateTreeStateDisplay();
+	
+	// Cleanup on hide
+	element.hide = () => {
+		if (nui.knower) {
+			nui.knower.clean(instanceId);
+		}
+	};
+}
+</script>

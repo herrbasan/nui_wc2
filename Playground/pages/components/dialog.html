@@ -40,29 +40,34 @@
     </nui-dialog>
 </div>
 
-<script>
-    window.showResult = function (text) {
-        document.getElementById('dialog-result').textContent = 'Result: ' + JSON.stringify(text);
+<script type="nui/page">
+function init(element, params) {
+    const resultEl = element.querySelector('#dialog-result');
+    
+    function showResult(text) {
+        resultEl.textContent = 'Result: ' + JSON.stringify(text);
     }
 
-    window.runConfirm = async function () {
+    // Attach handlers to window for inline onclick attributes
+    window.showResult = showResult;
+
+    window.runConfirm = async function() {
         const res = await nui.dialog.confirm('Confirmation', 'Are you sure you want to proceed?');
         showResult(res);
-    }
+    };
 
-    window.runPrompt = async function () {
+    window.runPrompt = async function() {
         const res = await nui.dialog.prompt('Enter Details', [
             { id: 'name', label: 'Name', value: 'John Doe' },
             { id: 'email', label: 'Email', type: 'email' }
         ]);
         showResult(res);
-    }
+    };
 
-    window.runLogin = async function () {
+    window.runLogin = async function() {
         const res = await nui.dialog.login({
             title: 'System Login',
             callback: (ctl) => {
-                // Simulate async check
                 setTimeout(() => {
                     if (ctl.values.login === 'admin' && ctl.values.password === '1234') {
                         ctl.close();
@@ -73,17 +78,17 @@
             }
         });
         showResult(res);
-    }
+    };
 
-    window.runConsent = function () {
+    window.runConsent = function() {
         nui.dialog.consent({
             text: 'We use cookies to improve your experience. Do you accept?',
             btn_allow: 'Accept All',
             btn_abort: 'Reject'
         }, (action) => showResult(action));
-    }
+    };
 
-    window.runProgress = function () {
+    window.runProgress = function() {
         const prog = nui.dialog.progress('Processing...');
         let val = 0;
         const max = 100;
@@ -103,9 +108,9 @@
                 showResult('Completed');
             }
         }, 200);
-    }
+    };
 
-    window.runModal = function () {
+    window.runModal = function() {
         nui.dialog.modal({
             header_title: 'My Modal Page',
             content: '<p>This is a generic modal page with custom content.</p><p>It can contain anything.</p>',
@@ -121,5 +126,6 @@
                 if (e.type === 'save') e.target.closest('nui-dialog').close();
             }
         });
-    }
+    };
+}
 </script>

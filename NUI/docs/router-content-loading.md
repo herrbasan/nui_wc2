@@ -94,18 +94,26 @@ The router is the **central coordinator** for what's visible in your application
                             │           Router                     │
                             │  - Watches URL changes               │
                             │  - Parses hash into route            │
-                            │  - Calls registered handler          │
-                            │  - Handler returns DOM element       │
+                            │  - Checks cache for element          │
+                            │  - Cache miss: calls pageContent()   │
                             │  - Router shows element, hides rest  │
                             │  - Owns the content container        │
+                            └─────────────────────────────────────┘
+                                           │
+                                           ▼
+                            ┌─────────────────────────────────────┐
+                            │        pageContent(type, id, params) │
+                            │  - Dispatcher function               │
+                            │  - Returns wrapper element immediately│
+                            │  - Content injected asynchronously   │
                             └─────────────────────────────────────┘
                                            │
                     ┌──────────────────────┼──────────────────────┐
                     ▼                      ▼                      ▼
              ┌────────────┐        ┌─────────────┐        ┌─────────────┐
-             │ 'page'     │        │ 'feature'   │        │ 'view'      │
-             │ handler    │        │ handler     │        │ handler     │
-             │ (fetches)  │        │ (app logic) │        │ (whatever)  │
+             │ type='page'│        │type='feature│        │ (other)     │
+             │ Content    │        │ Registered  │        │ Custom      │
+             │ Loader     │        │ init fn     │        │ handlers    │
              └────────────┘        └─────────────┘        └─────────────┘
 ```
 
@@ -113,9 +121,10 @@ The router is the **central coordinator** for what's visible in your application
 
 1. **URL is the single source of truth** - All state derives from `location.hash`
 2. **Router manages visibility** - It shows one thing, hides everything else
-3. **Handlers provide elements** - They return DOM elements, router doesn't care how
-4. **Link-list is decoupled** - It just creates links; highlights based on URL match
-5. **Everything is show/hide** - Once created, elements persist and are toggled
+3. **Element First** - Wrapper element returned immediately, content injected async
+4. **Unified dispatcher** - Single `pageContent(type, id, params)` function routes to appropriate handler
+5. **Link-list is decoupled** - It just creates links; highlights based on URL match
+6. **Everything is show/hide** - Once created, elements persist and are toggled
 
 ---
 
@@ -236,7 +245,7 @@ const router = nui.createRouter(container, {
 
 ### The "Element First" Pattern
 
-The router creates wrapper elements immediately and lets handlers populate them asynchronously. This ensures:
+The `pageContent` dispatcher returns wrapper elements immediately and injects content asynchronously. This ensures:
 - Instant visual response (no blocking)
 - No race conditions (each element is independent)
 - Handlers control their own loading/progress/error states
@@ -246,68 +255,107 @@ Navigate to #page=intro
        │
        ▼
 ┌─────────────────────────────┐
-│ Router creates wrapper      │ ← Immediate, synchronous
-│ element, caches it, shows it│
+│ Router checks cache         │
+│ Cache miss → calls          │
+│ pageContent('page','intro') │
 └──────────────┬──────────────┘
                │
                ▼
 ┌─────────────────────────────┐
-│ Handler called with element │ ← Async, non-blocking
-│ reference, populates it     │
+│ pageContent returns wrapper │ ← Immediate, synchronous
+│ element with loading state  │
+└──────────────┬──────────────┘
+               │
+               ▼
+┌─────────────────────────────┐
+│ Router caches element,      │
+│ shows it immediately        │
+└──────────────┬──────────────┘
+               │
+               ▼
+┌─────────────────────────────┐
+│ Content injected async      │ ← Non-blocking
+│ init() called when ready    │
 └─────────────────────────────┘
 ```
 
-### Registering Handlers
+### The pageContent Dispatcher
 
-Handlers receive `(id, params, element)` and populate the element:
+A single function dispatches to the appropriate handler based on route type:
 
 ```javascript
-// Lazy-loaded content fragments
-router.handle('page', async (id, params, element) => {
-    // Show loading state (handler's choice)
-    element.innerHTML = '<div class="loading">Loading...</div>';
+function pageContent(type, id, params) {
+    // Create wrapper immediately
+    const wrapper = document.createElement('div');
+    wrapper.className = `content-${type}`;
+    wrapper.innerHTML = '<div class="loading">Loading...</div>';
     
-    try {
-        const response = await fetch(`/pages/${id}.html`);
-        const html = await response.text();
-        element.innerHTML = html;
-        // Execute scripts if needed
-    } catch (error) {
-        element.innerHTML = `<div class="error">Failed to load ${id}</div>`;
+    if (type === 'page') {
+        // Built-in content loader for HTML fragments
+        loadFragment(`/pages/${id}.html`, wrapper, params);
+    } else if (type === 'feature') {
+        // Registered feature initializers
+        const initFn = registeredFeatures[id];
+        if (initFn) {
+            initFn(wrapper, params);
+        } else {
+            wrapper.innerHTML = `<div class="error">Unknown feature: ${id}</div>`;
+        }
     }
+    
+    return wrapper;  // Return immediately, content loads async
+}
+```
+
+### Registering Features
+
+App-specific features are registered with init functions:
+
+```javascript
+nui.registerFeature('dashboard', (element, params) => {
+    // Build dashboard UI
+    element.innerHTML = '<div class="dashboard">...</div>';
+    
+    // Attach lifecycle hooks
+    element.show = (params) => {
+        refreshDashboard(element, params);
+    };
+    
+    element.hide = () => {
+        pausePolling();
+    };
 });
 
-// App features with progress tracking
-router.handle('feature', async (id, params, element) => {
-    element.innerHTML = '<progress-bar value="0"></progress-bar>';
-    
-    const data = await loadData(id, (progress) => {
-        element.querySelector('progress-bar').value = progress;
-    });
-    
-    renderFeature(element, data, params);
-});
-
-// Synchronous handler (no loading state needed)
-router.handle('view', (id, params, element) => {
-    element.innerHTML = generateView(id, params);
+nui.registerFeature('settings', (element, params) => {
+    element.innerHTML = '<div class="settings">...</div>';
+    setupSettings(element);
 });
 ```
 
-### Handler Responsibilities
+### Responsibility Split
 
-The router handles:
-- Creating wrapper elements
-- Caching elements by route key
-- Show/hide management
-- Passing params to handlers
-- Calling lifecycle hooks
+**Router handles:**
+- Watching URL changes
+- Checking/managing element cache
+- Calling `pageContent(type, id, params)`
+- Show/hide management (including `inert` attribute)
+- Calling lifecycle hooks (`element.show(params)`, `element.hide()`)
+- Focus management on navigation
 
-Handlers handle:
-- Loading UI (spinners, skeletons, progress bars)
-- Fetching/generating content
-- Error display
-- Updating content when params change
+**pageContent handles:**
+- Creating wrapper element immediately
+- Dispatching to content loader (for `page` type) or registered features
+- Returning wrapper synchronously
+
+**Content loader handles:**
+- Fetching HTML fragments
+- Injecting content into wrapper
+- Extracting and executing `<script type="nui/page">`
+- Calling `init(element, params)` from fragment scripts
+
+**Feature init functions handle:**
+- Building feature UI
+- Attaching lifecycle hooks if needed
 
 ### Element Lifecycle Hooks
 
@@ -318,15 +366,15 @@ element.show?.(params);   // Called when element becomes visible
 element.hide?.();         // Called when element is hidden
 ```
 
-**Example: Handler with lifecycle hooks**
+**Example: Feature with lifecycle hooks**
 
 ```javascript
-router.handle('dashboard', async (id, params, element) => {
+nui.registerFeature('dashboard', (element, params) => {
     let refreshInterval = null;
     
     // Initial render
     element.innerHTML = '<div class="dashboard">Loading...</div>';
-    await renderDashboard(element, params);
+    renderDashboard(element, params);
     
     // Lifecycle: called when shown (including re-shows with new params)
     element.show = (params) => {
@@ -374,14 +422,20 @@ router.current;  // { type: 'page', id: 'docs/intro', params: {}, element: <div>
 
 ### On Hash Change
 
-1. Parse hash into `{ type, id, params }`
-2. Generate cache key: `${type}:${id}`
-3. Check if element already exists (cached)
-4. If not, call registered handler → handler returns element
-5. Append element to container (if not already there)
-6. Hide all children of container
-7. Show the target element
-8. If `params.id` exists, scroll to that element
+1. Parse hash into `{ type, id }`
+2. Parse search into `params` object
+3. Generate cache key: `${type}:${id}`
+4. Check if element already exists (cached)
+5. If cache miss:
+   - Call `pageContent(type, id, params)`
+   - `pageContent` returns wrapper element immediately
+   - Cache the element
+6. Call `element.hide()` on previously visible element (if any)
+7. Set `inert` attribute on all other children
+8. Remove `inert` from target element, show it
+9. Call `element.show(params)` on target element
+10. Move focus to target element
+11. If `params.id` exists, scroll to that element within the page
 
 ### Element Caching
 
@@ -400,75 +454,44 @@ Visit to #page=docs/intro&id=advanced:
 
 ---
 
-## Content Types
+## Content Handling
 
-The router doesn't enforce content types—handlers define them:
+The unified `pageContent` dispatcher handles different content types:
 
-### Type 1: Lazy-Loaded Fragments
+### Built-in: Page Type (HTML Fragments)
+
+When `type === 'page'`, the content loader fetches and injects HTML:
 
 ```javascript
-router.handle('page', async (id, params) => {
-    // Fetch HTML fragment, inject into wrapper, return wrapper
-    const response = await fetch(`/pages/${id}.html`);
-    const html = await response.text();
+// Automatic for #page=components/icon
+// Fetches /pages/components/icon.html
+// Injects content, executes <script type="nui/page">
+```
+
+### Registered: Feature Type
+
+When `type === 'feature'`, calls a registered init function:
+
+```javascript
+nui.registerFeature('dashboard', (element, params) => {
+    element.innerHTML = '<div class="dashboard">...</div>';
+    initDashboard(element);
     
-    const wrapper = document.createElement('div');
-    wrapper.className = `content-page page-${id.replace(/\//g, '-')}`;
-    wrapper.innerHTML = html;
-    
-    // Execute scripts in fragment
-    executeScripts(wrapper);
-    
-    return wrapper;
+    element.show = (params) => refreshData(params);
+    element.hide = () => stopPolling();
 });
+
+// Then #feature=dashboard triggers this init function
 ```
 
-### Type 2: App Features (Main.js Controlled)
+### Custom Types
+
+Register additional type handlers for specialized needs:
 
 ```javascript
-// In main.js - create feature elements once
-const dashboardEl = createDashboard();
-const settingsEl = createSettings();
-
-router.handle('feature', (id, params) => {
-    const features = {
-        dashboard: dashboardEl,
-        settings: settingsEl
-    };
-    return features[id];
-});
-```
-
-### Type 3: Template-Based (Pre-loaded)
-
-```html
-<!-- In index.html -->
-<template id="tmpl-about">
-    <h1>About</h1>
-    <p>Version 1.0</p>
-</template>
-```
-
-```javascript
-router.handle('info', (id, params) => {
-    const template = document.getElementById(`tmpl-${id}`);
-    if (!template) return null;
-    
-    const clone = template.content.cloneNode(true);
-    const wrapper = document.createElement('div');
-    wrapper.appendChild(clone);
-    return wrapper;
-});
-```
-
-### Type 4: Dynamically Generated
-
-```javascript
-router.handle('report', (id, params) => {
-    const el = document.createElement('div');
-    el.innerHTML = `<h1>Report: ${id}</h1>`;
-    // Generate report content based on params
-    return el;
+nui.registerType('report', (id, params, element) => {
+    // Custom handling for #report=quarterly
+    generateReport(element, id, params);
 });
 ```
 
@@ -521,75 +544,125 @@ URL changes ──┬──▶ Router shows/hides content
 
 ---
 
-## Fragment Script Patterns
+## Fragment Script Pattern
 
-When loading HTML fragments, scripts need to execute in the right context.
+HTML fragments can include initialization logic via a special script type. This provides controlled execution without the problems of script re-injection (global pollution, redeclaration errors, no cleanup).
 
-### Pattern A: External Module (Recommended for Complex Pages)
+### The `<script type="nui/page">` Pattern
 
 ```html
-<!-- fragment.html -->
-<script type="module" src="/pages/my-page.js"></script>
+<!-- pages/components/icon.html -->
 <header>
-    <h1>My Page</h1>
+    <h1>Icon Component</h1>
 </header>
-<section>...</section>
-```
-
-```javascript
-// my-page.js
-function initPage() {
-    const el = document.getElementById('my-element');
-    el.addEventListener('click', handleClick);
-}
-
-// Handle both initial load and dynamic injection
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initPage);
-} else {
-    initPage();
-}
-```
-
-### Pattern B: Inline Script (Simple Interactivity)
-
-```html
-<!-- fragment.html -->
-<section>
-    <button id="my-btn">Click Me</button>
+<section class="demo">
+    <nui-icon name="settings"></nui-icon>
+    <button class="demo-button">Toggle</button>
 </section>
-<script>
-// Script at end - elements already exist
-// nui is available globally
-document.getElementById('my-btn').addEventListener('click', () => {
-    console.log('Clicked!');
-});
+
+<script type="nui/page">
+// This script is NOT executed by browser (unknown type)
+// Content loader extracts and calls init() with controlled scope
+
+function init(element, params) {
+    // 'element' is the wrapper containing this content
+    // 'params' are the search params from URL (?key=value)
+    
+    const btn = element.querySelector('.demo-button');
+    btn.addEventListener('click', () => {
+        element.querySelector('nui-icon').classList.toggle('spin');
+    });
+    
+    // Optional: attach lifecycle hooks to element
+    element.show = (params) => {
+        console.log('Icon page shown with params:', params);
+    };
+    
+    element.hide = () => {
+        console.log('Icon page hidden');
+    };
+}
 </script>
 ```
 
-### Script Execution
+### How It Works
 
-The content loader re-injects scripts to trigger execution:
+1. **Browser ignores `type="nui/page"`** — Unknown script types are not executed
+2. **Content loader extracts the script** — Removes from DOM after reading
+3. **Creates scoped function** — Script runs in function scope, not global
+4. **Calls `init(element, params)`** — One-time initialization when content loads
+5. **Lifecycle hooks persist** — `element.show()` / `element.hide()` called by router
+
+### Script Execution Implementation
 
 ```javascript
-function executeScripts(container) {
-    const scripts = container.querySelectorAll('script');
-    for (const oldScript of scripts) {
-        const newScript = document.createElement('script');
-        
-        // Copy attributes
-        for (const attr of oldScript.attributes) {
-            newScript.setAttribute(attr.name, attr.value);
-        }
-        
-        // Copy content
-        newScript.textContent = oldScript.textContent;
-        
-        // Replace to trigger execution
-        oldScript.parentNode.replaceChild(newScript, oldScript);
-    }
+function executePageScript(wrapper, params) {
+    const scriptEl = wrapper.querySelector('script[type="nui/page"]');
+    if (!scriptEl) return;
+    
+    // Remove from DOM (already read)
+    scriptEl.remove();
+    
+    // Create function with controlled scope
+    // Script must define init(element, params)
+    const initFn = new Function(
+        'element', 
+        'params', 
+        scriptEl.textContent + '\nif (typeof init === "function") init(element, params);'
+    );
+    
+    // Execute initialization
+    initFn(wrapper, params);
 }
 ```
+
+### Why This Pattern
+
+| Old Pattern (re-injection) | New Pattern (`nui/page`) |
+|---------------------------|-------------------------|
+| Global scope pollution | Function scope (isolated) |
+| `const`/`let` redeclaration errors on revisit | Fresh scope each time |
+| No cleanup mechanism | `element.hide()` for cleanup |
+| Browser executes, then we re-execute | Single controlled execution |
+| Hard to debug (which execution?) | Clear: init runs once |
+
+### Lifecycle Flow
+
+```
+First navigation to #page=components/icon:
+  1. Content loader fetches HTML
+  2. Injects into wrapper
+  3. Extracts <script type="nui/page">
+  4. Calls init(wrapper, params) — runs ONCE
+  5. Router calls element.show(params)
+
+Navigate away:
+  6. Router calls element.hide()
+
+Navigate back (cache hit):
+  7. Router calls element.show(params) — init NOT called again
+  8. Same element, same event listeners, just shown again
+```
+
+### External Modules (Complex Pages)
+
+For pages with significant logic, use external modules instead:
+
+```html
+<!-- pages/dashboard.html -->
+<script type="module" src="/pages/dashboard.js"></script>
+<div class="dashboard">...</div>
+```
+
+```javascript
+// pages/dashboard.js
+// Standard ES module - full control over scope and lifecycle
+export function init(element, params) {
+    // Complex initialization
+}
+```
+
+The content loader can detect and handle module scripts appropriately.
 
 ---
 
@@ -619,13 +692,23 @@ For apps needing more control, use `createRouter` directly.
 
 | Component | Responsibility | Coupling |
 |-----------|---------------|----------|
-| **URL (hash)** | Single source of truth | - |
-| **Router** | Parse URL, manage visibility | Owns container |
-| **Handlers** | Create/return DOM elements | Registered with router |
+| **URL (hash)** | Single source of truth (WHERE) | - |
+| **URL (search)** | Element-specific data (WHAT) | - |
+| **Router** | Parse URL, manage cache, visibility, lifecycle | Owns container |
+| **pageContent** | Dispatch to content loader or feature init | Called by router |
+| **Content loader** | Fetch HTML, inject, execute `nui/page` scripts | Used by pageContent |
+| **Feature init** | Build app features, attach lifecycle hooks | Registered with nui |
 | **Link-list** | Render links, highlight active | Watches URL only |
-| **Content loader** | Fetch/cache HTML fragments | Used by handler |
 
-**The URL drives everything.** Router and link-list both react to URL changes independently. Handlers are the extension point for different content types.
+**The URL drives everything.** Router and link-list both react to URL changes independently. The `pageContent` dispatcher routes to the appropriate handler based on type.
+
+### Key Patterns
+
+1. **Element First**: Wrapper returned immediately, content loads async
+2. **Unified Dispatcher**: Single `pageContent` function for all route types
+3. **Controlled Script Execution**: `<script type="nui/page">` with scoped `init(element, params)`
+4. **Lifecycle Hooks**: `element.show(params)` and `element.hide()` for navigation events
+5. **Accessibility**: `inert` attribute on hidden elements, focus management on navigation
 
 ---
 
