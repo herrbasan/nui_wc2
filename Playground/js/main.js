@@ -17,9 +17,9 @@ const mode = urlParams.get('mode'); // Future: different test modes
 
 console.log('URL params:', { skipInit, mode });
 
-// Configure NUI for playground paths (optional - default should work)
+// Configure NUI for playground paths
 nui.configure({
-	iconSpritePath: '/NUI/assets/material-icons-sprite.svg'
+	iconSpritePath: '../NUI/assets/material-icons-sprite.svg'
 });
 
 // Register custom actions
