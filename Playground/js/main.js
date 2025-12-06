@@ -17,13 +17,6 @@ const mode = urlParams.get('mode'); // Future: different test modes
 
 console.log('URL params:', { skipInit, mode });
 
-// Detect base path for GitHub Pages compatibility
-// Gets the path up to /Playground/ and uses sibling /NUI/
-const basePath = new URL('.', import.meta.url).pathname.replace(/\/Playground\/.*$/, '');
-nui.configure({
-	iconSpritePath: `${basePath}/NUI/assets/material-icons-sprite.svg`
-});
-
 // Register custom actions
 nui.registerAction('show-alert', (target, source, event, param) => {
 	alert(`Button clicked: ${source.textContent.trim()}`);

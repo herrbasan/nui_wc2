@@ -4,10 +4,14 @@
 // ################################# CORE SYSTEMS
 
 const components = {};
+
+// Auto-detect base path from this script's location
+const nuiBasePath = new URL('.', import.meta.url).pathname.replace(/\/$/, '');
+
 const config = {
 	sanitizeActions: true,
 	sanitizeRoutes: true,
-	iconSpritePath: '/NUI/assets/material-icons-sprite.svg'
+	iconSpritePath: `${nuiBasePath}/assets/material-icons-sprite.svg`
 };
 
 // ################################# THE DOER
