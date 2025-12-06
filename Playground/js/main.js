@@ -152,7 +152,7 @@ if (sideNav && sideNav.loadData) {
 nui.enableContentLoading({
 	container: 'nui-content main',
 	navigation: 'nui-side-nav',
-	basePath: '/Playground/pages',
+	basePath: 'pages',
 	defaultPage: 'introduction'
 });
 
