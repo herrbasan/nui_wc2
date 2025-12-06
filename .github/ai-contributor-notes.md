@@ -573,3 +573,82 @@ Dialog demo page was deleting `window.showCustomDialog` in its `hide()` cleanup.
 ### Future Work Noted
 - `nui-dialog` should use `nui-button-container` instead of its own button structure
 
+---
+
+## #6Tm2P8 - December 6, 2025
+**Banner Component & GitHub Pages Deployment**
+
+Completed the banner component (separated from dialog) and set up GitHub Pages for hosting the Playground documentation.
+
+### Banner Component Implementation
+- Created `<nui-banner>` for edge-anchored notifications (distinct from centered dialogs)
+- Features: placement (top/bottom), auto-close with progress indicator, priority levels (info/alert for ARIA)
+- Factory: `nui.banner.create()` with singleton-per-placement pattern - calling again reuses existing banner
+- Content area architecture: `nui-content` now contains `.nui-content-scroll` (scrollable) and `.nui-banner-layer` (fixed overlay) as siblings
+
+### The Content Area Problem
+Initial implementation had banners inside the scroll container - they scrolled with content (wrong). Moving banners outside caused them to overlay top-nav/footer.
+
+**Solution:** Restructured `nui-content` with inner scroll wrapper:
+```html
+<nui-content>
+  <div class="nui-content-scroll">
+    <main>...</main>
+  </div>
+  <div class="nui-banner-layer">
+    <!-- Banners render here, outside scroll -->
+  </div>
+</nui-content>
+```
+
+Banners now stay fixed relative to content area without affecting scrollbars or overlaying other layout elements.
+
+### GitHub Pages Deployment
+Created `.github/workflows/deploy-playground.yml`:
+- Triggers on push to main or manual dispatch
+- Copies Playground and NUI folders preserving relative paths
+- Root redirects to Playground/index.html
+
+### Path Resolution Gotchas
+
+**Problem 1: Content loading**
+`basePath: '/Playground/pages'` broke on GitHub Pages (project lives at `/nui_wc2/`).
+**Fix:** Changed to relative path `basePath: 'pages'`
+
+**Problem 2: Icon sprite**
+Icons in HTML rendered before `nui.configure()` could run.
+**Fix:** Made `nui.js` auto-detect its own base path using `import.meta.url`:
+```javascript
+const nuiBasePath = new URL('.', import.meta.url).pathname.replace(/\/$/, '');
+const config = {
+    iconSpritePath: `${nuiBasePath}/assets/material-icons-sprite.svg`
+};
+```
+
+This works regardless of where the library is hosted - no manual configuration needed.
+
+### README Rewrite
+Replaced 993-line implementation-focused README with ~50-line philosophy-focused version:
+- Early development notice upfront
+- Key selling points: Fast, Accessible, Simple
+- Links to GitHub Pages Playground for documentation
+- Friendly tone (no preaching)
+
+### Theme Variables Added
+```css
+--color-banner-bg
+--color-banner-text  
+--color-banner-progress
+```
+
+### Key Insights
+- **Relative paths are fragile**: GitHub Pages project sites live at `/repo-name/`, breaking absolute paths. Auto-detection via `import.meta.url` is robust.
+- **Script execution order matters**: Icons in HTML are processed before module scripts run. Configuration must happen in the library itself, not in user code.
+- **README is marketing**: Implementation details belong in documentation. README should answer "why should I care?" not "how does it work?"
+- **Scroll container architecture**: Fixed overlays need to be siblings of scroll containers, not descendants.
+
+**Live Playground:** https://herrbasan.github.io/nui_wc2/
+
+---
+
+**Last Updated:** December 6, 2025
