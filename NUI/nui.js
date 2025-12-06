@@ -1185,6 +1185,18 @@ registerComponent('nui-link-list', (element) => {
 });
 
 registerComponent('nui-content', (element) => {
+	// In app-mode, wrap content in scroll container for banner layer support
+	const isAppMode = element.closest('nui-app[data-layout="app"]');
+	if (isAppMode && !element.querySelector(':scope > .nui-content-scroll')) {
+		// Move existing children into scroll container
+		const scrollContainer = document.createElement('div');
+		scrollContainer.className = 'nui-content-scroll';
+		while (element.firstChild) {
+			scrollContainer.appendChild(element.firstChild);
+		}
+		element.appendChild(scrollContainer);
+	}
+
 	const main = element.querySelector('main');
 	if (main) {
 		if (!main.hasAttribute('role')) {
@@ -1274,6 +1286,7 @@ registerComponent('nui-dialog', (element) => {
 	if (!dialog) return;
 
 	let isAnimating = false;
+	let isModal = false;
 	let cancelDialogAni = null;
 	let cancelBackdropAni = null;
 	let fakeBackdrop = null;
@@ -1297,7 +1310,22 @@ registerComponent('nui-dialog', (element) => {
 		if (dialog.open) return;
 		
 		cleanup(); // Cancel any pending close animation
+		isModal = true;
 		dialog.showModal();
+		isAnimating = true;
+		cancelDialogAni = nui.cssAnimation(dialog, 'ani-scale-in', () => {
+			isAnimating = false;
+			cancelDialogAni = null;
+		});
+		knower.tell(`dialog:${element.id}:open`, true);
+	};
+
+	element.show = () => {
+		if (dialog.open) return;
+		
+		cleanup(); // Cancel any pending close animation
+		isModal = false;
+		dialog.show();
 		isAnimating = true;
 		cancelDialogAni = nui.cssAnimation(dialog, 'ani-scale-in', () => {
 			isAnimating = false;
@@ -1313,11 +1341,15 @@ registerComponent('nui-dialog', (element) => {
 		isAnimating = true;
 		
 		dialog.classList.add('closing');
-		fakeBackdrop = document.createElement('div');
-		fakeBackdrop.className = 'nui-dialog-backdrop';
-		document.body.appendChild(fakeBackdrop);
 		
-		cancelBackdropAni = nui.cssAnimation(fakeBackdrop, 'ani-fade-out');
+		// Only create fake backdrop for modal dialogs
+		if (isModal) {
+			fakeBackdrop = document.createElement('div');
+			fakeBackdrop.className = 'nui-dialog-backdrop';
+			document.body.appendChild(fakeBackdrop);
+			cancelBackdropAni = nui.cssAnimation(fakeBackdrop, 'ani-fade-out');
+		}
+		
 		cancelDialogAni = nui.cssAnimation(dialog, 'ani-scale-out', () => {
 			cleanup();
 			dialog.close(returnValue);
@@ -1352,26 +1384,233 @@ registerComponent('nui-dialog', (element) => {
 	doer.register('dialog-close', () => element.close(), instanceId);
 });
 
+// ################################# nui-banner COMPONENT
+
+registerComponent('nui-banner', (element) => {
+	let isOpen = false;
+	let autoCloseTimer = null;
+	let countdown = 0;
+	let cancelOpenAni = null;
+	let cancelCloseAni = null;
+
+	const cleanup = () => {
+		if (cancelOpenAni) cancelOpenAni();
+		if (cancelCloseAni) cancelCloseAni();
+		if (autoCloseTimer) clearTimeout(autoCloseTimer);
+		cancelOpenAni = null;
+		cancelCloseAni = null;
+		autoCloseTimer = null;
+	};
+
+	// Set accessibility defaults
+	const priority = element.getAttribute('priority') || 'info';
+	if (priority === 'alert') {
+		element.setAttribute('role', 'alert');
+		element.setAttribute('aria-live', 'assertive');
+	} else {
+		element.setAttribute('role', 'status');
+		element.setAttribute('aria-live', 'polite');
+	}
+
+	// Determine animation direction based on placement
+	const getAnimations = () => {
+		const placement = element.getAttribute('placement') || 'bottom';
+		if (placement === 'top') {
+			return { in: 'ani-slide-in-top', out: 'ani-slide-out-top' };
+		}
+		return { in: 'ani-slide-in-bottom', out: 'ani-slide-out-bottom' };
+	};
+
+	element.show = () => {
+		if (isOpen) return;
+
+		cleanup();
+		isOpen = true;
+		element.setAttribute('open', '');
+		
+		const animations = getAnimations();
+		cancelOpenAni = nui.cssAnimation(element, animations.in, () => {
+			cancelOpenAni = null;
+		});
+
+		// Start auto-close timer if configured (value is in milliseconds)
+		const autoClose = element.getAttribute('auto-close');
+		if (autoClose && parseInt(autoClose, 10) > 0) {
+			const duration = parseInt(autoClose, 10);
+			autoCloseTimer = setTimeout(() => {
+				element.close('timeout');
+			}, duration);
+		}
+
+		knower.tell(`banner:${element.id}:open`, true);
+		element.dispatchEvent(new CustomEvent('nui-banner-open', { bubbles: true }));
+	};
+
+	element.close = (action = 'close') => {
+		if (!isOpen) return;
+
+		cleanup();
+		
+		const animations = getAnimations();
+		cancelCloseAni = nui.cssAnimation(element, animations.out, () => {
+			isOpen = false;
+			element.removeAttribute('open');
+			cancelCloseAni = null;
+			
+			knower.tell(`banner:${element.id}:open`, false);
+			knower.tell(`banner:${element.id}:action`, action);
+			element.dispatchEvent(new CustomEvent('nui-banner-close', { 
+				bubbles: true, 
+				detail: { action } 
+			}));
+		});
+	};
+
+	element.update = (content) => {
+		if (typeof content === 'string') {
+			// Find first text node or element and update
+			const textEl = element.querySelector('p, span, [data-content]');
+			if (textEl) textEl.textContent = content;
+		}
+	};
+
+	element.isOpen = () => isOpen;
+
+	const instanceId = ensureInstanceId(element, 'banner');
+	doer.register('banner-show', () => element.show(), instanceId);
+	doer.register('banner-close', () => element.close(), instanceId);
+	doer.register('banner-action', (target, source, event, param) => {
+		const action = source?.dataset?.action || param || 'action';
+		element.close(action);
+	}, instanceId);
+});
+
+// ################################# BANNER FACTORY
+
+const activeBanners = { top: null, bottom: null };
+
+const bannerFactory = {
+	create(options = {}) {
+		const placement = options.placement || 'bottom';
+		// Smart target detection: prefer content area in app-mode, fallback to body
+		let target = options.target;
+		if (!target) {
+			const contentArea = document.querySelector('nui-app nui-content');
+			if (contentArea) {
+				// Use or create banner layer as sibling to scroll container
+				let bannerLayer = contentArea.querySelector(':scope > .nui-banner-layer');
+				if (!bannerLayer) {
+					bannerLayer = document.createElement('div');
+					bannerLayer.className = 'nui-banner-layer';
+					contentArea.appendChild(bannerLayer);
+				}
+				target = bannerLayer;
+			} else {
+				target = document.body;
+			}
+		}
+		
+		// Close existing banner at this placement (singleton per placement)
+		if (activeBanners[placement]) {
+			activeBanners[placement].element.close('replaced');
+		}
+
+		// Create banner element
+		const banner = document.createElement('nui-banner');
+		banner.id = 'nui-banner-' + Date.now();
+		banner.setAttribute('placement', placement);
+		if (options.priority) banner.setAttribute('priority', options.priority);
+		if (options.autoClose) banner.setAttribute('auto-close', options.autoClose);
+
+		// Set content with optional close button
+		const wrapper = document.createElement('div');
+		wrapper.style.cssText = 'display: flex; justify-content: space-between; align-items: flex-start; padding: 1rem; gap: 1rem;';
+		
+		const contentEl = document.createElement('div');
+		contentEl.style.cssText = 'flex: 1; max-height: 50vh; overflow-y: auto;';
+		if (typeof options.content === 'string') {
+			contentEl.innerHTML = options.content;
+		} else if (options.content instanceof Element) {
+			contentEl.appendChild(options.content);
+		}
+		wrapper.appendChild(contentEl);
+
+		// Add close button unless explicitly disabled
+		const showCloseButton = options.showCloseButton !== false;
+		if (showCloseButton) {
+			const closeBtn = document.createElement('button');
+			closeBtn.type = 'button';
+			closeBtn.textContent = '✕';
+			closeBtn.style.cssText = 'background: none; border: none; cursor: pointer; font-size: 1.25rem; padding: 0.25rem; flex-shrink: 0; color: inherit; opacity: 0.8;';
+			closeBtn.onclick = () => banner.close('dismiss');
+			wrapper.appendChild(closeBtn);
+		}
+
+		banner.appendChild(wrapper);
+
+		// Add auto-close progress indicator if enabled
+		if (options.autoClose && options.showProgress !== false) {
+			const progressBar = document.createElement('div');
+			progressBar.className = 'nui-banner-progress';
+			progressBar.style.animationDuration = options.autoClose + 'ms';
+			progressBar.style.animationName = 'nui-banner-progress';
+			banner.appendChild(progressBar);
+		}
+
+		target.appendChild(banner);
+
+		// Create controller
+		const controller = {
+			element: banner,
+			close(action) {
+				banner.close(action);
+			},
+			update(content) {
+				banner.update(content);
+			},
+			onClose(callback) {
+				banner.addEventListener('nui-banner-close', (e) => {
+					callback(e.detail.action);
+				}, { once: true });
+			}
+		};
+
+		// Track active banner
+		activeBanners[placement] = controller;
+
+		// Clean up tracking on close
+		banner.addEventListener('nui-banner-close', () => {
+			if (activeBanners[placement]?.element === banner) {
+				activeBanners[placement] = null;
+			}
+			banner.remove();
+		}, { once: true });
+
+		// Show the banner
+		banner.show();
+
+		return controller;
+	}
+};
+
 // ################################# DIALOG SYSTEM
 
 const dialogSystem = {
-	_getSystemDialog() {
-		let dialog = document.getElementById('nui-system-dialog');
-		if (!dialog) {
-			dialog = document.createElement('nui-dialog');
-			dialog.id = 'nui-system-dialog';
-			dialog.innerHTML = '<dialog><div class="nui-dialog-content"></div></dialog>';
-			document.body.appendChild(dialog);
-		}
+	_createDialog(target, placement) {
+		const dialog = document.createElement('nui-dialog');
+		dialog.id = 'nui-system-dialog-' + Date.now();
+		if (placement) dialog.setAttribute('placement', placement);
+		dialog.innerHTML = '<dialog><div class="nui-dialog-content"></div></dialog>';
+		(target || document.body).appendChild(dialog);
 		return dialog;
 	},
 
-	_show(htmlContent, classes = []) {
-		const dialog = this._getSystemDialog();
+	_show(htmlContent, options = {}) {
+		const { classes = [], target, placement, modal = true } = options;
+		const dialog = this._createDialog(target, placement);
 		const content = dialog.querySelector('.nui-dialog-content');
 		const nativeDialog = dialog.querySelector('dialog');
 
-		nativeDialog.className = '';
 		if (classes.length) nativeDialog.classList.add(...classes);
 
 		if (typeof htmlContent === 'string') {
@@ -1381,11 +1620,19 @@ const dialogSystem = {
 			content.appendChild(htmlContent);
 		}
 
-		dialog.showModal();
+		if (modal) {
+			dialog.showModal();
+		} else {
+			dialog.show();
+		}
+		
+		// Auto-remove dialog element when closed
+		nativeDialog.addEventListener('close', () => dialog.remove(), { once: true });
+		
 		return dialog;
 	},
 
-	alert(title, message) {
+	alert(title, message, options = {}) {
 		return new Promise((resolve) => {
 			const html = `
 				<div class="nui-dialog-alert">
@@ -1396,7 +1643,7 @@ const dialogSystem = {
 					</nui-button-container>
 				</div>
 			`;
-			const dialog = this._show(html, ['nui-alert']);
+			const dialog = this._show(html, { classes: ['nui-alert'], ...options });
 
 			const onOk = () => {
 				dialog.close('ok');
@@ -1409,7 +1656,7 @@ const dialogSystem = {
 		});
 	},
 
-	confirm(title, message) {
+	confirm(title, message, options = {}) {
 		return new Promise((resolve) => {
 			const html = `
 				<div class="nui-dialog-alert">
@@ -1421,7 +1668,7 @@ const dialogSystem = {
 					</nui-button-container>
 				</div>
 			`;
-			const dialog = this._show(html, ['nui-alert']);
+			const dialog = this._show(html, { classes: ['nui-alert'], ...options });
 
 			const onOk = () => { dialog.close('ok'); resolve(true); };
 			const onCancel = () => { dialog.close('cancel'); resolve(false); };
@@ -1432,7 +1679,7 @@ const dialogSystem = {
 		});
 	},
 
-	prompt(title, fields) {
+	prompt(title, fields, options = {}) {
 		return new Promise((resolve) => {
 			const inputsHtml = fields.map(f => `
 				<div class="nui-input">
@@ -1451,7 +1698,7 @@ const dialogSystem = {
 					</nui-button-container>
 				</div>
 			`;
-			const dialog = this._show(html, ['nui-prompt']);
+			const dialog = this._show(html, { classes: ['nui-prompt'], ...options });
 
 			const onOk = () => {
 				const values = {};
@@ -1474,196 +1721,6 @@ const dialogSystem = {
 				if (first) first.focus();
 			}, 50);
 		});
-	},
-
-	login(options) {
-		return new Promise((resolve) => {
-			const html = `
-				<div class="nui-dialog-login">
-					<div class="nui-headline">${options.title || 'Enter Credentials:'}</div>
-					<div class="nui-dialog-body">
-						<div class="nui-input">
-							<label>${options.label_login || 'Login'}:</label>
-							<input id="login-user" autocomplete="username">
-						</div>
-						<div class="nui-input">
-							<label>${options.label_password || 'Password'}:</label>
-							<input id="login-pass" type="password" autocomplete="current-password">
-						</div>
-						<div id="login-error" class="nui-error-message" style="display:none; color:var(--palette-alert); margin-top:0.5rem;"></div>
-					</div>
-					<nui-button-container align="end">
-						<button class="primary" id="nui-dialog-enter">${options.label_button || 'Enter'}</button>
-					</nui-button-container>
-				</div>
-			`;
-			const dialog = this._show(html, ['nui-login']);
-
-			const errorEl = dialog.querySelector('#login-error');
-			const userIn = dialog.querySelector('#login-user');
-			const passIn = dialog.querySelector('#login-pass');
-			const btn = dialog.querySelector('#nui-dialog-enter');
-
-			const showError = (msg) => {
-				errorEl.textContent = msg;
-				errorEl.style.display = 'block';
-				userIn.value = '';
-				passIn.value = '';
-				userIn.focus();
-				btn.classList.remove('progress');
-			};
-
-			const onEnter = async () => {
-				btn.classList.add('progress');
-				errorEl.style.display = 'none';
-
-				if (options.callback) {
-					const controller = {
-						values: { login: userIn.value, password: passIn.value },
-						error: showError,
-						close: () => {
-							dialog.close('ok');
-							resolve({ login: userIn.value, password: passIn.value });
-						}
-					};
-					options.callback(controller);
-				} else {
-					dialog.close('ok');
-					resolve({ login: userIn.value, password: passIn.value });
-				}
-			};
-
-			btn.addEventListener('click', onEnter);
-			passIn.addEventListener('keydown', e => { if (e.key === 'Enter') onEnter(); });
-
-			setTimeout(() => userIn.focus(), 50);
-		});
-	},
-
-	consent(options, callback) {
-		let timer = null;
-		let counter = 15;
-
-		const html = `
-			<div class="nui-dialog-consent">
-				<div class="nui-copy">${options.text}</div>
-				<nui-button-container align="between">
-					<button class="outline" id="nui-dialog-decline">
-						${options.btn_abort || 'Decline'} <span id="consent-timer">(15)</span>
-					</button>
-					<button class="primary" id="nui-dialog-allow">${options.btn_allow || 'Allow'}</button>
-				</nui-button-container>
-			</div>
-		`;
-		const dialog = this._show(html, ['nui-consent']);
-
-		const timerSpan = dialog.querySelector('#consent-timer');
-
-		const close = (action) => {
-			if (timer) clearInterval(timer);
-			dialog.close(action);
-			if (callback) callback(action);
-		};
-
-		timer = setInterval(() => {
-			counter--;
-			if (counter < 0) {
-				close('abort');
-			} else {
-				timerSpan.textContent = `(${counter})`;
-			}
-		}, 1000);
-
-		dialog.querySelector('#nui-dialog-decline').addEventListener('click', () => close('abort'), { once: true });
-		dialog.querySelector('#nui-dialog-allow').addEventListener('click', () => close('allow'), { once: true });
-	},
-
-	progress(title) {
-		const html = `
-			<div class="nui-dialog-progress">
-				<div class="nui-headline">${title}</div>
-				<div class="nui-progress-container">
-					<div class="nui-progress-text">Starting...</div>
-					<div class="nui-progress-bar-track">
-						<div class="nui-progress-bar-fill" style="width: 0%"></div>
-					</div>
-				</div>
-				<nui-button-container align="end">
-					<button class="outline" id="nui-dialog-stop">Stop</button>
-				</nui-button-container>
-			</div>
-		`;
-		const dialog = this._show(html, ['nui-progress']);
-
-		const textEl = dialog.querySelector('.nui-progress-text');
-		const fillEl = dialog.querySelector('.nui-progress-bar-fill');
-
-		return {
-			update(current, max) {
-				const pct = Math.min(100, Math.max(0, (current / max) * 100));
-				textEl.textContent = `${current} of ${max}`;
-				fillEl.style.width = `${pct}%`;
-			},
-			onStop(cb) {
-				dialog.querySelector('#nui-dialog-stop').addEventListener('click', () => {
-					cb(() => dialog.close('stop'));
-				});
-			},
-			close() {
-				dialog.close();
-			}
-		};
-	},
-
-	modal(options) {
-		const html = `
-			<div class="nui-dialog-page" style="${options.maxWidth ? 'max-width:' + options.maxWidth : ''}">
-				<div class="nui-dialog-header">
-					<h2>${options.header_title || ''}</h2>
-					<button class="icon-only close-btn"><nui-icon name="close"></nui-icon></button>
-				</div>
-				<div class="nui-dialog-body"></div>
-				<div class="nui-dialog-footer"></div>
-			</div>
-		`;
-		const dialog = this._show(html, ['nui-modal-page']);
-
-		const body = dialog.querySelector('.nui-dialog-body');
-		if (options.content instanceof Element) {
-			body.appendChild(options.content);
-		} else {
-			body.innerHTML = options.content || '';
-		}
-
-		if (options.buttons) {
-			const footer = dialog.querySelector('.nui-dialog-footer');
-			['left', 'center', 'right'].forEach(pos => {
-				if (options.buttons[pos]) {
-					const div = document.createElement('div');
-					div.className = pos;
-					options.buttons[pos].forEach(btn => {
-						const b = document.createElement('button');
-						b.textContent = btn.name;
-						if (btn.type) b.setAttribute('type', btn.type);
-						b.dataset.action = btn.action;
-						b.addEventListener('click', () => {
-							if (options.callback) options.callback({ type: btn.action, target: b });
-							if (btn.action === 'close') dialog.close();
-						});
-						div.appendChild(b);
-					});
-					footer.appendChild(div);
-				}
-			});
-		} else {
-			dialog.querySelector('.nui-dialog-page').classList.add('no-foot');
-		}
-
-		dialog.querySelector('.close-btn').addEventListener('click', () => dialog.close());
-
-		return {
-			close: () => dialog.close()
-		};
 	}
 };
 
@@ -2059,7 +2116,8 @@ export const nui = {
 		return enableContentLoading(options);
 	},
 
-	dialog: dialogSystem
+	dialog: dialogSystem,
+	banner: bannerFactory
 };
 
 // ################################# AUTO-INITIALIZATION

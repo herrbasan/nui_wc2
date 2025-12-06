@@ -11,10 +11,6 @@
                 onclick="nui.dialog.alert('Hello!', 'This is a standard system alert.')">Alert</button></nui-button>
         <nui-button><button type="button" onclick="runConfirm()">Confirm</button></nui-button>
         <nui-button><button type="button" onclick="runPrompt()">Prompt</button></nui-button>
-        <nui-button><button type="button" onclick="runLogin()">Login</button></nui-button>
-        <nui-button><button type="button" onclick="runConsent()">Consent</button></nui-button>
-        <nui-button><button type="button" onclick="runProgress()">Progress</button></nui-button>
-        <nui-button><button type="button" onclick="runModal()">Modal Page</button></nui-button>
     </nui-button-container>
 
     <div id="dialog-result"
@@ -35,6 +31,49 @@
                 <p>This is a custom dialog defined in HTML.</p>
                 <nui-button><button type="button"
                         onclick="document.getElementById('custom-dialog').close()">Close</button></nui-button>
+            </div>
+        </dialog>
+    </nui-dialog>
+</div>
+
+<div class="nui-card">
+    <div class="nui-headline">Dialog Placement Modes</div>
+    <div class="nui-copy">
+        Use the <code>placement</code> attribute to position dialogs: <code>top</code> (upper 1/3), 
+        <code>center</code> (default), or <code>bottom</code> (lower 1/3).
+    </div>
+    <nui-button-container gap="1rem">
+        <nui-button><button type="button" onclick="document.getElementById('dialog-top').showModal()">Top Placement</button></nui-button>
+        <nui-button><button type="button" onclick="document.getElementById('dialog-center').showModal()">Center Placement</button></nui-button>
+        <nui-button><button type="button" onclick="document.getElementById('dialog-bottom').showModal()">Bottom Placement</button></nui-button>
+    </nui-button-container>
+
+    <nui-dialog id="dialog-top" placement="top">
+        <dialog>
+            <div style="padding: 2rem; width: 400px;">
+                <h3>Top Placement</h3>
+                <p>This dialog is positioned in the top 1/3 of the viewport.</p>
+                <nui-button><button type="button" onclick="document.getElementById('dialog-top').close()">Close</button></nui-button>
+            </div>
+        </dialog>
+    </nui-dialog>
+
+    <nui-dialog id="dialog-center" placement="center">
+        <dialog>
+            <div style="padding: 2rem; width: 400px;">
+                <h3>Center Placement</h3>
+                <p>This dialog is centered (browser default behavior).</p>
+                <nui-button><button type="button" onclick="document.getElementById('dialog-center').close()">Close</button></nui-button>
+            </div>
+        </dialog>
+    </nui-dialog>
+
+    <nui-dialog id="dialog-bottom" placement="bottom">
+        <dialog>
+            <div style="padding: 2rem; width: 400px;">
+                <h3>Bottom Placement</h3>
+                <p>This dialog is positioned in the bottom 1/3 of the viewport.</p>
+                <nui-button><button type="button" onclick="document.getElementById('dialog-bottom').close()">Close</button></nui-button>
             </div>
         </dialog>
     </nui-dialog>
@@ -62,70 +101,6 @@ function init(element, params) {
             { id: 'email', label: 'Email', type: 'email' }
         ]);
         showResult(res);
-    };
-
-    window.runLogin = async function() {
-        const res = await nui.dialog.login({
-            title: 'System Login',
-            callback: (ctl) => {
-                setTimeout(() => {
-                    if (ctl.values.login === 'admin' && ctl.values.password === '1234') {
-                        ctl.close();
-                    } else {
-                        ctl.error('Invalid credentials (try admin/1234)');
-                    }
-                }, 500);
-            }
-        });
-        showResult(res);
-    };
-
-    window.runConsent = function() {
-        nui.dialog.consent({
-            text: 'We use cookies to improve your experience. Do you accept?',
-            btn_allow: 'Accept All',
-            btn_abort: 'Reject'
-        }, (action) => showResult(action));
-    };
-
-    window.runProgress = function() {
-        const prog = nui.dialog.progress('Processing...');
-        let val = 0;
-        const max = 100;
-
-        prog.onStop((close) => {
-            clearInterval(timer);
-            close();
-            showResult('Stopped');
-        });
-
-        const timer = setInterval(() => {
-            val += 5;
-            prog.update(val, max);
-            if (val >= max) {
-                clearInterval(timer);
-                prog.close();
-                showResult('Completed');
-            }
-        }, 200);
-    };
-
-    window.runModal = function() {
-        nui.dialog.modal({
-            header_title: 'My Modal Page',
-            content: '<p>This is a generic modal page with custom content.</p><p>It can contain anything.</p>',
-            maxWidth: '500px',
-            buttons: {
-                right: [
-                    { name: 'Close', action: 'close' },
-                    { name: 'Save', action: 'save', type: 'primary' }
-                ]
-            },
-            callback: (e) => {
-                showResult('Clicked: ' + e.type);
-                if (e.type === 'save') e.target.closest('nui-dialog').close();
-            }
-        });
     };
 }
 </script>

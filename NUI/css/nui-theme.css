@@ -22,6 +22,10 @@
 	--color-highlight: light-dark(rgb(76, 132, 229), rgb(76, 132, 229));
 	--color-highlight-dim: light-dark(rgb(67, 112, 191), rgb(67, 112, 191));
 
+	--color-banner-bg: light-dark(var(--color-highlight-dim), var(--color-shade4));
+	--color-banner-text: light-dark(var(--color-white), var(--color-white));
+	--color-banner-progress: light-dark(rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.3));
+
 	--shadow-color: rgba(0, 0, 0, 0.2);
 	--shadow-radius0: var(--nui-space-half);
 	--shadow-radius1: var(--nui-space);
@@ -294,6 +298,24 @@ nui-link-list[mode="fold"] li {
 	text-decoration: none;
 	cursor: pointer;
 }
+
+nui-link-list[mode="fold"] li.list-item a:focus,
+nui-link-list[mode="fold"] li.group-header:focus {
+	outline:0;
+}
+
+nui-link-list[mode="fold"] li.list-item a:focus-visible,
+nui-link-list[mode="fold"] li.group-header:focus-visible {
+	outline:0;
+}
+nui-link-list[mode="fold"] li.list-item a:focus-visible::before,
+nui-link-list[mode="fold"] li.group-header:focus-visible::before {
+	content: '';
+	position: absolute;
+	inset:0;
+	z-index: 1;
+	border: 2px solid var(--color-highlight);
+}  
 
 nui-link-list[mode="fold"] li:hover {
 	color: var(--color-highlight);
@@ -837,9 +859,22 @@ nui-app[data-layout="app"] nui-content {
 	right: 0;
 	bottom: 0;
 	background: var(--color-shade1);
+	transition: left 0.3s ease;
+	overflow: hidden;
+	padding: 0;
+}
+
+/* Inner scroll container for actual content */
+nui-app[data-layout="app"] nui-content > .nui-content-scroll {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
 	overflow-y: auto;
 	overflow-x: hidden;
-	transition: left 0.3s ease;
+	padding: var(--nui-space-double);
+	box-sizing: border-box;
 }
 
 /* Content offset when top nav present */
@@ -1031,6 +1066,110 @@ nui-loading:not(.active) {
 	display: none !important;
 }
 /* =============================================================================
+   BANNER COMPONENT
+   ============================================================================= */
+
+nui-banner {
+	--z-banner: 1000;
+	position: fixed;
+	left: 0;
+	right: 0;
+	z-index: var(--z-banner);
+	display: none;
+	background: var(--color-banner-bg);
+	color: var(--color-banner-text);
+	box-shadow: 0 0 2rem 0 rgba(0, 0, 0, 0.3);
+}
+
+nui-banner[open] {
+	display: block;
+}
+
+nui-banner[placement="top"] {
+	top: 0;
+	border-top: none;
+	border-left: none;
+	border-right: none;
+}
+
+nui-banner[placement="bottom"],
+nui-banner:not([placement]) {
+	bottom: 0;
+	border-bottom: none;
+	border-left: none;
+	border-right: none;
+}
+
+/* Banner layer inside content - sibling to scroll container */
+nui-content > .nui-banner-layer {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	pointer-events: none;
+	z-index: var(--z-banner, 1000);
+	overflow: hidden;
+}
+
+nui-content > .nui-banner-layer nui-banner {
+	position: absolute;
+	pointer-events: auto;
+}
+
+/* Banner auto-close progress indicator */
+nui-banner > .nui-banner-progress {
+	position: absolute;
+	left: 0;
+	right: 0;
+	height: 0.3rem;
+	background: var(--color-banner-progress);
+	transform-origin: left;
+	animation-timing-function: linear;
+	animation-fill-mode: forwards;
+}
+
+nui-banner[placement="top"] > .nui-banner-progress {
+	bottom: 0;
+}
+
+nui-banner[placement="bottom"] > .nui-banner-progress,
+nui-banner:not([placement]) > .nui-banner-progress {
+	top: 0;
+}
+
+@keyframes nui-banner-progress {
+	from { transform: scaleX(1); }
+	to { transform: scaleX(0); }
+}
+
+/* Banner slide animations */
+.ani-slide-in-top { animation: ani-slide-in-top 0.3s forwards ease-out; }
+.ani-slide-out-top { animation: ani-slide-out-top 0.3s forwards ease-in; }
+.ani-slide-in-bottom { animation: ani-slide-in-bottom 0.3s forwards ease-out; }
+.ani-slide-out-bottom { animation: ani-slide-out-bottom 0.3s forwards ease-in; }
+
+@keyframes ani-slide-in-top {
+	from { opacity: 0; transform: translateY(-100%); }
+	to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ani-slide-out-top {
+	from { opacity: 1; transform: translateY(0); }
+	to { opacity: 0; transform: translateY(-100%); }
+}
+
+@keyframes ani-slide-in-bottom {
+	from { opacity: 0; transform: translateY(100%); }
+	to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ani-slide-out-bottom {
+	from { opacity: 1; transform: translateY(0); }
+	to { opacity: 0; transform: translateY(100%); }
+}
+
+/* =============================================================================
    DIALOG COMPONENT
    ============================================================================= */
 
@@ -1072,6 +1211,26 @@ nui-dialog dialog {
 	box-shadow: 0 0 2rem 0 rgba(0, 0, 0, 0.2);
 	max-width: 90vw;
 	max-height: 90vh;
+}
+
+/* Placement modes: top (1/3), center (default), bottom (2/3) */
+nui-dialog[placement="top"] dialog {
+	margin-block: 0;
+	top: 16.67vh;
+}
+
+/* placement="center" uses browser default (centered) - no override needed */
+
+nui-dialog[placement="bottom"] dialog {
+	margin-block: 0;
+	top: auto;
+	bottom: 16.67vh;
+}
+
+/* Non-modal dialogs need fixed positioning (modal dialogs use top-layer) */
+nui-dialog dialog:not(:modal) {
+	position: fixed;
+	z-index: calc(var(--z-banner, 1000) + 1);
 }
 
 .nui-dialog-content {
@@ -1188,113 +1347,6 @@ dialog nui-button-container button.outline:hover {
 	border: solid var(--border-thickness) var(--color-shade6);
 	color: var(--color-text);
 	outline: none;
-}
-
-/* Login Dialog */
-.nui-dialog-login {
-	width: 50%;
-	max-width: 25rem;
-	min-width: 14rem;
-	padding: var(--nui-space-triple);
-	border-radius: var(--border-radius1);
-}
-
-.nui-dialog-login .nui-dialog-body {
-	padding-top: var(--nui-space-double);
-	padding-bottom: var(--nui-space);
-}
-
-.nui-dialog-login .nui-headline {
-	margin-bottom: calc(var(--nui-space) * 1.5);
-}
-
-.nui-dialog-login nui-button-container {
-	margin-top: var(--nui-space-double);
-}
-
-/* Consent Dialog */
-.nui-dialog-consent {
-	padding: var(--nui-space-double);
-	width: 50%;
-	max-width: 36rem;
-	min-width: 22rem;
-}
-
-/* Progress Dialog */
-.nui-dialog-progress {
-	padding: var(--nui-space-double);
-	width: 50%;
-	max-width: 36rem;
-	min-width: 22rem;
-}
-
-.nui-dialog-progress .nui-headline {
-	margin-bottom: calc(var(--nui-space-double) * 2);
-}
-
-.nui-progress-container {
-	width: 100%;
-	margin-bottom: calc(var(--nui-space) * 3);
-}
-
-.nui-progress-text {
-	margin-bottom: var(--nui-space-half);
-	color: light-dark(rgba(0, 0, 0, 0.5), rgba(255, 255, 255, 0.5));
-}
-
-.nui-progress-bar-track {
-	width: 100%;
-	height: 0.5rem;
-	background-color: light-dark(rgba(0, 0, 0, 0.07), rgba(255, 255, 255, 0.07));
-	overflow: hidden;
-	border-radius: var(--border-radius1);
-}
-
-.nui-progress-bar-fill {
-	height: 100%;
-	background: var(--color-highlight);
-	transition: width 0.2s ease;
-}
-
-/* Modal Page Layout */
-.nui-dialog-page {
-	display: flex;
-	flex-direction: column;
-	width: 600px;
-	height: 400px;
-	max-width: 100%;
-	max-height: 100%;
-}
-
-.nui-dialog-header {
-	padding: var(--nui-space);
-	border-bottom: var(--border-thickness) solid var(--border-shade1);
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-}
-
-.nui-dialog-header h2 {
-	margin: 0;
-	font-size: 1.1rem;
-	font-weight: 500;
-}
-
-.nui-dialog-footer {
-	padding: var(--nui-space);
-	border-top: var(--border-thickness) solid var(--border-shade1);
-	display: flex;
-	justify-content: space-between;
-	background: var(--color-shade1);
-}
-
-.nui-dialog-footer > div {
-	display: flex;
-	gap: var(--nui-space-half);
-}
-
-.nui-dialog-page.no-foot .nui-dialog-footer {
-	display: none;
 }
 
 /* =============================================================================
