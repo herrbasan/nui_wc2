@@ -124,6 +124,7 @@ const navigationData = [
 			{ label: 'Button', href: '#page=components/button' },
 			{ label: 'Dialog', href: '#page=components/dialog' },
 			{ label: 'Banner', href: '#page=components/banner' },
+			{ label: 'Inputs', href: '#page=components/inputs' },
 			{ label: 'Animation', href: '#page=components/animation' }
 		]
 	},

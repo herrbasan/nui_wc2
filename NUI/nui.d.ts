@@ -277,6 +277,118 @@ export interface NuiLoadingElement extends HTMLElement {
 }
 
 // =============================================================================
+// Input Components
+// =============================================================================
+
+/**
+ * Input group component for wrapping inputs with label and description
+ */
+export interface NuiInputGroupElement extends HTMLElement {}
+
+/**
+ * Text input component
+ * Wraps native input element with validation and optional clear button
+ */
+export interface NuiInputElement extends HTMLElement {
+	/** Validate the input and return validity state */
+	validate(): boolean;
+	
+	/** Clear the input value */
+	clear(): void;
+	
+	/** Focus the input */
+	focus(): void;
+}
+
+/**
+ * Textarea component
+ * Wraps native textarea with auto-resize and character count features
+ */
+export interface NuiTextareaElement extends HTMLElement {
+	/** Validate the textarea and return validity state */
+	validate(): boolean;
+	
+	/** Clear the textarea value */
+	clear(): void;
+	
+	/** Focus the textarea */
+	focus(): void;
+}
+
+/**
+ * Checkbox component
+ * Custom-styled checkbox with native accessibility
+ */
+export interface NuiCheckboxElement extends HTMLElement {}
+
+/**
+ * Radio button component
+ * Custom-styled radio button with native accessibility
+ */
+export interface NuiRadioElement extends HTMLElement {}
+
+// =============================================================================
+// Input Events
+// =============================================================================
+
+export interface NuiInputEventDetail {
+	/** Current input value */
+	value: string;
+	/** Validity state */
+	valid: boolean;
+	/** Input name attribute */
+	name: string;
+}
+
+export interface NuiChangeEventDetail {
+	/** Current value */
+	value: string;
+	/** Validity state */
+	valid: boolean;
+	/** Input name attribute */
+	name: string;
+}
+
+export interface NuiCheckboxChangeEventDetail {
+	/** Checked state */
+	checked: boolean;
+	/** Input value attribute */
+	value: string;
+	/** Input name attribute */
+	name: string;
+}
+
+export interface NuiClearEventDetail {
+	/** Input name attribute */
+	name: string;
+}
+
+export interface NuiValidateEventDetail {
+	/** Validity state */
+	valid: boolean;
+	/** Validation message */
+	message: string;
+	/** Input name attribute */
+	name: string;
+}
+
+export interface NuiInputEvent extends CustomEvent<NuiInputEventDetail> {
+	type: 'nui-input';
+}
+
+export interface NuiChangeEvent extends CustomEvent<NuiChangeEventDetail | NuiCheckboxChangeEventDetail> {
+	type: 'nui-change';
+}
+
+export interface NuiClearEvent extends CustomEvent<NuiClearEventDetail> {
+	type: 'nui-clear';
+}
+
+export interface NuiValidateEvent extends CustomEvent<NuiValidateEventDetail> {
+	type: 'nui-validate';
+}
+
+// =============================================================================
 // Custom Events
 // =============================================================================
 
@@ -292,6 +404,10 @@ export interface NuiClickEvent extends CustomEvent<NuiClickEventDetail> {
 declare global {
 	interface HTMLElementEventMap {
 		'nui-click': NuiClickEvent;
+		'nui-input': NuiInputEvent;
+		'nui-change': NuiChangeEvent;
+		'nui-clear': NuiClearEvent;
+		'nui-validate': NuiValidateEvent;
 	}
 	
 	interface HTMLElementTagNameMap {
@@ -303,6 +419,11 @@ declare global {
 		'nui-app-footer': NuiAppFooterElement;
 		'nui-button': NuiButtonElement;
 		'nui-icon': NuiIconElement;
+		'nui-input-group': NuiInputGroupElement;
+		'nui-input': NuiInputElement;
+		'nui-textarea': NuiTextareaElement;
+		'nui-checkbox': NuiCheckboxElement;
+		'nui-radio': NuiRadioElement;
 	}
 }
 

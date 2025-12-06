@@ -362,21 +362,10 @@ function sanitizeInput(input) {
 		.trim();
 }
 
-function processEventAttributes(element) {
-	// Optimization: Use loop instead of Array.from to avoid allocation
-	for (let i = 0; i < element.attributes.length; i++) {
-		const attr = element.attributes[i];
-		if (attr.name.startsWith('nui-event-')) {
-			const eventType = sanitizeInput(attr.name.replace('nui-event-', ''));
-			const actionSpec = sanitizeInput(attr.value);
-
-			if (!eventType || !actionSpec) continue;
-
-			element.addEventListener(eventType, (e) => {
-				executeAction(actionSpec, element, e);
-			});
-		}
-	}
+function processEventAttributes(element, processChildren = true) {
+	// DEPRECATED: Event attributes are now handled via global delegation
+	// This function is kept for backwards compatibility but does nothing
+	// See setupGlobalEventDelegation()
 }
 
 function executeAction(actionSpec, element, event) {
@@ -396,6 +385,29 @@ function executeAction(actionSpec, element, event) {
 
 	doer.do(safeActionName, target, element, event, safeParam);
 }
+
+// Global event delegation for nui-event-* attributes
+// Single listener per event type, finds closest element with attribute
+function setupGlobalEventDelegation() {
+	const eventTypes = ['click', 'change', 'input', 'submit', 'focus', 'blur', 'keydown', 'keyup'];
+	
+	eventTypes.forEach(eventType => {
+		document.addEventListener(eventType, (e) => {
+			const attrName = `nui-event-${eventType}`;
+			const element = e.target.closest(`[${attrName}]`);
+			
+			if (element) {
+				const actionSpec = element.getAttribute(attrName);
+				if (actionSpec) {
+					executeAction(sanitizeInput(actionSpec), element, e);
+				}
+			}
+		}, true); // Capture phase to handle before other listeners
+	});
+}
+
+// Initialize delegation immediately
+setupGlobalEventDelegation();
 
 // ################################# BUILT-IN ACTIONS
 
@@ -470,6 +482,16 @@ doer.register('toggle-sidebar', (target, source, event, param) => {
 	if (app && app.toggleSideNav) {
 		app.toggleSideNav();
 	}
+});
+
+// Generic open/close actions - call showModal/close on target element
+doer.register('open', (target) => {
+	if (target?.showModal) target.showModal();
+	else if (target?.show) target.show();
+});
+
+doer.register('close', (target) => {
+	if (target?.close) target.close();
 });
 
 // ################################# ACCESSIBILITY
@@ -1363,18 +1385,27 @@ registerComponent('nui-dialog', (element) => {
 
 	element.isOpen = () => dialog.open;
 
+	// Check if dialog is blocking (no Escape/backdrop close)
+	const isBlocking = () => element.hasAttribute('blocking');
+
 	dialog.addEventListener('close', () => {
 		element.dispatchEvent(new CustomEvent('nui-dialog-close', { bubbles: true, detail: { returnValue: dialog.returnValue } }));
 		knower.tell(`dialog:${element.id}:open`, false);
 	});
 
 	dialog.addEventListener('cancel', (e) => {
+		if (isBlocking()) {
+			e.preventDefault();
+			return; // Don't close on Escape
+		}
 		e.preventDefault();
 		element.close('cancel');
 		element.dispatchEvent(new CustomEvent('nui-dialog-cancel', { bubbles: true }));
 	});
 
 	dialog.addEventListener('click', (e) => {
+		if (isBlocking()) return; // Don't close on backdrop click
+		
 		const rect = dialog.getBoundingClientRect();
 		const isInDialog = (rect.top <= e.clientY && e.clientY <= rect.top + rect.height &&
 			rect.left <= e.clientX && e.clientX <= rect.left + rect.width);
@@ -1384,8 +1415,6 @@ registerComponent('nui-dialog', (element) => {
 	});
 
 	const instanceId = ensureInstanceId(element, 'dialog');
-	doer.register('dialog-open', () => element.showModal(), instanceId);
-	doer.register('dialog-close', () => element.close(), instanceId);
 });
 
 // ################################# nui-banner COMPONENT
@@ -1487,6 +1516,410 @@ registerComponent('nui-banner', (element) => {
 		const action = source?.dataset?.action || param || 'action';
 		element.close(action);
 	}, instanceId);
+});
+
+// ################################# INPUT COMPONENTS
+
+// Utility: Generate unique ID for label/input association
+function generateInputId(prefix = 'nui-input') {
+	return `${prefix}-${crypto.randomUUID().slice(0, 8)}`;
+}
+
+// ################################# nui-input-group COMPONENT
+
+registerComponent('nui-input-group', (element) => {
+	// Find the label and input for association
+	const label = element.querySelector(':scope > label');
+	const inputComponent = element.querySelector('nui-input, nui-textarea, nui-checkbox, nui-radio');
+	const input = inputComponent?.querySelector('input, textarea');
+
+	// Auto-associate label with input if not already set
+	if (label && input && !input.id && !label.htmlFor) {
+		const id = generateInputId();
+		input.id = id;
+		label.htmlFor = id;
+	}
+
+	// Observe input for state changes
+	if (input) {
+		const updateState = () => {
+			element.classList.toggle('has-error', !input.validity.valid && input.value !== '');
+			element.classList.toggle('is-disabled', input.disabled);
+			element.classList.toggle('is-required', input.required);
+		};
+
+		input.addEventListener('blur', updateState);
+		input.addEventListener('input', () => {
+			// Clear error on typing
+			if (element.classList.contains('has-error') && input.validity.valid) {
+				element.classList.remove('has-error');
+			}
+		});
+
+		// Initial state
+		updateState();
+	}
+});
+
+// ################################# nui-input COMPONENT
+
+registerComponent('nui-input', (element) => {
+	const input = element.querySelector('input');
+	if (!input) return;
+
+	const instanceId = ensureInstanceId(element, 'input');
+	let clearBtn = null;
+	let errorEl = null;
+
+	// Dispatch custom event helper
+	const dispatch = (name, detail) => {
+		element.dispatchEvent(new CustomEvent(name, {
+			bubbles: true,
+			detail: { ...detail, name: input.name || input.id || '' }
+		}));
+	};
+
+	// Create clear button if clearable
+	if (element.hasAttribute('clearable')) {
+		clearBtn = document.createElement('button');
+		clearBtn.type = 'button';
+		clearBtn.className = 'nui-clear-btn';
+		clearBtn.setAttribute('aria-label', 'Clear input');
+		clearBtn.innerHTML = '<nui-icon name="close"></nui-icon>';
+		clearBtn.style.display = 'none';
+		element.appendChild(clearBtn);
+
+		clearBtn.addEventListener('click', () => {
+			input.value = '';
+			input.focus();
+			clearBtn.style.display = 'none';
+			dispatch('nui-clear', {});
+			dispatch('nui-input', { value: '', valid: input.validity.valid });
+		});
+	}
+
+	// Create error element (created once, reused)
+	const ensureErrorElement = () => {
+		if (!errorEl) {
+			errorEl = document.createElement('div');
+			errorEl.className = 'nui-error-message';
+			errorEl.setAttribute('role', 'alert');
+			element.appendChild(errorEl);
+		}
+		return errorEl;
+	};
+
+	// Update clear button visibility
+	const updateClearButton = () => {
+		if (clearBtn) {
+			clearBtn.style.display = input.value ? 'flex' : 'none';
+		}
+	};
+
+	// Validation
+	const validate = () => {
+		const valid = input.validity.valid;
+		element.classList.toggle('is-valid', valid && input.value !== '');
+		element.classList.toggle('is-invalid', !valid);
+
+		if (!valid && input.validationMessage) {
+			const errEl = ensureErrorElement();
+			errEl.textContent = input.validationMessage;
+			input.setAttribute('aria-invalid', 'true');
+			input.setAttribute('aria-describedby', errEl.id || (errEl.id = generateInputId('error')));
+		} else {
+			if (errorEl) errorEl.textContent = '';
+			input.removeAttribute('aria-invalid');
+			input.removeAttribute('aria-describedby');
+		}
+
+		return valid;
+	};
+
+	// Event handlers
+	input.addEventListener('input', () => {
+		updateClearButton();
+		// Real-time validation feedback
+		if (input.value !== '') {
+			validate();
+		} else {
+			// Clear validation state when empty
+			element.classList.remove('is-valid', 'is-invalid');
+			if (errorEl) errorEl.textContent = '';
+			input.removeAttribute('aria-invalid');
+			input.removeAttribute('aria-describedby');
+		}
+		dispatch('nui-input', { value: input.value, valid: input.validity.valid });
+	});
+
+	input.addEventListener('blur', () => {
+		validate();
+		dispatch('nui-change', { value: input.value, valid: input.validity.valid });
+	});
+
+	// Public methods
+	element.validate = () => {
+		const valid = validate();
+		dispatch('nui-validate', { valid, message: input.validationMessage });
+		return valid;
+	};
+
+	element.clear = () => {
+		input.value = '';
+		updateClearButton();
+		element.classList.remove('is-valid', 'is-invalid');
+		if (errorEl) errorEl.textContent = '';
+		dispatch('nui-clear', {});
+	};
+
+	element.focus = () => input.focus();
+
+	// Doer actions
+	doer.register(`focus@nui-input`, (target) => target.focus?.(), instanceId);
+	doer.register(`clear@nui-input`, (target) => target.clear?.(), instanceId);
+	doer.register(`validate@nui-input`, (target) => target.validate?.(), instanceId);
+
+	// Initial state
+	updateClearButton();
+});
+
+// ################################# nui-textarea COMPONENT
+
+registerComponent('nui-textarea', (element) => {
+	const textarea = element.querySelector('textarea');
+	if (!textarea) return;
+
+	const instanceId = ensureInstanceId(element, 'textarea');
+	let countEl = null;
+	let errorEl = null;
+
+	// Dispatch custom event helper
+	const dispatch = (name, detail) => {
+		element.dispatchEvent(new CustomEvent(name, {
+			bubbles: true,
+			detail: { ...detail, name: textarea.name || textarea.id || '' }
+		}));
+	};
+
+	// Auto-resize functionality
+	const autoResize = element.hasAttribute('auto-resize');
+	const minRows = parseInt(element.getAttribute('min-rows') || '3', 10);
+	const maxRows = parseInt(element.getAttribute('max-rows') || '10', 10);
+
+	// Calculate row height based on line-height
+	const computedStyle = getComputedStyle(textarea);
+	const lineHeight = parseFloat(computedStyle.lineHeight) || 24;
+	const paddingTop = parseFloat(computedStyle.paddingTop) || 0;
+	const paddingBottom = parseFloat(computedStyle.paddingBottom) || 0;
+	const borderTop = parseFloat(computedStyle.borderTopWidth) || 0;
+	const borderBottom = parseFloat(computedStyle.borderBottomWidth) || 0;
+
+	const minHeight = (lineHeight * minRows) + paddingTop + paddingBottom + borderTop + borderBottom;
+	const maxHeight = (lineHeight * maxRows) + paddingTop + paddingBottom + borderTop + borderBottom;
+
+	const resizeTextarea = () => {
+		if (!autoResize) return;
+		textarea.style.height = 'auto';
+		const newHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight);
+		textarea.style.height = newHeight + 'px';
+		// Show scrollbar if at max height
+		textarea.style.overflowY = textarea.scrollHeight > maxHeight ? 'auto' : 'hidden';
+	};
+
+	// Character count
+	const showCount = element.hasAttribute('show-count');
+	const maxLength = textarea.maxLength > 0 ? textarea.maxLength : null;
+
+	const ensureCountElement = () => {
+		if (!countEl && showCount) {
+			countEl = document.createElement('div');
+			countEl.className = 'nui-char-count';
+			element.appendChild(countEl);
+		}
+		return countEl;
+	};
+
+	const updateCount = () => {
+		if (!showCount) return;
+		const el = ensureCountElement();
+		const current = textarea.value.length;
+		if (maxLength) {
+			el.textContent = `${current} / ${maxLength}`;
+			el.classList.toggle('at-limit', current >= maxLength);
+		} else {
+			el.textContent = `${current}`;
+		}
+	};
+
+	// Error element
+	const ensureErrorElement = () => {
+		if (!errorEl) {
+			errorEl = document.createElement('div');
+			errorEl.className = 'nui-error-message';
+			errorEl.setAttribute('role', 'alert');
+			element.appendChild(errorEl);
+		}
+		return errorEl;
+	};
+
+	// Validation
+	const validate = () => {
+		const valid = textarea.validity.valid;
+		element.classList.toggle('is-valid', valid && textarea.value !== '');
+		element.classList.toggle('is-invalid', !valid);
+
+		if (!valid && textarea.validationMessage) {
+			const errEl = ensureErrorElement();
+			errEl.textContent = textarea.validationMessage;
+			textarea.setAttribute('aria-invalid', 'true');
+			textarea.setAttribute('aria-describedby', errEl.id || (errEl.id = generateInputId('error')));
+		} else {
+			if (errorEl) errorEl.textContent = '';
+			textarea.removeAttribute('aria-invalid');
+			textarea.removeAttribute('aria-describedby');
+		}
+
+		return valid;
+	};
+
+	// Event handlers
+	textarea.addEventListener('input', () => {
+		resizeTextarea();
+		updateCount();
+		// Real-time validation feedback
+		if (textarea.value !== '') {
+			validate();
+		} else {
+			// Clear validation state when empty
+			element.classList.remove('is-valid', 'is-invalid');
+			if (errorEl) errorEl.textContent = '';
+			textarea.removeAttribute('aria-invalid');
+			textarea.removeAttribute('aria-describedby');
+		}
+		dispatch('nui-input', { value: textarea.value, valid: textarea.validity.valid });
+	});
+
+	textarea.addEventListener('blur', () => {
+		validate();
+		dispatch('nui-change', { value: textarea.value, valid: textarea.validity.valid });
+	});
+
+	// Public methods
+	element.validate = () => {
+		const valid = validate();
+		dispatch('nui-validate', { valid, message: textarea.validationMessage });
+		return valid;
+	};
+
+	element.clear = () => {
+		textarea.value = '';
+		resizeTextarea();
+		updateCount();
+		element.classList.remove('is-valid', 'is-invalid');
+		if (errorEl) errorEl.textContent = '';
+		dispatch('nui-clear', {});
+	};
+
+	element.focus = () => textarea.focus();
+
+	// Doer actions
+	doer.register(`focus@nui-textarea`, (target) => target.focus?.(), instanceId);
+	doer.register(`clear@nui-textarea`, (target) => target.clear?.(), instanceId);
+	doer.register(`validate@nui-textarea`, (target) => target.validate?.(), instanceId);
+
+	// Initial state
+	if (autoResize) {
+		textarea.style.boxSizing = 'border-box';
+		resizeTextarea();
+	}
+	updateCount();
+});
+
+// ################################# nui-checkbox COMPONENT
+
+registerComponent('nui-checkbox', (element) => {
+	const input = element.querySelector('input[type="checkbox"]');
+	if (!input) return;
+
+	const label = element.querySelector('label');
+
+	// Ensure input has an ID and label is connected
+	if (label && !label.htmlFor) {
+		if (!input.id) input.id = generateInputId('checkbox');
+		label.htmlFor = input.id;
+	}
+
+	// Create custom visual element (once, reused)
+	const checkBox = document.createElement('span');
+	checkBox.className = 'nui-check-box';
+	checkBox.innerHTML = `<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+	checkBox.setAttribute('aria-hidden', 'true');
+
+	// Insert after input
+	input.after(checkBox);
+
+	// Click on component toggles checkbox
+	element.addEventListener('click', (e) => {
+		if (e.target === input || e.target === label) return; // Let native handle it
+		if (input.disabled) return;
+		input.checked = !input.checked;
+		input.dispatchEvent(new Event('change', { bubbles: true }));
+	});
+
+	// Dispatch custom event on change
+	input.addEventListener('change', () => {
+		element.dispatchEvent(new CustomEvent('nui-change', {
+			bubbles: true,
+			detail: {
+				checked: input.checked,
+				value: input.value,
+				name: input.name || input.id || ''
+			}
+		}));
+	});
+});
+
+// ################################# nui-radio COMPONENT
+
+registerComponent('nui-radio', (element) => {
+	const input = element.querySelector('input[type="radio"]');
+	if (!input) return;
+
+	const label = element.querySelector('label');
+
+	// Ensure input has an ID and label is connected
+	if (label && !label.htmlFor) {
+		if (!input.id) input.id = generateInputId('radio');
+		label.htmlFor = input.id;
+	}
+
+	// Create custom visual element (once, reused)
+	const radioCircle = document.createElement('span');
+	radioCircle.className = 'nui-radio-circle';
+	radioCircle.setAttribute('aria-hidden', 'true');
+
+	// Insert after input
+	input.after(radioCircle);
+
+	// Click on component toggles radio
+	element.addEventListener('click', (e) => {
+		if (e.target === input || e.target === label) return; // Let native handle it
+		if (input.disabled) return;
+		input.checked = true;
+		input.dispatchEvent(new Event('change', { bubbles: true }));
+	});
+
+	// Dispatch custom event on change
+	input.addEventListener('change', () => {
+		element.dispatchEvent(new CustomEvent('nui-change', {
+			bubbles: true,
+			detail: {
+				checked: input.checked,
+				value: input.value,
+				name: input.name || input.id || ''
+			}
+		}));
+	});
 });
 
 // ################################# BANNER FACTORY
@@ -1600,18 +2033,19 @@ const bannerFactory = {
 // ################################# DIALOG SYSTEM
 
 const dialogSystem = {
-	_createDialog(target, placement) {
+	_createDialog(target, placement, blocking = false) {
 		const dialog = document.createElement('nui-dialog');
 		dialog.id = 'nui-system-dialog-' + Date.now();
 		if (placement) dialog.setAttribute('placement', placement);
+		if (blocking) dialog.setAttribute('blocking', '');
 		dialog.innerHTML = '<dialog><div class="nui-dialog-content"></div></dialog>';
 		(target || document.body).appendChild(dialog);
 		return dialog;
 	},
 
 	_show(htmlContent, options = {}) {
-		const { classes = [], target, placement, modal = true } = options;
-		const dialog = this._createDialog(target, placement);
+		const { classes = [], target, placement, modal = true, blocking = false } = options;
+		const dialog = this._createDialog(target, placement, blocking);
 		const content = dialog.querySelector('.nui-dialog-content');
 		const nativeDialog = dialog.querySelector('dialog');
 
@@ -1643,7 +2077,7 @@ const dialogSystem = {
 					<div class="nui-headline">${title}</div>
 					<div class="nui-copy">${message}</div>
 					<nui-button-container align="end">
-						<button class="primary" id="nui-dialog-ok">OK</button>
+						<nui-button><button class="primary" id="nui-dialog-ok">OK</button></nui-button>
 					</nui-button-container>
 				</div>
 			`;
@@ -1667,8 +2101,8 @@ const dialogSystem = {
 					<div class="nui-headline">${title}</div>
 					<div class="nui-copy">${message}</div>
 					<nui-button-container align="end">
-						<button class="outline" id="nui-dialog-cancel">Cancel</button>
-						<button class="primary" id="nui-dialog-ok">OK</button>
+						<nui-button><button class="outline" id="nui-dialog-cancel">Cancel</button></nui-button>
+						<nui-button><button class="primary" id="nui-dialog-ok">OK</button></nui-button>
 					</nui-button-container>
 				</div>
 			`;
@@ -1683,7 +2117,9 @@ const dialogSystem = {
 		});
 	},
 
-	prompt(title, fields, options = {}) {
+	prompt(title, message, options = {}) {
+		const fields = options.fields || [];
+		
 		return new Promise((resolve) => {
 			const inputsHtml = fields.map(f => `
 				<div class="nui-input">
@@ -1695,10 +2131,11 @@ const dialogSystem = {
 			const html = `
 				<div class="nui-dialog-prompt">
 					<div class="nui-headline">${title}</div>
+					${message ? `<div class="nui-copy">${message}</div>` : ''}
 					<div class="nui-dialog-body">${inputsHtml}</div>
 					<nui-button-container align="end">
-						<button class="outline" id="nui-dialog-cancel">Cancel</button>
-						<button class="primary" id="nui-dialog-ok">OK</button>
+						<nui-button><button class="outline" id="nui-dialog-cancel">Cancel</button></nui-button>
+						<nui-button><button class="primary" id="nui-dialog-ok">OK</button></nui-button>
 					</nui-button-container>
 				</div>
 			`;
@@ -2052,6 +2489,7 @@ function ensureBaseStyles() {
 export const nui = {
 	config,
 	knower,
+	doer,
 	dom,
 
 	cssAnimation(element, className, callback) {

@@ -1,106 +1,463 @@
-<div class="nui-card">
-    <div class="nui-headline">Dialog Component</div>
-    <div class="nui-copy">
-        The <code>nui-dialog</code> component provides a native HTML dialog wrapper.
-        The <code>nui.dialog</code> system provides standardized helpers for common interactions.
-    </div>
+<header>
+	<h1>Dialog Component</h1>
+	<p>Modal and non-modal dialogs for user interactions requiring a response</p>
+</header>
 
-    <h3>System Dialogs</h3>
-    <nui-button-container gap="1rem">
-        <nui-button><button type="button"
-                onclick="nui.dialog.alert('Hello!', 'This is a standard system alert.')">Alert</button></nui-button>
-        <nui-button><button type="button" onclick="runConfirm()">Confirm</button></nui-button>
-        <nui-button><button type="button" onclick="runPrompt()">Prompt</button></nui-button>
-    </nui-button-container>
+<section>
+	<h2>Overview</h2>
+	<p>The <code>&lt;nui-dialog&gt;</code> component wraps the native HTML <code>&lt;dialog&gt;</code> element with animations, placement options, and accessibility enhancements. Use dialogs when you need user input or confirmation—for passive notifications, use banners instead.</p>
+	<p><strong>Key features:</strong></p>
+	<ul>
+		<li>Native dialog element with backdrop</li>
+		<li>Placement options (top, center, bottom)</li>
+		<li>Scale animations for open/close</li>
+		<li>System dialogs (alert, confirm, prompt)</li>
+		<li>Click-outside-to-close behavior</li>
+		<li>Escape key handling</li>
+	</ul>
+</section>
 
-    <div id="dialog-result"
-        style="margin-top: 1rem; padding: 1rem; background: var(--color-shade1); border-radius: var(--border-radius1);">
-        Result: -
-    </div>
-</div>
+<section>
+	<h2>System Dialogs</h2>
+	<p>Use the built-in factory methods for common dialog patterns. These return Promises and handle all the UI automatically.</p>
+	<nui-code>
+		<pre><code data-lang="javascript">// Alert - simple message with OK button
+await nui.dialog.alert('Title', 'Message text');
 
-<div class="nui-card">
-    <div class="nui-headline">Custom Declarative Dialog</div>
-    <nui-button><button type="button" onclick="document.getElementById('custom-dialog').showModal()">Open Custom
-            Dialog</button></nui-button>
+// Confirm - returns true/false
+const confirmed = await nui.dialog.confirm('Delete?', 'This cannot be undone.');
+if (confirmed) { /* user clicked OK */ }
 
-    <nui-dialog id="custom-dialog">
-        <dialog>
-            <div style="padding: 2rem; width: 400px;">
-                <h3>Custom Dialog</h3>
-                <p>This is a custom dialog defined in HTML.</p>
-                <nui-button><button type="button"
-                        onclick="document.getElementById('custom-dialog').close()">Close</button></nui-button>
-            </div>
-        </dialog>
-    </nui-dialog>
-</div>
+// Prompt - returns object with field values, or null if cancelled
+const result = await nui.dialog.prompt('Enter Details', 'Please fill in the form.', {
+    fields: [
+        { id: 'name', label: 'Name', value: 'Default' },
+        { id: 'email', label: 'Email', type: 'email' }
+    ]
+});
+if (result) {
+    console.log(result.name, result.email);
+}</code></pre>
+	</nui-code>
+	<h3>Try It</h3>
+	<nui-button-container gap="1rem">
+		<nui-button><button type="button" nui-event-click="show-alert">Alert</button></nui-button>
+		<nui-button><button type="button" nui-event-click="show-confirm">Confirm</button></nui-button>
+		<nui-button><button type="button" nui-event-click="show-prompt">Prompt</button></nui-button>
+	</nui-button-container>
+	<div id="dialog-result" style="margin-top: 1rem; padding: 1rem; background: var(--color-shade1); border-radius: var(--border-radius1);">
+		Result: -
+	</div>
+</section>
 
-<div class="nui-card">
-    <div class="nui-headline">Dialog Placement Modes</div>
-    <div class="nui-copy">
-        Use the <code>placement</code> attribute to position dialogs: <code>top</code> (upper 1/3), 
-        <code>center</code> (default), or <code>bottom</code> (lower 1/3).
-    </div>
-    <nui-button-container gap="1rem">
-        <nui-button><button type="button" onclick="document.getElementById('dialog-top').showModal()">Top Placement</button></nui-button>
-        <nui-button><button type="button" onclick="document.getElementById('dialog-center').showModal()">Center Placement</button></nui-button>
-        <nui-button><button type="button" onclick="document.getElementById('dialog-bottom').showModal()">Bottom Placement</button></nui-button>
-    </nui-button-container>
+<section>
+	<h2>Inline Event Handlers</h2>
+	<p>For simple cases, you can call dialog methods directly in onclick handlers:</p>
+	<nui-code>
+		<pre><code data-lang="html">&lt;button onclick="nui.dialog.alert('Hello!', 'Welcome to NUI.')"&gt;
+    Show Alert
+&lt;/button&gt;
 
-    <nui-dialog id="dialog-top" placement="top">
-        <dialog>
-            <div style="padding: 2rem; width: 400px;">
-                <h3>Top Placement</h3>
-                <p>This dialog is positioned in the top 1/3 of the viewport.</p>
-                <nui-button><button type="button" onclick="document.getElementById('dialog-top').close()">Close</button></nui-button>
-            </div>
-        </dialog>
-    </nui-dialog>
+&lt;button onclick="nui.dialog.confirm('Sure?', 'Continue?').then(ok =&gt; console.log(ok))"&gt;
+    Show Confirm
+&lt;/button&gt;</code></pre>
+	</nui-code>
+	<h3>Try It</h3>
+	<nui-button-container gap="1rem">
+		<nui-button><button type="button" onclick="nui.dialog.alert('Hello!', 'This is called directly from onclick.')">Direct Alert Call</button></nui-button>
+	</nui-button-container>
+</section>
 
-    <nui-dialog id="dialog-center" placement="center">
-        <dialog>
-            <div style="padding: 2rem; width: 400px;">
-                <h3>Center Placement</h3>
-                <p>This dialog is centered (browser default behavior).</p>
-                <nui-button><button type="button" onclick="document.getElementById('dialog-center').close()">Close</button></nui-button>
-            </div>
-        </dialog>
-    </nui-dialog>
+<section>
+	<h2>System Dialog Options</h2>
+	<p>All system dialogs accept an options object as the last parameter:</p>
+	<nui-code>
+		<pre><code data-lang="javascript">// Alert with placement
+await nui.dialog.alert('Notice', 'Positioned at top.', {
+    placement: 'top'
+});
 
-    <nui-dialog id="dialog-bottom" placement="bottom">
-        <dialog>
-            <div style="padding: 2rem; width: 400px;">
-                <h3>Bottom Placement</h3>
-                <p>This dialog is positioned in the bottom 1/3 of the viewport.</p>
-                <nui-button><button type="button" onclick="document.getElementById('dialog-bottom').close()">Close</button></nui-button>
-            </div>
-        </dialog>
-    </nui-dialog>
-</div>
+// Confirm with placement
+const ok = await nui.dialog.confirm('Delete?', 'Are you sure?', {
+    placement: 'bottom'
+});
+
+// Prompt with custom target container
+await nui.dialog.prompt('Login', fields, {
+    target: document.querySelector('.my-container'),
+    placement: 'center'
+});</code></pre>
+	</nui-code>
+	<h3>Try It</h3>
+	<nui-button-container gap="1rem">
+		<nui-button><button type="button" nui-event-click="show-alert-top">Alert (Top)</button></nui-button>
+		<nui-button><button type="button" nui-event-click="show-alert-bottom">Alert (Bottom)</button></nui-button>
+	</nui-button-container>
+</section>
+
+<section>
+	<h2>Blocking Dialogs</h2>
+	<p>Add the <code>blocking</code> attribute or option to create dialogs that can only be closed via buttons. Escape key and backdrop clicks are disabled.</p>
+	<nui-code>
+		<pre><code data-lang="javascript">// Blocking system dialog - must click OK
+await nui.dialog.alert('Important!', 'You must acknowledge this.', {
+    blocking: true
+});
+
+// Blocking confirm - must choose an option
+const confirmed = await nui.dialog.confirm('Terms', 'Accept the terms?', {
+    blocking: true
+});</code></pre>
+	</nui-code>
+	<nui-code>
+		<pre><code data-lang="html">&lt;!-- Blocking declarative dialog --&gt;
+&lt;nui-dialog id="blocking-dialog" blocking&gt;
+    &lt;dialog&gt;...&lt;/dialog&gt;
+&lt;/nui-dialog&gt;</code></pre>
+	</nui-code>
+	<h3>Try It</h3>
+	<nui-button-container gap="1rem">
+		<nui-button><button type="button" nui-event-click="show-blocking-alert">Blocking Alert</button></nui-button>
+		<nui-button><button type="button" nui-event-click="show-blocking-confirm">Blocking Confirm</button></nui-button>
+	</nui-button-container>
+</section>
+
+<section>
+	<h2>Declarative Dialogs</h2>
+	<p>Define dialogs in HTML for complex layouts. Use the <code>open</code> and <code>close</code> Doer actions to control visibility.</p>
+	<nui-code>
+		<pre><code data-lang="html">&lt;!-- Button triggers dialog via Doer --&gt;
+&lt;button nui-event-click="open@#custom-confirm"&gt;Open Custom Confirm&lt;/button&gt;
+
+&lt;!-- Dialog definition with OK/Cancel --&gt;
+&lt;nui-dialog id="custom-confirm"&gt;
+    &lt;dialog&gt;
+        &lt;div class="nui-dialog-alert"&gt;
+            &lt;div class="nui-headline"&gt;Confirm Action&lt;/div&gt;
+            &lt;div class="nui-copy"&gt;Do you want to proceed with this action?&lt;/div&gt;
+            &lt;nui-button-container align="end"&gt;
+                &lt;nui-button&gt;&lt;button id="custom-confirm-cancel"&gt;Cancel&lt;/button&gt;&lt;/nui-button&gt;
+                &lt;nui-button&gt;&lt;button id="custom-confirm-ok" class="primary"&gt;OK&lt;/button&gt;&lt;/nui-button&gt;
+            &lt;/nui-button-container&gt;
+        &lt;/div&gt;
+    &lt;/dialog&gt;
+&lt;/nui-dialog&gt;</code></pre>
+	</nui-code>
+	<h3>Try It</h3>
+	<nui-button-container gap="1rem" align="start">
+		<nui-button><button type="button" nui-event-click="open@#custom-confirm">Open Custom Confirm</button></nui-button>
+		<span id="custom-confirm-state" style="padding: 0.5rem 1rem; background: var(--color-shade1); border-radius: var(--border-radius1);">State: closed | Result: -</span>
+	</nui-button-container>
+
+	<nui-dialog id="custom-confirm">
+		<dialog>
+			<div class="nui-dialog-alert">
+				<div class="nui-headline">Confirm Action</div>
+				<div class="nui-copy">Do you want to proceed with this action?</div>
+				<nui-button-container align="end">
+					<nui-button><button type="button" id="custom-confirm-cancel">Cancel</button></nui-button>
+					<nui-button><button type="button" id="custom-confirm-ok" class="primary">OK</button></nui-button>
+				</nui-button-container>
+			</div>
+		</dialog>
+	</nui-dialog>
+
+	<h3>Watching Dialog State with Knower</h3>
+	<p>Dialogs publish their open/close state to the Knower. Watch for changes to react when dialogs open or close:</p>
+	<nui-code>
+		<pre><code data-lang="javascript">// Track the result
+let lastResult = '-';
+
+// Watch the dialog's open state
+nui.knower.watch('dialog:custom-confirm:open', (isOpen) => {
+    const stateEl = document.querySelector('#custom-confirm-state');
+    stateEl.textContent = 'State: ' + (isOpen ? 'open' : 'closed') + ' | Result: ' + lastResult;
+});
+
+// Handle button clicks
+document.querySelector('#custom-confirm-ok').addEventListener('click', () => {
+    lastResult = 'confirmed';
+    document.querySelector('#custom-confirm').close();
+});
+
+document.querySelector('#custom-confirm-cancel').addEventListener('click', () => {
+    lastResult = 'cancelled';
+    document.querySelector('#custom-confirm').close();
+});</code></pre>
+	</nui-code>
+</section>
+
+<section>
+	<h2>JavaScript Control</h2>
+	<p>Control dialogs programmatically using element methods:</p>
+	<nui-code>
+		<pre><code data-lang="javascript">const dialog = document.getElementById('my-dialog');
+
+// Open as modal (with backdrop)
+dialog.showModal();
+
+// Open as non-modal (no backdrop)
+dialog.show();
+
+// Close dialog
+dialog.close();
+dialog.close('return-value');  // Optional return value
+
+// Check if open
+if (dialog.isOpen()) { ... }</code></pre>
+	</nui-code>
+</section>
+
+<section>
+	<h2>Placement Modes</h2>
+	<p>Use the <code>placement</code> attribute to position dialogs vertically:</p>
+	<table style="width: 100%; border-collapse: collapse; margin: 1rem 0;">
+		<thead>
+			<tr style="border-bottom: 2px solid var(--border-shade1);">
+				<th style="text-align: left; padding: 0.5rem;">Placement</th>
+				<th style="text-align: left; padding: 0.5rem;">Position</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr style="border-bottom: 1px solid var(--border-shade1);">
+				<td style="padding: 0.5rem;"><code>top</code></td>
+				<td style="padding: 0.5rem;">Upper third of viewport</td>
+			</tr>
+			<tr style="border-bottom: 1px solid var(--border-shade1);">
+				<td style="padding: 0.5rem;"><code>center</code></td>
+				<td style="padding: 0.5rem;">Vertically centered (default)</td>
+			</tr>
+			<tr>
+				<td style="padding: 0.5rem;"><code>bottom</code></td>
+				<td style="padding: 0.5rem;">Lower third of viewport</td>
+			</tr>
+		</tbody>
+	</table>
+	<nui-code>
+		<pre><code data-lang="html">&lt;nui-dialog id="top-dialog" placement="top"&gt;...&lt;/nui-dialog&gt;
+&lt;nui-dialog id="center-dialog" placement="center"&gt;...&lt;/nui-dialog&gt;
+&lt;nui-dialog id="bottom-dialog" placement="bottom"&gt;...&lt;/nui-dialog&gt;</code></pre>
+	</nui-code>
+	<h3>Try It</h3>
+	<nui-button-container gap="1rem">
+		<nui-button><button type="button" nui-event-click="open@#dialog-top">Top</button></nui-button>
+		<nui-button><button type="button" nui-event-click="open@#dialog-center">Center</button></nui-button>
+		<nui-button><button type="button" nui-event-click="open@#dialog-bottom">Bottom</button></nui-button>
+	</nui-button-container>
+
+	<nui-dialog id="dialog-top" placement="top">
+		<dialog>
+			<div style="padding: 2rem; width: 400px;">
+				<h3>Top Placement</h3>
+				<p>This dialog is positioned in the top third of the viewport.</p>
+				<nui-button-container align="end">
+					<nui-button><button type="button" nui-event-click="close@#dialog-top">Close</button></nui-button>
+				</nui-button-container>
+			</div>
+		</dialog>
+	</nui-dialog>
+
+	<nui-dialog id="dialog-center" placement="center">
+		<dialog>
+			<div style="padding: 2rem; width: 400px;">
+				<h3>Center Placement</h3>
+				<p>This dialog is vertically centered (browser default).</p>
+				<nui-button-container align="end">
+					<nui-button><button type="button" nui-event-click="close@#dialog-center">Close</button></nui-button>
+				</nui-button-container>
+			</div>
+		</dialog>
+	</nui-dialog>
+
+	<nui-dialog id="dialog-bottom" placement="bottom">
+		<dialog>
+			<div style="padding: 2rem; width: 400px;">
+				<h3>Bottom Placement</h3>
+				<p>This dialog is positioned in the bottom third of the viewport.</p>
+				<nui-button-container align="end">
+					<nui-button><button type="button" nui-event-click="close@#dialog-bottom">Close</button></nui-button>
+				</nui-button-container>
+			</div>
+		</dialog>
+	</nui-dialog>
+</section>
+
+<section>
+	<h2>Events</h2>
+	<p>Dialogs dispatch custom events for close and cancel actions:</p>
+	<nui-code>
+		<pre><code data-lang="javascript">const dialog = document.getElementById('my-dialog');
+
+// Fired when dialog closes (any method)
+dialog.addEventListener('nui-dialog-close', (e) => {
+    console.log('Closed with:', e.detail.returnValue);
+});
+
+// Fired when user presses Escape or clicks backdrop
+dialog.addEventListener('nui-dialog-cancel', () => {
+    console.log('Dialog was cancelled');
+});</code></pre>
+	</nui-code>
+</section>
+
+<section>
+	<h2>Attributes Reference</h2>
+	<table style="width: 100%; border-collapse: collapse; margin: 1rem 0;">
+		<thead>
+			<tr style="border-bottom: 2px solid var(--border-shade1);">
+				<th style="text-align: left; padding: 0.5rem;">Attribute</th>
+				<th style="text-align: left; padding: 0.5rem;">Values</th>
+				<th style="text-align: left; padding: 0.5rem;">Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr style="border-bottom: 1px solid var(--border-shade1);">
+				<td style="padding: 0.5rem;"><code>placement</code></td>
+				<td style="padding: 0.5rem;"><code>top</code>, <code>center</code>, <code>bottom</code></td>
+				<td style="padding: 0.5rem;">Vertical position (default: center)</td>
+			</tr>
+			<tr style="border-bottom: 1px solid var(--border-shade1);">
+				<td style="padding: 0.5rem;"><code>blocking</code></td>
+				<td style="padding: 0.5rem;">(boolean)</td>
+				<td style="padding: 0.5rem;">Disable Escape key and backdrop click closing</td>
+			</tr>
+			<tr>
+				<td style="padding: 0.5rem;"><code>id</code></td>
+				<td style="padding: 0.5rem;">string</td>
+				<td style="padding: 0.5rem;">Required for Doer targeting and JS access</td>
+			</tr>
+		</tbody>
+	</table>
+</section>
+
+<section>
+	<h2>Factory Options Reference</h2>
+	<nui-code>
+		<pre><code data-lang="javascript">// Options object (third parameter for all dialog methods)
+{
+    placement: 'top' | 'center' | 'bottom',  // Vertical position
+    target: Element,                          // Container element (default: document.body)
+    modal: boolean,                           // Modal mode (default: true)
+    blocking: boolean,                        // Disable Escape/backdrop close (default: false)
+    classes: string[]                         // Additional CSS classes for dialog
+}</code></pre>
+	</nui-code>
+</section>
+
+<section>
+	<h2>Prompt Field Options</h2>
+	<nui-code>
+		<pre><code data-lang="javascript">nui.dialog.prompt('Title', 'Optional message text.', {
+    fields: [
+        {
+            id: 'fieldId',        // Required - key in returned object
+            label: 'Field Label', // Display label
+            type: 'text',         // Input type: text, email, password, number, etc.
+            value: 'default'      // Pre-filled value
+        }
+    ]
+});</code></pre>
+	</nui-code>
+</section>
+
+<section>
+	<h2>Doer Actions</h2>
+	<p>Built-in actions for declarative control:</p>
+	<table style="width: 100%; border-collapse: collapse; margin: 1rem 0;">
+		<thead>
+			<tr style="border-bottom: 2px solid var(--border-shade1);">
+				<th style="text-align: left; padding: 0.5rem;">Action</th>
+				<th style="text-align: left; padding: 0.5rem;">Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr style="border-bottom: 1px solid var(--border-shade1);">
+				<td style="padding: 0.5rem;"><code>open@#{id}</code></td>
+				<td style="padding: 0.5rem;">Open dialog as modal</td>
+			</tr>
+			<tr>
+				<td style="padding: 0.5rem;"><code>close@#{id}</code></td>
+				<td style="padding: 0.5rem;">Close dialog</td>
+			</tr>
+		</tbody>
+	</table>
+	<nui-code>
+		<pre><code data-lang="html">&lt;button nui-event-click="open@#my-dialog"&gt;Open&lt;/button&gt;
+&lt;button nui-event-click="close@#my-dialog"&gt;Close&lt;/button&gt;</code></pre>
+	</nui-code>
+</section>
 
 <script type="nui/page">
 function init(element, params) {
-    const resultEl = element.querySelector('#dialog-result');
-    
-    function showResult(text) {
-        resultEl.textContent = 'Result: ' + JSON.stringify(text);
-    }
+	const resultEl = element.querySelector('#dialog-result');
 
-    // Attach handlers to window for inline onclick attributes
-    window.showResult = showResult;
+	function showResult(text) {
+		resultEl.textContent = 'Result: ' + JSON.stringify(text);
+	}
 
-    window.runConfirm = async function() {
-        const res = await nui.dialog.confirm('Confirmation', 'Are you sure you want to proceed?');
-        showResult(res);
-    };
+	// Watch the custom-confirm state and display it
+	const stateEl = element.querySelector('#custom-confirm-state');
+	let lastResult = '-';
+	
+	nui.knower.watch('dialog:custom-confirm:open', (isOpen) => {
+		stateEl.textContent = 'State: ' + (isOpen ? 'open' : 'closed') + ' | Result: ' + lastResult;
+	});
 
-    window.runPrompt = async function() {
-        const res = await nui.dialog.prompt('Enter Details', [
-            { id: 'name', label: 'Name', value: 'John Doe' },
-            { id: 'email', label: 'Email', type: 'email' }
-        ]);
-        showResult(res);
-    };
+	// Handle custom confirm button clicks
+	element.querySelector('#custom-confirm-ok').addEventListener('click', () => {
+		lastResult = 'confirmed';
+		element.querySelector('#custom-confirm').close();
+	});
+
+	element.querySelector('#custom-confirm-cancel').addEventListener('click', () => {
+		lastResult = 'cancelled';
+		element.querySelector('#custom-confirm').close();
+	});
+
+	// Register Doer actions for this page
+	nui.doer.register('show-alert', async () => {
+		await nui.dialog.alert('Hello!', 'This is a standard system alert.', {placement: 'top'});
+		showResult('Alert closed');
+	});
+
+	nui.doer.register('show-confirm', async () => {
+		const res = await nui.dialog.confirm('Confirmation', 'Are you sure you want to proceed?', {placement: 'top'});
+		showResult(res);
+	});
+
+	nui.doer.register('show-prompt', async () => {
+		const res = await nui.dialog.prompt('Enter Details', 'Please provide your information.', {
+			placement: 'top',
+			fields: [
+				{ id: 'name', label: 'Name', value: 'John Doe' },
+				{ id: 'email', label: 'Email', type: 'email' }
+			]
+		});
+		showResult(res);
+	});
+
+	nui.doer.register('show-alert-top', async () => {
+		await nui.dialog.alert('Top Placement', 'This alert appears at the top.', { placement: 'top' });
+	});
+
+	nui.doer.register('show-alert-bottom', async () => {
+		await nui.dialog.alert('Bottom Placement', 'This alert appears at the bottom.', { placement: 'bottom' });
+	});
+
+	nui.doer.register('show-blocking-alert', async () => {
+		await nui.dialog.alert('Important Notice', 'This dialog cannot be closed with Escape or by clicking outside. You must click OK.', { 
+			blocking: true,
+			placement: 'top'
+		});
+		showResult('Blocking alert acknowledged');
+	});
+
+	nui.doer.register('show-blocking-confirm', async () => {
+		const res = await nui.dialog.confirm('Terms of Service', 'Do you accept the terms of service? You must choose an option.', { 
+			blocking: true,
+			placement: 'top'
+		});
+		showResult(res ? 'Terms accepted' : 'Terms declined');
+	});
 }
 </script>

@@ -1233,16 +1233,11 @@ nui-dialog dialog:not(:modal) {
 	z-index: calc(var(--z-banner, 1000) + 1);
 }
 
-.nui-dialog-content {
-	display: flex;
-	flex-direction: column;
-}
-
 /* Alert / Confirm Dialog */
 .nui-dialog-alert {
 	position: relative;
 	padding: var(--nui-space-double);
-	width: 50%;
+	width: 30rem;
 	max-width: 40rem;
 	min-width: 25rem;
 	border-radius: var(--border-radius2);
