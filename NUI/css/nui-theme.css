@@ -1239,10 +1239,11 @@ nui-dialog dialog:not(:modal) {
 .nui-dialog-alert {
 	position: relative;
 	padding: var(--nui-space-double);
-	width: 30rem;
+	width: 100%;
 	max-width: 40rem;
-	min-width: 25rem;
+	min-width: min(25rem, 100%);
 	border-radius: var(--border-radius2);
+	box-sizing: border-box;
 }
 
 .nui-headline {
@@ -1302,9 +1303,10 @@ dialog nui-button-container button.outline:hover {
 /* Prompt Dialog */
 .nui-dialog-prompt {
 	padding: var(--nui-space-double);
-	width: 50%;
+	width: 100%;
 	max-width: 36rem;
-	min-width: 22rem;
+	min-width: min(22rem, 100%);
+	box-sizing: border-box;
 }
 
 .nui-dialog-body {
