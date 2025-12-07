@@ -959,9 +959,16 @@ nui-side-nav {
 
 nui-column-flow {
 	display: block;
-	column-width: calc(var(--space-page-maxwidth, 62rem) / 4);
+	column-width: 18rem;
 	column-gap: var(--nui-space, 1rem);
 	column-fill: balance;
+}
+
+@media (max-width: 40rem) {
+	nui-column-flow {
+		column-count: 1;
+		column-width: auto;
+	}
 }
 
 nui-column-flow>* {
