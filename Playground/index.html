@@ -11,9 +11,9 @@
 		<link rel="stylesheet" href="../NUI/css/modules/nui-inputs.css">
 		<style>
 			/* Prevent layout shifts by hiding app until upgraded and ready */
-			nui-app:not(.nui-ready) {
-				visibility: hidden;
-			}
+			body { margin: 0; padding: 0; overflow: hidden; }
+			nui-app:not(.nui-ready) { display: none; }
+			nui-loading:not(.active) { display: none; }
 		</style>
 		<script type="module" src="js/main.js"></script>
 	</head>
