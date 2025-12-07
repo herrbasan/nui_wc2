@@ -1,53 +1,50 @@
 # Knower/Doer System Evaluation
 
 **Date:** December 2025  
-**Status:** Under Review  
-**Question:** Should we keep, modify, or remove the Knower/Doer system?
+**Status:** ✅ COMPLETED - Both systems removed  
+**Decision:** Remove both Knower and Doer, keep minimal `data-action` delegation
 
 ---
 
-## What They Are
+## Resolution Summary
 
-### Doer (Action System)
-Declarative action dispatch via HTML attributes:
-```html
-<button nui-event-click="open@#my-dialog">Open</button>
-<button nui-event-click="toggle-theme">Toggle Theme</button>
-```
+After evaluating 12 actual usages and comparing against platform alternatives, we removed both systems:
 
-### Knower (State System)
-JavaScript subscription system for cross-component state:
+### What Was Removed
+- **Knower object** (~100 lines) - State pub/sub system
+- **Doer object** (~70 lines) - Action registry  
+- **Event delegation** (~50 lines) - `nui-event-click` attribute handling
+- **Built-in actions** (~80 lines) - toggle-theme, toggle-class, etc.
+- **nui.registerAction()** - Public API method
+
+### What Was Kept
+- **Minimal action delegation** (~20 lines) - Uses `data-action` attributes, CSP-safe
+- Components dispatch standard `CustomEvent` instead of `knower.tell()`
+
+### New Patterns
+Components now dispatch standard events:
 ```javascript
-nui.knower.tell('sidebar:open', true);
-nui.knower.watch('sidebar:open', (isOpen) => { ... });
+// Old: knower.tell('dialog:my-dialog:open', true);
+// New: element.dispatchEvent(new CustomEvent('nui-dialog-open', { bubbles: true }));
+```
+
+HTML uses `data-action` attributes handled by app-level JavaScript:
+```html
+<!-- Old: nui-event-click="toggle-theme" -->
+<!-- New: -->
+<button data-action="toggle-theme">Toggle</button>
+
+<script>
+document.addEventListener('click', (e) => {
+    const action = e.target.closest('[data-action]')?.dataset.action;
+    if (action === 'toggle-theme') { /* handle */ }
+});
+</script>
 ```
 
 ---
 
-## The Case FOR Keeping
-
-### Doer Benefits
-1. **Concise syntax** - `nui-event-click="open@#dialog"` vs `onclick="document.querySelector('#dialog').showModal()"`
-2. **Separation of concerns** - Actions defined separately from triggers
-3. **Discoverability** - Scan HTML to see all interactions
-4. **Consistency** - Standard pattern across all components
-
-### Knower Benefits
-1. **Cross-component communication** - Components don't need direct references
-2. **Single source of truth** - State lives in one place
-3. **Decoupling** - Publisher doesn't know subscribers
-4. **Persistence potential** - Could sync to localStorage/server
-
-### Combined Benefits
-1. **Rapid prototyping** - Wire up interactions without writing JS
-2. **Teaching tool** - Introduces reactive patterns before frameworks
-
----
-
-## The Case AGAINST Keeping
-
-### Doer Problems
-1. **Limited power** - Complex actions still need JavaScript
+## Original Analysis (Archived)
 2. **New syntax to learn** - `action@#target:param` vs standard DOM APIs
 3. **Debugging indirection** - Action dispatch harder to trace than direct calls
 4. **Platform alternatives exist:**

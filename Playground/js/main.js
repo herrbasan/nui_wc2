@@ -17,24 +17,34 @@ const mode = urlParams.get('mode'); // Future: different test modes
 
 console.log('URL params:', { skipInit, mode });
 
-// Register custom actions
-nui.registerAction('show-alert', (target, source, event, param) => {
-	alert(`Button clicked: ${source.textContent.trim()}`);
-});
-
-nui.registerAction('log-action', (target, source, event, param) => {
-	console.log('Custom action triggered:', { target, source, param });
-});
-
-nui.registerAction('toggle-media', (target, source, event, param) => {
-	const icon = document.getElementById('dynamic-icon');
-	const isPlaying = icon.getAttribute('name') === 'play';
-
-	// Change icon AND simulate actual functionality
-	icon.setAttribute('name', isPlaying ? 'pause' : 'play');
-	console.log(isPlaying ? 'Starting playback...' : 'Pausing playback...');
-
-	// In real app: audio.play() or audio.pause()
+// Setup action handlers using event delegation on data-action attributes
+document.addEventListener('click', (e) => {
+	const actionEl = e.target.closest('[data-action]');
+	if (!actionEl) return;
+	
+	const action = actionEl.dataset.action;
+	
+	switch (action) {
+		case 'toggle-sidebar':
+			const app = document.querySelector('nui-app');
+			if (app?.toggleSideNav) app.toggleSideNav();
+			break;
+		case 'toggle-theme':
+			const current = document.documentElement.style.colorScheme || 'light';
+			const newTheme = current === 'dark' ? 'light' : 'dark';
+			document.documentElement.style.colorScheme = newTheme;
+			localStorage.setItem('nui-theme', newTheme);
+			break;
+		case 'log-action':
+			console.log('Custom action triggered:', { actionEl });
+			break;
+		case 'toggle-media':
+			const icon = document.getElementById('dynamic-icon');
+			const isPlaying = icon.getAttribute('name') === 'play';
+			icon.setAttribute('name', isPlaying ? 'pause' : 'play');
+			console.log(isPlaying ? 'Starting playback...' : 'Pausing playback...');
+			break;
+	}
 });
 
 // Register a demo feature (app-level functionality, not a content page)
@@ -110,7 +120,8 @@ const navigationData = [
 		icon: 'article',
 		items: [
 			{ label: 'Introduction', href: '#page=introduction' },
-			{ label: 'Getting Started', href: '#page=getting-started' }
+			{ label: 'Getting Started', href: '#page=getting-started' },
+			{ label: 'Declarative Actions', href: '#page=declarative-actions' }
 		]
 	},
 	{

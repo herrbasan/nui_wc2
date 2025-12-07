@@ -12,7 +12,7 @@ export function highlight(code, lang) {
 	let tokenId = 0;
 	
 	function wrap(match, className) {
-		const token = `___TOKEN_${tokenId++}___`;
+		const token = `~~TOKEN_${tokenId++}~~`;
 		tokens.push({ token, html: `<span class="hl-${className}">${match}</span>` });
 		return token;
 	}

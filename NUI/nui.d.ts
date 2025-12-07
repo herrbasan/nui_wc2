@@ -446,11 +446,11 @@ export type NuiVarsAttributes = `nui-vars-${string}`;
 export type NuiStateAttributes = `nui-state-${string}`;
 
 /**
- * Event handling attributes (nui-event-*)
- * Declarative event binding
- * Example: nui-event-click="toggle-theme"
+ * Data-action attribute for CSP-safe event delegation
+ * Action strings are handled by app-level JavaScript
+ * Example: data-action="toggle-theme"
  */
-export type NuiEventAttributes = `nui-event-${string}`;
+export type DataActionAttribute = 'data-action';
 
 /**
  * URL/Resource attributes (nui-url-*)

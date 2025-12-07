@@ -103,25 +103,8 @@ function updateDisplay(display, sideNav) {
 }
 
 function registerCustomActions() {
-	if (!window.nui || !window.nui.doer) return;
-	
-	// Edit section action (example)
-	window.nui.doer.register('edit-section', (target, source, event, section) => {
-		console.log('Edit section:', section);
-		alert(`Edit section: ${section}`);
-	});
-	
-	// Show alert action
-	window.nui.doer.register('show-alert', (target, source) => {
-		alert('Custom action triggered!');
-	});
-	
-	// Toggle media action
-	window.nui.doer.register('toggle-media', (target, source) => {
-		const icon = document.getElementById('dynamic-icon');
-		if (icon) {
-			const currentIcon = icon.getAttribute('name');
-			icon.setAttribute('name', currentIcon === 'play' ? 'pause' : 'play');
-		}
-	});
+	// Action handlers now use event delegation with data-action attributes
+	// These are handled in main.js or directly via onclick handlers
+	// This function is no longer needed but kept for reference
+	console.log('[archived] Custom actions should be handled via data-action attributes');
 }

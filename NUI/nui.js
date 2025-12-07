@@ -14,177 +14,43 @@ const config = {
 	iconSpritePath: `${nuiBasePath}/assets/material-icons-sprite.svg`
 };
 
-// ################################# THE DOER
+// ################################# MINIMAL EVENT DELEGATION
+// CSP-safe action dispatch using data-action attributes
+// Actions are functions on the nui object - no registry needed
 
-const doer = {
-	_actions: {},
-	_ownerCleanups: new Map(),
-
-	register(name, fn, ownerId = null) {
-		this._actions[name] = fn;
-
-		if (ownerId) {
-			const element = document.querySelector(`[nui-id="${ownerId}"]`);
-			if (!element || !element.isConnected) {
-				console.warn(`[DOER] Registering action "${name}" for disconnected component "${ownerId}". This may cause memory leaks. Register actions only for connected components.`);
-			}
-
-			if (!this._ownerCleanups.has(ownerId)) {
-				this._ownerCleanups.set(ownerId, new Set());
-			}
-			this._ownerCleanups.get(ownerId).add(() => {
-				if (this._actions[name] === fn) {
-					delete this._actions[name];
-				}
-			});
-		}
-	}, do(name, target, element, event, param) {
-		if (this._actions[name]) {
-			return this._actions[name](target, element, event, param);
+function setupActionDelegation() {
+	document.addEventListener('click', (e) => {
+		const actionEl = e.target.closest('[data-action]');
+		if (!actionEl) return;
+		
+		const actionSpec = actionEl.dataset.action;
+		if (!actionSpec) return;
+		
+		// Parse action@target:param format
+		const [actionPart, selector] = actionSpec.split('@');
+		const [actionName, param] = actionPart.split(':');
+		
+		// Find target element if specified
+		const target = selector ? document.querySelector(selector) : actionEl;
+		
+		// Call function on nui object if it exists
+		if (typeof nui[actionName] === 'function') {
+			nui[actionName](target, actionEl, e, param);
 		} else {
-			const customEvent = new CustomEvent(`nui-${name}`, {
+			// Dispatch generic event for easy handling
+			actionEl.dispatchEvent(new CustomEvent('nui-action', {
 				bubbles: true,
-				cancelable: true,
-				detail: {
-					element: element,
-					target: target,
-					param: param,
-					originalEvent: event
-				}
-			});
-			element.dispatchEvent(customEvent);
+				detail: { name: actionName, target, param, originalEvent: e }
+			}));
 
-			const actionId = `action:${name}`;
-			if (knower.hasWatchers(actionId)) {
-				knower.tell(actionId, param || name, element);
-			}
+			// Dispatch specific event for targeted listening
+			actionEl.dispatchEvent(new CustomEvent(`nui-action-${actionName}`, {
+				bubbles: true,
+				detail: { target, param, originalEvent: e }
+			}));
 		}
-	},
-
-	clean(ownerId) {
-		if (this._ownerCleanups.has(ownerId)) {
-			this._ownerCleanups.get(ownerId).forEach(fn => fn());
-			this._ownerCleanups.delete(ownerId);
-		}
-	},
-
-	listActions() {
-		return Object.keys(this._actions);
-	}
-};
-
-// ################################# THE KNOWER
-
-const knower = {
-	_states: null,
-	_hooks: null,
-	_ownerCleanups: null,
-
-	tell(id, state, source = null) {
-		if (!this._states) this._states = new Map();
-
-		const oldState = this._states.get(id);
-
-		if (oldState === state) return;
-
-		this._states.set(id, state);
-
-		if (this._hooks) {
-			const hooks = this._hooks.get(id);
-			if (hooks) {
-				Array.from(hooks).forEach(handler => {
-					try {
-						handler(state, oldState, source);
-					} catch (error) {
-						console.error('[KNOWER] Watcher error:', error);
-					}
-				});
-			}
-		}
-	}, know(id) {
-		return this._states?.get(id);
-	},
-
-	hasWatchers(id) {
-		return this._hooks?.has(id) && this._hooks.get(id).size > 0;
-	},
-
-	watch(id, handler, ownerId = null) {
-		if (!this._hooks) this._hooks = new Map();
-		if (!this._hooks.has(id)) {
-			this._hooks.set(id, new Set());
-		}
-		this._hooks.get(id).add(handler);
-
-		const currentState = this._states?.get(id);
-		if (currentState !== undefined) {
-			try {
-				handler(currentState, undefined, null);
-			} catch (error) {
-				console.error('[KNOWER] Watcher error during initial notification:', error);
-			}
-		}
-
-		const unwatch = () => this.unwatch(id, handler);
-
-		if (ownerId) {
-			const element = document.querySelector(`[nui-id="${ownerId}"]`);
-			if (!element || !element.isConnected) {
-				console.warn(`[KNOWER] Registering watcher for disconnected component "${ownerId}". This may cause memory leaks. Register watchers only for connected components.`);
-			}
-
-			if (!this._ownerCleanups) this._ownerCleanups = new Map();
-			if (!this._ownerCleanups.has(ownerId)) {
-				this._ownerCleanups.set(ownerId, new Set());
-			}
-			this._ownerCleanups.get(ownerId).add(unwatch);
-		}
-
-		return unwatch;
-	}, unwatch(id, handler) {
-		if (!this._hooks) return;
-		const hooks = this._hooks.get(id);
-		if (hooks) {
-			hooks.delete(handler);
-			if (hooks.size === 0) {
-				this._hooks.delete(id);
-			}
-		}
-	},
-
-	clean(ownerId) {
-		if (this._ownerCleanups && this._ownerCleanups.has(ownerId)) {
-			this._ownerCleanups.get(ownerId).forEach(fn => fn());
-			this._ownerCleanups.delete(ownerId);
-		}
-	},
-
-	forget(id) {
-		if (id) {
-			this._states?.delete(id);
-			this._hooks?.delete(id);
-		} else {
-			this._states = null;
-			this._hooks = null;
-			this._ownerCleanups = null;
-		}
-	},
-
-	knowAll() {
-		return this._states ? Object.fromEntries(this._states) : {};
-	},
-
-	listKnown() {
-		const all = this.knowAll();
-		return {
-			states: all,
-			watchers: this._hooks ? Array.from(this._hooks.keys()).map(id => ({
-				id,
-				count: this._hooks.get(id).size
-			})) : []
-		};
-	}
-};
+	});
+}
 
 // ################################# ATTRIBUTE PROXY SYSTEM
 
@@ -249,15 +115,6 @@ function defineAttributeProperty(element, propName, attrName = propName) {
 
 // ################################# DOM UTILITIES
 
-function ensureInstanceId(element, prefix = 'nui') {
-	let instanceId = element.getAttribute('nui-id');
-	if (!instanceId) {
-		instanceId = `${prefix}-${Math.random().toString(36).substr(2, 9)}`;
-		element.setAttribute('nui-id', instanceId);
-	}
-	return instanceId;
-}
-
 const dom = {
 	create(tag, attributes = {}, children = []) {
 		const element = document.createElement(tag);
@@ -304,19 +161,12 @@ const dom = {
 function createComponent(tagName, setupFn, cleanupFn) {
 	return class extends HTMLElement {
 		connectedCallback() {
-			processEventAttributes(this);
 			const setupCleanup = setupFn?.(this);
 			if (typeof setupCleanup === 'function') {
 				this._setupCleanup = setupCleanup;
 			}
 		}
 		disconnectedCallback() {
-			const instanceId = this.getAttribute('nui-id');
-			if (instanceId) {
-				knower.clean(instanceId);
-				doer.clean(instanceId);
-			}
-
 			if (this._originalAttributeMethods) {
 				this.setAttribute = this._originalAttributeMethods.setAttribute;
 				this.removeAttribute = this._originalAttributeMethods.removeAttribute;
@@ -349,150 +199,6 @@ function registerLayoutComponent(tagName) {
 		cleanup: () => { }
 	};
 }
-
-// ################################# EVENT ACTIONS
-
-function sanitizeInput(input) {
-	if (!input) return '';
-	if (!config.sanitizeActions) return input;
-	return input
-		.replace(/[<>'"]/g, '')
-		.replace(/javascript:/gi, '')
-		.replace(/on\w+=/gi, '')
-		.trim();
-}
-
-function processEventAttributes(element, processChildren = true) {
-	// DEPRECATED: Event attributes are now handled via global delegation
-	// This function is kept for backwards compatibility but does nothing
-	// See setupGlobalEventDelegation()
-}
-
-function executeAction(actionSpec, element, event) {
-	const [actionPart, selector] = actionSpec.split('@');
-	const [actionName, param] = actionPart.split(':');
-
-	const safeActionName = sanitizeInput(actionName);
-	const safeParam = sanitizeInput(param);
-	const safeSelector = sanitizeInput(selector);
-
-	if (config.sanitizeActions && safeSelector && !/^[a-zA-Z0-9\s\-_.#\[\]=,>+~:()]+$/.test(safeSelector)) {
-		console.warn(`Invalid selector: "${selector}"`);
-		return;
-	}
-
-	const target = safeSelector ? document.querySelector(safeSelector) : element;
-
-	doer.do(safeActionName, target, element, event, safeParam);
-}
-
-// Global event delegation for nui-event-* attributes
-// Single listener per event type, finds closest element with attribute
-function setupGlobalEventDelegation() {
-	const eventTypes = ['click', 'change', 'input', 'submit', 'focus', 'blur', 'keydown', 'keyup'];
-	
-	eventTypes.forEach(eventType => {
-		document.addEventListener(eventType, (e) => {
-			const attrName = `nui-event-${eventType}`;
-			const element = e.target.closest(`[${attrName}]`);
-			
-			if (element) {
-				const actionSpec = element.getAttribute(attrName);
-				if (actionSpec) {
-					executeAction(sanitizeInput(actionSpec), element, e);
-				}
-			}
-		}, true); // Capture phase to handle before other listeners
-	});
-}
-
-// Initialize delegation immediately
-setupGlobalEventDelegation();
-
-// ################################# BUILT-IN ACTIONS
-
-doer.register('toggle-theme', (target, source, event, param) => {
-	const root = document.documentElement;
-	const currentScheme = root.style.colorScheme ||
-		getComputedStyle(root).colorScheme || 'light dark';
-
-	let newTheme;
-
-	if (currentScheme.includes('dark') && !currentScheme.includes('light')) {
-		root.style.colorScheme = 'light';
-		localStorage.setItem('nui-theme', 'light');
-		newTheme = 'light';
-	} else if (currentScheme.includes('light') && !currentScheme.includes('dark')) {
-		root.style.colorScheme = 'dark';
-		localStorage.setItem('nui-theme', 'dark');
-		newTheme = 'dark';
-	} else {
-		const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-		root.style.colorScheme = prefersDark ? 'light' : 'dark';
-		localStorage.setItem('nui-theme', prefersDark ? 'light' : 'dark');
-		newTheme = prefersDark ? 'light' : 'dark';
-	}
-
-	knower.tell('theme', newTheme);
-});
-
-doer.register('toggle-class', (target, source, event, className) => {
-	if (target && className) {
-		target.classList.toggle(className);
-	}
-});
-
-doer.register('add-class', (target, source, event, className) => {
-	if (target && className) {
-		target.classList.add(className);
-	}
-});
-
-doer.register('remove-class', (target, source, event, className) => {
-	if (target && className) {
-		target.classList.remove(className);
-	}
-});
-
-doer.register('toggle-attr', (target, source, event, attrName) => {
-	if (target && attrName) {
-		if (target.hasAttribute(attrName)) {
-			target.removeAttribute(attrName);
-		} else {
-			target.setAttribute(attrName, '');
-		}
-	}
-});
-
-doer.register('set-attr', (target, source, event, attrSpec) => {
-	if (target && attrSpec) {
-		const [name, value] = attrSpec.split('=');
-		target.setAttribute(name, value || '');
-	}
-});
-
-doer.register('remove-attr', (target, source, event, attrName) => {
-	if (target && attrName) {
-		target.removeAttribute(attrName);
-	}
-});
-
-doer.register('toggle-sidebar', (target, source, event, param) => {
-	const app = document.querySelector('nui-app');
-	if (app && app.toggleSideNav) {
-		app.toggleSideNav();
-	}
-});
-
-// Generic open/close actions - call showModal/close on target element
-doer.register('open', (target) => {
-	if (target?.showModal) target.showModal();
-	else if (target?.show) target.show();
-});
-
-doer.register('close', (target) => {
-	if (target?.close) target.close();
-});
 
 // ################################# ACCESSIBILITY
 
@@ -586,7 +292,7 @@ const a11y = {
 	upgrade(element) {
 		element.querySelectorAll('button').forEach(btn => this.ensureButtonLabel(btn));
 
-		element.querySelectorAll('[onclick], [nui-event-click]').forEach(el => {
+		element.querySelectorAll('[onclick], [data-action]').forEach(el => {
 			if (el.tagName !== 'BUTTON' && el.tagName !== 'A' && !this.hasFocusableChild(el)) {
 				if (!el.hasAttribute('role')) {
 					el.setAttribute('role', 'button');
@@ -728,10 +434,6 @@ registerComponent('nui-loading', (element) => {
 });
 
 registerComponent('nui-app', (element) => {
-	const instanceId = ensureInstanceId(element, 'app');
-	const stateKey = `${instanceId}:side-nav`;
-	let lastState = null;
-
 	let cachedBreakpoint = null;
 
 	function getBreakpoint(element) {
@@ -763,6 +465,13 @@ registerComponent('nui-app', (element) => {
 		return cachedBreakpoint;
 	}
 
+	function dispatchSideNavEvent(state) {
+		element.dispatchEvent(new CustomEvent('nui-sidenav-change', {
+			bubbles: true,
+			detail: { state }
+		}));
+	}
+
 	function updateResponsiveState(element) {
 		const sideNav = element.querySelector('nui-side-nav');
 		if (!sideNav) return;
@@ -787,8 +496,7 @@ registerComponent('nui-app', (element) => {
 			}
 		}
 
-		knower.tell(stateKey, newState, element);
-		lastState = newState;
+		dispatchSideNavEvent(newState);
 
 		if (!element.classList.contains('nui-ready')) {
 			requestAnimationFrame(() => element.classList.add('nui-ready'));
@@ -803,13 +511,11 @@ registerComponent('nui-app', (element) => {
 		if (isOpen) {
 			element.classList.remove('sidenav-open');
 			element.classList.add('sidenav-closed');
-			knower.tell(stateKey, 'closed', element);
-			lastState = 'closed';
+			dispatchSideNavEvent('closed');
 		} else {
 			element.classList.remove('sidenav-closed');
 			element.classList.add('sidenav-open');
-			knower.tell(stateKey, 'open', element);
-			lastState = 'open';
+			dispatchSideNavEvent('open');
 		}
 	}
 
@@ -849,7 +555,6 @@ registerComponent('nui-app', (element) => {
 
 	return () => {
 		resizeObserver.disconnect();
-		knower.forget(stateKey);
 	};
 });
 
@@ -945,10 +650,15 @@ registerComponent('nui-code', (element) => {
 });
 
 registerComponent('nui-link-list', (element) => {
-	const instanceId = ensureInstanceId(element, 'link-list');
-	const stateKey = `${instanceId}:active`;
 	const mode = element.getAttribute('mode') || 'tree';
 	let activeItem = null;
+
+	function dispatchActiveEvent(data) {
+		element.dispatchEvent(new CustomEvent('nui-active-change', {
+			bubbles: true,
+			detail: data
+		}));
+	}
 
 	// ##### DATA LOADING & HTML GENERATION
 
@@ -980,13 +690,14 @@ registerComponent('nui-link-list', (element) => {
 			return `<ul>${buildGroupHeaderHTML(item)}<div class="group-items" role="presentation">${children}</div></ul>`;
 		}
 		const hrefAttr = item.href ? ` href="${item.href}"` : ' href=""';
-		const link = `<li class="list-item"><a${hrefAttr}${item.event ? ` nui-event-click="${item.event}"` : ''}>` +
+		const dataAction = item.action ? ` data-action="${item.action}"` : '';
+		const link = `<li class="list-item"><a${hrefAttr}${dataAction}>` +
 			`${item.icon ? `<nui-icon name="${item.icon}"></nui-icon>` : ''}<span>${item.label}</span></a></li>`;
 		return nested ? link : `<ul>${link}</ul>`;
 	}
 
 	function buildGroupHeaderHTML(item) {
-		const action = item.action ? `<button type="button" class="action" nui-event-click="${item.action}"><nui-icon name="settings"></nui-icon></button>` : '';
+		const action = item.headerAction ? `<button type="button" class="action" data-action="${item.headerAction}"><nui-icon name="settings"></nui-icon></button>` : '';
 		return `<li class="group-header"><span>${item.icon ? `<nui-icon name="${item.icon}"></nui-icon>` : ''}<span>${item.label}</span></span>${action}</li>`;
 	}
 
@@ -1055,12 +766,12 @@ registerComponent('nui-link-list', (element) => {
 		if (mode === 'fold') updateAccordionState(path);
 		else path.forEach(h => setGroupState(h, true));
 
-		knower.tell(stateKey, {
+		dispatchActiveEvent({
 			element: item,
 			href: item.getAttribute('href'),
 			text: item.textContent.trim(),
 			timestamp: Date.now()
-		}, element);
+		});
 		return true;
 	};
 
@@ -1075,7 +786,7 @@ registerComponent('nui-link-list', (element) => {
 	element.clearActive = (closeAll = false) => {
 		if (activeItem) {
 			updateActive(null);
-			knower.tell(stateKey, null, element);
+			dispatchActiveEvent(null);
 		}
 		if (closeAll) {
 			element.querySelectorAll('.group-header').forEach(h => setGroupState(h, false));
@@ -1145,12 +856,12 @@ registerComponent('nui-link-list', (element) => {
 			const listItem = link.closest('li');
 			if (listItem) {
 				updateActive(listItem);
-				knower.tell(stateKey, {
+				dispatchActiveEvent({
 					element: listItem,
 					link: link,
 					href: link.getAttribute('href'),
 					text: link.textContent.trim()
-				}, element);
+				});
 			}
 
 			if (!link.getAttribute('href')) {
@@ -1206,8 +917,6 @@ registerComponent('nui-link-list', (element) => {
 	}
 
 	upgradeAccessibility();
-
-	return () => knower.forget(stateKey);
 });
 
 registerComponent('nui-content', (element) => {
@@ -1343,7 +1052,7 @@ registerComponent('nui-dialog', (element) => {
 			isAnimating = false;
 			cancelDialogAni = null;
 		});
-		knower.tell(`dialog:${element.id}:open`, true);
+		element.dispatchEvent(new CustomEvent('nui-dialog-open', { bubbles: true }));
 	};
 
 	element.show = () => {
@@ -1357,7 +1066,7 @@ registerComponent('nui-dialog', (element) => {
 			isAnimating = false;
 			cancelDialogAni = null;
 		});
-		knower.tell(`dialog:${element.id}:open`, true);
+		element.dispatchEvent(new CustomEvent('nui-dialog-open', { bubbles: true }));
 	};
 
 	element.close = (returnValue) => {
@@ -1380,7 +1089,6 @@ registerComponent('nui-dialog', (element) => {
 			cleanup();
 			dialog.close(returnValue);
 		});
-		knower.tell(`dialog:${element.id}:open`, false);
 	};
 
 	element.isOpen = () => dialog.open;
@@ -1390,7 +1098,6 @@ registerComponent('nui-dialog', (element) => {
 
 	dialog.addEventListener('close', () => {
 		element.dispatchEvent(new CustomEvent('nui-dialog-close', { bubbles: true, detail: { returnValue: dialog.returnValue } }));
-		knower.tell(`dialog:${element.id}:open`, false);
 	});
 
 	dialog.addEventListener('cancel', (e) => {
@@ -1413,8 +1120,6 @@ registerComponent('nui-dialog', (element) => {
 			element.close('backdrop');
 		}
 	});
-
-	const instanceId = ensureInstanceId(element, 'dialog');
 });
 
 // ################################# nui-banner COMPONENT
@@ -1475,7 +1180,6 @@ registerComponent('nui-banner', (element) => {
 			}, duration);
 		}
 
-		knower.tell(`banner:${element.id}:open`, true);
 		element.dispatchEvent(new CustomEvent('nui-banner-open', { bubbles: true }));
 	};
 
@@ -1490,8 +1194,6 @@ registerComponent('nui-banner', (element) => {
 			element.removeAttribute('open');
 			cancelCloseAni = null;
 			
-			knower.tell(`banner:${element.id}:open`, false);
-			knower.tell(`banner:${element.id}:action`, action);
 			element.dispatchEvent(new CustomEvent('nui-banner-close', { 
 				bubbles: true, 
 				detail: { action } 
@@ -1508,14 +1210,6 @@ registerComponent('nui-banner', (element) => {
 	};
 
 	element.isOpen = () => isOpen;
-
-	const instanceId = ensureInstanceId(element, 'banner');
-	doer.register('banner-show', () => element.show(), instanceId);
-	doer.register('banner-close', () => element.close(), instanceId);
-	doer.register('banner-action', (target, source, event, param) => {
-		const action = source?.dataset?.action || param || 'action';
-		element.close(action);
-	}, instanceId);
 });
 
 // ################################# INPUT COMPONENTS
@@ -1567,7 +1261,6 @@ registerComponent('nui-input', (element) => {
 	const input = element.querySelector('input');
 	if (!input) return;
 
-	const instanceId = ensureInstanceId(element, 'input');
 	let clearBtn = null;
 	let errorEl = null;
 
@@ -1674,11 +1367,6 @@ registerComponent('nui-input', (element) => {
 
 	element.focus = () => input.focus();
 
-	// Doer actions
-	doer.register(`focus@nui-input`, (target) => target.focus?.(), instanceId);
-	doer.register(`clear@nui-input`, (target) => target.clear?.(), instanceId);
-	doer.register(`validate@nui-input`, (target) => target.validate?.(), instanceId);
-
 	// Initial state
 	updateClearButton();
 });
@@ -1689,7 +1377,6 @@ registerComponent('nui-textarea', (element) => {
 	const textarea = element.querySelector('textarea');
 	if (!textarea) return;
 
-	const instanceId = ensureInstanceId(element, 'textarea');
 	let countEl = null;
 	let errorEl = null;
 
@@ -1821,11 +1508,6 @@ registerComponent('nui-textarea', (element) => {
 	};
 
 	element.focus = () => textarea.focus();
-
-	// Doer actions
-	doer.register(`focus@nui-textarea`, (target) => target.focus?.(), instanceId);
-	doer.register(`clear@nui-textarea`, (target) => target.clear?.(), instanceId);
-	doer.register(`validate@nui-textarea`, (target) => target.validate?.(), instanceId);
 
 	// Initial state
 	if (autoResize) {
@@ -2077,7 +1759,7 @@ const dialogSystem = {
 					<div class="nui-headline">${title}</div>
 					<div class="nui-copy">${message}</div>
 					<nui-button-container align="end">
-						<nui-button><button class="primary" id="nui-dialog-ok">OK</button></nui-button>
+						<nui-button type="primary"><button id="nui-dialog-ok">OK</button></nui-button>
 					</nui-button-container>
 				</div>
 			`;
@@ -2101,8 +1783,8 @@ const dialogSystem = {
 					<div class="nui-headline">${title}</div>
 					<div class="nui-copy">${message}</div>
 					<nui-button-container align="end">
-						<nui-button><button class="outline" id="nui-dialog-cancel">Cancel</button></nui-button>
-						<nui-button><button class="primary" id="nui-dialog-ok">OK</button></nui-button>
+						<nui-button type="outline"><button id="nui-dialog-cancel">Cancel</button></nui-button>
+						<nui-button type="primary"><button id="nui-dialog-ok">OK</button></nui-button>
 					</nui-button-container>
 				</div>
 			`;
@@ -2134,8 +1816,8 @@ const dialogSystem = {
 					${message ? `<div class="nui-copy">${message}</div>` : ''}
 					<div class="nui-dialog-body">${inputsHtml}</div>
 					<nui-button-container align="end">
-						<nui-button><button class="outline" id="nui-dialog-cancel">Cancel</button></nui-button>
-						<nui-button><button class="primary" id="nui-dialog-ok">OK</button></nui-button>
+						<nui-button type="outline"><button id="nui-dialog-cancel">Cancel</button></nui-button>
+						<nui-button type="primary"><button id="nui-dialog-ok">OK</button></nui-button>
 					</nui-button-container>
 				</div>
 			`;
@@ -2359,7 +2041,11 @@ function createRouter(container, options = {}) {
 		currentElement = element;
 		currentRoute = { type, id, params, element };
 
-		knower.tell('route', currentRoute);
+		// Dispatch route change event
+		container.dispatchEvent(new CustomEvent('nui-route-change', {
+			bubbles: true,
+			detail: currentRoute
+		}));
 	}
 
 	function handleHashChange() {
@@ -2436,7 +2122,8 @@ function enableContentLoading(options = {}) {
 		: navigationSelector;
 
 	if (navigation) {
-		knower.watch('route', (route) => {
+		container.addEventListener('nui-route-change', (e) => {
+			const route = e.detail;
 			if (!route) return;
 
 			// Close sidebar if open and not forced (overlay mode)
@@ -2452,14 +2139,6 @@ function enableContentLoading(options = {}) {
 			}
 		});
 	}
-
-	doer.register('navigate', (target, source, event, param) => {
-		if (param.includes('=')) {
-			location.hash = param;
-		} else {
-			router.go('page', param);
-		}
-	});
 
 	router.start();
 
@@ -2488,8 +2167,6 @@ function ensureBaseStyles() {
 
 export const nui = {
 	config,
-	knower,
-	doer,
 	dom,
 
 	cssAnimation(element, className, callback) {
@@ -2513,6 +2190,7 @@ export const nui = {
 		}
 
 		ensureBaseStyles();
+		setupActionDelegation();
 
 		const savedTheme = localStorage.getItem('nui-theme');
 		if (savedTheme) {
@@ -2531,10 +2209,6 @@ export const nui = {
 		});
 	},
 
-	registerAction(name, handler) {
-		doer.register(name, handler);
-	},
-
 	registerFeature(name, initFn) {
 		registeredFeatures.set(name, initFn);
 	},
@@ -2546,9 +2220,6 @@ export const nui = {
 	configure(options) {
 		Object.assign(config, options);
 	},
-
-	knower: knower,
-	doer: doer,
 
 	createRouter(container, options = {}) {
 		return createRouter(container, options);

@@ -166,22 +166,22 @@ function init(element, params) {
 	];
 	
 	iconGrid.innerHTML = icons.map(iconName => `
-		<div class="icon-item" data-icon="${iconName}">
+		<div class="icon-item" data-action="copy-icon:${iconName}">
 			<nui-icon name="${iconName}" style="font-size: 2rem;"></nui-icon>
 			<code>${iconName}</code>
 		</div>
 	`).join('');
 	
-	// Add click handlers to copy icon name
-	iconGrid.querySelectorAll('.icon-item').forEach(item => {
-		item.addEventListener('click', async () => {
-			const iconName = item.dataset.icon;
-			
+	// Handle actions
+	element.addEventListener('nui-action', async (e) => {
+		const { name, param, target } = e.detail;
+		
+		if (name === 'copy-icon') {
 			try {
-				await navigator.clipboard.writeText(iconName);
+				await navigator.clipboard.writeText(param);
 				
 				// Visual feedback
-				const code = item.querySelector('code');
+				const code = target.querySelector('code');
 				const originalText = code.textContent;
 				code.textContent = 'Copied!';
 				code.style.opacity = '1';
@@ -195,7 +195,8 @@ function init(element, params) {
 			} catch (err) {
 				console.error('Failed to copy:', err);
 			}
-		});
+			e.stopPropagation();
+		}
 	});
 }
 </script>

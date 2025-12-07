@@ -423,140 +423,95 @@ themeButton.addEventListener('click', () => {
 **Secondary Pattern: Attribute System (Convenience)**
 ```html
 <!-- Quick setup for simple interactions -->
-<button nui-event-click="toggle-theme">Dark/Light</button>
+<button data-action="toggle-theme">Dark/Light</button>
 ```
 
-**Philosophy:** Attribute system is convenience sugar for rapid prototyping. Direct JavaScript using platform APIs is the primary teaching pattern showing platform fundamentals.
+**Philosophy:** The `data-action` attribute provides minimal event delegation for CSP safety. Direct JavaScript using platform APIs is the primary teaching pattern showing platform fundamentals.
 
-#### Knower & Doer Systems
+#### Discarded: Knower & Doer Systems (December 2025)
 
-**The Knower (State Management)** - "Knower knows things"
-- Lightweight, opt-in state observation for cross-component communication
-- Use for shared state only (sidebar open/closed, theme, global app state)
-- NOT for component-local state (use closures or DOM attributes instead)
-- Single source of truth per state ID
+**What We Built:**
+We implemented two interconnected systems for declarative interactions:
 
+1. **Knower (State Management)** - A pub/sub system for cross-component state:
+   ```javascript
+   nui.knower.tell('sidebar:open', true);
+   nui.knower.watch('sidebar:open', (isOpen) => { ... });
+   ```
+
+2. **Doer (Action System)** - A centralized action registry with HTML attribute binding:
+   ```html
+   <button nui-event-click="toggle-theme">Toggle</button>
+   <button nui-event-click="open@#my-dialog">Open</button>
+   ```
+
+3. **Built-in Actions** - Pre-registered actions for common patterns:
+   - `toggle-theme`, `toggle-class`, `open`, `close`, `toggle`, etc.
+
+**Why We Removed Them:**
+
+After evaluating 12 actual usage sites against platform alternatives, we found:
+
+| Pattern | Knower/Doer | Platform Alternative | Winner |
+|---------|-------------|---------------------|--------|
+| Toggle sidebar | `nui-event-click="toggle-sidebar"` | `onclick="app.toggleSideNav()"` | **Tie** |
+| Open dialog | `nui-event-click="open@#dialog"` | `onclick="dialog.showModal()"` | **Tie** |
+| Watch dialog state | `knower.watch('dialog:id:open', ...)` | `dialog.addEventListener('nui-dialog-close', ...)` | **Platform** |
+| Input focus/clear | `doer.do('focus@nui-input', el)` | `el.focus()` | **Platform** |
+
+**Key Insights:**
+
+1. **No actual cross-component state needs**: Every `knower.tell()` was immediately followed by a `CustomEvent` dispatch anyway. The Knower was redundant.
+
+2. **Platform APIs are equally concise**: The claimed syntax advantage (`nui-event-click="open@#id"` vs `onclick="..."`) was minimal and didn't justify the abstraction cost.
+
+3. **Teaching conflict**: A library meant to teach platform fundamentals shouldn't hide them behind custom abstractions.
+
+4. **Debugging complexity**: Custom systems require learning custom debugging. Platform APIs use browser DevTools directly.
+
+5. **CSP compatibility**: `nui-event-click` required our own event delegation anyway. Switching to `data-action` achieves the same CSP safety with less code.
+
+**What We Kept:**
+
+Minimal CSP-safe event delegation (~20 lines):
 ```javascript
-// Tell the Knower something changed
-nui.knower.tell('sidebar', { open: true, mode: 'tree' });
-
-// Watch for changes (returns unwatch function)
-const unwatch = nui.knower.watch('sidebar', (state, oldState) => {
-    overlay.style.display = state.open ? 'block' : 'none';
+// In nui.js - minimal action delegation
+document.addEventListener('click', (e) => {
+    const actionEl = e.target.closest('[data-action]');
+    if (!actionEl) return;
+    const action = actionEl.dataset.action;
+    // Dispatch custom event for app-level handling
+    actionEl.dispatchEvent(new CustomEvent(`nui-action-${action}`, { bubbles: true }));
 });
-
-// Query current state
-const state = nui.knower.know('sidebar');
 ```
 
-**The Doer (Action Execution)** - "Doer does things"
-- Centralized action system with auto-registration
-- Built-in actions for common operations (toggle-theme, toggle-class, etc.)
-- Unknown actions auto-dispatch custom events and update Knower
+**New Patterns:**
 
+Components dispatch standard `CustomEvent` instead of `knower.tell()`:
 ```javascript
-// Register custom action
-nui.doer.register('show-notification', (target, source, event, message) => {
-    // Action implementation
-});
-
-// Use via attributes or programmatically
-nui.doer.do('show-notification', element, element, null, 'Hello!');
+// Old: knower.tell('dialog:my-dialog:open', true);
+// New:
+element.dispatchEvent(new CustomEvent('nui-dialog-open', { bubbles: true }));
 ```
 
-**Dangers & Mitigation:**
-- **Problem**: Reactive systems invite over-subscription (like React hooks sprawl)
-- **Mitigation**: 
-  - Use Knower only for cross-component state, not component-local
-  - Prefer direct platform queries for component-specific concerns
-  - Namespace state IDs to avoid collisions (`sidebar:main` not just `sidebar`)
-  - Monitor watcher counts during development (use nui-monitor.js)
-  - Code review for over-subscription patterns
-  - Treat state changes as pure functions (input → output)
-
-**Development Monitoring:**
-```javascript
-import { createMonitor } from './NUI/lib/modules/nui-monitor.js';
-const monitor = createMonitor(nui);
-monitor.diagnose(); // Check for high watcher counts, state churn, etc.
+App-level code uses event delegation with `data-action`:
+```html
+<button data-action="toggle-theme">Toggle</button>
 ```
-
-**Refactor Note (November 2025): ID-Based Cleanup**
-To prevent memory leaks from object references, the system now uses an ID-based cleanup mechanism.
-- Components use the `nui-id` attribute for both state scoping and cleanup tracking
-- `knower.watch(id, handler, ownerId?)` accepts optional `ownerId` (string) for cleanup tracking
-- `doer.register(name, fn, ownerId?)` accepts optional `ownerId` (string) for cleanup tracking
-- Cleanup is triggered via `knower.clean(id)` and `doer.clean(id)` in `disconnectedCallback`
-- This ensures no direct DOM references are held by the central systems
-
-**Usage Pattern:**
 ```javascript
-registerComponent('my-component', (element) => {
-	const instanceId = ensureInstanceId(element, 'my-comp');
-	
-	// Register watcher with cleanup tracking
-	knower.watch('some-state', (state) => {
-		// Handle state change
-	}, instanceId);
-	
-	// Register action with cleanup tracking
-	doer.register('my-action', (target, source, event, param) => {
-		// Handle action
-	}, instanceId);
-});
-
-// Cleanup happens automatically in disconnectedCallback:
-// - knower.clean(instanceId) removes all watchers
-// - doer.clean(instanceId) removes all actions
-```
-
-**Lazy Execution Optimization:**
-Unknown actions only update Knower state if watchers exist, reducing memory churn:
-```javascript
-// This won't create state if no one is watching
-doer.do('unknown-action', target, source, event, param);
-
-// Check before expensive operations
-if (knower.hasWatchers('expensive-state')) {
-	knower.tell('expensive-state', computeExpensiveValue());
-}
-```
-
-**Fool-Proof Safeguards (Memory Leak Prevention):**
-System warns users about common mistakes that cause memory leaks:
-```javascript
-// Warns if registering watcher on disconnected component
-knower.watch('state', handler, 'disconnected-id'); 
-// Console: [KNOWER] Registering watcher for disconnected component...
-
-// Warns if registering action on disconnected component
-doer.register('action', fn, 'disconnected-id');
-// Console: [DOER] Registering action for disconnected component...
-```
-
-**Exception Resilience:**
-Watchers are wrapped in try-catch blocks so one failing watcher doesn't crash the system:
-```javascript
-// Safe iteration allows DOM manipulation during notifications
-Array.from(hooks).forEach(handler => {
-    try {
-        handler(state, oldState, source);
-    } catch (error) {
-        console.error('[KNOWER] Watcher error:', error);
-        // Other watchers continue executing
+document.addEventListener('click', (e) => {
+    const action = e.target.closest('[data-action]')?.dataset.action;
+    if (action === 'toggle-theme') {
+        const current = document.documentElement.style.colorScheme || 'light';
+        document.documentElement.style.colorScheme = current === 'dark' ? 'light' : 'dark';
     }
 });
 ```
 
-**Test Coverage:**
-Comprehensive 22-test suite validates:
-- Memory leak prevention (all scenarios)
-- Exception resilience (system survives errors)
-- Race conditions (200 parallel create/destroy cycles)
-- Edge cases (DOM manipulation during callbacks, circular dependencies, etc.)
-- Performance (1000 updates in <100ms)
+**Lesson Learned:**
+Build the simplest thing that works. When platform APIs are sufficient, use them. Custom abstractions must provide measurable value beyond what the platform offers—not just theoretical elegance.
 
-All tests pass. System is production-ready.
+**Reference:** See `NUI/docs/knower-doer-evaluation.md` for the full analysis.
 
 #### What to Avoid
 - ❌ Framework abstractions (React, Vue, Angular) unless specifically justified
@@ -565,6 +520,7 @@ All tests pass. System is production-ready.
 - ❌ State management libraries for simple state needs
 - ❌ CSS-in-JS when CSS Variables work
 - ❌ Unproven assumptions about performance or organization
+- ❌ Custom pub/sub systems when CustomEvent works (learned the hard way)
 
 #### What to Prefer
 - ✅ Custom elements for component structure (`<nui-button>`, `<nui-dialog>`)
@@ -574,6 +530,7 @@ All tests pass. System is production-ready.
 - ✅ Direct element manipulation within component logic (no Shadow DOM)
 - ✅ Element reuse over regeneration for performance-critical operations
 - ✅ Browser-native features and APIs
+- ✅ `data-action` attributes for CSP-safe event delegation (minimal abstraction)
 
 ### Project Goals
 - **Teaching Tool**: Library serves as reference implementation for platform-native performance patterns
@@ -647,14 +604,35 @@ The Playground is a Single Page Application (SPA) that uses a custom content loa
 ### Workflow: Adding New Components
 1. **Generate Component**: Create the component in `NUI/nui.js` following existing patterns (functional decomposition, `registerComponent`).
 2. **Integrate Features**: specific functionality should utilize:
-   - **Knower**: For cross-component state.
-   - **Doer**: For actions.
+   - **Custom Events**: For cross-component communication (`element.dispatchEvent(new CustomEvent(...))`).
+   - **Data Actions**: For simple interactions (`data-action="action-name"`).
    - **Attribute System**: For configuration (`nui-vars-*`, `nui-state-*`).
    - **Accessibility**: Ensure proper ARIA roles and keyboard navigation.
 3. **Create Demo Page**: Add a live example page in `Playground/pages/components/[component-name].html`.
    - Follow the pattern of existing component pages (header, examples, code snippets).
 4. **Update Navigation**: Add the new page to the `navigationData` array in `Playground/js/main.js` so it appears in the sidebar.
 
+### Core vs Addon Strategy
+
+**Core Components (Essential, ~10-15KB budget):**
+- `nui-tabs` - No good native alternative
+- `nui-menu` - Dropdowns/context menus (essential and tricky)
+- `nui-tooltip` - Demonstrates element reuse pattern
+- `nui-progress` - Tiny, common need
+- `nui-accordion` - Small, common pattern (native `<details>` has limitations)
+
+**Addon Modules (Optional, load on demand):**
+- `nui-select` - Complex, searchable dropdowns (~30KB)
+- `nui-table` - Data tables with sorting/filtering/virtual scroll
+- `nui-gallery` - Image galleries
+- `nui-media-player` - Audio/video controls
+
+**Note:** `nui-card` is CSS-only. `nui-toast` functionality is covered by `nui-banner`.
+
 ### Backlog
-- [ ] Refactor `nui-link-list` and other interactive elements to expose standard API methods (`next`, `prev`, `activate`) and register generic `doer` actions.
+- [ ] Implement `nui-tabs`
+- [ ] Implement `nui-menu`
+- [ ] Implement `nui-tooltip`
+- [ ] Implement `nui-progress`
+- [ ] Implement `nui-accordion`
 

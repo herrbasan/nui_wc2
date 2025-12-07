@@ -256,56 +256,49 @@
 		</nui-input-group>
 
 		<nui-button-container>
-			<nui-button><button type="button" class="primary" onclick="validateForm()">Validate All</button></nui-button>
+			<nui-button><button type="button" class="primary" data-action="validate-form">Validate All</button></nui-button>
 			<nui-button><button type="reset" class="outline">Reset</button></nui-button>
 		</nui-button-container>
 	</form>
 </article>
 
 <script type="nui/page">
-window.validateForm = function() {
-	const inputs = document.querySelectorAll('#demo-form nui-input, #demo-form nui-textarea');
-	let allValid = true;
-	inputs.forEach(input => {
-		if (input.validate && !input.validate()) {
-			allValid = false;
+this.init = function() {
+	// Handle actions
+	this.element.addEventListener('nui-action', (e) => {
+		const action = e.detail.name;
+		
+		if (action === 'validate-form') {
+			const inputs = this.element.querySelectorAll('#demo-form nui-input, #demo-form nui-textarea');
+			let allValid = true;
+			inputs.forEach(input => {
+				if (input.validate && !input.validate()) {
+					allValid = false;
+				}
+			});
+			if (allValid) {
+				nui.banner.create({
+					content: '<p>All fields are valid!</p>',
+					priority: 'info',
+					autoClose: 3000
+				});
+			}
+			e.stopPropagation();
 		}
 	});
-	if (allValid) {
-		nui.banner.create({
-			content: '<p>All fields are valid!</p>',
-			priority: 'info',
-			autoClose: 3000
+
+	// Handle event logging
+	const eventDemo = this.element.querySelector('#event-demo');
+	const eventLog = this.element.querySelector('#event-log');
+	
+	if (eventDemo && eventLog) {
+		['nui-input', 'nui-change', 'nui-clear'].forEach(eventType => {
+			eventDemo.addEventListener(eventType, (e) => {
+				const time = new Date().toLocaleTimeString();
+				const detail = JSON.stringify(e.detail || {});
+				eventLog.innerHTML = `<div>[${time}] ${eventType}: ${detail}</div>` + eventLog.innerHTML;
+			});
 		});
 	}
 }
-</script>
-
-<hr>
-
-<h2>Events</h2>
-
-<p>Input components dispatch custom events that bubble up the DOM.</p>
-
-<article>
-	<nui-input-group>
-		<label>Type to see events</label>
-		<nui-input id="event-demo">
-			<input type="text" placeholder="Start typing...">
-		</nui-input>
-	</nui-input-group>
-	<div id="event-log" style="font-family: monospace; font-size: 0.85rem; background: var(--color-shade1); padding: 1rem; border-radius: var(--border-radius1); max-height: 150px; overflow-y: auto;"></div>
-</article>
-
-<script>
-const eventDemo = document.getElementById('event-demo');
-const eventLog = document.getElementById('event-log');
-
-['nui-input', 'nui-change', 'nui-clear'].forEach(eventType => {
-	eventDemo.addEventListener(eventType, (e) => {
-		const time = new Date().toLocaleTimeString();
-		const detail = JSON.stringify(e.detail);
-		eventLog.innerHTML = `<div>[${time}] ${eventType}: ${detail}</div>` + eventLog.innerHTML;
-	});
-});
 </script>

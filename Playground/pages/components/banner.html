@@ -18,35 +18,40 @@
 
 <section>
 	<h2>Declarative Banners</h2>
-	<p>Define banners in HTML using the <code>&lt;nui-banner&gt;</code> element. Control visibility with the <code>.show()</code> and <code>.close()</code> methods.</p>
+	<p>Define banners in HTML using the <code>&lt;nui-banner&gt;</code> element. Control visibility with the <code>.show()</code> and <code>.close()</code> methods, or use declarative actions.</p>
 	<nui-code>
 		<pre><code data-lang="html">&lt;nui-banner id="my-banner" placement="bottom" auto-close="5000"&gt;
     &lt;div style="padding: 1rem;"&gt;
         &lt;span&gt;This is a declarative banner.&lt;/span&gt;
-        &lt;button onclick="document.getElementById('my-banner').close('dismiss')"&gt;
+        &lt;!-- CSP-safe close action --&gt;
+        &lt;button data-action="banner-close:dismiss@#my-banner"&gt;
             Dismiss
         &lt;/button&gt;
     &lt;/div&gt;
 &lt;/nui-banner&gt;
 
-&lt;script&gt;
-// Show the banner
-document.getElementById('my-banner').show();
+&lt;!-- Trigger button --&gt;
+&lt;button data-action="banner-show@#my-banner"&gt;Show Banner&lt;/button&gt;
 
-// Close with action
-document.getElementById('my-banner').close('user-dismissed');
+&lt;script&gt;
+// Generic handler for banner actions
+document.addEventListener('nui-action', (e) => {
+    const { name, target, param } = e.detail;
+    if (name === 'banner-show') target.show();
+    if (name === 'banner-close') target.close(param);
+});
 &lt;/script&gt;</code></pre>
 	</nui-code>
 	<h3>Try It</h3>
 	<nui-button-container gap="1rem">
-		<nui-button><button type="button" onclick="document.getElementById('demo-banner').show()">Show Banner</button></nui-button>
-		<nui-button><button type="button" onclick="document.getElementById('demo-banner').close()">Close Banner</button></nui-button>
+		<nui-button><button type="button" data-action="banner-show@#demo-banner">Show Banner</button></nui-button>
+		<nui-button><button type="button" data-action="banner-close@#demo-banner">Close Banner</button></nui-button>
 	</nui-button-container>
 
 	<nui-banner id="demo-banner" placement="bottom" auto-close="5000">
 		<div style="padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
 			<span>This is a declarative banner with 5 second auto-close.</span>
-			<button type="button" onclick="document.getElementById('demo-banner').close('dismiss')">Dismiss</button>
+			<button type="button" data-action="banner-close:dismiss@#demo-banner">Dismiss</button>
 		</div>
 	</nui-banner>
 </section>
@@ -72,9 +77,9 @@ nui.banner.create({
 	</nui-code>
 	<h3>Try It</h3>
 	<nui-button-container gap="1rem">
-		<nui-button><button type="button" onclick="showTopBanner()">Top Banner</button></nui-button>
-		<nui-button><button type="button" onclick="showBottomBanner()">Bottom Banner</button></nui-button>
-		<nui-button><button type="button" onclick="showPersistentBanner()">Persistent (No Auto-Close)</button></nui-button>
+		<nui-button><button type="button" data-action="show-top-banner">Top Banner</button></nui-button>
+		<nui-button><button type="button" data-action="show-bottom-banner">Bottom Banner</button></nui-button>
+		<nui-button><button type="button" data-action="show-persistent-banner">Persistent (No Auto-Close)</button></nui-button>
 	</nui-button-container>
 </section>
 
@@ -144,8 +149,8 @@ nui.banner.create({
 	</nui-code>
 	<h3>Try It</h3>
 	<nui-button-container gap="1rem">
-		<nui-button><button type="button" onclick="showInfoBanner()">Info Priority</button></nui-button>
-		<nui-button><button type="button" onclick="showAlertBanner()">Alert Priority</button></nui-button>
+		<nui-button><button type="button" data-action="show-info-banner">Info Priority</button></nui-button>
+		<nui-button><button type="button" data-action="show-alert-banner">Alert Priority</button></nui-button>
 	</nui-button-container>
 </section>
 
@@ -164,7 +169,7 @@ nui.banner.create({ content: 'Message 3', placement: 'bottom' });</code></pre>
 	</nui-code>
 	<h3>Try It</h3>
 	<nui-button-container gap="1rem">
-		<nui-button><button type="button" onclick="showReplacementDemo()">Click Multiple Times</button></nui-button>
+		<nui-button><button type="button" data-action="show-replacement-demo">Click Multiple Times</button></nui-button>
 	</nui-button-container>
 </section>
 
@@ -195,7 +200,7 @@ nui.banner.create({ content: 'Message 3', placement: 'bottom' });</code></pre>
 	</nui-code>
 	<h3>Try It</h3>
 	<nui-button-container gap="1rem">
-		<nui-button><button type="button" onclick="showCookieConsent()">Show Cookie Consent</button></nui-button>
+		<nui-button><button type="button" data-action="show-cookie-consent">Show Cookie Consent</button></nui-button>
 	</nui-button-container>
 </section>
 
@@ -218,8 +223,8 @@ nui.banner.create({
 	</nui-code>
 	<h3>Try It</h3>
 	<nui-button-container gap="1rem">
-		<nui-button><button type="button" onclick="showProgressDemo()">With Progress</button></nui-button>
-		<nui-button><button type="button" onclick="showNoProgressDemo()">Without Progress</button></nui-button>
+		<nui-button><button type="button" data-action="show-progress-demo">With Progress</button></nui-button>
+		<nui-button><button type="button" data-action="show-no-progress-demo">Without Progress</button></nui-button>
 	</nui-button-container>
 </section>
 
@@ -293,104 +298,110 @@ nui.banner.create({
 function init(element, params) {
 	let replacementCounter = 0;
 
-	window.showTopBanner = function() {
-		nui.banner.create({
-			content: 'This banner appears at the top of the content area.',
-			placement: 'top',
-			autoClose: 3000
-		});
-	};
+	// Handle all banner actions via delegation
+	element.addEventListener('nui-action', (e) => {
+		const { name, target, param } = e.detail;
 
-	window.showBottomBanner = function() {
-		nui.banner.create({
-			content: 'This banner appears at the bottom of the content area.',
-			placement: 'bottom',
-			autoClose: 3000
-		});
-	};
+		switch(name) {
+			// Declarative Banner Actions
+			case 'banner-show':
+				if (target && target.show) target.show();
+				break;
+			case 'banner-close':
+				if (target && target.close) target.close(param);
+				break;
 
-	window.showPersistentBanner = function() {
-		nui.banner.create({
-			content: 'This banner stays until you dismiss it.',
-			placement: 'top',
-			autoClose: 0
-		});
-	};
-
-	window.showInfoBanner = function() {
-		nui.banner.create({
-			content: 'ℹ️ This is an info banner (role="status").',
-			placement: 'bottom',
-			priority: 'info',
-			autoClose: 3000
-		});
-	};
-
-	window.showAlertBanner = function() {
-		nui.banner.create({
-			content: '⚠️ This is an alert banner (role="alert") - screen readers announce immediately.',
-			placement: 'bottom',
-			priority: 'alert',
-			autoClose: 4000
-		});
-	};
-
-	window.showReplacementDemo = function() {
-		replacementCounter++;
-		nui.banner.create({
-			content: `Banner #${replacementCounter} - Click again to replace this banner.`,
-			placement: 'top',
-			autoClose: 5000
-		});
-	};
-
-	window.handleCookies = function(choice) {
-		nui.banner.create({
-			content: `Cookie preference saved: <strong>${choice}</strong>`,
-			placement: 'bottom',
-			autoClose: 2000
-		});
-	};
-
-	window.showCookieConsent = function() {
-		nui.banner.create({
-			content: `
-				<div style="display: flex; flex-direction: column; gap: 1rem;">
-					<div>
-						<strong style="font-size: 1.1rem;">🍪 Cookie Preferences</strong>
-						<p style="margin: 0.5rem 0 0 0; opacity: 0.8;">
-							We use cookies to enhance your browsing experience, serve personalized content, and analyze our traffic. 
-							By clicking "Accept All", you consent to our use of cookies.
-						</p>
-					</div>
-					<div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-						<nui-button><button type="button" onclick="handleCookies('all')">Accept All</button></nui-button>
-						<nui-button><button type="button" onclick="handleCookies('essential')">Essential Only</button></nui-button>
-						<nui-button><button type="button" onclick="handleCookies('customize')">Customize</button></nui-button>
-					</div>
-				</div>
-			`,
-			placement: 'bottom',
-			showCloseButton: false,
-			autoClose: 0
-		});
-	};
-
-	window.showProgressDemo = function() {
-		nui.banner.create({
-			content: 'This banner will close in 5 seconds. Watch the progress bar!',
-			placement: 'top',
-			autoClose: 5000
-		});
-	};
-
-	window.showNoProgressDemo = function() {
-		nui.banner.create({
-			content: 'This banner will close in 5 seconds (no progress bar).',
-			placement: 'top',
-			autoClose: 5000,
-			showProgress: false
-		});
-	};
+			// Programmatic Demos
+			case 'show-top-banner':
+				nui.banner.create({
+					content: 'This banner appears at the top of the content area.',
+					placement: 'top',
+					autoClose: 3000
+				});
+				break;
+			case 'show-bottom-banner':
+				nui.banner.create({
+					content: 'This banner appears at the bottom of the content area.',
+					placement: 'bottom',
+					autoClose: 3000
+				});
+				break;
+			case 'show-persistent-banner':
+				nui.banner.create({
+					content: 'This banner stays until you dismiss it.',
+					placement: 'top',
+					autoClose: 0
+				});
+				break;
+			case 'show-info-banner':
+				nui.banner.create({
+					content: 'ℹ️ This is an info banner (role="status").',
+					placement: 'bottom',
+					priority: 'info',
+					autoClose: 3000
+				});
+				break;
+			case 'show-alert-banner':
+				nui.banner.create({
+					content: '⚠️ This is an alert banner (role="alert") - screen readers announce immediately.',
+					placement: 'bottom',
+					priority: 'alert',
+					autoClose: 4000
+				});
+				break;
+			case 'show-replacement-demo':
+				replacementCounter++;
+				nui.banner.create({
+					content: `Banner #${replacementCounter} - Click again to replace this banner.`,
+					placement: 'top',
+					autoClose: 5000
+				});
+				break;
+			case 'show-cookie-consent':
+				nui.banner.create({
+					content: `
+						<div style="display: flex; flex-direction: column; gap: 1rem;">
+							<div>
+								<strong style="font-size: 1.1rem;">🍪 Cookie Preferences</strong>
+								<p style="margin: 0.5rem 0 0 0; opacity: 0.8;">
+									We use cookies to enhance your browsing experience.
+								</p>
+							</div>
+							<div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+								<nui-button><button type="button" data-action="handle-cookies:all">Accept All</button></nui-button>
+								<nui-button><button type="button" data-action="handle-cookies:essential">Essential Only</button></nui-button>
+								<nui-button><button type="button" data-action="handle-cookies:customize">Customize</button></nui-button>
+							</div>
+						</div>
+					`,
+					placement: 'bottom',
+					showCloseButton: false,
+					autoClose: 0
+				});
+				break;
+			case 'handle-cookies':
+				nui.banner.create({
+					content: `Cookie preference saved: <strong>${param}</strong>`,
+					placement: 'bottom',
+					autoClose: 2000
+				});
+				break;
+			case 'show-progress-demo':
+				nui.banner.create({
+					content: 'This banner will close in 5 seconds. Watch the progress bar!',
+					placement: 'top',
+					autoClose: 5000
+				});
+				break;
+			case 'show-no-progress-demo':
+				nui.banner.create({
+					content: 'This banner will close in 5 seconds (no progress bar).',
+					placement: 'top',
+					autoClose: 5000,
+					showProgress: false
+				});
+				break;
+		}
+	});
 }
 </script>

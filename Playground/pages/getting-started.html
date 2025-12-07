@@ -72,17 +72,20 @@
 	
 	<section>
 		<h2>Step 4: Add Interactivity</h2>
-		<p>Use the Doer system for actions:</p>
+		<p>Use direct event listeners or <code>data-action</code> attributes for actions:</p>
 		<nui-code>
-			<pre><code>&lt;button nui-event-click="toggle-theme"&gt;
+			<pre><code>&lt;button data-action="toggle-theme"&gt;
 	Dark/Light Mode
 &lt;/button&gt;
 
 &lt;script type="module"&gt;
-import { nui } from './NUI/nui.js';
-
-nui.registerAction('my-action', (target, source, event, param) =&gt; {
-	console.log('Custom action executed!');
+// Handle actions with event delegation
+document.addEventListener('click', (e) => {
+	const action = e.target.closest('[data-action]')?.dataset.action;
+	if (action === 'toggle-theme') {
+		const current = document.documentElement.style.colorScheme || 'light';
+		document.documentElement.style.colorScheme = current === 'dark' ? 'light' : 'dark';
+	}
 });
 &lt;/script&gt;</code></pre>
 		</nui-code>

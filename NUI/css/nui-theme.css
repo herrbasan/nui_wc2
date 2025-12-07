@@ -615,13 +615,15 @@ nui-button[variant="reset"] button:hover {
 	background-color: var(--palette-gray-hi);
 }
 
-nui-button[variant="outline"] button {
+nui-button[variant="outline"] button,
+nui-button[type="outline"] button {
 	background-color: transparent;
 	border: solid var(--border-thickness) var(--palette-gray);
 	color: var(--color-text-dim);
 }
 
-nui-button[variant="outline"] button:hover {
+nui-button[variant="outline"] button:hover,
+nui-button[type="outline"] button:hover {
 	background-color: var(--palette-gray);
 	border-color: transparent;
 	color: var(--color-white);

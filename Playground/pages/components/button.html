@@ -26,33 +26,57 @@
 </section>
 
 <section>
-	<h2>Button Types</h2>
-	<p>Use the <code>type</code> attribute for different button behaviors:</p>
+	<h2>Button Variants</h2>
+	<p>Use the <code>type</code> or <code>variant</code> attribute on the <code>&lt;nui-button&gt;</code> element to apply different visual styles:</p>
 	<nui-code>
-		<pre><code data-lang="html">&lt;!-- Submit button (form submission) --&gt;
+		<pre><code data-lang="html">&lt;!-- Default (No Type) --&gt;
 &lt;nui-button&gt;
-  &lt;button type="submit"&gt;Submit Form&lt;/button&gt;
+  &lt;button type="button"&gt;Default&lt;/button&gt;
 &lt;/nui-button&gt;
 
-&lt;!-- Reset button (clear form) --&gt;
-&lt;nui-button&gt;
-  &lt;button type="reset"&gt;Reset&lt;/button&gt;
+&lt;!-- Primary (Explicit) --&gt;
+&lt;nui-button type="primary"&gt;
+  &lt;button type="button"&gt;Primary&lt;/button&gt;
 &lt;/nui-button&gt;
 
-&lt;!-- Regular button (default) --&gt;
-&lt;nui-button&gt;
-  &lt;button type="button"&gt;Action&lt;/button&gt;
+&lt;!-- Outline --&gt;
+&lt;nui-button type="outline"&gt;
+  &lt;button type="button"&gt;Outline&lt;/button&gt;
+&lt;/nui-button&gt;
+
+&lt;!-- Submit / Success --&gt;
+&lt;nui-button variant="submit"&gt;
+  &lt;button type="submit"&gt;Submit&lt;/button&gt;
+&lt;/nui-button&gt;
+
+&lt;!-- Danger / Delete --&gt;
+&lt;nui-button variant="danger"&gt;
+  &lt;button type="button"&gt;Delete&lt;/button&gt;
+&lt;/nui-button&gt;
+
+&lt;!-- Warning --&gt;
+&lt;nui-button variant="warning"&gt;
+  &lt;button type="button"&gt;Warning&lt;/button&gt;
 &lt;/nui-button&gt;</code></pre>
 	</nui-code>
 	<nui-button-container>
 		<nui-button>
-			<button type="submit">Submit Form</button>
+			<button type="button">Default</button>
 		</nui-button>
-		<nui-button>
-			<button type="reset">Reset</button>
+		<nui-button type="primary">
+			<button type="button">Primary</button>
 		</nui-button>
-		<nui-button>
-			<button type="button">Action</button>
+		<nui-button type="outline">
+			<button type="button">Outline</button>
+		</nui-button>
+		<nui-button variant="submit">
+			<button type="submit">Submit</button>
+		</nui-button>
+		<nui-button variant="danger">
+			<button type="button">Delete</button>
+		</nui-button>
+		<nui-button variant="warning">
+			<button type="button">Warning</button>
 		</nui-button>
 	</nui-button-container>
 </section>
@@ -165,20 +189,20 @@
 <section>
 	<h2>Interactive Examples</h2>
 	<h3>Toggle Theme</h3>
-	<p>Toggle between light and dark mode using the built-in <code>toggle-theme</code> action:</p>
+	<p>Toggle between light and dark mode using a <code>data-action</code> attribute (handled in your app's JavaScript):</p>
 	<nui-code>
-		<pre><code data-lang="html">&lt;nui-button nui-event-click="toggle-theme"&gt;
+		<pre><code data-lang="html">&lt;nui-button data-action="toggle-theme"&gt;
   &lt;button type="button"&gt;Toggle Theme&lt;/button&gt;
 &lt;/nui-button&gt;</code></pre>
 	</nui-code>
 	<nui-button-container>
-		<nui-button nui-event-click="toggle-theme">
+		<nui-button data-action="toggle-theme">
 			<button type="button">Toggle Theme</button>
 		</nui-button>
 	</nui-button-container>
 
 	<h3>Toggle Class</h3>
-	<p>Toggle a CSS class on a target element using <code>toggle-class:className@selector</code>:</p>
+	<p>Toggle a CSS class on a target element using <code>data-action</code>:</p>
 	<style>
 		.demo-box {
 			padding: 1rem;
@@ -201,37 +225,76 @@
 &lt;div id="demo-box" class="demo-box"&gt;Target Box&lt;/div&gt;
 
 &lt;!-- Button toggles 'highlight' class on #demo-box --&gt;
-&lt;nui-button nui-event-click="toggle-class:highlight@#demo-box"&gt;
+&lt;nui-button data-action="toggle-highlight@#demo-box"&gt;
   &lt;button type="button"&gt;Toggle Highlight&lt;/button&gt;
 &lt;/nui-button&gt;</code></pre>
 	</nui-code>
 	<div style="display: flex; flex-direction: column; gap: 1rem;">
 		<div id="demo-box" class="demo-box" style="margin-bottom: 1rem;">Target Box</div>
 		<nui-button-container>
-			<nui-button nui-event-click="toggle-class:highlight@#demo-box">
+			<nui-button data-action="toggle-highlight@#demo-box">
 				<button type="button">Toggle Highlight</button>
 			</nui-button>
 		</nui-button-container>
 	</div>
 
-	<h3>Custom Actions</h3>
-	<p>You can also register custom actions in JavaScript:</p>
+	<h3>Declarative Actions</h3>
+	<p>Use the <code>data-action</code> attribute to wire up interactions without manual query selectors. The <code>nui-action</code> event provides the action name and automatically resolved target element.</p>
+	
 	<nui-code>
-		<pre><code data-lang="javascript">// Register action
-nui.registerAction('show-alert', (target, source) => {
-  alert(`Clicked: ${source.textContent.trim()}`);
-});</code></pre>
-	</nui-code>
-	<nui-code>
-		<pre><code data-lang="html">&lt;nui-button nui-event-click="show-alert"&gt;
-  &lt;button type="button"&gt;Show Alert&lt;/button&gt;
+		<pre><code data-lang="html">&lt;!-- 1. Define the target element --&gt;
+&lt;form id="login-form"&gt;...&lt;/form&gt;
+
+&lt;!-- 2. Define the action and target (action@target) --&gt;
+&lt;nui-button data-action="submit-form@#login-form"&gt;
+  &lt;button type="button"&gt;Login&lt;/button&gt;
 &lt;/nui-button&gt;</code></pre>
 	</nui-code>
-	<nui-button-container>
-		<nui-button nui-event-click="show-alert">
-			<button type="button">Show Alert</button>
-		</nui-button>
-	</nui-button-container>
+
+	<nui-code>
+		<pre><code data-lang="javascript">// 3. Handle the generic event
+document.addEventListener('nui-action', (e) => {
+  const { name, target } = e.detail;
+  
+  if (name === 'submit-form') {
+    // 'target' is the #login-form element - no querySelector needed!
+    console.log('Submitting form:', target);
+  }
+});</code></pre>
+	</nui-code>
+
+	<div style="padding: 1rem; background: var(--color-shade1); border-radius: var(--border-radius1); margin-bottom: 1rem;">
+		<div id="demo-target" style="margin-bottom: 1rem; padding: 0.5rem; background: var(--color-shade2);">Target Element (#demo-target)</div>
+		
+		<nui-button-container>
+			<nui-button data-action="highlight-target@#demo-target">
+				<button type="button">Highlight Target</button>
+			</nui-button>
+		</nui-button-container>
+	</div>
+
+	<script type="nui/page">
+		this.init = function() {
+			this.element.addEventListener('nui-action', (e) => {
+				const { name, target } = e.detail;
+				
+				if (name === 'highlight-target') {
+					if (target) {
+						target.style.backgroundColor = 'var(--color-highlight)';
+						target.style.color = 'white';
+						setTimeout(() => {
+							target.style.backgroundColor = 'var(--color-shade2)';
+							target.style.color = 'inherit';
+						}, 500);
+					}
+				} else if (name === 'toggle-highlight') {
+					if (target) {
+						target.classList.toggle('highlight');
+					}
+				}
+			});
+		}
+	</script>
 </section>
 
 <section>

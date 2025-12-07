@@ -21,13 +21,13 @@
 	
 	<h3>Interactive Testing (Fold Mode)</h3>
 	<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1rem 0;">
-		<nui-button id="btn-set-eslint">
+		<nui-button data-action="set-active-fold:ESLint">
 			<button type="button">Set Active: ESLint</button>
 		</nui-button>
-		<nui-button id="btn-get-active-fold">
+		<nui-button data-action="get-active-fold">
 			<button type="button">Get Active State</button>
 		</nui-button>
-		<nui-button id="btn-clear-active-fold">
+		<nui-button data-action="clear-active-fold">
 			<button type="button">Clear Active & Close All</button>
 		</nui-button>
 	</div>
@@ -44,15 +44,15 @@
 			<nui-column-flow column-width="/3" sort="height">
 			<nui-column-flow column-width="/3" sort="height">
 				<ul>
-					<li class="group-header">
-						<span>
-							<nui-icon name="wysiwyg"></nui-icon>
-							<span>Content & Windows</span>
-						</span>
-						<button type="button" class="action" nui-event-click="edit-section:content">
-							<nui-icon name="settings"></nui-icon>
-						</button>
-					</li>
+				<li class="group-header">
+					<span>
+						<nui-icon name="wysiwyg"></nui-icon>
+						<span>Content & Windows</span>
+					</span>
+					<button type="button" class="action" data-action="edit-section:content">
+						<nui-icon name="settings"></nui-icon>
+					</button>
+				</li>
 					<li>
 						<a href="#content">
 							<span>Content</span>
@@ -303,13 +303,13 @@ linkList.loadData(navigationData);</code></pre>
 	
 	<h3>Interactive Testing (Tree Mode)</h3>
 	<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1rem 0;">
-		<nui-button id="btn-set-sub1">
+		<nui-button data-action="set-active-tree:Subgroup Item 1">
 			<button type="button">Set Active: Sub Item</button>
 		</nui-button>
-		<nui-button id="btn-get-active-tree">
+		<nui-button data-action="get-active-tree">
 			<button type="button">Get Active State</button>
 		</nui-button>
-		<nui-button id="btn-clear-active-tree">
+		<nui-button data-action="clear-active-tree">
 			<button type="button">Clear Active</button>
 		</nui-button>
 	</div>
@@ -379,7 +379,7 @@ linkList.loadData(navigationData);</code></pre>
 		&lt;nui-icon name="folder"&gt;&lt;/nui-icon&gt;
 		&lt;span&gt;Group Name&lt;/span&gt;
 	&lt;/span&gt;
-	&lt;button type="button" class="action" nui-event-click="edit-group"&gt;
+	&lt;button type="button" class="action" data-action="edit-group"&gt;
 		&lt;nui-icon name="settings"&gt;&lt;/nui-icon&gt;
 	&lt;/button&gt;
 &lt;/li&gt;</code></pre>
@@ -519,71 +519,47 @@ function init(element, params) {
 		treeStateDisplay.textContent = treeData ? `Active Item:\n  ${treeData.text}` : 'No active item';
 	}
 	
-	// Fold Mode: Set Active: ESLint
-	element.querySelector('#btn-set-eslint')?.addEventListener('nui-click', () => {
-		const allLinks = Array.from(demoFold.querySelectorAll('a:has(span)'));
-		const eslintItem = allLinks.find(link => link.textContent.trim() === 'ESLint');
-		if (eslintItem) demoFold.setActive(eslintItem);
-		updateFoldStateDisplay();
-	});
-	
-	// Fold Mode: Get Active State
-	element.querySelector('#btn-get-active-fold')?.addEventListener('nui-click', () => {
-		const foldData = demoFold.getActiveData?.();
-		alert(foldData ? `Fold Mode Active:\n\nText: ${foldData.text}` : 'Fold Mode: No active item');
-		updateFoldStateDisplay();
-	});
-	
-	// Fold Mode: Clear Active
-	element.querySelector('#btn-clear-active-fold')?.addEventListener('nui-click', () => {
-		demoFold.clearActive?.(true);
-		updateFoldStateDisplay();
-	});
-	
-	// Tree Mode: Set Active: Subgroup Item 1
-	element.querySelector('#btn-set-sub1')?.addEventListener('nui-click', () => {
-		const allLinks = Array.from(demoTree.querySelectorAll('a:has(span)'));
-		const subItem = allLinks.find(link => link.textContent.trim() === 'Subgroup Item 1');
-		if (subItem) demoTree.setActive(subItem);
-		updateTreeStateDisplay();
-	});
-	
-	// Tree Mode: Get Active State
-	element.querySelector('#btn-get-active-tree')?.addEventListener('nui-click', () => {
-		const treeData = demoTree.getActiveData?.();
-		alert(treeData ? `Tree Mode Active:\n\nText: ${treeData.text}` : 'Tree Mode: No active item');
-		updateTreeStateDisplay();
-	});
-	
-	// Tree Mode: Clear Active
-	element.querySelector('#btn-clear-active-tree')?.addEventListener('nui-click', () => {
-		demoTree.clearActive?.();
-		updateTreeStateDisplay();
-	});
-	
-	// Watch for state changes
-	if (demoFold) {
-		const foldId = demoFold.getAttribute('nui-id');
-		if (foldId && nui.knower) {
-			nui.knower.watch(`${foldId}:active`, () => updateFoldStateDisplay(), instanceId);
+	// Handle actions
+	element.addEventListener('nui-action', (e) => {
+		const { name, param } = e.detail;
+		
+		if (name === 'set-active-fold') {
+			const allLinks = Array.from(demoFold.querySelectorAll('a:has(span)'));
+			const item = allLinks.find(link => link.textContent.trim() === param);
+			if (item) demoFold.setActive(item);
+			updateFoldStateDisplay();
+		} else if (name === 'get-active-fold') {
+			const foldData = demoFold.getActiveData?.();
+			alert(foldData ? `Fold Mode Active:\n\nText: ${foldData.text}` : 'Fold Mode: No active item');
+			updateFoldStateDisplay();
+		} else if (name === 'clear-active-fold') {
+			demoFold.clearActive?.(true);
+			updateFoldStateDisplay();
+		} else if (name === 'set-active-tree') {
+			const allLinks = Array.from(demoTree.querySelectorAll('a:has(span)'));
+			const item = allLinks.find(link => link.textContent.trim() === param);
+			if (item) demoTree.setActive(item);
+			updateTreeStateDisplay();
+		} else if (name === 'get-active-tree') {
+			const treeData = demoTree.getActiveData?.();
+			alert(treeData ? `Tree Mode Active:\n\nText: ${treeData.text}` : 'Tree Mode: No active item');
+			updateTreeStateDisplay();
+		} else if (name === 'clear-active-tree') {
+			demoTree.clearActive?.();
+			updateTreeStateDisplay();
 		}
+	});
+	
+	// Watch for state changes using custom events
+	if (demoFold) {
+		demoFold.addEventListener('nui-link-list-active', () => updateFoldStateDisplay());
 	}
 	
 	if (demoTree) {
-		const treeId = demoTree.getAttribute('nui-id');
-		if (treeId && nui.knower) {
-			nui.knower.watch(`${treeId}:active`, () => updateTreeStateDisplay(), instanceId);
-		}
+		demoTree.addEventListener('nui-link-list-active', () => updateTreeStateDisplay());
 	}
 	
 	updateFoldStateDisplay();
 	updateTreeStateDisplay();
-	
-	// Cleanup on hide
-	element.hide = () => {
-		if (nui.knower) {
-			nui.knower.clean(instanceId);
-		}
-	};
 }
 </script>

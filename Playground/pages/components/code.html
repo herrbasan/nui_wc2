@@ -641,7 +641,7 @@ if (code.startsWith('<')) {
 		<p>Uses placeholder tokens to prevent nested span corruption during replacement:</p>
 		<nui-code>
 			<pre><code>// Placeholder prevents: &lt;span&gt;&lt;span&gt;&lt;span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;
-const token = `___TOKEN_${tokenId++}___`;
+const token = `~~TOKEN_${tokenId++}~~`;
 tokens.push({ 
 	token, 
 	html: `&lt;span class="hl-keyword"&gt;${match}&lt;/span&gt;` 

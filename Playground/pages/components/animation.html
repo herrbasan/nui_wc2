@@ -25,22 +25,22 @@ ani.play();</code></pre></nui-code>
 		<div class="demo-card">
 			<div class="demo-label"><code>x</code> / <code>y</code></div>
 			<div class="demo-stage"><nui-icon name="arrow" class="anim-icon" id="demo-xy"></nui-icon></div>
-			<nui-button><button type="button" id="play-xy">Translate</button></nui-button>
+			<nui-button><button type="button" data-action="anim-transform:xy">Translate</button></nui-button>
 		</div>
 		<div class="demo-card">
 			<div class="demo-label"><code>scale</code></div>
 			<div class="demo-stage"><nui-icon name="fullscreen" class="anim-icon" id="demo-scale"></nui-icon></div>
-			<nui-button><button type="button" id="play-scale">Scale</button></nui-button>
+			<nui-button><button type="button" data-action="anim-transform:scale">Scale</button></nui-button>
 		</div>
 		<div class="demo-card">
 			<div class="demo-label"><code>rotate</code></div>
 			<div class="demo-stage"><nui-icon name="settings" class="anim-icon" id="demo-rotate"></nui-icon></div>
-			<nui-button><button type="button" id="play-rotate">Rotate</button></nui-button>
+			<nui-button><button type="button" data-action="anim-transform:rotate">Rotate</button></nui-button>
 		</div>
 		<div class="demo-card">
 			<div class="demo-label">Combined</div>
 			<div class="demo-stage"><nui-icon name="star_rate" class="anim-icon" id="demo-combined"></nui-icon></div>
-			<nui-button><button type="button" id="play-combined">All</button></nui-button>
+			<nui-button><button type="button" data-action="anim-transform:combined">All</button></nui-button>
 		</div>
 	</div>
 
@@ -68,7 +68,7 @@ element.ani(800, { x: 100, y: 50, scale: 1.2, rotate: 15 });</code></pre></nui-c
 		<div class="easing-row"><span class="easing-name">back.out</span><div class="easing-track"><div class="easing-dot" data-ease="back.out"></div></div></div>
 	</div>
 	<nui-button-container align="center">
-		<nui-button><button type="button" id="play-easing">Compare Easing</button></nui-button>
+		<nui-button><button type="button" data-action="anim-easing">Compare Easing</button></nui-button>
 	</nui-button-container>
 
 	<nui-code><pre><code>// Available presets: sine, quad, cubic, quart, quint, expo, circ, back
@@ -86,7 +86,7 @@ element.ani(400, { scale: 1.2, ease: 'back.out' });</code></pre></nui-code>
 		<nui-icon name="public" class="anim-icon" id="demo-keyframes"></nui-icon>
 	</div>
 	<nui-button-container align="center">
-		<nui-button><button type="button" id="play-keyframes">Play Sequence</button></nui-button>
+		<nui-button><button type="button" data-action="anim-keyframes">Play Sequence</button></nui-button>
 	</nui-button-container>
 
 	<nui-code><pre><code>element.ani(2000, [
@@ -108,7 +108,7 @@ element.ani(400, { scale: 1.2, ease: 'back.out' });</code></pre></nui-code>
 				<span>Wait before/after animation</span>
 			</div>
 			<div class="demo-stage"><nui-icon name="calendar" class="anim-icon" id="demo-delay"></nui-icon></div>
-			<nui-button><button type="button" id="play-delay">Play</button></nui-button>
+			<nui-button><button type="button" data-action="anim-option:delay">Play</button></nui-button>
 		</div>
 		<div class="option-row">
 			<div class="option-label">
@@ -116,7 +116,7 @@ element.ani(400, { scale: 1.2, ease: 'back.out' });</code></pre></nui-code>
 				<span>Repeat count (Infinity for loop)</span>
 			</div>
 			<div class="demo-stage"><nui-icon name="sync" class="anim-icon" id="demo-iterations"></nui-icon></div>
-			<nui-button><button type="button" id="play-iterations">Play 3×</button></nui-button>
+			<nui-button><button type="button" data-action="anim-option:iterations">Play 3×</button></nui-button>
 		</div>
 		<div class="option-row">
 			<div class="option-label">
@@ -124,7 +124,7 @@ element.ani(400, { scale: 1.2, ease: 'back.out' });</code></pre></nui-code>
 				<span>Reverse on repeat</span>
 			</div>
 			<div class="demo-stage"><nui-icon name="sort" class="anim-icon" id="demo-alternate"></nui-icon></div>
-			<nui-button><button type="button" id="play-alternate">Bounce</button></nui-button>
+			<nui-button><button type="button" data-action="anim-option:alternate">Bounce</button></nui-button>
 		</div>
 	</div>
 
@@ -155,9 +155,9 @@ element.ani(1000, { rotate: 360 }, { iterations: Infinity });</code></pre></nui-
 			<span>State: <strong id="control-state">idle</strong></span>
 		</div>
 		<nui-button-container align="center">
-			<nui-button><button type="button" id="control-play">Play</button></nui-button>
-			<nui-button variant="outline"><button type="button" id="control-pause">Pause</button></nui-button>
-			<nui-button variant="outline"><button type="button" id="control-cancel">Cancel</button></nui-button>
+			<nui-button><button type="button" data-action="anim-control:play">Play</button></nui-button>
+			<nui-button variant="outline"><button type="button" data-action="anim-control:pause">Pause</button></nui-button>
+			<nui-button variant="outline"><button type="button" data-action="anim-control:cancel">Cancel</button></nui-button>
 		</nui-button-container>
 	</div>
 
@@ -184,7 +184,7 @@ ani.play(1500);      // Seek to 1500ms and play</code></pre></nui-code>
 		</div>
 		<div class="event-log" id="event-log">Events will appear here...</div>
 		<nui-button-container align="center">
-			<nui-button><button type="button" id="play-events">Play with Events</button></nui-button>
+			<nui-button><button type="button" data-action="anim-events">Play with Events</button></nui-button>
 		</nui-button-container>
 	</div>
 
@@ -212,7 +212,7 @@ ani.play(1500);      // Seek to 1500ms and play</code></pre></nui-code>
 		<nui-icon name="stadia_controller" class="anim-icon" id="demo-chain"></nui-icon>
 	</div>
 	<nui-button-container align="center">
-		<nui-button><button type="button" id="play-chain">Run Sequence</button></nui-button>
+		<nui-button><button type="button" data-action="anim-chain">Run Sequence</button></nui-button>
 	</nui-button-container>
 
 	<nui-code><pre><code>// Chain with callbacks
@@ -230,9 +230,9 @@ box.ani(300, { scale: 1.4, ease: 'back.out' }, {
 	<p>Micro-animations provide tactile feedback for user interactions:</p>
 	
 	<div class="practical-demo">
-		<nui-button><button type="button" class="feedback-btn" id="btn-success">Success</button></nui-button>
-		<nui-button><button type="button" class="feedback-btn" id="btn-error">Error</button></nui-button>
-		<nui-button><button type="button" class="feedback-btn" id="btn-loading">Submit</button></nui-button>
+		<nui-button><button type="button" class="feedback-btn" data-action="anim-practical:success">Success</button></nui-button>
+		<nui-button><button type="button" class="feedback-btn" data-action="anim-practical:error">Error</button></nui-button>
+		<nui-button><button type="button" class="feedback-btn" data-action="anim-practical:loading">Submit</button></nui-button>
 	</div>
 
 	<nui-code><pre><code>// Success pulse
@@ -438,112 +438,30 @@ function init(element, params) {
 		el.style.opacity = '';
 	}
 
-	// ===== Transform Shorthands =====
-	
+	// Element References
 	const xyBox = element.querySelector('#demo-xy');
-	element.querySelector('#play-xy').addEventListener('click', () => {
-		reset(xyBox);
-		xyBox.ani(600, { x: 120, y: 20, ease: 'quad.out' }, {
-			cb: () => xyBox.ani(600, { x: 0, y: 0, ease: 'quad.inOut' })
-		});
-	});
-
 	const scaleBox = element.querySelector('#demo-scale');
-	element.querySelector('#play-scale').addEventListener('click', () => {
-		reset(scaleBox);
-		scaleBox.ani(400, { scale: 1.6, ease: 'back.out' }, {
-			cb: () => scaleBox.ani(300, { scale: 1, ease: 'quad.out' })
-		});
-	});
-
 	const rotateBox = element.querySelector('#demo-rotate');
-	element.querySelector('#play-rotate').addEventListener('click', () => {
-		reset(rotateBox);
-		rotateBox.ani(800, { rotate: 360, ease: 'expo.out' });
-	});
-
 	const combinedBox = element.querySelector('#demo-combined');
-	element.querySelector('#play-combined').addEventListener('click', () => {
-		reset(combinedBox);
-		combinedBox.ani(800, { x: 80, scale: 1.3, rotate: 180, ease: 'cubic.out' }, {
-			cb: () => combinedBox.ani(600, { x: 0, scale: 1, rotate: 360, ease: 'cubic.inOut' })
-		});
-	});
-
-	// ===== Easing Comparison =====
-	
 	const easingDots = element.querySelectorAll('.easing-dot');
-	const easingAnimations = new Map();
-	element.querySelector('#play-easing').addEventListener('click', () => {
-		easingDots.forEach(dot => {
-			// Cancel any existing animation
-			if (easingAnimations.has(dot)) {
-				easingAnimations.get(dot).cancel();
-			}
-			dot.style.left = '2px';
-			const ease = dot.dataset.ease;
-			const trackWidth = dot.parentElement.offsetWidth;
-			const endPos = trackWidth - 18; // 16px dot + 2px padding
-			const ani = dot.ani(1200, { left: endPos }, { 
-				ease: ease === 'linear' ? undefined : ease 
-			});
-			easingAnimations.set(dot, ani);
-		});
-	});
-
-	// ===== Keyframe Sequence =====
-	
 	const keyframesBox = element.querySelector('#demo-keyframes');
-	element.querySelector('#play-keyframes').addEventListener('click', () => {
-		reset(keyframesBox);
-		keyframesBox.ani(2000, [
-			{ x: 0, scale: 1, rotate: 0 },
-			{ x: 150, scale: 1.3, rotate: 0, offset: 0.3 },
-			{ x: 150, scale: 1.3, rotate: 180, offset: 0.6 },
-			{ x: 350, scale: 1, rotate: 360 }
-		], { ease: 'cubic.inOut' });
-	});
-
-	// ===== Animation Options =====
-	
 	const delayBox = element.querySelector('#demo-delay');
-	element.querySelector('#play-delay').addEventListener('click', () => {
-		reset(delayBox);
-		delayBox.style.opacity = '0.4';
-		delayBox.ani(400, { x: 150, opacity: 1 }, { 
-			delay: 500, 
-			endDelay: 300,
-			ease: 'expo.out',
-			cb: () => {
-				delayBox.ani(400, { x: 0, opacity: 0.4 }, { ease: 'expo.in' });
-			}
-		});
-	});
-
 	const iterBox = element.querySelector('#demo-iterations');
-	element.querySelector('#play-iterations').addEventListener('click', () => {
-		reset(iterBox);
-		iterBox.ani(300, { rotate: 360 }, { iterations: 3, ease: 'sine.inOut' });
-	});
-
 	const altBox = element.querySelector('#demo-alternate');
-	element.querySelector('#play-alternate').addEventListener('click', () => {
-		reset(altBox);
-		altBox.ani(400, { x: 150 }, { 
-			iterations: 4, 
-			direction: 'alternate',
-			ease: 'quad.inOut'
-		});
-	});
-
-	// ===== Playback Control =====
-	
 	const controlBox = element.querySelector('#demo-control');
 	const timeEl = element.querySelector('#control-time');
 	const progressEl = element.querySelector('#control-progress');
 	const stateEl = element.querySelector('#control-state');
-	let controlAni = null;
+	const eventsBox = element.querySelector('#demo-events');
+	const eventLog = element.querySelector('#event-log');
+	const chainBox = element.querySelector('#demo-chain');
 
+	// State
+	const easingAnimations = new Map();
+	let controlAni = null;
+	let loadingAni = null;
+
+	// Control Animation Setup
 	function createControlAnimation() {
 		reset(controlBox);
 		controlAni = controlBox.ani(3000, { x: 450 }, {
@@ -562,113 +480,186 @@ function init(element, params) {
 	}
 	createControlAnimation();
 
-	element.querySelector('#control-play').addEventListener('click', () => {
-		if (!controlAni || controlAni.animation.playState === 'finished') {
-			createControlAnimation();
-		}
-		controlAni.play();
-	});
-
-	element.querySelector('#control-pause').addEventListener('click', () => {
-		if (controlAni) controlAni.pause();
-	});
-
-	element.querySelector('#control-cancel').addEventListener('click', () => {
-		if (controlAni) controlAni.cancel();
-		timeEl.textContent = '0';
-		progressEl.textContent = '0%';
-		stateEl.textContent = 'idle';
-		createControlAnimation();
-	});
-
-	// ===== Events Demo =====
-	
-	const eventsBox = element.querySelector('#demo-events');
-	const eventLog = element.querySelector('#event-log');
-
+	// Event Logging Helper
 	function log(msg) {
 		const time = new Date().toLocaleTimeString('en', { hour12: false });
 		eventLog.innerHTML = `<div>${time} — ${msg}</div>` + eventLog.innerHTML;
 	}
 
-	element.querySelector('#play-events').addEventListener('click', () => {
-		reset(eventsBox);
-		eventLog.innerHTML = '';
-		log('Animation started');
-		
-		eventsBox.ani(1500, [
-			{ x: 0, scale: 1 },
-			{ x: 150, scale: 1.5, offset: 0.5 },
-			{ x: 350, scale: 1 }
-		], {
-			ease: 'cubic.inOut',
-			events: (e) => {
-				if (e.type === 'keyframe') {
-					log(`Keyframe ${e.idx} reached`);
-				} else if (e.type === 'finished') {
-					log('Animation finished');
+	// Main Action Handler
+	element.addEventListener('nui-action', (e) => {
+		const { name, target, param } = e.detail;
+
+		switch(name) {
+			// Transform Shorthands
+			case 'anim-transform':
+				if (param === 'xy') {
+					reset(xyBox);
+					xyBox.ani(600, { x: 120, y: 20, ease: 'quad.out' }, {
+						cb: () => xyBox.ani(600, { x: 0, y: 0, ease: 'quad.inOut' })
+					});
+				} else if (param === 'scale') {
+					reset(scaleBox);
+					scaleBox.ani(400, { scale: 1.6, ease: 'back.out' }, {
+						cb: () => scaleBox.ani(300, { scale: 1, ease: 'quad.out' })
+					});
+				} else if (param === 'rotate') {
+					reset(rotateBox);
+					rotateBox.ani(800, { rotate: 360, ease: 'expo.out' });
+				} else if (param === 'combined') {
+					reset(combinedBox);
+					combinedBox.ani(800, { x: 80, scale: 1.3, rotate: 180, ease: 'cubic.out' }, {
+						cb: () => combinedBox.ani(600, { x: 0, scale: 1, rotate: 360, ease: 'cubic.inOut' })
+					});
 				}
-			},
-			cb: (ani) => {
-				log(`Callback fired (progress: ${Math.round(ani.progress * 100)}%)`);
-			}
-		});
-	});
+				break;
 
-	// ===== Chain Animation =====
-	
-	const chainBox = element.querySelector('#demo-chain');
-	element.querySelector('#play-chain').addEventListener('click', () => {
-		reset(chainBox);
-		
-		chainBox.ani(300, { scale: 1.4, ease: 'back.out' }, {
-			cb: () => chainBox.ani(400, { rotate: 180, ease: 'expo.out' }, {
-				cb: () => chainBox.ani(300, { scale: 1, ease: 'back.out' }, {
-					cb: () => chainBox.ani(500, { x: 350, rotate: 360, ease: 'expo.out' }, {
-						cb: () => chainBox.ani(400, { x: 0, scale: 1, ease: 'cubic.inOut' })
+			// Easing Comparison
+			case 'anim-easing':
+				easingDots.forEach(dot => {
+					if (easingAnimations.has(dot)) {
+						easingAnimations.get(dot).cancel();
+					}
+					dot.style.left = '2px';
+					const ease = dot.dataset.ease;
+					const trackWidth = dot.parentElement.offsetWidth;
+					const endPos = trackWidth - 18;
+					const ani = dot.ani(1200, { left: endPos }, { 
+						ease: ease === 'linear' ? undefined : ease 
+					});
+					easingAnimations.set(dot, ani);
+				});
+				break;
+
+			// Keyframes
+			case 'anim-keyframes':
+				reset(keyframesBox);
+				keyframesBox.ani(2000, [
+					{ x: 0, scale: 1, rotate: 0 },
+					{ x: 150, scale: 1.3, rotate: 0, offset: 0.3 },
+					{ x: 150, scale: 1.3, rotate: 180, offset: 0.6 },
+					{ x: 350, scale: 1, rotate: 360 }
+				], { ease: 'cubic.inOut' });
+				break;
+
+			// Options
+			case 'anim-option':
+				if (param === 'delay') {
+					reset(delayBox);
+					delayBox.style.opacity = '0.4';
+					delayBox.ani(400, { x: 150, opacity: 1 }, { 
+						delay: 500, 
+						endDelay: 300,
+						ease: 'expo.out',
+						cb: () => {
+							delayBox.ani(400, { x: 0, opacity: 0.4 }, { ease: 'expo.in' });
+						}
+					});
+				} else if (param === 'iterations') {
+					reset(iterBox);
+					iterBox.ani(300, { rotate: 360 }, { iterations: 3, ease: 'sine.inOut' });
+				} else if (param === 'alternate') {
+					reset(altBox);
+					altBox.ani(400, { x: 150 }, { 
+						iterations: 4, 
+						direction: 'alternate',
+						ease: 'quad.inOut'
+					});
+				}
+				break;
+
+			// Playback Control
+			case 'anim-control':
+				if (param === 'play') {
+					if (!controlAni || controlAni.animation.playState === 'finished') {
+						createControlAnimation();
+					}
+					controlAni.play();
+				} else if (param === 'pause') {
+					if (controlAni) controlAni.pause();
+				} else if (param === 'cancel') {
+					if (controlAni) controlAni.cancel();
+					timeEl.textContent = '0';
+					progressEl.textContent = '0%';
+					stateEl.textContent = 'idle';
+					createControlAnimation();
+				}
+				break;
+
+			// Events
+			case 'anim-events':
+				reset(eventsBox);
+				eventLog.innerHTML = '';
+				log('Animation started');
+				
+				eventsBox.ani(1500, [
+					{ x: 0, scale: 1 },
+					{ x: 150, scale: 1.5, offset: 0.5 },
+					{ x: 350, scale: 1 }
+				], {
+					ease: 'cubic.inOut',
+					events: (e) => {
+						if (e.type === 'keyframe') {
+							log(`Keyframe ${e.idx} reached`);
+						} else if (e.type === 'finished') {
+							log('Animation finished');
+						}
+					},
+					cb: (ani) => {
+						log(`Callback fired (progress: ${Math.round(ani.progress * 100)}%)`);
+					}
+				});
+				break;
+
+			// Chain
+			case 'anim-chain':
+				reset(chainBox);
+				chainBox.ani(300, { scale: 1.4, ease: 'back.out' }, {
+					cb: () => chainBox.ani(400, { rotate: 180, ease: 'expo.out' }, {
+						cb: () => chainBox.ani(300, { scale: 1, ease: 'back.out' }, {
+							cb: () => chainBox.ani(500, { x: 350, rotate: 360, ease: 'expo.out' }, {
+								cb: () => chainBox.ani(400, { x: 0, scale: 1, ease: 'cubic.inOut' })
+							})
+						})
 					})
-				})
-			})
-		});
-	});
+				});
+				break;
 
-	// ===== Practical Examples =====
-	
-	element.querySelector('#btn-success').addEventListener('click', function() {
-		this.ani(100, { scale: 0.92 }, {
-			cb: () => this.ani(300, { scale: 1, ease: 'back.out' })
-		});
-	});
-
-	element.querySelector('#btn-error').addEventListener('click', function() {
-		this.ani(400, [
-			{ x: 0 }, { x: -6 }, { x: 6 }, { x: -6 }, { x: 6 }, { x: -4 }, { x: 4 }, { x: 0 }
-		]);
-	});
-
-	let loadingAni = null;
-	const submitBtn = element.querySelector('#btn-loading');
-	submitBtn.addEventListener('click', function() {
-		if (loadingAni) {
-			loadingAni.cancel();
-			loadingAni = null;
-			this.textContent = 'Submit';
-			this.style.transform = '';
-			return;
+			// Practical Examples
+			case 'anim-practical':
+				const btn = target.closest('button'); // Ensure we have the button
+				if (param === 'success') {
+					btn.ani(100, { scale: 0.92 }, {
+						cb: () => btn.ani(300, { scale: 1, ease: 'back.out' })
+					});
+				} else if (param === 'error') {
+					btn.ani(400, [
+						{ x: 0 }, { x: -6 }, { x: 6 }, { x: -6 }, { x: 6 }, { x: -4 }, { x: 4 }, { x: 0 }
+					]);
+				} else if (param === 'loading') {
+					if (loadingAni) {
+						loadingAni.cancel();
+						loadingAni = null;
+						btn.textContent = 'Submit';
+						btn.style.transform = '';
+						return;
+					}
+					
+					btn.textContent = '⟳';
+					loadingAni = btn.ani(800, { rotate: 360 }, { iterations: Infinity });
+					
+					// Auto-stop after 3 seconds for demo
+					setTimeout(() => {
+						if (loadingAni) {
+							loadingAni.cancel();
+							loadingAni = null;
+							btn.textContent = 'Submit';
+							btn.style.transform = '';
+						}
+					}, 3000);
+				}
+				break;
 		}
-		
-		this.textContent = '⟳';
-		loadingAni = this.ani(800, { rotate: 360 }, { iterations: Infinity });
-		
-		// Auto-stop after 3 seconds for demo
-		setTimeout(() => {
-			if (loadingAni) {
-				loadingAni.cancel();
-				loadingAni = null;
-				this.textContent = 'Submit';
-				this.style.transform = '';
-			}
-		}, 3000);
 	});
 
 	// Cleanup

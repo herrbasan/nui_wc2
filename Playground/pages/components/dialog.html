@@ -41,9 +41,9 @@ if (result) {
 	</nui-code>
 	<h3>Try It</h3>
 	<nui-button-container gap="1rem">
-		<nui-button><button type="button" nui-event-click="show-alert">Alert</button></nui-button>
-		<nui-button><button type="button" nui-event-click="show-confirm">Confirm</button></nui-button>
-		<nui-button><button type="button" nui-event-click="show-prompt">Prompt</button></nui-button>
+		<nui-button><button type="button" data-action="show-alert">Alert</button></nui-button>
+		<nui-button><button type="button" data-action="show-confirm">Confirm</button></nui-button>
+		<nui-button><button type="button" data-action="show-prompt">Prompt</button></nui-button>
 	</nui-button-container>
 	<div id="dialog-result" style="margin-top: 1rem; padding: 1rem; background: var(--color-shade1); border-radius: var(--border-radius1);">
 		Result: -
@@ -51,20 +51,21 @@ if (result) {
 </section>
 
 <section>
-	<h2>Inline Event Handlers</h2>
-	<p>For simple cases, you can call dialog methods directly in onclick handlers:</p>
+	<h2>Declarative Actions</h2>
+	<p>For simple cases, you can use <code>data-action</code> to trigger dialogs without writing JavaScript handlers:</p>
 	<nui-code>
-		<pre><code data-lang="html">&lt;button onclick="nui.dialog.alert('Hello!', 'Welcome to NUI.')"&gt;
-    Show Alert
-&lt;/button&gt;
+		<pre><code data-lang="html">&lt;!-- Open a dialog --&gt;
+&lt;button data-action="dialog-open@#my-dialog"&gt;Open Dialog&lt;/button&gt;
 
-&lt;button onclick="nui.dialog.confirm('Sure?', 'Continue?').then(ok =&gt; console.log(ok))"&gt;
-    Show Confirm
-&lt;/button&gt;</code></pre>
+&lt;!-- Close a dialog --&gt;
+&lt;button data-action="dialog-close@#my-dialog"&gt;Close Dialog&lt;/button&gt;
+
+&lt;!-- Close with return value --&gt;
+&lt;button data-action="dialog-close:confirmed@#my-dialog"&gt;Confirm&lt;/button&gt;</code></pre>
 	</nui-code>
 	<h3>Try It</h3>
 	<nui-button-container gap="1rem">
-		<nui-button><button type="button" onclick="nui.dialog.alert('Hello!', 'This is called directly from onclick.')">Direct Alert Call</button></nui-button>
+		<nui-button><button type="button" data-action="show-alert">Show Alert</button></nui-button>
 	</nui-button-container>
 </section>
 
@@ -90,8 +91,8 @@ await nui.dialog.prompt('Login', fields, {
 	</nui-code>
 	<h3>Try It</h3>
 	<nui-button-container gap="1rem">
-		<nui-button><button type="button" nui-event-click="show-alert-top">Alert (Top)</button></nui-button>
-		<nui-button><button type="button" nui-event-click="show-alert-bottom">Alert (Bottom)</button></nui-button>
+		<nui-button><button type="button" data-action="show-alert-top">Alert (Top)</button></nui-button>
+		<nui-button><button type="button" data-action="show-alert-bottom">Alert (Bottom)</button></nui-button>
 	</nui-button-container>
 </section>
 
@@ -110,42 +111,56 @@ const confirmed = await nui.dialog.confirm('Terms', 'Accept the terms?', {
 });</code></pre>
 	</nui-code>
 	<nui-code>
-		<pre><code data-lang="html">&lt;!-- Blocking declarative dialog --&gt;
+		<pre><code data-lang="html">&lt;!-- Blocking inline dialog --&gt;
 &lt;nui-dialog id="blocking-dialog" blocking&gt;
     &lt;dialog&gt;...&lt;/dialog&gt;
 &lt;/nui-dialog&gt;</code></pre>
 	</nui-code>
 	<h3>Try It</h3>
 	<nui-button-container gap="1rem">
-		<nui-button><button type="button" nui-event-click="show-blocking-alert">Blocking Alert</button></nui-button>
-		<nui-button><button type="button" nui-event-click="show-blocking-confirm">Blocking Confirm</button></nui-button>
+		<nui-button><button type="button" data-action="show-blocking-alert">Blocking Alert</button></nui-button>
+		<nui-button><button type="button" data-action="show-blocking-confirm">Blocking Confirm</button></nui-button>
 	</nui-button-container>
 </section>
 
 <section>
-	<h2>Declarative Dialogs</h2>
-	<p>Define dialogs in HTML for complex layouts. Use the <code>open</code> and <code>close</code> Doer actions to control visibility.</p>
+	<h2>Inline Dialogs</h2>
+	<p>Define dialogs in HTML for complex layouts, then control them with standard JavaScript.</p>
 	<nui-code>
-		<pre><code data-lang="html">&lt;!-- Button triggers dialog via Doer --&gt;
-&lt;button nui-event-click="open@#custom-confirm"&gt;Open Custom Confirm&lt;/button&gt;
+		<pre><code data-lang="html">&lt;!-- Trigger --&gt;
+&lt;button id="open-btn"&gt;Open Dialog&lt;/button&gt;
 
-&lt;!-- Dialog definition with OK/Cancel --&gt;
-&lt;nui-dialog id="custom-confirm"&gt;
+&lt;!-- Dialog Definition --&gt;
+&lt;nui-dialog id="my-dialog"&gt;
     &lt;dialog&gt;
         &lt;div class="nui-dialog-alert"&gt;
             &lt;div class="nui-headline"&gt;Confirm Action&lt;/div&gt;
-            &lt;div class="nui-copy"&gt;Do you want to proceed with this action?&lt;/div&gt;
+            &lt;div class="nui-copy"&gt;Proceed with action?&lt;/div&gt;
             &lt;nui-button-container align="end"&gt;
-                &lt;nui-button&gt;&lt;button id="custom-confirm-cancel"&gt;Cancel&lt;/button&gt;&lt;/nui-button&gt;
-                &lt;nui-button&gt;&lt;button id="custom-confirm-ok" class="primary"&gt;OK&lt;/button&gt;&lt;/nui-button&gt;
+                &lt;nui-button type="outline"&gt;&lt;button type="button" id="cancel-btn"&gt;Cancel&lt;/button&gt;&lt;/nui-button&gt;
+                &lt;nui-button type="primary"&gt;&lt;button type="button" id="ok-btn"&gt;OK&lt;/button&gt;&lt;/nui-button&gt;
             &lt;/nui-button-container&gt;
         &lt;/div&gt;
     &lt;/dialog&gt;
-&lt;/nui-dialog&gt;</code></pre>
+&lt;/nui-dialog&gt;
+
+&lt;script&gt;
+    const dialog = document.getElementById('my-dialog');
+    
+    // Open
+    document.getElementById('open-btn').onclick = () => dialog.showModal();
+    
+    // Close
+    document.getElementById('cancel-btn').onclick = () => dialog.close();
+    document.getElementById('ok-btn').onclick = () => {
+        console.log('Confirmed');
+        dialog.close();
+    };
+&lt;/script&gt;</code></pre>
 	</nui-code>
 	<h3>Try It</h3>
 	<nui-button-container gap="1rem" align="start">
-		<nui-button><button type="button" nui-event-click="open@#custom-confirm">Open Custom Confirm</button></nui-button>
+		<nui-button><button type="button" data-action="open-custom-confirm">Open Custom Confirm</button></nui-button>
 		<span id="custom-confirm-state" style="padding: 0.5rem 1rem; background: var(--color-shade1); border-radius: var(--border-radius1);">State: closed | Result: -</span>
 	</nui-button-container>
 
@@ -155,34 +170,39 @@ const confirmed = await nui.dialog.confirm('Terms', 'Accept the terms?', {
 				<div class="nui-headline">Confirm Action</div>
 				<div class="nui-copy">Do you want to proceed with this action?</div>
 				<nui-button-container align="end">
-					<nui-button><button type="button" id="custom-confirm-cancel">Cancel</button></nui-button>
-					<nui-button><button type="button" id="custom-confirm-ok" class="primary">OK</button></nui-button>
+					<nui-button type="outline"><button type="button" id="custom-confirm-cancel">Cancel</button></nui-button>
+					<nui-button type="primary"><button type="button" id="custom-confirm-ok">OK</button></nui-button>
 				</nui-button-container>
 			</div>
 		</dialog>
 	</nui-dialog>
 
-	<h3>Watching Dialog State with Knower</h3>
-	<p>Dialogs publish their open/close state to the Knower. Watch for changes to react when dialogs open or close:</p>
+	<h3>Watching Dialog State with Events</h3>
+	<p>Dialogs dispatch custom events when they open or close. Listen for these to react to state changes:</p>
 	<nui-code>
-		<pre><code data-lang="javascript">// Track the result
+		<pre><code data-lang="javascript">const dialog = document.querySelector('#custom-confirm');
+const stateEl = document.querySelector('#custom-confirm-state');
 let lastResult = '-';
 
-// Watch the dialog's open state
-nui.knower.watch('dialog:custom-confirm:open', (isOpen) => {
-    const stateEl = document.querySelector('#custom-confirm-state');
-    stateEl.textContent = 'State: ' + (isOpen ? 'open' : 'closed') + ' | Result: ' + lastResult;
+// Listen for dialog open
+dialog.addEventListener('nui-dialog-open', () => {
+    stateEl.textContent = 'State: open | Result: ' + lastResult;
+});
+
+// Listen for dialog close
+dialog.addEventListener('nui-dialog-close', () => {
+    stateEl.textContent = 'State: closed | Result: ' + lastResult;
 });
 
 // Handle button clicks
 document.querySelector('#custom-confirm-ok').addEventListener('click', () => {
     lastResult = 'confirmed';
-    document.querySelector('#custom-confirm').close();
+    dialog.close();
 });
 
 document.querySelector('#custom-confirm-cancel').addEventListener('click', () => {
     lastResult = 'cancelled';
-    document.querySelector('#custom-confirm').close();
+    dialog.close();
 });</code></pre>
 	</nui-code>
 </section>
@@ -240,9 +260,9 @@ if (dialog.isOpen()) { ... }</code></pre>
 	</nui-code>
 	<h3>Try It</h3>
 	<nui-button-container gap="1rem">
-		<nui-button><button type="button" nui-event-click="open@#dialog-top">Top</button></nui-button>
-		<nui-button><button type="button" nui-event-click="open@#dialog-center">Center</button></nui-button>
-		<nui-button><button type="button" nui-event-click="open@#dialog-bottom">Bottom</button></nui-button>
+		<nui-button><button type="button" data-action="dialog-open@#dialog-top">Top</button></nui-button>
+		<nui-button><button type="button" data-action="dialog-open@#dialog-center">Center</button></nui-button>
+		<nui-button><button type="button" data-action="dialog-open@#dialog-bottom">Bottom</button></nui-button>
 	</nui-button-container>
 
 	<nui-dialog id="dialog-top" placement="top">
@@ -251,7 +271,7 @@ if (dialog.isOpen()) { ... }</code></pre>
 				<h3>Top Placement</h3>
 				<p>This dialog is positioned in the top third of the viewport.</p>
 				<nui-button-container align="end">
-					<nui-button><button type="button" nui-event-click="close@#dialog-top">Close</button></nui-button>
+					<nui-button><button type="button" data-action="dialog-close@#dialog-top">Close</button></nui-button>
 				</nui-button-container>
 			</div>
 		</dialog>
@@ -263,7 +283,7 @@ if (dialog.isOpen()) { ... }</code></pre>
 				<h3>Center Placement</h3>
 				<p>This dialog is vertically centered (browser default).</p>
 				<nui-button-container align="end">
-					<nui-button><button type="button" nui-event-click="close@#dialog-center">Close</button></nui-button>
+					<nui-button><button type="button" data-action="dialog-close@#dialog-center">Close</button></nui-button>
 				</nui-button-container>
 			</div>
 		</dialog>
@@ -275,7 +295,7 @@ if (dialog.isOpen()) { ... }</code></pre>
 				<h3>Bottom Placement</h3>
 				<p>This dialog is positioned in the bottom third of the viewport.</p>
 				<nui-button-container align="end">
-					<nui-button><button type="button" nui-event-click="close@#dialog-bottom">Close</button></nui-button>
+					<nui-button><button type="button" data-action="dialog-close@#dialog-bottom">Close</button></nui-button>
 				</nui-button-container>
 			</div>
 		</dialog>
@@ -361,29 +381,23 @@ dialog.addEventListener('nui-dialog-cancel', () => {
 </section>
 
 <section>
-	<h2>Doer Actions</h2>
-	<p>Built-in actions for declarative control:</p>
-	<table style="width: 100%; border-collapse: collapse; margin: 1rem 0;">
-		<thead>
-			<tr style="border-bottom: 2px solid var(--border-shade1);">
-				<th style="text-align: left; padding: 0.5rem;">Action</th>
-				<th style="text-align: left; padding: 0.5rem;">Description</th>
-			</tr>
-		</thead>
-		<tbody>
-			<tr style="border-bottom: 1px solid var(--border-shade1);">
-				<td style="padding: 0.5rem;"><code>open@#{id}</code></td>
-				<td style="padding: 0.5rem;">Open dialog as modal</td>
-			</tr>
-			<tr>
-				<td style="padding: 0.5rem;"><code>close@#{id}</code></td>
-				<td style="padding: 0.5rem;">Close dialog</td>
-			</tr>
-		</tbody>
-	</table>
+	<h2>Programmatic Control</h2>
+	<p>Control dialogs using standard JavaScript methods:</p>
 	<nui-code>
-		<pre><code data-lang="html">&lt;button nui-event-click="open@#my-dialog"&gt;Open&lt;/button&gt;
-&lt;button nui-event-click="close@#my-dialog"&gt;Close&lt;/button&gt;</code></pre>
+		<pre><code data-lang="javascript">const dialog = document.querySelector('#my-dialog');
+
+// Open
+dialog.showModal();  // As modal with backdrop
+dialog.show();       // As non-modal
+
+// Close
+dialog.close();              // Close normally
+dialog.close('return-value'); // Close with a return value</code></pre>
+	</nui-code>
+	<nui-code>
+		<pre><code data-lang="html">&lt;!-- Declarative actions for simple cases --&gt;
+&lt;button data-action="dialog-open@#my-dialog"&gt;Open&lt;/button&gt;
+&lt;button data-action="dialog-close@#my-dialog"&gt;Close&lt;/button&gt;</code></pre>
 	</nui-code>
 </section>
 
@@ -397,67 +411,81 @@ function init(element, params) {
 
 	// Watch the custom-confirm state and display it
 	const stateEl = element.querySelector('#custom-confirm-state');
+	const customConfirm = element.querySelector('#custom-confirm');
 	let lastResult = '-';
-	
-	nui.knower.watch('dialog:custom-confirm:open', (isOpen) => {
-		stateEl.textContent = 'State: ' + (isOpen ? 'open' : 'closed') + ' | Result: ' + lastResult;
+
+	customConfirm.addEventListener('nui-dialog-open', () => {
+		stateEl.textContent = 'State: open | Result: ' + lastResult;
+	});
+
+	customConfirm.addEventListener('nui-dialog-close', () => {
+		stateEl.textContent = 'State: closed | Result: ' + lastResult;
 	});
 
 	// Handle custom confirm button clicks
 	element.querySelector('#custom-confirm-ok').addEventListener('click', () => {
 		lastResult = 'confirmed';
-		element.querySelector('#custom-confirm').close();
+		customConfirm.close();
 	});
 
 	element.querySelector('#custom-confirm-cancel').addEventListener('click', () => {
 		lastResult = 'cancelled';
-		element.querySelector('#custom-confirm').close();
+		customConfirm.close();
 	});
 
-	// Register Doer actions for this page
-	nui.doer.register('show-alert', async () => {
-		await nui.dialog.alert('Hello!', 'This is a standard system alert.', {placement: 'top'});
-		showResult('Alert closed');
-	});
+	// Setup action handlers using data-action delegation
+	element.addEventListener('nui-action', async (e) => {
+		const { name, target, param } = e.detail;
 
-	nui.doer.register('show-confirm', async () => {
-		const res = await nui.dialog.confirm('Confirmation', 'Are you sure you want to proceed?', {placement: 'top'});
-		showResult(res);
-	});
-
-	nui.doer.register('show-prompt', async () => {
-		const res = await nui.dialog.prompt('Enter Details', 'Please provide your information.', {
-			placement: 'top',
-			fields: [
-				{ id: 'name', label: 'Name', value: 'John Doe' },
-				{ id: 'email', label: 'Email', type: 'email' }
-			]
-		});
-		showResult(res);
-	});
-
-	nui.doer.register('show-alert-top', async () => {
-		await nui.dialog.alert('Top Placement', 'This alert appears at the top.', { placement: 'top' });
-	});
-
-	nui.doer.register('show-alert-bottom', async () => {
-		await nui.dialog.alert('Bottom Placement', 'This alert appears at the bottom.', { placement: 'bottom' });
-	});
-
-	nui.doer.register('show-blocking-alert', async () => {
-		await nui.dialog.alert('Important Notice', 'This dialog cannot be closed with Escape or by clicking outside. You must click OK.', { 
-			blocking: true,
-			placement: 'top'
-		});
-		showResult('Blocking alert acknowledged');
-	});
-
-	nui.doer.register('show-blocking-confirm', async () => {
-		const res = await nui.dialog.confirm('Terms of Service', 'Do you accept the terms of service? You must choose an option.', { 
-			blocking: true,
-			placement: 'top'
-		});
-		showResult(res ? 'Terms accepted' : 'Terms declined');
+		switch (name) {
+			case 'dialog-open':
+				if (target && target.showModal) target.showModal();
+				break;
+			case 'dialog-close':
+				if (target && target.close) target.close(param);
+				break;
+			case 'show-alert':
+				await nui.dialog.alert('Hello!', 'This is a standard system alert.', {placement: 'top'});
+				showResult('Alert closed');
+				break;
+			case 'show-confirm':
+				const confirmRes = await nui.dialog.confirm('Confirmation', 'Are you sure you want to proceed?', {placement: 'top'});
+				showResult(confirmRes);
+				break;
+			case 'show-prompt':
+				const promptRes = await nui.dialog.prompt('Enter Details', 'Please provide your information.', {
+					placement: 'top',
+					fields: [
+						{ id: 'name', label: 'Name', value: 'John Doe' },
+						{ id: 'email', label: 'Email', type: 'email' }
+					]
+				});
+				showResult(promptRes);
+				break;
+			case 'show-alert-top':
+				await nui.dialog.alert('Top Placement', 'This alert appears at the top.', { placement: 'top' });
+				break;
+			case 'show-alert-bottom':
+				await nui.dialog.alert('Bottom Placement', 'This alert appears at the bottom.', { placement: 'bottom' });
+				break;
+			case 'show-blocking-alert':
+				await nui.dialog.alert('Important Notice', 'This dialog cannot be closed with Escape or by clicking outside. You must click OK.', { 
+					blocking: true,
+					placement: 'top'
+				});
+				showResult('Blocking alert acknowledged');
+				break;
+			case 'show-blocking-confirm':
+				const blockingRes = await nui.dialog.confirm('Terms of Service', 'Do you accept the terms of service? You must choose an option.', { 
+					blocking: true,
+					placement: 'top'
+				});
+				showResult(blockingRes ? 'Terms accepted' : 'Terms declined');
+				break;
+			case 'open-custom-confirm':
+				customConfirm.showModal();
+				break;
+		}
 	});
 }
 </script>
