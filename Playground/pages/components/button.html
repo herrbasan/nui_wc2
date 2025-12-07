@@ -274,8 +274,8 @@ document.addEventListener('nui-action', (e) => {
 	</div>
 
 	<script type="nui/page">
-		this.init = function() {
-			this.element.addEventListener('nui-action', (e) => {
+		function init(element) {
+			element.addEventListener('nui-action', (e) => {
 				const { name, target } = e.detail;
 				
 				if (name === 'highlight-target') {

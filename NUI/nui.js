@@ -741,6 +741,13 @@ registerComponent('nui-link-list', (element) => {
 		if (expand && container.style.height === 'auto') return;
 		if (!expand && container.style.height === '0px') return;
 
+		// If element is hidden (e.g. during init), scrollHeight is 0.
+		// Just set final state without animation.
+		if (container.scrollHeight === 0) {
+			container.style.height = expand ? 'auto' : '0px';
+			return;
+		}
+
 		container.style.height = container.scrollHeight + 'px';
 		if (!expand) container.offsetHeight; // Force reflow
 		container.style.height = expand ? container.scrollHeight + 'px' : '0px';

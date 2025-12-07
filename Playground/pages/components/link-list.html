@@ -13,7 +13,7 @@
 
     <h2>Live Demo: Fold Mode (Accordion)</h2>
 	<p>In fold mode, only one group can be open at a time. Opening a group automatically closes others:</p>
-	<div style="border: 1px solid var(--nui-border); border-radius: 0.5rem; padding: 1rem; background: var(--nui-surface-1); margin-bottom: 1rem;">
+	<div class="link_list_fold_container">
 		<nui-link-list id="demo-fold" mode="fold">
 			<!-- Loaded via JavaScript -->
 		</nui-link-list>
@@ -39,7 +39,7 @@
 	
 	<h2>Live Demo: Tree Mode (Masonry Layout)</h2>
 	<p>In tree mode, all groups can be open simultaneously. The masonry layout arranges groups in columns for efficient space usage:</p>
-	<div style="border: 1px solid var(--nui-border); border-radius: 0.5rem; padding: 1rem; background: var(--nui-surface-1); margin-bottom: 1rem;">
+	<div class="link_list_column_container">
 		<nui-link-list id="demo-tree" mode="tree">
 			<nui-column-flow column-width="/3" sort="height">
 			<nui-column-flow column-width="/3" sort="height">
@@ -302,7 +302,7 @@ linkList.loadData(navigationData);</code></pre>
 	
 	
 	<h3>Interactive Testing (Tree Mode)</h3>
-	<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1rem 0;">
+	<nui-button-contaier>
 		<nui-button data-action="set-active-tree:Subgroup Item 1">
 			<button type="button">Set Active: Sub Item</button>
 		</nui-button>
@@ -312,7 +312,7 @@ linkList.loadData(navigationData);</code></pre>
 		<nui-button data-action="clear-active-tree">
 			<button type="button">Clear Active</button>
 		</nui-button>
-	</div>
+	</nui-button-container>
 	
 	<div style="background: var(--nui-surface-2); padding: 1rem; border-radius: 0.5rem; margin-bottom: 2rem;">
 		<h4 style="margin-top: 0;">Tree Mode State:</h4>
@@ -520,31 +520,37 @@ function init(element, params) {
 	}
 	
 	// Handle actions
-	element.addEventListener('nui-action', (e) => {
-		const { name, param } = e.detail;
+	element.addEventListener('click', (e) => {
+		const actionEl = e.target.closest('[data-action]');
+		if (!actionEl) return;
 		
-		if (name === 'set-active-fold') {
+		const actionSpec = actionEl.dataset.action;
+		if (!actionSpec) return;
+		
+		const [actionName, param] = actionSpec.split(':');
+		
+		if (actionName === 'set-active-fold') {
 			const allLinks = Array.from(demoFold.querySelectorAll('a:has(span)'));
 			const item = allLinks.find(link => link.textContent.trim() === param);
 			if (item) demoFold.setActive(item);
 			updateFoldStateDisplay();
-		} else if (name === 'get-active-fold') {
+		} else if (actionName === 'get-active-fold') {
 			const foldData = demoFold.getActiveData?.();
 			alert(foldData ? `Fold Mode Active:\n\nText: ${foldData.text}` : 'Fold Mode: No active item');
 			updateFoldStateDisplay();
-		} else if (name === 'clear-active-fold') {
+		} else if (actionName === 'clear-active-fold') {
 			demoFold.clearActive?.(true);
 			updateFoldStateDisplay();
-		} else if (name === 'set-active-tree') {
+		} else if (actionName === 'set-active-tree') {
 			const allLinks = Array.from(demoTree.querySelectorAll('a:has(span)'));
 			const item = allLinks.find(link => link.textContent.trim() === param);
 			if (item) demoTree.setActive(item);
 			updateTreeStateDisplay();
-		} else if (name === 'get-active-tree') {
+		} else if (actionName === 'get-active-tree') {
 			const treeData = demoTree.getActiveData?.();
 			alert(treeData ? `Tree Mode Active:\n\nText: ${treeData.text}` : 'Tree Mode: No active item');
 			updateTreeStateDisplay();
-		} else if (name === 'clear-active-tree') {
+		} else if (actionName === 'clear-active-tree') {
 			demoTree.clearActive?.();
 			updateTreeStateDisplay();
 		}

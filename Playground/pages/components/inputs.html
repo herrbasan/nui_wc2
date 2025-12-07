@@ -263,13 +263,13 @@
 </article>
 
 <script type="nui/page">
-this.init = function() {
+function init(element) {
 	// Handle actions
-	this.element.addEventListener('nui-action', (e) => {
+	element.addEventListener('nui-action', (e) => {
 		const action = e.detail.name;
 		
 		if (action === 'validate-form') {
-			const inputs = this.element.querySelectorAll('#demo-form nui-input, #demo-form nui-textarea');
+			const inputs = element.querySelectorAll('#demo-form nui-input, #demo-form nui-textarea');
 			let allValid = true;
 			inputs.forEach(input => {
 				if (input.validate && !input.validate()) {
@@ -288,8 +288,8 @@ this.init = function() {
 	});
 
 	// Handle event logging
-	const eventDemo = this.element.querySelector('#event-demo');
-	const eventLog = this.element.querySelector('#event-log');
+	const eventDemo = element.querySelector('#event-demo');
+	const eventLog = element.querySelector('#event-log');
 	
 	if (eventDemo && eventLog) {
 		['nui-input', 'nui-change', 'nui-clear'].forEach(eventType => {

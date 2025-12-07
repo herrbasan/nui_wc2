@@ -586,3 +586,12 @@ button {
 	border-radius: var(--border-radius1);
 	font-size: 0.85em;
 }
+
+
+.link_list_fold_container {
+	border: 1px solid var(--border-shade2);
+	border-radius: var(--border-radius1);
+	padding: 1rem;
+	background: var(--color-shade1);
+	margin-bottom: 1rem;
+}
