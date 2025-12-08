@@ -2219,7 +2219,8 @@ function pageContent(type, id, params, options = {}) {
 
 	if (type === 'page') {
 		const basePath = options.basePath || '/pages';
-		loadFragment(`${basePath}/${id}.html`, wrapper, params);
+		// Attach promise to element for router to wait on
+		wrapper.nuiLoaded = loadFragment(`${basePath}/${id}.html`, wrapper, params);
 	} else if (type === 'feature') {
 		const initFn = registeredFeatures.get(id);
 		if (initFn) {
@@ -2258,6 +2259,7 @@ function createRouter(container, options = {}) {
 	let currentElement = null;
 	let currentRoute = null;
 	let isStarted = false;
+	let navigationId = 0; // Track latest navigation request
 
 	container = typeof container === 'string'
 		? document.querySelector(container)
@@ -2276,19 +2278,21 @@ function createRouter(container, options = {}) {
 		if (!element) return;
 		element.inert = true;
 		element.style.display = 'none';
+		element.classList.remove('nui-page-active'); // Reset animation state
 		element.hide?.();
 	}
 
 	function showElement(element, params) {
 		element.inert = false;
-		element.style.display = '';
 		element.show?.(params);
+		
+		// Trigger animation
+		element.classList.add('nui-page-active');
 
-		requestAnimationFrame(() => {
-			const focusTarget = element.querySelector('h1, h2, [autofocus], main') || element;
-			if (focusTarget.tabIndex < 0) focusTarget.tabIndex = -1;
-			focusTarget.focus({ preventScroll: true });
-		});
+		// Focus management
+		const focusTarget = element.querySelector('h1, h2, [autofocus], main') || element;
+		if (focusTarget.tabIndex < 0) focusTarget.tabIndex = -1;
+		focusTarget.focus({ preventScroll: true });
 	}
 
 	function handleDeepLink(element, params) {
@@ -2304,7 +2308,7 @@ function createRouter(container, options = {}) {
 		}
 	}
 
-	function navigate(route) {
+	async function navigate(route) {
 		if (!route) {
 			if (defaultRoute) {
 				location.hash = defaultRoute;
@@ -2312,29 +2316,64 @@ function createRouter(container, options = {}) {
 			return;
 		}
 
+		const currentNavId = ++navigationId;
 		const { type, id, params } = route;
 		const cacheKey = getCacheKey(type, id);
 
-		hideElement(currentElement);
-
+		// 1. Get or create target element
 		let element = cache.get(cacheKey);
 		if (!element) {
 			element = pageContent(type, id, params, { basePath });
 			cache.set(cacheKey, element);
 			container.appendChild(element);
+			// Ensure it's hidden initially
+			element.style.display = 'none';
 		}
 
-		showElement(element, params);
-		handleDeepLink(element, params);
+		// 2. Wait for content if loading (and we are still the latest navigation)
+		if (element.nuiLoaded) {
+			try {
+				await element.nuiLoaded;
+			} catch (e) {
+				// Error handled in loadFragment, but we proceed to show the error state
+			}
+		}
 
-		currentElement = element;
-		currentRoute = { type, id, params, element };
+		// 3. Check if we were superseded by a newer navigation
+		if (currentNavId !== navigationId) {
+			return; // Abort, another navigation happened
+		}
 
-		// Dispatch route change event
-		container.dispatchEvent(new CustomEvent('nui-route-change', {
-			bubbles: true,
-			detail: currentRoute
-		}));
+		// 4. Perform switch
+		if (currentElement !== element) {
+			hideElement(currentElement);
+			
+			// Show element but keep it invisible for one frame to ensure transition triggers
+			element.style.display = '';
+			
+			// Force reflow
+			void element.offsetHeight;
+			
+			// Trigger animation (double rAF to ensure next frame)
+			requestAnimationFrame(() => {
+				requestAnimationFrame(() => {
+					showElement(element, params);
+					handleDeepLink(element, params);
+				});
+			});
+			
+			currentElement = element;
+			currentRoute = { type, id, params, element };
+
+			// Dispatch route change event
+			container.dispatchEvent(new CustomEvent('nui-route-change', {
+				bubbles: true,
+				detail: currentRoute
+			}));
+		} else {
+			// Same element, just update params/deeplink
+			handleDeepLink(element, params);
+		}
 	}
 
 	function handleHashChange() {

@@ -2035,3 +2035,27 @@ padding-left: 0;
 padding-right: 0;
 }
 
+
+/* =============================================================================
+   ROUTER TRANSITIONS
+   ============================================================================= */
+
+[class^='content-'] {
+	opacity: 0;
+	transform: translateY(-1rem);
+	transition: opacity 0.3s ease-out, transform 0.2s ease-out;
+}
+
+[class^='content-'].nui-page-active {
+	opacity: 1;
+	transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+[class^='content-'] {
+transition: none !important;
+transform: none !important;
+opacity: 1 !important;
+}
+}
+
