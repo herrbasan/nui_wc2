@@ -1301,6 +1301,114 @@ registerComponent('nui-tabs', (element) => {
 	}
 });
 
+// ################################# nui-accordion COMPONENT
+
+registerComponent('nui-accordion', (element) => {
+	const details = Array.from(element.querySelectorAll(':scope > details'));
+	const animate = element.hasAttribute('animate') && 
+					!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+	// Animation helper
+	const animateDetails = (detail, opening) => {
+		if (!animate) return;
+		
+		const summary = detail.querySelector('summary');
+		const content = detail.querySelector('.accordion-content') || detail.lastElementChild;
+		if (!summary || !content) return;
+
+		if (opening) {
+			// Opening animation
+			// 1. Set height to summary height (start state)
+			const startHeight = summary.offsetHeight;
+			detail.style.height = `${startHeight}px`;
+			detail.style.overflow = 'hidden';
+			
+			// 2. Add open attribute to render content
+			detail.open = true;
+			
+			// 3. Measure full height (end state)
+			const endHeight = summary.offsetHeight + content.offsetHeight;
+			
+			// 4. Animate
+			requestAnimationFrame(() => {
+				detail.style.transition = 'height 0.3s ease-out';
+				detail.style.height = `${endHeight}px`;
+				
+				const onEnd = () => {
+					detail.style.height = '';
+					detail.style.overflow = '';
+					detail.style.transition = '';
+					detail.removeEventListener('transitionend', onEnd);
+				};
+				detail.addEventListener('transitionend', onEnd, { once: true });
+			});
+		} else {
+			// Closing animation
+			// 1. Set height to current full height (start state)
+			const startHeight = detail.offsetHeight;
+			detail.style.height = `${startHeight}px`;
+			detail.style.overflow = 'hidden';
+			
+			// 2. Force reflow
+			detail.offsetHeight;
+			
+			// 3. Animate to summary height (end state)
+			const endHeight = summary.offsetHeight;
+			
+			requestAnimationFrame(() => {
+				detail.style.transition = 'height 0.3s ease-out';
+				detail.style.height = `${endHeight}px`;
+				
+				const onEnd = () => {
+					detail.open = false; // Actually close it
+					detail.style.height = '';
+					detail.style.overflow = '';
+					detail.style.transition = '';
+					detail.removeEventListener('transitionend', onEnd);
+				};
+				detail.addEventListener('transitionend', onEnd, { once: true });
+			});
+		}
+	};
+
+	// Click handler for animation control
+	if (animate) {
+		details.forEach(detail => {
+			const summary = detail.querySelector('summary');
+			if (!summary) return;
+
+			summary.addEventListener('click', (e) => {
+				e.preventDefault(); // Take control of toggling
+				
+				// If exclusive, close others first
+				if (element.hasAttribute('exclusive') && !detail.open) {
+					details.forEach(d => {
+						if (d !== detail && d.open) {
+							animateDetails(d, false);
+						}
+					});
+				}
+
+				// Toggle current
+				animateDetails(detail, !detail.open);
+			});
+		});
+	} else if (element.hasAttribute('exclusive')) {
+		// Non-animated exclusive mode
+		details.forEach(targetDetail => {
+			targetDetail.addEventListener('toggle', (e) => {
+				if (targetDetail.open) {
+					details.forEach(d => {
+						if (d !== targetDetail && d.open) {
+							d.removeAttribute('open');
+						}
+					});
+				}
+			});
+		});
+	}
+});
+
 // ################################# nui-banner COMPONENT
 
 registerComponent('nui-banner', (element) => {

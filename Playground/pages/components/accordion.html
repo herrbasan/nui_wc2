@@ -1,0 +1,120 @@
+<header>
+	<h1>Accordion Component</h1>
+	<p>Expandable content sections using <code>&lt;nui-accordion&gt;</code>. Built on native <code>&lt;details&gt;</code> elements.</p>
+</header>
+
+<section class="page-accordion">
+	<h2>Basic Usage</h2>
+	<p>Wraps standard HTML <code>&lt;details&gt;</code> elements. Provides consistent styling and optional behavior enhancements.</p>
+	
+	<div class="demo-container">
+		<nui-accordion animate>
+			<details>
+				<summary>Section 1: Introduction</summary>
+				<div class="accordion-content">
+					<p><strong>Welcome to the NUI Accordion.</strong> This component is designed to handle various types of content, from simple text to complex HTML structures.</p>
+					<p>It leverages the native <code>&lt;details&gt;</code> and <code>&lt;summary&gt;</code> elements, ensuring that the content is accessible and semantic. The animation you see is a progressive enhancement, meaning the component works perfectly fine even if JavaScript is disabled or fails to load.</p>
+				</div>
+			</details>
+			<details>
+				<summary>Section 2: Features</summary>
+				<div class="accordion-content">
+					<p>The NUI Accordion comes with several built-in features:</p>
+					<ul>
+						<li><strong>Semantic HTML:</strong> Built on standard web platform elements.</li>
+						<li><strong>Accessibility:</strong> Fully accessible via keyboard and screen readers.</li>
+						<li><strong>Animation:</strong> Smooth height transitions (optional).</li>
+						<li><strong>Styling:</strong> Easily customizable via CSS variables.</li>
+					</ul>
+					<p>You can nest other components inside these panels as well.</p>
+				</div>
+			</details>
+			<details>
+				<summary>Section 3: Conclusion</summary>
+				<div class="accordion-content">
+					<p>In conclusion, the accordion is a versatile tool for organizing content. By hiding sections that aren't immediately relevant, you can reduce cognitive load and make your pages easier to scan.</p>
+					<p>Remember to use the <code>exclusive</code> attribute if you want to enforce a "one-at-a-time" policy, which is often useful for FAQs or step-by-step instructions.</p>
+				</div>
+			</details>
+		</nui-accordion>
+	</div>
+
+	<nui-code>
+		<pre><code data-lang="html">&lt;nui-accordion animate&gt;
+  &lt;details&gt;
+    &lt;summary&gt;Section 1&lt;/summary&gt;
+    &lt;div&gt;...&lt;/div&gt;
+  &lt;/details&gt;
+  &lt;details&gt;
+    &lt;summary&gt;Section 2&lt;/summary&gt;
+    &lt;div&gt;...&lt;/div&gt;
+  &lt;/details&gt;
+&lt;/nui-accordion&gt;</code></pre>
+	</nui-code>
+</section>
+
+<section class="page-accordion">
+	<h2>Exclusive Mode</h2>
+	<p>Add the <code>exclusive</code> attribute to allow only one section to be open at a time.</p>
+	
+	<div class="demo-container">
+		<nui-accordion exclusive animate>
+			<details open>
+				<summary>First Option</summary>
+				<div class="accordion-content">
+					<p>This is the <strong>First Option</strong>. In exclusive mode, opening another section will automatically close this one.</p>
+					<p>This behavior is particularly useful for:</p>
+					<ul>
+						<li>Reducing visual clutter on the page.</li>
+						<li>Guiding the user's focus to a single topic.</li>
+						<li>Creating a "wizard-lite" experience where users step through information.</li>
+					</ul>
+				</div>
+			</details>
+			<details>
+				<summary>Second Option</summary>
+				<div class="accordion-content">
+					<p>Here is the <strong>Second Option</strong>. Notice how the first one closed smoothly when you opened this?</p>
+					<p>The animation logic handles the coordination between the opening of this element and the closing of the previous one, ensuring a jank-free experience.</p>
+				</div>
+			</details>
+			<details>
+				<summary>Third Option</summary>
+				<div class="accordion-content">
+					<p>And finally, the <strong>Third Option</strong>.</p>
+					<p>Exclusive mode is implemented by listening to the <code>toggle</code> event (or click events when animated) and managing the <code>open</code> state of sibling details elements.</p>
+				</div>
+			</details>
+		</nui-accordion>
+	</div>
+
+	<nui-code>
+		<pre><code data-lang="html">&lt;nui-accordion exclusive animate&gt;
+  &lt;details open&gt;...&lt;/details&gt;
+  &lt;details&gt;...&lt;/details&gt;
+&lt;/nui-accordion&gt;</code></pre>
+	</nui-code>
+</section>
+
+<section class="page-accordion">
+	<h2>Visual Variants</h2>
+	<p>Accordions can be styled to fit different contexts.</p>
+	
+	<div class="demo-container">
+		<h3>Clean Variant (No Animation)</h3>
+		<nui-accordion class="nui-accordion-clean">
+			<details>
+				<summary>Clean Style Item</summary>
+				<div class="accordion-content">
+					<p>This variant removes the borders and background colors for a cleaner, more minimalist look. It fits well within other containers or cards.</p>
+				</div>
+			</details>
+			<details>
+				<summary>Another Clean Item</summary>
+				<div class="accordion-content">
+					<p>This example also demonstrates the default behavior <strong>without animation</strong>. The content snaps open instantly, which is the native browser behavior for <code>&lt;details&gt;</code> elements.</p>
+				</div>
+			</details>
+		</nui-accordion>
+	</div>
+</section>

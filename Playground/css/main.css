@@ -607,3 +607,11 @@ font-family: monospace;
 font-size: 0.85rem;
 }
 
+
+/* Accordion page styles */
+.page-accordion .accordion-content {
+padding: 1rem;
+background: var(--color-base);
+line-height: 1.6;
+}
+

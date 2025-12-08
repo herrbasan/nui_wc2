@@ -1939,3 +1939,99 @@ animation: ani-fade-in 0.2s ease-out;
 nui-tabs [role="tabpanel"][hidden] {
 display: none !important;
 }
+
+/* =============================================================================
+   NUI-ACCORDION COMPONENT
+   ============================================================================= */
+
+nui-accordion {
+display: block;
+width: 100%;
+border: solid var(--border-thickness) var(--border-shade2);
+border-radius: var(--border-radius2);
+overflow: hidden;
+}
+
+nui-accordion details {
+border-bottom: solid var(--border-thickness) var(--border-shade2);
+background: var(--color-shade1);
+}
+
+nui-accordion details:last-child {
+border-bottom: none;
+}
+
+nui-accordion summary {
+padding: var(--nui-space);
+cursor: pointer;
+font-weight: 500;
+list-style: none;
+position: relative;
+padding-right: var(--nui-space-triple);
+transition: background-color 0.2s ease-in-out;
+}
+
+nui-accordion summary:hover {
+background-color: var(--color-shade2);
+}
+
+nui-accordion summary:focus-visible {
+outline: 2px solid var(--color-highlight);
+outline-offset: -2px;
+z-index: 1;
+}
+
+/* Custom arrow indicator */
+nui-accordion summary::-webkit-details-marker {
+display: none;
+}
+
+nui-accordion summary::after {
+content: '';
+position: absolute;
+right: var(--nui-space);
+top: 50%;
+width: 0.6em;
+height: 0.6em;
+border-right: 2px solid var(--color-text-dim);
+border-bottom: 2px solid var(--color-text-dim);
+transform: translateY(-60%) rotate(45deg);
+transition: transform 0.2s ease;
+}
+
+nui-accordion details[open] summary::after {
+transform: translateY(-30%) rotate(225deg);
+border-color: var(--color-highlight);
+}
+
+nui-accordion details[open] summary {
+color: var(--color-highlight);
+border-bottom: solid var(--border-thickness) var(--border-shade2);
+}
+
+nui-accordion .accordion-content {
+padding: var(--nui-space);
+background: var(--color-base);
+line-height: 1.6;
+}
+
+/* Clean Variant */
+nui-accordion.nui-accordion-clean {
+border: none;
+border-radius: 0;
+}
+
+nui-accordion.nui-accordion-clean details {
+border-bottom: solid var(--border-thickness) var(--border-shade2);
+background: transparent;
+}
+
+nui-accordion.nui-accordion-clean summary {
+padding-left: 0;
+}
+
+nui-accordion.nui-accordion-clean .accordion-content {
+padding-left: 0;
+padding-right: 0;
+}
+
