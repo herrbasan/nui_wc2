@@ -105,43 +105,53 @@ function defineAttributeProperty(element, propName, attrName = propName) {
 // ################################# DOM UTILITIES
 
 const dom = {
-	create(tag, attributes = {}, children = []) {
-		const element = document.createElement(tag);
-		Object.entries(attributes).forEach(([key, value]) => {
+	create(tag, options = {}) {
+		const el = document.createElement(tag);
+		if (options.id) el.id = options.id;
+		if (options.class) {
+			const classes = Array.isArray(options.class) ? options.class : [options.class];
+			el.classList.add(...classes.filter(Boolean));
+		}
+		if (options.style) {
+			Object.entries(options.style).forEach(([prop, value]) => { el.style[prop] = value;});
+		}
+		if (options.data) {
+			Object.entries(options.data).forEach(([key, value]) => { el.dataset[key] = value;});
+		}
+		if (options.attrs) {
+			Object.entries(options.attrs).forEach(([key, value]) => {
+				if (value !== null && value !== undefined) {
+					el.setAttribute(key, value);
+				}
+			});
+		}
+		if (options.events) {
+			Object.entries(options.events).forEach(([event, handler]) => { 
+				el.addEventListener(event, handler); 
+			});
+		}
+		if (options.text) el.textContent = options.text;
+		if (options.content) {
+			if (typeof options.content === 'string') {
+				el.innerHTML = options.content;
+			} else if (Array.isArray(options.content)) {
+				options.content.forEach(child => child && el.appendChild(child));
+			} else {
+				el.appendChild(options.content);
+			}
+		}
+		if (options.target) options.target.appendChild(el);
+		return el;
+	},
+
+	svg(tag, attrs = {}) {
+		const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+		Object.entries(attrs).forEach(([key, value]) => {
 			if (value !== null && value !== undefined) {
-				element.setAttribute(key, value);
+				el.setAttribute(key, value);
 			}
 		});
-		children.forEach(child => {
-			if (typeof child === 'string') {
-				element.appendChild(document.createTextNode(child));
-			} else if (child) {
-				element.appendChild(child);
-			}
-		});
-		return element;
-	},
-
-	svg(tag, attributes = {}) {
-		const element = document.createElementNS('http://www.w3.org/2000/svg', tag);
-		Object.entries(attributes).forEach(([key, value]) => {
-			if (value !== null && value !== undefined) {
-				element.setAttribute(key, value);
-			}
-		});
-		return element;
-	},
-
-	icon(name) {
-		const icon = document.createElement('nui-icon');
-		icon.setAttribute('name', name);
-		return icon;
-	},
-
-	span(text) {
-		const span = document.createElement('span');
-		if (text) span.textContent = text;
-		return span;
+		return el;
 	}
 };
 

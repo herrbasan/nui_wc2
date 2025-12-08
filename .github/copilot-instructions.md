@@ -378,6 +378,18 @@ customElements.define('nui-button', NuiButton);
 
 #### Component Patterns
 
+**Component Instantiation Patterns:**
+1. **Declarative HTML (Default):**
+   - Use for: `nui-button`, `nui-tabs`, `nui-accordion`, `nui-card`, `nui-input`, `nui-code`.
+   - Pattern: Create element -> Set `innerHTML` -> Append.
+   - Example: `const t = document.createElement('nui-tabs'); t.innerHTML = '...';`
+   - **Rule:** Do NOT invent `.loadData()` methods for these components.
+
+2. **Data-Driven (Exception):**
+   - Use ONLY for: `nui-link-list`, `nui-dialog` (via factory), `nui-banner` (via factory).
+   - Pattern: Create element -> Call `.loadData()` or factory method.
+   - Reason: Complex recursive structures or runtime chrome generation.
+
 **Tree View Pattern (`nui-link-list`):**
 - **Structure**: `role="tree"` > `role="group"` > `role="treeitem"`
 - **Navigation**: Hybrid model supporting both Tab (web standard) and Arrow keys (app standard)

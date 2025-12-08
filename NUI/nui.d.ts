@@ -151,6 +151,52 @@ declare global {
 }
 
 // =============================================================================
+// DOM Utilities
+// =============================================================================
+
+/**
+ * Options for dom.create element factory
+ */
+export interface DomCreateOptions {
+	/** Element id attribute */
+	id?: string;
+	/** CSS class(es) - single string or array */
+	class?: string | string[];
+	/** Inline styles object { property: value } */
+	style?: Partial<CSSStyleDeclaration>;
+	/** Dataset attributes { key: value } → data-key="value" */
+	data?: Record<string, string>;
+	/** HTML attributes { name: value } */
+	attrs?: Record<string, string | number | boolean | null | undefined>;
+	/** Event listeners { eventName: handler } */
+	events?: Record<string, EventListener>;
+	/** Plain text content (uses textContent - safe, no HTML parsing) */
+	text?: string;
+	/** HTML content - innerHTML string, single Element, or array of Elements */
+	content?: string | Element | Element[];
+	/** Parent element to append to */
+	target?: Element;
+}
+
+/**
+ * DOM element creation utilities
+ * Provides efficient element creation with minimal boilerplate
+ */
+export interface DomUtilities {
+	/** Create an element with options object */
+	create<K extends keyof HTMLElementTagNameMap>(tag: K, options?: DomCreateOptions): HTMLElementTagNameMap[K];
+	create(tag: string, options?: DomCreateOptions): HTMLElement;
+	
+	/** Create an SVG element with attributes */
+	svg<K extends keyof SVGElementTagNameMap>(tag: K, attrs?: Record<string, string | number>): SVGElementTagNameMap[K];
+	svg(tag: string, attrs?: Record<string, string | number>): SVGElement;
+}
+
+declare global {
+	const dom: DomUtilities;
+}
+
+// =============================================================================
 // Accessibility Utilities
 // =============================================================================
 
