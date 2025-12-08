@@ -48,6 +48,56 @@
 </section>
 
 <section>
+	<h2>Variable Content Height</h2>
+	<p>Tabs automatically animate their height when switching between panels of different sizes. This provides a smooth user experience without layout jumps.</p>
+	
+	<div class="demo-container">
+		<nui-tabs>
+			<nav>
+				<button>Short</button>
+				<button>Medium</button>
+				<button>Tall</button>
+			</nav>
+			<div class="tab-content-short">
+				<h3>Short Content</h3>
+				<p>This tab has very little content.</p>
+			</div>
+			<div class="tab-content-medium">
+				<h3>Medium Content</h3>
+				<p>This tab has a moderate amount of content.</p>
+				<p>It takes up a bit more space than the first one.</p>
+				<p>The transition should be smooth.</p>
+			</div>
+			<div class="tab-content-tall">
+				<h3>Tall Content</h3>
+				<p>This tab has a lot of content to demonstrate the height animation.</p>
+				<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+				<p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+				<p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>
+				<p>Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+				<p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium.</p>
+			</div>
+		</nui-tabs>
+	</div>
+
+	<nui-code>
+		<pre><code data-lang="html">&lt;nui-tabs&gt;
+  &lt;nav&gt;
+    &lt;button&gt;Short&lt;/button&gt;
+    &lt;button&gt;Medium&lt;/button&gt;
+    &lt;button&gt;Tall&lt;/button&gt;
+  &lt;/nav&gt;
+  &lt;div&gt;
+    &lt;h3&gt;Short Content&lt;/h3&gt;
+    &lt;p&gt;...&lt;/p&gt;
+  &lt;/div&gt;
+  &lt;div&gt;...&lt;/div&gt;
+  &lt;div&gt;...&lt;/div&gt;
+&lt;/nui-tabs&gt;</code></pre>
+	</nui-code>
+</section>
+
+<section>
 	<h2>Explicit ARIA Structure</h2>
 	<p>For full control, use standard ARIA roles and IDs. This allows you to place panels anywhere within the container or link them explicitly.</p>
 	
@@ -117,44 +167,38 @@
 </section>
 
 <section class="page-tabs">
-	<h2>Animated Height</h2>
-	<p>Add the <code>animate-height</code> attribute to smoothly animate the container height when switching between tabs of different sizes.</p>
+	<h2>Disable Animation</h2>
+	<p>Tabs animate their height by default. Add the <code>no-animation</code> attribute to disable this behavior.</p>
 	
 	<div class="demo-container">
-		<nui-tabs animate-height>
+		<nui-tabs no-animation>
 			<nav>
-				<button>Short</button>
-				<button>Medium</button>
-				<button>Tall</button>
+				<button>Overview</button>
+				<button>Details</button>
+				<button>Settings</button>
 			</nav>
-			<div class="tab-content-short">
-				<h3>Short Content</h3>
-				<p>This tab has very little content.</p>
+			<div>
+				<h3>Overview Content</h3>
+				<p>This is the overview tab content. It is visible by default because it corresponds to the first tab.</p>
 			</div>
-			<div class="tab-content-medium">
-				<h3>Medium Content</h3>
-				<p>This tab has a moderate amount of content.</p>
-				<p>It takes up a bit more space than the first one.</p>
-				<p>The transition should be smooth.</p>
+			<div>
+				<h3>Details Content</h3>
+				<p>Here are the details. This content is shown when the second tab is active.</p>
 			</div>
-			<div class="tab-content-tall">
-				<h3>Tall Content</h3>
-				<p>This tab has a lot of content to demonstrate the height animation.</p>
-				<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
-				<p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
-				<p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>
-				<p>Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-				<p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium.</p>
+			<div>
+				<h3>Settings Content</h3>
+				<p>Adjust your settings here.</p>
+				<nui-button><button type="button">Save Changes</button></nui-button>
 			</div>
 		</nui-tabs>
 	</div>
 
 	<nui-code>
-		<pre><code data-lang="html">&lt;nui-tabs animate-height&gt;
+		<pre><code data-lang="html">&lt;nui-tabs no-animation&gt;
   &lt;nav&gt;
-    &lt;button&gt;Short&lt;/button&gt;
-    &lt;button&gt;Medium&lt;/button&gt;
-    &lt;button&gt;Tall&lt;/button&gt;
+    &lt;button&gt;Overview&lt;/button&gt;
+    &lt;button&gt;Details&lt;/button&gt;
+    &lt;button&gt;Settings&lt;/button&gt;
   &lt;/nav&gt;
   &lt;div&gt;...&lt;/div&gt;
   &lt;div&gt;...&lt;/div&gt;

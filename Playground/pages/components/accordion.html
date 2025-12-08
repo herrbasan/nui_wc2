@@ -8,7 +8,7 @@
 	<p>Wraps standard HTML <code>&lt;details&gt;</code> elements. Provides consistent styling and optional behavior enhancements.</p>
 	
 	<div class="demo-container">
-		<nui-accordion animate>
+		<nui-accordion>
 			<details>
 				<summary>Section 1: Introduction</summary>
 				<div class="accordion-content">
@@ -23,7 +23,7 @@
 					<ul>
 						<li><strong>Semantic HTML:</strong> Built on standard web platform elements.</li>
 						<li><strong>Accessibility:</strong> Fully accessible via keyboard and screen readers.</li>
-						<li><strong>Animation:</strong> Smooth height transitions (optional).</li>
+						<li><strong>Animation:</strong> Smooth height transitions (enabled by default).</li>
 						<li><strong>Styling:</strong> Easily customizable via CSS variables.</li>
 					</ul>
 					<p>You can nest other components inside these panels as well.</p>
@@ -40,7 +40,7 @@
 	</div>
 
 	<nui-code>
-		<pre><code data-lang="html">&lt;nui-accordion animate&gt;
+		<pre><code data-lang="html">&lt;nui-accordion&gt;
   &lt;details&gt;
     &lt;summary&gt;Section 1&lt;/summary&gt;
     &lt;div&gt;...&lt;/div&gt;
@@ -58,7 +58,7 @@
 	<p>Add the <code>exclusive</code> attribute to allow only one section to be open at a time.</p>
 	
 	<div class="demo-container">
-		<nui-accordion exclusive animate>
+		<nui-accordion exclusive>
 			<details open>
 				<summary>First Option</summary>
 				<div class="accordion-content">
@@ -89,7 +89,7 @@
 	</div>
 
 	<nui-code>
-		<pre><code data-lang="html">&lt;nui-accordion exclusive animate&gt;
+		<pre><code data-lang="html">&lt;nui-accordion exclusive&gt;
   &lt;details open&gt;...&lt;/details&gt;
   &lt;details&gt;...&lt;/details&gt;
 &lt;/nui-accordion&gt;</code></pre>
@@ -102,7 +102,7 @@
 	
 	<div class="demo-container">
 		<h3>Clean Variant (No Animation)</h3>
-		<nui-accordion class="nui-accordion-clean">
+		<nui-accordion class="nui-accordion-clean" no-animation>
 			<details>
 				<summary>Clean Style Item</summary>
 				<div class="accordion-content">

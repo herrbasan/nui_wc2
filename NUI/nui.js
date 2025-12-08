@@ -1189,21 +1189,24 @@ registerComponent('nui-tabs', (element) => {
 	});
 
 	// 5. State Management
-	const activateTab = (targetTab) => {
+	const activateTab = (targetTab, shouldAnimate = true) => {
 		const panelId = targetTab.getAttribute('aria-controls');
 		const targetPanel = element.querySelector(`#${panelId}`);
 
 		if (!targetPanel) return;
 
 		// Animation setup
-		const animate = element.hasAttribute('animate-height') && 
+		const animate = shouldAnimate && !element.hasAttribute('no-animation') && 
 						!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-		let startHeight;
 		
+		let startHeight = 0;
+
 		if (animate) {
+			// 1. Set start height
 			startHeight = element.offsetHeight;
 			element.style.height = `${startHeight}px`;
 			element.style.overflow = 'hidden';
+			element.style.transition = 'height 0.3s ease-out';
 		}
 
 		// Deactivate all
@@ -1225,34 +1228,30 @@ registerComponent('nui-tabs', (element) => {
 		
 		// Animation execution
 		if (animate) {
-			// Measure new height
+			// 2. Force reflow to register start state
+			void element.offsetHeight;
+
+			// 3. Measure new height
 			element.style.height = 'auto';
-			const newHeight = element.offsetHeight;
+			const newHeight = element.scrollHeight;
 			
-			// Snap back to start
+			// 4. Snap back to start (for the transition to work from)
 			element.style.height = `${startHeight}px`;
 			
-			// Force reflow
-			element.offsetHeight;
-			
-			// Animate
-			element.style.transition = 'height 0.3s ease';
+			// 5. Force reflow again
+			void element.offsetHeight;
+
+			// 6. Animate to new height
 			element.style.height = `${newHeight}px`;
 			
-			const onEnd = () => {
+			const onEnd = (e) => {
+				if (e.target !== element) return;
 				element.style.height = '';
 				element.style.overflow = '';
 				element.style.transition = '';
 				element.removeEventListener('transitionend', onEnd);
 			};
-			element.addEventListener('transitionend', onEnd, { once: true });
-			
-			// Fallback if transition doesn't fire (e.g. same height)
-			setTimeout(() => {
-				if (element.style.height !== '') {
-					onEnd();
-				}
-			}, 350);
+			element.addEventListener('transitionend', onEnd);
 		}
 
 		element.dispatchEvent(new CustomEvent('nui-tab-change', {
@@ -1297,7 +1296,7 @@ registerComponent('nui-tabs', (element) => {
 	// 7. Initial State
 	const initialTab = tabs.find(t => t.getAttribute('aria-selected') === 'true') || tabs[0];
 	if (initialTab) {
-		activateTab(initialTab);
+		activateTab(initialTab, false);
 	}
 });
 
@@ -1305,7 +1304,7 @@ registerComponent('nui-tabs', (element) => {
 
 registerComponent('nui-accordion', (element) => {
 	const details = Array.from(element.querySelectorAll(':scope > details'));
-	const animate = element.hasAttribute('animate') && 
+	const animate = !element.hasAttribute('no-animation') && 
 					!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 	// Animation helper
@@ -1315,6 +1314,9 @@ registerComponent('nui-accordion', (element) => {
 		const summary = detail.querySelector('summary');
 		const content = detail.querySelector('.accordion-content') || detail.lastElementChild;
 		if (!summary || !content) return;
+
+		// Ensure transition is set
+		detail.style.transition = 'height 0.3s ease-out';
 
 		if (opening) {
 			// Opening animation
@@ -1326,22 +1328,12 @@ registerComponent('nui-accordion', (element) => {
 			// 2. Add open attribute to render content
 			detail.open = true;
 			
-			// 3. Measure full height (end state)
-			const endHeight = summary.offsetHeight + content.offsetHeight;
+			// 3. Force reflow to register start state
+			void detail.offsetHeight;
 			
-			// 4. Animate
-			requestAnimationFrame(() => {
-				detail.style.transition = 'height 0.3s ease-out';
-				detail.style.height = `${endHeight}px`;
-				
-				const onEnd = () => {
-					detail.style.height = '';
-					detail.style.overflow = '';
-					detail.style.transition = '';
-					detail.removeEventListener('transitionend', onEnd);
-				};
-				detail.addEventListener('transitionend', onEnd, { once: true });
-			});
+			// 4. Set target height
+			const endHeight = detail.scrollHeight;
+			detail.style.height = `${endHeight}px`;
 		} else {
 			// Closing animation
 			// 1. Set height to current full height (start state)
@@ -1349,26 +1341,27 @@ registerComponent('nui-accordion', (element) => {
 			detail.style.height = `${startHeight}px`;
 			detail.style.overflow = 'hidden';
 			
-			// 2. Force reflow
-			detail.offsetHeight;
+			// 2. Force reflow to register start state
+			void detail.offsetHeight;
 			
-			// 3. Animate to summary height (end state)
+			// 3. Set target height (summary only)
 			const endHeight = summary.offsetHeight;
-			
-			requestAnimationFrame(() => {
-				detail.style.transition = 'height 0.3s ease-out';
-				detail.style.height = `${endHeight}px`;
-				
-				const onEnd = () => {
-					detail.open = false; // Actually close it
-					detail.style.height = '';
-					detail.style.overflow = '';
-					detail.style.transition = '';
-					detail.removeEventListener('transitionend', onEnd);
-				};
-				detail.addEventListener('transitionend', onEnd, { once: true });
-			});
+			detail.style.height = `${endHeight}px`;
 		}
+
+		const onEnd = (e) => {
+			if (e.target !== detail) return;
+			
+			detail.style.height = '';
+			detail.style.overflow = '';
+			detail.style.transition = '';
+			
+			if (!opening) {
+				detail.open = false;
+			}
+			detail.removeEventListener('transitionend', onEnd);
+		};
+		detail.addEventListener('transitionend', onEnd);
 	};
 
 	// Click handler for animation control

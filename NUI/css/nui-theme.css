@@ -1882,7 +1882,7 @@ nui-textarea textarea:-webkit-autofill:focus {
    ============================================================================= */
 
 nui-tabs {
-display: block;
+display: flow-root;
 width: 100%;
 }
 
