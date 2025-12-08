@@ -276,6 +276,54 @@ export interface NuiLoadingElement extends HTMLElement {
 	active: boolean;
 }
 
+/**
+ * Tabs component
+ * Manages tab panels and navigation
+ */
+export interface NuiTabsElement extends HTMLElement {}
+
+/**
+ * Accordion component
+ * Manages collapsible details elements
+ */
+export interface NuiAccordionElement extends HTMLElement {}
+
+/**
+ * Dialog component
+ * Wrapper for native <dialog> with animations and backdrop support
+ */
+export interface NuiDialogElement extends HTMLElement {
+	/** Show the dialog as a modal */
+	showModal(): void;
+	
+	/** Show the dialog (non-modal) */
+	show(): void;
+	
+	/** Close the dialog */
+	close(returnValue?: string): void;
+	
+	/** Check if dialog is open */
+	isOpen(): boolean;
+}
+
+/**
+ * Banner component
+ * Toast/Notification system
+ */
+export interface NuiBannerElement extends HTMLElement {
+	/** Show the banner */
+	show(): void;
+	
+	/** Close the banner */
+	close(action?: string): void;
+	
+	/** Update banner content */
+	update(content: string): void;
+	
+	/** Check if banner is open */
+	isOpen(): boolean;
+}
+
 // =============================================================================
 // Input Components
 // =============================================================================
@@ -419,6 +467,10 @@ declare global {
 		'nui-app-footer': NuiAppFooterElement;
 		'nui-button': NuiButtonElement;
 		'nui-icon': NuiIconElement;
+		'nui-tabs': NuiTabsElement;
+		'nui-accordion': NuiAccordionElement;
+		'nui-dialog': NuiDialogElement;
+		'nui-banner': NuiBannerElement;
 		'nui-input-group': NuiInputGroupElement;
 		'nui-input': NuiInputElement;
 		'nui-textarea': NuiTextareaElement;
@@ -448,7 +500,10 @@ export type NuiStateAttributes = `nui-state-${string}`;
 /**
  * Data-action attribute for CSP-safe event delegation
  * Action strings are handled by app-level JavaScript
+ * Syntax: "actionName" or "actionName@targetSelector:param"
  * Example: data-action="toggle-theme"
+ * Example: data-action="open@#my-dialog"
+ * Example: data-action="update@#user-list:sort=name"
  */
 export type DataActionAttribute = 'data-action';
 

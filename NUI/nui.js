@@ -1,11 +1,7 @@
-// NUI - DOM-First UI Component Library
-// Include in <head> with type="module"
-
 // ################################# CORE SYSTEMS
 
 const components = {};
 
-// Auto-detect base path from this script's location
 const nuiBasePath = new URL('.', import.meta.url).pathname.replace(/\/$/, '');
 
 const config = {
@@ -15,8 +11,6 @@ const config = {
 };
 
 // ################################# MINIMAL EVENT DELEGATION
-// CSP-safe action dispatch using data-action attributes
-// Actions are functions on the nui object - no registry needed
 
 function setupActionDelegation() {
 	document.addEventListener('click', (e) => {
@@ -26,24 +20,19 @@ function setupActionDelegation() {
 		const actionSpec = actionEl.dataset.action;
 		if (!actionSpec) return;
 		
-		// Parse action@target:param format
 		const [actionPart, selector] = actionSpec.split('@');
 		const [actionName, param] = actionPart.split(':');
 		
-		// Find target element if specified
 		const target = selector ? document.querySelector(selector) : actionEl;
 		
-		// Call function on nui object if it exists
 		if (typeof nui[actionName] === 'function') {
 			nui[actionName](target, actionEl, e, param);
 		} else {
-			// Dispatch generic event for easy handling
 			actionEl.dispatchEvent(new CustomEvent('nui-action', {
 				bubbles: true,
 				detail: { name: actionName, target, param, originalEvent: e }
 			}));
 
-			// Dispatch specific event for targeted listening
 			actionEl.dispatchEvent(new CustomEvent(`nui-action-${actionName}`, {
 				bubbles: true,
 				detail: { target, param, originalEvent: e }
@@ -686,7 +675,6 @@ registerComponent('nui-link-list', (element) => {
 		if (item.separator) return '<li class="separator"><hr></li>';
 		if (item.items) {
 			const children = item.items.map(i => buildItemHTML(i, true)).join('');
-			// Optimization: Pre-wrap children in group-items div to avoid upgradeHtml reflows
 			return `<ul>${buildGroupHeaderHTML(item)}<div class="group-items" role="presentation">${children}</div></ul>`;
 		}
 		const hrefAttr = item.href ? ` href="${item.href}"` : ' href=""';
@@ -741,15 +729,13 @@ registerComponent('nui-link-list', (element) => {
 		if (expand && container.style.height === 'auto') return;
 		if (!expand && container.style.height === '0px') return;
 
-		// If element is hidden (e.g. during init), scrollHeight is 0.
-		// Just set final state without animation.
 		if (container.scrollHeight === 0) {
 			container.style.height = expand ? 'auto' : '0px';
 			return;
 		}
 
 		container.style.height = container.scrollHeight + 'px';
-		if (!expand) container.offsetHeight; // Force reflow
+		if (!expand) container.offsetHeight;
 		container.style.height = expand ? container.scrollHeight + 'px' : '0px';
 
 		const onEnd = (e) => {
@@ -851,7 +837,7 @@ registerComponent('nui-link-list', (element) => {
 				updateAccordionState(path);
 			} else {
 				setGroupState(header, expand);
-				if (!expand) { // Close descendants
+				if (!expand) {
 					header.nextElementSibling?.querySelectorAll('.group-header').forEach(h => setGroupState(h, false));
 				}
 			}
@@ -927,10 +913,8 @@ registerComponent('nui-link-list', (element) => {
 });
 
 registerComponent('nui-content', (element) => {
-	// In app-mode, wrap content in scroll container for banner layer support
 	const isAppMode = element.closest('nui-app[data-layout="app"]');
 	if (isAppMode && !element.querySelector(':scope > .nui-content-scroll')) {
-		// Move existing children into scroll container
 		const scrollContainer = document.createElement('div');
 		scrollContainer.className = 'nui-content-scroll';
 		while (element.firstChild) {
@@ -1051,7 +1035,7 @@ registerComponent('nui-dialog', (element) => {
 	element.showModal = () => {
 		if (dialog.open) return;
 		
-		cleanup(); // Cancel any pending close animation
+		cleanup();
 		isModal = true;
 		dialog.showModal();
 		isAnimating = true;
@@ -1065,7 +1049,7 @@ registerComponent('nui-dialog', (element) => {
 	element.show = () => {
 		if (dialog.open) return;
 		
-		cleanup(); // Cancel any pending close animation
+		cleanup();
 		isModal = false;
 		dialog.show();
 		isAnimating = true;
@@ -1077,14 +1061,13 @@ registerComponent('nui-dialog', (element) => {
 	};
 
 	element.close = (returnValue) => {
-		if (!dialog.open || isAnimating && dialog.classList.contains('closing')) return; // Already closing
+		if (!dialog.open || isAnimating && dialog.classList.contains('closing')) return;
 		
-		cleanup(); // Cancel any pending open animation
+		cleanup();
 		isAnimating = true;
 		
 		dialog.classList.add('closing');
 		
-		// Only create fake backdrop for modal dialogs
 		if (isModal) {
 			fakeBackdrop = document.createElement('div');
 			fakeBackdrop.className = 'nui-dialog-backdrop';
@@ -1100,7 +1083,6 @@ registerComponent('nui-dialog', (element) => {
 
 	element.isOpen = () => dialog.open;
 
-	// Check if dialog is blocking (no Escape/backdrop close)
 	const isBlocking = () => element.hasAttribute('blocking');
 
 	dialog.addEventListener('close', () => {
@@ -1110,7 +1092,7 @@ registerComponent('nui-dialog', (element) => {
 	dialog.addEventListener('cancel', (e) => {
 		if (isBlocking()) {
 			e.preventDefault();
-			return; // Don't close on Escape
+			return;
 		}
 		e.preventDefault();
 		element.close('cancel');
@@ -1118,7 +1100,7 @@ registerComponent('nui-dialog', (element) => {
 	});
 
 	dialog.addEventListener('click', (e) => {
-		if (isBlocking()) return; // Don't close on backdrop click
+		if (isBlocking()) return;
 		
 		const rect = dialog.getBoundingClientRect();
 		const isInDialog = (rect.top <= e.clientY && e.clientY <= rect.top + rect.height &&
@@ -1132,17 +1114,14 @@ registerComponent('nui-dialog', (element) => {
 // ################################# nui-tabs COMPONENT
 
 registerComponent('nui-tabs', (element) => {
-	// 1. Find or infer Tab List
 	let tabList = element.querySelector('[role="tablist"]');
 	if (!tabList) {
-		// Infer: First child that contains buttons or links
 		const candidates = Array.from(element.children);
 		tabList = candidates.find(child => child.querySelector('button, a'));
 		if (tabList) tabList.setAttribute('role', 'tablist');
 	}
 	if (!tabList) return;
 
-	// 2. Find Tabs
 	const tabs = Array.from(tabList.querySelectorAll('button, a'));
 	tabs.forEach(tab => {
 		tab.setAttribute('role', 'tab');
@@ -1151,17 +1130,13 @@ registerComponent('nui-tabs', (element) => {
 		}
 	});
 
-	// 3. Find or infer Panels
 	let panels = Array.from(element.querySelectorAll('[role="tabpanel"]'));
 	if (panels.length === 0) {
-		// Infer: All direct children except the tabList
 		panels = Array.from(element.children).filter(child => child !== tabList);
 		panels.forEach(panel => panel.setAttribute('role', 'tabpanel'));
 	}
 
-	// 4. Link Tabs to Panels
 	tabs.forEach((tab, index) => {
-		// Determine target panel ID
 		let panelId = tab.getAttribute('aria-controls');
 		if (!panelId && tab.getAttribute('href')) {
 			panelId = tab.getAttribute('href').replace('#', '');
@@ -1171,45 +1146,38 @@ registerComponent('nui-tabs', (element) => {
 		if (panelId) {
 			panel = element.querySelector(`#${panelId}`);
 		} else {
-			// Fallback: Match by index
 			panel = panels[index];
 		}
 
 		if (panel) {
-			// Ensure IDs exist for ARIA linking
 			if (!panel.id) panel.id = `nui-panel-${Date.now()}-${index}`;
 			if (!tab.id) tab.id = `nui-tab-${Date.now()}-${index}`;
 
 			tab.setAttribute('aria-controls', panel.id);
 			panel.setAttribute('aria-labelledby', tab.id);
 			
-			// Ensure panel is in our list if found by ID
 			if (!panels.includes(panel)) panels.push(panel);
 		}
 	});
 
-	// 5. State Management
 	const activateTab = (targetTab, shouldAnimate = true) => {
 		const panelId = targetTab.getAttribute('aria-controls');
 		const targetPanel = element.querySelector(`#${panelId}`);
 
 		if (!targetPanel) return;
 
-		// Animation setup
 		const animate = shouldAnimate && !element.hasAttribute('no-animation') && 
 						!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 		
 		let startHeight = 0;
 
 		if (animate) {
-			// 1. Set start height
 			startHeight = element.offsetHeight;
 			element.style.height = `${startHeight}px`;
 			element.style.overflow = 'hidden';
 			element.style.transition = 'height 0.3s ease-out';
 		}
 
-		// Deactivate all
 		tabs.forEach(t => {
 			t.setAttribute('aria-selected', 'false');
 			t.setAttribute('tabindex', '-1');
@@ -1219,29 +1187,22 @@ registerComponent('nui-tabs', (element) => {
 			p.style.display = 'none';
 		});
 
-		// Activate target
 		targetTab.setAttribute('aria-selected', 'true');
 		targetTab.removeAttribute('tabindex');
 		
 		targetPanel.hidden = false;
 		targetPanel.style.display = '';
 		
-		// Animation execution
 		if (animate) {
-			// 2. Force reflow to register start state
 			void element.offsetHeight;
 
-			// 3. Measure new height
 			element.style.height = 'auto';
 			const newHeight = element.scrollHeight;
 			
-			// 4. Snap back to start (for the transition to work from)
 			element.style.height = `${startHeight}px`;
 			
-			// 5. Force reflow again
 			void element.offsetHeight;
 
-			// 6. Animate to new height
 			element.style.height = `${newHeight}px`;
 			
 			const onEnd = (e) => {
@@ -1260,7 +1221,6 @@ registerComponent('nui-tabs', (element) => {
 		}));
 	};
 
-	// 6. Event Listeners
 	tabList.addEventListener('click', (e) => {
 		const tab = e.target.closest('[role="tab"]');
 		if (tab && tabs.includes(tab)) {
@@ -1293,7 +1253,6 @@ registerComponent('nui-tabs', (element) => {
 		}
 	});
 
-	// 7. Initial State
 	const initialTab = tabs.find(t => t.getAttribute('aria-selected') === 'true') || tabs[0];
 	if (initialTab) {
 		activateTab(initialTab, false);
@@ -1307,7 +1266,6 @@ registerComponent('nui-accordion', (element) => {
 	const animate = !element.hasAttribute('no-animation') && 
 					!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-	// Animation helper
 	const animateDetails = (detail, opening) => {
 		if (!animate) return;
 		
@@ -1315,36 +1273,26 @@ registerComponent('nui-accordion', (element) => {
 		const content = detail.querySelector('.accordion-content') || detail.lastElementChild;
 		if (!summary || !content) return;
 
-		// Ensure transition is set
 		detail.style.transition = 'height 0.3s ease-out';
 
 		if (opening) {
-			// Opening animation
-			// 1. Set height to summary height (start state)
 			const startHeight = summary.offsetHeight;
 			detail.style.height = `${startHeight}px`;
 			detail.style.overflow = 'hidden';
 			
-			// 2. Add open attribute to render content
 			detail.open = true;
 			
-			// 3. Force reflow to register start state
 			void detail.offsetHeight;
 			
-			// 4. Set target height
 			const endHeight = detail.scrollHeight;
 			detail.style.height = `${endHeight}px`;
 		} else {
-			// Closing animation
-			// 1. Set height to current full height (start state)
 			const startHeight = detail.offsetHeight;
 			detail.style.height = `${startHeight}px`;
 			detail.style.overflow = 'hidden';
 			
-			// 2. Force reflow to register start state
 			void detail.offsetHeight;
 			
-			// 3. Set target height (summary only)
 			const endHeight = summary.offsetHeight;
 			detail.style.height = `${endHeight}px`;
 		}
@@ -1364,16 +1312,14 @@ registerComponent('nui-accordion', (element) => {
 		detail.addEventListener('transitionend', onEnd);
 	};
 
-	// Click handler for animation control
 	if (animate) {
 		details.forEach(detail => {
 			const summary = detail.querySelector('summary');
 			if (!summary) return;
 
 			summary.addEventListener('click', (e) => {
-				e.preventDefault(); // Take control of toggling
+				e.preventDefault();
 				
-				// If exclusive, close others first
 				if (element.hasAttribute('exclusive') && !detail.open) {
 					details.forEach(d => {
 						if (d !== detail && d.open) {
@@ -1382,12 +1328,10 @@ registerComponent('nui-accordion', (element) => {
 					});
 				}
 
-				// Toggle current
 				animateDetails(detail, !detail.open);
 			});
 		});
 	} else if (element.hasAttribute('exclusive')) {
-		// Non-animated exclusive mode
 		details.forEach(targetDetail => {
 			targetDetail.addEventListener('toggle', (e) => {
 				if (targetDetail.open) {
@@ -1420,7 +1364,6 @@ registerComponent('nui-banner', (element) => {
 		autoCloseTimer = null;
 	};
 
-	// Set accessibility defaults
 	const priority = element.getAttribute('priority') || 'info';
 	if (priority === 'alert') {
 		element.setAttribute('role', 'alert');
@@ -1430,7 +1373,6 @@ registerComponent('nui-banner', (element) => {
 		element.setAttribute('aria-live', 'polite');
 	}
 
-	// Determine animation direction based on placement
 	const getAnimations = () => {
 		const placement = element.getAttribute('placement') || 'bottom';
 		if (placement === 'top') {
@@ -1451,7 +1393,6 @@ registerComponent('nui-banner', (element) => {
 			cancelOpenAni = null;
 		});
 
-		// Start auto-close timer if configured (value is in milliseconds)
 		const autoClose = element.getAttribute('auto-close');
 		if (autoClose && parseInt(autoClose, 10) > 0) {
 			const duration = parseInt(autoClose, 10);
@@ -1483,7 +1424,6 @@ registerComponent('nui-banner', (element) => {
 
 	element.update = (content) => {
 		if (typeof content === 'string') {
-			// Find first text node or element and update
 			const textEl = element.querySelector('p, span, [data-content]');
 			if (textEl) textEl.textContent = content;
 		}
@@ -1494,7 +1434,6 @@ registerComponent('nui-banner', (element) => {
 
 // ################################# INPUT COMPONENTS
 
-// Utility: Generate unique ID for label/input association
 function generateInputId(prefix = 'nui-input') {
 	return `${prefix}-${crypto.randomUUID().slice(0, 8)}`;
 }
@@ -1502,19 +1441,16 @@ function generateInputId(prefix = 'nui-input') {
 // ################################# nui-input-group COMPONENT
 
 registerComponent('nui-input-group', (element) => {
-	// Find the label and input for association
 	const label = element.querySelector(':scope > label');
 	const inputComponent = element.querySelector('nui-input, nui-textarea, nui-checkbox, nui-radio');
 	const input = inputComponent?.querySelector('input, textarea');
 
-	// Auto-associate label with input if not already set
 	if (label && input && !input.id && !label.htmlFor) {
 		const id = generateInputId();
 		input.id = id;
 		label.htmlFor = id;
 	}
 
-	// Observe input for state changes
 	if (input) {
 		const updateState = () => {
 			element.classList.toggle('has-error', !input.validity.valid && input.value !== '');
@@ -1544,7 +1480,6 @@ registerComponent('nui-input', (element) => {
 	let clearBtn = null;
 	let errorEl = null;
 
-	// Dispatch custom event helper
 	const dispatch = (name, detail) => {
 		element.dispatchEvent(new CustomEvent(name, {
 			bubbles: true,
@@ -1552,7 +1487,6 @@ registerComponent('nui-input', (element) => {
 		}));
 	};
 
-	// Create clear button if clearable
 	if (element.hasAttribute('clearable')) {
 		clearBtn = document.createElement('button');
 		clearBtn.type = 'button';
@@ -1571,7 +1505,6 @@ registerComponent('nui-input', (element) => {
 		});
 	}
 
-	// Create error element (created once, reused)
 	const ensureErrorElement = () => {
 		if (!errorEl) {
 			errorEl = document.createElement('div');
@@ -1582,14 +1515,12 @@ registerComponent('nui-input', (element) => {
 		return errorEl;
 	};
 
-	// Update clear button visibility
 	const updateClearButton = () => {
 		if (clearBtn) {
 			clearBtn.style.display = input.value ? 'flex' : 'none';
 		}
 	};
 
-	// Validation
 	const validate = () => {
 		const valid = input.validity.valid;
 		element.classList.toggle('is-valid', valid && input.value !== '');
@@ -1609,14 +1540,11 @@ registerComponent('nui-input', (element) => {
 		return valid;
 	};
 
-	// Event handlers
 	input.addEventListener('input', () => {
 		updateClearButton();
-		// Real-time validation feedback
 		if (input.value !== '') {
 			validate();
 		} else {
-			// Clear validation state when empty
 			element.classList.remove('is-valid', 'is-invalid');
 			if (errorEl) errorEl.textContent = '';
 			input.removeAttribute('aria-invalid');
@@ -1630,7 +1558,6 @@ registerComponent('nui-input', (element) => {
 		dispatch('nui-change', { value: input.value, valid: input.validity.valid });
 	});
 
-	// Public methods
 	element.validate = () => {
 		const valid = validate();
 		dispatch('nui-validate', { valid, message: input.validationMessage });
@@ -1647,7 +1574,6 @@ registerComponent('nui-input', (element) => {
 
 	element.focus = () => input.focus();
 
-	// Initial state
 	updateClearButton();
 });
 
@@ -1660,7 +1586,6 @@ registerComponent('nui-textarea', (element) => {
 	let countEl = null;
 	let errorEl = null;
 
-	// Dispatch custom event helper
 	const dispatch = (name, detail) => {
 		element.dispatchEvent(new CustomEvent(name, {
 			bubbles: true,
@@ -1668,12 +1593,10 @@ registerComponent('nui-textarea', (element) => {
 		}));
 	};
 
-	// Auto-resize functionality
 	const autoResize = element.hasAttribute('auto-resize');
 	const minRows = parseInt(element.getAttribute('min-rows') || '3', 10);
 	const maxRows = parseInt(element.getAttribute('max-rows') || '10', 10);
 
-	// Calculate row height based on line-height
 	const computedStyle = getComputedStyle(textarea);
 	const lineHeight = parseFloat(computedStyle.lineHeight) || 24;
 	const paddingTop = parseFloat(computedStyle.paddingTop) || 0;
@@ -1689,11 +1612,9 @@ registerComponent('nui-textarea', (element) => {
 		textarea.style.height = 'auto';
 		const newHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight);
 		textarea.style.height = newHeight + 'px';
-		// Show scrollbar if at max height
 		textarea.style.overflowY = textarea.scrollHeight > maxHeight ? 'auto' : 'hidden';
 	};
 
-	// Character count
 	const showCount = element.hasAttribute('show-count');
 	const maxLength = textarea.maxLength > 0 ? textarea.maxLength : null;
 
@@ -1718,7 +1639,6 @@ registerComponent('nui-textarea', (element) => {
 		}
 	};
 
-	// Error element
 	const ensureErrorElement = () => {
 		if (!errorEl) {
 			errorEl = document.createElement('div');
@@ -1729,7 +1649,6 @@ registerComponent('nui-textarea', (element) => {
 		return errorEl;
 	};
 
-	// Validation
 	const validate = () => {
 		const valid = textarea.validity.valid;
 		element.classList.toggle('is-valid', valid && textarea.value !== '');
@@ -1749,15 +1668,12 @@ registerComponent('nui-textarea', (element) => {
 		return valid;
 	};
 
-	// Event handlers
 	textarea.addEventListener('input', () => {
 		resizeTextarea();
 		updateCount();
-		// Real-time validation feedback
 		if (textarea.value !== '') {
 			validate();
 		} else {
-			// Clear validation state when empty
 			element.classList.remove('is-valid', 'is-invalid');
 			if (errorEl) errorEl.textContent = '';
 			textarea.removeAttribute('aria-invalid');
@@ -1771,7 +1687,6 @@ registerComponent('nui-textarea', (element) => {
 		dispatch('nui-change', { value: textarea.value, valid: textarea.validity.valid });
 	});
 
-	// Public methods
 	element.validate = () => {
 		const valid = validate();
 		dispatch('nui-validate', { valid, message: textarea.validationMessage });
@@ -1789,7 +1704,6 @@ registerComponent('nui-textarea', (element) => {
 
 	element.focus = () => textarea.focus();
 
-	// Initial state
 	if (autoResize) {
 		textarea.style.boxSizing = 'border-box';
 		resizeTextarea();
@@ -1805,30 +1719,25 @@ registerComponent('nui-checkbox', (element) => {
 
 	const label = element.querySelector('label');
 
-	// Ensure input has an ID and label is connected
 	if (label && !label.htmlFor) {
 		if (!input.id) input.id = generateInputId('checkbox');
 		label.htmlFor = input.id;
 	}
 
-	// Create custom visual element (once, reused)
 	const checkBox = document.createElement('span');
 	checkBox.className = 'nui-check-box';
 	checkBox.innerHTML = `<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
 	checkBox.setAttribute('aria-hidden', 'true');
 
-	// Insert after input
 	input.after(checkBox);
 
-	// Click on component toggles checkbox
 	element.addEventListener('click', (e) => {
-		if (e.target === input || e.target === label) return; // Let native handle it
+		if (e.target === input || e.target === label) return;
 		if (input.disabled) return;
 		input.checked = !input.checked;
 		input.dispatchEvent(new Event('change', { bubbles: true }));
 	});
 
-	// Dispatch custom event on change
 	input.addEventListener('change', () => {
 		element.dispatchEvent(new CustomEvent('nui-change', {
 			bubbles: true,
@@ -1849,29 +1758,24 @@ registerComponent('nui-radio', (element) => {
 
 	const label = element.querySelector('label');
 
-	// Ensure input has an ID and label is connected
 	if (label && !label.htmlFor) {
 		if (!input.id) input.id = generateInputId('radio');
 		label.htmlFor = input.id;
 	}
 
-	// Create custom visual element (once, reused)
 	const radioCircle = document.createElement('span');
 	radioCircle.className = 'nui-radio-circle';
 	radioCircle.setAttribute('aria-hidden', 'true');
 
-	// Insert after input
 	input.after(radioCircle);
 
-	// Click on component toggles radio
 	element.addEventListener('click', (e) => {
-		if (e.target === input || e.target === label) return; // Let native handle it
+		if (e.target === input || e.target === label) return;
 		if (input.disabled) return;
 		input.checked = true;
 		input.dispatchEvent(new Event('change', { bubbles: true }));
 	});
 
-	// Dispatch custom event on change
 	input.addEventListener('change', () => {
 		element.dispatchEvent(new CustomEvent('nui-change', {
 			bubbles: true,
@@ -1891,12 +1795,10 @@ const activeBanners = { top: null, bottom: null };
 const bannerFactory = {
 	create(options = {}) {
 		const placement = options.placement || 'bottom';
-		// Smart target detection: prefer content area in app-mode, fallback to body
 		let target = options.target;
 		if (!target) {
 			const contentArea = document.querySelector('nui-app nui-content');
 			if (contentArea) {
-				// Use or create banner layer as sibling to scroll container
 				let bannerLayer = contentArea.querySelector(':scope > .nui-banner-layer');
 				if (!bannerLayer) {
 					bannerLayer = document.createElement('div');
@@ -1909,19 +1811,16 @@ const bannerFactory = {
 			}
 		}
 		
-		// Close existing banner at this placement (singleton per placement)
 		if (activeBanners[placement]) {
 			activeBanners[placement].element.close('replaced');
 		}
 
-		// Create banner element
 		const banner = document.createElement('nui-banner');
 		banner.id = 'nui-banner-' + Date.now();
 		banner.setAttribute('placement', placement);
 		if (options.priority) banner.setAttribute('priority', options.priority);
 		if (options.autoClose) banner.setAttribute('auto-close', options.autoClose);
 
-		// Set content with optional close button
 		const wrapper = document.createElement('div');
 		wrapper.style.cssText = 'display: flex; justify-content: space-between; align-items: flex-start; padding: 1rem; gap: 1rem;';
 		
@@ -1934,7 +1833,6 @@ const bannerFactory = {
 		}
 		wrapper.appendChild(contentEl);
 
-		// Add close button unless explicitly disabled
 		const showCloseButton = options.showCloseButton !== false;
 		if (showCloseButton) {
 			const closeBtn = document.createElement('button');
@@ -1947,7 +1845,6 @@ const bannerFactory = {
 
 		banner.appendChild(wrapper);
 
-		// Add auto-close progress indicator if enabled
 		if (options.autoClose && options.showProgress !== false) {
 			const progressBar = document.createElement('div');
 			progressBar.className = 'nui-banner-progress';
@@ -1958,7 +1855,6 @@ const bannerFactory = {
 
 		target.appendChild(banner);
 
-		// Create controller
 		const controller = {
 			element: banner,
 			close(action) {
@@ -1974,10 +1870,8 @@ const bannerFactory = {
 			}
 		};
 
-		// Track active banner
 		activeBanners[placement] = controller;
 
-		// Clean up tracking on close
 		banner.addEventListener('nui-banner-close', () => {
 			if (activeBanners[placement]?.element === banner) {
 				activeBanners[placement] = null;
@@ -1985,7 +1879,6 @@ const bannerFactory = {
 			banner.remove();
 		}, { once: true });
 
-		// Show the banner
 		banner.show();
 
 		return controller;
@@ -2026,7 +1919,6 @@ const dialogSystem = {
 			dialog.show();
 		}
 		
-		// Auto-remove dialog element when closed
 		nativeDialog.addEventListener('close', () => dialog.remove(), { once: true });
 		
 		return dialog;
@@ -2212,7 +2104,6 @@ function pageContent(type, id, params, options = {}) {
 
 	if (type === 'page') {
 		const basePath = options.basePath || '/pages';
-		// Attach promise to element for router to wait on
 		wrapper.nuiLoaded = loadFragment(`${basePath}/${id}.html`, wrapper, params);
 	} else if (type === 'feature') {
 		const initFn = registeredFeatures.get(id);
@@ -2252,7 +2143,7 @@ function createRouter(container, options = {}) {
 	let currentElement = null;
 	let currentRoute = null;
 	let isStarted = false;
-	let navigationId = 0; // Track latest navigation request
+	let navigationId = 0;
 
 	container = typeof container === 'string'
 		? document.querySelector(container)
@@ -2271,7 +2162,7 @@ function createRouter(container, options = {}) {
 		if (!element) return;
 		element.inert = true;
 		element.style.display = 'none';
-		element.classList.remove('nui-page-active'); // Reset animation state
+		element.classList.remove('nui-page-active');
 		element.hide?.();
 	}
 
@@ -2279,10 +2170,8 @@ function createRouter(container, options = {}) {
 		element.inert = false;
 		element.show?.(params);
 		
-		// Trigger animation
 		element.classList.add('nui-page-active');
 
-		// Focus management
 		const focusTarget = element.querySelector('h1, h2, [autofocus], main') || element;
 		if (focusTarget.tabIndex < 0) focusTarget.tabIndex = -1;
 		focusTarget.focus({ preventScroll: true });
@@ -2313,41 +2202,32 @@ function createRouter(container, options = {}) {
 		const { type, id, params } = route;
 		const cacheKey = getCacheKey(type, id);
 
-		// 1. Get or create target element
 		let element = cache.get(cacheKey);
 		if (!element) {
 			element = pageContent(type, id, params, { basePath });
 			cache.set(cacheKey, element);
 			container.appendChild(element);
-			// Ensure it's hidden initially
 			element.style.display = 'none';
 		}
 
-		// 2. Wait for content if loading (and we are still the latest navigation)
 		if (element.nuiLoaded) {
 			try {
 				await element.nuiLoaded;
 			} catch (e) {
-				// Error handled in loadFragment, but we proceed to show the error state
 			}
 		}
 
-		// 3. Check if we were superseded by a newer navigation
 		if (currentNavId !== navigationId) {
-			return; // Abort, another navigation happened
+			return;
 		}
 
-		// 4. Perform switch
 		if (currentElement !== element) {
 			hideElement(currentElement);
 			
-			// Show element but keep it invisible for one frame to ensure transition triggers
 			element.style.display = '';
 			
-			// Force reflow
 			void element.offsetHeight;
 			
-			// Trigger animation (double rAF to ensure next frame)
 			requestAnimationFrame(() => {
 				requestAnimationFrame(() => {
 					showElement(element, params);
@@ -2358,13 +2238,11 @@ function createRouter(container, options = {}) {
 			currentElement = element;
 			currentRoute = { type, id, params, element };
 
-			// Dispatch route change event
 			container.dispatchEvent(new CustomEvent('nui-route-change', {
 				bubbles: true,
 				detail: currentRoute
 			}));
 		} else {
-			// Same element, just update params/deeplink
 			handleDeepLink(element, params);
 		}
 	}
@@ -2447,7 +2325,6 @@ function enableContentLoading(options = {}) {
 			const route = e.detail;
 			if (!route) return;
 
-			// Close sidebar if open and not forced (overlay mode)
 			const app = navigation.closest('nui-app');
 			if (app && app.classList.contains('sidenav-open') && !app.classList.contains('sidenav-forced')) {
 				app.toggleSideNav();
