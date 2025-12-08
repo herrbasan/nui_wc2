@@ -33,10 +33,6 @@ button {
 
 /* Component demo page styles */
 .demo-container {
-	border: 1px solid var(--nui-border);
-	border-radius: 0.5rem;
-	padding: 1rem;
-	background: var(--nui-surface-1);
 	margin-bottom: 1rem;
 }
 
@@ -595,3 +591,19 @@ button {
 	background: var(--color-shade1);
 	margin-bottom: 1rem;
 }
+/* Tabs page styles */
+.page-tabs .tab-content-short,
+.page-tabs .tab-content-medium,
+.page-tabs .tab-content-tall {
+padding: 1rem;
+background: var(--color-shade2);
+}
+
+.page-tabs .tab-log {
+margin-top: 1rem;
+padding: 0.5rem;
+background: var(--color-shade2);
+font-family: monospace;
+font-size: 0.85rem;
+}
+

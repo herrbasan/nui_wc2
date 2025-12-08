@@ -371,6 +371,11 @@ customElements.define('nui-button', NuiButton);
 - Functions return values or undefined, minimal side effects
 - State lives on the element or in closures, not class properties
 
+**Playground & Demo Rules:**
+- **No Inline Styles**: Use `Playground/css/main.css` for all demo styling. Inline styles are only for dynamic values set by JS.
+- **Clean HTML**: Demo code should look like production code.
+- **Separation of Concerns**: Keep structure (HTML) and presentation (CSS) separate to serve as good examples.
+
 #### Component Patterns
 
 **Tree View Pattern (`nui-link-list`):**

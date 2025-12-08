@@ -79,8 +79,8 @@
 	--palette-gray-hi: light-dark(rgb(120, 120, 120), rgb(150, 150, 150));
 	--palette-mark: light-dark(rgb(180, 160, 40), rgb(203, 184, 55));
 	--palette-mark-hi: light-dark(rgb(170, 150, 60), rgb(197, 181, 83));
-	--palette-activate: light-dark(rgb(40, 120, 30), rgb(54, 137, 43));
-	--palette-activate-hi: light-dark(rgb(60, 150, 50), rgb(74, 178, 60));
+	--palette-activate: light-dark(rgb(40, 120, 30), rgb(29, 171, 10));
+	--palette-activate-hi: light-dark(rgb(60, 150, 50), rgb(41, 228, 17));
 	--palette-alert: light-dark(rgb(160, 25, 25), rgb(181, 36, 36));
 	--palette-alert-hi: light-dark(rgb(200, 50, 50), rgb(222, 61, 61));
 }
@@ -158,7 +158,7 @@ body {
 	padding: 0;
 	font-family: var(--system-ui);
 	font-size: var(--nui-rem-base);
-	background: var(--color-shade2);
+	background: light-dark(var(--color-shade3), var(--color-shade1));
 	color: var(--text-color);
 	line-height: 1.6;
 }
@@ -860,7 +860,6 @@ nui-app[data-layout="app"] nui-content {
 	left: 0;
 	right: 0;
 	bottom: 0;
-	background: var(--color-shade1);
 	transition: left 0.3s ease;
 	overflow: hidden;
 	padding: 0;
@@ -1310,8 +1309,6 @@ dialog nui-button-container button.outline:hover {
 .nui-dialog-prompt {
 	padding: var(--nui-space-double);
 	width: 100%;
-	max-width: 36rem;
-	min-width: min(22rem, 100%);
 	box-sizing: border-box;
 }
 
@@ -1386,3 +1383,559 @@ dialog nui-button-container button.outline:hover {
 .ani-right-out { animation: ani-right-out 0.2s forwards ease-in; }
 @keyframes ani-right-in { from { opacity: 0; transform: translateX(10%); } to { opacity: 1; transform: translateX(0); } }
 @keyframes ani-right-out { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(10%); } }
+
+/* =============================================================================
+   NUI INPUT COMPONENTS
+   Styling for form input components: nui-input-group, nui-input, nui-textarea,
+   nui-checkbox, nui-radio
+   ============================================================================= */
+
+
+
+/* =============================================================================
+   NUI-INPUT-GROUP - Label Wrapper Component
+   ============================================================================= */
+
+nui-input-group {
+	display: flex;
+	flex-direction: column;
+	gap: var(--nui-space-quarter);
+	margin-bottom: var(--nui-space);
+}
+
+nui-input-group > label {
+	display: block;
+	color: light-dark(rgba(0, 0, 0, 0.5), rgba(255, 255, 255, 0.5));
+	font-size: 0.75rem;
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+	padding: 0;
+	margin: 0;
+}
+
+nui-input-group > .description {
+	font-size: 0.85rem;
+	color: var(--color-text-muted);
+	margin-top: calc(var(--nui-space-quarter) * -0.5);
+}
+
+nui-input-group > .nui-error-message {
+	font-size: 0.85rem;
+	color: var(--palette-alert);
+}
+
+/* State classes applied by JS */
+nui-input-group.has-error > label {
+	color: var(--palette-alert);
+}
+
+nui-input-group.is-disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+/* =============================================================================
+   NUI-INPUT - Text Input Component
+   ============================================================================= */
+
+nui-input {
+	display: block;
+	position: relative;
+}
+nui-input input:focus {
+	outline: none;
+	border: solid var(--border-thickness) var(--color-highlight);
+}
+nui-input input {
+	width: 100%;
+	min-height: calc(var(--nui-space) * 2.5);
+	padding: 0 var(--nui-space);
+	background: light-dark(var(--color-white), var(--color-shade3));
+	border: solid var(--border-thickness) transparent;
+	border-bottom: solid var(--border-thickness) var(--color-shade4);
+	color: var(--color-text-dim);
+	font-family: var(--system-ui);
+	font-size: 1rem;
+	line-height: 1.5;
+	outline: none;
+	transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+	box-sizing: border-box;
+	margin: 0;
+}
+
+nui-input input::placeholder {
+	color: var(--color-shade5);
+}
+
+nui-input input:hover:not(:disabled) {
+	background: var(--color-shade1);
+	border-color: var(--color-shade5);
+}
+
+nui-input input:focus {
+	background: var(--color-shade1);
+	border-color: var(--color-shade6);
+	color: var(--color-text);
+}
+
+nui-input input:disabled {
+	background: var(--color-shade2);
+	color: var(--color-shade4);
+	cursor: not-allowed;
+}
+
+nui-input input:read-only {
+	background: var(--color-shade2);
+}
+
+/* Validation states */
+nui-input.is-invalid input {
+	
+}
+
+nui-input.is-valid::after {
+	content: '';
+	position: absolute;
+	width: 2rem;
+	height: 100%;
+	right: 0;
+	top: 0;
+	background-color: var(--palette-activate);
+	-webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+	mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+	-webkit-mask-repeat: no-repeat;
+	mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	mask-position: center;
+	-webkit-mask-size: 40%;
+	mask-size: 40%;
+}
+
+/* Clear button */
+nui-input .nui-clear-btn {
+	position: absolute;
+	right: var(--nui-space-half);
+	top: 50%;
+	transform: translateY(-50%);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.5rem;
+	height: 1.5rem;
+	padding: 0;
+	background: transparent;
+	border: none;
+	border-radius: var(--border-radius1);
+	cursor: pointer;
+	color: var(--color-shade5);
+	transition: color 0.15s, background-color 0.15s;
+}
+
+nui-input .nui-clear-btn:hover {
+	color: var(--color-text-dim);
+	background: var(--color-shade2);
+}
+
+nui-input .nui-clear-btn nui-icon {
+	width: 1rem;
+	height: 1rem;
+}
+
+/* When clearable, add padding for the button */
+nui-input[clearable] input {
+	padding-right: calc(var(--nui-space) + 2rem);
+}
+
+/* Hide clear button when disabled */
+nui-input:has(input:disabled) .nui-clear-btn {
+	display: none;
+}
+
+/* Error message inside input component */
+nui-input .nui-error-message {
+	display: none;
+	font-size: 0.85rem;
+	color: var(--palette-alert);
+	margin-top: var(--nui-space-quarter);
+}
+
+nui-input.is-invalid .nui-error-message {
+	display: block;
+}
+
+/* =============================================================================
+   NUI-TEXTAREA - Multiline Text Component
+   ============================================================================= */
+
+nui-textarea {
+	display: block;
+	position: relative;
+}
+
+nui-textarea textarea {
+	width: 100%;
+	min-height: calc(calc(var(--nui-space) * 2.5) * 2);
+	padding: var(--nui-space);
+	background: var(--color-base);
+	border: solid var(--border-thickness) var(--color-shade4);
+	border-radius: var(--border-radius1);
+	color: var(--color-text-dim);
+	font-family: var(--system-ui);
+	font-size: 1rem;
+	line-height: 1.5;
+	outline: none;
+	transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+	box-sizing: border-box;
+	margin: 0;
+	resize: vertical;
+}
+
+nui-textarea textarea::placeholder {
+	color: var(--color-shade5);
+}
+
+nui-textarea textarea:hover:not(:disabled) {
+	background: var(--color-shade1);
+	border-color: var(--color-shade5);
+}
+
+nui-textarea textarea:focus {
+	background: var(--color-shade1);
+	border-color: var(--color-shade6);
+	color: var(--color-text);
+}
+
+nui-textarea textarea:disabled {
+	background: var(--color-shade2);
+	color: var(--color-shade4);
+	cursor: not-allowed;
+}
+
+/* Auto-resize mode */
+nui-textarea[auto-resize] textarea {
+	resize: none;
+	overflow: hidden;
+}
+
+/* Character count */
+nui-textarea .nui-char-count {
+	font-size: 0.75rem;
+	color: var(--color-text-muted);
+	text-align: right;
+	margin-top: var(--nui-space-quarter);
+}
+
+nui-textarea .nui-char-count.at-limit {
+	color: var(--palette-alert);
+}
+
+/* Validation states */
+nui-textarea.is-invalid textarea {
+	border-color: var(--palette-alert);
+}
+
+nui-textarea.is-valid textarea {
+	border-color: var(--palette-activate);
+}
+
+/* Error message */
+nui-textarea .nui-error-message {
+	display: none;
+	font-size: 0.85rem;
+	color: var(--palette-alert);
+	margin-top: var(--nui-space-quarter);
+}
+
+nui-textarea.is-invalid .nui-error-message {
+	display: block;
+}
+
+/* =============================================================================
+   NUI-CHECKBOX - Custom Checkbox Component
+   ============================================================================= */
+
+nui-checkbox {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--nui-space-half);
+	cursor: pointer;
+	position: relative;
+	min-height: 2rem;
+}
+
+/* Hide native checkbox visually but keep accessible */
+nui-checkbox input[type="checkbox"] {
+	position: absolute;
+	opacity: 0;
+	width: 0;
+	height: 0;
+	pointer-events: none;
+}
+
+/* Custom checkbox visual */
+nui-checkbox .nui-check-box {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.25rem;
+	height: 1.25rem;
+	border: 2px solid var(--color-shade4);
+	border-radius: 3px;
+	background: var(--color-base);
+	flex-shrink: 0;
+	transition: background-color 0.15s, border-color 0.15s;
+}
+
+/* Checkmark icon */
+nui-checkbox .nui-check-box svg {
+	width: 0.875rem;
+	height: 0.875rem;
+	fill: none;
+	stroke: white;
+	stroke-width: 3;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+	opacity: 0;
+	transform: scale(0);
+	transition: opacity 0.1s, transform 0.1s;
+}
+
+/* Hover state */
+nui-checkbox:hover .nui-check-box {
+	border-color: var(--color-highlight);
+}
+
+/* Checked state */
+nui-checkbox input:checked ~ .nui-check-box {
+	background: var(--color-highlight);
+	border-color: var(--color-highlight);
+}
+
+nui-checkbox input:checked ~ .nui-check-box svg {
+	opacity: 1;
+	transform: scale(1);
+}
+
+/* Focus state - on custom visual */
+nui-checkbox input:focus-visible ~ .nui-check-box {
+	outline: 2px solid var(--color-highlight);
+	outline-offset: 2px;
+}
+
+/* Disabled state */
+nui-checkbox:has(input:disabled) {
+	cursor: not-allowed;
+	opacity: 0.6;
+}
+
+nui-checkbox input:disabled ~ .nui-check-box {
+	background: var(--color-shade2);
+	border-color: var(--color-shade4);
+}
+
+/* Indeterminate state */
+nui-checkbox input:indeterminate ~ .nui-check-box {
+	background: var(--color-highlight);
+	border-color: var(--color-highlight);
+}
+
+nui-checkbox input:indeterminate ~ .nui-check-box svg {
+	opacity: 0;
+}
+
+nui-checkbox input:indeterminate ~ .nui-check-box::after {
+	content: '';
+	width: 0.5rem;
+	height: 2px;
+	background: white;
+	border-radius: 1px;
+}
+
+/* Label styling */
+nui-checkbox label {
+	color: var(--color-text-dim);
+	cursor: inherit;
+	user-select: none;
+}
+
+/* =============================================================================
+   NUI-RADIO - Custom Radio Button Component
+   ============================================================================= */
+
+nui-radio {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--nui-space-half);
+	cursor: pointer;
+	position: relative;
+	min-height: 2rem;
+}
+
+/* Hide native radio visually but keep accessible */
+nui-radio input[type="radio"] {
+	position: absolute;
+	opacity: 0;
+	width: 0;
+	height: 0;
+	pointer-events: none;
+}
+
+/* Custom radio visual */
+nui-radio .nui-radio-circle {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.25rem;
+	height: 1.25rem;
+	border: 2px solid var(--color-shade4);
+	border-radius: 50%;
+	background: var(--color-base);
+	flex-shrink: 0;
+	transition: border-color 0.15s;
+}
+
+/* Inner dot */
+nui-radio .nui-radio-circle::after {
+	content: '';
+	width: 0.5rem;
+	height: 0.5rem;
+	border-radius: 50%;
+	background: var(--color-highlight);
+	transform: scale(0);
+	transition: transform 0.15s ease;
+}
+
+/* Hover state */
+nui-radio:hover .nui-radio-circle {
+	border-color: var(--color-highlight);
+}
+
+/* Checked state */
+nui-radio input:checked ~ .nui-radio-circle {
+	border-color: var(--color-highlight);
+}
+
+nui-radio input:checked ~ .nui-radio-circle::after {
+	transform: scale(1);
+}
+
+/* Focus state - on custom visual */
+nui-radio input:focus-visible ~ .nui-radio-circle {
+	outline: 2px solid var(--color-highlight);
+	outline-offset: 2px;
+}
+
+/* Disabled state */
+nui-radio:has(input:disabled) {
+	cursor: not-allowed;
+	opacity: 0.6;
+}
+
+nui-radio input:disabled ~ .nui-radio-circle {
+	background: var(--color-shade2);
+	border-color: var(--color-shade4);
+}
+
+/* Label styling */
+nui-radio label {
+	color: var(--color-text-dim);
+	cursor: inherit;
+	user-select: none;
+}
+
+/* =============================================================================
+   ACCESSIBILITY - Reduced Motion
+   ============================================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+	nui-input input,
+	nui-textarea textarea,
+	nui-checkbox .nui-check-box,
+	nui-checkbox .nui-check-box svg,
+	nui-radio .nui-radio-circle,
+	nui-radio .nui-radio-circle::after {
+		transition: none;
+	}
+}
+
+/* =============================================================================
+   AUTOFILL STYLING
+   ============================================================================= */
+
+nui-input input:-webkit-autofill,
+nui-textarea textarea:-webkit-autofill {
+	-webkit-box-shadow: 0 0 0 10rem var(--color-base) inset !important;
+	box-shadow: 0 0 0 10rem var(--color-base) inset !important;
+	-webkit-text-fill-color: var(--color-text-dim) !important;
+}
+
+nui-input input:-webkit-autofill:focus,
+nui-textarea textarea:-webkit-autofill:focus {
+	-webkit-box-shadow: 0 0 0 10rem var(--color-shade1) inset !important;
+	box-shadow: 0 0 0 10rem var(--color-shade1) inset !important;
+	-webkit-text-fill-color: var(--color-text) !important;
+}
+
+
+/* =============================================================================
+   NUI-TABS COMPONENT
+   ============================================================================= */
+
+nui-tabs {
+display: block;
+width: 100%;
+}
+
+/* Tab List Container */
+nui-tabs [role="tablist"] {
+display: flex;
+flex-wrap: wrap;
+border-bottom: solid var(--border-thickness) var(--border-shade2);
+margin-bottom: var(--nui-space);
+gap: var(--nui-space-quarter);
+}
+
+/* Tab Items (Buttons/Links) */
+nui-tabs [role="tab"] {
+appearance: none;
+background: transparent;
+border: none;
+border-bottom: 2px solid transparent;
+color: var(--color-text-dim);
+cursor: pointer;
+font-family: var(--system-ui);
+font-size: 1rem;
+padding: var(--nui-space-half) var(--nui-space);
+transition: all 0.2s ease;
+text-decoration: none;
+display: inline-flex;
+align-items: center;
+gap: var(--nui-space-half);
+}
+
+nui-tabs [role="tab"]:hover {
+color: var(--color-text);
+background-color: var(--color-shade2);
+border-radius: var(--border-radius1) var(--border-radius1) 0 0;
+}
+
+nui-tabs [role="tab"][aria-selected="true"] {
+color: var(--color-highlight);
+border-bottom-color: var(--color-highlight);
+}
+
+nui-tabs [role="tab"]:focus-visible {
+outline: 2px solid var(--color-highlight);
+outline-offset: -2px;
+border-radius: var(--border-radius1);
+}
+
+/* Tab Panels */
+nui-tabs [role="tabpanel"] {
+display: block;
+animation: ani-fade-in 0.2s ease-out;
+}
+
+nui-tabs [role="tabpanel"][hidden] {
+display: none !important;
+}

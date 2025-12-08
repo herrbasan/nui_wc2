@@ -1,0 +1,179 @@
+<header>
+	<h1>Tabs Component</h1>
+	<p>Organize content into multiple sections with <code>&lt;nui-tabs&gt;</code>.</p>
+</header>
+
+<section>
+	<h2>Basic Usage</h2>
+	<p>The component automatically upgrades semantic HTML structure. Use a list or container for tabs, and separate containers for panels.</p>
+	
+	<div class="demo-container">
+		<nui-tabs>
+			<nav>
+				<button>Overview</button>
+				<button>Details</button>
+				<button>Settings</button>
+			</nav>
+			<div>
+				<h3>Overview Content</h3>
+				<p>This is the overview tab content. It is visible by default because it corresponds to the first tab.</p>
+			</div>
+			<div>
+				<h3>Details Content</h3>
+				<p>Here are the details. This content is shown when the second tab is active.</p>
+			</div>
+			<div>
+				<h3>Settings Content</h3>
+				<p>Adjust your settings here.</p>
+				<nui-button><button type="button">Save Changes</button></nui-button>
+			</div>
+		</nui-tabs>
+	</div>
+
+	<nui-code>
+		<pre><code data-lang="html">&lt;nui-tabs&gt;
+  &lt;nav&gt;
+    &lt;button&gt;Overview&lt;/button&gt;
+    &lt;button&gt;Details&lt;/button&gt;
+    &lt;button&gt;Settings&lt;/button&gt;
+  &lt;/nav&gt;
+  &lt;div&gt;
+    &lt;h3&gt;Overview Content&lt;/h3&gt;
+    &lt;p&gt;...&lt;/p&gt;
+  &lt;/div&gt;
+  &lt;div&gt;...&lt;/div&gt;
+  &lt;div&gt;...&lt;/div&gt;
+&lt;/nui-tabs&gt;</code></pre>
+	</nui-code>
+</section>
+
+<section>
+	<h2>Explicit ARIA Structure</h2>
+	<p>For full control, use standard ARIA roles and IDs. This allows you to place panels anywhere within the container or link them explicitly.</p>
+	
+	<div class="demo-container">
+		<nui-tabs>
+			<div role="tablist" aria-label="Account Settings">
+				<button type="button" role="tab" aria-controls="panel-profile" aria-selected="true">
+					<nui-icon name="person"></nui-icon> Profile
+				</button>
+				<button type="button" role="tab" aria-controls="panel-security">
+					<nui-icon name="lock"></nui-icon> Security
+				</button>
+			</div>
+			<div id="panel-profile" role="tabpanel">
+				<p>Manage your public profile information.</p>
+				<nui-input-group>
+					<label>Username</label>
+					<nui-input><input type="text" value="jdoe"></nui-input>
+				</nui-input-group>
+			</div>
+			<div id="panel-security" role="tabpanel" hidden>
+				<p>Update your security preferences.</p>
+				<nui-button variant="outline"><button type="button">Change Password</button></nui-button>
+			</div>
+		</nui-tabs>
+	</div>
+
+	<nui-code>
+		<pre><code data-lang="html">&lt;nui-tabs&gt;
+  &lt;div role="tablist" aria-label="Account Settings"&gt;
+    &lt;button type="button" role="tab" aria-controls="panel-profile" aria-selected="true"&gt;
+      &lt;nui-icon name="person"&gt;&lt;/nui-icon&gt; Profile
+    &lt;/button&gt;
+    &lt;button type="button" role="tab" aria-controls="panel-security"&gt;
+      &lt;nui-icon name="lock"&gt;&lt;/nui-icon&gt; Security
+    &lt;/button&gt;
+  &lt;/div&gt;
+  
+  &lt;div id="panel-profile" role="tabpanel"&gt;
+    ...
+  &lt;/div&gt;
+  
+  &lt;div id="panel-security" role="tabpanel" hidden&gt;
+    ...
+  &lt;/div&gt;
+&lt;/nui-tabs&gt;</code></pre>
+	</nui-code>
+</section>
+
+<section class="page-tabs">
+	<h2>Events</h2>
+	<p>Listen for the <code>nui-tab-change</code> event to react to tab switches.</p>
+	
+	<div class="demo-container">
+		<nui-tabs id="event-tabs">
+			<nav>
+				<button>Tab A</button>
+				<button>Tab B</button>
+			</nav>
+			<div>Content A</div>
+			<div>Content B</div>
+		</nui-tabs>
+		<div id="tab-log" class="tab-log">
+			Log: Interact with tabs above...
+		</div>
+	</div>
+</section>
+
+<section class="page-tabs">
+	<h2>Animated Height</h2>
+	<p>Add the <code>animate-height</code> attribute to smoothly animate the container height when switching between tabs of different sizes.</p>
+	
+	<div class="demo-container">
+		<nui-tabs animate-height>
+			<nav>
+				<button>Short</button>
+				<button>Medium</button>
+				<button>Tall</button>
+			</nav>
+			<div class="tab-content-short">
+				<h3>Short Content</h3>
+				<p>This tab has very little content.</p>
+			</div>
+			<div class="tab-content-medium">
+				<h3>Medium Content</h3>
+				<p>This tab has a moderate amount of content.</p>
+				<p>It takes up a bit more space than the first one.</p>
+				<p>The transition should be smooth.</p>
+			</div>
+			<div class="tab-content-tall">
+				<h3>Tall Content</h3>
+				<p>This tab has a lot of content to demonstrate the height animation.</p>
+				<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+				<p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+				<p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>
+				<p>Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+				<p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium.</p>
+			</div>
+		</nui-tabs>
+	</div>
+
+	<nui-code>
+		<pre><code data-lang="html">&lt;nui-tabs animate-height&gt;
+  &lt;nav&gt;
+    &lt;button&gt;Short&lt;/button&gt;
+    &lt;button&gt;Medium&lt;/button&gt;
+    &lt;button&gt;Tall&lt;/button&gt;
+  &lt;/nav&gt;
+  &lt;div&gt;...&lt;/div&gt;
+  &lt;div&gt;...&lt;/div&gt;
+  &lt;div&gt;...&lt;/div&gt;
+&lt;/nui-tabs&gt;</code></pre>
+	</nui-code>
+</section>
+
+<script type="nui/page">
+function init(element) {
+	const tabs = element.querySelector('#event-tabs');
+	const log = element.querySelector('#tab-log');
+	
+	if (tabs && log) {
+		tabs.addEventListener('nui-tab-change', (e) => {
+			const tabText = e.detail.tab.textContent.trim();
+			const panelId = e.detail.panel.id;
+			log.textContent = `Log: Switched to "${tabText}" (Panel ID: ${panelId})`;
+		});
+	}
+}
+</script>

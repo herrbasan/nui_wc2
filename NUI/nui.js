@@ -1129,6 +1129,178 @@ registerComponent('nui-dialog', (element) => {
 	});
 });
 
+// ################################# nui-tabs COMPONENT
+
+registerComponent('nui-tabs', (element) => {
+	// 1. Find or infer Tab List
+	let tabList = element.querySelector('[role="tablist"]');
+	if (!tabList) {
+		// Infer: First child that contains buttons or links
+		const candidates = Array.from(element.children);
+		tabList = candidates.find(child => child.querySelector('button, a'));
+		if (tabList) tabList.setAttribute('role', 'tablist');
+	}
+	if (!tabList) return;
+
+	// 2. Find Tabs
+	const tabs = Array.from(tabList.querySelectorAll('button, a'));
+	tabs.forEach(tab => {
+		tab.setAttribute('role', 'tab');
+		if (tab.tagName === 'A') {
+			tab.addEventListener('click', e => e.preventDefault());
+		}
+	});
+
+	// 3. Find or infer Panels
+	let panels = Array.from(element.querySelectorAll('[role="tabpanel"]'));
+	if (panels.length === 0) {
+		// Infer: All direct children except the tabList
+		panels = Array.from(element.children).filter(child => child !== tabList);
+		panels.forEach(panel => panel.setAttribute('role', 'tabpanel'));
+	}
+
+	// 4. Link Tabs to Panels
+	tabs.forEach((tab, index) => {
+		// Determine target panel ID
+		let panelId = tab.getAttribute('aria-controls');
+		if (!panelId && tab.getAttribute('href')) {
+			panelId = tab.getAttribute('href').replace('#', '');
+		}
+
+		let panel;
+		if (panelId) {
+			panel = element.querySelector(`#${panelId}`);
+		} else {
+			// Fallback: Match by index
+			panel = panels[index];
+		}
+
+		if (panel) {
+			// Ensure IDs exist for ARIA linking
+			if (!panel.id) panel.id = `nui-panel-${Date.now()}-${index}`;
+			if (!tab.id) tab.id = `nui-tab-${Date.now()}-${index}`;
+
+			tab.setAttribute('aria-controls', panel.id);
+			panel.setAttribute('aria-labelledby', tab.id);
+			
+			// Ensure panel is in our list if found by ID
+			if (!panels.includes(panel)) panels.push(panel);
+		}
+	});
+
+	// 5. State Management
+	const activateTab = (targetTab) => {
+		const panelId = targetTab.getAttribute('aria-controls');
+		const targetPanel = element.querySelector(`#${panelId}`);
+
+		if (!targetPanel) return;
+
+		// Animation setup
+		const animate = element.hasAttribute('animate-height') && 
+						!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+		let startHeight;
+		
+		if (animate) {
+			startHeight = element.offsetHeight;
+			element.style.height = `${startHeight}px`;
+			element.style.overflow = 'hidden';
+		}
+
+		// Deactivate all
+		tabs.forEach(t => {
+			t.setAttribute('aria-selected', 'false');
+			t.setAttribute('tabindex', '-1');
+		});
+		panels.forEach(p => {
+			p.hidden = true;
+			p.style.display = 'none';
+		});
+
+		// Activate target
+		targetTab.setAttribute('aria-selected', 'true');
+		targetTab.removeAttribute('tabindex');
+		
+		targetPanel.hidden = false;
+		targetPanel.style.display = '';
+		
+		// Animation execution
+		if (animate) {
+			// Measure new height
+			element.style.height = 'auto';
+			const newHeight = element.offsetHeight;
+			
+			// Snap back to start
+			element.style.height = `${startHeight}px`;
+			
+			// Force reflow
+			element.offsetHeight;
+			
+			// Animate
+			element.style.transition = 'height 0.3s ease';
+			element.style.height = `${newHeight}px`;
+			
+			const onEnd = () => {
+				element.style.height = '';
+				element.style.overflow = '';
+				element.style.transition = '';
+				element.removeEventListener('transitionend', onEnd);
+			};
+			element.addEventListener('transitionend', onEnd, { once: true });
+			
+			// Fallback if transition doesn't fire (e.g. same height)
+			setTimeout(() => {
+				if (element.style.height !== '') {
+					onEnd();
+				}
+			}, 350);
+		}
+
+		element.dispatchEvent(new CustomEvent('nui-tab-change', {
+			bubbles: true,
+			detail: { tab: targetTab, panel: targetPanel }
+		}));
+	};
+
+	// 6. Event Listeners
+	tabList.addEventListener('click', (e) => {
+		const tab = e.target.closest('[role="tab"]');
+		if (tab && tabs.includes(tab)) {
+			activateTab(tab);
+		}
+	});
+
+	tabList.addEventListener('keydown', (e) => {
+		const currentTab = e.target.closest('[role="tab"]');
+		if (!currentTab) return;
+
+		const index = tabs.indexOf(currentTab);
+		let nextIndex = null;
+
+		if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+			nextIndex = (index + 1) % tabs.length;
+		} else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+			nextIndex = (index - 1 + tabs.length) % tabs.length;
+		} else if (e.key === 'Home') {
+			nextIndex = 0;
+		} else if (e.key === 'End') {
+			nextIndex = tabs.length - 1;
+		}
+
+		if (nextIndex !== null) {
+			e.preventDefault();
+			const nextTab = tabs[nextIndex];
+			nextTab.focus();
+			activateTab(nextTab);
+		}
+	});
+
+	// 7. Initial State
+	const initialTab = tabs.find(t => t.getAttribute('aria-selected') === 'true') || tabs[0];
+	if (initialTab) {
+		activateTab(initialTab);
+	}
+});
+
 // ################################# nui-banner COMPONENT
 
 registerComponent('nui-banner', (element) => {
@@ -1811,10 +1983,12 @@ const dialogSystem = {
 		
 		return new Promise((resolve) => {
 			const inputsHtml = fields.map(f => `
-				<div class="nui-input">
+				<nui-input-group>
 					<label>${f.label}</label>
-					<input id="${f.id}" value="${f.value || ''}" type="${f.type || 'text'}">
-				</div>
+					<nui-input>
+						<input id="${f.id}" value="${f.value || ''}" type="${f.type || 'text'}">
+					</nui-input>
+				</nui-input-group>
 			`).join('');
 
 			const html = `
