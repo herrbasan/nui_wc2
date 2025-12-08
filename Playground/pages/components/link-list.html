@@ -241,6 +241,11 @@
 			</nui-column-flow>
 		</nui-link-list>
 	</div>
+
+	<div style="background: var(--nui-surface-2); padding: 1rem; border-radius: 0.5rem; margin: 1rem 0 2rem;">
+		<h4 style="margin-top: 0;">Last Clicked Path:</h4>
+		<pre id="tree-path-display" style="margin: 0; font-family: monospace; font-size: 0.875rem;">No item selected</pre>
+	</div>
 	
 	<h2>HTML Structure Example</h2>
 	<p>Basic structure with semantic HTML:</p>
@@ -505,6 +510,7 @@ function init(element, params) {
 	// Setup interactive testing
 	const foldStateDisplay = element.querySelector('#fold-state-display');
 	const treeStateDisplay = element.querySelector('#tree-state-display');
+	const treePathDisplay = element.querySelector('#tree-path-display');
 	const instanceId = 'link-list-page-' + Date.now();
 	
 	function updateFoldStateDisplay() {
@@ -517,6 +523,33 @@ function init(element, params) {
 		if (!treeStateDisplay || !demoTree) return;
 		const treeData = demoTree.getActiveData?.();
 		treeStateDisplay.textContent = treeData ? `Active Item:\n  ${treeData.text}` : 'No active item';
+	}
+
+	function getBreadcrumbFromItem(item) {
+		if (!item) return [];
+		const path = [];
+		const anchor = item.querySelector('a') || item;
+		const itemLabel = anchor.textContent.trim();
+		if (itemLabel) path.unshift(itemLabel);
+
+		let container = item.closest('.group-items');
+		while (container) {
+			const header = container.previousElementSibling?.closest('.group-header');
+			if (!header) break;
+			const labelSpan = header.querySelector('span span');
+			const label = (labelSpan ? labelSpan.textContent : header.textContent || '').trim();
+			if (label) path.unshift(label);
+			container = header.closest('.group-items');
+		}
+
+		return path;
+	}
+
+	function updateTreePathDisplay(item = null) {
+		if (!treePathDisplay) return;
+		const targetItem = item || demoTree?.getActive?.();
+		const path = getBreadcrumbFromItem(targetItem);
+		treePathDisplay.textContent = path.length ? path.join(' / ') : 'No item selected';
 	}
 	
 	// Handle actions
@@ -536,7 +569,7 @@ function init(element, params) {
 			updateFoldStateDisplay();
 		} else if (actionName === 'get-active-fold') {
 			const foldData = demoFold.getActiveData?.();
-			alert(foldData ? `Fold Mode Active:\n\nText: ${foldData.text}` : 'Fold Mode: No active item');
+			nui.dialog.alert('Active State', foldData ? `Fold Mode Active:\n\nText: ${foldData.text}` : 'Fold Mode: No active item');
 			updateFoldStateDisplay();
 		} else if (actionName === 'clear-active-fold') {
 			demoFold.clearActive?.(true);
@@ -546,26 +579,33 @@ function init(element, params) {
 			const item = allLinks.find(link => link.textContent.trim() === param);
 			if (item) demoTree.setActive(item);
 			updateTreeStateDisplay();
+			updateTreePathDisplay(item?.closest('li'));
 		} else if (actionName === 'get-active-tree') {
 			const treeData = demoTree.getActiveData?.();
-			alert(treeData ? `Tree Mode Active:\n\nText: ${treeData.text}` : 'Tree Mode: No active item');
+			nui.dialog.alert('Active State', treeData ? `Tree Mode Active:\n\nText: ${treeData.text}` : 'Tree Mode: No active item');
 			updateTreeStateDisplay();
+			updateTreePathDisplay();
 		} else if (actionName === 'clear-active-tree') {
 			demoTree.clearActive?.();
 			updateTreeStateDisplay();
+			updateTreePathDisplay();
 		}
 	});
 	
 	// Watch for state changes using custom events
 	if (demoFold) {
-		demoFold.addEventListener('nui-link-list-active', () => updateFoldStateDisplay());
+		demoFold.addEventListener('nui-active-change', () => updateFoldStateDisplay());
 	}
 	
 	if (demoTree) {
-		demoTree.addEventListener('nui-link-list-active', () => updateTreeStateDisplay());
+		demoTree.addEventListener('nui-active-change', (e) => {
+			updateTreeStateDisplay();
+			updateTreePathDisplay(e.detail?.element);
+		});
 	}
 	
 	updateFoldStateDisplay();
 	updateTreeStateDisplay();
+	updateTreePathDisplay();
 }
 </script>

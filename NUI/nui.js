@@ -1832,10 +1832,10 @@ const bannerFactory = {
 		if (options.autoClose) banner.setAttribute('auto-close', options.autoClose);
 
 		const wrapper = document.createElement('div');
-		wrapper.style.cssText = 'display: flex; justify-content: space-between; align-items: flex-start; padding: 1rem; gap: 1rem;';
+		wrapper.className = 'nui-banner-wrapper';
 		
 		const contentEl = document.createElement('div');
-		contentEl.style.cssText = 'flex: 1; max-height: 50vh; overflow-y: auto;';
+		contentEl.className = 'nui-banner-content';
 		if (typeof options.content === 'string') {
 			contentEl.innerHTML = options.content;
 		} else if (options.content instanceof Element) {
@@ -1847,8 +1847,8 @@ const bannerFactory = {
 		if (showCloseButton) {
 			const closeBtn = document.createElement('button');
 			closeBtn.type = 'button';
+			closeBtn.className = 'nui-banner-close';
 			closeBtn.textContent = '✕';
-			closeBtn.style.cssText = 'background: none; border: none; cursor: pointer; font-size: 1.25rem; padding: 0.25rem; flex-shrink: 0; color: inherit; opacity: 0.8;';
 			closeBtn.onclick = () => banner.close('dismiss');
 			wrapper.appendChild(closeBtn);
 		}
@@ -1908,6 +1908,77 @@ const dialogSystem = {
 		return dialog;
 	},
 
+	_buildFieldHtml(field) {
+		const id = field.id;
+		const type = field.type || 'text';
+		const value = field.value || '';
+		const placeholder = field.placeholder || '';
+		const required = field.required ? 'required' : '';
+		const pattern = field.pattern ? `pattern="${field.pattern}"` : '';
+		const min = field.min !== undefined ? `min="${field.min}"` : '';
+		const max = field.max !== undefined ? `max="${field.max}"` : '';
+		const minlength = field.minlength !== undefined ? `minlength="${field.minlength}"` : '';
+		const maxlength = field.maxlength !== undefined ? `maxlength="${field.maxlength}"` : '';
+
+		if (type === 'textarea') {
+			return `
+				<nui-input-group>
+					<label>${field.label}</label>
+					<nui-textarea>
+						<textarea id="${id}" placeholder="${placeholder}" ${required} ${minlength} ${maxlength}>${value}</textarea>
+					</nui-textarea>
+				</nui-input-group>
+			`;
+		}
+
+		if (type === 'checkbox') {
+			const checked = field.checked ? 'checked' : '';
+			return `
+				<nui-input-group>
+					<nui-checkbox>
+						<input type="checkbox" id="${id}" ${checked}>
+						<label>${field.label}</label>
+					</nui-checkbox>
+				</nui-input-group>
+			`;
+		}
+
+		return `
+			<nui-input-group>
+				<label>${field.label}</label>
+				<nui-input>
+					<input id="${id}" value="${value}" type="${type}" placeholder="${placeholder}" ${required} ${pattern} ${min} ${max} ${minlength} ${maxlength}>
+				</nui-input>
+			</nui-input-group>
+		`;
+	},
+
+	_buildButtonHtml(button) {
+		const type = button.type || 'outline';
+		const id = button.id ? `id="${button.id}"` : '';
+		const icon = button.icon ? `<nui-icon name="${button.icon}"></nui-icon>` : '';
+		return `<nui-button type="${type}"><button ${id}>${icon}${button.label}</button></nui-button>`;
+	},
+
+	_buildButtonsHtml(buttons) {
+		if (!buttons || buttons.length === 0) return '';
+		return `<nui-button-container align="end">${buttons.map(b => this._buildButtonHtml(b)).join('')}</nui-button-container>`;
+	},
+
+	_defaultButtons: {
+		alert: [
+			{ id: 'nui-dialog-ok', label: 'OK', type: 'primary', value: 'ok' }
+		],
+		confirm: [
+			{ id: 'nui-dialog-cancel', label: 'Cancel', type: 'outline', value: 'cancel' },
+			{ id: 'nui-dialog-ok', label: 'OK', type: 'primary', value: 'ok' }
+		],
+		prompt: [
+			{ id: 'nui-dialog-cancel', label: 'Cancel', type: 'outline', value: null },
+			{ id: 'nui-dialog-ok', label: 'OK', type: 'primary', value: 'ok' }
+		]
+	},
+
 	_show(htmlContent, options = {}) {
 		const { classes = [], target, placement, modal = true, blocking = false } = options;
 		const dialog = this._createDialog(target, placement, blocking);
@@ -1935,96 +2006,109 @@ const dialogSystem = {
 	},
 
 	alert(title, message, options = {}) {
+		const buttons = options.buttons || this._defaultButtons.alert;
+
 		return new Promise((resolve) => {
 			const html = `
 				<div class="nui-dialog-alert">
 					<div class="nui-headline">${title}</div>
 					<div class="nui-copy">${message}</div>
-					<nui-button-container align="end">
-						<nui-button type="primary"><button id="nui-dialog-ok">OK</button></nui-button>
-					</nui-button-container>
+					${this._buildButtonsHtml(buttons)}
 				</div>
 			`;
 			const dialog = this._show(html, { classes: ['nui-alert'], ...options });
 
-			const onOk = () => {
-				dialog.close('ok');
-				resolve();
-			};
+			buttons.forEach(btn => {
+				const el = dialog.querySelector(`#${btn.id}`);
+				if (el) {
+					el.addEventListener('click', () => {
+						dialog.close(btn.value || btn.id);
+						resolve(btn.value);
+					}, { once: true });
+				}
+			});
 
-			const btn = dialog.querySelector('#nui-dialog-ok');
-			if (btn) btn.addEventListener('click', onOk, { once: true });
 			dialog.querySelector('dialog').addEventListener('close', () => resolve(), { once: true });
 		});
 	},
 
 	confirm(title, message, options = {}) {
+		const buttons = options.buttons || this._defaultButtons.confirm;
+
 		return new Promise((resolve) => {
 			const html = `
 				<div class="nui-dialog-alert">
 					<div class="nui-headline">${title}</div>
 					<div class="nui-copy">${message}</div>
-					<nui-button-container align="end">
-						<nui-button type="outline"><button id="nui-dialog-cancel">Cancel</button></nui-button>
-						<nui-button type="primary"><button id="nui-dialog-ok">OK</button></nui-button>
-					</nui-button-container>
+					${this._buildButtonsHtml(buttons)}
 				</div>
 			`;
 			const dialog = this._show(html, { classes: ['nui-alert'], ...options });
 
-			const onOk = () => { dialog.close('ok'); resolve(true); };
-			const onCancel = () => { dialog.close('cancel'); resolve(false); };
+			buttons.forEach(btn => {
+				const el = dialog.querySelector(`#${btn.id}`);
+				if (el) {
+					el.addEventListener('click', () => {
+						dialog.close(btn.value || btn.id);
+						resolve(btn.value === 'ok' || btn.value === true);
+					}, { once: true });
+				}
+			});
 
-			dialog.querySelector('#nui-dialog-ok').addEventListener('click', onOk, { once: true });
-			dialog.querySelector('#nui-dialog-cancel').addEventListener('click', onCancel, { once: true });
 			dialog.querySelector('dialog').addEventListener('close', () => resolve(false), { once: true });
 		});
 	},
 
 	prompt(title, message, options = {}) {
 		const fields = options.fields || [];
+		const buttons = options.buttons || this._defaultButtons.prompt;
 		
 		return new Promise((resolve) => {
-			const inputsHtml = fields.map(f => `
-				<nui-input-group>
-					<label>${f.label}</label>
-					<nui-input>
-						<input id="${f.id}" value="${f.value || ''}" type="${f.type || 'text'}">
-					</nui-input>
-				</nui-input-group>
-			`).join('');
+			const inputsHtml = fields.map(f => this._buildFieldHtml(f)).join('');
 
 			const html = `
 				<div class="nui-dialog-prompt">
 					<div class="nui-headline">${title}</div>
 					${message ? `<div class="nui-copy">${message}</div>` : ''}
 					<div class="nui-dialog-body">${inputsHtml}</div>
-					<nui-button-container align="end">
-						<nui-button type="outline"><button id="nui-dialog-cancel">Cancel</button></nui-button>
-						<nui-button type="primary"><button id="nui-dialog-ok">OK</button></nui-button>
-					</nui-button-container>
+					${this._buildButtonsHtml(buttons)}
 				</div>
 			`;
 			const dialog = this._show(html, { classes: ['nui-prompt'], ...options });
 
-			const onOk = () => {
+			const getValues = () => {
 				const values = {};
 				fields.forEach(f => {
 					const input = dialog.querySelector(`#${f.id}`);
-					if (input) values[f.id] = input.value;
+					if (input) {
+						if (f.type === 'checkbox') {
+							values[f.id] = input.checked;
+						} else {
+							values[f.id] = input.value;
+						}
+					}
 				});
-				dialog.close('ok');
-				resolve(values);
+				return values;
 			};
 
-			const onCancel = () => { dialog.close('cancel'); resolve(null); };
+			buttons.forEach(btn => {
+				const el = dialog.querySelector(`#${btn.id}`);
+				if (el) {
+					el.addEventListener('click', () => {
+						dialog.close(btn.value || btn.id);
+						if (btn.value === 'ok' || btn.value === true) {
+							resolve(getValues());
+						} else {
+							resolve(btn.value);
+						}
+					}, { once: true });
+				}
+			});
 
-			dialog.querySelector('#nui-dialog-ok').addEventListener('click', onOk, { once: true });
-			dialog.querySelector('#nui-dialog-cancel').addEventListener('click', onCancel, { once: true });
 			dialog.querySelector('dialog').addEventListener('close', () => resolve(null), { once: true });
 
 			setTimeout(() => {
-				const first = dialog.querySelector('input');
+				const first = dialog.querySelector('input, textarea');
 				if (first) first.focus();
 			}, 50);
 		});

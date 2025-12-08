@@ -358,7 +358,7 @@ function init(element, params) {
 				});
 				break;
 			case 'show-cookie-consent':
-				nui.banner.create({
+				const cookieBanner = nui.banner.create({
 					content: `
 						<div style="display: flex; flex-direction: column; gap: 1rem;">
 							<div>
@@ -377,6 +377,14 @@ function init(element, params) {
 					placement: 'bottom',
 					showCloseButton: false,
 					autoClose: 0
+				});
+
+				// Forward actions from the banner to the page element
+				// (Since the banner is outside the page DOM, events won't bubble to 'element' automatically)
+				cookieBanner.element.addEventListener('nui-action', (e) => {
+					element.dispatchEvent(new CustomEvent('nui-action', {
+						detail: e.detail
+					}));
 				});
 				break;
 			case 'handle-cookies':

@@ -103,8 +103,8 @@ This avoids duplicating structure knowledge between HTML templates and JS genera
 | Component | Why | Status |
 |-----------|-----|--------|
 | `nui-link-list` | Navigation from CMS/API data | ✅ Has `loadData` |
-| `nui-dialog` | Runtime alerts/confirms/prompts | ✅ Has factory (`dialogSystem`) |
-| `nui-banner` | Runtime notifications | ✅ Has factory (`bannerFactory`) |
+| `nui-dialog` | Runtime alerts/confirms/prompts | ✅ Has factory (`nui.dialog`) |
+| `nui-banner` | Runtime notifications | ✅ Has factory (`nui.banner`) |
 
 **Components that DON'T need it:**
 
@@ -136,31 +136,49 @@ nav.loadData([
 ]);
 ```
 
-### nui-dialog (via dialogSystem)
+### nui-dialog (via nui.dialog)
 
 ```js
-// Alert
-nui.dialogSystem.alert('Title', 'Message');
+// Alert (with default OK button)
+await nui.dialog.alert('Title', 'Message');
 
-// Confirm
-const confirmed = await nui.dialogSystem.confirm('Delete?', 'This cannot be undone.');
+// Alert with custom button
+await nui.dialog.alert('Success!', 'Your file was saved.', {
+    buttons: [{ id: 'ok', label: 'Got it', type: 'primary', value: 'ok' }]
+});
 
-// Prompt with multiple fields (use classes for styling variants)
-const result = await nui.dialogSystem.prompt('User Details', 'Please fill in your info', {
-    classes: ['dialog-form'],
-    fields: [
-        { id: 'name', label: 'Name', type: 'text', required: true },
-        { id: 'email', label: 'Email', type: 'email', required: true }
+// Confirm (returns true/false)
+const confirmed = await nui.dialog.confirm('Delete?', 'This cannot be undone.');
+
+// Confirm with custom buttons
+const result = await nui.dialog.confirm('Save changes?', 'You have unsaved work.', {
+    buttons: [
+        { id: 'discard', label: 'Discard', type: 'outline', value: false },
+        { id: 'save', label: 'Save', type: 'primary', icon: 'save', value: true }
     ]
 });
-// result is { name: '...', email: '...' } or null if cancelled
+
+// Prompt with multiple fields
+const userData = await nui.dialog.prompt('User Details', 'Please fill in your info', {
+    fields: [
+        { id: 'name', label: 'Name', type: 'text', required: true, placeholder: 'Enter name' },
+        { id: 'email', label: 'Email', type: 'email', required: true },
+        { id: 'bio', label: 'Bio', type: 'textarea' },
+        { id: 'newsletter', label: 'Subscribe to newsletter', type: 'checkbox', checked: true }
+    ],
+    buttons: [
+        { id: 'cancel', label: 'Cancel', type: 'outline', value: null },
+        { id: 'submit', label: 'Submit', type: 'primary', value: 'ok' }
+    ]
+});
+// userData is { name: '...', email: '...', bio: '...', newsletter: true } or null if cancelled
 ```
 
-### nui-banner (via bannerFactory)
+### nui-banner (via nui.banner)
 
 ```js
 // Structured banner with priority, placement, auto-close
-nui.bannerFactory.show({
+nui.banner.create({
     content: 'Your changes have been saved.',
     priority: 'info',       // 'info' | 'alert'
     placement: 'bottom',    // 'top' | 'bottom'
@@ -189,24 +207,44 @@ For components with `loadData`, these are the expected data structures:
 }
 ```
 
-### dialog (via factory)
-
-The `prompt` method accepts an options object with fields for form inputs:
+### dialog fields (via nui.dialog.prompt)
 
 ```js
 {
-    fields: [
-        { id: 'name', label: 'Name', type: 'text', required: true },
-        { id: 'email', label: 'Email', type: 'email' }
-    ],
-    classes: ['dialog-form'],  // optional, for styling variants
-    placement: 'center'         // optional
+    id: 'fieldId',           // Required: unique identifier, used as key in returned values
+    label: 'Field Label',    // Required: display label
+    type: 'text',            // 'text' | 'email' | 'password' | 'number' | 'url' | 'tel' | 'textarea' | 'checkbox'
+    value: '',               // Initial value (optional)
+    placeholder: '',         // Placeholder text (optional)
+    required: false,         // HTML5 required validation (optional)
+    pattern: '',             // Regex pattern for validation (optional)
+    min: 0,                  // Min value for number inputs (optional)
+    max: 100,                // Max value for number inputs (optional)
+    minlength: 0,            // Min length for text inputs (optional)
+    maxlength: 100,          // Max length for text inputs (optional)
+    checked: false           // For checkbox type only (optional)
 }
 ```
 
-Note: `buttons` customization is not yet implemented. Currently uses Cancel/OK.
+### dialog buttons (via nui.dialog)
 
-### banner (via factory)
+```js
+{
+    id: 'button-id',      // Required: used for querySelector and as fallback value
+    label: 'Button Text', // Required: display text
+    type: 'primary',      // 'primary' | 'outline' | 'ghost' (optional, default: 'outline')
+    icon: 'icon_name',    // Icon name (optional)
+    value: 'ok'           // Value returned when clicked (optional, defaults to id)
+                          // For prompt: 'ok' or true returns field values, anything else returns the value directly
+}
+```
+
+**Default buttons:**
+- `alert`: `[{ id: 'nui-dialog-ok', label: 'OK', type: 'primary', value: 'ok' }]`
+- `confirm`: `[{ id: 'nui-dialog-cancel', label: 'Cancel', type: 'outline', value: 'cancel' }, { id: 'nui-dialog-ok', label: 'OK', type: 'primary', value: 'ok' }]`
+- `prompt`: Same as confirm
+
+### banner (via nui.banner)
 
 ```js
 {
