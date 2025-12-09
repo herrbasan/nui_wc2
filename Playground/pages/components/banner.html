@@ -113,27 +113,29 @@ banner.onClose((action) => {
 <section>
 	<h2>Priority Levels &amp; Accessibility</h2>
 	<p>Banners support two priority levels that affect ARIA attributes:</p>
-	<table style="width: 100%; border-collapse: collapse; margin: 1rem 0;">
-		<thead>
-			<tr style="border-bottom: 2px solid var(--border-shade1);">
-				<th style="text-align: left; padding: 0.5rem;">Priority</th>
-				<th style="text-align: left; padding: 0.5rem;">ARIA Role</th>
-				<th style="text-align: left; padding: 0.5rem;">Behavior</th>
-			</tr>
-		</thead>
-		<tbody>
-			<tr style="border-bottom: 1px solid var(--border-shade1);">
-				<td style="padding: 0.5rem;"><code>info</code> (default)</td>
-				<td style="padding: 0.5rem;"><code>role="status"</code></td>
-				<td style="padding: 0.5rem;">Politely announced when screen reader is idle</td>
-			</tr>
-			<tr>
-				<td style="padding: 0.5rem;"><code>alert</code></td>
-				<td style="padding: 0.5rem;"><code>role="alert"</code></td>
-				<td style="padding: 0.5rem;">Immediately announced, interrupts current speech</td>
-			</tr>
-		</tbody>
-	</table>
+	<nui-table>
+		<table>
+			<thead>
+				<tr>
+					<th>Priority</th>
+					<th>ARIA Role</th>
+					<th>Behavior</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><code>info</code> (default)</td>
+					<td><code>role="status"</code></td>
+					<td>Politely announced when screen reader is idle</td>
+				</tr>
+				<tr>
+					<td><code>alert</code></td>
+					<td><code>role="alert"</code></td>
+					<td>Immediately announced, interrupts current speech</td>
+				</tr>
+			</tbody>
+		</table>
+	</nui-table>
 	<nui-code>
 		<pre><code data-lang="javascript">// Info: Non-urgent status updates
 nui.components.banner.show({
@@ -230,37 +232,39 @@ nui.components.banner.show({
 
 <section>
 	<h2>Attributes Reference</h2>
-	<table style="width: 100%; border-collapse: collapse; margin: 1rem 0;">
-		<thead>
-			<tr style="border-bottom: 2px solid var(--border-shade1);">
-				<th style="text-align: left; padding: 0.5rem;">Attribute</th>
-				<th style="text-align: left; padding: 0.5rem;">Values</th>
-				<th style="text-align: left; padding: 0.5rem;">Description</th>
-			</tr>
-		</thead>
-		<tbody>
-			<tr style="border-bottom: 1px solid var(--border-shade1);">
-				<td style="padding: 0.5rem;"><code>placement</code></td>
-				<td style="padding: 0.5rem;"><code>top</code>, <code>bottom</code></td>
-				<td style="padding: 0.5rem;">Edge placement (default: bottom)</td>
-			</tr>
-			<tr style="border-bottom: 1px solid var(--border-shade1);">
-				<td style="padding: 0.5rem;"><code>auto-close</code></td>
-				<td style="padding: 0.5rem;">milliseconds</td>
-				<td style="padding: 0.5rem;">Auto-close timeout (0 = disabled)</td>
-			</tr>
-			<tr style="border-bottom: 1px solid var(--border-shade1);">
-				<td style="padding: 0.5rem;"><code>priority</code></td>
-				<td style="padding: 0.5rem;"><code>info</code>, <code>alert</code></td>
-				<td style="padding: 0.5rem;">Accessibility priority (default: info)</td>
-			</tr>
-			<tr>
-				<td style="padding: 0.5rem;"><code>open</code></td>
-				<td style="padding: 0.5rem;">(boolean)</td>
-				<td style="padding: 0.5rem;">Present when banner is visible</td>
-			</tr>
-		</tbody>
-	</table>
+	<nui-table>
+		<table>
+			<thead>
+				<tr>
+					<th>Attribute</th>
+					<th>Values</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><code>placement</code></td>
+					<td><code>top</code>, <code>bottom</code></td>
+					<td>Edge placement (default: bottom)</td>
+				</tr>
+				<tr>
+					<td><code>auto-close</code></td>
+					<td>milliseconds</td>
+					<td>Auto-close timeout (0 = disabled)</td>
+				</tr>
+				<tr>
+					<td><code>priority</code></td>
+					<td><code>info</code>, <code>alert</code></td>
+					<td>Accessibility priority (default: info)</td>
+				</tr>
+				<tr>
+					<td><code>open</code></td>
+					<td>(boolean)</td>
+					<td>Present when banner is visible</td>
+				</tr>
+			</tbody>
+		</table>
+	</nui-table>
 </section>
 
 <section>

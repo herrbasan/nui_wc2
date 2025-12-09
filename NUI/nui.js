@@ -1231,6 +1231,39 @@ registerComponent('nui-accordion', (element) => {
 	}
 });
 
+// ################################# nui-table COMPONENT
+
+registerComponent('nui-table', (element) => {
+	const table = element.querySelector('table');
+	if (!table) return;
+
+	// Add enhanced class
+	table.classList.add('nui-table-enhanced');
+
+	// Get headers
+	const ths = Array.from(table.querySelectorAll('thead th'));
+	const headers = ths.map(th => th.textContent.trim());
+
+	// Process rows
+	const rows = Array.from(table.querySelectorAll('tbody tr'));
+	const totalCells = rows.reduce((sum, row) => sum + row.children.length, 0);
+	let tableCellIndex = 1;
+
+	rows.forEach(row => {
+		const cells = Array.from(row.children);
+		cells.forEach((cell, i) => {
+			if (headers[i]) {
+				cell.setAttribute('data-label', headers[i]);
+			}
+			cell.setAttribute('data-row-cell-index', i + 1);
+			cell.setAttribute('data-row-cell-total', cells.length);
+			cell.setAttribute('data-table-cell-total', totalCells);
+			cell.setAttribute('data-table-cell-index', tableCellIndex);
+			tableCellIndex++;
+		});
+	});
+});
+
 // ################################# nui-banner COMPONENT
 
 registerComponent('nui-banner', (element) => {

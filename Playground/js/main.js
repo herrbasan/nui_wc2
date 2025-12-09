@@ -138,6 +138,7 @@ const navigationData = [
 			{ label: 'Tabs', href: '#page=components/tabs' },
 			{ label: 'Accordion', href: '#page=components/accordion' },
 			{ label: 'Inputs', href: '#page=components/inputs' },
+			{ label: 'Table', href: '#page=components/table' },
 			{ label: 'Animation', href: '#page=components/animation' }
 		]
 	},

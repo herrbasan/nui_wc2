@@ -54,30 +54,32 @@ nui.util.storage.set({ name: 'prefs', value: 'compact', target: 'localStorage' }
 // Get from specific target
 nui.util.storage.get({ name: 'prefs', target: 'localStorage' });</code></pre>
 	</nui-code>
-	<table class="nui-table">
-		<thead>
-			<tr>
-				<th>Target</th>
-				<th>Persistence</th>
-				<th>Size Limit</th>
-				<th>Sent to Server</th>
-			</tr>
-		</thead>
-		<tbody>
-			<tr>
-				<td><code>cookie</code></td>
-				<td>Configurable (TTL)</td>
-				<td>~4KB per cookie</td>
-				<td>Yes (every request)</td>
-			</tr>
-			<tr>
-				<td><code>localStorage</code></td>
-				<td>Configurable (TTL)</td>
-				<td>~5-10MB total</td>
-				<td>No</td>
-			</tr>
-		</tbody>
-	</table>
+	<nui-table>
+		<table>
+			<thead>
+				<tr>
+					<th>Target</th>
+					<th>Persistence</th>
+					<th>Size Limit</th>
+					<th>Sent to Server</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><code>cookie</code></td>
+					<td>Configurable (TTL)</td>
+					<td>~4KB per cookie</td>
+					<td>Yes (every request)</td>
+				</tr>
+				<tr>
+					<td><code>localStorage</code></td>
+					<td>Configurable (TTL)</td>
+					<td>~5-10MB total</td>
+					<td>No</td>
+				</tr>
+			</tbody>
+		</table>
+	</nui-table>
 </section>
 
 <section>
@@ -113,67 +115,69 @@ nui.util.storage.set({ name: 'exp', value: 'x', ttl: 1735689600000 });</code></p
 
 <section>
 	<h2>TTL Format Reference</h2>
-	<table class="nui-table">
-		<thead>
-			<tr>
-				<th>Format</th>
-				<th>Example</th>
-				<th>Description</th>
-			</tr>
-		</thead>
-		<tbody>
-			<tr>
-				<td><code>forever</code></td>
-				<td><code>'forever'</code></td>
-				<td>Never expires (10 years for cookies)</td>
-			</tr>
-			<tr>
-				<td><code>session</code></td>
-				<td><code>'session'</code></td>
-				<td>Expires when browser closes</td>
-			</tr>
-			<tr>
-				<td><code>N-minutes</code></td>
-				<td><code>'30-minutes'</code></td>
-				<td>Expires in N minutes</td>
-			</tr>
-			<tr>
-				<td><code>N-hours</code></td>
-				<td><code>'2-hours'</code></td>
-				<td>Expires in N hours</td>
-			</tr>
-			<tr>
-				<td><code>N-days</code></td>
-				<td><code>'7-days'</code></td>
-				<td>Expires in N days</td>
-			</tr>
-			<tr>
-				<td><code>N-months</code></td>
-				<td><code>'3-months'</code></td>
-				<td>Expires in N months</td>
-			</tr>
-			<tr>
-				<td><code>N-years</code></td>
-				<td><code>'1-year'</code></td>
-				<td>Expires in N years</td>
-			</tr>
-			<tr>
-				<td><code>YYYY-MM-DD</code></td>
-				<td><code>'2025-12-31'</code></td>
-				<td>Expires end of that date</td>
-			</tr>
-			<tr>
-				<td>Epoch (ms)</td>
-				<td><code>1735689600000</code></td>
-				<td>Expires at timestamp (>1e12 = ms)</td>
-			</tr>
-			<tr>
-				<td>Epoch (s)</td>
-				<td><code>1735689600</code></td>
-				<td>Expires at timestamp (≤1e12 = seconds)</td>
-			</tr>
-		</tbody>
-	</table>
+	<nui-table>
+		<table>
+			<thead>
+				<tr>
+					<th>Format</th>
+					<th>Example</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><code>forever</code></td>
+					<td><code>'forever'</code></td>
+					<td>Never expires (10 years for cookies)</td>
+				</tr>
+				<tr>
+					<td><code>session</code></td>
+					<td><code>'session'</code></td>
+					<td>Expires when browser closes</td>
+				</tr>
+				<tr>
+					<td><code>N-minutes</code></td>
+					<td><code>'30-minutes'</code></td>
+					<td>Expires in N minutes</td>
+				</tr>
+				<tr>
+					<td><code>N-hours</code></td>
+					<td><code>'2-hours'</code></td>
+					<td>Expires in N hours</td>
+				</tr>
+				<tr>
+					<td><code>N-days</code></td>
+					<td><code>'7-days'</code></td>
+					<td>Expires in N days</td>
+				</tr>
+				<tr>
+					<td><code>N-months</code></td>
+					<td><code>'3-months'</code></td>
+					<td>Expires in N months</td>
+				</tr>
+				<tr>
+					<td><code>N-years</code></td>
+					<td><code>'1-year'</code></td>
+					<td>Expires in N years</td>
+				</tr>
+				<tr>
+					<td><code>YYYY-MM-DD</code></td>
+					<td><code>'2025-12-31'</code></td>
+					<td>Expires end of that date</td>
+				</tr>
+				<tr>
+					<td>Epoch (ms)</td>
+					<td><code>1735689600000</code></td>
+					<td>Expires at timestamp (>1e12 = ms)</td>
+				</tr>
+				<tr>
+					<td>Epoch (s)</td>
+					<td><code>1735689600</code></td>
+					<td>Expires at timestamp (≤1e12 = seconds)</td>
+				</tr>
+			</tbody>
+		</table>
+	</nui-table>
 </section>
 
 <section>
@@ -196,96 +200,102 @@ nui.util.storage.set({ name: 'theme', value: 'dark' });</code></pre>
 	
 	<h3>set(options)</h3>
 	<p>Store a value. Returns <code>true</code> on success, <code>false</code> on failure.</p>
-	<table class="nui-table">
-		<thead>
-			<tr>
-				<th>Option</th>
-				<th>Type</th>
-				<th>Default</th>
-				<th>Description</th>
-			</tr>
-		</thead>
-		<tbody>
-			<tr>
-				<td><code>name</code></td>
-				<td>string</td>
-				<td>(required)</td>
-				<td>Storage key name</td>
-			</tr>
-			<tr>
-						const success = nui.util.storage.set({ name: 'theme', value: 'dark' });
-				<td>string</td>
-				<td>(required)</td>
-				<td>Value to store (text only)</td>
-						const theme = nui.util.storage.get({ name: 'theme' });
-			<tr>
-				<td><code>target</code></td>
-				<td>string</td>
-						const removed = nui.util.storage.remove({ name: 'theme' });
-				<td><code>'cookie'</code> or <code>'localStorage'</code></td>
-			</tr>
-			<tr>
-						nui.util.storage.set({ name: 'demo', value: 'session-value', ttl: 'session' });
-				<td>string | number</td>
-				<td><code>'forever'</code></td>
-				<td>Time-to-live (see formats above)</td>
-						nui.util.storage.set({ name: 'demo', value: 'expires-soon', ttl: '1-minute' });
-		</tbody>
-	</table>
+	<nui-table>
+		<table>
+			<thead>
+				<tr>
+					<th>Option</th>
+					<th>Type</th>
+					<th>Default</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><code>name</code></td>
+					<td>string</td>
+					<td>(required)</td>
+					<td>Storage key name</td>
+				</tr>
+				<tr>
+					<td><code>value</code></td>
+					<td>string</td>
+					<td>(required)</td>
+					<td>Value to store (text only)</td>
+				</tr>
+				<tr>
+					<td><code>target</code></td>
+					<td>string</td>
+					<td><code>'cookie'</code></td>
+					<td><code>'cookie'</code> or <code>'localStorage'</code></td>
+				</tr>
+				<tr>
+					<td><code>ttl</code></td>
+					<td>string | number</td>
+					<td><code>'forever'</code></td>
+					<td>Time-to-live (see formats above)</td>
+				</tr>
+			</tbody>
+		</table>
+	</nui-table>
 	
-						const demo = nui.util.storage.get({ name: 'demo' });
+	<h3>get(options)</h3>
 	<p>Retrieve a value. Returns the value or <code>undefined</code> if not found or expired.</p>
-	<table class="nui-table">
-		<thead>
-			<tr>
-				<th>Option</th>
-				<th>Type</th>
-				<th>Default</th>
-				<th>Description</th>
-			</tr>
-		</thead>
-		<tbody>
-			<tr>
-				<td><code>name</code></td>
-				<td>string</td>
-				<td>(required)</td>
-				<td>Storage key name</td>
-			</tr>
-			<tr>
-				<td><code>target</code></td>
-				<td>string</td>
-				<td><code>'cookie'</code></td>
-				<td><code>'cookie'</code> or <code>'localStorage'</code></td>
-			</tr>
-		</tbody>
-	</table>
+	<nui-table>
+		<table>
+			<thead>
+				<tr>
+					<th>Option</th>
+					<th>Type</th>
+					<th>Default</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><code>name</code></td>
+					<td>string</td>
+					<td>(required)</td>
+					<td>Storage key name</td>
+				</tr>
+				<tr>
+					<td><code>target</code></td>
+					<td>string</td>
+					<td><code>'cookie'</code></td>
+					<td><code>'cookie'</code> or <code>'localStorage'</code></td>
+				</tr>
+			</tbody>
+		</table>
+	</nui-table>
 	
 	<h3>remove(options)</h3>
 	<p>Remove a stored value. Returns <code>true</code> if the value existed and was removed, <code>false</code> otherwise.</p>
-	<table class="nui-table">
-		<thead>
-			<tr>
-				<th>Option</th>
-				<th>Type</th>
-				<th>Default</th>
-				<th>Description</th>
-			</tr>
-		</thead>
-		<tbody>
-			<tr>
-				<td><code>name</code></td>
-				<td>string</td>
-				<td>(required)</td>
-				<td>Storage key name</td>
-			</tr>
-			<tr>
-				<td><code>target</code></td>
-				<td>string</td>
-				<td><code>'cookie'</code></td>
-				<td><code>'cookie'</code> or <code>'localStorage'</code></td>
-			</tr>
-		</tbody>
-	</table>
+	<nui-table>
+		<table>
+			<thead>
+				<tr>
+					<th>Option</th>
+					<th>Type</th>
+					<th>Default</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><code>name</code></td>
+					<td>string</td>
+					<td>(required)</td>
+					<td>Storage key name</td>
+				</tr>
+				<tr>
+					<td><code>target</code></td>
+					<td>string</td>
+					<td><code>'cookie'</code></td>
+					<td><code>'cookie'</code> or <code>'localStorage'</code></td>
+				</tr>
+			</tbody>
+		</table>
+	</nui-table>
 </section>
 
 <section>

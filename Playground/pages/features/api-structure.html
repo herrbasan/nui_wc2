@@ -38,52 +38,54 @@ nui.enableContentLoading(options);</code></pre>
 	</nui-code>
 	
 	<h3>Available Root Members</h3>
-	<table class="nui-table">
-		<thead>
-			<tr>
-				<th>Member</th>
-				<th>Type</th>
-				<th>Description</th>
-			</tr>
-		</thead>
-		<tbody>
-			<tr>
-				<td><code>config</code></td>
-				<td>Object</td>
-				<td>Library configuration (iconSpritePath, sanitizeActions, etc.)</td>
-			</tr>
-			<tr>
-				<td><code>init(options)</code></td>
-				<td>Function</td>
-				<td>Initialize library, register custom elements</td>
-			</tr>
-			<tr>
-				<td><code>configure(options)</code></td>
-				<td>Function</td>
-				<td>Update configuration after init</td>
-			</tr>
-			<tr>
-				<td><code>registerFeature(name, fn)</code></td>
-				<td>Function</td>
-				<td>Register a named feature for content routing</td>
-			</tr>
-			<tr>
-				<td><code>registerType(type, handler)</code></td>
-				<td>Function</td>
-				<td>Register a content type handler</td>
-			</tr>
-			<tr>
-				<td><code>createRouter(container, options)</code></td>
-				<td>Function</td>
-				<td>Create a router instance for SPA navigation</td>
-			</tr>
-			<tr>
-				<td><code>enableContentLoading(options)</code></td>
-				<td>Function</td>
-				<td>Enable hash-based content loading</td>
-			</tr>
-		</tbody>
-	</table>
+	<nui-table>
+		<table>
+			<thead>
+				<tr>
+					<th>Member</th>
+					<th>Type</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><code>config</code></td>
+					<td>Object</td>
+					<td>Library configuration (iconSpritePath, sanitizeActions, etc.)</td>
+				</tr>
+				<tr>
+					<td><code>init(options)</code></td>
+					<td>Function</td>
+					<td>Initialize library, register custom elements</td>
+				</tr>
+				<tr>
+					<td><code>configure(options)</code></td>
+					<td>Function</td>
+					<td>Update configuration after init</td>
+				</tr>
+				<tr>
+					<td><code>registerFeature(name, fn)</code></td>
+					<td>Function</td>
+					<td>Register a named feature for content routing</td>
+				</tr>
+				<tr>
+					<td><code>registerType(type, handler)</code></td>
+					<td>Function</td>
+					<td>Register a content type handler</td>
+				</tr>
+				<tr>
+					<td><code>createRouter(container, options)</code></td>
+					<td>Function</td>
+					<td>Create a router instance for SPA navigation</td>
+				</tr>
+				<tr>
+					<td><code>enableContentLoading(options)</code></td>
+					<td>Function</td>
+					<td>Enable hash-based content loading</td>
+				</tr>
+			</tbody>
+		</table>
+	</nui-table>
 </section>
 
 <section>
@@ -136,32 +138,34 @@ list.setActive('a[href="/profile"]');</code></pre>
 	</nui-tabs>
 
 	<h3>Built-in Components</h3>
-	<table class="nui-table">
-		<thead>
-			<tr>
-				<th>Component</th>
-				<th>Type</th>
-				<th>Methods</th>
-			</tr>
-		</thead>
-		<tbody>
-			<tr>
-				<td><code>dialog</code></td>
-				<td>Ephemeral</td>
-				<td><code>alert()</code>, <code>confirm()</code>, <code>prompt()</code></td>
-			</tr>
-			<tr>
-				<td><code>banner</code></td>
-				<td>Ephemeral</td>
-				<td><code>show()</code>, <code>hide()</code>, <code>hideAll()</code></td>
-			</tr>
-			<tr>
-				<td><code>linkList</code></td>
-				<td>Persistent</td>
-				<td><code>create()</code></td>
-			</tr>
-		</tbody>
-	</table>
+	<nui-table>
+		<table>
+			<thead>
+				<tr>
+					<th>Component</th>
+					<th>Type</th>
+					<th>Methods</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><code>dialog</code></td>
+					<td>Ephemeral</td>
+					<td><code>alert()</code>, <code>confirm()</code>, <code>prompt()</code></td>
+				</tr>
+				<tr>
+					<td><code>banner</code></td>
+					<td>Ephemeral</td>
+					<td><code>show()</code>, <code>hide()</code>, <code>hideAll()</code></td>
+				</tr>
+				<tr>
+					<td><code>linkList</code></td>
+					<td>Persistent</td>
+					<td><code>create()</code></td>
+				</tr>
+			</tbody>
+		</table>
+	</nui-table>
 
 	<h3>Dialog</h3>
 	<p>System dialogs for alerts, confirmations, and prompts:</p>
@@ -241,32 +245,34 @@ nui.components.dataTable = {
 	<p>Helper functions and subsystems. Extensible by addon utilities.</p>
 
 	<h3>Built-in Utilities</h3>
-	<table class="nui-table">
-		<thead>
-			<tr>
-				<th>Utility</th>
-				<th>Description</th>
-			</tr>
-		</thead>
-		<tbody>
-			<tr>
-				<td><code>createElement(tag, options)</code></td>
-				<td>Create DOM elements with options (class, attrs, events, content)</td>
-			</tr>
-			<tr>
-				<td><code>createSvgElement(tag, attrs)</code></td>
-				<td>Create SVG elements in the SVG namespace</td>
-			</tr>
-			<tr>
-				<td><code>cssAnimation(el, class, cb)</code></td>
-				<td>Run CSS animation class, callback on complete, return cancel function</td>
-			</tr>
-			<tr>
-				<td><code>storage</code></td>
-				<td>Cookie/localStorage helper with TTL support</td>
-			</tr>
-		</tbody>
-	</table>
+	<nui-table>
+		<table>
+			<thead>
+				<tr>
+					<th>Utility</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><code>createElement(tag, options)</code></td>
+					<td>Create DOM elements with options (class, attrs, events, content)</td>
+				</tr>
+				<tr>
+					<td><code>createSvgElement(tag, attrs)</code></td>
+					<td>Create SVG elements in the SVG namespace</td>
+				</tr>
+				<tr>
+					<td><code>cssAnimation(el, class, cb)</code></td>
+					<td>Run CSS animation class, callback on complete, return cancel function</td>
+				</tr>
+				<tr>
+					<td><code>storage</code></td>
+					<td>Cookie/localStorage helper with TTL support</td>
+				</tr>
+			</tbody>
+		</table>
+	</nui-table>
 
 	<h3>createElement</h3>
 	<p>Create DOM elements with a single options object:</p>

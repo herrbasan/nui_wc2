@@ -231,28 +231,30 @@ if (dialog.isOpen()) { ... }</code></pre>
 <section>
 	<h2>Placement Modes</h2>
 	<p>Use the <code>placement</code> attribute to position dialogs vertically:</p>
-	<table style="width: 100%; border-collapse: collapse; margin: 1rem 0;">
-		<thead>
-			<tr style="border-bottom: 2px solid var(--border-shade1);">
-				<th style="text-align: left; padding: 0.5rem;">Placement</th>
-				<th style="text-align: left; padding: 0.5rem;">Position</th>
-			</tr>
-		</thead>
-		<tbody>
-			<tr style="border-bottom: 1px solid var(--border-shade1);">
-				<td style="padding: 0.5rem;"><code>top</code></td>
-				<td style="padding: 0.5rem;">Upper third of viewport</td>
-			</tr>
-			<tr style="border-bottom: 1px solid var(--border-shade1);">
-				<td style="padding: 0.5rem;"><code>center</code></td>
-				<td style="padding: 0.5rem;">Vertically centered (default)</td>
-			</tr>
-			<tr>
-				<td style="padding: 0.5rem;"><code>bottom</code></td>
-				<td style="padding: 0.5rem;">Lower third of viewport</td>
-			</tr>
-		</tbody>
-	</table>
+	<nui-table>
+		<table>
+			<thead>
+				<tr>
+					<th>Placement</th>
+					<th>Position</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><code>top</code></td>
+					<td>Upper third of viewport</td>
+				</tr>
+				<tr>
+					<td><code>center</code></td>
+					<td>Vertically centered (default)</td>
+				</tr>
+				<tr>
+					<td><code>bottom</code></td>
+					<td>Lower third of viewport</td>
+				</tr>
+			</tbody>
+		</table>
+	</nui-table>
 	<nui-code>
 		<pre><code data-lang="html">&lt;nui-dialog id="top-dialog" placement="top"&gt;...&lt;/nui-dialog&gt;
 &lt;nui-dialog id="center-dialog" placement="center"&gt;...&lt;/nui-dialog&gt;
@@ -322,32 +324,34 @@ dialog.addEventListener('nui-dialog-cancel', () => {
 
 <section>
 	<h2>Attributes Reference</h2>
-	<table style="width: 100%; border-collapse: collapse; margin: 1rem 0;">
-		<thead>
-			<tr style="border-bottom: 2px solid var(--border-shade1);">
-				<th style="text-align: left; padding: 0.5rem;">Attribute</th>
-				<th style="text-align: left; padding: 0.5rem;">Values</th>
-				<th style="text-align: left; padding: 0.5rem;">Description</th>
-			</tr>
-		</thead>
-		<tbody>
-			<tr style="border-bottom: 1px solid var(--border-shade1);">
-				<td style="padding: 0.5rem;"><code>placement</code></td>
-				<td style="padding: 0.5rem;"><code>top</code>, <code>center</code>, <code>bottom</code></td>
-				<td style="padding: 0.5rem;">Vertical position (default: center)</td>
-			</tr>
-			<tr style="border-bottom: 1px solid var(--border-shade1);">
-				<td style="padding: 0.5rem;"><code>blocking</code></td>
-				<td style="padding: 0.5rem;">(boolean)</td>
-				<td style="padding: 0.5rem;">Disable Escape key and backdrop click closing</td>
-			</tr>
-			<tr>
-				<td style="padding: 0.5rem;"><code>id</code></td>
-				<td style="padding: 0.5rem;">string</td>
-				<td style="padding: 0.5rem;">Required for Doer targeting and JS access</td>
-			</tr>
-		</tbody>
-	</table>
+	<nui-table>
+		<table>
+			<thead>
+				<tr>
+					<th>Attribute</th>
+					<th>Values</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><code>placement</code></td>
+					<td><code>top</code>, <code>center</code>, <code>bottom</code></td>
+					<td>Vertical position (default: center)</td>
+				</tr>
+				<tr>
+					<td><code>blocking</code></td>
+					<td>(boolean)</td>
+					<td>Disable Escape key and backdrop click closing</td>
+				</tr>
+				<tr>
+					<td><code>id</code></td>
+					<td>string</td>
+					<td>Required for Doer targeting and JS access</td>
+				</tr>
+			</tbody>
+		</table>
+	</nui-table>
 </section>
 
 <section>

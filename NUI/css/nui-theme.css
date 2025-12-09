@@ -2176,3 +2176,107 @@ nui-banner[placement='top'].closing {
 	} 
 }
 
+/* ################################# nui-table COMPONENT */
+
+nui-table {
+	display: block;
+	width: 100%;
+	overflow-x: auto;
+}
+
+nui-table table {
+	width: 100%;
+	border-collapse: collapse;
+	background-color: var(--color-base);
+	color: var(--color-text);
+}
+
+nui-table th,
+nui-table td {
+	border: var(--border-thickness) solid var(--border-shade2);
+	padding: var(--nui-space-half);
+	text-align: left;
+	vertical-align: top;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: normal;
+	word-break: break-word;
+}
+
+nui-table th {
+	background-color: var(--color-shade2);
+	color: var(--color-text);
+	font-weight: bold;
+}
+
+nui-table tfoot {
+	background-color: var(--color-shade3);
+	color: var(--color-text);
+	font-weight: bold;
+}
+
+/* Responsive Table Enhancement */
+@media (max-width: 40rem) {
+	nui-table table.nui-table-enhanced,
+	nui-table table.nui-table-enhanced thead,
+	nui-table table.nui-table-enhanced tbody,
+	nui-table table.nui-table-enhanced th,
+	nui-table table.nui-table-enhanced td,
+	nui-table table.nui-table-enhanced tr {
+		display: block;
+	}
+
+	nui-table table.nui-table-enhanced thead tr {
+		position: absolute;
+		top: -9999px;
+		left: -9999px;
+	}
+
+	nui-table table.nui-table-enhanced tr {
+		background: var(--color-base);
+		margin-bottom: var(--nui-space);
+		border-radius: var(--border-radius2);
+		border: var(--border-thickness) solid var(--border-shade2);
+		overflow: hidden;
+		box-shadow: none;
+		padding: 0;
+	}
+
+	nui-table table.nui-table-enhanced td {
+		border: none;
+		border-bottom: var(--border-thickness) solid var(--border-shade2);
+		border-radius: 0;
+		padding: var(--nui-space-half);
+		color: var(--color-text);
+		width: 100%;
+		max-width: 100%;
+		box-sizing: border-box;
+		background: none;
+		position: relative;
+		text-align: left;
+		display: flex;
+		flex-direction: column;
+		align-items: stretch;
+		justify-content: flex-start;
+	}
+
+	nui-table table.nui-table-enhanced td:last-child {
+		border-bottom: none;
+	}
+
+	nui-table table.nui-table-enhanced td:before {
+		display: block;
+		width: 100%;
+		margin-bottom: 0.25em;
+		padding: 0;
+		white-space: normal;
+		text-align: left;
+		font-weight: 500;
+		color: var(--color-text-dim);
+		opacity: 0.8;
+		font-size: 0.85em;
+		content: attr(data-label);
+		box-sizing: border-box;
+	}
+}
+
