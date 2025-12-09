@@ -77,3 +77,438 @@
 		</table>
 	</nui-table>
 </section>
+
+<section>
+	<h2>Wide Table (Many Columns)</h2>
+	<p>Testing horizontal overflow and responsive behavior with 8+ columns.</p>
+	<nui-table>
+		<table>
+			<thead>
+				<tr>
+					<th>ID</th>
+					<th>First Name</th>
+					<th>Last Name</th>
+					<th>Email</th>
+					<th>Department</th>
+					<th>Role</th>
+					<th>Start Date</th>
+					<th>Status</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>E001</td>
+					<td>Sarah</td>
+					<td>Johnson</td>
+					<td>sarah.j@example.com</td>
+					<td>Engineering</td>
+					<td>Senior Developer</td>
+					<td>2020-03-15</td>
+					<td>Active</td>
+				</tr>
+				<tr>
+					<td>E002</td>
+					<td>Michael</td>
+					<td>Chen</td>
+					<td>m.chen@example.com</td>
+					<td>Design</td>
+					<td>UX Lead</td>
+					<td>2019-07-22</td>
+					<td>Active</td>
+				</tr>
+				<tr>
+					<td>E003</td>
+					<td>Emily</td>
+					<td>Rodriguez</td>
+					<td>emily.r@example.com</td>
+					<td>Marketing</td>
+					<td>Campaign Manager</td>
+					<td>2021-01-10</td>
+					<td>On Leave</td>
+				</tr>
+				<tr>
+					<td>E004</td>
+					<td>James</td>
+					<td>Williams</td>
+					<td>j.williams@example.com</td>
+					<td>Sales</td>
+					<td>Account Executive</td>
+					<td>2022-05-03</td>
+					<td>Active</td>
+				</tr>
+			</tbody>
+		</table>
+	</nui-table>
+</section>
+
+<section>
+	<h2>Narrow Table (2 Columns)</h2>
+	<p>Minimal key-value style table, common for settings or specifications.</p>
+	<nui-table>
+		<table>
+			<thead>
+				<tr>
+					<th>Setting</th>
+					<th>Value</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>Theme</td>
+					<td>Dark</td>
+				</tr>
+				<tr>
+					<td>Language</td>
+					<td>English</td>
+				</tr>
+				<tr>
+					<td>Timezone</td>
+					<td>UTC-5</td>
+				</tr>
+				<tr>
+					<td>Notifications</td>
+					<td>Enabled</td>
+				</tr>
+			</tbody>
+		</table>
+	</nui-table>
+</section>
+
+<section>
+	<h2>Long Content Cells</h2>
+	<p>Testing text wrapping and cell expansion with lengthy content.</p>
+	<nui-table>
+		<table>
+			<thead>
+				<tr>
+					<th>Task</th>
+					<th>Description</th>
+					<th>Assignee</th>
+					<th>Due</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>API Integration</td>
+					<td>Implement the new REST API endpoints for user authentication including OAuth2 flow and JWT token management</td>
+					<td>Dev Team</td>
+					<td>Dec 15</td>
+				</tr>
+				<tr>
+					<td>Database Migration</td>
+					<td>Migrate legacy PostgreSQL database to new schema with zero downtime deployment strategy</td>
+					<td>DBA</td>
+					<td>Dec 20</td>
+				</tr>
+				<tr>
+					<td>UI Redesign</td>
+					<td>Complete redesign of dashboard including new charts, responsive layouts, and dark mode support</td>
+					<td>Design Team</td>
+					<td>Jan 5</td>
+				</tr>
+			</tbody>
+		</table>
+	</nui-table>
+</section>
+
+<section>
+	<h2>Numeric Data (Right Aligned)</h2>
+	<p>Financial or statistical data often benefits from right-aligned numbers.</p>
+	<nui-table>
+		<table>
+			<thead>
+				<tr>
+					<th>Quarter</th>
+					<th>Revenue</th>
+					<th>Expenses</th>
+					<th>Profit</th>
+					<th>Growth</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>Q1 2025</td>
+					<td>$1,250,000</td>
+					<td>$890,000</td>
+					<td>$360,000</td>
+					<td>+12.5%</td>
+				</tr>
+				<tr>
+					<td>Q2 2025</td>
+					<td>$1,480,000</td>
+					<td>$920,000</td>
+					<td>$560,000</td>
+					<td>+18.4%</td>
+				</tr>
+				<tr>
+					<td>Q3 2025</td>
+					<td>$1,320,000</td>
+					<td>$950,000</td>
+					<td>$370,000</td>
+					<td>-10.8%</td>
+				</tr>
+				<tr>
+					<td>Q4 2025</td>
+					<td>$1,890,000</td>
+					<td>$1,100,000</td>
+					<td>$790,000</td>
+					<td>+43.2%</td>
+				</tr>
+			</tbody>
+		</table>
+	</nui-table>
+</section>
+
+<section>
+	<h2>Many Rows</h2>
+	<p>Testing scrolling and performance with a larger dataset.</p>
+	<nui-table>
+		<table>
+			<thead>
+				<tr>
+					<th>#</th>
+					<th>Country</th>
+					<th>Capital</th>
+					<th>Population</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr><td>1</td><td>United States</td><td>Washington D.C.</td><td>331M</td></tr>
+				<tr><td>2</td><td>China</td><td>Beijing</td><td>1.4B</td></tr>
+				<tr><td>3</td><td>Japan</td><td>Tokyo</td><td>126M</td></tr>
+				<tr><td>4</td><td>Germany</td><td>Berlin</td><td>83M</td></tr>
+				<tr><td>5</td><td>United Kingdom</td><td>London</td><td>67M</td></tr>
+				<tr><td>6</td><td>France</td><td>Paris</td><td>67M</td></tr>
+				<tr><td>7</td><td>India</td><td>New Delhi</td><td>1.4B</td></tr>
+				<tr><td>8</td><td>Italy</td><td>Rome</td><td>60M</td></tr>
+				<tr><td>9</td><td>Brazil</td><td>Brasília</td><td>213M</td></tr>
+				<tr><td>10</td><td>Canada</td><td>Ottawa</td><td>38M</td></tr>
+				<tr><td>11</td><td>Russia</td><td>Moscow</td><td>144M</td></tr>
+				<tr><td>12</td><td>South Korea</td><td>Seoul</td><td>52M</td></tr>
+				<tr><td>13</td><td>Australia</td><td>Canberra</td><td>26M</td></tr>
+				<tr><td>14</td><td>Spain</td><td>Madrid</td><td>47M</td></tr>
+				<tr><td>15</td><td>Mexico</td><td>Mexico City</td><td>129M</td></tr>
+			</tbody>
+		</table>
+	</nui-table>
+</section>
+
+<section>
+	<h2>Mixed Content Types</h2>
+	<p>Table with buttons, icons, and interactive elements inside cells.</p>
+	<nui-table>
+		<table>
+			<thead>
+				<tr>
+					<th>File</th>
+					<th>Type</th>
+					<th>Size</th>
+					<th>Modified</th>
+					<th>Actions</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><nui-icon name="file"></nui-icon> report-2025.pdf</td>
+					<td>PDF</td>
+					<td>2.4 MB</td>
+					<td>Dec 1, 2025</td>
+					<td>
+						<nui-button-container class="fill">
+							<nui-button><button type="button">Download</button></nui-button>
+							<nui-button variant="danger"><button type="button">Delete</button></nui-button>
+						</nui-button-container>
+					</td>
+				</tr>
+				<tr>
+					<td><nui-icon name="file"></nui-icon> presentation.pptx</td>
+					<td>PowerPoint</td>
+					<td>8.1 MB</td>
+					<td>Nov 28, 2025</td>
+					<td>
+						<nui-button-container class="fill">
+							<nui-button><button type="button">Download</button></nui-button>
+							<nui-button variant="danger"><button type="button">Delete</button></nui-button>
+						</nui-button-container>
+					</td>
+				</tr>
+				<tr>
+					<td><nui-icon name="file"></nui-icon> data-export.csv</td>
+					<td>CSV</td>
+					<td>156 KB</td>
+					<td>Dec 5, 2025</td>
+					<td>
+						<nui-button-container class="fill">
+							<nui-button><button type="button">Download</button></nui-button>
+							<nui-button variant="danger"><button type="button">Delete</button></nui-button>
+						</nui-button-container>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</nui-table>
+</section>
+
+<section>
+	<h2>No Header (tbody only)</h2>
+	<p>Some tables don't need headers - testing graceful degradation.</p>
+	<nui-table>
+		<table>
+			<tbody>
+				<tr>
+					<td>Row 1, Cell 1</td>
+					<td>Row 1, Cell 2</td>
+					<td>Row 1, Cell 3</td>
+				</tr>
+				<tr>
+					<td>Row 2, Cell 1</td>
+					<td>Row 2, Cell 2</td>
+					<td>Row 2, Cell 3</td>
+				</tr>
+				<tr>
+					<td>Row 3, Cell 1</td>
+					<td>Row 3, Cell 2</td>
+					<td>Row 3, Cell 3</td>
+				</tr>
+			</tbody>
+		</table>
+	</nui-table>
+</section>
+
+<section>
+	<h2>With Footer</h2>
+	<p>Tables with tfoot for summary rows or totals.</p>
+	<nui-table>
+		<table>
+			<thead>
+				<tr>
+					<th>Item</th>
+					<th>Qty</th>
+					<th>Unit Price</th>
+					<th>Total</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>Widget A</td>
+					<td>10</td>
+					<td>$5.00</td>
+					<td>$50.00</td>
+				</tr>
+				<tr>
+					<td>Widget B</td>
+					<td>5</td>
+					<td>$12.00</td>
+					<td>$60.00</td>
+				</tr>
+				<tr>
+					<td>Widget C</td>
+					<td>20</td>
+					<td>$3.50</td>
+					<td>$70.00</td>
+				</tr>
+			</tbody>
+			<tfoot>
+				<tr>
+					<td colspan="3"><strong>Grand Total</strong></td>
+					<td><strong>$180.00</strong></td>
+				</tr>
+			</tfoot>
+		</table>
+	</nui-table>
+</section>
+
+<section>
+	<h2>Colspan and Rowspan</h2>
+	<p>Testing merged cells - a common pattern for grouped data.</p>
+	<nui-table>
+		<table>
+			<thead>
+				<tr>
+					<th rowspan="2">Region</th>
+					<th colspan="2">Sales</th>
+					<th colspan="2">Returns</th>
+				</tr>
+				<tr>
+					<th>Units</th>
+					<th>Revenue</th>
+					<th>Units</th>
+					<th>Cost</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>North</td>
+					<td>1,200</td>
+					<td>$48,000</td>
+					<td>45</td>
+					<td>$1,800</td>
+				</tr>
+				<tr>
+					<td>South</td>
+					<td>980</td>
+					<td>$39,200</td>
+					<td>32</td>
+					<td>$1,280</td>
+				</tr>
+				<tr>
+					<td>East</td>
+					<td>1,450</td>
+					<td>$58,000</td>
+					<td>67</td>
+					<td>$2,680</td>
+				</tr>
+				<tr>
+					<td>West</td>
+					<td>1,100</td>
+					<td>$44,000</td>
+					<td>28</td>
+					<td>$1,120</td>
+				</tr>
+			</tbody>
+		</table>
+	</nui-table>
+</section>
+
+<section>
+	<h2>Single Row</h2>
+	<p>Edge case - table with just header and one data row.</p>
+	<nui-table>
+		<table>
+			<thead>
+				<tr>
+					<th>Status</th>
+					<th>Message</th>
+					<th>Timestamp</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>OK</td>
+					<td>System operational</td>
+					<td>2025-12-09 14:32:01</td>
+				</tr>
+			</tbody>
+		</table>
+	</nui-table>
+</section>
+
+<section>
+	<h2>Empty State</h2>
+	<p>Table with headers but no data rows - testing empty tbody handling.</p>
+	<nui-table>
+		<table>
+			<thead>
+				<tr>
+					<th>ID</th>
+					<th>Name</th>
+					<th>Status</th>
+				</tr>
+			</thead>
+			<tbody>
+				<!-- No data rows -->
+			</tbody>
+		</table>
+	</nui-table>
+	<p><em>Note: In production, you'd typically show an empty state message.</em></p>
+</section>

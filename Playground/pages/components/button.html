@@ -162,6 +162,26 @@
 		</li>
 		<li><code>direction</code>: Layout direction. Options: <code>row</code> (default), <code>column</code>.</li>
 	</ul>
+
+	<h3>Fill Mode</h3>
+	<p>Use the <code>fill</code> class to make buttons expand equally to fill the available space. Useful for action bars, mobile layouts, or when you want uniform button widths.</p>
+	<nui-code>
+		<pre><code data-lang="html">&lt;nui-button-container class="fill"&gt;
+  &lt;nui-button&gt;&lt;button type="button"&gt;Action 1&lt;/button&gt;&lt;/nui-button&gt;
+  &lt;nui-button&gt;&lt;button type="button"&gt;Action 2&lt;/button&gt;&lt;/nui-button&gt;
+  &lt;nui-button&gt;&lt;button type="button"&gt;Action 3&lt;/button&gt;&lt;/nui-button&gt;
+&lt;/nui-button-container&gt;</code></pre>
+	</nui-code>
+	<nui-button-container class="fill">
+		<nui-button><button type="button">Action 1</button></nui-button>
+		<nui-button><button type="button">Action 2</button></nui-button>
+		<nui-button><button type="button">Action 3</button></nui-button>
+	</nui-button-container>
+	<p style="margin-top: 1rem;"><strong>Fill with different variants:</strong></p>
+	<nui-button-container class="fill">
+		<nui-button type="outline"><button type="button">Cancel</button></nui-button>
+		<nui-button variant="submit"><button type="button">Confirm</button></nui-button>
+	</nui-button-container>
 	<h3>Examples</h3>
 	<p><strong>Right Aligned:</strong></p>
 	<nui-code>

@@ -7,24 +7,6 @@ body {
 	line-height: 1.6;
 }
 
-h2 {
-	margin-top: 2rem;
-}
-
-h3 {
-	margin-top: 1.5rem;
-	color: #666;
-}
-
-nui-button {
-	display: inline-block;
-	margin: 0.5rem 0.5rem 0.5rem 0;
-}
-
-button {
-	padding: 0.5rem 1rem;
-	cursor: pointer;
-}
 
 .highlight {
 	background: yellow;

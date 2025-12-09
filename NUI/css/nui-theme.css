@@ -72,6 +72,11 @@
 	--side-nav-width: 21rem;
 	--top-nav-height: var(--nui-space-quadruple);
 	--footer-height: var(--nui-space-double);
+
+	/* Breakpoints - use sparingly, only for fundamental layout changes */
+	/* Pixels used intentionally: viewport size is independent of font size */
+	--nui-breakpoint-mobile: 320px;
+	--nui-breakpoint-tablet: 640px;
 }
 
 :root {
@@ -111,6 +116,44 @@
 	outline: none;
 }
 
+
+h1 {
+	color: var(--color-highlight);
+	font-size: 2rem;
+	line-height: 2.2rem;
+	margin-bottom: var(--nui-space);
+	font-weight: 300;
+}
+
+h2 {
+	color: var(--color-highlight);
+	font-size: 1.4rem;
+	line-height: 1.8rem;
+	font-weight: 300;
+}
+
+h3{
+	font-weight: 400;
+	font-size: 1.3rem;
+	line-height: 2rem;
+	color:var(--color-text);
+}
+
+h4{
+	font-weight: 600;
+	font-size: 1.2rem;
+	line-height: 1.5rem;
+}
+
+h5{
+	font-weight: 600;
+	font-size: 1rem;
+}
+
+h6{
+	font-weight: 600;
+	font-size: 0.8rem;
+}
 
 
 /* Skip link for keyboard navigation (optional, can be added to HTML) */
@@ -489,6 +532,23 @@ nui-button-container.align-center {
 
 nui-button-container.align-between {
 	justify-content: space-between;
+}
+
+nui-button-container.fill {
+	flex-wrap: nowrap;
+}
+
+nui-button-container.fill > * {
+	flex: 1 1 0;
+}
+
+nui-button-container.fill > nui-button {
+	display: flex;
+}
+
+nui-button-container.fill > nui-button > button {
+	flex: 1;
+	min-width: 0;
 }
 
 nui-button-container.direction-column {
@@ -963,10 +1023,19 @@ nui-column-flow {
 	column-fill: balance;
 }
 
-@media (max-width: 40rem) {
+/* Tablet breakpoint: 640px (--nui-breakpoint-tablet) */
+@media (max-width: 640px) {
 	nui-column-flow {
 		column-count: 1;
 		column-width: auto;
+	}
+
+	nui-button-container.fill {
+		flex-wrap: wrap;
+	}
+
+	nui-button-container.fill > * {
+		flex: 1 1 100%;
 	}
 }
 
@@ -2264,13 +2333,13 @@ nui-table {
 nui-table table {
 	width: 100%;
 	border-collapse: collapse;
-	background-color: var(--color-base);
+	background-color: var(--color-shade2);
 	color: var(--color-text);
 }
 
 nui-table th,
 nui-table td {
-	border: var(--border-thickness) solid var(--border-shade2);
+	border: var(--border-thickness) solid var(--border-shade3);
 	padding: var(--nui-space-half);
 	text-align: left;
 	vertical-align: top;
@@ -2281,19 +2350,20 @@ nui-table td {
 }
 
 nui-table th {
-	background-color: var(--color-shade2);
+	background-color: var(--color-shade4);
 	color: var(--color-text);
 	font-weight: bold;
 }
 
 nui-table tfoot {
-	background-color: var(--color-shade3);
+	background-color: var(--color-shade1);
 	color: var(--color-text);
 	font-weight: bold;
 }
 
 /* Responsive Table Enhancement */
-@media (max-width: 40rem) {
+/* Tablet breakpoint: 640px (--nui-breakpoint-tablet) */
+@media (max-width: 640px) {
 	nui-table table.nui-table-enhanced,
 	nui-table table.nui-table-enhanced thead,
 	nui-table table.nui-table-enhanced tbody,
@@ -2303,6 +2373,13 @@ nui-table tfoot {
 		display: block;
 	}
 
+	nui-table,
+	nui-table table {
+		overflow-x: unset;
+		border: none;
+		background-color: transparent;
+	}
+
 	nui-table table.nui-table-enhanced thead tr {
 		position: absolute;
 		top: -9999px;
@@ -2310,18 +2387,18 @@ nui-table tfoot {
 	}
 
 	nui-table table.nui-table-enhanced tr {
-		background: var(--color-base);
+		background: var(--color-shade2);
 		margin-bottom: var(--nui-space);
-		border-radius: var(--border-radius2);
-		border: var(--border-thickness) solid var(--border-shade2);
-		overflow: hidden;
+		border-radius: var(--border-radius3);
+		border: var(--border-thickness) solid var(--border-shade3);
 		box-shadow: none;
 		padding: 0;
+		filter: drop-shadow(0 0 0.5rem light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.3)));
 	}
 
 	nui-table table.nui-table-enhanced td {
 		border: none;
-		border-bottom: var(--border-thickness) solid var(--border-shade2);
+		border-bottom: var(--border-thickness) solid var(--border-shade4);
 		border-radius: 0;
 		padding: var(--nui-space-half);
 		color: var(--color-text);
@@ -2331,6 +2408,7 @@ nui-table tfoot {
 		background: none;
 		position: relative;
 		text-align: left;
+		vertical-align: middle;
 		display: flex;
 		flex-direction: column;
 		align-items: stretch;
