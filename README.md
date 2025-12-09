@@ -38,6 +38,23 @@ The semantic `<button>` inside works on its own. The `<nui-button>` wrapper adds
 - **CSS Variable Theming** — Customize the entire design system with CSS custom properties
 - **Keyboard Navigation** — Full arrow key and Tab support where appropriate
 
+## Components
+
+| Component | Description |
+|-----------|-------------|
+| `nui-app` | App shell with sidebar, topbar, content grid |
+| `nui-tabs` | Tab panels with keyboard navigation |
+| `nui-accordion` | Collapsible sections |
+| `nui-dialog` | Modal dialogs (wraps native `<dialog>`) |
+| `nui-banner` | Notifications and alerts |
+| `nui-table` | Data tables with sorting and filtering |
+| `nui-slider` | Custom range input with drag support |
+| `nui-input` | Form input enhancements |
+| `nui-link-list` | Navigation trees with ARIA tree pattern |
+| `nui-code` | Code blocks with syntax highlighting |
+| `nui-button` | Button enhancements |
+| `nui-icon` | Icon system with SVG sprite support |
+
 ## Philosophy
 
 NUI embraces the web platform. Instead of abstracting away the DOM, it works with it directly. Components use semantic HTML inside custom element containers, making them accessible and debuggable with standard browser tools.

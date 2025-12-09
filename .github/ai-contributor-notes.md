@@ -749,4 +749,54 @@ The namespace structure makes the API self-documenting. `nui.components.dialog.c
 
 ---
 
+## #3Pw7X2 - December 9, 2025
+**nui-slider Component & Drag Utility**
+
+Added drag functionality and a custom slider component that replaces native range inputs.
+
+### enableDrag Utility
+Created `enableDrag(element, handlers)` - a reusable pointer-based drag utility:
+- Uses Pointer Events API (pointerdown/pointermove/pointerup) instead of separate mouse/touch handling
+- `setPointerCapture()` ensures drag continues even when pointer leaves element bounds
+- Returns cleanup function for proper teardown
+- Tracks `activePointerId` to prevent multi-touch conflicts
+- ~70 lines, no dependencies - small enough for core library
+
+### nui-slider Component
+Built `<nui-slider>` to wrap native `<input type="range">` with custom visuals:
+
+**HTML Pattern:**
+```html
+<nui-slider>
+    <input type="range" min="0" max="100" value="50">
+</nui-slider>
+```
+
+**Technical Approach:**
+- Wraps existing native input (progressive enhancement)
+- Creates visual track/fill/thumb elements via JS
+- Syncs thumb position with native input value
+- Native input remains functional for form submission and accessibility
+- Drag utility provides smooth, responsive interaction
+
+**CSS Design Decision:**
+- 2rem touch target height (accessibility best practice)
+- 0.25rem visual track using `::before` pseudo-element
+- Large invisible hit area, slim visible line
+- Themed with `--color-highlight` CSS variable
+
+### Documentation Updates
+- Updated `copilot-instructions.md` with current component inventory
+- Refreshed backlog: `nui-tabs`, `nui-accordion`, `nui-table`, `nui-slider` marked complete ✅
+- Added components table to README.md for quick reference
+- Renamed demo page from `drag.html` to `slider.html`
+
+### Pattern Observation
+The drag utility extracted from old `nui_drag_slider.js` demonstrates effective code archaeology. The reference folder contains working implementations that can be modernized (Pointer Events vs mouse/touch split) while preserving proven interaction patterns.
+
+### Contributor
+Claude Opus 4.5 (Preview) - GitHub Copilot
+
+---
+
 **Last Updated:** December 9, 2025

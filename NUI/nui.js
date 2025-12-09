@@ -1264,6 +1264,94 @@ registerComponent('nui-table', (element) => {
 	});
 });
 
+// ################################# nui-slider COMPONENT
+
+registerComponent('nui-slider', (element) => {
+	// Find or create the native input
+	let input = element.el('input[type="range"]');
+	if (!input) {
+		input = dom.create('input', {
+			attrs: { type: 'range', min: '0', max: '100', value: '50' }
+		});
+		element.appendChild(input);
+	}
+
+	// Hide native input but keep it accessible
+	input.classList.add('nui-slider-native');
+
+	// Create visual elements
+	const track = dom.create('div', { class: 'nui-slider-track', target: element });
+	const fill = dom.create('div', { class: 'nui-slider-fill', target: track });
+	const thumb = dom.create('div', { class: 'nui-slider-thumb', target: track });
+
+	// Get range properties
+	function getRange() {
+		const min = parseFloat(input.min) || 0;
+		const max = parseFloat(input.max) || 100;
+		const step = parseFloat(input.step) || 1;
+		return { min, max, step };
+	}
+
+	// Update visual position from input value
+	function updateVisuals() {
+		const { min, max } = getRange();
+		const value = parseFloat(input.value);
+		const percent = ((value - min) / (max - min)) * 100;
+		fill.style.width = percent + '%';
+		thumb.style.left = percent + '%';
+	}
+
+	// Set value from percentage
+	function setValueFromPercent(percent) {
+		const { min, max, step } = getRange();
+		let value = min + (percent * (max - min));
+		
+		// Snap to step
+		if (step > 0) {
+			value = Math.round(value / step) * step;
+		}
+		
+		// Clamp to range
+		value = Math.max(min, Math.min(max, value));
+		
+		if (parseFloat(input.value) !== value) {
+			input.value = value;
+			input.dispatchEvent(new Event('input', { bubbles: true }));
+		}
+	}
+
+	// Initial sync
+	updateVisuals();
+
+	// Listen to native input changes
+	input.addEventListener('input', updateVisuals);
+
+	// Enable drag interaction on track
+	const cleanup = enableDrag(track, (data) => {
+		setValueFromPercent(data.percentX);
+		updateVisuals();
+
+		if (data.type === 'start') {
+			thumb.classList.add('active');
+			element.classList.add('dragging');
+		} else if (data.type === 'end') {
+			thumb.classList.remove('active');
+			element.classList.remove('dragging');
+			input.dispatchEvent(new Event('change', { bubbles: true }));
+		}
+	});
+
+	// Expose API on element
+	element.getValue = () => parseFloat(input.value);
+	element.setValue = (val) => {
+		input.value = val;
+		updateVisuals();
+	};
+
+	// Return cleanup function
+	return cleanup;
+});
+
 // ################################# nui-banner COMPONENT
 
 registerComponent('nui-banner', (element) => {
@@ -2418,9 +2506,75 @@ const storage = {
 	}
 };
 
+function enableDrag(target, callback, options = {}) {
+	const subtarget = options.subtarget || target;
+	let activePointerId = null;
+	
+	function handleDown(e) {
+		e.preventDefault();
+		activePointerId = e.pointerId;
+		target.setPointerCapture(e.pointerId);
+		
+		target.addEventListener('pointermove', handleMove);
+		target.addEventListener('pointerup', handleUp);
+		target.addEventListener('pointercancel', handleUp);
+		target.addEventListener('lostpointercapture', handleUp);
+		
+		report(e, 'start');
+	}
+
+	function handleMove(e) {
+		if (e.pointerId !== activePointerId) return;
+		report(e, 'move');
+	}
+
+	function handleUp(e) {
+		if (e.pointerId !== activePointerId) return;
+		report(e, 'end');
+		cleanup();
+	}
+
+	function report(e, type) {
+		const rect = subtarget.getBoundingClientRect();
+		const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+		const y = Math.max(0, Math.min(e.clientY - rect.top, rect.height));
+		
+		callback({
+			type,
+			x, 
+			y,
+			percentX: x / rect.width,
+			percentY: y / rect.height,
+			clientX: e.clientX,
+			clientY: e.clientY,
+			isTouch: e.pointerType === 'touch'
+		});
+	}
+
+	function cleanup() {
+		if (activePointerId !== null) {
+			try { target.releasePointerCapture(activePointerId); } catch {}
+		}
+		activePointerId = null;
+		target.removeEventListener('pointermove', handleMove);
+		target.removeEventListener('pointerup', handleUp);
+		target.removeEventListener('pointercancel', handleUp);
+		target.removeEventListener('lostpointercapture', handleUp);
+	}
+
+	target.addEventListener('pointerdown', handleDown);
+
+	// Return cleanup function that fully removes all listeners
+	return () => {
+		cleanup();
+		target.removeEventListener('pointerdown', handleDown);
+	};
+}
+
 const util = {
 	createElement: dom.create,
 	createSvgElement: dom.svg,
+	enableDrag,
 	storage
 };
 

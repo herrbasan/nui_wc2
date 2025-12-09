@@ -631,25 +631,43 @@ The Playground is a Single Page Application (SPA) that uses a custom content loa
 
 ### Core vs Addon Strategy
 
-**Core Components (Essential, ~10-15KB budget):**
-- `nui-tabs` - No good native alternative
+**Core Components (Implemented):**
+- `nui-app`, `nui-top-nav`, `nui-side-nav`, `nui-content`, `nui-app-footer` - App layout system
+- `nui-button`, `nui-button-container` - Button enhancements
+- `nui-icon` - Icon system with sprite support
+- `nui-tabs` - Tab panels with keyboard navigation
+- `nui-accordion` - Collapsible sections
+- `nui-dialog` - Modal dialogs (wraps native `<dialog>`)
+- `nui-banner` - Notifications/alerts (covers toast use case)
+- `nui-table` - Data tables with sorting/filtering
+- `nui-slider` - Custom range input with drag support
+- `nui-input`, `nui-input-group` - Form input enhancements
+- `nui-link-list` - Navigation trees with ARIA tree pattern
+- `nui-code` - Code blocks with syntax highlighting support
+- `nui-column-flow` - Multi-column layout helper
+- `nui-loading` - Loading indicator
+
+**Planned Core Components:**
 - `nui-menu` - Dropdowns/context menus (essential and tricky)
 - `nui-tooltip` - Demonstrates element reuse pattern
 - `nui-progress` - Tiny, common need
-- `nui-accordion` - Small, common pattern (native `<details>` has limitations)
 
 **Addon Modules (Optional, load on demand):**
-- `nui-select` - Complex, searchable dropdowns (~30KB)
-- `nui-table` - Data tables with sorting/filtering/virtual scroll
+- `nui-select` - Complex, searchable dropdowns
 - `nui-gallery` - Image galleries
 - `nui-media-player` - Audio/video controls
 
-**Note:** `nui-card` is CSS-only. `nui-toast` functionality is covered by `nui-banner`.
+**Utilities:**
+- `enableDrag(element, handlers)` - Pointer-based drag utility
+- `enableContentLoading(config)` - SPA content loader/router
+- `storage` - localStorage wrapper with JSON support
 
 ### Backlog
-- [ ] Implement `nui-tabs`
+- [x] Implement `nui-tabs` ✅
+- [x] Implement `nui-accordion` ✅
+- [x] Implement `nui-table` ✅
+- [x] Implement `nui-slider` ✅
 - [ ] Implement `nui-menu`
 - [ ] Implement `nui-tooltip`
 - [ ] Implement `nui-progress`
-- [ ] Implement `nui-accordion`
 
