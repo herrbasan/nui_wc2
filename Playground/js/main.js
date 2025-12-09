@@ -116,7 +116,7 @@ nui.registerFeature('dashboard', (element, params) => {
 // Navigation data (JSON) - mirrors the HTML structure
 const navigationData = [
 	{
-		label: 'Pages',
+		label: 'Documentation',
 		icon: 'article',
 		items: [
 			{ label: 'Introduction', href: '#page=introduction' },
@@ -145,6 +145,7 @@ const navigationData = [
 		label: 'Features',
 		icon: 'settings',
 		items: [
+			{ label: 'API Structure', href: '#page=features/api-structure' },
 			{ label: 'Dashboard', href: '#feature=dashboard' },
 			{ label: 'Storage', href: '#page=features/storage' }
 		]

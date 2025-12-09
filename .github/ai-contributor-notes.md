@@ -702,4 +702,51 @@ User noted that `nui.storage` should "offer the same interface as dialog and ban
 
 ---
 
-**Last Updated:** December 8, 2025
+## #2Kx5T9 - December 9, 2025
+**API Namespacing & Legacy Cleanup**
+
+Major API restructuring to establish clear organizational hierarchy.
+
+### Namespace Structure
+Refactored the nui API into a three-tier namespace:
+
+**Root Level** - Core library functions:
+- `nui.init()`, `nui.configure()`, `nui.createRouter()`, `nui.enableContentLoading()`
+- `nui.registerFeature()`, `nui.registerType()`, `nui.config`
+
+**nui.components** - Factory objects for dynamic component creation:
+- `nui.components.dialog` - Modal dialog system
+- `nui.components.banner` - Notification banners
+- `nui.components.linkList` - Tree navigation
+
+**nui.util** - Pure utility functions:
+- `nui.util.createElement()`, `nui.util.createSvgElement()`
+- `nui.util.cssAnimation()` - Promise-based CSS animations
+- `nui.util.storage` - Cookie/localStorage helper
+
+### Legacy Aliases Removed
+Eliminated deprecated root-level aliases that bypassed the namespace:
+- ~~`nui.dialog`~~ → `nui.components.dialog`
+- ~~`nui.banner`~~ → `nui.components.banner`  
+- ~~`nui.storage`~~ → `nui.util.storage`
+
+### Declarative Banner Fix
+Resolved critical bug where declarative `<nui-banner>` elements would flash and immediately close. Root cause: banners inside `.nui-content-scroll` were clipped by `overflow: hidden`. Solution:
+- Added `_bannerInitialized` flag to prevent re-initialization on DOM moves
+- `moveToBannerLayer()` relocates banner to `.nui-banner-layer` inside `nui-content`
+- `restorePosition()` returns banner to original DOM location after close
+
+### Scroll Reset Fix
+Fixed page navigation not scrolling to top. The `handleDeepLink()` function was setting `scrollTop = 0` on the wrong element (the `main` container instead of `.nui-content-scroll`). Now correctly finds the actual scroll container.
+
+### Documentation
+- Created `Playground/pages/features/api-structure.html` documenting the full API hierarchy
+- Added to Features navigation section
+- Renamed top-level navigation group from "Pages" to "Documentation"
+
+### Lesson Learned
+The namespace structure makes the API self-documenting. `nui.components.dialog.create()` is immediately understandable without consulting docs. Clear organizational hierarchy reduces cognitive load and makes the library more approachable for newcomers.
+
+---
+
+**Last Updated:** December 9, 2025

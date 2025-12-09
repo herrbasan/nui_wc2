@@ -2438,6 +2438,9 @@ function createRouter(container, options = {}) {
 	}
 
 	function handleDeepLink(element, params) {
+		// Find the actual scroll container (may be wrapped in .nui-content-scroll in app mode)
+		const scrollContainer = container.closest('.nui-content-scroll') || container.closest('nui-content')?.querySelector('.nui-content-scroll') || container;
+		
 		if (params.id) {
 			const target = element.querySelector(`#${params.id}`);
 			if (target) {
@@ -2446,7 +2449,7 @@ function createRouter(container, options = {}) {
 				});
 			}
 		} else {
-			container.scrollTop = 0;
+			scrollContainer.scrollTop = 0;
 		}
 	}
 
@@ -2833,11 +2836,7 @@ export const nui = {
 
 	enableContentLoading(options = {}) {
 		return enableContentLoading(options);
-	},
-
-	dialog: dialogSystem,
-	banner: bannerFactory,
-	storage
+	}
 };
 
 // ################################# AUTO-INITIALIZATION

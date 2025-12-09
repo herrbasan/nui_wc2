@@ -1,0 +1,349 @@
+<header>
+	<h1>API Structure</h1>
+	<p>Understanding the NUI library's three-tier namespace architecture</p>
+</header>
+
+<section>
+	<h2>Overview</h2>
+	<p>The NUI library exports a single <code>nui</code> object organized into three tiers:</p>
+	<ul>
+		<li><strong>Root</strong> (<code>nui.*</code>) — Core library functions for initialization and configuration</li>
+		<li><strong>Components</strong> (<code>nui.components.*</code>) — Factory APIs for data-driven components</li>
+		<li><strong>Utilities</strong> (<code>nui.util.*</code>) — Helper functions and subsystems</li>
+	</ul>
+	<p>This structure provides clear extension points for addons and makes the API self-documenting.</p>
+</section>
+
+<section>
+	<h2>Root Functions</h2>
+	<p>Core library initialization and maintenance functions. These are essential and always present.</p>
+	<nui-code>
+		<pre><code data-lang="javascript">// Initialize NUI (auto-called unless ?skip-init in URL)
+nui.init(options);
+
+// Update configuration
+nui.configure({ iconSpritePath: '/custom/path.svg' });
+
+// Register content features for router
+nui.registerFeature('dashboard', (container, params) => { ... });
+
+// Register type handlers for router
+nui.registerType('markdown', (container, content) => { ... });
+
+// Create a router instance
+const router = nui.createRouter(container, options);
+
+// Enable SPA content loading
+nui.enableContentLoading(options);</code></pre>
+	</nui-code>
+	
+	<h3>Available Root Members</h3>
+	<table class="nui-table">
+		<thead>
+			<tr>
+				<th>Member</th>
+				<th>Type</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>config</code></td>
+				<td>Object</td>
+				<td>Library configuration (iconSpritePath, sanitizeActions, etc.)</td>
+			</tr>
+			<tr>
+				<td><code>init(options)</code></td>
+				<td>Function</td>
+				<td>Initialize library, register custom elements</td>
+			</tr>
+			<tr>
+				<td><code>configure(options)</code></td>
+				<td>Function</td>
+				<td>Update configuration after init</td>
+			</tr>
+			<tr>
+				<td><code>registerFeature(name, fn)</code></td>
+				<td>Function</td>
+				<td>Register a named feature for content routing</td>
+			</tr>
+			<tr>
+				<td><code>registerType(type, handler)</code></td>
+				<td>Function</td>
+				<td>Register a content type handler</td>
+			</tr>
+			<tr>
+				<td><code>createRouter(container, options)</code></td>
+				<td>Function</td>
+				<td>Create a router instance for SPA navigation</td>
+			</tr>
+			<tr>
+				<td><code>enableContentLoading(options)</code></td>
+				<td>Function</td>
+				<td>Enable hash-based content loading</td>
+			</tr>
+		</tbody>
+	</table>
+</section>
+
+<section>
+	<h2>Components API</h2>
+	<p>Factory APIs for creating and managing data-driven components. Extensible by addon components.</p>
+	
+	<h3>Component Patterns</h3>
+	<p>Components follow one of two patterns:</p>
+	
+	<nui-tabs>
+		<nav>
+			<button aria-selected="true">Ephemeral</button>
+			<button>Persistent</button>
+		</nav>
+		<div>
+			<p>Ephemeral components are created, shown, and then destroyed when dismissed:</p>
+			<nui-code>
+				<pre><code data-lang="javascript">// Show an instance, get a controller back
+const controller = nui.components.banner.show({
+    content: 'Saved successfully!',
+    autoClose: 3000
+});
+
+// Later: hide specific instance
+nui.components.banner.hide(controller);
+
+// Or hide all
+nui.components.banner.hideAll();</code></pre>
+			</nui-code>
+		</div>
+		<div>
+			<p>Persistent components are created and remain in the DOM:</p>
+			<nui-code>
+				<pre><code data-lang="javascript">// Create element from data
+const list = nui.components.linkList.create([
+    { label: 'Home', href: '/' },
+    { label: 'Settings', icon: 'settings', items: [
+        { label: 'Profile', href: '/profile' },
+        { label: 'Security', href: '/security' }
+    ]}
+]);
+
+// Append to DOM
+container.appendChild(list);
+
+// Element has instance methods
+list.setActive('a[href="/profile"]');</code></pre>
+			</nui-code>
+		</div>
+	</nui-tabs>
+
+	<h3>Built-in Components</h3>
+	<table class="nui-table">
+		<thead>
+			<tr>
+				<th>Component</th>
+				<th>Type</th>
+				<th>Methods</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>dialog</code></td>
+				<td>Ephemeral</td>
+				<td><code>alert()</code>, <code>confirm()</code>, <code>prompt()</code></td>
+			</tr>
+			<tr>
+				<td><code>banner</code></td>
+				<td>Ephemeral</td>
+				<td><code>show()</code>, <code>hide()</code>, <code>hideAll()</code></td>
+			</tr>
+			<tr>
+				<td><code>linkList</code></td>
+				<td>Persistent</td>
+				<td><code>create()</code></td>
+			</tr>
+		</tbody>
+	</table>
+
+	<h3>Dialog</h3>
+	<p>System dialogs for alerts, confirmations, and prompts:</p>
+	<nui-code>
+		<pre><code data-lang="javascript">// Simple alert
+await nui.components.dialog.alert('Success', 'Your changes have been saved.');
+
+// Confirmation dialog
+const confirmed = await nui.components.dialog.confirm(
+    'Delete Item?', 
+    'This action cannot be undone.'
+);
+if (confirmed) { ... }
+
+// Prompt for input
+const name = await nui.components.dialog.prompt(
+    'Rename File',
+    'Enter a new filename:',
+    { defaultValue: 'document.txt' }
+);</code></pre>
+	</nui-code>
+
+	<h3>Banner</h3>
+	<p>Toast-style notifications:</p>
+	<nui-code>
+		<pre><code data-lang="javascript">// Show a banner
+const banner = nui.components.banner.show({
+    content: 'Changes saved',
+    placement: 'bottom',    // 'top' or 'bottom'
+    priority: 'info',       // 'info' or 'alert'
+    autoClose: 3000         // ms, 0 = no auto-close
+});
+
+// Hide specific banner
+nui.components.banner.hide(banner);
+
+// Hide all banners
+nui.components.banner.hideAll();</code></pre>
+	</nui-code>
+
+	<h3>Link List</h3>
+	<p>Create navigation lists from data:</p>
+	<nui-code>
+		<pre><code data-lang="javascript">const nav = nui.components.linkList.create([
+    { label: 'Dashboard', icon: 'dashboard', href: '#dashboard' },
+    { label: 'Users', icon: 'people', items: [
+        { label: 'All Users', href: '#users' },
+        { label: 'Add User', href: '#users/new' }
+    ]},
+    { separator: true },
+    { label: 'Settings', icon: 'settings', href: '#settings' }
+], { mode: 'fold' });
+
+// Instance methods
+nav.setActive('a[href="#users"]');
+nav.getActive();
+nav.clearActive();</code></pre>
+	</nui-code>
+
+	<h3>Extending with Addons</h3>
+	<p>Addon components register themselves under <code>nui.components</code>:</p>
+	<nui-code>
+		<pre><code data-lang="javascript">// In nui-gallery.js addon
+nui.components.gallery = {
+    create(images, options) { ... }
+};
+
+// In nui-data-table.js addon  
+nui.components.dataTable = {
+    create(data, options) { ... }
+};</code></pre>
+	</nui-code>
+</section>
+
+<section>
+	<h2>Utilities API</h2>
+	<p>Helper functions and subsystems. Extensible by addon utilities.</p>
+
+	<h3>Built-in Utilities</h3>
+	<table class="nui-table">
+		<thead>
+			<tr>
+				<th>Utility</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>createElement(tag, options)</code></td>
+				<td>Create DOM elements with options (class, attrs, events, content)</td>
+			</tr>
+			<tr>
+				<td><code>createSvgElement(tag, attrs)</code></td>
+				<td>Create SVG elements in the SVG namespace</td>
+			</tr>
+			<tr>
+				<td><code>cssAnimation(el, class, cb)</code></td>
+				<td>Run CSS animation class, callback on complete, return cancel function</td>
+			</tr>
+			<tr>
+				<td><code>storage</code></td>
+				<td>Cookie/localStorage helper with TTL support</td>
+			</tr>
+		</tbody>
+	</table>
+
+	<h3>createElement</h3>
+	<p>Create DOM elements with a single options object:</p>
+	<nui-code>
+		<pre><code data-lang="javascript">const button = nui.util.createElement('button', {
+    class: ['btn', 'btn-primary'],
+    attrs: { type: 'submit', disabled: true },
+    data: { action: 'save' },
+    events: { click: handleClick },
+    content: 'Save Changes'
+});
+
+// Append directly
+nui.util.createElement('div', {
+    class: 'notification',
+    content: 'Hello!',
+    target: document.body  // Appends to body
+});</code></pre>
+	</nui-code>
+
+	<h3>cssAnimation</h3>
+	<p>Run CSS animations with completion callbacks:</p>
+	<nui-code>
+		<pre><code data-lang="javascript">// Run animation, get cancel function
+const cancel = nui.util.cssAnimation(element, 'fade-in', () => {
+    console.log('Animation complete');
+});
+
+// Cancel if needed
+cancel();</code></pre>
+	</nui-code>
+
+	<h3>storage</h3>
+	<p>See the <a href="#page=features/storage">Storage documentation</a> for full details.</p>
+	<nui-code>
+		<pre><code data-lang="javascript">// Set value
+nui.util.storage.set({ name: 'theme', value: 'dark', ttl: '30d' });
+
+// Get value
+const theme = nui.util.storage.get({ name: 'theme' });
+
+// Remove value
+nui.util.storage.remove({ name: 'theme' });</code></pre>
+	</nui-code>
+
+	<h3>Extending with Addons</h3>
+	<p>Addon utilities register themselves under <code>nui.util</code>:</p>
+	<nui-code>
+		<pre><code data-lang="javascript">// In nui-animation.js addon
+nui.util.animation = {
+    fadeIn(element, duration) { ... },
+    fadeOut(element, duration) { ... }
+};
+
+// In nui-syntax-highlight.js addon
+nui.util.syntaxHighlight = {
+    highlight(element, language) { ... }
+};</code></pre>
+	</nui-code>
+</section>
+
+<section>
+	<h2>Inspecting the API</h2>
+	<p>The namespace structure makes the API self-documenting:</p>
+	<nui-code>
+		<pre><code data-lang="javascript">// See all component factories
+console.log(Object.keys(nui.components));
+// → ['dialog', 'banner', 'linkList']
+
+// See all utilities
+console.log(Object.keys(nui.util));
+// → ['createElement', 'createSvgElement', 'cssAnimation', 'storage']
+
+// Destructure for convenience
+const { dialog, banner } = nui.components;
+const { storage } = nui.util;
+
+await dialog.confirm('Delete?', 'Are you sure?');</code></pre>
+	</nui-code>
+</section>
