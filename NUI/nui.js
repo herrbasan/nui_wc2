@@ -985,104 +985,50 @@ registerComponent('nui-dialog', (element) => {
 	const dialog = element.el('dialog');
 	if (!dialog) return;
 
-	let isAnimating = false;
-	let isModal = false;
-	let cancelDialogAni = null;
-	let cancelBackdropAni = null;
-	let fakeBackdrop = null;
-
-	const cleanup = () => {
-		if (cancelDialogAni) cancelDialogAni();
-		if (cancelBackdropAni) cancelBackdropAni();
-		cancelDialogAni = null;
-		cancelBackdropAni = null;
-		
-		if (fakeBackdrop) {
-			fakeBackdrop.remove();
-			fakeBackdrop = null;
-		}
-		
-		dialog.classList.remove('closing', 'ani-scale-in', 'ani-scale-out');
-		isAnimating = false;
+	const close = (ret) => {
+		dialog.classList.add('closing');
+		dialog.addEventListener('transitionend', () => {
+			dialog.classList.remove('closing');
+			dialog.close(ret);
+			element.dispatchEvent(new CustomEvent('nui-dialog-close', { bubbles: true, detail: { returnValue: ret } }));
+		}, { once: true });
 	};
 
 	element.showModal = () => {
-		if (dialog.open) return;
-		
-		cleanup();
-		isModal = true;
 		dialog.showModal();
-		isAnimating = true;
-		cancelDialogAni = cssAnimation(dialog, 'ani-scale-in', () => {
-			isAnimating = false;
-			cancelDialogAni = null;
-		});
 		element.dispatchEvent(new CustomEvent('nui-dialog-open', { bubbles: true }));
 	};
 
 	element.show = () => {
-		if (dialog.open) return;
-		
-		cleanup();
-		isModal = false;
 		dialog.show();
-		isAnimating = true;
-		cancelDialogAni = cssAnimation(dialog, 'ani-scale-in', () => {
-			isAnimating = false;
-			cancelDialogAni = null;
-		});
 		element.dispatchEvent(new CustomEvent('nui-dialog-open', { bubbles: true }));
 	};
 
-	element.close = (returnValue) => {
-		if (!dialog.open || isAnimating && dialog.classList.contains('closing')) return;
-		
-		cleanup();
-		isAnimating = true;
-		
-		dialog.classList.add('closing');
-		
-		if (isModal) {
-			fakeBackdrop = dom.create('div', {
-				class: 'nui-dialog-backdrop',
-				target: document.body
-			});
-			cancelBackdropAni = cssAnimation(fakeBackdrop, 'ani-fade-out');
-		}
-		
-		cancelDialogAni = cssAnimation(dialog, 'ani-scale-out', () => {
-			cleanup();
-			dialog.close(returnValue);
-		});
+	element.close = (ret) => {
+		if (!dialog.open || dialog.classList.contains('closing')) return;
+		close(ret);
 	};
 
 	element.isOpen = () => dialog.open;
 
-	const isBlocking = () => element.hasAttribute('blocking');
-
 	dialog.addEventListener('close', () => {
-		element.dispatchEvent(new CustomEvent('nui-dialog-close', { bubbles: true, detail: { returnValue: dialog.returnValue } }));
+		if (!dialog.classList.contains('closing')) {
+			element.dispatchEvent(new CustomEvent('nui-dialog-close', { bubbles: true, detail: { returnValue: dialog.returnValue } }));
+		}
 	});
 
 	dialog.addEventListener('cancel', (e) => {
-		if (isBlocking()) {
-			e.preventDefault();
-			return;
-		}
 		e.preventDefault();
-		element.close('cancel');
+		if (!element.hasAttribute('blocking')) element.close('cancel');
 		element.dispatchEvent(new CustomEvent('nui-dialog-cancel', { bubbles: true }));
 	});
 
 	dialog.addEventListener('click', (e) => {
-		if (isBlocking()) return;
-		
+		if (element.hasAttribute('blocking')) return;
 		const rect = dialog.getBoundingClientRect();
-		const isInDialog = (rect.top <= e.clientY && e.clientY <= rect.top + rect.height &&
-			rect.left <= e.clientX && e.clientX <= rect.left + rect.width);
-		if (!isInDialog) {
-			element.close('backdrop');
-		}
+		if (rect.top <= e.clientY && e.clientY <= rect.top + rect.height &&
+			rect.left <= e.clientX && e.clientX <= rect.left + rect.width) return;
+		element.close('backdrop');
 	});
 });
 
@@ -1292,89 +1238,32 @@ registerComponent('nui-banner', (element) => {
 	let contentEl = element.el('.nui-banner-content');
 	if (!wrapper) {
 		const children = Array.from(element.childNodes);
-		
-		contentEl = dom.create('div', {
-			class: 'nui-banner-content',
-			content: children
-		});
-		
-		wrapper = dom.create('div', {
-			class: 'nui-banner-wrapper',
-			content: contentEl,
-			target: element
-		});
+		contentEl = dom.create('div', { class: 'nui-banner-content', content: children });
+		wrapper = dom.create('div', { class: 'nui-banner-wrapper', content: contentEl, target: element });
 	} else if (!contentEl) {
 		const children = Array.from(wrapper.childNodes);
-		
-		contentEl = dom.create('div', {
-			class: 'nui-banner-content',
-			content: children,
-			target: wrapper
-		});
+		contentEl = dom.create('div', { class: 'nui-banner-content', content: children, target: wrapper });
 	}
 
-	let isOpen = false;
 	let autoCloseTimer = null;
-	let countdown = 0;
-	let cancelOpenAni = null;
-	let cancelCloseAni = null;
 	let originalParent = null;
 	let originalNextSibling = null;
 	
-	// Mark as initialized to prevent re-setup on move
 	if (element._bannerInitialized) return;
 	element._bannerInitialized = true;
 
-	const cleanup = () => {
-		if (cancelOpenAni) cancelOpenAni();
-		if (cancelCloseAni) cancelCloseAni();
-		if (autoCloseTimer) clearTimeout(autoCloseTimer);
-		cancelOpenAni = null;
-		cancelCloseAni = null;
-		autoCloseTimer = null;
-	};
-
 	const priority = element.getAttribute('priority') || 'info';
-	if (priority === 'alert') {
-		element.setAttribute('role', 'alert');
-		element.setAttribute('aria-live', 'assertive');
-	} else {
-		element.setAttribute('role', 'status');
-		element.setAttribute('aria-live', 'polite');
-	}
-
-	const getAnimations = () => {
-		const placement = element.getAttribute('placement') || 'bottom';
-		if (placement === 'top') {
-			return { in: 'ani-slide-in-top', out: 'ani-slide-out-top' };
-		}
-		return { in: 'ani-slide-in-bottom', out: 'ani-slide-out-bottom' };
-	};
-
-	const getBannerLayer = () => {
-		const contentArea = document.el('nui-app nui-content');
-		if (!contentArea) return null;
-		
-		let bannerLayer = contentArea.el(':scope > .nui-banner-layer');
-		if (!bannerLayer) {
-			bannerLayer = dom.create('div', {
-				class: 'nui-banner-layer',
-				target: contentArea
-			});
-		}
-		return bannerLayer;
-	};
-
-	const needsMove = () => {
-		// Check if banner is inside scroll container or other clipping context
-		const bannerLayer = element.closest('.nui-banner-layer');
-		if (bannerLayer) return false; // Already in banner layer
-		return element.closest('nui-content, .nui-content-scroll') !== null;
-	};
+	element.setAttribute('role', priority === 'alert' ? 'alert' : 'status');
+	element.setAttribute('aria-live', priority === 'alert' ? 'assertive' : 'polite');
 
 	const moveToBannerLayer = () => {
-		const bannerLayer = getBannerLayer();
-		if (!bannerLayer || element.parentElement === bannerLayer) return;
+		const contentArea = document.el('nui-app nui-content');
+		if (!contentArea) return;
+		
+		let bannerLayer = contentArea.el(':scope > .nui-banner-layer');
+		if (!bannerLayer) bannerLayer = dom.create('div', { class: 'nui-banner-layer', target: contentArea });
+		
+		if (element.parentElement === bannerLayer) return;
 		
 		originalParent = element.parentElement;
 		originalNextSibling = element.nextSibling;
@@ -1393,53 +1282,30 @@ registerComponent('nui-banner', (element) => {
 	};
 
 	element.show = () => {
-		if (isOpen) return;
-
-		cleanup();
+		if (element.hasAttribute('open')) return;
+		if (element.closest('nui-content, .nui-content-scroll')) moveToBannerLayer();
 		
-		// Move to banner layer if inside scroll container
-		if (needsMove()) {
-			moveToBannerLayer();
-		}
-		
-		isOpen = true;
 		element.setAttribute('open', '');
-		
-		const animations = getAnimations();
-		cancelOpenAni = cssAnimation(element, animations.in, () => {
-			cancelOpenAni = null;
-		});
+		element.dispatchEvent(new CustomEvent('nui-banner-open', { bubbles: true }));
 
 		const autoClose = element.getAttribute('auto-close');
 		if (autoClose && parseInt(autoClose, 10) > 0) {
-			const duration = parseInt(autoClose, 10);
-			autoCloseTimer = setTimeout(() => {
-				element.close('timeout');
-			}, duration);
+			if (autoCloseTimer) clearTimeout(autoCloseTimer);
+			autoCloseTimer = setTimeout(() => element.close('timeout'), parseInt(autoClose, 10));
 		}
-
-		element.dispatchEvent(new CustomEvent('nui-banner-open', { bubbles: true }));
 	};
 
 	element.close = (action = 'close') => {
-		if (!isOpen) return;
+		if (!element.hasAttribute('open')) return;
+		if (autoCloseTimer) clearTimeout(autoCloseTimer);
 
-		cleanup();
-		
-		const animations = getAnimations();
-		cancelCloseAni = cssAnimation(element, animations.out, () => {
-			isOpen = false;
+		element.classList.add('closing');
+		element.addEventListener('transitionend', () => {
+			element.classList.remove('closing');
 			element.removeAttribute('open');
-			cancelCloseAni = null;
-			
-			// Restore original position after close animation
 			restorePosition();
-			
-			element.dispatchEvent(new CustomEvent('nui-banner-close', { 
-				bubbles: true, 
-				detail: { action } 
-			}));
-		});
+			element.dispatchEvent(new CustomEvent('nui-banner-close', { bubbles: true, detail: { action } }));
+		}, { once: true });
 	};
 
 	element.update = (content) => {
@@ -1449,13 +1315,163 @@ registerComponent('nui-banner', (element) => {
 		}
 	};
 
-	element.isOpen = () => isOpen;
+	element.isOpen = () => element.hasAttribute('open');
 });
 
 // ################################# INPUT COMPONENTS
 
 function generateInputId(prefix = 'nui-input') {
 	return `${prefix}-${crypto.randomUUID().slice(0, 8)}`;
+}
+
+function setupInputBehavior(element, input, config = {}) {
+	const { autoResize, showCount } = config;
+	let errorEl, countEl, clearBtn;
+
+	const dispatch = (name, detail = {}) => {
+		element.dispatchEvent(new CustomEvent(name, {
+			bubbles: true,
+			detail: { ...detail, name: input.name || input.id || '' }
+		}));
+	};
+
+	const ensureEl = (type, cls, role) => {
+		let el = type === 'error' ? errorEl : countEl;
+		if (!el) {
+			el = dom.create('div', { class: cls, attrs: role ? { role } : {}, target: element });
+			if (type === 'error') errorEl = el; else countEl = el;
+		}
+		return el;
+	};
+
+	const validate = () => {
+		const valid = input.validity.valid;
+		const hasValue = input.value !== '';
+		element.classList.toggle('is-valid', valid && hasValue);
+		element.classList.toggle('is-invalid', !valid);
+
+		if (!valid && input.validationMessage) {
+			const el = ensureEl('error', 'nui-error-message', 'alert');
+			el.textContent = input.validationMessage;
+			input.setAttribute('aria-invalid', 'true');
+			input.setAttribute('aria-describedby', el.id || (el.id = generateInputId('error')));
+		} else {
+			if (errorEl) errorEl.textContent = '';
+			input.removeAttribute('aria-invalid');
+			input.removeAttribute('aria-describedby');
+		}
+		return valid;
+	};
+
+	const updateState = () => {
+		if (autoResize) {
+			input.style.height = 'auto';
+			input.style.height = input.scrollHeight + 'px';
+		}
+		if (showCount) {
+			const el = ensureEl('count', 'nui-char-count');
+			const max = input.maxLength > 0 ? input.maxLength : null;
+			const len = input.value.length;
+			el.textContent = max ? `${len} / ${max}` : len;
+			if (max) el.classList.toggle('at-limit', len >= max);
+		}
+		if (clearBtn) clearBtn.style.display = input.value ? 'flex' : 'none';
+	};
+
+	if (element.hasAttribute('clearable')) {
+		clearBtn = dom.create('button', {
+			class: 'nui-clear-btn',
+			attrs: { type: 'button', 'aria-label': 'Clear input' },
+			style: 'display: none',
+			content: '<nui-icon name="close"></nui-icon>',
+			target: element
+		});
+		clearBtn.addEventListener('click', () => {
+			input.value = '';
+			input.focus();
+			updateState();
+			dispatch('nui-clear');
+			dispatch('nui-input', { value: '', valid: true });
+		});
+	}
+
+	input.addEventListener('input', () => {
+		updateState();
+		if (input.value !== '') validate();
+		else {
+			element.classList.remove('is-valid', 'is-invalid');
+			if (errorEl) errorEl.textContent = '';
+			input.removeAttribute('aria-invalid');
+		}
+		dispatch('nui-input', { value: input.value, valid: input.validity.valid });
+	});
+
+	input.addEventListener('blur', () => {
+		validate();
+		dispatch('nui-change', { value: input.value, valid: input.validity.valid });
+	});
+
+	element.validate = () => {
+		const valid = validate();
+		dispatch('nui-validate', { valid, message: input.validationMessage });
+		return valid;
+	};
+
+	element.clear = () => {
+		input.value = '';
+		updateState();
+		element.classList.remove('is-valid', 'is-invalid');
+		if (errorEl) errorEl.textContent = '';
+		dispatch('nui-clear');
+	};
+
+	element.focus = () => input.focus();
+	
+	if (autoResize) {
+		input.style.boxSizing = 'border-box';
+		updateState();
+	} else {
+		updateState();
+	}
+}
+
+function setupCheckableBehavior(element, type) {
+	const input = element.el(`input[type="${type}"]`);
+	if (!input) return;
+
+	const label = element.el('label');
+	if (label && !label.htmlFor) {
+		if (!input.id) input.id = generateInputId(type);
+		label.htmlFor = input.id;
+	}
+
+	const isRadio = type === 'radio';
+	const indicator = dom.create('span', {
+		class: isRadio ? 'nui-radio-circle' : 'nui-check-box',
+		attrs: { 'aria-hidden': 'true' },
+		content: isRadio ? '' : `<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>`
+	});
+
+	input.after(indicator);
+
+	element.addEventListener('click', (e) => {
+		if (e.target === input || e.target === label || input.disabled) return;
+		if (isRadio && input.checked) return;
+		
+		input.checked = isRadio ? true : !input.checked;
+		input.dispatchEvent(new Event('change', { bubbles: true }));
+	});
+
+	input.addEventListener('change', () => {
+		element.dispatchEvent(new CustomEvent('nui-change', {
+			bubbles: true,
+			detail: {
+				checked: input.checked,
+				value: input.value,
+				name: input.name || input.id || ''
+			}
+		}));
+	});
 }
 
 // ################################# nui-input-group COMPONENT
@@ -1495,107 +1511,7 @@ registerComponent('nui-input-group', (element) => {
 
 registerComponent('nui-input', (element) => {
 	const input = element.el('input');
-	if (!input) return;
-
-	let clearBtn = null;
-	let errorEl = null;
-
-	const dispatch = (name, detail) => {
-		element.dispatchEvent(new CustomEvent(name, {
-			bubbles: true,
-			detail: { ...detail, name: input.name || input.id || '' }
-		}));
-	};
-
-	if (element.hasAttribute('clearable')) {
-		clearBtn = dom.create('button', {
-			class: 'nui-clear-btn',
-			attrs: { type: 'button', 'aria-label': 'Clear input' },
-			style: 'display: none',
-			content: '<nui-icon name="close"></nui-icon>',
-			target: element
-		});
-
-		clearBtn.addEventListener('click', () => {
-			input.value = '';
-			input.focus();
-			clearBtn.style.display = 'none';
-			dispatch('nui-clear', {});
-			dispatch('nui-input', { value: '', valid: input.validity.valid });
-		});
-	}
-
-	const ensureErrorElement = () => {
-		if (!errorEl) {
-			errorEl = dom.create('div', {
-				class: 'nui-error-message',
-				attrs: { role: 'alert' },
-				target: element
-			});
-		}
-		return errorEl;
-	};
-
-	const updateClearButton = () => {
-		if (clearBtn) {
-			clearBtn.style.display = input.value ? 'flex' : 'none';
-		}
-	};
-
-	const validate = () => {
-		const valid = input.validity.valid;
-		element.classList.toggle('is-valid', valid && input.value !== '');
-		element.classList.toggle('is-invalid', !valid);
-
-		if (!valid && input.validationMessage) {
-			const errEl = ensureErrorElement();
-			errEl.textContent = input.validationMessage;
-			input.setAttribute('aria-invalid', 'true');
-			input.setAttribute('aria-describedby', errEl.id || (errEl.id = generateInputId('error')));
-		} else {
-			if (errorEl) errorEl.textContent = '';
-			input.removeAttribute('aria-invalid');
-			input.removeAttribute('aria-describedby');
-		}
-
-		return valid;
-	};
-
-	input.addEventListener('input', () => {
-		updateClearButton();
-		if (input.value !== '') {
-			validate();
-		} else {
-			element.classList.remove('is-valid', 'is-invalid');
-			if (errorEl) errorEl.textContent = '';
-			input.removeAttribute('aria-invalid');
-			input.removeAttribute('aria-describedby');
-		}
-		dispatch('nui-input', { value: input.value, valid: input.validity.valid });
-	});
-
-	input.addEventListener('blur', () => {
-		validate();
-		dispatch('nui-change', { value: input.value, valid: input.validity.valid });
-	});
-
-	element.validate = () => {
-		const valid = validate();
-		dispatch('nui-validate', { valid, message: input.validationMessage });
-		return valid;
-	};
-
-	element.clear = () => {
-		input.value = '';
-		updateClearButton();
-		element.classList.remove('is-valid', 'is-invalid');
-		if (errorEl) errorEl.textContent = '';
-		dispatch('nui-clear', {});
-	};
-
-	element.focus = () => input.focus();
-
-	updateClearButton();
+	if (input) setupInputBehavior(element, input);
 });
 
 // ################################# nui-textarea COMPONENT
@@ -1604,213 +1520,22 @@ registerComponent('nui-textarea', (element) => {
 	const textarea = element.el('textarea');
 	if (!textarea) return;
 
-	let countEl = null;
-	let errorEl = null;
-
-	const dispatch = (name, detail) => {
-		element.dispatchEvent(new CustomEvent(name, {
-			bubbles: true,
-			detail: { ...detail, name: textarea.name || textarea.id || '' }
-		}));
-	};
-
 	const autoResize = element.hasAttribute('auto-resize');
-	const minRows = parseInt(element.getAttribute('min-rows') || '3', 10);
-	const maxRows = parseInt(element.getAttribute('max-rows') || '10', 10);
-
-	const computedStyle = getComputedStyle(textarea);
-	const lineHeight = parseFloat(computedStyle.lineHeight) || 24;
-	const paddingTop = parseFloat(computedStyle.paddingTop) || 0;
-	const paddingBottom = parseFloat(computedStyle.paddingBottom) || 0;
-	const borderTop = parseFloat(computedStyle.borderTopWidth) || 0;
-	const borderBottom = parseFloat(computedStyle.borderBottomWidth) || 0;
-
-	const minHeight = (lineHeight * minRows) + paddingTop + paddingBottom + borderTop + borderBottom;
-	const maxHeight = (lineHeight * maxRows) + paddingTop + paddingBottom + borderTop + borderBottom;
-
-	const resizeTextarea = () => {
-		if (!autoResize) return;
-		textarea.style.height = 'auto';
-		const newHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight);
-		textarea.style.height = newHeight + 'px';
-		textarea.style.overflowY = textarea.scrollHeight > maxHeight ? 'auto' : 'hidden';
-	};
-
 	const showCount = element.hasAttribute('show-count');
-	const maxLength = textarea.maxLength > 0 ? textarea.maxLength : null;
 
-	const ensureCountElement = () => {
-		if (!countEl && showCount) {
-			countEl = dom.create('div', {
-				class: 'nui-char-count',
-				target: element
-			});
-		}
-		return countEl;
-	};
-
-	const updateCount = () => {
-		if (!showCount) return;
-		const el = ensureCountElement();
-		const current = textarea.value.length;
-		if (maxLength) {
-			el.textContent = `${current} / ${maxLength}`;
-			el.classList.toggle('at-limit', current >= maxLength);
-		} else {
-			el.textContent = `${current}`;
-		}
-	};
-
-	const ensureErrorElement = () => {
-		if (!errorEl) {
-			errorEl = dom.create('div', {
-				class: 'nui-error-message',
-				attrs: { role: 'alert' },
-				target: element
-			});
-		}
-		return errorEl;
-	};
-
-	const validate = () => {
-		const valid = textarea.validity.valid;
-		element.classList.toggle('is-valid', valid && textarea.value !== '');
-		element.classList.toggle('is-invalid', !valid);
-
-		if (!valid && textarea.validationMessage) {
-			const errEl = ensureErrorElement();
-			errEl.textContent = textarea.validationMessage;
-			textarea.setAttribute('aria-invalid', 'true');
-			textarea.setAttribute('aria-describedby', errEl.id || (errEl.id = generateInputId('error')));
-		} else {
-			if (errorEl) errorEl.textContent = '';
-			textarea.removeAttribute('aria-invalid');
-			textarea.removeAttribute('aria-describedby');
-		}
-
-		return valid;
-	};
-
-	textarea.addEventListener('input', () => {
-		resizeTextarea();
-		updateCount();
-		if (textarea.value !== '') {
-			validate();
-		} else {
-			element.classList.remove('is-valid', 'is-invalid');
-			if (errorEl) errorEl.textContent = '';
-			textarea.removeAttribute('aria-invalid');
-			textarea.removeAttribute('aria-describedby');
-		}
-		dispatch('nui-input', { value: textarea.value, valid: textarea.validity.valid });
-	});
-
-	textarea.addEventListener('blur', () => {
-		validate();
-		dispatch('nui-change', { value: textarea.value, valid: textarea.validity.valid });
-	});
-
-	element.validate = () => {
-		const valid = validate();
-		dispatch('nui-validate', { valid, message: textarea.validationMessage });
-		return valid;
-	};
-
-	element.clear = () => {
-		textarea.value = '';
-		resizeTextarea();
-		updateCount();
-		element.classList.remove('is-valid', 'is-invalid');
-		if (errorEl) errorEl.textContent = '';
-		dispatch('nui-clear', {});
-	};
-
-	element.focus = () => textarea.focus();
-
-	if (autoResize) {
-		textarea.style.boxSizing = 'border-box';
-		resizeTextarea();
-	}
-	updateCount();
+	setupInputBehavior(element, textarea, { autoResize, showCount });
 });
 
 // ################################# nui-checkbox COMPONENT
 
 registerComponent('nui-checkbox', (element) => {
-	const input = element.el('input[type="checkbox"]');
-	if (!input) return;
-
-	const label = element.el('label');
-
-	if (label && !label.htmlFor) {
-		if (!input.id) input.id = generateInputId('checkbox');
-		label.htmlFor = input.id;
-	}
-
-	const checkBox = dom.create('span', {
-		class: 'nui-check-box',
-		attrs: { 'aria-hidden': 'true' },
-		content: `<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>`
-	});
-
-	input.after(checkBox);
-
-	element.addEventListener('click', (e) => {
-		if (e.target === input || e.target === label) return;
-		if (input.disabled) return;
-		input.checked = !input.checked;
-		input.dispatchEvent(new Event('change', { bubbles: true }));
-	});
-
-	input.addEventListener('change', () => {
-		element.dispatchEvent(new CustomEvent('nui-change', {
-			bubbles: true,
-			detail: {
-				checked: input.checked,
-				value: input.value,
-				name: input.name || input.id || ''
-			}
-		}));
-	});
+	setupCheckableBehavior(element, 'checkbox');
 });
 
 // ################################# nui-radio COMPONENT
 
 registerComponent('nui-radio', (element) => {
-	const input = element.el('input[type="radio"]');
-	if (!input) return;
-
-	const label = element.el('label');
-
-	if (label && !label.htmlFor) {
-		if (!input.id) input.id = generateInputId('radio');
-		label.htmlFor = input.id;
-	}
-
-	const radioCircle = dom.create('span', {
-		class: 'nui-radio-circle',
-		attrs: { 'aria-hidden': 'true' }
-	});
-
-	input.after(radioCircle);
-
-	element.addEventListener('click', (e) => {
-		if (e.target === input || e.target === label) return;
-		if (input.disabled) return;
-		input.checked = true;
-		input.dispatchEvent(new Event('change', { bubbles: true }));
-	});
-
-	input.addEventListener('change', () => {
-		element.dispatchEvent(new CustomEvent('nui-change', {
-			bubbles: true,
-			detail: {
-				checked: input.checked,
-				value: input.value,
-				name: input.name || input.id || ''
-			}
-		}));
-	});
+	setupCheckableBehavior(element, 'radio');
 });
 
 // ################################# BANNER FACTORY
@@ -2523,6 +2248,36 @@ function ensureBaseStyles() {
 
 		console.warn('[NUI] Default theme auto-loaded from:', cssPath, '(Include nui.js in <head> to prevent layout shifts)');
 	}
+
+	if (!document.getElementById('nui-core-styles')) {
+		dom.create('style', {
+			id: 'nui-core-styles',
+			content: `
+				nui-dialog dialog { transition: opacity 0.2s, transform 0.2s, display 0.2s allow-discrete, overlay 0.2s allow-discrete; opacity: 0; transform: scale(0.95); }
+				nui-dialog dialog[open] { opacity: 1; transform: scale(1); }
+				nui-dialog dialog.closing { opacity: 0; transform: scale(0.95); }
+				@starting-style { nui-dialog dialog[open] { opacity: 0; transform: scale(0.95); } }
+				
+				nui-dialog dialog::backdrop { 
+					transition: opacity 0.2s, display 0.2s allow-discrete, overlay 0.2s allow-discrete; 
+					opacity: 0; 
+					background-color: light-dark(rgba(240, 240, 240, 0.95), rgba(20, 20, 20, 0.95));
+				}
+				nui-dialog dialog[open]::backdrop { opacity: 1; }
+				nui-dialog dialog.closing::backdrop { opacity: 0; }
+				@starting-style { nui-dialog dialog[open]::backdrop { opacity: 0; } }
+
+				nui-banner { transition: opacity 0.3s, transform 0.3s, display 0.3s allow-discrete; opacity: 0; transform: translateY(100%); }
+				nui-banner[open] { opacity: 1; transform: translateY(0); }
+				nui-banner.closing { opacity: 0; transform: translateY(100%); }
+				@starting-style { nui-banner[open] { opacity: 0; transform: translateY(100%); } }
+				nui-banner[placement="top"] { transform: translateY(-100%); }
+				nui-banner[placement="top"].closing { transform: translateY(-100%); }
+				@starting-style { nui-banner[placement="top"][open] { transform: translateY(-100%); } }
+			`,
+			target: document.head
+		});
+	}
 }
 
 // ################################# STORAGE SYSTEM
@@ -2657,25 +2412,9 @@ const storage = {
 	}
 };
 
-function cssAnimation(element, className, callback) {
-	const onEnd = () => {
-		element.removeEventListener('animationend', onEnd);
-		element.classList.remove(className);
-		if (callback) callback(element);
-	};
-	element.addEventListener('animationend', onEnd);
-	element.classList.add(className);
-
-	return () => {
-		element.removeEventListener('animationend', onEnd);
-		element.classList.remove(className);
-	};
-}
-
 const util = {
 	createElement: dom.create,
 	createSvgElement: dom.svg,
-	cssAnimation,
 	storage
 };
 
