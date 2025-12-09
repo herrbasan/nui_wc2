@@ -12,32 +12,69 @@ const config = {
 
 // ################################# MINIMAL EVENT DELEGATION
 
+const builtinActionHandlers = {
+	'banner-show': (target, _actionEl, event) => {
+		if (target && typeof target.show === 'function') {
+			event.stopPropagation();
+			target.show();
+			return true;
+		}
+		return false;
+	},
+	'banner-close': (target, _actionEl, event, param) => {
+		if (target && typeof target.close === 'function') {
+			event.stopPropagation();
+			target.close(param);
+			return true;
+		}
+		return false;
+	}
+};
+
+function resolveAction(actionName) {
+	const parts = actionName.split('.');
+	let ctx = nui;
+	for (const part of parts) {
+		if (ctx && part in ctx) {
+			ctx = ctx[part];
+		} else {
+			return null;
+		}
+	}
+	return typeof ctx === 'function' ? ctx : null;
+}
+
 function setupActionDelegation() {
 	document.addEventListener('click', (e) => {
 		const actionEl = e.target.closest('[data-action]');
 		if (!actionEl) return;
-		
+
 		const actionSpec = actionEl.dataset.action;
 		if (!actionSpec) return;
-		
+
 		const [actionPart, selector] = actionSpec.split('@');
 		const [actionName, param] = actionPart.split(':');
-		
-		const target = selector ? document.querySelector(selector) : actionEl;
-		
-		if (typeof nui[actionName] === 'function') {
-			nui[actionName](target, actionEl, e, param);
-		} else {
-			actionEl.dispatchEvent(new CustomEvent('nui-action', {
-				bubbles: true,
-				detail: { name: actionName, target, param, originalEvent: e }
-			}));
 
-			actionEl.dispatchEvent(new CustomEvent(`nui-action-${actionName}`, {
-				bubbles: true,
-				detail: { target, param, originalEvent: e }
-			}));
+		const target = selector ? document.querySelector(selector) : actionEl;
+
+		const actionFn = resolveAction(actionName);
+		if (actionFn) {
+			actionFn(target, actionEl, e, param);
+			return;
 		}
+
+		const handled = builtinActionHandlers[actionName]?.(target, actionEl, e, param);
+		if (handled) return;
+
+		actionEl.dispatchEvent(new CustomEvent('nui-action', {
+			bubbles: true,
+			detail: { name: actionName, target, param, originalEvent: e }
+		}));
+
+		actionEl.dispatchEvent(new CustomEvent(`nui-action-${actionName}`, {
+			bubbles: true,
+			detail: { target, param, originalEvent: e }
+		}));
 	});
 }
 
@@ -1049,7 +1086,7 @@ registerComponent('nui-dialog', (element) => {
 		isModal = true;
 		dialog.showModal();
 		isAnimating = true;
-		cancelDialogAni = nui.cssAnimation(dialog, 'ani-scale-in', () => {
+		cancelDialogAni = cssAnimation(dialog, 'ani-scale-in', () => {
 			isAnimating = false;
 			cancelDialogAni = null;
 		});
@@ -1063,7 +1100,7 @@ registerComponent('nui-dialog', (element) => {
 		isModal = false;
 		dialog.show();
 		isAnimating = true;
-		cancelDialogAni = nui.cssAnimation(dialog, 'ani-scale-in', () => {
+		cancelDialogAni = cssAnimation(dialog, 'ani-scale-in', () => {
 			isAnimating = false;
 			cancelDialogAni = null;
 		});
@@ -1082,10 +1119,10 @@ registerComponent('nui-dialog', (element) => {
 			fakeBackdrop = document.createElement('div');
 			fakeBackdrop.className = 'nui-dialog-backdrop';
 			document.body.appendChild(fakeBackdrop);
-			cancelBackdropAni = nui.cssAnimation(fakeBackdrop, 'ani-fade-out');
+			cancelBackdropAni = cssAnimation(fakeBackdrop, 'ani-fade-out');
 		}
 		
-		cancelDialogAni = nui.cssAnimation(dialog, 'ani-scale-out', () => {
+		cancelDialogAni = cssAnimation(dialog, 'ani-scale-out', () => {
 			cleanup();
 			dialog.close(returnValue);
 		});
@@ -1359,11 +1396,38 @@ registerComponent('nui-accordion', (element) => {
 // ################################# nui-banner COMPONENT
 
 registerComponent('nui-banner', (element) => {
+	let wrapper = element.querySelector('.nui-banner-wrapper');
+	let contentEl = element.querySelector('.nui-banner-content');
+	if (!wrapper) {
+		wrapper = document.createElement('div');
+		wrapper.className = 'nui-banner-wrapper';
+		contentEl = document.createElement('div');
+		contentEl.className = 'nui-banner-content';
+		while (element.firstChild) {
+			contentEl.appendChild(element.firstChild);
+		}
+		wrapper.appendChild(contentEl);
+		element.appendChild(wrapper);
+	} else if (!contentEl) {
+		contentEl = document.createElement('div');
+		contentEl.className = 'nui-banner-content';
+		while (wrapper.firstChild) {
+			contentEl.appendChild(wrapper.firstChild);
+		}
+		wrapper.appendChild(contentEl);
+	}
+
 	let isOpen = false;
 	let autoCloseTimer = null;
 	let countdown = 0;
 	let cancelOpenAni = null;
 	let cancelCloseAni = null;
+	let originalParent = null;
+	let originalNextSibling = null;
+	
+	// Mark as initialized to prevent re-setup on move
+	if (element._bannerInitialized) return;
+	element._bannerInitialized = true;
 
 	const cleanup = () => {
 		if (cancelOpenAni) cancelOpenAni();
@@ -1391,15 +1455,61 @@ registerComponent('nui-banner', (element) => {
 		return { in: 'ani-slide-in-bottom', out: 'ani-slide-out-bottom' };
 	};
 
+	const getBannerLayer = () => {
+		const contentArea = document.querySelector('nui-app nui-content');
+		if (!contentArea) return null;
+		
+		let bannerLayer = contentArea.querySelector(':scope > .nui-banner-layer');
+		if (!bannerLayer) {
+			bannerLayer = document.createElement('div');
+			bannerLayer.className = 'nui-banner-layer';
+			contentArea.appendChild(bannerLayer);
+		}
+		return bannerLayer;
+	};
+
+	const needsMove = () => {
+		// Check if banner is inside scroll container or other clipping context
+		const bannerLayer = element.closest('.nui-banner-layer');
+		if (bannerLayer) return false; // Already in banner layer
+		return element.closest('nui-content, .nui-content-scroll') !== null;
+	};
+
+	const moveToBannerLayer = () => {
+		const bannerLayer = getBannerLayer();
+		if (!bannerLayer || element.parentElement === bannerLayer) return;
+		
+		originalParent = element.parentElement;
+		originalNextSibling = element.nextSibling;
+		bannerLayer.appendChild(element);
+	};
+
+	const restorePosition = () => {
+		if (!originalParent) return;
+		if (originalNextSibling && originalNextSibling.parentElement === originalParent) {
+			originalParent.insertBefore(element, originalNextSibling);
+		} else if (originalParent.isConnected) {
+			originalParent.appendChild(element);
+		}
+		originalParent = null;
+		originalNextSibling = null;
+	};
+
 	element.show = () => {
 		if (isOpen) return;
 
 		cleanup();
+		
+		// Move to banner layer if inside scroll container
+		if (needsMove()) {
+			moveToBannerLayer();
+		}
+		
 		isOpen = true;
 		element.setAttribute('open', '');
 		
 		const animations = getAnimations();
-		cancelOpenAni = nui.cssAnimation(element, animations.in, () => {
+		cancelOpenAni = cssAnimation(element, animations.in, () => {
 			cancelOpenAni = null;
 		});
 
@@ -1420,10 +1530,13 @@ registerComponent('nui-banner', (element) => {
 		cleanup();
 		
 		const animations = getAnimations();
-		cancelCloseAni = nui.cssAnimation(element, animations.out, () => {
+		cancelCloseAni = cssAnimation(element, animations.out, () => {
 			isOpen = false;
 			element.removeAttribute('open');
 			cancelCloseAni = null;
+			
+			// Restore original position after close animation
+			restorePosition();
 			
 			element.dispatchEvent(new CustomEvent('nui-banner-close', { 
 				bubbles: true, 
@@ -1892,6 +2005,35 @@ const bannerFactory = {
 		banner.show();
 
 		return controller;
+	},
+
+	show(options = {}) {
+		return this.create(options);
+	},
+
+	hide(ref) {
+		if (ref === 'all' || ref === undefined || ref === null) {
+			return this.hideAll();
+		}
+
+		if (ref?.element instanceof HTMLElement) {
+			ref.element.close('dismiss');
+			return true;
+		}
+
+		if (ref instanceof HTMLElement) {
+			ref.close?.('dismiss');
+			return true;
+		}
+
+		return false;
+	},
+
+	hideAll() {
+		Object.values(activeBanners).forEach(controller => {
+			controller?.element?.close('dismiss');
+		});
+		return true;
 	}
 };
 
@@ -2114,6 +2256,30 @@ const dialogSystem = {
 		});
 	}
 };
+
+function createLinkList(data = [], options = {}) {
+	const element = document.createElement('nui-link-list');
+
+	if (options.mode) element.setAttribute('mode', options.mode);
+	if (options.id) element.id = options.id;
+	if (options.class) {
+		const classes = Array.isArray(options.class) ? options.class : [options.class];
+		element.classList.add(...classes.filter(Boolean));
+	}
+	if (options.attrs) {
+		Object.entries(options.attrs).forEach(([key, value]) => {
+			if (value !== null && value !== undefined) {
+				element.setAttribute(key, value);
+			}
+		});
+	}
+
+	if (data && element.loadData) {
+		element.loadData(data);
+	}
+
+	return element;
+}
 
 // ################################# CONTENT LOADER & ROUTER
 
@@ -2589,24 +2755,40 @@ const storage = {
 	}
 };
 
+function cssAnimation(element, className, callback) {
+	const onEnd = () => {
+		element.removeEventListener('animationend', onEnd);
+		element.classList.remove(className);
+		if (callback) callback(element);
+	};
+	element.addEventListener('animationend', onEnd);
+	element.classList.add(className);
+
+	return () => {
+		element.removeEventListener('animationend', onEnd);
+		element.classList.remove(className);
+	};
+}
+
+const util = {
+	createElement: dom.create,
+	createSvgElement: dom.svg,
+	cssAnimation,
+	storage
+};
+
+const componentsApi = {
+	dialog: dialogSystem,
+	banner: bannerFactory,
+	linkList: {
+		create: createLinkList
+	}
+};
+
 export const nui = {
 	config,
-	dom,
-
-	cssAnimation(element, className, callback) {
-		const onEnd = () => {
-			element.removeEventListener('animationend', onEnd);
-			element.classList.remove(className);
-			if (callback) callback(element);
-		};
-		element.addEventListener('animationend', onEnd);
-		element.classList.add(className);
-		
-		return () => {
-			element.removeEventListener('animationend', onEnd);
-			element.classList.remove(className);
-		};
-	},
+	util,
+	components: componentsApi,
 
 	init(options) {
 		if (options) {

@@ -22,14 +22,14 @@
 	<p>Use the built-in factory methods for common dialog patterns. These return Promises and handle all the UI automatically.</p>
 	<nui-code>
 		<pre><code data-lang="javascript">// Alert - simple message with OK button
-await nui.dialog.alert('Title', 'Message text');
+await nui.components.dialog.alert('Title', 'Message text');
 
 // Confirm - returns true/false
-const confirmed = await nui.dialog.confirm('Delete?', 'This cannot be undone.');
+const confirmed = await nui.components.dialog.confirm('Delete?', 'This cannot be undone.');
 if (confirmed) { /* user clicked OK */ }
 
 // Prompt - returns object with field values, or null if cancelled
-const result = await nui.dialog.prompt('Enter Details', 'Please fill in the form.', {
+const result = await nui.components.dialog.prompt('Enter Details', 'Please fill in the form.', {
     fields: [
         { id: 'name', label: 'Name', value: 'Default' },
         { id: 'email', label: 'Email', type: 'email' }
@@ -74,17 +74,17 @@ if (result) {
 	<p>All system dialogs accept an options object as the last parameter:</p>
 	<nui-code>
 		<pre><code data-lang="javascript">// Alert with placement
-await nui.dialog.alert('Notice', 'Positioned at top.', {
+await nui.components.dialog.alert('Notice', 'Positioned at top.', {
     placement: 'top'
 });
 
 // Confirm with placement
-const ok = await nui.dialog.confirm('Delete?', 'Are you sure?', {
+const ok = await nui.components.dialog.confirm('Delete?', 'Are you sure?', {
     placement: 'bottom'
 });
 
 // Prompt with custom target container
-await nui.dialog.prompt('Login', fields, {
+await nui.components.dialog.prompt('Login', fields, {
     target: document.querySelector('.my-container'),
     placement: 'center'
 });</code></pre>
@@ -101,12 +101,12 @@ await nui.dialog.prompt('Login', fields, {
 	<p>Add the <code>blocking</code> attribute or option to create dialogs that can only be closed via buttons. Escape key and backdrop clicks are disabled.</p>
 	<nui-code>
 		<pre><code data-lang="javascript">// Blocking system dialog - must click OK
-await nui.dialog.alert('Important!', 'You must acknowledge this.', {
+await nui.components.dialog.alert('Important!', 'You must acknowledge this.', {
     blocking: true
 });
 
 // Blocking confirm - must choose an option
-const confirmed = await nui.dialog.confirm('Terms', 'Accept the terms?', {
+const confirmed = await nui.components.dialog.confirm('Terms', 'Accept the terms?', {
     blocking: true
 });</code></pre>
 	</nui-code>
@@ -367,7 +367,7 @@ dialog.addEventListener('nui-dialog-cancel', () => {
 <section>
 	<h2>Prompt Field Options</h2>
 	<nui-code>
-		<pre><code data-lang="javascript">nui.dialog.prompt('Title', 'Optional message text.', {
+		<pre><code data-lang="javascript">nui.components.dialog.prompt('Title', 'Optional message text.', {
     fields: [
         {
             id: 'fieldId',        // Required - key in returned object
@@ -445,15 +445,15 @@ function init(element, params) {
 				if (target && target.close) target.close(param);
 				break;
 			case 'show-alert':
-				await nui.dialog.alert('Hello!', 'This is a standard system alert.', {placement: 'top'});
+				await nui.components.dialog.alert('Hello!', 'This is a standard system alert.', {placement: 'top'});
 				showResult('Alert closed');
 				break;
 			case 'show-confirm':
-				const confirmRes = await nui.dialog.confirm('Confirmation', 'Are you sure you want to proceed?', {placement: 'top'});
+				const confirmRes = await nui.components.dialog.confirm('Confirmation', 'Are you sure you want to proceed?', {placement: 'top'});
 				showResult(confirmRes);
 				break;
 			case 'show-prompt':
-				const promptRes = await nui.dialog.prompt('Enter Details', 'Please provide your information.', {
+				const promptRes = await nui.components.dialog.prompt('Enter Details', 'Please provide your information.', {
 					placement: 'top',
 					fields: [
 						{ id: 'name', label: 'Name', value: 'John Doe' },
@@ -463,20 +463,20 @@ function init(element, params) {
 				showResult(promptRes);
 				break;
 			case 'show-alert-top':
-				await nui.dialog.alert('Top Placement', 'This alert appears at the top.', { placement: 'top' });
+				await nui.components.dialog.alert('Top Placement', 'This alert appears at the top.', { placement: 'top' });
 				break;
 			case 'show-alert-bottom':
-				await nui.dialog.alert('Bottom Placement', 'This alert appears at the bottom.', { placement: 'bottom' });
+				await nui.components.dialog.alert('Bottom Placement', 'This alert appears at the bottom.', { placement: 'bottom' });
 				break;
 			case 'show-blocking-alert':
-				await nui.dialog.alert('Important Notice', 'This dialog cannot be closed with Escape or by clicking outside. You must click OK.', { 
+				await nui.components.dialog.alert('Important Notice', 'This dialog cannot be closed with Escape or by clicking outside. You must click OK.', { 
 					blocking: true,
 					placement: 'top'
 				});
 				showResult('Blocking alert acknowledged');
 				break;
 			case 'show-blocking-confirm':
-				const blockingRes = await nui.dialog.confirm('Terms of Service', 'Do you accept the terms of service? You must choose an option.', { 
+				const blockingRes = await nui.components.dialog.confirm('Terms of Service', 'Do you accept the terms of service? You must choose an option.', { 
 					blocking: true,
 					placement: 'top'
 				});

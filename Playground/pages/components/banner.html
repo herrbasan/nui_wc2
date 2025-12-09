@@ -58,17 +58,17 @@ document.addEventListener('nui-action', (e) => {
 
 <section>
 	<h2>Programmatic Banners (Factory)</h2>
-	<p>Use <code>nui.banner.create()</code> to create banners programmatically. This is the recommended approach for dynamic notifications.</p>
+	<p>Use <code>nui.components.banner.show()</code> to create banners programmatically. This is the recommended approach for dynamic notifications.</p>
 	<nui-code>
 		<pre><code data-lang="javascript">// Basic banner with auto-close
-nui.banner.create({
+nui.components.banner.show({
     content: 'Your changes have been saved.',
     placement: 'bottom',  // 'top' or 'bottom'
     autoClose: 3000       // milliseconds (0 = no auto-close)
 });
 
 // Banner with priority for accessibility
-nui.banner.create({
+nui.components.banner.show({
     content: 'Connection lost. Retrying...',
     placement: 'top',
     priority: 'alert',    // 'info' (default) or 'alert'
@@ -87,7 +87,7 @@ nui.banner.create({
 	<h2>Factory Return Value</h2>
 	<p>The factory returns a controller object for programmatic control:</p>
 	<nui-code>
-		<pre><code data-lang="javascript">const banner = nui.banner.create({
+		<pre><code data-lang="javascript">const banner = nui.components.banner.show({
     content: 'Processing...',
     placement: 'bottom',
     autoClose: 0
@@ -136,13 +136,13 @@ banner.onClose((action) => {
 	</table>
 	<nui-code>
 		<pre><code data-lang="javascript">// Info: Non-urgent status updates
-nui.banner.create({
+nui.components.banner.show({
     content: 'Auto-saved.',
     priority: 'info'
 });
 
 // Alert: Important notifications requiring attention
-nui.banner.create({
+nui.components.banner.show({
     content: 'Session expires in 5 minutes!',
     priority: 'alert'
 });</code></pre>
@@ -159,13 +159,13 @@ nui.banner.create({
 	<p>Factory-created banners are <strong>singleton per placement</strong>. Creating a new banner at the same position automatically closes and replaces the existing one. This prevents banner stacking and ensures only one notification per edge.</p>
 	<nui-code>
 		<pre><code data-lang="javascript">// First banner at top
-nui.banner.create({ content: 'Message 1', placement: 'top' });
+nui.components.banner.show({ content: 'Message 1', placement: 'top' });
 
 // This replaces the first banner (same placement)
-nui.banner.create({ content: 'Message 2', placement: 'top' });
+nui.components.banner.show({ content: 'Message 2', placement: 'top' });
 
 // This is separate (different placement)
-nui.banner.create({ content: 'Message 3', placement: 'bottom' });</code></pre>
+nui.components.banner.show({ content: 'Message 3', placement: 'bottom' });</code></pre>
 	</nui-code>
 	<h3>Try It</h3>
 	<nui-button-container gap="1rem">
@@ -177,7 +177,7 @@ nui.banner.create({ content: 'Message 3', placement: 'bottom' });</code></pre>
 	<h2>Complex HTML Example: Cookie Consent</h2>
 	<p>Banners can contain rich HTML including styled elements and interactive controls. Use <code>showCloseButton: false</code> when providing custom actions.</p>
 	<nui-code>
-		<pre><code data-lang="javascript">nui.banner.create({
+		<pre><code data-lang="javascript">nui.components.banner.show({
     content: `
         &lt;div style="display: flex; flex-direction: column; gap: 1rem;"&gt;
             &lt;div&gt;
@@ -209,13 +209,13 @@ nui.banner.create({ content: 'Message 3', placement: 'bottom' });</code></pre>
 	<p>Banners with <code>autoClose</code> display a progress bar showing remaining time. The bar appears at the opposite edge of the banner placement (bottom for top banners, top for bottom banners). Disable with <code>showProgress: false</code>.</p>
 	<nui-code>
 		<pre><code data-lang="javascript">// With progress indicator (default when autoClose is set)
-nui.banner.create({
+nui.components.banner.show({
     content: 'This will close in 5 seconds...',
     autoClose: 5000
 });
 
 // Without progress indicator
-nui.banner.create({
+nui.components.banner.show({
     content: 'Silent countdown...',
     autoClose: 5000,
     showProgress: false
@@ -266,7 +266,7 @@ nui.banner.create({
 <section>
 	<h2>Factory Options Reference</h2>
 	<nui-code>
-		<pre><code data-lang="javascript">nui.banner.create({
+		<pre><code data-lang="javascript">nui.components.banner.show({
     content: string | Element,   // Banner content (required) - HTML strings are parsed
     placement: 'top' | 'bottom', // Edge placement (default: 'bottom')
     autoClose: number,           // Auto-close ms (default: 0, no auto-close)
@@ -284,10 +284,10 @@ nui.banner.create({
 	<p>In app mode (with <code>&lt;nui-app&gt;</code>), banners automatically appear within the content area rather than the full viewport. A dedicated banner layer prevents banners from affecting the content scrollbar.</p>
 	<nui-code>
 		<pre><code data-lang="javascript">// In app mode, banners auto-target the content area
-nui.banner.create({ content: 'Appears in content area' });
+nui.components.banner.show({ content: 'Appears in content area' });
 
 // Override with explicit target
-nui.banner.create({
+nui.components.banner.show({
     content: 'Appears in specific container',
     target: document.querySelector('.my-container')
 });</code></pre>
@@ -313,28 +313,28 @@ function init(element, params) {
 
 			// Programmatic Demos
 			case 'show-top-banner':
-				nui.banner.create({
+				nui.components.banner.show({
 					content: 'This banner appears at the top of the content area.',
 					placement: 'top',
 					autoClose: 3000
 				});
 				break;
 			case 'show-bottom-banner':
-				nui.banner.create({
+				nui.components.banner.show({
 					content: 'This banner appears at the bottom of the content area.',
 					placement: 'bottom',
 					autoClose: 3000
 				});
 				break;
 			case 'show-persistent-banner':
-				nui.banner.create({
+				nui.components.banner.show({
 					content: 'This banner stays until you dismiss it.',
 					placement: 'top',
 					autoClose: 0
 				});
 				break;
 			case 'show-info-banner':
-				nui.banner.create({
+				nui.components.banner.show({
 					content: 'ℹ️ This is an info banner (role="status").',
 					placement: 'bottom',
 					priority: 'info',
@@ -342,7 +342,7 @@ function init(element, params) {
 				});
 				break;
 			case 'show-alert-banner':
-				nui.banner.create({
+				nui.components.banner.show({
 					content: '⚠️ This is an alert banner (role="alert") - screen readers announce immediately.',
 					placement: 'bottom',
 					priority: 'alert',
@@ -351,14 +351,14 @@ function init(element, params) {
 				break;
 			case 'show-replacement-demo':
 				replacementCounter++;
-				nui.banner.create({
+				nui.components.banner.show({
 					content: `Banner #${replacementCounter} - Click again to replace this banner.`,
 					placement: 'top',
 					autoClose: 5000
 				});
 				break;
 			case 'show-cookie-consent':
-				const cookieBanner = nui.banner.create({
+				const cookieBanner = nui.components.banner.show({
 					content: `
 						<div style="display: flex; flex-direction: column; gap: 1rem;">
 							<div>
@@ -388,21 +388,21 @@ function init(element, params) {
 				});
 				break;
 			case 'handle-cookies':
-				nui.banner.create({
+				nui.components.banner.show({
 					content: `Cookie preference saved: <strong>${param}</strong>`,
 					placement: 'bottom',
 					autoClose: 2000
 				});
 				break;
 			case 'show-progress-demo':
-				nui.banner.create({
+				nui.components.banner.show({
 					content: 'This banner will close in 5 seconds. Watch the progress bar!',
 					placement: 'top',
 					autoClose: 5000
 				});
 				break;
 			case 'show-no-progress-demo':
-				nui.banner.create({
+				nui.components.banner.show({
 					content: 'This banner will close in 5 seconds (no progress bar).',
 					placement: 'top',
 					autoClose: 5000,

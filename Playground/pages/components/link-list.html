@@ -569,7 +569,7 @@ function init(element, params) {
 			updateFoldStateDisplay();
 		} else if (actionName === 'get-active-fold') {
 			const foldData = demoFold.getActiveData?.();
-			nui.dialog.alert('Active State', foldData ? `Fold Mode Active:\n\nText: ${foldData.text}` : 'Fold Mode: No active item');
+						nui.components.dialog.alert('Active State', foldData ? `Fold Mode Active:\n\nText: ${foldData.text}` : 'Fold Mode: No active item');
 			updateFoldStateDisplay();
 		} else if (actionName === 'clear-active-fold') {
 			demoFold.clearActive?.(true);
@@ -582,7 +582,7 @@ function init(element, params) {
 			updateTreePathDisplay(item?.closest('li'));
 		} else if (actionName === 'get-active-tree') {
 			const treeData = demoTree.getActiveData?.();
-			nui.dialog.alert('Active State', treeData ? `Tree Mode Active:\n\nText: ${treeData.text}` : 'Tree Mode: No active item');
+						nui.components.dialog.alert('Active State', treeData ? `Tree Mode Active:\n\nText: ${treeData.text}` : 'Tree Mode: No active item');
 			updateTreeStateDisplay();
 			updateTreePathDisplay();
 		} else if (actionName === 'clear-active-tree') {

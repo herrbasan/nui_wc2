@@ -115,31 +115,25 @@ export interface ContentLoadingResult {
 // =============================================================================
 
 export interface NuiAPI {
-	/** Configure NUI library settings */
-	configure(config: NuiConfig): void;
-	
-	/** Register a custom component */
-	registerComponent(name: string, setup: (element: HTMLElement) => void | (() => void)): void;
-	
-	/** Attribute proxy system for reactive attributes */
-	setupAttributeProxy(
-		element: HTMLElement,
-		handlers: Record<string, (newValue: string | null, oldValue: string | null) => void>
-	): void;
-	
-	/** Define property descriptor mapping attribute to property */
-	defineAttributeProperty(
-		element: HTMLElement,
-		propName: string,
-		attrName: string
-	): void;
+	config: NuiConfig;
+	util: NuiUtilities;
+	components: NuiComponents;
 
-	/** Create a content loader for managing page fragments */
-	createContentLoader(container: HTMLElement, options?: ContentLoaderOptions): ContentLoader;
-	
+	/** Initialize the library and register components */
+	init(options?: Partial<NuiConfig> & Record<string, unknown>): void;
+
+	/** Update configuration */
+	configure(config: Partial<NuiConfig>): void;
+
+	/** Register a feature initializer */
+	registerFeature(name: string, initFn: () => void): void;
+
+	/** Register a type handler */
+	registerType(type: string, handler: (value: string) => unknown): void;
+
 	/** Create a router for URL-based navigation */
-	createRouter(loader: ContentLoader, options?: RouterOptions): Router;
-	
+	createRouter(container: HTMLElement, options?: RouterOptions): Router;
+
 	/** Enable content loading with simplified setup (recommended) */
 	enableContentLoading(options?: ContentLoadingOptions): ContentLoadingResult | null;
 }
@@ -151,49 +145,132 @@ declare global {
 }
 
 // =============================================================================
-// DOM Utilities
+// Utilities Namespace (nui.util)
 // =============================================================================
 
-/**
- * Options for dom.create element factory
- */
-export interface DomCreateOptions {
-	/** Element id attribute */
+export interface NuiCreateOptions {
 	id?: string;
-	/** CSS class(es) - single string or array */
 	class?: string | string[];
-	/** Inline styles object { property: value } */
 	style?: Partial<CSSStyleDeclaration>;
-	/** Dataset attributes { key: value } → data-key="value" */
 	data?: Record<string, string>;
-	/** HTML attributes { name: value } */
 	attrs?: Record<string, string | number | boolean | null | undefined>;
-	/** Event listeners { eventName: handler } */
 	events?: Record<string, EventListener>;
-	/** Plain text content (uses textContent - safe, no HTML parsing) */
 	text?: string;
-	/** HTML content - innerHTML string, single Element, or array of Elements */
 	content?: string | Element | Element[];
-	/** Parent element to append to */
 	target?: Element;
 }
 
-/**
- * DOM element creation utilities
- * Provides efficient element creation with minimal boilerplate
- */
-export interface DomUtilities {
-	/** Create an element with options object */
-	create<K extends keyof HTMLElementTagNameMap>(tag: K, options?: DomCreateOptions): HTMLElementTagNameMap[K];
-	create(tag: string, options?: DomCreateOptions): HTMLElement;
-	
-	/** Create an SVG element with attributes */
-	svg<K extends keyof SVGElementTagNameMap>(tag: K, attrs?: Record<string, string | number>): SVGElementTagNameMap[K];
-	svg(tag: string, attrs?: Record<string, string | number>): SVGElement;
+export interface NuiStorageOptions {
+	name: string;
+	value?: string;
+	target?: 'cookie' | 'localStorage';
+	ttl?: number | string | Date | 'forever';
 }
 
-declare global {
-	const dom: DomUtilities;
+export interface NuiStorageAPI {
+	set(options: NuiStorageOptions): boolean;
+	get(options: { name: string; target?: 'cookie' | 'localStorage' }): string | undefined;
+	remove(options: { name: string; target?: 'cookie' | 'localStorage' }): boolean;
+}
+
+export interface NuiUtilities {
+	createElement<K extends keyof HTMLElementTagNameMap>(tag: K, options?: NuiCreateOptions): HTMLElementTagNameMap[K];
+	createElement(tag: string, options?: NuiCreateOptions): HTMLElement;
+
+	createSvgElement<K extends keyof SVGElementTagNameMap>(tag: K, attrs?: Record<string, string | number>): SVGElementTagNameMap[K];
+	createSvgElement(tag: string, attrs?: Record<string, string | number>): SVGElement;
+
+	cssAnimation(element: HTMLElement, className: string, callback?: (el: HTMLElement) => void): () => void;
+
+	storage: NuiStorageAPI;
+}
+
+// =============================================================================
+// Components Namespace (nui.components)
+// =============================================================================
+
+export interface NuiBannerOptions {
+	placement?: 'top' | 'bottom';
+	target?: Element;
+	priority?: string;
+	autoClose?: number;
+	showCloseButton?: boolean;
+	showProgress?: boolean;
+	content?: string | Element;
+}
+
+export interface NuiBannerController {
+	element: NuiBannerElement;
+	close(action?: string): void;
+	update(content: string | Element): void;
+	onClose(callback: (action?: string) => void): void;
+}
+
+export interface NuiDialogButton {
+	id?: string;
+	label: string;
+	type?: 'primary' | 'outline' | string;
+	icon?: string;
+	value?: unknown;
+}
+
+export interface NuiDialogField {
+	id: string;
+	label: string;
+	type?: string;
+	value?: string;
+	placeholder?: string;
+	required?: boolean;
+	pattern?: string;
+	min?: number;
+	max?: number;
+	minlength?: number;
+	maxlength?: number;
+	checked?: boolean;
+}
+
+export interface NuiDialogShowOptions {
+	classes?: string[];
+	target?: Element;
+	placement?: string;
+	modal?: boolean;
+	blocking?: boolean;
+}
+
+export interface NuiDialogOptions {
+	buttons?: NuiDialogButton[];
+	fields?: NuiDialogField[];
+	classes?: string[];
+	target?: Element;
+	placement?: string;
+	modal?: boolean;
+	blocking?: boolean;
+}
+
+export interface NuiLinkListCreateOptions {
+	mode?: string;
+	id?: string;
+	class?: string | string[];
+	attrs?: Record<string, string | number | boolean | null | undefined>;
+}
+
+export interface NuiComponents {
+	dialog: {
+		show(content: string | Element, options?: NuiDialogShowOptions): NuiDialogElement;
+		alert(title: string, message: string, options?: NuiDialogOptions): Promise<unknown>;
+		confirm(title: string, message: string, options?: NuiDialogOptions): Promise<boolean>;
+		prompt(title: string, message: string, options?: NuiDialogOptions): Promise<Record<string, unknown> | null>;
+	};
+
+	banner: {
+		show(options: NuiBannerOptions): NuiBannerController;
+		hide(ref?: NuiBannerController | NuiBannerElement | HTMLElement | 'all' | null): boolean;
+		hideAll(): boolean;
+	};
+
+	linkList: {
+		create(data: unknown[], options?: NuiLinkListCreateOptions): NuiLinkListElement;
+	};
 }
 
 // =============================================================================

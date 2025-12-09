@@ -5,7 +5,7 @@
 
 <section>
 	<h2>Overview</h2>
-	<p>The <code>nui.storage</code> object provides a simple getter/setter API for storing text values. It's designed for simple use cases like theme preferences, session tokens, or user settings—not complex data.</p>
+	<p>The <code>nui.util.storage</code> object provides a simple getter/setter API for storing text values. It's designed for simple use cases like theme preferences, session tokens, or user settings—not complex data.</p>
 	<p><strong>Key features:</strong></p>
 	<ul>
 		<li>Unified API for cookies and localStorage</li>
@@ -22,13 +22,13 @@
 	<p>Store and retrieve values with sensible defaults:</p>
 	<nui-code>
 		<pre><code data-lang="javascript">// Store a value (cookie, forever)
-nui.storage.set({ name: 'theme', value: 'dark' });
+nui.util.storage.set({ name: 'theme', value: 'dark' });
 
 // Retrieve a value
-const theme = nui.storage.get({ name: 'theme' }); // 'dark' or undefined
+const theme = nui.util.storage.get({ name: 'theme' }); // 'dark' or undefined
 
 // Remove a value
-nui.storage.remove({ name: 'theme' }); // true if existed, false otherwise</code></pre>
+nui.util.storage.remove({ name: 'theme' }); // true if existed, false otherwise</code></pre>
 	</nui-code>
 	<h3>Try It</h3>
 	<nui-button-container gap="1rem">
@@ -46,13 +46,13 @@ nui.storage.remove({ name: 'theme' }); // true if existed, false otherwise</code
 	<p>Choose where to store your data:</p>
 	<nui-code>
 		<pre><code data-lang="javascript">// Cookie (default)
-nui.storage.set({ name: 'token', value: 'abc123' });
+nui.util.storage.set({ name: 'token', value: 'abc123' });
 
 // localStorage
-nui.storage.set({ name: 'prefs', value: 'compact', target: 'localStorage' });
+nui.util.storage.set({ name: 'prefs', value: 'compact', target: 'localStorage' });
 
 // Get from specific target
-nui.storage.get({ name: 'prefs', target: 'localStorage' });</code></pre>
+nui.util.storage.get({ name: 'prefs', target: 'localStorage' });</code></pre>
 	</nui-code>
 	<table class="nui-table">
 		<thead>
@@ -85,23 +85,23 @@ nui.storage.get({ name: 'prefs', target: 'localStorage' });</code></pre>
 	<p>Control when stored values expire using flexible TTL formats:</p>
 	<nui-code>
 		<pre><code data-lang="javascript">// Forever (default) - 10 years for cookies
-nui.storage.set({ name: 'pref', value: 'x' });
-nui.storage.set({ name: 'pref', value: 'x', ttl: 'forever' });
+nui.util.storage.set({ name: 'pref', value: 'x' });
+nui.util.storage.set({ name: 'pref', value: 'x', ttl: 'forever' });
 
 // Session - deleted when browser closes (cookies only)
-nui.storage.set({ name: 'session', value: 'temp', ttl: 'session' });
+nui.util.storage.set({ name: 'session', value: 'temp', ttl: 'session' });
 
 // Relative time
-nui.storage.set({ name: 'cache', value: 'data', ttl: '30-minutes' });
-nui.storage.set({ name: 'token', value: 'abc', ttl: '2-hours' });
-nui.storage.set({ name: 'remember', value: 'me', ttl: '7-days' });
-nui.storage.set({ name: 'annual', value: 'sub', ttl: '1-year' });
+nui.util.storage.set({ name: 'cache', value: 'data', ttl: '30-minutes' });
+nui.util.storage.set({ name: 'token', value: 'abc', ttl: '2-hours' });
+nui.util.storage.set({ name: 'remember', value: 'me', ttl: '7-days' });
+nui.util.storage.set({ name: 'annual', value: 'sub', ttl: '1-year' });
 
 // Specific date (expires end of that day)
-nui.storage.set({ name: 'promo', value: 'sale', ttl: '2025-12-31' });
+nui.util.storage.set({ name: 'promo', value: 'sale', ttl: '2025-12-31' });
 
 // Epoch timestamp (milliseconds if > 1e12, otherwise seconds)
-nui.storage.set({ name: 'exp', value: 'x', ttl: 1735689600000 });</code></pre>
+nui.util.storage.set({ name: 'exp', value: 'x', ttl: 1735689600000 });</code></pre>
 	</nui-code>
 	<h3>Try It</h3>
 	<nui-button-container gap="1rem">
@@ -187,7 +187,7 @@ nui.storage.set({ name: 'exp', value: 'x', ttl: 1735689600000 });</code></pre>
 	<nui-code>
 		<pre><code data-lang="javascript">// Cookie created with these attributes:
 // theme=dark; path=/; SameSite=Lax; Secure; expires=...
-nui.storage.set({ name: 'theme', value: 'dark' });</code></pre>
+nui.util.storage.set({ name: 'theme', value: 'dark' });</code></pre>
 	</nui-code>
 </section>
 
@@ -213,27 +213,27 @@ nui.storage.set({ name: 'theme', value: 'dark' });</code></pre>
 				<td>Storage key name</td>
 			</tr>
 			<tr>
-				<td><code>value</code></td>
+						const success = nui.util.storage.set({ name: 'theme', value: 'dark' });
 				<td>string</td>
 				<td>(required)</td>
 				<td>Value to store (text only)</td>
-			</tr>
+						const theme = nui.util.storage.get({ name: 'theme' });
 			<tr>
 				<td><code>target</code></td>
 				<td>string</td>
-				<td><code>'cookie'</code></td>
+						const removed = nui.util.storage.remove({ name: 'theme' });
 				<td><code>'cookie'</code> or <code>'localStorage'</code></td>
 			</tr>
 			<tr>
-				<td><code>ttl</code></td>
+						nui.util.storage.set({ name: 'demo', value: 'session-value', ttl: 'session' });
 				<td>string | number</td>
 				<td><code>'forever'</code></td>
 				<td>Time-to-live (see formats above)</td>
-			</tr>
+						nui.util.storage.set({ name: 'demo', value: 'expires-soon', ttl: '1-minute' });
 		</tbody>
 	</table>
 	
-	<h3>get(options)</h3>
+						const demo = nui.util.storage.get({ name: 'demo' });
 	<p>Retrieve a value. Returns the value or <code>undefined</code> if not found or expired.</p>
 	<table class="nui-table">
 		<thead>
@@ -292,33 +292,33 @@ nui.storage.set({ name: 'theme', value: 'dark' });</code></pre>
 	<h2>Practical Examples</h2>
 	<nui-code>
 		<pre><code data-lang="javascript">// Remember user's theme preference
-const theme = nui.storage.get({ name: 'theme' }) || 'light';
+const theme = nui.util.storage.get({ name: 'theme' }) || 'light';
 document.documentElement.style.colorScheme = theme;
 
 function toggleTheme() {
-    const current = nui.storage.get({ name: 'theme' }) || 'light';
+	 const current = nui.util.storage.get({ name: 'theme' }) || 'light';
     const next = current === 'dark' ? 'light' : 'dark';
-    nui.storage.set({ name: 'theme', value: next });
+	 nui.util.storage.set({ name: 'theme', value: next });
     document.documentElement.style.colorScheme = next;
 }
 
 // Session token with expiry
-nui.storage.set({ 
+nui.util.storage.set({ 
     name: 'auth-token', 
     value: 'jwt-token-here', 
     ttl: '2-hours' 
 });
 
 // Check if token exists
-if (nui.storage.get({ name: 'auth-token' })) {
+if (nui.util.storage.get({ name: 'auth-token' })) {
     // User is authenticated
 }
 
 // Clear on logout
-nui.storage.remove({ name: 'auth-token' });
+nui.util.storage.remove({ name: 'auth-token' });
 
 // Use localStorage for larger data
-nui.storage.set({
+nui.util.storage.set({
     name: 'user-settings',
     value: 'sidebar:collapsed,density:compact',
     target: 'localStorage',
@@ -340,27 +340,27 @@ document.addEventListener('click', (e) => {
 	
 	switch (action) {
 		case 'storage-set-theme':
-			const success = nui.storage.set({ name: 'theme', value: 'dark' });
+			const success = nui.util.storage.set({ name: 'theme', value: 'dark' });
 			showResult(success ? 'Set theme=dark (cookie)' : 'Failed to set');
 			break;
 		case 'storage-get-theme':
-			const theme = nui.storage.get({ name: 'theme' });
+			const theme = nui.util.storage.get({ name: 'theme' });
 			showResult(theme !== undefined ? `theme = "${theme}"` : 'theme not found');
 			break;
 		case 'storage-remove-theme':
-			const removed = nui.storage.remove({ name: 'theme' });
+			const removed = nui.util.storage.remove({ name: 'theme' });
 			showResult(removed ? 'Removed theme cookie' : 'theme did not exist');
 			break;
 		case 'storage-set-session':
-			nui.storage.set({ name: 'demo', value: 'session-value', ttl: 'session' });
+			nui.util.storage.set({ name: 'demo', value: 'session-value', ttl: 'session' });
 			showResult('Set demo=session-value (session cookie - closes with browser)');
 			break;
 		case 'storage-set-1min':
-			nui.storage.set({ name: 'demo', value: 'expires-soon', ttl: '1-minute' });
+			nui.util.storage.set({ name: 'demo', value: 'expires-soon', ttl: '1-minute' });
 			showResult('Set demo=expires-soon (expires in 1 minute)');
 			break;
 		case 'storage-get-demo':
-			const demo = nui.storage.get({ name: 'demo' });
+			const demo = nui.util.storage.get({ name: 'demo' });
 			showResult(demo !== undefined ? `demo = "${demo}"` : 'demo not found or expired');
 			break;
 	}
