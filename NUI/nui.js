@@ -2457,6 +2457,138 @@ function ensureBaseStyles() {
 	}
 }
 
+// ################################# STORAGE SYSTEM
+
+function parseTTL(ttl) {
+	if (!ttl || ttl === 'forever') return null;
+	if (ttl === 'session') return 0;
+
+	if (typeof ttl === 'number') {
+		if (ttl > 1e12) return new Date(ttl);
+		return new Date(ttl * 1000);
+	}
+
+	if (/^\d{4}-\d{2}-\d{2}$/.test(ttl)) {
+		return new Date(ttl + 'T23:59:59');
+	}
+
+	const match = ttl.match(/^(\d+)-(minutes?|hours?|days?|months?|years?)$/);
+	if (match) {
+		const value = parseInt(match[1], 10);
+		const unit = match[2].replace(/s$/, '');
+		const now = new Date();
+
+		switch (unit) {
+			case 'minute': return new Date(now.getTime() + value * 60 * 1000);
+			case 'hour': return new Date(now.getTime() + value * 60 * 60 * 1000);
+			case 'day': return new Date(now.getTime() + value * 24 * 60 * 60 * 1000);
+			case 'month': return new Date(now.setMonth(now.getMonth() + value));
+			case 'year': return new Date(now.setFullYear(now.getFullYear() + value));
+		}
+	}
+
+	return null;
+}
+
+const storage = {
+	set({ name, value, target = 'cookie', ttl = 'forever' }) {
+		if (!name || value === undefined || value === null) return false;
+
+		const expires = parseTTL(ttl);
+
+		if (target === 'localStorage') {
+			try {
+				const entry = { value };
+				if (expires) entry.expires = expires.getTime();
+				localStorage.setItem(name, JSON.stringify(entry));
+				return true;
+			} catch {
+				return false;
+			}
+		}
+
+		let cookie = `${encodeURIComponent(name)}=${encodeURIComponent(value)}`;
+		cookie += '; path=/';
+		cookie += '; SameSite=Lax';
+
+		if (location.protocol === 'https:') {
+			cookie += '; Secure';
+		}
+
+		if (expires === 0) {
+			// Session cookie - no expires attribute
+		} else if (expires) {
+			cookie += `; expires=${expires.toUTCString()}`;
+		} else {
+			// "forever" = 10 years
+			const far = new Date();
+			far.setFullYear(far.getFullYear() + 10);
+			cookie += `; expires=${far.toUTCString()}`;
+		}
+
+		document.cookie = cookie;
+		return true;
+	},
+
+	get({ name, target = 'cookie' }) {
+		if (!name) return undefined;
+
+		if (target === 'localStorage') {
+			try {
+				const raw = localStorage.getItem(name);
+				if (!raw) return undefined;
+
+				const entry = JSON.parse(raw);
+				if (entry.expires && Date.now() > entry.expires) {
+					localStorage.removeItem(name);
+					return undefined;
+				}
+				return entry.value;
+			} catch {
+				return undefined;
+			}
+		}
+
+		const cookies = document.cookie.split('; ');
+		for (const cookie of cookies) {
+			const [cookieName, ...rest] = cookie.split('=');
+			if (decodeURIComponent(cookieName) === name) {
+				return decodeURIComponent(rest.join('='));
+			}
+		}
+		return undefined;
+	},
+
+	remove({ name, target = 'cookie' }) {
+		if (!name) return false;
+
+		if (target === 'localStorage') {
+			try {
+				if (localStorage.getItem(name) === null) return false;
+				localStorage.removeItem(name);
+				return true;
+			} catch {
+				return false;
+			}
+		}
+
+		const exists = this.get({ name, target: 'cookie' }) !== undefined;
+		if (!exists) return false;
+
+		let cookie = `${encodeURIComponent(name)}=`;
+		cookie += '; path=/';
+		cookie += '; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+		cookie += '; SameSite=Lax';
+
+		if (location.protocol === 'https:') {
+			cookie += '; Secure';
+		}
+
+		document.cookie = cookie;
+		return true;
+	}
+};
+
 export const nui = {
 	config,
 	dom,
@@ -2522,7 +2654,8 @@ export const nui = {
 	},
 
 	dialog: dialogSystem,
-	banner: bannerFactory
+	banner: bannerFactory,
+	storage
 };
 
 // ################################# AUTO-INITIALIZATION

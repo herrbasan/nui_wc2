@@ -658,6 +658,42 @@ Replaced 993-line implementation-focused README with ~50-line philosophy-focused
 Implemented full functionality for `nui-tabs` and `nui-accordion` components, including accessible keyboard navigation and smooth height transitions.
 - **Tabs Implementation**: Built `nui-tabs` with ARIA roles, keyboard support (Arrow keys, Home, End), and height animation.
 - **Accordion Implementation**: Built `nui-accordion` with exclusive mode support and smooth expand/collapse animations.
+
+---
+
+## #9Px7M3 - December 9, 2025
+**Storage System Added**
+
+Implemented `nui.storage` - minimal text storage helper for cookies and localStorage with TTL support.
+
+### Design Decisions
+- **Text-only**: No JSON serialization - this is a simple helper, not a data store
+- **Targets**: `cookie` (default), `localStorage` only. IndexedDB excluded (async complexity doesn't fit sync getter/setter model)
+- **Cookie security**: `SameSite=Lax` (CSRF protection without breaking navigation), `Secure` auto-added on HTTPS, `path=/`
+- **TTL formats**: `forever` (default, 10 years), `session`, `N-minutes|hours|days|months|years`, `YYYY-MM-DD`, epoch timestamp
+- **Return values**: `set`/`remove` return `true`/`false`, `get` returns value or `undefined`
+
+### API
+```javascript
+nui.storage.set({ name: 'theme', value: 'dark' });                    // cookie, forever
+nui.storage.set({ name: 'token', value: 'abc', ttl: '30-minutes' });  // expires in 30 min
+nui.storage.set({ name: 'prefs', value: 'x', target: 'localStorage' });
+nui.storage.get({ name: 'theme' });                                   // 'dark' or undefined
+nui.storage.remove({ name: 'theme' });                                // true/false
+```
+
+### localStorage TTL Implementation
+Cookies have native expiry, but localStorage doesn't. Solved by storing metadata:
+```javascript
+// Stored as: { value: "...", expires: 1702123456789 }
+// On get(): check if Date.now() > expires, return undefined if expired (and remove)
+```
+
+### Documentation
+Created `Playground/pages/features/storage.html` with live demos and complete API reference.
+
+### Open Question (Deferred)
+User noted that `nui.storage` should "offer the same interface as dialog and banner" - meaning the API pattern should be consistent. Currently `nui.dialog` and `nui.banner` are factory objects, while `nui.storage` is a utility object. This consistency question was deferred for future consideration but doesn't block the current implementation.
 - **Refactoring**: Performed extensive code cleanup in `nui.js`, removing inline comments to reduce noise while preserving section headers.
 - **Type Definitions**: Updated `nui.d.ts` with complete interfaces for the new components.
 - **Demos**: Created and updated demo pages for the new components.

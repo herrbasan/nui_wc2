@@ -145,7 +145,8 @@ const navigationData = [
 		label: 'Features',
 		icon: 'settings',
 		items: [
-			{ label: 'Dashboard', href: '#feature=dashboard' }
+			{ label: 'Dashboard', href: '#feature=dashboard' },
+			{ label: 'Storage', href: '#page=features/storage' }
 		]
 	}
 ];

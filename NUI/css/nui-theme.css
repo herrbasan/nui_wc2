@@ -761,7 +761,7 @@ nui-app[data-layout="app"] nui-top-nav {
 	left: 0;
 	right: 0;
 	height: var(--top-nav-height);
-	background: light-dark(var(--color-shade6), var(--color-shade2));
+	background: light-dark(var(--color-shade5), var(--color-shade2));
 	border-bottom: solid var(--border-thickness) var(--border-shade2);
 	padding: var(--nui-space-half) var(--nui-space);
 	box-shadow: 0 0 var(--shadow-radius1) 0 var(--shadow-color);
