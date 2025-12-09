@@ -829,12 +829,12 @@ nui-app[data-layout="app"].nui-ready nui-side-nav {
 }
 
 /* Side nav offset when top nav present */
-nui-app[data-layout="app"].has-top-nav nui-side-nav {
+nui-app[data-layout="app"]:has(nui-top-nav) nui-side-nav {
 	top: var(--top-nav-height);
 }
 
 /* Side nav offset when footer present */
-nui-app[data-layout="app"].has-footer nui-side-nav {
+nui-app[data-layout="app"]:has(nui-app-footer) nui-side-nav {
 	bottom: var(--footer-height);
 }
 
@@ -879,17 +879,17 @@ nui-app[data-layout="app"] nui-content > .nui-content-scroll {
 }
 
 /* Content offset when top nav present */
-nui-app[data-layout="app"].has-top-nav nui-content {
+nui-app[data-layout="app"]:has(nui-top-nav) nui-content {
 	top: var(--top-nav-height);
 }
 
 /* Content offset when footer present */
-nui-app[data-layout="app"].has-footer nui-content {
+nui-app[data-layout="app"]:has(nui-app-footer) nui-content {
 	bottom: var(--footer-height);
 }
 
 /* Content offset when side nav forced */
-nui-app[data-layout="app"].has-side-nav.sidenav-forced nui-content {
+nui-app[data-layout="app"]:has(nui-side-nav).sidenav-forced nui-content {
 	left: var(--side-nav-width);
 }
 
@@ -929,7 +929,7 @@ nui-app[data-layout="app"].sidenav-open::before {
 	z-index: 99;
 }
 
-nui-app[data-layout="app"]:not(.has-top-nav).sidenav-open::before {
+nui-app[data-layout="app"]:not(:has(nui-top-nav)).sidenav-open::before {
 	top: 0;
 }
 
@@ -2087,5 +2087,92 @@ transition: none !important;
 transform: none !important;
 opacity: 1 !important;
 }
+}
+
+
+/* =============================================================================
+   DIALOG & BANNER ANIMATIONS
+   ============================================================================= */
+
+nui-dialog dialog { 
+	transition: opacity 0.2s, transform 0.2s, display 0.2s allow-discrete, overlay 0.2s allow-discrete; 
+	opacity: 0; 
+	transform: scale(0.95); 
+}
+
+nui-dialog dialog[open] { 
+	opacity: 1; 
+	transform: scale(1); 
+}
+
+nui-dialog dialog.closing { 
+	opacity: 0; 
+	transform: scale(0.95); 
+}
+
+@starting-style { 
+	nui-dialog dialog[open] { 
+		opacity: 0; 
+		transform: scale(0.95); 
+	} 
+}
+
+nui-dialog dialog::backdrop { 
+	transition: opacity 0.2s, display 0.2s allow-discrete, overlay 0.2s allow-discrete; 
+	opacity: 0; 
+	background-color: light-dark(rgba(240, 240, 240, 0.95), rgba(20, 20, 20, 0.95));
+}
+
+nui-dialog dialog[open]::backdrop { 
+	opacity: 1; 
+}
+
+nui-dialog dialog.closing::backdrop { 
+	opacity: 0; 
+}
+
+@starting-style { 
+	nui-dialog dialog[open]::backdrop { 
+		opacity: 0; 
+	} 
+}
+
+/* Banner Base Styles */
+nui-banner { 
+	transition: opacity 0.3s, transform 0.3s, display 0.3s allow-discrete; 
+	opacity: 0; 
+	transform: translateY(100%); 
+}
+
+nui-banner[placement='top'] { 
+	transform: translateY(-100%); 
+}
+
+/* Banner Open State (Overrides Base) */
+nui-banner[open] { 
+	opacity: 1; 
+	transform: translateY(0); 
+}
+
+/* Banner Closing State */
+nui-banner.closing { 
+	opacity: 0; 
+	transform: translateY(100%); 
+}
+
+nui-banner[placement='top'].closing { 
+	transform: translateY(-100%); 
+}
+
+/* Banner Starting Styles */
+@starting-style { 
+	nui-banner[open] { 
+		opacity: 0; 
+		transform: translateY(100%); 
+	} 
+	
+	nui-banner[placement='top'][open] { 
+		transform: translateY(-100%); 
+	} 
 }
 
