@@ -140,8 +140,8 @@ const dom = {
 		return el;
 	},
 
-	el: (s, c = document) => c.querySelector(s),
-	els: (s, c = document) => [...c.querySelectorAll(s)]
+	el: (s, c = document) => s instanceof Element ? s : c.querySelector(s),
+	els: (s, c = document) => s instanceof NodeList || s instanceof Array ? [...s] : [...c.querySelectorAll(s)]
 };
 
 // Extend native prototypes for convenience
@@ -149,8 +149,8 @@ if (typeof window !== 'undefined') {
 	['Element', 'Document', 'DocumentFragment'].forEach(t => {
 		if (!window[t]) return;
 		Object.defineProperties(window[t].prototype, {
-			el: { value: function(s) { return this.querySelector(s); }, writable: true, configurable: true },
-			els: { value: function(s) { return [...this.querySelectorAll(s)]; }, writable: true, configurable: true }
+			el: { value: function(s) { return s instanceof Element ? s : this.querySelector(s); }, writable: true, configurable: true },
+			els: { value: function(s) { return s instanceof NodeList || s instanceof Array ? [...s] : [...this.querySelectorAll(s)]; }, writable: true, configurable: true }
 		});
 	});
 }
@@ -457,6 +457,20 @@ registerComponent('nui-app', (element) => {
 			}
 		}
 
+		// Update menu toggle button state
+		const menuToggle = element.el('[data-action="toggle-sidebar"]');
+		if (menuToggle) {
+			if (isForced) {
+				menuToggle.setAttribute('disabled', 'true');
+				menuToggle.setAttribute('aria-hidden', 'true');
+				menuToggle.setAttribute('tabindex', '-1');
+			} else {
+				menuToggle.removeAttribute('disabled');
+				menuToggle.removeAttribute('aria-hidden');
+				menuToggle.removeAttribute('tabindex');
+			}
+		}
+
 		dispatchSideNavEvent(newState);
 
 		if (!element.classList.contains('nui-ready')) {
@@ -545,6 +559,23 @@ registerComponent('nui-side-nav', (element) => {
 		element.getActiveData = () => linkList.getActiveData?.();
 		element.clearActive = () => linkList.clearActive?.();
 		element.clearSubs = () => linkList.clearSubs?.();
+	}
+
+	const app = element.closest('nui-app');
+
+	if (app) {
+		element.addEventListener('focusin', () => {
+			if (app.classList.contains('sidenav-closed') && !app.classList.contains('sidenav-forced')) {
+				app.toggleSideNav?.();
+			}
+		});
+
+		element.addEventListener('focusout', (event) => {
+			if (!app.classList.contains('sidenav-open') || app.classList.contains('sidenav-forced')) return;
+			const next = event.relatedTarget;
+			if (next && element.contains(next)) return;
+			app.toggleSideNav?.();
+		});
 	}
 });
 
@@ -635,29 +666,27 @@ registerComponent('nui-link-list', (element) => {
 		upgradeHtml();
 		if (mode === 'fold') {
 			element.els('.group-header').forEach(h => {
-				h.setAttribute('tabindex', '0');
-				h.setAttribute('role', 'button');
 				setGroupState(h, false);
 			});
 		}
 	};
 
 	function buildItemHTML(item, nested = false) {
-		if (item.separator) return '<li class="separator"><hr></li>';
+		if (item.separator) return '<li class="separator" role="none"><hr></li>';
 		if (item.items) {
 			const children = item.items.map(i => buildItemHTML(i, true)).join('');
-			return `<ul>${buildGroupHeaderHTML(item)}<div class="group-items" role="presentation">${children}</div></ul>`;
+			return `<ul role="group">${buildGroupHeaderHTML(item)}<div class="group-items" role="presentation">${children}</div></ul>`;
 		}
 		const hrefAttr = item.href ? ` href="${item.href}"` : ' href=""';
 		const dataAction = item.action ? ` data-action="${item.action}"` : '';
-		const link = `<li class="list-item"><a${hrefAttr}${dataAction}>` +
+		const link = `<li class="list-item" role="none"><a${hrefAttr}${dataAction} role="treeitem">` +
 			`${item.icon ? `<nui-icon name="${item.icon}"></nui-icon>` : ''}<span>${item.label}</span></a></li>`;
-		return nested ? link : `<ul>${link}</ul>`;
+		return nested ? link : `<ul role="group">${link}</ul>`;
 	}
 
 	function buildGroupHeaderHTML(item) {
-		const action = item.headerAction ? `<button type="button" class="action" data-action="${item.headerAction}"><nui-icon name="settings"></nui-icon></button>` : '';
-		return `<li class="group-header"><span>${item.icon ? `<nui-icon name="${item.icon}"></nui-icon>` : ''}<span>${item.label}</span></span>${action}</li>`;
+		const action = item.headerAction ? `<button type="button" class="action" data-action="${item.headerAction}" aria-label="Settings"><nui-icon name="settings"></nui-icon></button>` : '';
+		return `<li class="group-header" role="none"><button type="button" class="group-toggle" role="treeitem" aria-expanded="false">${item.icon ? `<nui-icon name="${item.icon}"></nui-icon>` : ''}<span>${item.label}</span></button>${action}</li>`;
 	}
 
 	// ##### STATE MANAGEMENT
@@ -669,8 +698,8 @@ registerComponent('nui-link-list', (element) => {
 			const p = item.parentElement;
 			if (p) {
 				p.classList.toggle('active', add);
-				add ? p.setAttribute('aria-selected', 'true') : p.removeAttribute('aria-selected');
 			}
+			add ? item.setAttribute('aria-selected', 'true') : item.removeAttribute('aria-selected');
 		};
 		toggle(activeItem, false);
 		activeItem = newItem;
@@ -694,7 +723,8 @@ registerComponent('nui-link-list', (element) => {
 	}
 
 	function setGroupState(header, expand) {
-		header.setAttribute('aria-expanded', expand);
+		const button = header.el('.group-toggle') || header;
+		button.setAttribute('aria-expanded', expand);
 		const container = header.nextElementSibling;
 		if (!container?.classList.contains('group-items')) return;
 
@@ -787,10 +817,23 @@ registerComponent('nui-link-list', (element) => {
 
 	function upgradeAccessibility() {
 		if (!element.hasAttribute('role')) element.setAttribute('role', 'tree');
-		element.els('ul').forEach(ul => ul.setAttribute('role', 'group'));
-		element.els('li').forEach(li => {
-			li.setAttribute('role', 'treeitem');
-			if (li.classList.contains('active')) li.setAttribute('aria-selected', 'true');
+		element.els('ul').forEach(ul => {
+			if (!ul.hasAttribute('role')) ul.setAttribute('role', 'group');
+		});
+		element.els('li:not(.group-header):not(.separator)').forEach(li => {
+			if (!li.hasAttribute('role')) li.setAttribute('role', 'none');
+		});
+		element.els('a').forEach(link => {
+			if (!link.hasAttribute('role')) link.setAttribute('role', 'treeitem');
+			if (link.closest('.active')) link.setAttribute('aria-selected', 'true');
+		});
+		element.els('.group-header').forEach(header => {
+			if (!header.hasAttribute('role')) header.setAttribute('role', 'none');
+			const button = header.el('.group-toggle');
+			if (button) {
+				if (!button.hasAttribute('role')) button.setAttribute('role', 'treeitem');
+				if (!button.hasAttribute('aria-expanded')) button.setAttribute('aria-expanded', 'false');
+			}
 		});
 	}
 
@@ -801,17 +844,20 @@ registerComponent('nui-link-list', (element) => {
 	});
 
 	element.addEventListener('click', (e) => {
-		const header = e.target.closest('.group-header');
-		if (header) {
-			const expand = header.getAttribute('aria-expanded') !== 'true';
-			if (mode === 'fold' && expand) {
-				const path = getPathHeaders(header);
-				path.add(header);
-				updateAccordionState(path);
-			} else {
-				setGroupState(header, expand);
-				if (!expand) {
-					header.nextElementSibling?.els('.group-header').forEach(h => setGroupState(h, false));
+		const groupToggle = e.target.closest('.group-toggle');
+		if (groupToggle) {
+			const header = groupToggle.closest('.group-header');
+			if (header) {
+				const expand = groupToggle.getAttribute('aria-expanded') !== 'true';
+				if (mode === 'fold' && expand) {
+					const path = getPathHeaders(header);
+					path.add(header);
+					updateAccordionState(path);
+				} else {
+					setGroupState(header, expand);
+					if (!expand) {
+						header.nextElementSibling?.els('.group-header').forEach(h => setGroupState(h, false));
+					}
 				}
 			}
 			return;
@@ -819,16 +865,12 @@ registerComponent('nui-link-list', (element) => {
 
 		const link = e.target.closest('a');
 		if (link) {
-			const listItem = link.closest('li');
-			if (listItem) {
-				updateActive(listItem);
-				dispatchActiveEvent({
-					element: listItem,
-					link: link,
-					href: link.getAttribute('href'),
-					text: link.textContent.trim()
-				});
-			}
+			updateActive(link);
+			dispatchActiveEvent({
+				element: link,
+				href: link.getAttribute('href'),
+				text: link.textContent.trim()
+			});
 
 			if (!link.getAttribute('href')) {
 				e.preventDefault();
@@ -838,9 +880,10 @@ registerComponent('nui-link-list', (element) => {
 
 	element.addEventListener('focusin', (e) => {
 		if (mode === 'fold') {
-			const header = e.target.closest('.group-header');
-			if (header) {
+			const groupToggle = e.target.closest('.group-toggle');
+			if (groupToggle) {
 				if (isMouseDown) return;
+				const header = groupToggle.closest('.group-header');
 				const path = getPathHeaders(header);
 				path.add(header);
 				updateAccordionState(path);
@@ -855,10 +898,10 @@ registerComponent('nui-link-list', (element) => {
 	});
 
 	element.addEventListener('keydown', (e) => {
-		const target = e.target.closest('a, .group-header');
+		const target = e.target.closest('a, .group-toggle');
 		if (!target) return;
 
-		const items = element.els('a, .group-header').filter(el => {
+		const items = element.els('a, .group-toggle').filter(el => {
 			return el.offsetParent !== null && getComputedStyle(el).visibility !== 'hidden';
 		});
 		const idx = items.indexOf(target);
@@ -876,8 +919,6 @@ registerComponent('nui-link-list', (element) => {
 	if (mode === 'fold') {
 		upgradeHtml();
 		element.els('.group-header').forEach(h => {
-			h.setAttribute('tabindex', '0');
-			h.setAttribute('role', 'button');
 			setGroupState(h, false);
 		});
 	}
@@ -926,6 +967,79 @@ registerComponent('nui-app-footer', (element) => {
 		if (isMainFooter && !footer.hasAttribute('role')) {
 			footer.setAttribute('role', 'contentinfo');
 		}
+	}
+});
+
+registerComponent('nui-skip-links', (element) => {
+	function buildSkipLink(target, label) {
+		const targetEl = document.el(target);
+		if (!targetEl) return null;
+		
+		let targetId = targetEl.id;
+		if (!targetId) {
+			targetId = `skip-target-${Math.random().toString(36).substr(2, 9)}`;
+			targetEl.id = targetId;
+		}
+		
+		if (!targetEl.hasAttribute('tabindex')) {
+			targetEl.setAttribute('tabindex', '-1');
+		}
+		
+		const link = dom.create('a', {
+			attrs: { href: `#${targetId}` },
+			class: 'skip-link',
+			text: label
+		});
+		
+		link.addEventListener('click', (e) => {
+			e.preventDefault();
+			targetEl.focus();
+		});
+		
+		return link;
+	}
+	
+	if (element.children.length === 0) {
+		const app = element.closest('nui-app') || document.el('nui-app');
+		const defaultLinks = [];
+		
+		// In app mode, only provide skip to main content
+		// (topnav and sidenav are already visible in fixed positions)
+		const main = document.el('main');
+		if (main) {
+			defaultLinks.push({ target: main, label: 'Skip to main content' });
+		}
+		
+		defaultLinks.forEach(({ target, label }) => {
+			const link = buildSkipLink(target, label);
+			if (link) element.appendChild(link);
+		});
+	} else {
+		element.els('a[href^="#"]').forEach(link => {
+			const target = link.getAttribute('href');
+			if (target && target !== '#') {
+				const targetEl = document.el(target);
+				if (targetEl && !targetEl.hasAttribute('tabindex')) {
+					targetEl.setAttribute('tabindex', '-1');
+				}
+			}
+			
+			link.addEventListener('click', (e) => {
+				e.preventDefault();
+				const targetId = link.getAttribute('href');
+				const targetEl = document.el(targetId);
+				if (targetEl) {
+					targetEl.focus();
+				}
+			});
+		});
+	}
+	
+	if (!element.hasAttribute('role')) {
+		element.setAttribute('role', 'navigation');
+	}
+	if (!element.hasAttribute('aria-label')) {
+		element.setAttribute('aria-label', 'Skip links');
 	}
 });
 
@@ -2149,6 +2263,7 @@ function createRouter(container, options = {}) {
 	let currentElement = null;
 	let currentRoute = null;
 	let isStarted = false;
+	let isInitialLoad = true;
 	let navigationId = 0;
 
 	container = typeof container === 'string'
@@ -2239,7 +2354,15 @@ function createRouter(container, options = {}) {
 			
 			requestAnimationFrame(() => {
 				requestAnimationFrame(() => {
-					showElement(element, params);
+					// Only focus content on navigation, not on initial page load
+					if (!isInitialLoad) {
+						showElement(element, params);
+					} else {
+						element.inert = false;
+						element.show?.(params);
+						element.classList.add('nui-page-active');
+						isInitialLoad = false;
+					}
 					handleDeepLink(element, params);
 				});
 			});

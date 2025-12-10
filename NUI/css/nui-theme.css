@@ -117,6 +117,95 @@
 }
 
 
+
+
+
+/* Skip links for keyboard navigation */
+nui-skip-links {
+	display: block;
+	position: absolute;
+	top: var(--nui-space);
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 10000;
+	pointer-events: none;
+}
+
+nui-skip-links .skip-link {
+	position: absolute;
+	top: 0;
+	left: 50%;
+	transform: translateX(-50%) translateY(-100%);
+	opacity: 0;
+	background: var(--color-highlight);
+	color: var(--color-white);
+	padding: var(--nui-space-half) var(--nui-space);
+	text-decoration: none;
+	border-radius: var(--border-radius2);
+	font-weight: 500;
+	white-space: nowrap;
+	box-shadow: 0 4px 6px var(--shadow-color);
+	transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+	pointer-events: auto;
+}
+
+nui-skip-links .skip-link:focus {
+	transform: translateX(-50%) translateY(0);
+	opacity: 1;
+	outline: 2px solid var(--color-white);
+	outline-offset: 2px;
+}
+
+/* Ensure focus is visible for keyboard users */
+:focus-visible {
+	outline: 2px solid var(--color-highlight);
+	outline-offset: 2px;
+}
+
+/* Screen reader only content */
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border-width: 0;
+}
+
+layout,
+item {
+	display: contents;
+}
+
+body {
+	margin: 0;
+	padding: 0;
+	font-family: var(--system-ui);
+	font-size: var(--nui-rem-base);
+	background: light-dark(var(--color-shade2), var(--color-shade1));
+	color: var(--text-color);
+	line-height: 1.6;
+}
+
+pre {
+	font-family: monospace;
+	background: light-dark(var(--color-shade1), var(--color-shade2));
+	border-radius: var(--border-radius1);
+	border: solid var(--border-thickness) var(--border-shade2);
+	overflow-x: auto;
+	padding: var(--nui-space);
+}
+
+h1:focus,
+div:focus,
+p:focus,
+main:focus {
+	outline: none;
+}		
+
 h1 {
 	color: var(--color-highlight);
 	font-size: 2rem;
@@ -153,66 +242,6 @@ h5{
 h6{
 	font-weight: 600;
 	font-size: 0.8rem;
-}
-
-
-/* Skip link for keyboard navigation (optional, can be added to HTML) */
-.skip-link {
-	position: absolute;
-	top: -40px;
-	left: 0;
-	background: var(--color-highlight);
-	color: var(--color-white);
-	padding: 8px;
-	text-decoration: none;
-	z-index: 100;
-}
-
-.skip-link:focus {
-	top: 0;
-}
-
-/* Ensure focus is visible for keyboard users */
-:focus-visible {
-	outline: 2px solid var(--color-highlight);
-	outline-offset: 2px;
-}
-
-/* Screen reader only content */
-.sr-only {
-	position: absolute;
-	width: 1px;
-	height: 1px;
-	padding: 0;
-	margin: -1px;
-	overflow: hidden;
-	clip: rect(0, 0, 0, 0);
-	white-space: nowrap;
-	border-width: 0;
-}
-
-layout,
-item {
-	display: contents;
-}
-
-body {
-	margin: 0;
-	padding: 0;
-	font-family: var(--system-ui);
-	font-size: var(--nui-rem-base);
-	background: light-dark(var(--color-shade3), var(--color-shade1));
-	color: var(--text-color);
-	line-height: 1.6;
-}
-
-pre {
-	font-family: monospace;
-	background: var(--color-shade2);
-	border-radius: var(--border-radius1);
-	border: solid var(--border-thickness) var(--border-shade2);
-	overflow-x: auto;
-	padding: var(--nui-space);
 }
 
 nui-side-nav nui-link-list {
@@ -256,7 +285,7 @@ nui-link-list:first-child ul li:first-child {
 }
 
 nui-link-list ul li a,
-nui-link-list ul li.group-header>span:first-child {
+nui-link-list ul li.group-header button.group-toggle {
 	flex: 1;
 	display: flex;
 	align-items: center;
@@ -265,10 +294,16 @@ nui-link-list ul li.group-header>span:first-child {
 	text-decoration: none;
 	color: inherit;
 	min-width: 0;
+	background: none;
+	border: none;
+	padding: 0;
+	cursor: pointer;
+	font: inherit;
+	text-align: left;
 }
 
 nui-link-list ul li a nui-icon,
-nui-link-list ul li.group-header>span>nui-icon {
+nui-link-list ul li.group-header button.group-toggle nui-icon {
 	flex-shrink: 0;
 }
 
@@ -343,16 +378,16 @@ nui-link-list[mode="fold"] li {
 }
 
 nui-link-list[mode="fold"] li.list-item a:focus,
-nui-link-list[mode="fold"] li.group-header:focus {
+nui-link-list[mode="fold"] li.group-header button.group-toggle:focus {
 	outline:0;
 }
 
 nui-link-list[mode="fold"] li.list-item a:focus-visible,
-nui-link-list[mode="fold"] li.group-header:focus-visible {
+nui-link-list[mode="fold"] li.group-header button.group-toggle:focus-visible {
 	outline:0;
 }
 nui-link-list[mode="fold"] li.list-item a:focus-visible::before,
-nui-link-list[mode="fold"] li.group-header:focus-visible::before {
+nui-link-list[mode="fold"] li.group-header button.group-toggle:focus-visible::before {
 	content: '';
 	position: absolute;
 	inset:0;
@@ -362,7 +397,7 @@ nui-link-list[mode="fold"] li.group-header:focus-visible::before {
 
 nui-link-list[mode="fold"] li:hover {
 	color: var(--color-highlight);
-	background-color: var(--color-shade3);
+	background-color: var(--color-shade2);
 }
 
 nui-link-list[mode="fold"] li.list-item {
@@ -370,8 +405,8 @@ nui-link-list[mode="fold"] li.list-item {
 }
 
 nui-link-list[mode="fold"] li.list-item.active {
-	color: var(--color-white);
-	background-color: var(--color-shade3);
+	color: light-dark(var(--color-highlight), var(--color-highlight));
+	background-color: light-dark(var(--color-shade3), var(--color-shade3));
 }
 
 nui-link-list[mode="fold"] li.list-item.active::after {
@@ -382,7 +417,18 @@ nui-link-list[mode="fold"] li.list-item.active::after {
 	bottom: 0;
 	width: 0.3rem;
 	background-color: var(--color-highlight);
-	border-radius: var(--nui-radius);
+}
+
+nui-link-list[mode="fold"] li.list-item.active::before {
+	content: '';
+	position: absolute;
+	right: var(--nui-space);
+	top: 50%;
+	width: 0.3rem;
+	height: 0.3rem;
+	border-right: 2px solid var(--color-highlight);
+	border-bottom: 2px solid var(--color-highlight);
+	transform: translateY(-60%) rotate(-45deg);
 }
 
 nui-link-list[mode="fold"] li.list-item a {
@@ -409,7 +455,7 @@ nui-link-list[mode="fold"] ul li {
 	transition: opacity 0.2s, background-color 0.2s;
 }
 
-nui-link-list[mode="fold"] ul li.group-header::after {
+nui-link-list[mode="fold"] ul li.group-header button.group-toggle::after {
 	content: '▸';
 	font-size: 1.4rem;
 	opacity: 0.2;
@@ -418,14 +464,14 @@ nui-link-list[mode="fold"] ul li.group-header::after {
 	right: var(--nui-space);
 }
 
-nui-link-list[mode="fold"] ul li.group-header[aria-expanded="true"]::after {
+nui-link-list[mode="fold"] ul li.group-header button.group-toggle[aria-expanded="true"]::after {
 	transform: rotate(90deg);
 	color: var(--color-highlight);
 	opacity: 1;
 }
 
 nui-link-list[mode="fold"] ul li a,
-nui-link-list[mode="fold"] ul li.group-header>span:first-child {
+nui-link-list[mode="fold"] ul li.group-header button.group-toggle {
 	width: 100%;
 	height: 100%;
 	display: flex;
@@ -439,7 +485,7 @@ nui-link-list[mode="fold"] ul li.group-header {
 	position: relative;
 }
 
-nui-link-list[mode="fold"] ul li.group-header>span {
+nui-link-list[mode="fold"] ul li.group-header button.group-toggle {
 	position: absolute;
 	inset: 0;
 	padding-left: var(--nui-space);
@@ -454,7 +500,7 @@ nui-link-list[mode="fold"] .group-items {
 }
 
 /* Background for expanded group container - fold mode only */
-nui-link-list[mode="fold"] .group-header[aria-expanded="true"]+.group-items {
+nui-link-list[mode="fold"] .group-header:has(button[aria-expanded="true"])+.group-items {
 	background-color: light-dark(rgb(255, 255, 255), rgb(30, 30, 30));
 	visibility: visible;
 	transition: height 0.2s ease-out, visibility 0s 0s;
@@ -466,16 +512,16 @@ nui-link-list[mode="fold"] .group-items>li a span {
 }
 
 /* Fold mode only - expandable states */
-nui-link-list[mode="fold"] ul li.group-header[aria-expanded="true"] {
+nui-link-list[mode="fold"] ul li.group-header:has(button[aria-expanded="true"]) {
 	opacity: 1;
 	background-color: light-dark(rgb(240, 240, 240), rgb(48, 48, 48));
 }
 
-nui-link-list[mode="fold"] ul li.group-header[aria-expanded="true"]+ul>li a:hover {
+nui-link-list[mode="fold"] ul li.group-header:has(button[aria-expanded="true"])+ul>li a:hover {
 	background-color: light-dark(rgb(240, 240, 240), rgb(55, 55, 55));
 }
 
-nui-link-list[mode="fold"] ul li.group-header[aria-expanded="true"]+ul>li a.active {
+nui-link-list[mode="fold"] ul li.group-header:has(button[aria-expanded="true"])+ul>li a.active {
 	background-color: light-dark(rgb(230, 235, 240), rgb(60, 65, 70));
 	border-left: 0.3rem solid var(--color-highlight);
 }
@@ -848,6 +894,13 @@ nui-top-nav header h1 {
 	color: var(--color-white)
 }
 
+/* Dim menu toggle button when sidebar is forced open */
+nui-app.sidenav-forced [data-action="toggle-sidebar"] {
+	opacity: 0.3;
+	pointer-events: none;
+	cursor: default;
+}
+
 nui-top-nav ul {
 	list-style: none;
 	margin: 0;
@@ -860,6 +913,10 @@ nui-top-nav ul {
 nui-top-nav li {
 	margin: 0;
 	padding: 0;
+}
+
+nui-top-nav button svg {
+	color: light-dark(var(--color-white), var(--color-white));
 }
 
 /* =============================================================================
@@ -1588,10 +1645,6 @@ nui-input input:read-only {
 }
 
 /* Validation states */
-nui-input.is-invalid input {
-	
-}
-
 nui-input.is-valid::after {
 	content: '';
 	position: absolute;
@@ -2333,7 +2386,7 @@ nui-table {
 nui-table table {
 	width: 100%;
 	border-collapse: collapse;
-	background-color: var(--color-shade2);
+	background-color: light-dark(var(--color-shade1), var(--color-shade2));
 	color: var(--color-text);
 }
 

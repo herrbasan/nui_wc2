@@ -46,7 +46,7 @@ nui-code .nui-code-copy nui-icon {
 .hl-value { color: light-dark(rgb(163, 21, 21), rgb(253, 151, 31)); }
 
 /* JavaScript/TypeScript */
-.hl-keyword { color: light-dark(rgb(175, 0, 219), rgb(197, 134, 192)); font-weight: 600; }
+.hl-keyword { color: light-dark(rgb(175, 0, 219), rgb(238, 138, 230)); font-weight: 600; }
 .hl-literal { color: light-dark(rgb(9, 134, 88), rgb(86, 156, 214)); }
 .hl-number { color: light-dark(rgb(9, 134, 88), rgb(181, 206, 168)); }
 .hl-builtin { color: light-dark(rgb(0, 92, 197), rgb(79, 193, 255)); font-weight: 500; }

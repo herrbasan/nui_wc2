@@ -27,7 +27,18 @@ document.addEventListener('click', (e) => {
 	switch (action) {
 		case 'toggle-sidebar':
 			const app = document.querySelector('nui-app');
-			if (app?.toggleSideNav) app.toggleSideNav();
+			if (app?.toggleSideNav) {
+				const wasOpen = app.classList.contains('sidenav-open');
+				app.toggleSideNav();
+				
+				// Focus first link when opening sidebar
+				if (!wasOpen && !app.classList.contains('sidenav-forced')) {
+					requestAnimationFrame(() => {
+						const firstLink = app.querySelector('nui-side-nav a[role="treeitem"], nui-side-nav button[role="treeitem"]');
+						if (firstLink) firstLink.focus();
+					});
+				}
+			}
 			break;
 		case 'toggle-theme':
 			const current = document.documentElement.style.colorScheme || 'light';
@@ -130,6 +141,7 @@ const navigationData = [
 		items: [
 			{ label: 'App Layout', href: '#page=components/app-layout' },
 			{ label: 'Link List', href: '#page=components/link-list' },
+			{ label: 'Skip Links', href: '#page=components/skip-links' },
 			{ label: 'Code', href: '#page=components/code' },
 			{ label: 'Icon', href: '#page=components/icon' },
 			{ label: 'Button', href: '#page=components/button' },

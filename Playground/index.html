@@ -21,12 +21,15 @@
 		<nui-loading mode="bar"></nui-loading>
 		
 		<nui-app nui-vars-sidebar_width="15rem" nui-vars-sidebar_force-breakpoint="75rem">
+			<!-- Skip links for keyboard accessibility (auto-generated for nui-app structure) -->
+			<nui-skip-links></nui-skip-links>
+
             <nui-top-nav>
                     <header>
                         <layout>
                             <item>
                                 <nui-button data-action="toggle-sidebar">
-                                    <button type="button">
+                                    <button type="button" aria-label="Toggle navigation menu">
                                         <nui-icon name="menu">☰</nui-icon>
                                     </button>
                                 </nui-button>
@@ -36,7 +39,7 @@
                             </item>
                             <item>
                                 <nui-button data-action="toggle-theme">
-                                    <button type="button">
+                                    <button type="button" aria-label="Toggle light/dark theme">
                                         <nui-icon name="brightness">⛭</nui-icon>
                                     </button>
                                 </nui-button>

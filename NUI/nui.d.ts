@@ -585,6 +585,7 @@ declare global {
 		'nui-app': NuiAppElement;
 		'nui-top-nav': NuiTopNavElement;
 		'nui-side-nav': NuiSideNavElement;
+		'nui-skip-links': HTMLElement;
 		'nui-link-list': NuiLinkListElement;
 		'nui-content': NuiContentElement;
 		'nui-app-footer': NuiAppFooterElement;
