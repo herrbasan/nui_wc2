@@ -943,3 +943,31 @@ Refined `nui-menu` keyboard navigation to support nested submenus and match WAI-
         - `Escape`: Closes current submenu if inside one, otherwise closes the entire menu.
     - Updated `renderMenuItem` to attach `_itemData` to the button element for keyboard access.
 - **Result**: Keyboard navigation now supports entering and exiting submenus naturally, enabling access to nested menu structures.
+
+---
+
+## #2Jp5M8 - December 11, 2025
+**Menu Accessibility Polish: Mute Submenu Icon**
+
+- **Problem**: Screen readers were announcing the submenu arrow icon (triangle), adding noise to the navigation experience.
+- **Solution**: Added `aria-hidden="true"` to the submenu arrow `<span>` element.
+- **Result**: Cleaner screen reader output, focusing only on the menu item label and its state (has popup, expanded/collapsed).
+
+---
+
+## #3Xq9L1 - December 11, 2025
+**Menu Accessibility Polish: Explicit Menu Role**
+
+- **Problem**: Screen readers were announcing menu items as "submenu" instead of "menu", which was confusing for top-level items.
+- **Solution**: Changed `aria-haspopup="true"` to `aria-haspopup="menu"` for both top-level menu items and submenu triggers.
+- **Result**: Screen readers now explicitly announce "menu", providing clearer context to the user.
+
+---
+
+## #4Yk2P9 - December 11, 2025
+**Menu Accessibility Polish: Close on Focus Loss**
+
+- **Problem**: When tabbing out of the menu component, open menus remained open, creating a confusing state when returning.
+- **Solution**: Added a `focusout` event listener to the `nui-menu` element.
+- **Logic**: Checks if `e.relatedTarget` (the new focus target) is outside the menu component. If so, calls `closeAllMenus()`.
+- **Result**: Menu state is cleanly reset when the user navigates away, ensuring a fresh start upon return.

@@ -106,8 +106,15 @@ function setupMenu(element) {
 		handleMenuKeyboard(e, element);
 	};
 
+	element._focusHandler = (e) => {
+		if (!element.contains(e.relatedTarget)) {
+			closeAllMenus();
+		}
+	};
+
 	document.addEventListener('click', element._dismissHandler);
 	element.addEventListener('keydown', element._keyHandler);
+	element.addEventListener('focusout', element._focusHandler);
 }
 
 function parseDeclarativeMenu(element, nav) {
@@ -204,6 +211,9 @@ function cleanupMenu(element) {
 	if (element._keyHandler) {
 		element.removeEventListener('keydown', element._keyHandler);
 	}
+	if (element._focusHandler) {
+		element.removeEventListener('focusout', element._focusHandler);
+	}
 
 	// Clean up dropdowns
 	const elementDropdowns = dropdownCache.get(element);
@@ -233,7 +243,7 @@ function loadMenuData(element, data) {
 		button.textContent = item.label;
 		button.setAttribute('data-menu-id', menuId);
 		button.setAttribute('role', 'menuitem');
-		button.setAttribute('aria-haspopup', 'true');
+		button.setAttribute('aria-haspopup', 'menu');
 		button.setAttribute('aria-expanded', 'false');
 		button.setAttribute('aria-controls', `${menuId}_dropdown`);
 		button.id = `${menuId}_trigger`;
@@ -324,10 +334,11 @@ function renderMenuItem(item, element, parentMenuId) {
 		const submenuId = `nui-submenu-${submenuIdCounter++}`;
 		button.id = `${submenuId}-trigger`;
 		button.setAttribute('aria-controls', submenuId);
-		button.setAttribute('aria-haspopup', 'true');
+		button.setAttribute('aria-haspopup', 'menu');
 		button.setAttribute('aria-expanded', 'false');
 		const arrow = document.createElement('span');
 		arrow.className = 'nui-menu-arrow';
+		arrow.setAttribute('aria-hidden', 'true');
 		arrow.textContent = SUBMENU_ICON;
 		button.appendChild(arrow);
 
@@ -568,7 +579,7 @@ function handleMenuKeyboard(e, element) {
 		}
 	} else if (e.key === 'ArrowRight') {
 		e.preventDefault();
-		if (isDropdownItem && activeElement.getAttribute('aria-haspopup') === 'true') {
+		if (isDropdownItem && activeElement.getAttribute('aria-haspopup') === 'menu') {
 			const itemData = activeElement._itemData;
 			if (itemData && itemData.items) {
 				openSubmenu(activeElement, itemData.items, element);
