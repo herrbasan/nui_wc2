@@ -1,0 +1,156 @@
+/**
+ * NUI Menu - Addon Component Styles
+ * Menu bar with dropdown menus and nested submenus
+ */
+
+/* Menu Bar Container */
+nui-menu {
+	display: block;
+	position: relative;
+	overflow: visible;
+}
+
+.nui-menu-bar {
+	display: flex;
+	align-items: center;
+	height: var(--nui-space-double);
+	background: var(--color-shade1);
+	border-bottom: var(--border-thickness) solid var(--border-shade2);
+	gap: 0;
+}
+
+/* Menu Bar Items */
+.nui-menu-item {
+	display: flex;
+	align-items: center;
+	height: 100%;
+	padding: 0 var(--nui-space);
+	background: transparent;
+	border: none;
+	color: var(--color-text);
+	font-family: var(--system-ui);
+	font-size: 0.875rem;
+	cursor: pointer;
+	transition: background-color 0.15s ease;
+	white-space: nowrap;
+}
+
+.nui-menu-item:hover {
+	background: var(--color-shade3);
+}
+
+.nui-menu-item.active {
+	background: var(--color-highlight);
+	color: var(--color-white);
+}
+
+.nui-menu-item:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.nui-menu-item:focus-visible {
+	outline: 2px solid var(--color-highlight);
+	outline-offset: -2px;
+	z-index: 1;
+}
+
+/* Dropdown Menu */
+.nui-menu-dropdown {
+	position: absolute;
+	min-width: 12rem;
+	background: var(--color-shade2);
+	border: var(--border-thickness) solid var(--border-shade2);
+	border-radius: var(--border-radius2);
+	box-shadow: 0 var(--shadow-radius0) var(--shadow-radius1) var(--shadow-color);
+	z-index: 1000;
+	opacity: 0;
+	visibility: hidden;
+	transform: translateY(-4px);
+	transition: opacity 0.15s ease, transform 0.15s ease, visibility 0s 0.15s;
+}
+
+.nui-menu-dropdown.open {
+	opacity: 1;
+	visibility: visible;
+	transform: translateY(0);
+	transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.nui-menu-dropdown ul {
+	list-style: none;
+	margin: 0;
+	padding: var(--nui-space-quarter) 0;
+}
+
+/* Dropdown Menu Items */
+.nui-menu-dropdown-item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
+	padding: var(--nui-space-half) var(--nui-space);
+	background: transparent;
+	border: none;
+	color: var(--color-text);
+	font-family: var(--system-ui);
+	font-size: 0.875rem;
+	text-align: left;
+	cursor: pointer;
+	transition: background-color 0.15s ease;
+	gap: var(--nui-space-double);
+}
+
+.nui-menu-dropdown-item:hover {
+	background: var(--color-shade3);
+}
+
+.nui-menu-dropdown-item:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.nui-menu-dropdown-item:focus-visible {
+	outline: none;
+	background: var(--color-shade3);
+}
+
+/* Menu Item Label */
+.nui-menu-label {
+	flex: 1;
+	white-space: nowrap;
+}
+
+/* Keyboard Shortcut */
+.nui-menu-shortcut {
+	color: var(--color-text-muted);
+	font-size: 0.75rem;
+	margin-left: var(--nui-space);
+	white-space: nowrap;
+}
+
+/* Submenu Arrow */
+.nui-menu-arrow {
+	margin-left: var(--nui-space-half);
+	color: var(--color-text-muted);
+	font-size: 0.75rem;
+}
+
+/* Separator */
+.nui-menu-separator {
+	height: 1px;
+	margin: var(--nui-space-quarter) 0;
+	background: var(--border-shade2);
+}
+
+/* Submenu Positioning */
+.nui-menu-submenu {
+	z-index: 1001;
+}
+
+/* Accessibility: Reduce Motion */
+@media (prefers-reduced-motion: reduce) {
+	.nui-menu-dropdown {
+		transition: none;
+	}
+}

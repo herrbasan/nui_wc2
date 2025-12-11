@@ -882,4 +882,34 @@ Claude Sonnet 4.5 - GitHub Copilot
 
 ---
 
-**Last Updated:** December 10, 2025
+
+---
+
+## #7Jk9L2 - December 11, 2025
+**Menu Component Refactor: Clean Slate & Roving Tabindex**
+
+Completely refactored `nui-menu` keyboard navigation after initial attempts failed to meet WAI-ARIA standards.
+
+**The Problem:**
+- Initial implementation mixed focus management with state management, leading to unpredictable behavior.
+- Tab key was trapping focus or navigating incorrectly through all items.
+- ARIA roles were structurally incorrect (`menubar` > `nav` > `menuitem` is invalid).
+
+**The Solution:**
+1. **Clean Slate Protocol**: Removed all existing keyboard logic to start fresh.
+2. **Roving Tabindex Pattern**:
+   - Only ONE item in the entire menu system has `tabindex="0"` at any time.
+   - All other items have `tabindex="-1"`.
+   - Tab key naturally enters the component (focuses active item) and exits it (moves to next page element).
+   - Arrow keys manage internal focus and update the `tabindex="0"` assignment.
+3. **ARIA Structure Fix**:
+   - Moved `role="menubar"` from the container to the internal `<nav>` element.
+   - Ensures direct `menubar` > `menuitem` parent/child relationship.
+4. **Unified Navigation**:
+   - Left/Right arrows cycle through top-level menu items regardless of open/closed state.
+   - Up/Down arrows handle dropdown navigation and auto-opening.
+   - Cross-menu navigation works seamlessly from within dropdowns.
+
+**Lesson Learned**: When complex state management fights against platform behavior, delete it. Implementing the standard "Roving Tabindex" pattern from scratch was cleaner and more robust than patching the existing logic.
+
+**Last Updated:** December 11, 2025

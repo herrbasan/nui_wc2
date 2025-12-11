@@ -629,6 +629,21 @@ The Playground is a Single Page Application (SPA) that uses a custom content loa
    - Follow the pattern of existing component pages (header, examples, code snippets).
 4. **Update Navigation**: Add the new page to the `navigationData` array in `Playground/js/main.js` so it appears in the sidebar.
 
+### Accessibility Patterns
+
+**Roving Tabindex (Menus, Grids, Toolbars):**
+- **Concept**: Only the *active* item in a composite component has `tabindex="0"`. All others have `tabindex="-1"`.
+- **Behavior**: Tab key enters the component (focuses active item) and exits it (moves to next page element).
+- **Internal Navigation**: Arrow keys manage focus internally and update which item has `tabindex="0"`.
+- **Implementation**:
+  ```javascript
+  // On arrow key:
+  items.forEach(item => item.tabIndex = -1);
+  nextItem.tabIndex = 0;
+  nextItem.focus();
+  ```
+- **Used in**: `nui-menu`, `nui-tabs`, `nui-link-list`.
+
 ### Core vs Addon Strategy
 
 **Core Components (Implemented):**
@@ -667,7 +682,7 @@ The Playground is a Single Page Application (SPA) that uses a custom content loa
 - [x] Implement `nui-accordion` ✅
 - [x] Implement `nui-table` ✅
 - [x] Implement `nui-slider` ✅
-- [ ] Implement `nui-menu`
+- [x] Implement `nui-menu` ✅
 - [ ] Implement `nui-tooltip`
 - [ ] Implement `nui-progress`
 

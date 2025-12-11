@@ -1,0 +1,323 @@
+<header>
+	<h1>Menu Component</h1>
+	<p>Menu bar with dropdown menus and nested submenus. This is the first <strong>addon component</strong>, demonstrating how to extend the NUI library with optional modules.</p>
+</header>
+
+<section>
+	<h2>Overview</h2>
+	<p>The <code>&lt;nui-menu&gt;</code> component provides application-style menu bars with dropdowns and nested submenus. Uses the same data structure pattern as <code>nui-link-list</code>.</p>
+	<p><strong>Key features:</strong></p>
+	<ul>
+		<li>VS Code-inspired state machine for predictable behavior</li>
+		<li>Element reuse pattern - dropdowns created once, repositioned on activation</li>
+		<li>Full keyboard navigation (arrow keys, ESC, Enter/Space, Home/End)</li>
+		<li>Nested submenus with intelligent overflow positioning</li>
+		<li>Complete ARIA menubar/menu/menuitem pattern</li>
+		<li>Same JSON data structure as link-list (items, separators, disabled states)</li>
+	</ul>
+</section>
+
+<section>
+	<h2>Declarative HTML Pattern</h2>
+	<p>Create menus using semantic HTML structure. The component will automatically parse and upgrade the markup.</p>
+	
+	<div style="background: var(--color-shade1); border: var(--border-thickness) solid var(--border-shade2); border-radius: var(--border-radius2); padding: 1rem; margin: 1.5rem 0;">
+		<nui-menu id="declarative-menu">
+			<nav>
+				<button>File</button>
+				<ul>
+					<li><button data-action="new-file" data-shortcut="Ctrl+N">New File</button></li>
+					<li><button data-action="open" data-shortcut="Ctrl+O">Open...</button></li>
+					<li class="separator"></li>
+					<li><button data-action="save" data-shortcut="Ctrl+S">Save</button></li>
+					<li><button data-action="exit">Exit</button></li>
+				</ul>
+				<button>Edit</button>
+				<ul>
+					<li><button data-action="undo" data-shortcut="Ctrl+Z">Undo</button></li>
+					<li><button data-action="redo" data-shortcut="Ctrl+Y">Redo</button></li>
+					<li class="separator"></li>
+					<li><button data-action="cut" data-shortcut="Ctrl+X">Cut</button></li>
+					<li><button data-action="copy" data-shortcut="Ctrl+C">Copy</button></li>
+					<li><button data-action="paste" data-shortcut="Ctrl+V">Paste</button></li>
+				</ul>
+				<button>View</button>
+				<ul>
+					<li><button data-action="zoom-in" data-shortcut="Ctrl+=">Zoom In</button></li>
+					<li><button data-action="zoom-out" data-shortcut="Ctrl+-">Zoom Out</button></li>
+					<li><button data-action="zoom-reset" data-shortcut="Ctrl+0">Reset Zoom</button></li>
+				</ul>
+			</nav>
+		</nui-menu>
+	</div>
+
+	<nui-code>
+		<pre><code data-lang="html">&lt;nui-menu&gt;
+  &lt;nav&gt;
+    &lt;button&gt;File&lt;/button&gt;
+    &lt;ul&gt;
+      &lt;li&gt;&lt;button data-action="new-file" data-shortcut="Ctrl+N"&gt;New File&lt;/button&gt;&lt;/li&gt;
+      &lt;li&gt;&lt;button data-action="open" data-shortcut="Ctrl+O"&gt;Open...&lt;/button&gt;&lt;/li&gt;
+      &lt;li class="separator"&gt;&lt;/li&gt;
+      &lt;li&gt;&lt;button data-action="save" data-shortcut="Ctrl+S"&gt;Save&lt;/button&gt;&lt;/li&gt;
+    &lt;/ul&gt;
+    &lt;button&gt;Edit&lt;/button&gt;
+    &lt;ul&gt;...&lt;/ul&gt;
+  &lt;/nav&gt;
+&lt;/nui-menu&gt;</code></pre>
+	</nui-code>
+</section>
+
+<section>
+	<h2>Programmatic Pattern (.loadData)</h2>
+	<p>Create menus dynamically using JavaScript with the same data structure as <code>nui-link-list</code>.</p>
+	
+	<div style="background: var(--color-shade1); border: var(--border-thickness) solid var(--border-shade2); border-radius: var(--border-radius2); padding: 1rem; margin: 1.5rem 0;">
+		<nui-menu id="basic-menu"></nui-menu>
+	</div>
+
+	<div style="background: var(--color-shade1); border-left: 4px solid var(--color-highlight); padding: 1rem; margin: 1rem 0;">
+		<h3 style="margin-top: 0;">Interaction Patterns:</h3>
+		<p><strong>Mouse:</strong></p>
+		<ul>
+			<li><strong>Click</strong> a menu to open dropdown</li>
+			<li><strong>Click again</strong> to close (toggle)</li>
+			<li><strong>Hover</strong> other menus when active to switch instantly</li>
+			<li><strong>Click outside</strong> or press <kbd>ESC</kbd> to dismiss</li>
+		</ul>
+		<p><strong>Keyboard (W3C ARIA Menubar Pattern):</strong></p>
+		<ul>
+			<li><strong>Left/Right Arrow:</strong> Navigate between menubar items (auto-opens menus if one is open)</li>
+			<li><strong>Down Arrow:</strong> Open menu and focus first item (or navigate down in open menu)</li>
+			<li><strong>Up Arrow:</strong> Open menu and focus last item (or navigate up in open menu)</li>
+			<li><strong>Enter/Space:</strong> Open menu or activate item (opens submenu if present)</li>
+			<li><strong>Right Arrow (in menu):</strong> Open submenu or move to next menubar item</li>
+			<li><strong>Left Arrow (in menu):</strong> Close submenu or move to previous menubar item</li>
+			<li><strong>Escape:</strong> Close menu and return focus to menubar</li>
+			<li><strong>Home/End:</strong> Jump to first/last item in current context</li>
+		</ul>
+	</div>
+
+	<nui-code>
+		<pre><code data-lang="javascript">const menuData = {
+	items: [
+		{
+			label: 'File',
+			items: [
+				{ label: 'New File', action: 'new-file', shortcut: 'Ctrl+N' },
+				{ label: 'Open...', action: 'open', shortcut: 'Ctrl+O' },
+				{ type: 'separator' },
+				{ label: 'Save', action: 'save', shortcut: 'Ctrl+S' },
+				{ label: 'Save As...', action: 'save-as' },
+				{ type: 'separator' },
+				{ label: 'Exit', action: 'exit', shortcut: 'Alt+F4' }
+			]
+		},
+		{
+			label: 'Edit',
+			items: [
+				{ label: 'Undo', action: 'undo', shortcut: 'Ctrl+Z' },
+				{ label: 'Redo', action: 'redo', shortcut: 'Ctrl+Y' },
+				{ type: 'separator' },
+				{ label: 'Cut', action: 'cut', shortcut: 'Ctrl+X' },
+				{ label: 'Copy', action: 'copy', shortcut: 'Ctrl+C' },
+				{ label: 'Paste', action: 'paste', shortcut: 'Ctrl+V' }
+			]
+		},
+		{
+			label: 'View',
+			items: [
+				{ label: 'Zoom In', action: 'zoom-in', shortcut: 'Ctrl+=' },
+				{ label: 'Zoom Out', action: 'zoom-out', shortcut: 'Ctrl+-' },
+				{ label: 'Reset Zoom', action: 'zoom-reset', shortcut: 'Ctrl+0' }
+			]
+		}
+	]
+};
+
+const menu = document.createElement('nui-menu');
+menu.loadData(menuData);
+document.body.appendChild(menu);</code></pre>
+	</nui-code>
+</section>
+
+<section>
+	<h2>Nested Submenus Example</h2>
+	<p>Menu with nested submenus demonstrating recursive structure (hover with 300ms delay to open).</p>
+	
+	<div style="background: var(--color-shade1); border: var(--border-thickness) solid var(--border-shade2); border-radius: var(--border-radius2); padding: 1rem; margin: 1.5rem 0;">
+		<nui-menu id="nested-menu"></nui-menu>
+	</div>
+
+	<nui-code>
+		<pre><code data-lang="javascript">const nestedData = {
+	items: [
+		{
+			label: 'File',
+			items: [
+				{ label: 'New...', items: [
+					{ label: 'Text File', action: 'new-text' },
+					{ label: 'HTML File', action: 'new-html' },
+					{ label: 'JavaScript File', action: 'new-js' }
+				]},
+				{ label: 'Open Recent', items: [
+					{ label: 'project-1.html', action: 'open-recent-1' },
+					{ label: 'script.js', action: 'open-recent-2' },
+					{ type: 'separator' },
+					{ label: 'Clear Recent', action: 'clear-recent' }
+				]},
+				{ type: 'separator' },
+				{ label: 'Save', action: 'save', shortcut: 'Ctrl+S' }
+			]
+		},
+		{
+			label: 'Preferences',
+			items: [
+				{ label: 'Settings', action: 'settings', shortcut: 'Ctrl+,' },
+				{ label: 'Theme', items: [
+					{ label: 'Light', action: 'theme-light' },
+					{ label: 'Dark', action: 'theme-dark' },
+					{ label: 'Auto', action: 'theme-auto' }
+				]},
+				{ label: 'Keyboard Shortcuts', action: 'shortcuts', disabled: true }
+			]
+		}
+	]
+};</code></pre>
+	</nui-code>
+</section>
+
+<script type="nui/page">
+function init(element, params) {
+	// Load the menu addon module
+	import('../../NUI/lib/modules/nui-menu.js').then(() => {
+		// Basic menu data
+		const basicMenuData = {
+		items: [
+			{
+				label: 'File',
+				items: [
+					{ label: 'New File', action: 'new-file', shortcut: 'Ctrl+N' },
+					{ label: 'Open...', action: 'open', shortcut: 'Ctrl+O' },
+					{ type: 'separator' },
+					{ label: 'Save', action: 'save', shortcut: 'Ctrl+S' },
+					{ label: 'Save As...', action: 'save-as', shortcut: 'Ctrl+Shift+S' },
+					{ type: 'separator' },
+					{ label: 'Exit', action: 'exit', shortcut: 'Alt+F4' }
+				]
+			},
+			{
+				label: 'Edit',
+				items: [
+					{ label: 'Undo', action: 'undo', shortcut: 'Ctrl+Z' },
+					{ label: 'Redo', action: 'redo', shortcut: 'Ctrl+Y' },
+					{ type: 'separator' },
+					{ label: 'Cut', action: 'cut', shortcut: 'Ctrl+X' },
+					{ label: 'Copy', action: 'copy', shortcut: 'Ctrl+C' },
+					{ label: 'Paste', action: 'paste', shortcut: 'Ctrl+V' },
+					{ type: 'separator' },
+					{ label: 'Find', action: 'find', shortcut: 'Ctrl+F' },
+					{ label: 'Replace', action: 'replace', shortcut: 'Ctrl+H' }
+				]
+			},
+			{
+				label: 'View',
+				items: [
+					{ label: 'Zoom In', action: 'zoom-in', shortcut: 'Ctrl+=' },
+					{ label: 'Zoom Out', action: 'zoom-out', shortcut: 'Ctrl+-' },
+					{ label: 'Reset Zoom', action: 'zoom-reset', shortcut: 'Ctrl+0' },
+					{ type: 'separator' },
+					{ label: 'Toggle Sidebar', action: 'toggle-sidebar', shortcut: 'Ctrl+B' },
+					{ label: 'Toggle Terminal', action: 'toggle-terminal', shortcut: 'Ctrl+`' }
+				]
+			}
+		]
+	};
+
+	// Nested menu data
+	const nestedMenuData = {
+		items: [
+			{
+				label: 'File',
+				items: [
+					{
+						label: 'New...',
+						items: [
+							{ label: 'Text File', action: 'new-text' },
+							{ label: 'HTML File', action: 'new-html' },
+							{ label: 'CSS File', action: 'new-css' },
+							{ label: 'JavaScript File', action: 'new-js' },
+							{ type: 'separator' },
+							{ label: 'Folder', action: 'new-folder' }
+						]
+					},
+					{
+						label: 'Open Recent',
+						items: [
+							{ label: 'project-1.html', action: 'open-recent-1' },
+							{ label: 'script.js', action: 'open-recent-2' },
+							{ label: 'styles.css', action: 'open-recent-3' },
+							{ type: 'separator' },
+							{ label: 'Clear Recent', action: 'clear-recent' }
+						]
+					},
+					{ type: 'separator' },
+					{ label: 'Save', action: 'save', shortcut: 'Ctrl+S' },
+					{ label: 'Save All', action: 'save-all', shortcut: 'Ctrl+K S' }
+				]
+			},
+			{
+				label: 'Preferences',
+				items: [
+					{ label: 'Settings', action: 'settings', shortcut: 'Ctrl+,' },
+					{
+						label: 'Theme',
+						items: [
+							{ label: 'Light', action: 'theme-light' },
+							{ label: 'Dark', action: 'theme-dark' },
+							{ label: 'High Contrast', action: 'theme-contrast' },
+							{ type: 'separator' },
+							{ label: 'Auto (System)', action: 'theme-auto' }
+						]
+					},
+					{
+						label: 'Color Scheme',
+						items: [
+							{ label: 'Default', action: 'color-default' },
+							{ label: 'Monokai', action: 'color-monokai' },
+							{ label: 'Solarized', action: 'color-solarized' },
+							{ label: 'Dracula', action: 'color-dracula' }
+						]
+					},
+					{ type: 'separator' },
+					{ label: 'Keyboard Shortcuts', action: 'shortcuts', disabled: true }
+				]
+			},
+			{
+				label: 'Help',
+				items: [
+					{ label: 'Documentation', action: 'docs' },
+					{ label: 'Keyboard Shortcuts', action: 'help-shortcuts' },
+					{ type: 'separator' },
+					{ label: 'About', action: 'about' }
+				]
+			}
+		]
+	};
+
+	// Load menus
+	const basicMenu = element.querySelector('#basic-menu');
+	const nestedMenu = element.querySelector('#nested-menu');
+	
+	if (basicMenu && basicMenu.loadData) {
+		basicMenu.loadData(basicMenuData);
+	}
+	
+	if (nestedMenu && nestedMenu.loadData) {
+		nestedMenu.loadData(nestedMenuData);
+	}
+	}).catch(err => {
+		console.error('Failed to load nui-menu module:', err);
+	});
+}
+</script>

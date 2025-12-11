@@ -152,6 +152,7 @@ const navigationData = [
 			{ label: 'Inputs', href: '#page=components/inputs' },
 			{ label: 'Table', href: '#page=components/table' },
 			{ label: 'Slider', href: '#page=components/slider' },
+			{ label: 'Menu', href: '#page=components/menu' },
 			{ label: 'Animation', href: '#page=components/animation' }
 		]
 	},
