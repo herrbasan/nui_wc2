@@ -32,6 +32,7 @@ let activeDropdown = null;
 let submenuTimer = null;
 let activeMenuElement = null;
 const dropdownCache = new WeakMap(); // Element -> Map(menuId -> dropdown)
+let submenuIdCounter = 0;
 
 // Constants
 const SUBMENU_DELAY = 300; // ms delay before opening submenu
@@ -234,6 +235,8 @@ function loadMenuData(element, data) {
 		button.setAttribute('role', 'menuitem');
 		button.setAttribute('aria-haspopup', 'true');
 		button.setAttribute('aria-expanded', 'false');
+		button.setAttribute('aria-controls', `${menuId}_dropdown`);
+		button.id = `${menuId}_trigger`;
 		button.tabIndex = index === 0 ? 0 : -1;
 
 		if (item.disabled) {
@@ -262,6 +265,8 @@ function getOrCreateDropdown(element, menuId, items) {
 		dropdown.className = 'nui-menu-dropdown';
 		dropdown.setAttribute('role', 'menu');
 		dropdown.setAttribute('data-menu-id', menuId);
+		dropdown.id = `${menuId}_dropdown`;
+		dropdown.setAttribute('aria-labelledby', `${menuId}_trigger`);
 
 		// Render dropdown content
 		const ul = document.createElement('ul');
@@ -315,6 +320,9 @@ function renderMenuItem(item, element, parentMenuId) {
 
 	// Submenu indicator
 	if (item.items && item.items.length > 0) {
+		const submenuId = `nui-submenu-${submenuIdCounter++}`;
+		button.id = `${submenuId}-trigger`;
+		button.setAttribute('aria-controls', submenuId);
 		button.setAttribute('aria-haspopup', 'true');
 		button.setAttribute('aria-expanded', 'false');
 		const arrow = document.createElement('span');
@@ -349,9 +357,14 @@ function openSubmenu(triggerButton, items, element) {
 	// Close any existing submenu
 	closeActiveSubmenu();
 
+	const submenuId = triggerButton.getAttribute('aria-controls');
 	const submenu = document.createElement('div');
 	submenu.className = 'nui-menu-dropdown nui-menu-submenu';
 	submenu.setAttribute('role', 'menu');
+	if (submenuId) {
+		submenu.id = submenuId;
+		submenu.setAttribute('aria-labelledby', triggerButton.id);
+	}
 
 	const ul = document.createElement('ul');
 	ul.setAttribute('role', 'none');
@@ -521,6 +534,68 @@ function handleMenuKeyboard(e, element) {
 			focusDropdownItem(activeDropdown, 'last');
 		} else if (isDropdownItem) {
 			moveDropdownFocus(activeElement, -1);
+		}
+	} else if (e.key === 'Escape') {
+		e.preventDefault();
+		if (isDropdownItem) {
+			const submenu = activeElement.closest('.nui-menu-submenu');
+			if (submenu) {
+				// In submenu: Close submenu and focus parent trigger
+				const trigger = document.querySelector('.nui-menu-dropdown-item[aria-expanded="true"]');
+				closeActiveSubmenu();
+				if (trigger) trigger.focus();
+			} else {
+				// In top-level menu: Close menu and focus menubar item
+				const currentMenuId = activeMenuId;
+				closeAllMenus();
+				const menuBarItem = element.querySelector(`[data-menu-id="${currentMenuId}"]`);
+				if (menuBarItem) {
+					menuBarItem.tabIndex = 0;
+					menuBarItem.focus();
+				}
+			}
+		} else if (isMenuBarItem) {
+			if (currentState === MenuState.MENU_ACTIVE) {
+				closeAllMenus();
+				activeElement.focus(); // Keep focus on the item
+			}
+		}
+	} else if (e.key === 'Home') {
+		e.preventDefault();
+		if (isMenuBarItem) {
+			const items = Array.from(element.querySelectorAll('.nui-menu-bar > .nui-menu-item:not([disabled])'));
+			if (items.length > 0) {
+				items.forEach(i => i.tabIndex = -1);
+				items[0].tabIndex = 0;
+				items[0].focus();
+				if (currentState === MenuState.MENU_ACTIVE) {
+					closeAllMenus();
+					openMenu(element, items[0].dataset.menuId);
+					currentState = MenuState.MENU_ACTIVE;
+				}
+			}
+		} else if (isDropdownItem) {
+			const dropdown = activeElement.closest('.nui-menu-dropdown');
+			focusDropdownItem(dropdown, 'first');
+		}
+	} else if (e.key === 'End') {
+		e.preventDefault();
+		if (isMenuBarItem) {
+			const items = Array.from(element.querySelectorAll('.nui-menu-bar > .nui-menu-item:not([disabled])'));
+			if (items.length > 0) {
+				items.forEach(i => i.tabIndex = -1);
+				const last = items[items.length - 1];
+				last.tabIndex = 0;
+				last.focus();
+				if (currentState === MenuState.MENU_ACTIVE) {
+					closeAllMenus();
+					openMenu(element, last.dataset.menuId);
+					currentState = MenuState.MENU_ACTIVE;
+				}
+			}
+		} else if (isDropdownItem) {
+			const dropdown = activeElement.closest('.nui-menu-dropdown');
+			focusDropdownItem(dropdown, 'last');
 		}
 	}
 }

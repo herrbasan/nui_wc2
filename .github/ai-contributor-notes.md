@@ -912,4 +912,17 @@ Completely refactored `nui-menu` keyboard navigation after initial attempts fail
 
 **Lesson Learned**: When complex state management fights against platform behavior, delete it. Implementing the standard "Roving Tabindex" pattern from scratch was cleaner and more robust than patching the existing logic.
 
+---
+
+## #8Km2P4 - December 11, 2025
+**Menu Accessibility Refinement: ARIA Relationships**
+
+Refined `nui-menu` to strictly follow WAI-ARIA Menubar pattern relationships based on expert feedback.
+
+**Improvements:**
+- **Explicit IDs**: Added unique IDs for all menu triggers and dropdown containers.
+- **ARIA Controls**: Added `aria-controls` to all menu items (top-level and submenu triggers) pointing to their respective dropdowns.
+- **ARIA LabelledBy**: Added `aria-labelledby` to all dropdown containers pointing back to their trigger buttons.
+- **Result**: Full programmatic association between controls and their content, ensuring screen readers understand the hierarchy.
+
 **Last Updated:** December 11, 2025
