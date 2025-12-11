@@ -631,6 +631,9 @@ The Playground is a Single Page Application (SPA) that uses a custom content loa
 
 ### Accessibility Patterns
 
+**Reference Standard:**
+All components must adhere to the [W3C ARIA Authoring Practices Guide (APG)](https://www.w3.org/WAI/ARIA/apg/patterns/). Check this reference for every interactive component to ensure correct roles, states, properties, and keyboard interactions.
+
 **Roving Tabindex (Menus, Grids, Toolbars):**
 - **Concept**: Only the *active* item in a composite component has `tabindex="0"`. All others have `tabindex="-1"`.
 - **Behavior**: Tab key enters the component (focuses active item) and exits it (moves to next page element).

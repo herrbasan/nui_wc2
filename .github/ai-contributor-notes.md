@@ -971,3 +971,16 @@ Refined `nui-menu` keyboard navigation to support nested submenus and match WAI-
 - **Solution**: Added a `focusout` event listener to the `nui-menu` element.
 - **Logic**: Checks if `e.relatedTarget` (the new focus target) is outside the menu component. If so, calls `closeAllMenus()`.
 - **Result**: Menu state is cleanly reset when the user navigates away, ensuring a fresh start upon return.
+
+---
+
+## #5Zp8R3 - December 11, 2025
+**Lesson Learned: Accessibility is Detail Work**
+
+The `nui-menu` refactor reinforced that accessibility isn't just about high-level patterns (like "Roving Tabindex"), but about the micro-details:
+- **Explicit Roles**: `aria-haspopup="menu"` vs `true` changes how screen readers announce items.
+- **Noise Reduction**: Muting decorative icons (`aria-hidden="true"`) is crucial for a clean auditory experience.
+- **State Management**: Closing menus on focus loss (`focusout`) is essential for predictable keyboard navigation.
+- **Relationship Mapping**: Explicit `aria-controls` and `aria-labelledby` are non-negotiable for complex composite widgets.
+
+**Takeaway**: When implementing complex widgets, always validate against the W3C ARIA APG examples line-by-line. Don't assume "it works for me" means it works for assistive technology.
