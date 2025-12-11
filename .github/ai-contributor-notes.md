@@ -926,3 +926,20 @@ Refined `nui-menu` to strictly follow WAI-ARIA Menubar pattern relationships bas
 - **Result**: Full programmatic association between controls and their content, ensuring screen readers understand the hierarchy.
 
 **Last Updated:** December 11, 2025
+
+---
+
+## #9Ln3Q5 - December 11, 2025
+**Menu Keyboard Navigation Refinement**
+
+Refined `nui-menu` keyboard navigation to support nested submenus and match WAI-ARIA patterns more closely.
+- **Problem**: `ArrowRight` on a menu item with a submenu would move to the next menu bar item instead of opening the submenu. `ArrowLeft` inside a submenu would close the entire menu structure instead of just the current submenu.
+- **Solution**:
+    - Implemented `closeSubmenu(submenu)` to handle closing specific submenus and their children recursively.
+    - Updated `openSubmenu` to use `closeSubmenu` for sibling submenus instead of `closeActiveSubmenu` (which wipes everything).
+    - Updated `handleMenuKeyboard`:
+        - `ArrowRight`: Opens submenu if available, otherwise moves to next menu bar item.
+        - `ArrowLeft`: Closes current submenu if inside one, otherwise moves to previous menu bar item.
+        - `Escape`: Closes current submenu if inside one, otherwise closes the entire menu.
+    - Updated `renderMenuItem` to attach `_itemData` to the button element for keyboard access.
+- **Result**: Keyboard navigation now supports entering and exiting submenus naturally, enabling access to nested menu structures.

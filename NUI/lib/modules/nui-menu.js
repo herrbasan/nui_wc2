@@ -299,6 +299,7 @@ function renderMenuItem(item, element, parentMenuId) {
 	button.className = 'nui-menu-dropdown-item';
 	button.setAttribute('role', 'menuitem');
 	button.tabIndex = -1;
+	button._itemData = item; // Store for keyboard navigation
 
 	if (item.disabled) {
 		button.disabled = true;
@@ -353,9 +354,49 @@ function renderMenuItem(item, element, parentMenuId) {
 	return li;
 }
 
+function closeSubmenu(submenu) {
+	if (!submenu) return;
+
+	// Recursively close any open submenus triggered from within this submenu
+	const activeTriggers = submenu.querySelectorAll('.nui-menu-dropdown-item[aria-expanded="true"]');
+	activeTriggers.forEach(trigger => {
+		if (trigger._activeSubmenu) {
+			closeSubmenu(trigger._activeSubmenu);
+		}
+	});
+
+	submenu.classList.remove('open');
+	if (submenu.parentNode) {
+		submenu.parentNode.removeChild(submenu);
+	}
+
+	// Find the trigger that opened this submenu
+	const triggerId = submenu.getAttribute('aria-labelledby');
+	if (triggerId) {
+		const trigger = document.getElementById(triggerId);
+		if (trigger) {
+			trigger.setAttribute('aria-expanded', 'false');
+			trigger._activeSubmenu = null;
+		}
+	}
+}
+
 function openSubmenu(triggerButton, items, element) {
-	// Close any existing submenu
-	closeActiveSubmenu();
+	// Find parent dropdown to identify siblings
+	const parentDropdown = triggerButton.closest('.nui-menu-dropdown');
+	
+	// Close any sibling submenus
+	if (parentDropdown) {
+		const siblingTriggers = parentDropdown.querySelectorAll('.nui-menu-dropdown-item[aria-expanded="true"]');
+		siblingTriggers.forEach(sibling => {
+			if (sibling !== triggerButton && sibling._activeSubmenu) {
+				closeSubmenu(sibling._activeSubmenu);
+			}
+		});
+	} else {
+		// Fallback: close all submenus if we can't determine context
+		closeActiveSubmenu();
+	}
 
 	const submenuId = triggerButton.getAttribute('aria-controls');
 	const submenu = document.createElement('div');
@@ -509,10 +550,37 @@ function handleMenuKeyboard(e, element) {
 
 	if (e.key === 'ArrowLeft') {
 		e.preventDefault();
-		moveMenuBarFocus(element, -1);
+		if (isDropdownItem) {
+			const submenu = activeElement.closest('.nui-menu-submenu');
+			if (submenu) {
+				// In submenu: Close submenu and focus parent trigger
+				const triggerId = submenu.getAttribute('aria-labelledby');
+				closeSubmenu(submenu);
+				if (triggerId) {
+					const trigger = document.getElementById(triggerId);
+					if (trigger) trigger.focus();
+				}
+			} else {
+				moveMenuBarFocus(element, -1);
+			}
+		} else {
+			moveMenuBarFocus(element, -1);
+		}
 	} else if (e.key === 'ArrowRight') {
 		e.preventDefault();
-		moveMenuBarFocus(element, 1);
+		if (isDropdownItem && activeElement.getAttribute('aria-haspopup') === 'true') {
+			const itemData = activeElement._itemData;
+			if (itemData && itemData.items) {
+				openSubmenu(activeElement, itemData.items, element);
+				// Focus first item in new submenu
+				setTimeout(() => {
+					const submenu = activeElement._activeSubmenu;
+					if (submenu) focusDropdownItem(submenu, 'first');
+				}, 0);
+			}
+		} else {
+			moveMenuBarFocus(element, 1);
+		}
 	} else if (e.key === 'ArrowDown') {
 		e.preventDefault();
 		if (isMenuBarItem) {
@@ -541,9 +609,12 @@ function handleMenuKeyboard(e, element) {
 			const submenu = activeElement.closest('.nui-menu-submenu');
 			if (submenu) {
 				// In submenu: Close submenu and focus parent trigger
-				const trigger = document.querySelector('.nui-menu-dropdown-item[aria-expanded="true"]');
-				closeActiveSubmenu();
-				if (trigger) trigger.focus();
+				const triggerId = submenu.getAttribute('aria-labelledby');
+				closeSubmenu(submenu);
+				if (triggerId) {
+					const trigger = document.getElementById(triggerId);
+					if (trigger) trigger.focus();
+				}
 			} else {
 				// In top-level menu: Close menu and focus menubar item
 				const currentMenuId = activeMenuId;
