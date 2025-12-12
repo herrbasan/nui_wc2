@@ -19,9 +19,9 @@ console.log('URL params:', { skipInit, mode });
 
 // Setup action handlers using event delegation on data-action attributes
 document.addEventListener('click', (e) => {
+	
 	const actionEl = e.target.closest('[data-action]');
 	if (!actionEl) return;
-	
 	const action = actionEl.dataset.action;
 	
 	switch (action) {
@@ -132,7 +132,8 @@ const navigationData = [
 		items: [
 			{ label: 'Introduction', href: '#page=introduction' },
 			{ label: 'Getting Started', href: '#page=getting-started' },
-			{ label: 'Declarative Actions', href: '#page=declarative-actions' }
+			{ label: 'Declarative Actions', href: '#page=declarative-actions' },
+			{ label: 'API Structure', href: '#page=api-structure' },
 		]
 	},
 	{
@@ -140,6 +141,7 @@ const navigationData = [
 		icon: 'empty_dashboard',
 		items: [
 			{ label: 'App Layout', href: '#page=components/app-layout' },
+			{ label: 'Storage', href: '#page=components/storage' },
 			{ label: 'Link List', href: '#page=components/link-list' },
 			{ label: 'Skip Links', href: '#page=components/skip-links' },
 			{ label: 'Code', href: '#page=components/code' },
@@ -151,18 +153,22 @@ const navigationData = [
 			{ label: 'Accordion', href: '#page=components/accordion' },
 			{ label: 'Inputs', href: '#page=components/inputs' },
 			{ label: 'Table', href: '#page=components/table' },
-			{ label: 'Slider', href: '#page=components/slider' },
-			{ label: 'Menu', href: '#page=components/menu' },
-			{ label: 'Animation', href: '#page=components/animation' }
+			{ label: 'Slider', href: '#page=components/slider' }
+		]
+	},
+	{
+		label: 'Addons',
+		icon: 'extension',
+		items: [
+			{ label: 'Menu', href: '#page=addons/menu' },
+			{ label: 'Animation', href: '#page=addons/animation' }
 		]
 	},
 	{
 		label: 'Features',
 		icon: 'settings',
 		items: [
-			{ label: 'API Structure', href: '#page=features/api-structure' },
 			{ label: 'Dashboard', href: '#feature=dashboard' },
-			{ label: 'Storage', href: '#page=features/storage' }
 		]
 	}
 ];

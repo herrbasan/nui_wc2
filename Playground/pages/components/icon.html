@@ -145,25 +145,14 @@
 </div>
 
 <script type="nui/page">
-function init(element, params) {
+async function init(element, params) {
 	const iconGrid = element.querySelector('#icon-grid');
 	if (!iconGrid) return;
 
+	iconGrid.innerHTML = '<div class="loading">Loading icons...</div>';
+
 	// All available Material Design icons in the sprite
-	const icons = [
-		'add', 'add_circle', 'analytics', 'arrow', 'article', 'aspect_ratio',
-		'assessment', 'attach_money', 'brightness', 'calendar', 'chat', 'close',
-		'credit_card', 'database', 'delete', 'done', 'download', 'drag_handle',
-		'drag_indicator', 'edit', 'edit_note', 'empty_dashboard', 'filter_list',
-		'folder', 'fullscreen', 'grid_on', 'headphones', 'id_card', 'image',
-		'info', 'install_desktop', 'invert_colors', 'key', 'keyboard', 'label',
-		'layers', 'location_on', 'logout', 'mail', 'media_folder', 'menu',
-		'monitor', 'more', 'mouse', 'my_location', 'notifications', 'open_in_full',
-		'palette', 'pause', 'person', 'photo_camera', 'play', 'print', 'public',
-		'rainy', 'save', 'search', 'security', 'settings', 'sign_language',
-		'smart_display', 'sort', 'speaker', 'stadia_controller', 'star_rate',
-		'sticky_note', 'sync', 'upload', 'volume', 'warning', 'work', 'wysiwyg'
-	];
+	const icons = await nui.components.icon.getAvailable();
 	
 	iconGrid.innerHTML = icons.map(iconName => `
 		<div class="icon-item" data-action="copy-icon:${iconName}">

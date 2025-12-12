@@ -618,6 +618,12 @@ The Playground is a Single Page Application (SPA) that uses a custom content loa
 - **Content Loading**: `nui.enableContentLoading()` handles fetching and injecting page content
 - **Script Execution**: Scripts in loaded pages are re-injected to ensure execution
 
+#### Navigation Structure
+- **Documentation**: Overall Documentation
+- **Components**: Core Components included in `nui.js`
+- **Addons**: Addon components
+- **Features**: Demos / experiments (temporary section)
+
 ### Workflow: Adding New Components
 1. **Generate Component**: Create the component in `NUI/nui.js` following existing patterns (functional decomposition, `registerComponent`).
 2. **Integrate Features**: specific functionality should utilize:

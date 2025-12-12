@@ -2694,6 +2694,34 @@ function enableDrag(target, callback, options = {}) {
 	};
 }
 
+// ################################# ICON SYSTEM
+
+const iconSystem = {
+	_cache: null,
+	async getAvailable() {
+		if (this._cache) return this._cache;
+		try {
+			const response = await fetch(config.iconSpritePath);
+			const text = await response.text();
+			const parser = new DOMParser();
+			const doc = parser.parseFromString(text, 'image/svg+xml');
+			const symbols = doc.querySelectorAll('symbol');
+			this._cache = Array.from(symbols).map(s => s.id).sort();
+			return this._cache;
+		} catch (e) {
+			console.error('Failed to load icon sprite:', e);
+			return [];
+		}
+	},
+
+	create(name, asElement = false) {
+		if (asElement) {
+			return dom.create('nui-icon', { attrs: { name } });
+		}
+		return `<nui-icon name="${name}"></nui-icon>`;
+	}
+};
+
 const util = {
 	createElement: dom.create,
 	createSvgElement: dom.svg,
@@ -2706,7 +2734,8 @@ const componentsApi = {
 	banner: bannerFactory,
 	linkList: {
 		create: createLinkList
-	}
+	},
+	icon: iconSystem
 };
 
 export const nui = {
