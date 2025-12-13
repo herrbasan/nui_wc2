@@ -28,16 +28,7 @@ document.addEventListener('click', (e) => {
 		case 'toggle-sidebar':
 			const app = document.querySelector('nui-app');
 			if (app?.toggleSideNav) {
-				const wasOpen = app.classList.contains('sidenav-open');
 				app.toggleSideNav();
-				
-				// Focus first link when opening sidebar
-				if (!wasOpen && !app.classList.contains('sidenav-forced')) {
-					requestAnimationFrame(() => {
-						const firstLink = app.querySelector('nui-side-nav a[role="treeitem"], nui-side-nav button[role="treeitem"]');
-						if (firstLink) firstLink.focus();
-					});
-				}
 			}
 			break;
 		case 'toggle-theme':
