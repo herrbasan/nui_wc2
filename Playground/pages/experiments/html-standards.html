@@ -279,7 +279,7 @@
                     <figure><img src="images/nui_2.webp" alt="Image alt text"></figure>
                     <h3>Wrapped in a <code>&lt;figure&gt;</code> element, with a <code>&lt;figcaption&gt;</code></h3>
                     <figure>
-                        <img src="images/nui_3.webp" alt="Image alt text">
+                        <img src="images/nui_4.webp" alt="Image alt text">
                         <figcaption>Here is a caption for this image.</figcaption>
                     </figure>
                 </div>
@@ -309,7 +309,42 @@
                 <header>
                     <h2>Canvas</h2>
                 </header>
-                <div><canvas>canvas</canvas></div>
+                <div>
+                    <canvas id="math-canvas" width="600" height="200" style="background:transparent; border:1px solid #717171; max-width:100%"></canvas>
+                    <script type="nui/page">
+                        function init(element) {
+                            const c = element.querySelector('#math-canvas');
+                            if(!c) return;
+                            const ctx = c.getContext('2d');
+                            let t = 0;
+                            let animId;
+
+                            function draw() {
+                                if (!c.isConnected) {
+                                    cancelAnimationFrame(animId);
+                                    return;
+                                }
+                                // Fade out existing content to transparent
+                                ctx.globalCompositeOperation = 'destination-out';
+                                ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+                                ctx.fillRect(0, 0, c.width, c.height);
+                                ctx.globalCompositeOperation = 'source-over';
+
+                                ctx.beginPath();
+                                for(let i=0; i<c.width; i+=2) {
+                                    const y = c.height/2 + Math.sin(i*0.03 + t)*30 + Math.sin(i*0.02 - t*1.5)*20;
+                                    if(i===0) ctx.moveTo(i,y); else ctx.lineTo(i,y);
+                                }
+                                ctx.strokeStyle = `hsl(${t*20}, 70%, 50%)`;
+                                ctx.lineWidth = 2;
+                                ctx.stroke();
+                                t += 0.05;
+                                animId = requestAnimationFrame(draw);
+                            }
+                            draw();
+                        }
+                    </script>
+                </div>
                 <footer>
                     <p><a href="#top">[Top]</a></p>
                 </footer>
