@@ -130,10 +130,10 @@ const navigationData = [
 		label: 'Documentation',
 		icon: 'article',
 		items: [
-			{ label: 'Introduction', href: '#page=introduction' },
-			{ label: 'Getting Started', href: '#page=getting-started' },
-			{ label: 'Declarative Actions', href: '#page=declarative-actions' },
-			{ label: 'API Structure', href: '#page=api-structure' },
+			{ label: 'Introduction', href: '#page=documentation/introduction' },
+			{ label: 'Getting Started', href: '#page=documentation/getting-started' },
+			{ label: 'Declarative Actions', href: '#page=documentation/declarative-actions' },
+			{ label: 'API Structure', href: '#page=documentation/api-structure' },
 		]
 	},
 	{
@@ -165,10 +165,11 @@ const navigationData = [
 		]
 	},
 	{
-		label: 'Features',
+		label: 'Experiments',
 		icon: 'settings',
 		items: [
 			{ label: 'Dashboard', href: '#feature=dashboard' },
+			{ label: 'HTML Standards', href: '#page=experiments/html-standards' },
 		]
 	}
 ];
@@ -185,7 +186,7 @@ nui.enableContentLoading({
 	container: 'nui-content main',
 	navigation: 'nui-side-nav',
 	basePath: 'pages',
-	defaultPage: 'introduction'
+	defaultPage: 'documentation/introduction'
 });
 
 // Note: nui.init() is called automatically in nui.js unless ?skip-init parameter is present

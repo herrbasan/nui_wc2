@@ -613,10 +613,17 @@ Build the simplest thing that works. When platform APIs are sufficient, use them
 ### Playground Architecture
 The Playground is a Single Page Application (SPA) that uses a custom content loading system.
 - **Entry Point**: `Playground/index.html`
-- **Pages**: Located in `Playground/pages/` as HTML fragments
+- **Pages**: Located in `Playground/pages/` as HTML fragments, organized by folder
 - **Navigation**: JSON-based configuration in `Playground/js/main.js`
 - **Content Loading**: `nui.enableContentLoading()` handles fetching and injecting page content
 - **Script Execution**: Scripts in loaded pages are re-injected to ensure execution
+
+#### Page Organization Structure
+Pages are organized into folders matching the navigation structure:
+- **`documentation/`**: Overall documentation pages (`introduction.html`, `getting-started.html`, etc.)
+- **`components/`**: Core component demo pages (`button.html`, `tabs.html`, etc.)
+- **`addons/`**: Addon component demo pages (`menu.html`, `animation.html`, etc.)
+- **`features/`**: Demos / experiments (temporary section)
 
 #### Navigation Structure
 - **Documentation**: Overall Documentation
@@ -631,8 +638,11 @@ The Playground is a Single Page Application (SPA) that uses a custom content loa
    - **Data Actions**: For simple interactions (`data-action="action-name"`).
    - **Attribute System**: For configuration (`nui-vars-*`, `nui-state-*`).
    - **Accessibility**: Ensure proper ARIA roles and keyboard navigation.
-3. **Create Demo Page**: Add a live example page in `Playground/pages/components/[component-name].html`.
-   - Follow the pattern of existing component pages (header, examples, code snippets).
+3. **Create Demo Page**: Add a live example page in the appropriate `Playground/pages/` subfolder:
+   - Core components → `Playground/pages/components/[component-name].html`
+   - Addons → `Playground/pages/addons/[component-name].html`
+   - Documentation → `Playground/pages/documentation/[page-name].html`
+   - Follow the pattern of existing pages (header, examples, code snippets).
 4. **Update Navigation**: Add the new page to the `navigationData` array in `Playground/js/main.js` so it appears in the sidebar.
 
 ### Accessibility Patterns

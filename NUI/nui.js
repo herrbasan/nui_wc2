@@ -103,33 +103,33 @@ const dom = {
 	create(tag, options = {}) {
 		const el = document.createElement(tag);
 		if (options.id) el.id = options.id;
-		
+
 		if (options.class) {
 			const c = options.class;
 			el.classList.add(...(Array.isArray(c) ? c : [c]).filter(Boolean));
 		}
-		
+
 		if (options.style) {
 			if (typeof options.style === 'string') el.style.cssText = options.style;
 			else Object.entries(options.style).forEach(([p, v]) => el.style[p] = v);
 		}
-		
+
 		if (options.data) Object.entries(options.data).forEach(([k, v]) => el.dataset[k] = v);
-		
+
 		if (options.attrs) {
 			Object.entries(options.attrs).forEach(([k, v]) => v != null && el.setAttribute(k, v));
 		}
-		
+
 		if (options.events) Object.entries(options.events).forEach(([e, h]) => el.addEventListener(e, h));
-		
+
 		if (options.text) el.textContent = options.text;
-		
+
 		if (options.content) {
 			if (typeof options.content === 'string') el.innerHTML = options.content;
 			else if (Array.isArray(options.content)) el.append(...options.content.filter(Boolean));
 			else el.append(options.content);
 		}
-		
+
 		if (options.target) options.target.append(el);
 		return el;
 	},
@@ -149,8 +149,8 @@ if (typeof window !== 'undefined') {
 	['Element', 'Document', 'DocumentFragment'].forEach(t => {
 		if (!window[t]) return;
 		Object.defineProperties(window[t].prototype, {
-			el: { value: function(s) { return s instanceof Element ? s : this.querySelector(s); }, writable: true, configurable: true },
-			els: { value: function(s) { return s instanceof NodeList || s instanceof Array ? [...s] : [...this.querySelectorAll(s)]; }, writable: true, configurable: true }
+			el: { value: function (s) { return s instanceof Element ? s : this.querySelector(s); }, writable: true, configurable: true },
+			els: { value: function (s) { return s instanceof NodeList || s instanceof Array ? [...s] : [...this.querySelectorAll(s)]; }, writable: true, configurable: true }
 		});
 	});
 }
@@ -419,7 +419,7 @@ registerComponent('nui-app', (element) => {
 
 		const fb = element.getAttribute('nui-vars-sidebar_force-breakpoint');
 		const m = fb?.match(/^(\d+(?:\.\d+)?)(px|rem|em)?$/);
-		
+
 		if (!m) return cachedBreakpoint = 768;
 
 		const v = parseFloat(m[1]);
@@ -435,7 +435,12 @@ registerComponent('nui-app', (element) => {
 
 	function updateResponsiveState(element) {
 		const sideNav = element.el('nui-side-nav');
-		if (!sideNav) return;
+		if (!sideNav) {
+			if (!element.classList.contains('nui-ready')) {
+				requestAnimationFrame(() => element.classList.add('nui-ready'));
+			}
+			return;
+		}
 
 		const breakpoint = getBreakpoint(element);
 		const viewportWidth = window.innerWidth;
@@ -637,7 +642,7 @@ registerComponent('nui-code', (element) => {
 		if (lang) {
 			codeBlock.innerHTML = module.highlight(rawText, lang);
 		}
-	}).catch(() => {});
+	}).catch(() => { });
 });
 
 registerComponent('nui-link-list', (element) => {
@@ -930,7 +935,7 @@ registerComponent('nui-content', (element) => {
 	const isAppMode = element.closest('nui-app[data-layout="app"]');
 	if (isAppMode && !element.el(':scope > .nui-content-scroll')) {
 		const children = Array.from(element.childNodes);
-		
+
 		dom.create('div', {
 			class: 'nui-content-scroll',
 			content: children,
@@ -974,42 +979,42 @@ registerComponent('nui-skip-links', (element) => {
 	function buildSkipLink(target, label) {
 		const targetEl = document.el(target);
 		if (!targetEl) return null;
-		
+
 		let targetId = targetEl.id;
 		if (!targetId) {
 			targetId = `skip-target-${Math.random().toString(36).substr(2, 9)}`;
 			targetEl.id = targetId;
 		}
-		
+
 		if (!targetEl.hasAttribute('tabindex')) {
 			targetEl.setAttribute('tabindex', '-1');
 		}
-		
+
 		const link = dom.create('a', {
 			attrs: { href: `#${targetId}` },
 			class: 'skip-link',
 			text: label
 		});
-		
+
 		link.addEventListener('click', (e) => {
 			e.preventDefault();
 			targetEl.focus();
 		});
-		
+
 		return link;
 	}
-	
+
 	if (element.children.length === 0) {
 		const app = element.closest('nui-app') || document.el('nui-app');
 		const defaultLinks = [];
-		
+
 		// In app mode, only provide skip to main content
 		// (topnav and sidenav are already visible in fixed positions)
 		const main = document.el('main');
 		if (main) {
 			defaultLinks.push({ target: main, label: 'Skip to main content' });
 		}
-		
+
 		defaultLinks.forEach(({ target, label }) => {
 			const link = buildSkipLink(target, label);
 			if (link) element.appendChild(link);
@@ -1023,7 +1028,7 @@ registerComponent('nui-skip-links', (element) => {
 					targetEl.setAttribute('tabindex', '-1');
 				}
 			}
-			
+
 			link.addEventListener('click', (e) => {
 				e.preventDefault();
 				const targetId = link.getAttribute('href');
@@ -1034,7 +1039,7 @@ registerComponent('nui-skip-links', (element) => {
 			});
 		});
 	}
-	
+
 	if (!element.hasAttribute('role')) {
 		element.setAttribute('role', 'navigation');
 	}
@@ -1188,9 +1193,9 @@ registerComponent('nui-tabs', (element) => {
 
 		if (!targetPanel) return;
 
-		const animate = shouldAnimate && !element.hasAttribute('no-animation') && 
-						!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-		
+		const animate = shouldAnimate && !element.hasAttribute('no-animation') &&
+			!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
 		let startHeight = 0;
 
 		if (animate) {
@@ -1209,22 +1214,22 @@ registerComponent('nui-tabs', (element) => {
 
 		targetTab.setAttribute('aria-selected', 'true');
 		targetTab.removeAttribute('tabindex');
-		
+
 		targetPanel.hidden = false;
 		targetPanel.style.display = '';
-		
+
 		if (animate) {
 			void element.offsetHeight;
 
 			element.style.height = 'auto';
 			const newHeight = element.scrollHeight;
-			
+
 			element.style.height = `${startHeight}px`;
-			
+
 			void element.offsetHeight;
 
 			element.style.height = `${newHeight}px`;
-			
+
 			const onEnd = (e) => {
 				if (e.target !== element) return;
 				element.style.cssText = '';
@@ -1281,30 +1286,30 @@ registerComponent('nui-tabs', (element) => {
 
 registerComponent('nui-accordion', (element) => {
 	const details = element.els(':scope > details');
-	const animate = !element.hasAttribute('no-animation') && 
-					!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+	const animate = !element.hasAttribute('no-animation') &&
+		!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 	const animateDetails = (detail, opening) => {
 		if (!animate) return;
-		
+
 		const summary = detail.el('summary');
 		const content = detail.el('.accordion-content') || detail.lastElementChild;
 		if (!summary || !content) return;
 
 		const start = opening ? summary.offsetHeight : detail.offsetHeight;
 		detail.style.cssText = `height: ${start}px; overflow: hidden; transition: height 0.3s ease-out`;
-		
+
 		if (opening) detail.open = true;
 		void detail.offsetHeight;
-		
+
 		const end = opening ? detail.scrollHeight : summary.offsetHeight;
 		detail.style.height = `${end}px`;
 
 		const onEnd = (e) => {
 			if (e.target !== detail) return;
-			
+
 			detail.style.cssText = '';
-			
+
 			if (!opening) detail.open = false;
 			detail.removeEventListener('transitionend', onEnd);
 		};
@@ -1318,7 +1323,7 @@ registerComponent('nui-accordion', (element) => {
 
 			summary.addEventListener('click', (e) => {
 				e.preventDefault();
-				
+
 				if (element.hasAttribute('exclusive') && !detail.open) {
 					details.forEach(d => {
 						if (d !== detail && d.open) {
@@ -1419,15 +1424,15 @@ registerComponent('nui-slider', (element) => {
 	function setValueFromPercent(percent) {
 		const { min, max, step } = getRange();
 		let value = min + (percent * (max - min));
-		
+
 		// Snap to step
 		if (step > 0) {
 			value = Math.round(value / step) * step;
 		}
-		
+
 		// Clamp to range
 		value = Math.max(min, Math.min(max, value));
-		
+
 		if (parseFloat(input.value) !== value) {
 			input.value = value;
 			input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -1483,7 +1488,7 @@ registerComponent('nui-banner', (element) => {
 	let autoCloseTimer = null;
 	let originalParent = null;
 	let originalNextSibling = null;
-	
+
 	if (element._bannerInitialized) return;
 	element._bannerInitialized = true;
 
@@ -1494,12 +1499,12 @@ registerComponent('nui-banner', (element) => {
 	const moveToBannerLayer = () => {
 		const contentArea = document.el('nui-app nui-content');
 		if (!contentArea) return;
-		
+
 		let bannerLayer = contentArea.el(':scope > .nui-banner-layer');
 		if (!bannerLayer) bannerLayer = dom.create('div', { class: 'nui-banner-layer', target: contentArea });
-		
+
 		if (element.parentElement === bannerLayer) return;
-		
+
 		originalParent = element.parentElement;
 		originalNextSibling = element.nextSibling;
 		bannerLayer.appendChild(element);
@@ -1519,7 +1524,7 @@ registerComponent('nui-banner', (element) => {
 	element.show = () => {
 		if (element.hasAttribute('open')) return;
 		if (element.closest('nui-content, .nui-content-scroll')) moveToBannerLayer();
-		
+
 		element.setAttribute('open', '');
 		element.dispatchEvent(new CustomEvent('nui-banner-open', { bubbles: true }));
 
@@ -1661,7 +1666,7 @@ function setupInputBehavior(element, input, config = {}) {
 	};
 
 	element.focus = () => input.focus();
-	
+
 	if (autoResize) {
 		input.style.boxSizing = 'border-box';
 		updateState();
@@ -1692,7 +1697,7 @@ function setupCheckableBehavior(element, type) {
 	element.addEventListener('click', (e) => {
 		if (e.target === input || e.target === label || input.disabled) return;
 		if (isRadio && input.checked) return;
-		
+
 		input.checked = isRadio ? true : !input.checked;
 		input.dispatchEvent(new Event('change', { bubbles: true }));
 	});
@@ -1796,7 +1801,7 @@ const bannerFactory = {
 				target = document.body;
 			}
 		}
-		
+
 		if (activeBanners[placement]) {
 			activeBanners[placement].element.close('replaced');
 		}
@@ -2007,9 +2012,9 @@ const dialogSystem = {
 		} else {
 			dialog.show();
 		}
-		
+
 		nativeDialog.addEventListener('close', () => dialog.remove(), { once: true });
-		
+
 		return dialog;
 	},
 
@@ -2070,7 +2075,7 @@ const dialogSystem = {
 	prompt(title, message, options = {}) {
 		const fields = options.fields || [];
 		const buttons = options.buttons || this._defaultButtons.prompt;
-		
+
 		return new Promise((resolve) => {
 			const inputsHtml = fields.map(f => this._buildFieldHtml(f)).join('');
 
@@ -2290,7 +2295,7 @@ function createRouter(container, options = {}) {
 	function showElement(element, params) {
 		element.inert = false;
 		element.show?.(params);
-		
+
 		element.classList.add('nui-page-active');
 
 		const focusTarget = element.el('h1, h2, [autofocus], main') || element;
@@ -2301,7 +2306,7 @@ function createRouter(container, options = {}) {
 	function handleDeepLink(element, params) {
 		// Find the actual scroll container (may be wrapped in .nui-content-scroll in app mode)
 		const scrollContainer = container.closest('.nui-content-scroll') || container.closest('nui-content')?.el('.nui-content-scroll') || container;
-		
+
 		if (params.id) {
 			const target = element.el(`#${params.id}`);
 			if (target) {
@@ -2347,11 +2352,11 @@ function createRouter(container, options = {}) {
 
 		if (currentElement !== element) {
 			hideElement(currentElement);
-			
+
 			element.style.display = '';
-			
+
 			void element.offsetHeight;
-			
+
 			requestAnimationFrame(() => {
 				requestAnimationFrame(() => {
 					// Only focus content on navigation, not on initial page load
@@ -2366,7 +2371,7 @@ function createRouter(container, options = {}) {
 					handleDeepLink(element, params);
 				});
 			});
-			
+
 			currentElement = element;
 			currentRoute = { type, id, params, element };
 
@@ -2632,17 +2637,17 @@ const storage = {
 function enableDrag(target, callback, options = {}) {
 	const subtarget = options.subtarget || target;
 	let activePointerId = null;
-	
+
 	function handleDown(e) {
 		e.preventDefault();
 		activePointerId = e.pointerId;
 		target.setPointerCapture(e.pointerId);
-		
+
 		target.addEventListener('pointermove', handleMove);
 		target.addEventListener('pointerup', handleUp);
 		target.addEventListener('pointercancel', handleUp);
 		target.addEventListener('lostpointercapture', handleUp);
-		
+
 		report(e, 'start');
 	}
 
@@ -2661,10 +2666,10 @@ function enableDrag(target, callback, options = {}) {
 		const rect = subtarget.getBoundingClientRect();
 		const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
 		const y = Math.max(0, Math.min(e.clientY - rect.top, rect.height));
-		
+
 		callback({
 			type,
-			x, 
+			x,
 			y,
 			percentX: x / rect.width,
 			percentY: y / rect.height,
@@ -2676,7 +2681,7 @@ function enableDrag(target, callback, options = {}) {
 
 	function cleanup() {
 		if (activePointerId !== null) {
-			try { target.releasePointerCapture(activePointerId); } catch {}
+			try { target.releasePointerCapture(activePointerId); } catch { }
 		}
 		activePointerId = null;
 		target.removeEventListener('pointermove', handleMove);

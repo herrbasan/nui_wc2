@@ -1,0 +1,257 @@
+<header>
+	<h1>Declarative Actions</h1>
+	<p>A lightweight pattern for wiring up interactions directly in HTML without manual DOM queries.</p>
+</header>
+
+<section>
+	<h2>The Problem</h2>
+	<p>Standard event handling often requires three steps:</p>
+	<ol>
+		<li>Add an ID or class to the trigger button.</li>
+		<li>Add an ID to the target element you want to manipulate.</li>
+		<li>Write JavaScript to find both elements and connect them.</li>
+	</ol>
+	<nui-code>
+		<pre><code data-lang="javascript">// The "Old" Way
+const btn = document.querySelector('#my-btn');
+const form = document.querySelector('#my-form'); // Manual query
+
+btn.addEventListener('click', () => {
+    submitForm(form);
+});</code></pre>
+	</nui-code>
+</section>
+
+<section>
+	<h2>The Solution</h2>
+	<p>NUI's declarative action system lets you define the <strong>action</strong>, <strong>parameter</strong>, and <strong>target</strong> directly in the markup. The system handles the click, finds the target, and dispatches a single clean event with everything you need.</p>
+	
+	<h3>Syntax</h3>
+	<p>Use the <code>data-action</code> attribute with the following format:</p>
+	<div style="padding: 1rem; background: var(--color-shade1); border-radius: var(--border-radius1); font-family: monospace; font-size: 1.2rem; margin-bottom: 1rem;">
+		data-action="<span style="color: var(--color-highlight)">name</span>:<span style="color: var(--palette-mark)">param</span>@<span style="color: var(--palette-activate)">targetSelector</span>"
+	</div>
+	<ul>
+		<li><strong>name</strong>: The name of the action (required).</li>
+		<li><strong>:param</strong>: Optional string parameter passed to the handler.</li>
+		<li><strong>@target</strong>: Optional CSS selector for the target element.</li>
+	</ul>
+</section>
+
+<section>
+	<h2>Examples</h2>
+
+	<h3>1. Action with Target</h3>
+	<p><strong>Honest Assessment:</strong> Looking at this single-element example, you might rightly ask: <em>"Does this actually solve anything?"</em> compared to a standard event listener. For a single static button, the answer is <strong>no</strong>.</p>
+	
+	<p><strong>The Utility Threshold:</strong> This pattern becomes superior to manual wiring when:</p>
+	<ul>
+		<li><strong>Scale:</strong> You have a list of 50 items (see Example 4). Wiring 50 listeners is slow; one delegated listener is fast.</li>
+		<li><strong>Dynamics:</strong> Elements are added/removed via AJAX. Delegated listeners don't need re-attaching.</li>
+		<li><strong>Decoupling:</strong> You want to move the button to a different part of the HTML without breaking the JS selector logic.</li>
+	</ul>
+
+	<nui-code>
+		<pre><code data-lang="html">&lt;!-- The Target --&gt;
+&lt;div id="status-box"&gt;Waiting...&lt;/div&gt;
+
+&lt;!-- The Trigger --&gt;
+&lt;nui-button data-action="update-status@#status-box"&gt;
+    &lt;button type="button"&gt;Update Status&lt;/button&gt;
+&lt;/nui-button&gt;
+
+&lt;script&gt;
+  // The Listener (Required)
+  document.addEventListener('nui-action', (e) => {
+    if (e.detail.name === 'update-status') {
+      // e.detail.target is automatically resolved to #status-box
+      e.detail.target.textContent = 'Updated!';
+    }
+  });
+&lt;/script&gt;</code></pre>
+	</nui-code>
+	
+	<div class="demo-area" style="padding: 1rem; border: 1px solid var(--border-shade1); border-radius: var(--border-radius1); margin-bottom: 1rem;">
+		<div id="demo-status-box" style="padding: 1rem; background: var(--color-shade2); margin-bottom: 1rem; transition: background 0.3s;">Waiting for action...</div>
+		<nui-button data-action="demo-update@#demo-status-box">
+			<button type="button">Update Status Box</button>
+		</nui-button>
+	</div>
+
+	<h3>2. Action with Parameter</h3>
+	<p>Pass data directly to your handler without parsing <code>data-</code> attributes manually.</p>
+	<nui-code>
+		<pre><code data-lang="html">&lt;nui-button data-action="set-theme:dark"&gt;Dark&lt;/nui-button&gt;
+&lt;nui-button data-action="set-theme:light"&gt;Light&lt;/nui-button&gt;
+
+&lt;script&gt;
+  document.addEventListener('nui-action', (e) => {
+    if (e.detail.name === 'set-theme') {
+      // e.detail.param contains "dark" or "light"
+      console.log('Theme:', e.detail.param);
+    }
+  });
+&lt;/script&gt;</code></pre>
+	</nui-code>
+	
+	<div class="demo-area" style="padding: 1rem; border: 1px solid var(--border-shade1); border-radius: var(--border-radius1); margin-bottom: 1rem;">
+		<p>Current Value: <strong id="demo-param-display">-</strong></p>
+		<nui-button-container>
+			<nui-button data-action="demo-select:Option A"><button type="button">Select A</button></nui-button>
+			<nui-button data-action="demo-select:Option B"><button type="button">Select B</button></nui-button>
+			<nui-button data-action="demo-select:Option C"><button type="button">Select C</button></nui-button>
+		</nui-button-container>
+	</div>
+
+	<h3>3. Handling the Event</h3>
+	<p>Listen for the global <code>nui-action</code> event. The <code>detail</code> object contains everything you need.</p>
+	<nui-code>
+		<pre><code data-lang="javascript">document.addEventListener('nui-action', (e) => {
+    const { name, target, param } = e.detail;
+
+    if (name === 'update-status') {
+        // 'target' is the #status-box element
+        target.textContent = 'Updated!';
+        target.style.background = '#e6f4ea';
+    }
+    
+    if (name === 'set-theme') {
+        console.log('Setting theme to:', param);
+    }
+});</code></pre>
+	</nui-code>
+
+	<h3>4. Component-Level Delegation</h3>
+	<p>The real power of this pattern is <strong>event delegation</strong>. Instead of attaching listeners to every button in a component, you attach <strong>one</strong> listener to the container to handle all actions within it.</p>
+	
+	<div id="task-card" style="padding: 1rem; border: 1px solid var(--border-shade1); border-radius: var(--border-radius1); max-width: 400px;">
+		<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+			<h4 style="margin: 0;">Task: Review Pull Request</h4>
+			<span id="task-status" style="font-size: 0.8rem; padding: 0.2rem 0.5rem; background: var(--color-shade2); border-radius: 4px;">Pending</span>
+		</div>
+		
+		<nui-button-container>
+			<nui-button data-action="approve"><button type="button">Approve</button></nui-button>
+			<nui-button data-action="reject"><button type="button">Reject</button></nui-button>
+			<nui-button data-action="delete" variant="danger"><button type="button">Delete</button></nui-button>
+		</nui-button-container>
+		
+		<div id="task-log" style="margin-top: 1rem; font-size: 0.9rem; color: var(--text-color-dim); font-family: monospace;">Log: -</div>
+	</div>
+
+	<nui-code>
+		<pre><code data-lang="javascript">const card = document.getElementById('task-card');
+
+// ONE listener handles ALL buttons in the card
+card.addEventListener('nui-action', (e) => {
+    e.stopPropagation(); // Keep events inside the component
+    const { name } = e.detail;
+    
+    switch(name) {
+        case 'approve':
+            updateStatus('Approved', 'green');
+            break;
+        case 'reject':
+            updateStatus('Rejected', 'red');
+            break;
+        case 'delete':
+            card.remove();
+            break;
+    }
+});</code></pre>
+	</nui-code>
+</section>
+
+<section>
+	<h2>Philosophy & Limitations</h2>
+	<p>It is important to understand that this system is <strong>not a framework feature</strong> but a helper for a standard DOM pattern. It does not replace JavaScript logic; it simply standardizes how you connect HTML to that logic.</p>
+
+	<h3>Why no "Router" or "Payloads"?</h3>
+	<p>You might be tempted to ask for features like <code>data-payload="{...}"</code> or a central event registry. We deliberately avoid this because:</p>
+	<ul>
+		<li><strong>Complexity Conservation:</strong> Adding JSON to HTML attributes doesn't remove complexity; it just moves it to a place that is harder to read and debug.</li>
+		<li><strong>The DOM is the Router:</strong> The browser's native event bubbling is the most efficient routing system available. We don't need to rebuild it in JavaScript.</li>
+		<li><strong>Natural Scoping:</strong> The <code>@target</code> syntax uses the DOM itself for scoping. The target element becomes the "Event Bus" for its component, which is a natural fit for how the browser works.</li>
+	</ul>
+	<p><strong>Recommendation:</strong> Use this pattern for simple wiring and list delegation. If you need complex data payloads or intricate logic, write a standard JavaScript event handler. Do not try to force complex application logic into HTML attributes.</p>
+
+	<h3>The Pattern "Under the Hood"</h3>
+	<p>To prove this isn't "magic", here is the simplified logic that powers the system. It's just a global event listener that parses the attribute and dispatches a clean event:</p>
+	<nui-code>
+		<pre><code data-lang="javascript">// The core logic (simplified)
+document.addEventListener('click', (e) => {
+    const trigger = e.target.closest('[data-action]');
+    if (!trigger) return;
+
+    // 1. Parse the attribute
+    const [actionSpec, selector] = trigger.dataset.action.split('@');
+    const [name, param] = actionSpec.split(':');
+
+    // 2. Find the target
+    const target = selector ? document.querySelector(selector) : trigger;
+
+    // 3. Dispatch the clean event
+    trigger.dispatchEvent(new CustomEvent('nui-action', {
+        bubbles: true,
+        detail: { name, param, target }
+    }));
+});</code></pre>
+	</nui-code>
+</section>
+
+<script type="nui/page">
+function init(element) {
+	// We can listen on the page element itself since events bubble up
+	element.addEventListener('nui-action', (e) => {
+		const { name, target, param } = e.detail;
+
+		if (name === 'demo-update') {
+			target.textContent = 'Updated at ' + new Date().toLocaleTimeString();
+			target.style.backgroundColor = 'var(--color-highlight-dim)';
+			target.style.color = 'white';
+			
+			setTimeout(() => {
+				target.style.backgroundColor = 'var(--color-shade2)';
+				target.style.color = 'inherit';
+			}, 1000);
+		}
+
+		if (name === 'demo-select') {
+			const display = element.querySelector('#demo-param-display');
+			display.textContent = param;
+		}
+	});
+
+	// Component Delegation Demo
+	const card = element.querySelector('#task-card');
+	const status = element.querySelector('#task-status');
+	const log = element.querySelector('#task-log');
+
+	if (card) {
+		card.addEventListener('nui-action', (e) => {
+			e.stopPropagation();
+			const { name } = e.detail;
+			
+			log.textContent = `Log: Action "${name}" triggered`;
+			
+			switch(name) {
+				case 'approve':
+					status.textContent = 'Approved';
+					status.style.backgroundColor = 'var(--palette-activate)';
+					status.style.color = 'white';
+					break;
+				case 'reject':
+					status.textContent = 'Rejected';
+					status.style.backgroundColor = 'var(--palette-alert)';
+					status.style.color = 'white';
+					break;
+				case 'delete':
+					card.style.opacity = '0.5';
+					card.style.pointerEvents = 'none';
+					log.textContent = 'Log: Task deleted';
+					break;
+			}
+		});
+	}
+}
+</script>
