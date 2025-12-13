@@ -2163,6 +2163,9 @@ function parseUrl() {
 	const hash = location.hash.slice(1);
 	if (!hash) return null;
 
+	// If hash doesn't contain '=', it's an anchor link, not a route
+	if (!hash.includes('=')) return null;
+
 	const hashParams = new URLSearchParams(hash);
 	const entries = [...hashParams.entries()];
 	if (entries.length === 0) return null;
@@ -2386,12 +2389,120 @@ function createRouter(container, options = {}) {
 
 	function handleHashChange() {
 		const route = parseUrl();
+		
+		// If parseUrl returns null, check if it's an anchor link (no route)
+		if (!route) {
+			const hash = location.hash.slice(1);
+			// If there's a hash but no route, it's an anchor link
+			if (hash) {
+				console.log('Anchor link detected:', hash);
+				
+				// Immediately reset any body scroll that may have occurred
+				window.scrollTo(0, 0);
+				document.documentElement.scrollTop = 0;
+				document.body.scrollTop = 0;
+				
+				console.log('Body scrollTop AFTER reset:', document.body.scrollTop, 'documentElement scrollTop:', document.documentElement.scrollTop);
+				console.log('Window pageYOffset:', window.pageYOffset, 'scrollY:', window.scrollY);
+				
+				// Find and scroll the content container
+				const target = document.getElementById(hash);
+				if (target) {
+					const contentScroll = document.querySelector('nui-content-scroll') || 
+					                      document.querySelector('nui-content');
+					if (contentScroll) {
+						// Calculate position relative to content container
+						const containerRect = contentScroll.getBoundingClientRect();
+						const targetRect = target.getBoundingClientRect();
+						const scrollOffset = targetRect.top - containerRect.top + contentScroll.scrollTop;
+						console.log('Container top:', containerRect.top, 'Target top:', targetRect.top, 'Scrolling to:', scrollOffset);
+						
+						requestAnimationFrame(() => {
+							contentScroll.scrollTo({ top: scrollOffset, behavior: 'smooth' });
+							// Remove hash from URL
+							history.replaceState(null, '', location.pathname + location.search);
+						});
+					} else {
+						// Fallback
+						target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+						history.replaceState(null, '', location.pathname + location.search);
+					}
+				}
+				
+				return;
+			}
+			// Otherwise, no hash at all - navigate to default
+		}
+		
 		navigate(route);
+	}
+
+	function handleAnchorClick(e) {
+		const link = e.target.closest('a[href^="#"]');
+		if (!link) return;
+		
+		const hash = link.getAttribute('href').slice(1);
+		// Skip if it's a route (contains '=')
+		if (hash.includes('=')) return;
+		
+		console.log('Intercepted anchor click:', hash);
+		e.preventDefault();
+		e.stopPropagation();
+		
+		// Find and scroll the content container
+		const target = document.getElementById(hash);
+		if (!target) {
+			console.log('Target not found:', hash);
+			return;
+		}
+		
+		// Find the scrollable container from the link's context
+		// Note: .nui-content-scroll is a CLASS, not an element
+		let contentScroll = link.closest('.nui-content-scroll');
+		console.log('Link closest .nui-content-scroll:', contentScroll);
+		
+		// If link is not inside content-scroll, find the target's container
+		if (!contentScroll) {
+			contentScroll = target.closest('.nui-content-scroll');
+			console.log('Target closest .nui-content-scroll:', contentScroll);
+		}
+		
+		// Last resort: find first visible content-scroll
+		if (!contentScroll) {
+			contentScroll = document.querySelector('.nui-content-scroll:not([hidden])');
+			console.log('querySelector .nui-content-scroll:', contentScroll);
+		}
+		
+		// Try without :not([hidden])
+		if (!contentScroll) {
+			contentScroll = document.querySelector('.nui-content-scroll');
+			console.log('querySelector .nui-content-scroll (any):', contentScroll);
+		}
+		
+		if (contentScroll) {
+			// Immediately prevent any pending scroll
+			window.scrollTo(0, 0);
+			
+			// Get positions
+			const containerRect = contentScroll.getBoundingClientRect();
+			const targetRect = target.getBoundingClientRect();
+			
+			// Calculate absolute position within scrollable content
+			const scrollOffset = targetRect.top - containerRect.top + contentScroll.scrollTop;
+			
+			// Use native smooth scroll
+			contentScroll.scrollTo({ top: scrollOffset, behavior: 'smooth' });
+		} else {
+			console.log('No content scroll container found');
+			// Fallback
+			target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+		}
 	}
 
 	function start() {
 		if (isStarted) return;
 		isStarted = true;
+		document.addEventListener('click', handleAnchorClick);
 		window.addEventListener('hashchange', handleHashChange);
 		handleHashChange();
 	}
@@ -2399,6 +2510,7 @@ function createRouter(container, options = {}) {
 	function stop() {
 		if (!isStarted) return;
 		isStarted = false;
+		document.removeEventListener('click', handleAnchorClick);
 		window.removeEventListener('hashchange', handleHashChange);
 	}
 

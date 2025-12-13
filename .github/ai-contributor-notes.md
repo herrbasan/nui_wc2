@@ -984,3 +984,50 @@ The `nui-menu` refactor reinforced that accessibility isn't just about high-leve
 - **Relationship Mapping**: Explicit `aria-controls` and `aria-labelledby` are non-negotiable for complex composite widgets.
 
 **Takeaway**: When implementing complex widgets, always validate against the W3C ARIA APG examples line-by-line. Don't assume "it works for me" means it works for assistive technology.
+
+---
+
+## #6Wm3N7 - December 13, 2025
+**Progressive Enhancement & Router Anchor Link Fixes**
+
+Major CSS refactoring and router fixes to support progressive enhancement and proper anchor link handling.
+
+### Progressive Enhancement CSS
+Extracted base styling from component scopes to work on plain HTML elements:
+- **Tables**: Base table, th, td, tfoot, caption styling works without `<nui-table>` wrapper
+- **Inputs**: All text input types styled without `<nui-input>` wrapper
+- **Buttons**: Base button styling extracted from `nui-button` scope
+- **Images/Figures**: Responsive by default with styled figcaption
+- **Fieldsets**: Styled with list bullets removed for nested lists
+
+**Philosophy**: CSS provides visual styles first, JavaScript components add behavior. Components enhance working DOM structure.
+
+### Router Anchor Link Handling
+- **Problem**: Anchor links (`<a href="#section">`) caused body scroll despite `overflow:hidden` on app layout, shifting viewport and breaking fixed positioning. Browser's native scroll-to-anchor happened before we could intercept it via `hashchange`.
+- **Solution**: Intercept anchor clicks **before** browser processes them using click event listener:
+  ```javascript
+  document.addEventListener('click', handleAnchorClick);
+  // In handleAnchorClick:
+  // 1. Detect anchor-only links (href starts with # but doesn't contain =)
+  // 2. e.preventDefault() to stop browser's default scroll
+  // 3. Find .nui-content-scroll container (it's a CLASS, not an element!)
+  // 4. Calculate scroll offset relative to container
+  // 5. Use native scrollTo() with smooth behavior
+  ```
+- **Critical Discovery**: `.nui-content-scroll` is a **class on a div**, not a custom element. Used wrong selector (`nui-content-scroll` vs `.nui-content-scroll`) initially.
+- **Result**: Anchor links now scroll within content container smoothly without viewport shift.
+
+### Styling Conflicts Resolved
+- **Link-list button styling**: Added overrides to prevent base button text-transform and other effects from affecting link-list group buttons
+- **Link-list hover colors**: Fixed invisible hover in side-nav by adding specific background-color override
+- **First-child specificity**: Added higher-specificity rules for first-child link-list items to maintain proper hover/active colors
+
+### Key Insights
+1. **CSS specificity matters**: Override chains need careful ordering to prevent style leakage between components
+2. **App layout architecture needs review**: The fact that we needed to jump through hoops (CSS overflow:hidden, position:fixed, click interception, manual scroll calculation) suggests the layout system may benefit from simplification
+3. **Native API rule validated**: Initially implemented custom scroll animation with requestAnimationFrame, but this violated "use native when possible" principle. Reverted to `scrollTo({ behavior: 'smooth' })` which respects user preferences for reduced motion
+4. **Element vs class selectors**: Always verify whether you're targeting a custom element or a class name. `.nui-content-scroll` (class) vs `nui-content-scroll` (element) was the key breakthrough
+
+**Lesson Learned**: When basic browser behavior (anchor links) requires complex workarounds, the underlying architecture likely has fundamental issues worth investigating. Sometimes the fix works but the need for the fix is the real problem.
+
+**Last Updated:** December 13, 2025

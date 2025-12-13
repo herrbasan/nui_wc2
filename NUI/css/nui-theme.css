@@ -180,6 +180,14 @@ item {
 	display: contents;
 }
 
+/* Prevent scroll in app layout */
+html:has(nui-app[data-layout="app"]),
+body:has(nui-app[data-layout="app"]) {
+	overflow: hidden;
+	position: absolute;
+	inset: 0;
+}
+
 body {
 	margin: 0;
 	padding: 0;
@@ -244,6 +252,10 @@ h6 {
 	font-size: 0.8rem;
 }
 
+iframe {
+	border: solid var(--border-thickness) var(--border-shade2);
+}
+
 nui-side-nav nui-link-list {
 	margin-top: var(--nui-space);
 	padding: 0;
@@ -300,6 +312,17 @@ nui-link-list ul li.group-header button.group-toggle {
 	cursor: pointer;
 	font: inherit;
 	text-align: left;
+}
+
+/* Override base button styles for group-toggle */
+nui-link-list ul li.group-header button.group-toggle {
+	min-height: unset;
+	border-radius: 0;
+	text-transform: none;
+}
+
+nui-link-list ul li.group-header button.group-toggle:active {
+	transform: none;
 }
 
 nui-link-list ul li a nui-icon,
@@ -397,8 +420,18 @@ nui-link-list[mode="fold"] li.group-header button.group-toggle:focus-visible::be
 }
 
 nui-link-list[mode="fold"] li:hover {
-	color: var(--color-highlight);
+	color: var(--color-contrast);
 	background-color: var(--color-shade2);
+}
+
+/* Ensure first item also gets hover color */
+nui-link-list[mode="fold"]:first-child ul li:first-child:hover {
+	color: var(--color-contrast);
+}
+
+/* Lighter hover when inside side-nav */
+nui-side-nav nui-link-list[mode="fold"] li:hover {
+	background-color: var(--color-shade3);
 }
 
 nui-link-list[mode="fold"] li.list-item {
@@ -408,6 +441,11 @@ nui-link-list[mode="fold"] li.list-item {
 nui-link-list[mode="fold"] li.list-item.active {
 	color: light-dark(var(--color-highlight), var(--color-highlight));
 	background-color: light-dark(var(--color-shade3), var(--color-shade3));
+}
+
+/* Ensure first item also gets active color */
+nui-link-list[mode="fold"]:first-child ul li:first-child.active {
+	color: light-dark(var(--color-highlight), var(--color-highlight));
 }
 
 nui-link-list[mode="fold"] li.list-item.active::after {
@@ -635,51 +673,10 @@ nui-button-container.gap-large {
 	gap: var(--nui-space-double);
 }
 
+/* nui-button enhancements - builds on base button styles */
 nui-button button {
-	position: relative;
-	min-width: var(--nui-space-double);
-	min-height: var(--nui-space-double);
-	padding: var(--nui-space-quarter) var(--nui-space);
-	margin: 0;
-	font-size: 0.8rem;
-	line-height: 0.8rem;
-	font-family: var(--system-ui);
-	background-color: var(--color-highlight-dim);
-	color: var(--color-white);
-	border: solid var(--border-thickness) light-dark(rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.1));
-	border-radius: var(--border-radius1);
-	cursor: pointer;
-	transition: background-color 0.2s ease, color 0.2s ease;
-	text-transform: uppercase;
-	white-space: nowrap;
-	user-select: none;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	gap: var(--nui-space-quarter);
-	appearance: none;
-	vertical-align: top;
 	min-width: 6rem;
-}
-
-nui-button button:hover {
-	background-color: var(--color-highlight);
-	color: var(--color-white);
-}
-
-nui-button button:active {
-	transform: translateY(1px);
-}
-
-nui-button button:focus-visible {
-	outline: 2px solid var(--color-highlight);
-	outline-offset: 2px;
-}
-
-nui-button button:disabled {
-	opacity: 0.4;
-	pointer-events: none;
-	cursor: not-allowed;
+	text-transform: uppercase;
 }
 
 /* Button flash effect on click */
@@ -701,36 +698,14 @@ nui-button button:not(:active)::after {
 	transition: opacity 0.5s;
 }
 
-/* Button type variants */
-nui-button button[type="submit"],
-nui-button[variant="submit"] button {
-	background-color: var(--palette-activate);
-}
-
-nui-button button[type="submit"]:hover,
-nui-button[variant="submit"] button:hover {
-	background-color: var(--palette-activate-hi);
-}
-
-nui-button button[type="reset"],
-nui-button[variant="reset"] button {
-	background-color: var(--palette-gray);
-}
-
-nui-button button[type="reset"]:hover,
-nui-button[variant="reset"] button:hover {
-	background-color: var(--palette-gray-hi);
-}
-
-nui-button[variant="outline"] button,
-nui-button[type="outline"] button {
+/* Button variant extensions */
+nui-button[variant="outline"] button {
 	background-color: transparent;
 	border: solid var(--border-thickness) var(--palette-gray);
 	color: var(--color-text-dim);
 }
 
-nui-button[variant="outline"] button:hover,
-nui-button[type="outline"] button:hover {
+nui-button[variant="outline"] button:hover {
 	background-color: var(--palette-gray);
 	border-color: transparent;
 	color: var(--color-white);
@@ -1001,7 +976,7 @@ nui-app[data-layout="app"] nui-content>.nui-content-scroll {
 	right: 0;
 	bottom: 0;
 	overflow-y: auto;
-	overflow-x: hidden;
+	overflow-x: auto;
 	padding: var(--nui-space-double);
 	box-sizing: border-box;
 }
@@ -2567,21 +2542,19 @@ nui-slider:focus-within .nui-slider-track::before {
 
 /* ################################# nui-table COMPONENT */
 
-nui-table {
-	display: block;
-	width: 100%;
-	overflow-x: auto;
-}
+/* =============================================================================
+   BASE TABLE STYLING (Works without component wrapper)
+   ============================================================================= */
 
-nui-table table {
+table {
 	width: 100%;
 	border-collapse: collapse;
 	background-color: light-dark(var(--color-shade1), var(--color-shade2));
 	color: var(--color-text);
 }
 
-nui-table th,
-nui-table td {
+th,
+td {
 	border: var(--border-thickness) solid var(--border-shade3);
 	padding: var(--nui-space-half);
 	text-align: left;
@@ -2592,16 +2565,33 @@ nui-table td {
 	word-break: break-word;
 }
 
-nui-table th {
+th {
 	background-color: var(--color-shade4);
 	color: var(--color-text);
 	font-weight: bold;
 }
 
-nui-table tfoot {
+tfoot {
 	background-color: var(--color-shade1);
 	color: var(--color-text);
 	font-weight: bold;
+}
+
+caption {
+	padding: var(--nui-space-half);
+	font-weight: bold;
+	text-align: left;
+	caption-side: top;
+}
+
+/* =============================================================================
+   NUI-TABLE COMPONENT (Adds scrolling and responsive behavior)
+   ============================================================================= */
+
+nui-table {
+	display: block;
+	width: 100%;
+	overflow-x: auto;
 }
 
 /* Responsive Table Enhancement */
@@ -2681,34 +2671,264 @@ nui-table tfoot {
 
 
 /* =============================================================================
+   BASE IMAGE & FIGURE STYLING (Works without component wrapper)
+   ============================================================================= */
+
+/* Images within paragraphs or figures fill container width */
+p img,
+figure img {
+	width: 100%;
+	height: auto;
+	display: block;
+}
+
+/* Figure container */
+figure {
+	margin: 0;
+	margin-bottom: var(--nui-space);
+}
+
+/* Figure caption */
+figcaption {
+	width: 100%;
+	padding: var(--nui-space-half);
+	background-color: light-dark(var(--color-shade2), var(--color-shade3));
+	color: var(--color-text);
+	font-size: 0.9rem;
+	line-height: 1.4;
+	box-sizing: border-box;
+}
+
+
+/* =============================================================================
+   BASE INPUT STYLING (Works without component wrapper)
+   ============================================================================= */
+
+fieldset {
+	border: var(--border-thickness) solid var(--border-shade2);
+	border-radius: var(--border-radius2);
+	padding: var(--nui-space);
+	margin: 0 0 var(--nui-space) 0;
+	background-color: light-dark(var(--color-shade1), var(--color-shade1));
+}
+
+legend {
+	padding: 0 var(--nui-space-half);
+	color: var(--color-text);
+	font-size: 0.75rem;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+}
+
+
+/* Lists in fieldsets - no bullets or indentation */
+fieldset ul,
+fieldset ol {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="url"],
+input[type="tel"],
+input[type="search"],
+input[type="number"],
+input[type="date"],
+input[type="datetime-local"],
+input[type="month"],
+input[type="week"],
+input[type="time"] {
+	width: 100%;
+	min-height: calc(var(--nui-space) * 2.5);
+	padding: 0 var(--nui-space);
+	background: light-dark(var(--color-white), var(--color-shade3));
+	border: solid var(--border-thickness) transparent;
+	border-bottom: solid var(--border-thickness) var(--color-shade4);
+	color: var(--color-text-dim);
+	font-family: var(--system-ui);
+	font-size: 1rem;
+	line-height: 1.5;
+	outline: none;
+	transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+	box-sizing: border-box;
+	margin: 0;
+	display: block;
+}
+
+input[type="text"]::placeholder,
+input[type="email"]::placeholder,
+input[type="password"]::placeholder,
+input[type="url"]::placeholder,
+input[type="tel"]::placeholder,
+input[type="search"]::placeholder,
+input[type="number"]::placeholder {
+	color: var(--color-shade5);
+}
+
+input[type="text"]:hover:not(:disabled),
+input[type="email"]:hover:not(:disabled),
+input[type="password"]:hover:not(:disabled),
+input[type="url"]:hover:not(:disabled),
+input[type="tel"]:hover:not(:disabled),
+input[type="search"]:hover:not(:disabled),
+input[type="number"]:hover:not(:disabled),
+input[type="date"]:hover:not(:disabled),
+input[type="datetime-local"]:hover:not(:disabled),
+input[type="month"]:hover:not(:disabled),
+input[type="week"]:hover:not(:disabled),
+input[type="time"]:hover:not(:disabled) {
+	background: var(--color-shade1);
+	border-color: var(--color-shade5);
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="url"]:focus,
+input[type="tel"]:focus,
+input[type="search"]:focus,
+input[type="number"]:focus,
+input[type="date"]:focus,
+input[type="datetime-local"]:focus,
+input[type="month"]:focus,
+input[type="week"]:focus,
+input[type="time"]:focus {
+	outline: none;
+	border: solid var(--border-thickness) var(--color-highlight);
+	background: var(--color-shade1);
+	border-color: var(--color-shade6);
+	color: var(--color-text);
+}
+
+input[type="text"]:disabled,
+input[type="email"]:disabled,
+input[type="password"]:disabled,
+input[type="url"]:disabled,
+input[type="tel"]:disabled,
+input[type="search"]:disabled,
+input[type="number"]:disabled,
+input[type="date"]:disabled,
+input[type="datetime-local"]:disabled,
+input[type="month"]:disabled,
+input[type="week"]:disabled,
+input[type="time"]:disabled {
+	background: var(--color-shade2);
+	color: var(--color-shade4);
+	cursor: not-allowed;
+}
+
+input[type="text"]:read-only,
+input[type="email"]:read-only,
+input[type="password"]:read-only,
+input[type="url"]:read-only,
+input[type="tel"]:read-only,
+input[type="search"]:read-only,
+input[type="number"]:read-only {
+	background: var(--color-shade2);
+}
+
+
+/* =============================================================================
+   BASE BUTTON STYLING (Works without component wrapper)
+   ============================================================================= */
+
+button,
+input[type="submit"],
+input[type="reset"],
+input[type="button"] {
+	position: relative;
+	min-width: var(--nui-space-double);
+	min-height: var(--nui-space-double);
+	padding: var(--nui-space-quarter) var(--nui-space);
+	margin: 0;
+	font-size: 0.8rem;
+	line-height: 0.8rem;
+	font-family: var(--system-ui);
+	background-color: var(--color-highlight-dim);
+	color: var(--color-white);
+	border: solid var(--border-thickness) light-dark(rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.1));
+	border-radius: var(--border-radius1);
+	cursor: pointer;
+	transition: background-color 0.2s ease, color 0.2s ease;
+	white-space: nowrap;
+	user-select: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--nui-space-quarter);
+	appearance: none;
+	vertical-align: top;
+}
+
+button:hover,
+input[type="submit"]:hover,
+input[type="reset"]:hover,
+input[type="button"]:hover {
+	background-color: var(--color-highlight);
+	color: var(--color-white);
+}
+
+button:active,
+input[type="submit"]:active,
+input[type="reset"]:active,
+input[type="button"]:active {
+	transform: translateY(1px);
+}
+
+button:focus-visible,
+input[type="submit"]:focus-visible,
+input[type="reset"]:focus-visible,
+input[type="button"]:focus-visible {
+	outline: 2px solid var(--color-highlight);
+	outline-offset: 2px;
+}
+
+button:disabled,
+input[type="submit"]:disabled,
+input[type="reset"]:disabled,
+input[type="button"]:disabled {
+	opacity: 0.4;
+	pointer-events: none;
+	cursor: not-allowed;
+}
+
+/* Submit button variant */
+button[type="submit"],
+input[type="submit"] {
+	background-color: var(--palette-activate);
+}
+
+button[type="submit"]:hover,
+input[type="submit"]:hover {
+	background-color: var(--palette-activate-hi);
+}
+
+/* Reset button variant */
+button[type="reset"],
+input[type="reset"] {
+	background-color: var(--palette-gray);
+}
+
+button[type="reset"]:hover,
+input[type="reset"]:hover {
+	background-color: var(--palette-gray-hi);
+}
+
+
+/* =============================================================================
    NUI-CARD STYLING
    ============================================================================= */
 
 .nui-card {
-	background: var(--color-base);
-	border: solid var(--border-thickness) var(--border-shade2);
-	border-radius: var(--border-radius3);
-	padding: var(--nui-space-double);
-	display: flex;
-	flex-direction: column;
+	background: light-dark(var(--color-shade1), var(--color-shade2));
+	border: solid var(--border-thickness) light-dark(rgb(0, 0, 0, 0.2), var(--border-shade2));
+	border-radius: var(--border-radius2);
+	padding: var(--nui-space);
+	box-shadow: 0 0.3rem 1rem light-dark(rgb(0, 0, 0, 0.1), rgba(0, 0, 0, 0.3));
 	gap: var(--nui-space);
 	transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-}
-
-.nui-card:hover {
-	border-color: var(--border-shade3);
-	box-shadow: 0 4px 12px var(--shadow-color);
-	transform: translateY(-2px);
-}
-
-.nui-card.featured {
-	border-color: var(--color-highlight);
-	box-shadow: 0 0 0 1px var(--color-highlight);
-}
-
-.nui-card .card-icon {
-	font-size: 2.5rem;
-	color: var(--color-highlight);
 	margin-bottom: var(--nui-space);
-	display: inline-flex;
 }
