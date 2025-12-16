@@ -934,7 +934,7 @@ registerComponent('nui-link-list', (element) => {
 registerComponent('nui-content', (element) => {
 	// nui-content is the positioning context for content area
 	// nui-main handles the scroll behavior
-	upgradeAccessibility();
+	upgradeAccessibility(element);
 });
 
 registerComponent('nui-main', (element) => {
