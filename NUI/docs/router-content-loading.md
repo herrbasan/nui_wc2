@@ -672,7 +672,7 @@ For the common case of "pages loaded from files + link-list navigation":
 
 ```javascript
 nui.enableContentLoading({
-    container: 'nui-content main',  // Selector or element
+    container: 'nui-content nui-main',  // Selector or element
     navigation: 'nui-side-nav',     // Link-list for active state
     basePath: '/pages',             // Where to fetch fragments
     defaultPage: 'intro'            // Default route

@@ -14,7 +14,7 @@
 	--nui-space-quadruple: calc(var(--nui-space) * 4);
 
 	--space-scrollbar-width: 0.7rem;
-	--space-page-maxwidth: 62rem;
+	--space-page-maxwidth: 56rem;
 
 	--icon-size: 1.2rem;
 	--text-color: light-dark(rgb(30, 30, 30), rgb(230, 230, 230));
@@ -116,10 +116,6 @@
 	outline: none;
 }
 
-
-
-
-
 /* Skip links for keyboard navigation */
 nui-skip-links {
 	display: block;
@@ -214,6 +210,20 @@ main:focus {
 	outline: none;
 }
 
+
+footer {
+	font-size: 0.9rem;
+	color: var(--color-text-muted);
+	text-align: center;
+	padding: var(--nui-space);
+	border-top: solid var(--border-thickness) var(--border-shade2);
+	margin-top: auto; 
+}
+
+footer h1 {
+	font-size: 1rem;
+}
+
 h1 {
 	color: var(--color-highlight);
 	font-size: 2rem;
@@ -255,6 +265,7 @@ h6 {
 iframe {
 	border: solid var(--border-thickness) var(--border-shade2);
 }
+
 
 nui-side-nav nui-link-list {
 	margin-top: var(--nui-space);
@@ -936,25 +947,23 @@ nui-app[data-layout="app"]:has(nui-app-footer) nui-side-nav {
 /* =============================================================================
    CONTENT AREA
    ============================================================================= */
-
-nui-content {
-	padding: var(--nui-space-double);
-	box-sizing: border-box;
+nui-main > .content-page,
+nui-main > .content-feature{
+	display: block;
+	width: 100%;
+	position: relative;
 }
 
-nui-content main {
+nui-main > .content-page > *,
+nui-main > .content-feature > * {
+	padding: var(--nui-space) var(--nui-space-double);
 	max-width: var(--space-page-maxwidth);
-	box-sizing: border-box;
 }
+
+
 nui-page nui-content{
 	padding: 0;
 	margin-top: var(--top-nav-height);
-}
-
-nui-page nui-content main {
-	margin: 0 auto;
-	max-width: var(--space-page-maxwidth);
-	box-sizing: border-box;
 }
 
 nui-app[data-layout="app"] nui-content {
@@ -968,8 +977,8 @@ nui-app[data-layout="app"] nui-content {
 	padding: 0;
 }
 
-/* Inner scroll container for actual content */
-nui-app[data-layout="app"] nui-content>.nui-content-scroll {
+/* Scroll container for content area */
+nui-app[data-layout="app"] nui-content>nui-main {
 	position: absolute;
 	top: 0;
 	left: 0;
@@ -977,7 +986,6 @@ nui-app[data-layout="app"] nui-content>.nui-content-scroll {
 	bottom: 0;
 	overflow-y: auto;
 	overflow-x: auto;
-	padding: var(--nui-space-double);
 	box-sizing: border-box;
 }
 
@@ -1251,7 +1259,7 @@ nui-banner:not([placement]) {
 	border-right: none;
 }
 
-/* Banner layer inside content - sibling to scroll container */
+/* Banner layer inside content - sibling to nui-main */
 nui-content>.nui-banner-layer {
 	position: absolute;
 	top: 0;
@@ -2705,11 +2713,11 @@ figcaption {
    ============================================================================= */
 
 fieldset {
-	border: var(--border-thickness) solid var(--border-shade2);
+	border: var(--border-thickness) solid light-dark(rgba(0, 0, 0, 0.3), rgba(255, 255, 255, 0.2));
 	border-radius: var(--border-radius2);
 	padding: var(--nui-space);
 	margin: 0 0 var(--nui-space) 0;
-	background-color: light-dark(var(--color-shade1), var(--color-shade1));
+	background-color: light-dark(rgb(245,245,245), rgb(30,30,30));
 }
 
 legend {
@@ -2727,6 +2735,31 @@ fieldset ol {
 	list-style: none;
 	padding: 0;
 	margin: 0;
+}
+
+fieldset label {
+	display: block;
+	margin-bottom: var(--nui-space-quarter);
+	color: var(--color-text-dim);
+	font-size: 0.9rem;
+}
+
+textarea {
+	width: 100%;
+	min-height: calc(calc(var(--nui-space) * 2.5) * 2);
+	padding: var(--nui-space);
+	background: light-dark(var(--color-white), var(--color-shade3));
+	border: solid var(--border-thickness) var(--color-shade4);
+	border-radius: var(--border-radius1);
+	color: var(--color-text-dim);
+	font-family: var(--system-ui);
+	font-size: 1rem;
+	line-height: 1.5;
+	outline: none;
+	transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+	box-sizing: border-box;
+	margin: 0;
+	resize: vertical;
 }
 
 input[type="text"],
@@ -2931,4 +2964,35 @@ input[type="reset"]:hover {
 	gap: var(--nui-space);
 	transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 	margin-bottom: var(--nui-space);
+}
+
+
+nui-layout[columns="2"]{
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--nui-space);
+}
+
+nui-layout[columns="3"]{
+	display: grid;
+	grid-template-columns: 1fr 1fr 1fr;
+	gap: var(--nui-space);
+}
+
+nui-layout[columns="4"]{
+	display: grid;
+	grid-template-columns: 1fr 1fr 1fr 1fr;
+	gap: var(--nui-space);
+}
+
+nui-layout[banner] {
+	display: block;
+	max-width: 100% !important;
+	width: 100% !important;
+	padding: 0 !important;
+}
+
+nui-layout[banner] > * {
+	padding: var(--nui-space) var(--nui-space-double);
+	max-width: var(--space-page-maxwidth);
 }

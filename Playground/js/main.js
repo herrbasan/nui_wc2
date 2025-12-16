@@ -160,6 +160,7 @@ const navigationData = [
 		icon: 'settings',
 		items: [
 			{ label: 'Dashboard', href: '#feature=dashboard' },
+			{ label: 'Layout', href: '#page=experiments/layout' },
 			{ label: 'HTML Standards', href: '#page=experiments/html-standards' },
 		]
 	}
@@ -174,7 +175,7 @@ if (sideNav && sideNav.loadData) {
 
 // Setup content loading (simplified single call)
 nui.enableContentLoading({
-	container: 'nui-content main',
+	container: 'nui-content nui-main',
 	navigation: 'nui-side-nav',
 	basePath: 'pages',
 	defaultPage: 'documentation/introduction'

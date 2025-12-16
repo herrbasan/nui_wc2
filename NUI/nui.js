@@ -932,37 +932,20 @@ registerComponent('nui-link-list', (element) => {
 });
 
 registerComponent('nui-content', (element) => {
-	const isAppMode = element.closest('nui-app[data-layout="app"]');
-	if (isAppMode && !element.el(':scope > .nui-content-scroll')) {
-		const children = Array.from(element.childNodes);
+	// nui-content is the positioning context for content area
+	// nui-main handles the scroll behavior
+	upgradeAccessibility();
+});
 
-		dom.create('div', {
-			class: 'nui-content-scroll',
-			content: children,
-			target: element
-		});
+registerComponent('nui-main', (element) => {
+	// nui-main is the scroll container for content
+	if (!element.hasAttribute('role')) {
+		element.setAttribute('role', 'main');
 	}
-
-	const main = element.el('main');
-	if (main) {
-		if (!main.hasAttribute('role')) {
-			main.setAttribute('role', 'main');
-		}
-
-		if (!main.hasAttribute('id')) {
-			main.setAttribute('id', 'main-content');
-		}
-
-		upgradeAccessibility(main);
-	} else {
-		const isMainContent = !element.closest('article, section, aside');
-		if (isMainContent) {
-			console.warn(
-				`nui-content: Consider wrapping content in <main> element for accessibility.`,
-				element
-			);
-		}
+	if (!element.hasAttribute('id')) {
+		element.setAttribute('id', 'main-content');
 	}
+	upgradeAccessibility(element);
 });
 
 registerComponent('nui-app-footer', (element) => {
@@ -1523,7 +1506,7 @@ registerComponent('nui-banner', (element) => {
 
 	element.show = () => {
 		if (element.hasAttribute('open')) return;
-		if (element.closest('nui-content, .nui-content-scroll')) moveToBannerLayer();
+		if (element.closest('nui-content, nui-main')) moveToBannerLayer();
 
 		element.setAttribute('open', '');
 		element.dispatchEvent(new CustomEvent('nui-banner-open', { bubbles: true }));
@@ -2307,8 +2290,8 @@ function createRouter(container, options = {}) {
 	}
 
 	function handleDeepLink(element, params) {
-		// Find the actual scroll container (may be wrapped in .nui-content-scroll in app mode)
-		const scrollContainer = container.closest('.nui-content-scroll') || container.closest('nui-content')?.el('.nui-content-scroll') || container;
+		// Find the actual scroll container (nui-main in app mode)
+		const scrollContainer = container.closest('nui-main') || container.closest('nui-content')?.el('nui-main') || container;
 
 		if (params.id) {
 			const target = element.el(`#${params.id}`);
@@ -2408,7 +2391,7 @@ function createRouter(container, options = {}) {
 				// Find and scroll the content container
 				const target = document.getElementById(hash);
 				if (target) {
-					const contentScroll = document.querySelector('nui-content-scroll') || 
+					const contentScroll = document.querySelector('nui-main') || 
 					                      document.querySelector('nui-content');
 					if (contentScroll) {
 						// Calculate position relative to content container
@@ -2457,26 +2440,25 @@ function createRouter(container, options = {}) {
 		}
 		
 		// Find the scrollable container from the link's context
-		// Note: .nui-content-scroll is a CLASS, not an element
-		let contentScroll = link.closest('.nui-content-scroll');
-		console.log('Link closest .nui-content-scroll:', contentScroll);
+		let contentScroll = link.closest('nui-main');
+		console.log('Link closest nui-main:', contentScroll);
 		
-		// If link is not inside content-scroll, find the target's container
+		// If link is not inside nui-main, find the target's container
 		if (!contentScroll) {
-			contentScroll = target.closest('.nui-content-scroll');
-			console.log('Target closest .nui-content-scroll:', contentScroll);
+			contentScroll = target.closest('nui-main');
+			console.log('Target closest nui-main:', contentScroll);
 		}
 		
-		// Last resort: find first visible content-scroll
+		// Last resort: find first visible nui-main
 		if (!contentScroll) {
-			contentScroll = document.querySelector('.nui-content-scroll:not([hidden])');
-			console.log('querySelector .nui-content-scroll:', contentScroll);
+			contentScroll = document.querySelector('nui-main:not([hidden])');
+			console.log('querySelector nui-main:', contentScroll);
 		}
 		
 		// Try without :not([hidden])
 		if (!contentScroll) {
-			contentScroll = document.querySelector('.nui-content-scroll');
-			console.log('querySelector .nui-content-scroll (any):', contentScroll);
+			contentScroll = document.querySelector('nui-main');
+			console.log('querySelector nui-main (any):', contentScroll);
 		}
 		
 		if (contentScroll) {
@@ -2546,7 +2528,7 @@ function createRouter(container, options = {}) {
 }
 
 function enableContentLoading(options = {}) {
-	const containerSelector = options.container || 'nui-content main';
+	const containerSelector = options.container || 'nui-content nui-main';
 	const navigationSelector = options.navigation || 'nui-side-nav';
 	const basePath = options.basePath || '/pages';
 	const defaultPage = options.defaultPage || null;

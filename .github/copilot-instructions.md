@@ -666,7 +666,7 @@ All components must adhere to the [W3C ARIA Authoring Practices Guide (APG)](htt
 ### Core vs Addon Strategy
 
 **Core Components (Implemented):**
-- `nui-app`, `nui-top-nav`, `nui-side-nav`, `nui-content`, `nui-app-footer` - App layout system
+- `nui-app`, `nui-top-nav`, `nui-side-nav`, `nui-content`, `nui-main`, `nui-app-footer` - App layout system
 - `nui-button`, `nui-button-container` - Button enhancements
 - `nui-icon` - Icon system with sprite support
 - `nui-tabs` - Tab panels with keyboard navigation

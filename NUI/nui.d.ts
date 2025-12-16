@@ -89,7 +89,7 @@ export interface RouterOptions {
 // =============================================================================
 
 export interface ContentLoadingOptions {
-	/** Container selector or element (default: 'nui-content main') */
+	/** Container selector or element (default: 'nui-content nui-main') */
 	container?: string | HTMLElement;
 	
 	/** Navigation selector or element for active sync (default: 'nui-side-nav') */

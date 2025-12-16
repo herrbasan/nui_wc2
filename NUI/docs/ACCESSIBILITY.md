@@ -495,9 +495,9 @@ NUI provides helpful warnings when it auto-upgrades accessibility:
 
 **Main Content Recommendation:**
 ```
-⚠️ nui-content: Consider wrapping content in <main> element for accessibility.
+⚠️ nui-content: Consider using <nui-main> element for accessibility.
 ```
-**Action:** Wrap primary content in `<main>` element.
+**Action:** Use `<nui-main>` as the scroll container inside `<nui-content>`.
 
 **Non-Semantic Interactive Element:**
 ```

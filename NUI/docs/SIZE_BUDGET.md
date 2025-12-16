@@ -50,7 +50,8 @@
 - nui-top-nav (banner landmark)
 - nui-side-nav (navigation landmark)
 - nui-link-list (tree mode with accordion, ~8 KB)
-- nui-content (main landmark)
+- nui-content (positioning context)
+- nui-main (scroll container with main landmark)
 - nui-app-footer (contentinfo landmark)
 
 ### Planned Additions (Budget Available: ~4 KB)
