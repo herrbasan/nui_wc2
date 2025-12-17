@@ -1,32 +1,30 @@
-<h1>Skip Links</h1>
+<header>
+	<h1>Skip Links</h1>
+	<p>Skip links provide keyboard users with a way to quickly jump to important page sections, improving navigation efficiency and accessibility. The <code>nui-skip-links</code> component makes it easy to add skip links to your application.</p>
+</header>
 
-<p>
-	Skip links provide keyboard users with a way to quickly jump to important page sections, improving navigation efficiency and accessibility.
-	The <code>nui-skip-links</code> component makes it easy to add skip links to your application.
-</p>
+<section>
+	<h2>Features</h2>
+	<ul>
+		<li><strong>Automatic Detection</strong> - Auto-generates links for common NUI app structure (top-nav, side-nav, main content)</li>
+		<li><strong>Declarative HTML</strong> - Define custom skip links with simple anchor tags</li>
+		<li><strong>Keyboard Friendly</strong> - Links are hidden until focused via Tab key</li>
+		<li><strong>Smart Focus Management</strong> - Automatically adds tabindex="-1" to targets for proper focus handling</li>
+		<li><strong>Smooth Scrolling</strong> - Animated scroll to target section</li>
+	</ul>
+</section>
 
-<h2>Features</h2>
+<section>
+	<h2>Automatic Mode (Recommended)</h2>
+	<p>Simply add <code>&lt;nui-skip-links&gt;&lt;/nui-skip-links&gt;</code> to your app and it will automatically detect and create skip links for:</p>
+	<ul>
+		<li><code>nui-top-nav</code> - Skip to navigation</li>
+		<li><code>nui-side-nav</code> - Skip to sidebar</li>
+		<li><code>main</code> - Skip to main content</li>
+	</ul>
 
-<ul>
-	<li><strong>Automatic Detection</strong> - Auto-generates links for common NUI app structure (top-nav, side-nav, main content)</li>
-	<li><strong>Declarative HTML</strong> - Define custom skip links with simple anchor tags</li>
-	<li><strong>Keyboard Friendly</strong> - Links are hidden until focused via Tab key</li>
-	<li><strong>Smart Focus Management</strong> - Automatically adds tabindex="-1" to targets for proper focus handling</li>
-	<li><strong>Smooth Scrolling</strong> - Animated scroll to target section</li>
-</ul>
-
-<h2>Automatic Mode (Recommended)</h2>
-
-<p>Simply add <code>&lt;nui-skip-links&gt;&lt;/nui-skip-links&gt;</code> to your app and it will automatically detect and create skip links for:</p>
-
-<ul>
-	<li><code>nui-top-nav</code> - Skip to navigation</li>
-	<li><code>nui-side-nav</code> - Skip to sidebar</li>
-	<li><code>main</code> - Skip to main content</li>
-</ul>
-
-<nui-code>
-	<pre><code data-lang="html">&lt;nui-app&gt;
+	<nui-code>
+		<pre><code data-lang="html">&lt;nui-app&gt;
 	&lt;!-- Auto-generates skip links for nui-app structure --&gt;
 	&lt;nui-skip-links&gt;&lt;/nui-skip-links&gt;
 	
@@ -36,14 +34,15 @@
 		&lt;main&gt;...&lt;/main&gt;
 	&lt;/nui-content&gt;
 &lt;/nui-app&gt;</code></pre>
-</nui-code>
+	</nui-code>
+</section>
 
-<h2>Declarative Mode</h2>
+<section>
+	<h2>Declarative Mode</h2>
+	<p>Define custom skip links by providing anchor tags inside the component:</p>
 
-<p>Define custom skip links by providing anchor tags inside the component:</p>
-
-<nui-code>
-	<pre><code data-lang="html">&lt;nui-skip-links&gt;
+	<nui-code>
+		<pre><code data-lang="html">&lt;nui-skip-links&gt;
 	&lt;a href="#main-content"&gt;Skip to main content&lt;/a&gt;
 	&lt;a href="#search"&gt;Skip to search&lt;/a&gt;
 	&lt;a href="#footer"&gt;Skip to footer&lt;/a&gt;
@@ -53,135 +52,144 @@
 &lt;main id="main-content"&gt;...&lt;/main&gt;
 &lt;div id="search"&gt;...&lt;/div&gt;
 &lt;footer id="footer"&gt;...&lt;/footer&gt;</code></pre>
-</nui-code>
+	</nui-code>
+</section>
 
-<h2>How It Works</h2>
+<section>
+	<h2>How It Works</h2>
+	<ol>
+		<li><strong>Hidden by default</strong> - Skip links are positioned off-screen until focused</li>
+		<li><strong>Tab to reveal</strong> - Press Tab from the top of the page to reveal the first skip link</li>
+		<li><strong>Focus cascade</strong> - When one link is focused, others become visible inline</li>
+		<li><strong>Auto-setup</strong> - Component ensures target elements have proper <code>id</code> and <code>tabindex="-1"</code> attributes</li>
+	</ol>
+</section>
 
-<ol>
-	<li><strong>Hidden by default</strong> - Skip links are positioned off-screen until focused</li>
-	<li><strong>Tab to reveal</strong> - Press Tab from the top of the page to reveal the first skip link</li>
-	<li><strong>Focus cascade</strong> - When one link is focused, others become visible inline</li>
-	<li><strong>Auto-setup</strong> - Component ensures target elements have proper <code>id</code> and <code>tabindex="-1"</code> attributes</li>
-</ol>
+<section>
+	<h2>Usage Tips</h2>
 
-<h2>Usage Tips</h2>
+	<h3>Placement</h3>
+	<p>Place <code>nui-skip-links</code> as the first focusable element in your document, typically right after the opening <code>&lt;body&gt;</code> or inside <code>&lt;nui-app&gt;</code>.</p>
 
-<h3>Placement</h3>
-<p>Place <code>nui-skip-links</code> as the first focusable element in your document, typically right after the opening <code>&lt;body&gt;</code> or inside <code>&lt;nui-app&gt;</code>.</p>
+	<h3>Testing</h3>
+	<p>To test skip links:</p>
+	<ol>
+		<li>Reload the page</li>
+		<li>Press <kbd>Tab</kbd> - the first skip link should appear</li>
+		<li>Press <kbd>Enter</kbd> to activate</li>
+		<li>Focus should move to the target section</li>
+	</ol>
 
-<h3>Testing</h3>
-<p>To test skip links:</p>
-<ol>
-	<li>Reload the page</li>
-	<li>Press <kbd>Tab</kbd> - the first skip link should appear</li>
-	<li>Press <kbd>Enter</kbd> to activate</li>
-	<li>Focus should move to the target section</li>
-</ol>
+	<h3>Accessibility Notes</h3>
+	<ul>
+		<li>Skip links are <strong>required</strong> for WCAG 2.1 Level A compliance</li>
+		<li>They help users with mobility impairments bypass repetitive navigation</li>
+		<li>Screen readers announce skip links as navigation landmarks</li>
+		<li>The component automatically adds <code>role="navigation"</code> and <code>aria-label="Skip links"</code></li>
+	</ul>
+</section>
 
-<h3>Accessibility Notes</h3>
-<ul>
-	<li>Skip links are <strong>required</strong> for WCAG 2.1 Level A compliance</li>
-	<li>They help users with mobility impairments bypass repetitive navigation</li>
-	<li>Screen readers announce skip links as navigation landmarks</li>
-	<li>The component automatically adds <code>role="navigation"</code> and <code>aria-label="Skip links"</code></li>
-</ul>
+<section>
+	<h2>Live Example</h2>
+	<p>This playground application uses <code>nui-skip-links</code> in automatic mode. Try it yourself:</p>
+	<ol>
+		<li>Click in the browser address bar (or press <kbd>Ctrl+L</kbd> / <kbd>Cmd+L</kbd>)</li>
+		<li>Press <kbd>Tab</kbd> repeatedly to see the skip links appear at the top of the page</li>
+		<li>Press <kbd>Enter</kbd> on any skip link to jump to that section</li>
+	</ol>
 
-<h2>Live Example</h2>
+	<nui-banner mode="info" dismissible="false">
+		<strong>Tip:</strong> Skip links are especially useful on pages with complex navigation. They allow keyboard users to quickly reach the main content without tabbing through dozens of navigation items.
+	</nui-banner>
+</section>
 
-<p>This playground application uses <code>nui-skip-links</code> in automatic mode. Try it yourself:</p>
+<section>
+	<h2>Component Reference</h2>
 
-<ol>
-	<li>Click in the browser address bar (or press <kbd>Ctrl+L</kbd> / <kbd>Cmd+L</kbd>)</li>
-	<li>Press <kbd>Tab</kbd> repeatedly to see the skip links appear at the top of the page</li>
-	<li>Press <kbd>Enter</kbd> on any skip link to jump to that section</li>
-</ol>
+	<h3>Component: <code>nui-skip-links</code></h3>
+	<nui-table>
+		<table>
+			<thead>
+				<tr>
+					<th>Mode</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><strong>Automatic</strong></td>
+					<td>Empty component auto-generates skip links for nui-app structure</td>
+				</tr>
+				<tr>
+					<td><strong>Declarative</strong></td>
+					<td>Define custom skip links using anchor tags as children</td>
+				</tr>
+			</tbody>
+		</table>
+	</nui-table>
 
-<nui-banner mode="info" dismissible="false">
-	<strong>Tip:</strong> Skip links are especially useful on pages with complex navigation. They allow keyboard users to quickly reach the main content without tabbing through dozens of navigation items.
-</nui-banner>
+	<h3>Automatic Targets</h3>
+	<nui-table>
+		<table>
+			<thead>
+				<tr>
+					<th>Element</th>
+					<th>Label</th>
+					<th>Condition</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><code>nui-top-nav</code></td>
+					<td>"Skip to navigation"</td>
+					<td>If present in nui-app</td>
+				</tr>
+				<tr>
+					<td><code>nui-side-nav</code></td>
+					<td>"Skip to sidebar"</td>
+					<td>If present in nui-app</td>
+				</tr>
+				<tr>
+					<td><code>main</code></td>
+					<td>"Skip to main content"</td>
+					<td>If present in document</td>
+				</tr>
+			</tbody>
+		</table>
+	</nui-table>
 
-<h2>Component Reference</h2>
-
-<h3>Component: <code>nui-skip-links</code></h3>
-
-<table>
-	<thead>
-		<tr>
-			<th>Mode</th>
-			<th>Description</th>
-		</tr>
-	</thead>
-	<tbody>
-		<tr>
-			<td><strong>Automatic</strong></td>
-			<td>Empty component auto-generates skip links for nui-app structure</td>
-		</tr>
-		<tr>
-			<td><strong>Declarative</strong></td>
-			<td>Define custom skip links using anchor tags as children</td>
-		</tr>
-	</tbody>
-</table>
-
-<h3>Automatic Targets</h3>
-
-<table>
-	<thead>
-		<tr>
-			<th>Element</th>
-			<th>Label</th>
-			<th>Condition</th>
-		</tr>
-	</thead>
-	<tbody>
-		<tr>
-			<td><code>nui-top-nav</code></td>
-			<td>"Skip to navigation"</td>
-			<td>If present in nui-app</td>
-		</tr>
-		<tr>
-			<td><code>nui-side-nav</code></td>
-			<td>"Skip to sidebar"</td>
-			<td>If present in nui-app</td>
-		</tr>
-		<tr>
-			<td><code>main</code></td>
-			<td>"Skip to main content"</td>
-			<td>If present in document</td>
-		</tr>
-	</tbody>
-</table>
-
-<h3>ARIA Attributes (Auto-applied)</h3>
-
-<table>
-	<thead>
-		<tr>
-			<th>Attribute</th>
-			<th>Value</th>
-			<th>Target</th>
-		</tr>
-	</thead>
-	<tbody>
-		<tr>
-			<td><code>role</code></td>
-			<td>"navigation"</td>
-			<td>nui-skip-links element</td>
-		</tr>
-		<tr>
-			<td><code>aria-label</code></td>
-			<td>"Skip links"</td>
-			<td>nui-skip-links element</td>
-		</tr>
-		<tr>
-			<td><code>tabindex</code></td>
-			<td>"-1"</td>
-			<td>Target elements (if missing)</td>
-		</tr>
-		<tr>
-			<td><code>id</code></td>
-			<td>Generated or existing</td>
-			<td>Target elements (if missing)</td>
-		</tr>
-	</tbody>
-</table>
+	<h3>ARIA Attributes (Auto-applied)</h3>
+	<nui-table>
+		<table>
+			<thead>
+				<tr>
+					<th>Attribute</th>
+					<th>Value</th>
+					<th>Target</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><code>role</code></td>
+					<td>"navigation"</td>
+					<td>nui-skip-links element</td>
+				</tr>
+				<tr>
+					<td><code>aria-label</code></td>
+					<td>"Skip links"</td>
+					<td>nui-skip-links element</td>
+				</tr>
+				<tr>
+					<td><code>tabindex</code></td>
+					<td>"-1"</td>
+					<td>Target elements (if missing)</td>
+				</tr>
+				<tr>
+					<td><code>id</code></td>
+					<td>Generated or existing</td>
+					<td>Target elements (if missing)</td>
+				</tr>
+			</tbody>
+		</table>
+	</nui-table>
+</section>
