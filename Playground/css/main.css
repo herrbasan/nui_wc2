@@ -664,3 +664,11 @@ padding: 1rem;
 background: var(--color-base);
 line-height: 1.6;
 }
+
+/* Playground specific banner layout override */
+.layout-banner {
+	position: relative;
+	overflow: hidden;
+	background-color: var(--color-shade3);
+	isolation: isolate;
+}

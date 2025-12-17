@@ -1033,7 +1033,60 @@ registerComponent('nui-skip-links', (element) => {
 
 registerLayoutComponent('nui-icon-button');
 
-// ################################# nui-column-flow COMPONENT
+// ################################# nui-layout COMPONENT
+
+registerComponent('nui-layout', (element) => {
+	const type = element.getAttribute('type') || 'grid';
+	element.classList.add(`nui-layout-${type}`);
+
+	if (type === 'grid') {
+		handleGridLayout(element);
+	} else if (type === 'flow') {
+		handleFlowLayout(element);
+	}
+});
+
+function handleGridLayout(element) {
+	const columns = element.getAttribute('columns');
+	const gap = element.getAttribute('gap');
+	const n = parseInt(columns) || 1;
+
+	if (gap) element.style.setProperty('--nui-layout-gap', gap);
+
+	element.style.setProperty('--nui-layout-columns', n);
+	element.style.setProperty('--nui-layout-columns-tablet', Math.min(n, 2));
+}
+
+function handleFlowLayout(element) {
+	const columns = element.getAttribute('columns');
+	const columnWidth = element.getAttribute('column-width');
+	const sort = element.getAttribute('sort');
+	const gap = element.getAttribute('gap');
+	const n = parseInt(columns) || 1;
+
+	if (gap) element.style.setProperty('--nui-layout-gap', gap);
+
+	element.style.setProperty('--nui-layout-count', n);
+	element.style.setProperty('--nui-layout-count-tablet', Math.min(n, 2));
+
+	if (columnWidth?.startsWith('/')) {
+		const divisor = parseInt(columnWidth.slice(1));
+		if (!isNaN(divisor) && divisor > 0) {
+			const containerWidth = element.offsetWidth;
+			const gapValue = parseFloat(getComputedStyle(element).columnGap) || 0;
+			const availableWidth = containerWidth - (gapValue * (divisor - 1));
+			element.style.setProperty('--nui-layout-width', `${availableWidth / divisor}px`);
+		}
+	}
+
+	if (sort === 'height') {
+		const children = Array.from(element.children);
+		children.sort((a, b) => b.offsetHeight - a.offsetHeight);
+		children.forEach(child => element.appendChild(child));
+	}
+}
+
+// ################################# nui-column-flow COMPONENT (Deprecated - use nui-layout type="flow")
 
 registerComponent('nui-column-flow', (element) => {
 	const sort = element.getAttribute('sort');
@@ -1048,7 +1101,6 @@ registerComponent('nui-column-flow', (element) => {
 			const divisor = parseInt(columnWidth.slice(1));
 			if (!isNaN(divisor) && divisor > 0) {
 				const containerWidth = element.offsetWidth;
-				console.log('Container width:', containerWidth);
 				const gapValue = parseFloat(getComputedStyle(element).columnGap) || 0;
 				const availableWidth = containerWidth - (gapValue * (divisor - 1));
 				element.style.columnWidth = `${availableWidth / divisor}px`;

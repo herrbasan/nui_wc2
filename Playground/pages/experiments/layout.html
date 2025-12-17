@@ -1,111 +1,369 @@
+<header>
+	<h1>Layout Component</h1>
+	<p>A constrained, robust layout utility for common content patterns.</p>
+</header>
 
-<nui-layout banner>
-    <div>
-        <h2>Some Random Card</h2>
-        <p>Some Random Text</p>
-    </div>
+<section>
+	<h2>Why This Component Exists</h2>
+	<p>Most layout components give you maximum flexibility: any number of columns, any ratio, any breakpoint. This sounds great until you realize that flexibility is the enemy of consistency. Developers end up writing the same responsive patterns over and over, often inconsistently.</p>
+	
+	<p><code>&lt;nui-layout&gt;</code> takes the opposite approach: <strong>the constraint is the feature</strong>.</p>
+
+	<h3>The Viewport Math</h3>
+	<p>All content must be consumable on the smallest viewport (320px mobile). From this non-negotiable principle, a natural column pattern emerges:</p>
+	
+	<nui-table>
+		<table>
+			<thead>
+				<tr>
+					<th>Viewport</th>
+					<th>Width</th>
+					<th>Columns</th>
+					<th>Reasoning</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>Mobile</td>
+					<td>~320px</td>
+					<td>1</td>
+					<td>Base unit. Content must fit here first.</td>
+				</tr>
+				<tr>
+					<td>Tablet</td>
+					<td>~640px</td>
+					<td>2</td>
+					<td>2× mobile width = room for 2 columns.</td>
+				</tr>
+				<tr>
+					<td>Desktop</td>
+					<td>~960px+</td>
+					<td>3+</td>
+					<td>3× mobile width = room for 3+ columns.</td>
+				</tr>
+			</tbody>
+		</table>
+	</nui-table>
+
+	<p>This means <strong>1, 2, and 3 are the natural column counts</strong>. Anything beyond is a design choice, not a viewport necessity. By encoding this pattern into the component, we:</p>
+	<ul>
+		<li><strong>Enforce a best practice</strong> — instead of enabling arbitrary complexity</li>
+		<li><strong>Make the right thing easy</strong> — no breakpoint thinking required</li>
+		<li><strong>Guarantee content fits</strong> — on all viewports, automatically</li>
+	</ul>
+
+	<h3>What This Is For</h3>
+	<p>This component handles <strong>content layouts</strong>: cards, form fields, dashboard widgets, galleries — fluid, repetitive patterns that benefit from equal-width columns. For structural app chrome (sidebars, headers, fixed ratios), those are separate concerns handled by <code>&lt;nui-app&gt;</code> or custom CSS.</p>
+</section>
+
+<section>
+	<h2>Grid Layout (Default)</h2>
+	<p>The default behavior creates equal-width columns using CSS Grid. Specify the target number of columns for desktop; the component handles tablet (max 2) and mobile (always 1) automatically.</p>
+
+	<h3>2 Columns</h3>
+	<nui-layout columns="2">
+		<div class="nui-card">
+			<div>
+				<h3>Card 1</h3>
+				<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore
+					et dolore magna aliqua. Ut enim ad minim veniam.</p>
+			</div>
+		</div>
+		<div class="nui-card">
+			<div>
+				<h3>Card 2</h3>
+				<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore
+					et dolore magna aliqua. Ut enim ad minim veniam.</p>
+			</div>
+		</div>
+		<div class="nui-card">
+			<div>
+				<h3>Card 3</h3>
+				<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore
+					et dolore magna aliqua. Ut enim ad minim veniam.</p>
+			</div>
+		</div>
+		<div class="nui-card">
+			<div>
+				<h3>Card 4</h3>
+				<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore
+					et dolore magna aliqua. Ut enim ad minim veniam.</p>
+			</div>
+		</div>
+	</nui-layout>
+
+	<nui-code>
+		<pre><code data-lang="html">&lt;nui-layout columns="2"&gt;
+  &lt;div class="nui-card"&gt;Card 1&lt;/div&gt;
+  &lt;div class="nui-card"&gt;Card 2&lt;/div&gt;
+  ...
+&lt;/nui-layout&gt;</code></pre>
+	</nui-code>
+</section>
+
+<section>
+	<h3>3 Columns</h3>
+	<p>On larger screens (desktop), this will show 3 columns. On tablets, it automatically clamps to 2. On mobile, it
+		stacks to 1.</p>
+	<nui-layout columns="3">
+		<div class="nui-card">
+			<div>
+				<h3>Card 1</h3>
+				<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore
+					et dolore magna aliqua.</p>
+			</div>
+		</div>
+		<div class="nui-card">
+			<div>
+				<h3>Card 2</h3>
+				<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore
+					et dolore magna aliqua.</p>
+			</div>
+		</div>
+		<div class="nui-card">
+			<div>
+				<h3>Card 3</h3>
+				<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore
+					et dolore magna aliqua.</p>
+			</div>
+		</div>
+		<div class="nui-card">
+			<div>
+				<h3>Card 4</h3>
+				<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore
+					et dolore magna aliqua.</p>
+			</div>
+		</div>
+		<div class="nui-card">
+			<div>
+				<h3>Card 5</h3>
+				<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore
+					et dolore magna aliqua.</p>
+			</div>
+		</div>
+		<div class="nui-card">
+			<div>
+				<h3>Card 6</h3>
+				<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore
+					et dolore magna aliqua.</p>
+			</div>
+		</div>
+	</nui-layout>
+
+	<nui-code>
+		<pre><code data-lang="html">&lt;nui-layout columns="3"&gt;
+  &lt;div class="nui-card"&gt;Card 1&lt;/div&gt;
+  &lt;div class="nui-card"&gt;Card 2&lt;/div&gt;
+  &lt;div class="nui-card"&gt;Card 3&lt;/div&gt;
+  ...
+&lt;/nui-layout&gt;</code></pre>
+	</nui-code>
+</section>
+
+<section>
+	<h2>Flow Layout (Masonry-like)</h2>
+	<p>Use `type="flow"` for content that should flow vertically and wrap to the next column, similar to a masonry
+		layout or newspaper text.</p>
+
+	<h3>Basic Flow</h3>
+	<nui-layout type="flow" columns="3">
+		<div class="nui-card" style="height: 100px">
+			<div>
+				<h3>Short</h3>
+				<p>Lorem ipsum dolor sit amet.</p>
+			</div>
+		</div>
+		<div class="nui-card" style="height: 200px">
+			<div>
+				<h3>Tall</h3>
+				<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore
+					et dolore magna aliqua.</p>
+			</div>
+		</div>
+		<div class="nui-card" style="height: 150px">
+			<div>
+				<h3>Medium</h3>
+				<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+			</div>
+		</div>
+		<div class="nui-card" style="height: 120px">
+			<div>
+				<h3>Short-ish</h3>
+				<p>Lorem ipsum dolor sit amet.</p>
+			</div>
+		</div>
+		<div class="nui-card" style="height: 180px">
+			<div>
+				<h3>Tall-ish</h3>
+				<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore
+					et dolore magna aliqua.</p>
+			</div>
+		</div>
+		<div class="nui-card" style="height: 90px">
+			<div>
+				<h3>Tiny</h3>
+				<p>Lorem ipsum.</p>
+			</div>
+		</div>
+	</nui-layout>
+
+	<nui-code>
+		<pre><code data-lang="html">&lt;nui-layout type="flow" columns="3"&gt;
+  &lt;!-- Items flow down, then across --&gt;
+  &lt;div class="nui-card"&gt;...&lt;/div&gt;
+  &lt;div class="nui-card"&gt;...&lt;/div&gt;
+&lt;/nui-layout&gt;</code></pre>
+	</nui-code>
+
+	<h3>Sorted Flow</h3>
+	<p>Add <code>sort="height"</code> to automatically reorder items so tall items appear first, which can help create a
+		more balanced look in some cases.</p>
+	<nui-layout type="flow" columns="3" sort="height">
+		<div class="nui-card" style="height: 80px">
+			<div>
+				<h3>80px</h3>
+				<p>Lorem ipsum.</p>
+			</div>
+		</div>
+		<div class="nui-card" style="height: 200px">
+			<div>
+				<h3>200px (Tallest)</h3>
+				<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore
+					et dolore magna aliqua.</p>
+			</div>
+		</div>
+		<div class="nui-card" style="height: 150px">
+			<div>
+				<h3>150px</h3>
+				<p>Lorem ipsum dolor sit amet.</p>
+			</div>
+		</div>
+	</nui-layout>
+
+	<nui-code>
+		<pre><code data-lang="html">&lt;nui-layout type="flow" columns="3" sort="height"&gt;
+  &lt;!-- JS will reorder these by height --&gt;
+  &lt;div class="nui-card"&gt;...&lt;/div&gt;
+&lt;/nui-layout&gt;</code></pre>
+	</nui-code>
+</section>
+
+<section>
+	<h2>Responsive Contract</h2>
+	<p>Resize your browser to see how `columns` values are interpreted across different device sizes.</p>
+
+	<nui-table>
+		<table>
+			<thead>
+				<tr>
+					<th>Viewport</th>
+					<th>columns="2"</th>
+					<th>columns="3"</th>
+					<th>columns="4"</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>Desktop (≥768px)</td>
+					<td>2</td>
+					<td>3</td>
+					<td>4</td>
+				</tr>
+				<tr>
+					<td>Tablet (480-767px)</td>
+					<td>2</td>
+					<td>2 (Clamped)</td>
+					<td>2 (Clamped)</td>
+				</tr>
+				<tr>
+					<td>Mobile (&lt;480px)</td>
+					<td>1</td>
+					<td>1</td>
+					<td>1</td>
+				</tr>
+			</tbody>
+		</table>
+	</nui-table>
+</section>
+
+<section>
+	<h2>Full-Width Banner Mode</h2>
+	<p>Content pages typically constrain their width (via <code>--space-page-maxwidth</code>) for readability. Sometimes you need an element to break out of this constraint — hero sections, featured callouts, or visual separators.</p>
+	
+	<p>Add the <code>banner</code> attribute to make a layout span the full container width while keeping its children properly constrained. The banner must be a direct child of the content area (outside of sections):</p>
+</section>
+
+<nui-layout banner class="layout-banner">
+	<div class="maxwidth-container">
+		<div>
+			<h3>Full-Width Banner</h3>
+			<p>This layout breaks out of the page's max-width constraint. Notice how the background spans edge-to-edge, but the text content inside stays readable.</p>
+		</div>
+	</div>
 </nui-layout>
+
 <section>
-    <h2>Columns: Even Split</h2>
-    <nui-layout columns="2">
-        <div class="nui-card">
-            <div>
-                <h2>Some Random Card</h2>
-                <p>Some Random Text</p>
-            </div>
-        </div>
-        <div class="nui-card">
-            <div>
-                <h2>Some Random Card</h2>
-                <p>Some Random Text</p>
-            </div>
-        </div>
-    </nui-layout>
-</section>
-<section>
-    <h2>Columns: Uneven Split</h2>
-    <nui-layout columns="2" split="30,auto">
-        <div class="nui-card">
-            <div>
-                <h2>Some Random Card</h2>
-                <p>Some Random Text</p>
-            </div>
-        </div>
-        <div class="nui-card">
-            <div>
-                <h2>Some Random Card</h2>
-                <p>Some Random Text</p>
-            </div>
-        </div>
-    </nui-layout>
-</section>
-<section>
-    <h2>Columns: Specific Split</h2>
-    <nui-layout columns="3" split="30,20,50">
-        <div class="nui-card">
-            <div>
-                <h2>Some Random Card</h2>
-                <p>Some Random Text</p>
-            </div>
-        </div>
-        <div class="nui-card">
-            <div>
-                <h2>Some Random Card</h2>
-                <p>Some Random Text</p>
-            </div>
-        </div>
-        <div class="nui-card">
-            <div>
-                <h2>Some Random Card</h2>
-                <p>Some Random Text</p>
-            </div>
-        </div>
-    </nui-layout>
-</section>
-<section>
-    <h2>Columns: Specific gap</h2>
-    <nui-layout columns="2" gap="2rem">
-        <div class="nui-card">
-            <div>
-                <h2>Some Random Card</h2>
-                <p>Some Random Text</p>
-            </div>
-        </div>
-        <div class="nui-card">
-            <div>
-                <h2>Some Random Card</h2>
-                <p>Some Random Text</p>
-            </div>
-        </div>
-    </nui-layout>
+	<nui-code>
+		<pre><code data-lang="html">&lt;nui-layout banner&gt;
+  &lt;div class="nui-card"&gt;
+    &lt;!-- Content is still max-width constrained --&gt;
+  &lt;/div&gt;
+&lt;/nui-layout&gt;</code></pre>
+	</nui-code>
+
+	<p><strong>How it works:</strong> The <code>banner</code> attribute removes the max-width on the container itself (<code>max-width: 100%</code>), but the children retain proper padding and max-width constraints. This gives you full-bleed backgrounds while keeping content readable.</p>
 </section>
 
 <section>
-    <h2>Column Flow</h2>
-    <nui-column-flow column-width="/3" sort="height">
-        <div class="nui-card">
-            <div>
-                <h2>Some Random Card</h2>
-                <p>Some Random Text</p>
-            </div>
-        </div>
-        <div class="nui-card">
-            <div>
-                <h2>Some Random Card</h2>
-                <p>Some Random Text</p>
-            </div>
-        </div>
-        <div class="nui-card">
-            <div>
-                <h2>Some Random Card</h2>
-                <p>Some Random Text</p>
-            </div>
-        </div>
-        <div class="nui-card">
-            <div>
-                <h2>Some Random Card</h2>
-                <p>Some Random Text</p>
-            </div>
-        </div>
-    </nui-column-flow>
+	<h2>API Reference</h2>
+	<nui-table>
+		<table>
+			<thead>
+				<tr>
+					<th>Attribute</th>
+					<th>Description</th>
+					<th>Type</th>
+					<th>Default</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><code>type</code></td>
+					<td>Layout engine: <code>grid</code> (equal heights) or <code>flow</code> (masonry).</td>
+					<td>string</td>
+					<td>grid</td>
+				</tr>
+				<tr>
+					<td><code>columns</code></td>
+					<td>Target number of columns for desktop.</td>
+					<td>number</td>
+					<td>1</td>
+				</tr>
+				<tr>
+					<td><code>gap</code></td>
+					<td>Gap between items (e.g., <code>1rem</code>, <code>20px</code>).</td>
+					<td>string</td>
+					<td>1rem</td>
+				</tr>
+				<tr>
+					<td><code>sort</code></td>
+					<td>Reordering strategy (flow only). Value: <code>height</code>.</td>
+					<td>string</td>
+					<td>—</td>
+				</tr>
+				<tr>
+					<td><code>column-width</code></td>
+					<td>Alternately specify width by division (e.g., <code>/3</code>). (flow only)</td>
+					<td>string</td>
+					<td>—</td>
+				</tr>
+				<tr>
+					<td><code>banner</code></td>
+					<td>Boolean attribute. Breaks out of max-width constraint for full-bleed layouts.</td>
+					<td>boolean</td>
+					<td>—</td>
+				</tr>
+			</tbody>
+		</table>
+	</nui-table>
 </section>

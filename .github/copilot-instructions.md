@@ -678,11 +678,10 @@ All components must adhere to the [W3C ARIA Authoring Practices Guide (APG)](htt
 - `nui-input`, `nui-input-group` - Form input enhancements
 - `nui-link-list` - Navigation trees with ARIA tree pattern
 - `nui-code` - Code blocks with syntax highlighting support
-- `nui-column-flow` - Multi-column layout helper
+- `nui-layout` - Constrained responsive grid (equal columns, auto tablet/mobile clamping, banner mode)
 - `nui-loading` - Loading indicator
 
 **Planned Core Components:**
-- `nui-menu` - Dropdowns/context menus (essential and tricky)
 - `nui-tooltip` - Demonstrates element reuse pattern
 - `nui-progress` - Tiny, common need
 
@@ -695,6 +694,9 @@ All components must adhere to the [W3C ARIA Authoring Practices Guide (APG)](htt
 - `enableDrag(element, handlers)` - Pointer-based drag utility
 - `enableContentLoading(config)` - SPA content loader/router
 - `storage` - localStorage wrapper with JSON support
+
+**Deprecated:**
+- `nui-column-flow` - Use `<nui-layout type="flow">` instead
 
 ### Backlog
 - [x] Implement `nui-tabs` ✅

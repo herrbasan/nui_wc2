@@ -1030,4 +1030,43 @@ Extracted base styling from component scopes to work on plain HTML elements:
 
 **Lesson Learned**: When basic browser behavior (anchor links) requires complex workarounds, the underlying architecture likely has fundamental issues worth investigating. Sometimes the fix works but the need for the fix is the real problem.
 
-**Last Updated:** December 13, 2025
+---
+
+## #8Pv2K9 - December 17, 2025
+**nui-layout Component Complete**
+
+Implemented `<nui-layout>` component for constrained, responsive content grids. Extended design session with multiple AI collaborators (Claude, Gemini) iterating through v0.1→v0.4 proposals.
+
+### The Philosophy: "The Constraint is the Feature"
+Most layout components offer maximum flexibility (any columns, any ratio, any breakpoint). This sounds great until flexibility breeds inconsistency. `nui-layout` takes the opposite approach:
+- **Equal columns only** — no ratios, no pixel widths
+- **Automatic responsiveness** — predictable clamping at breakpoints
+- **Viewport math** — 320px mobile (1 col) → 640px tablet (2 col max) → 960px+ desktop (N cols)
+
+The component encodes a proven pattern covering ~80% of content layout needs. For complex app layouts, use `<nui-app>` or custom CSS.
+
+### Implementation
+- **Grid type (default)**: CSS Grid with equal `1fr` columns, automatic tablet clamping to max 2
+- **Flow type**: CSS Multi-column for masonry-like vertical flow, optional `sort="height"` for JS reordering
+- **CSS Variables**: `--nui-layout-columns`, `--nui-layout-columns-tablet` set by JS for responsive CSS
+- **Banner attribute**: Breaks out of `--space-page-maxwidth` constraint for full-bleed layouts
+
+### Technical Struggles
+- **Responsive breakpoints not working**: Initial implementation had correct CSS media queries but layouts didn't respond. Issue traced to missing class (`nui-layout-grid`) not being applied. Gemini's visual debugging capability helped identify the root cause.
+- **Specificity battle for banner**: `nui-layout[banner]` needed `!important` to override `nui-main>.content-page>*` selector. Solved by adding higher-specificity selectors matching the parent context.
+- **light-dark() limitation**: Discovered `light-dark()` CSS function only accepts `<color>` values, not gradients. Documented alternatives: media queries or CSS variables for color components.
+
+### Files Changed
+- `NUI/nui.js`: Added `registerComponent('nui-layout', ...)` with `handleGridLayout` and `handleFlowLayout` functions
+- `NUI/css/nui-theme.css`: Mobile-first responsive CSS with media queries at 30rem (480px) and 48rem (768px)
+- `Playground/pages/experiments/layout.html`: Complete documentation page with philosophy, examples, and API reference
+
+### Key Insights
+1. **Constraint drives consistency**: By limiting to equal columns, developers don't have to think about breakpoints
+2. **Multi-AI collaboration works**: Different models (Claude for code, Gemini for visual debugging) complement each other
+3. **CSS specificity requires context**: When overriding wildcard selectors (`>*`), you need to match the full parent chain
+
+### Deprecated
+- `nui-column-flow`: Still works but marked deprecated. Use `<nui-layout type="flow">` instead.
+
+**Last Updated:** December 17, 2025
