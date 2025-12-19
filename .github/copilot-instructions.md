@@ -642,7 +642,10 @@ Pages are organized into folders matching the navigation structure:
    - Core components → `Playground/pages/components/[component-name].html`
    - Addons → `Playground/pages/addons/[component-name].html`
    - Documentation → `Playground/pages/documentation/[page-name].html`
-   - Follow the pattern of existing pages (header, examples, code snippets).
+   - **Follow `Playground/DEMO_STRUCTURE.md` guide** for proper demo container usage and styling patterns
+   - Use standard demo classes: `.demo-area`, `.demo-result`, `.demo-chrome`, `.demo-callout`
+   - Result containers should use `<pre>` tags for consistent formatting
+   - Single-column layout by default, multi-column only when necessary
 4. **Update Navigation**: Add the new page to the `navigationData` array in `Playground/js/main.js` so it appears in the sidebar.
 
 ### Accessibility Patterns

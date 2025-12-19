@@ -45,8 +45,8 @@ if (result) {
 		<nui-button><button type="button" data-action="show-confirm">Confirm</button></nui-button>
 		<nui-button><button type="button" data-action="show-prompt">Prompt</button></nui-button>
 	</nui-button-container>
-	<div id="dialog-result" style="margin-top: 1rem; padding: 1rem; background: var(--color-shade1); border-radius: var(--border-radius1);">
-		Result: -
+	<div class="demo-result">
+		<pre id="dialog-result">Result: -</pre>
 	</div>
 </section>
 
@@ -161,7 +161,7 @@ const confirmed = await nui.components.dialog.confirm('Terms', 'Accept the terms
 	<h3>Try It</h3>
 	<nui-button-container gap="1rem" align="start">
 		<nui-button><button type="button" data-action="open-custom-confirm">Open Custom Confirm</button></nui-button>
-		<span id="custom-confirm-state" style="padding: 0.5rem 1rem; background: var(--color-shade1); border-radius: var(--border-radius1);">State: closed | Result: -</span>
+		<span id="custom-confirm-state">State: closed | Result: -</span>
 	</nui-button-container>
 
 	<nui-dialog id="custom-confirm">
@@ -269,9 +269,11 @@ if (dialog.isOpen()) { ... }</code></pre>
 
 	<nui-dialog id="dialog-top" placement="top">
 		<dialog>
-			<div style="padding: 2rem; width: 400px;">
-				<h3>Top Placement</h3>
-				<p>This dialog is positioned in the top third of the viewport.</p>
+			<div class="nui-dialog-alert">
+				<div class="nui-headline">Top Placement</div>
+				<div class="nui-copy">
+					<p>This dialog is positioned in the top third of the viewport.</p>
+				</div>
 				<nui-button-container align="end">
 					<nui-button><button type="button" data-action="dialog-close@#dialog-top">Close</button></nui-button>
 				</nui-button-container>
@@ -281,9 +283,11 @@ if (dialog.isOpen()) { ... }</code></pre>
 
 	<nui-dialog id="dialog-center" placement="center">
 		<dialog>
-			<div style="padding: 2rem; width: 400px;">
-				<h3>Center Placement</h3>
-				<p>This dialog is vertically centered (browser default).</p>
+			<div class="nui-dialog-alert">
+				<div class="nui-headline">Center Placement</div>
+				<div class="nui-copy">
+					<p>This dialog is vertically centered (browser default).</p>
+				</div>
 				<nui-button-container align="end">
 					<nui-button><button type="button" data-action="dialog-close@#dialog-center">Close</button></nui-button>
 				</nui-button-container>
@@ -293,9 +297,11 @@ if (dialog.isOpen()) { ... }</code></pre>
 
 	<nui-dialog id="dialog-bottom" placement="bottom">
 		<dialog>
-			<div style="padding: 2rem; width: 400px;">
-				<h3>Bottom Placement</h3>
-				<p>This dialog is positioned in the bottom third of the viewport.</p>
+			<div class="nui-dialog-alert">
+				<div class="nui-headline">Bottom Placement</div>
+				<div class="nui-copy">
+					<p>This dialog is positioned in the bottom third of the viewport.</p>
+				</div>
 				<nui-button-container align="end">
 					<nui-button><button type="button" data-action="dialog-close@#dialog-bottom">Close</button></nui-button>
 				</nui-button-container>

@@ -1,266 +1,277 @@
-<h1>Input Components</h1>
+<header>
+	<h1>Input Components</h1>
+	<p>Form input components with native accessibility, validation, and custom styling.</p>
+</header>
 
-<p>Form input components with native accessibility, validation, and custom styling.</p>
+<section>
+	<h2>Text Input</h2>
+	<p>Basic text input with the <code>&lt;nui-input&gt;</code> component. Works standalone or wrapped in <code>&lt;nui-input-group&gt;</code> for labels.</p>
 
-<h2>Text Input</h2>
-
-<p>Basic text input with the <code>&lt;nui-input&gt;</code> component. Works standalone or wrapped in <code>&lt;nui-input-group&gt;</code> for labels.</p>
-
-<article>
-	<nui-input-group>
-		<label>Email Address</label>
-		<nui-input>
-			<input type="email" placeholder="you@example.com" required>
-		</nui-input>
-		<span class="description">We'll never share your email with anyone.</span>
-	</nui-input-group>
-
-	<nui-input-group>
-		<label>Username</label>
-		<nui-input>
-			<input type="text" placeholder="Enter username" minlength="3" required>
-		</nui-input>
-	</nui-input-group>
-
-	<nui-input-group>
-		<label>Password</label>
-		<nui-input>
-			<input type="password" placeholder="Enter password" minlength="8">
-		</nui-input>
-	</nui-input-group>
-</article>
-
-<h3>Clearable Input</h3>
-
-<p>Add the <code>clearable</code> attribute to show a clear button when the input has a value.</p>
-
-<article>
-	<nui-input-group>
-		<label>Search</label>
-		<nui-input clearable>
-			<input type="search" placeholder="Search..." value="Example search">
-		</nui-input>
-	</nui-input-group>
-</article>
-
-<h3>Standalone Input</h3>
-
-<p>Inputs work without a group wrapper.</p>
-
-<article>
-	<nui-input>
-		<input type="text" placeholder="Standalone input...">
-	</nui-input>
-</article>
-
-<h3>Input Types</h3>
-
-<article>
-	<nui-input-group>
-		<label>Number</label>
-		<nui-input>
-			<input type="number" placeholder="0" min="0" max="100">
-		</nui-input>
-	</nui-input-group>
-
-	<nui-input-group>
-		<label>Date</label>
-		<nui-input>
-			<input type="date">
-		</nui-input>
-	</nui-input-group>
-
-	<nui-input-group>
-		<label>URL</label>
-		<nui-input>
-			<input type="url" placeholder="https://example.com">
-		</nui-input>
-	</nui-input-group>
-</article>
-
-<h3>Disabled & Read-only</h3>
-
-<article>
-	<nui-input-group>
-		<label>Disabled</label>
-		<nui-input>
-			<input type="text" value="Cannot edit this" disabled>
-		</nui-input>
-	</nui-input-group>
-
-	<nui-input-group>
-		<label>Read-only</label>
-		<nui-input>
-			<input type="text" value="Read-only value" readonly>
-		</nui-input>
-	</nui-input-group>
-</article>
-
-<hr>
-
-<h2>Textarea</h2>
-
-<p>Multiline text input with <code>&lt;nui-textarea&gt;</code>. Supports auto-resize and character counting.</p>
-
-<article>
-	<nui-input-group>
-		<label>Comments</label>
-		<nui-textarea>
-			<textarea placeholder="Enter your comments..."></textarea>
-		</nui-textarea>
-	</nui-input-group>
-</article>
-
-<h3>Auto-resize</h3>
-
-<p>Add <code>auto-resize</code> to make the textarea grow with content.</p>
-
-<article>
-	<nui-input-group>
-		<label>Bio</label>
-		<nui-textarea auto-resize min-rows="2" max-rows="8">
-			<textarea placeholder="Tell us about yourself..."></textarea>
-		</nui-textarea>
-	</nui-input-group>
-</article>
-
-<h3>Character Count</h3>
-
-<p>Add <code>show-count</code> to display character count. Works with <code>maxlength</code>.</p>
-
-<article>
-	<nui-input-group>
-		<label>Tweet</label>
-		<nui-textarea show-count>
-			<textarea placeholder="What's happening?" maxlength="280"></textarea>
-		</nui-textarea>
-	</nui-input-group>
-</article>
-
-<hr>
-
-<h2>Checkbox</h2>
-
-<p>Custom-styled checkboxes with <code>&lt;nui-checkbox&gt;</code>. Native accessibility preserved.</p>
-
-<article>
-	<nui-checkbox>
-		<input type="checkbox" name="agree" value="yes">
-		<label>I agree to the terms and conditions</label>
-	</nui-checkbox>
-
-	<nui-checkbox>
-		<input type="checkbox" name="newsletter" value="yes" checked>
-		<label>Subscribe to newsletter</label>
-	</nui-checkbox>
-
-	<nui-checkbox>
-		<input type="checkbox" name="disabled" value="yes" disabled>
-		<label>Disabled checkbox</label>
-	</nui-checkbox>
-</article>
-
-<h3>Checkbox Group</h3>
-
-<p>Use <code>&lt;nui-input-group&gt;</code> to create a labeled group of checkboxes.</p>
-
-<article>
-	<nui-input-group>
-		<label>To Do List</label>
-		<nui-checkbox>
-			<input type="checkbox" name="todo" value="eggs">
-			<label>Buy eggs</label>
-		</nui-checkbox>
-		<nui-checkbox>
-			<input type="checkbox" name="todo" value="cat">
-			<label>Feed the cat</label>
-		</nui-checkbox>
-		<nui-checkbox>
-			<input type="checkbox" name="todo" value="cancer">
-			<label>Cure cancer</label>
-		</nui-checkbox>
-	</nui-input-group>
-</article>
-
-<hr>
-
-<h2>Radio Buttons</h2>
-
-<p>Custom-styled radio buttons with <code>&lt;nui-radio&gt;</code>.</p>
-
-<article>
-	<nui-input-group>
-		<label>Select Something</label>
-		<nui-radio>
-			<input type="radio" name="choice" value="1">
-			<label>Either this</label>
-		</nui-radio>
-		<nui-radio>
-			<input type="radio" name="choice" value="2">
-			<label>Or this</label>
-		</nui-radio>
-		<nui-radio>
-			<input type="radio" name="choice" value="3">
-			<label>Or this if you like</label>
-		</nui-radio>
-	</nui-input-group>
-</article>
-
-<h3>Disabled Radio</h3>
-
-<article>
-	<nui-input-group>
-		<label>Choose a plan</label>
-		<nui-radio>
-			<input type="radio" name="plan" value="free" checked>
-			<label>Free</label>
-		</nui-radio>
-		<nui-radio>
-			<input type="radio" name="plan" value="pro">
-			<label>Pro</label>
-		</nui-radio>
-		<nui-radio>
-			<input type="radio" name="plan" value="enterprise" disabled>
-			<label>Enterprise (coming soon)</label>
-		</nui-radio>
-	</nui-input-group>
-</article>
-
-<hr>
-
-<h2>Validation</h2>
-
-<p>Inputs use native constraint validation. Validation runs on blur and shows error messages automatically.</p>
-
-<article>
-	<form id="demo-form" onsubmit="return false;">
+	<div class="demo-container">
 		<nui-input-group>
-			<label>Required Field</label>
+			<label>Email Address</label>
 			<nui-input>
-				<input type="text" required placeholder="This field is required">
+				<input type="email" placeholder="you@example.com" required>
+			</nui-input>
+			<span class="description">We'll never share your email with anyone.</span>
+		</nui-input-group>
+		<nui-input-group>
+			<label>Username</label>
+			<nui-input>
+				<input type="text" placeholder="Enter username" minlength="3" required>
 			</nui-input>
 		</nui-input-group>
 
 		<nui-input-group>
-			<label>Email (must be valid)</label>
+			<label>Password</label>
 			<nui-input>
-				<input type="email" required placeholder="Enter valid email">
+				<input type="password" placeholder="Enter password" minlength="8">
+			</nui-input>
+		</nui-input-group>
+	</div>
+</section>
+
+<section>
+	<h2>Clearable Input</h2>
+	<p>Add the <code>clearable</code> attribute to show a clear button when the input has a value.</p>
+
+	<div class="demo-container">
+		<nui-input-group>
+			<label>Search</label>
+			<nui-input clearable>
+				<input type="search" placeholder="Search..." value="Example search">
+			</nui-input>
+		</nui-input-group>
+	</div>
+</section>
+
+<section>
+	<h2>Standalone Input</h2>
+	<p>Inputs work without a group wrapper.</p>
+
+	<div class="demo-container">
+		<nui-input>
+			<input type="text" placeholder="Standalone input...">
+		</nui-input>
+	</div>
+</section>
+
+<section>
+	<h2>Input Types</h2>
+	<p>Standard HTML input types are supported.</p>
+
+	<div class="demo-container">
+		<nui-input-group>
+			<label>Number</label>
+			<nui-input>
+				<input type="number" placeholder="0" min="0" max="100">
 			</nui-input>
 		</nui-input-group>
 
 		<nui-input-group>
-			<label>Min Length (3+ characters)</label>
+			<label>Date</label>
 			<nui-input>
-				<input type="text" minlength="3" placeholder="At least 3 characters">
+				<input type="date">
 			</nui-input>
 		</nui-input-group>
 
-		<nui-button-container>
-			<nui-button><button type="button" class="primary" data-action="validate-form">Validate All</button></nui-button>
-			<nui-button><button type="reset" class="outline">Reset</button></nui-button>
-		</nui-button-container>
-	</form>
-</article>
+		<nui-input-group>
+			<label>URL</label>
+			<nui-input>
+				<input type="url" placeholder="https://example.com">
+			</nui-input>
+		</nui-input-group>
+	</div>
+</section>
+
+<section>
+	<h2>Disabled & Read-only</h2>
+	<p>Standard HTML attributes for disabled and read-only states.</p>
+
+	<div class="demo-container">
+		<nui-input-group>
+			<label>Disabled</label>
+			<nui-input>
+				<input type="text" value="Cannot edit this" disabled>
+			</nui-input>
+		</nui-input-group>
+
+		<nui-input-group>
+			<label>Read-only</label>
+			<nui-input>
+				<input type="text" value="Read-only value" readonly>
+			</nui-input>
+		</nui-input-group>
+	</div>
+</section>
+
+<section>
+	<h2>Textarea</h2>
+	<p>Multiline text input with <code>&lt;nui-textarea&gt;</code>. Supports auto-resize and character counting.</p>
+
+	<div class="demo-container">
+		<nui-input-group>
+			<label>Comments</label>
+			<nui-textarea>
+				<textarea placeholder="Enter your comments..."></textarea>
+			</nui-textarea>
+		</nui-input-group>
+	</div>
+</section>
+
+<section>
+	<h2>Auto-resize</h2>
+	<p>Add <code>auto-resize</code> to make the textarea grow with content.</p>
+
+	<div class="demo-container">
+		<nui-input-group>
+			<label>Bio</label>
+			<nui-textarea auto-resize min-rows="2" max-rows="8">
+				<textarea placeholder="Tell us about yourself..."></textarea>
+			</nui-textarea>
+		</nui-input-group>
+	</div>
+</section>
+
+<section>
+	<h2>Character Count</h2>
+	<p>Add <code>show-count</code> to display character count. Works with <code>maxlength</code>.</p>
+
+	<div class="demo-container">
+		<nui-input-group>
+			<label>Tweet</label>
+			<nui-textarea show-count>
+				<textarea placeholder="What's happening?" maxlength="280"></textarea>
+			</nui-textarea>
+		</nui-input-group>
+	</div>
+</section>
+
+<section>
+	<h2>Checkbox</h2>
+	<p>Custom-styled checkboxes with <code>&lt;nui-checkbox&gt;</code>. Native accessibility preserved.</p>
+
+	<div class="demo-container">
+		<nui-checkbox>
+			<input type="checkbox" name="agree" value="yes">
+			<label>I agree to the terms and conditions</label>
+		</nui-checkbox>
+
+		<nui-checkbox>
+			<input type="checkbox" name="newsletter" value="yes" checked>
+			<label>Subscribe to newsletter</label>
+		</nui-checkbox>
+
+		<nui-checkbox>
+			<input type="checkbox" name="disabled" value="yes" disabled>
+			<label>Disabled checkbox</label>
+		</nui-checkbox>
+	</div>
+</section>
+
+<section>
+	<h2>Checkbox Group</h2>
+	<p>Use <code>&lt;nui-input-group&gt;</code> to create a labeled group of checkboxes.</p>
+
+	<div class="demo-container">
+		<nui-input-group>
+			<label>To Do List</label>
+			<nui-checkbox>
+				<input type="checkbox" name="todo" value="eggs">
+				<label>Buy eggs</label>
+			</nui-checkbox>
+			<nui-checkbox>
+				<input type="checkbox" name="todo" value="cat">
+				<label>Feed the cat</label>
+			</nui-checkbox>
+			<nui-checkbox>
+				<input type="checkbox" name="todo" value="cancer">
+				<label>Cure cancer</label>
+			</nui-checkbox>
+		</nui-input-group>
+	</div>
+</section>
+
+<section>
+	<h2>Radio Buttons</h2>
+	<p>Custom-styled radio buttons with <code>&lt;nui-radio&gt;</code>.</p>
+
+	<div class="demo-container">
+		<nui-input-group>
+			<label>Select Something</label>
+			<nui-radio>
+				<input type="radio" name="choice" value="1">
+				<label>Either this</label>
+			</nui-radio>
+			<nui-radio>
+				<input type="radio" name="choice" value="2">
+				<label>Or this</label>
+			</nui-radio>
+			<nui-radio>
+				<input type="radio" name="choice" value="3">
+				<label>Or this if you like</label>
+			</nui-radio>
+		</nui-input-group>
+	</div>
+</section>
+
+<section>
+	<h2>Disabled Radio</h2>
+	<p>Radio buttons can be disabled individually.</p>
+
+	<div class="demo-container">
+		<nui-input-group>
+			<label>Choose a plan</label>
+			<nui-radio>
+				<input type="radio" name="plan" value="free" checked>
+				<label>Free</label>
+			</nui-radio>
+			<nui-radio>
+				<input type="radio" name="plan" value="pro">
+				<label>Pro</label>
+			</nui-radio>
+			<nui-radio>
+				<input type="radio" name="plan" value="enterprise" disabled>
+				<label>Enterprise (coming soon)</label>
+			</nui-radio>
+		</nui-input-group>
+	</div>
+</section>
+
+<section>
+	<h2>Validation</h2>
+	<p>Inputs use native constraint validation. Validation runs on blur and shows error messages automatically.</p>
+
+	<div class="demo-container">
+		<form id="demo-form" onsubmit="return false;">
+			<nui-input-group>
+				<label>Required Field</label>
+				<nui-input>
+					<input type="text" required placeholder="This field is required">
+				</nui-input>
+			</nui-input-group>
+
+			<nui-input-group>
+				<label>Email (must be valid)</label>
+				<nui-input>
+					<input type="email" required placeholder="Enter valid email">
+				</nui-input>
+			</nui-input-group>
+
+			<nui-input-group>
+				<label>Min Length (3+ characters)</label>
+				<nui-input>
+					<input type="text" minlength="3" placeholder="At least 3 characters">
+				</nui-input>
+			</nui-input-group>
+
+			<nui-button-container>
+				<nui-button><button type="button" class="primary" data-action="validate-form">Validate All</button></nui-button>
+				<nui-button><button type="reset" class="outline">Reset</button></nui-button>
+			</nui-button-container>
+		</form>
+	</div>
+</section>
 
 <script type="nui/page">
 function init(element) {

@@ -944,6 +944,7 @@ nui-app[data-layout="app"]:has(nui-app-footer) nui-side-nav {
 
 
 
+
 /* =============================================================================
    CONTENT AREA
    ============================================================================= */
@@ -1012,12 +1013,21 @@ nui-app[data-layout="app"] nui-app-footer {
 	height: var(--footer-height);
 	background: var(--color-shade3);
 	color: var(--color-text-muted);
-	padding: var(--nui-space-half) var(--nui-space);
+	padding-top: 0;
+	padding-bottom: 0;
+	padding-left: var(--nui-space);
+	padding-right: var(--nui-space);
 	border-top: solid var(--border-thickness) var(--border-shade2);
 	display: flex;
 	align-items: center;
 	z-index: 10;
 	box-sizing: border-box;
+}
+
+nui-app[data-layout="app"] nui-app-footer footer {
+	margin: 0;
+	padding: 0;
+	border: none;
 }
 
 nui-app[data-layout="app"].sidenav-closed nui-side-nav {
@@ -2413,6 +2423,7 @@ nui-accordion.nui-accordion-clean summary {
 nui-accordion.nui-accordion-clean .accordion-content {
 	padding-left: 0;
 	padding-right: 0;
+	background: transparent;
 }
 
 

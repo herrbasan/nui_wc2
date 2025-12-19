@@ -135,7 +135,6 @@ const navigationData = [
 			{ label: 'Storage', href: '#page=components/storage' },
 			{ label: 'Link List', href: '#page=components/link-list' },
 			{ label: 'Skip Links', href: '#page=components/skip-links' },
-			{ label: 'Code', href: '#page=components/code' },
 			{ label: 'Icon', href: '#page=components/icon' },
 			{ label: 'Button', href: '#page=components/button' },
 			{ label: 'Dialog', href: '#page=components/dialog' },
@@ -151,6 +150,7 @@ const navigationData = [
 		label: 'Addons',
 		icon: 'extension',
 		items: [
+			{ label: 'Code', href: '#page=addons/code' },
 			{ label: 'Menu', href: '#page=addons/menu' },
 			{ label: 'Animation', href: '#page=addons/animation' }
 		]

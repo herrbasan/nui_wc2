@@ -100,9 +100,10 @@
 	<h2>Visual Variants</h2>
 	<p>Accordions can be styled to fit different contexts.</p>
 	
+	<h3>Clean Variant</h3>
+	<p>Use the <code>nui-accordion-clean</code> class for a minimalist look without borders and backgrounds.</p>
 	<div class="demo-container">
-		<h3>Clean Variant (No Animation)</h3>
-		<nui-accordion class="nui-accordion-clean" no-animation>
+		<nui-accordion class="nui-accordion-clean">
 			<details>
 				<summary>Clean Style Item</summary>
 				<div class="accordion-content">
@@ -112,7 +113,26 @@
 			<details>
 				<summary>Another Clean Item</summary>
 				<div class="accordion-content">
-					<p>This example also demonstrates the default behavior <strong>without animation</strong>. The content snaps open instantly, which is the native browser behavior for <code>&lt;details&gt;</code> elements.</p>
+					<p>The clean variant maintains the same animated behavior as the default style, just with different visual treatment.</p>
+				</div>
+			</details>
+		</nui-accordion>
+	</div>
+	
+	<h3>No Animation</h3>
+	<p>Add the <code>no-animation</code> attribute to disable animations and use native browser behavior.</p>
+	<div class="demo-container">
+		<nui-accordion no-animation>
+			<details>
+				<summary>Instant Open</summary>
+				<div class="accordion-content">
+					<p>This accordion opens instantly without animation. The content snaps open immediately, which is the native browser behavior for <code>&lt;details&gt;</code> elements.</p>
+				</div>
+			</details>
+			<details>
+				<summary>Another Instant Item</summary>
+				<div class="accordion-content">
+					<p>No smooth transitions here—just instant expand and collapse. This can be useful for performance-critical situations or when you prefer the native behavior.</p>
 				</div>
 			</details>
 		</nui-accordion>

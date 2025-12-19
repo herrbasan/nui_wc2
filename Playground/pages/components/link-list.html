@@ -1,17 +1,18 @@
-<section>
+<header>
 	<h1>Link List Component</h1>
-	<p>
-		The <code>&lt;nui-link-list&gt;</code> component provides hierarchical navigation with multiple modes:
-		<strong>fold</strong> (accordion - one group open at a time) and <strong>tree</strong> (all groups can be open).
-	</p>
-	
+	<p>The <code>&lt;nui-link-list&gt;</code> component provides hierarchical navigation with multiple modes: <strong>fold</strong> (accordion - one group open at a time) and <strong>tree</strong> (all groups can be open).</p>
+</header>
+
+<section>
 	<h2>Usage Modes</h2>
 	<ul>
 		<li><strong>Fold Mode (Accordion):</strong> <code>&lt;nui-link-list mode="fold"&gt;</code> - Opening one group closes others</li>
 		<li><strong>Tree Mode:</strong> <code>&lt;nui-link-list mode="tree"&gt;</code> - All groups can be open simultaneously</li>
 	</ul>
+</section>
 
-    <h2>Live Demo: Fold Mode (Accordion)</h2>
+<section>
+	<h2>Live Demo: Fold Mode (Accordion)</h2>
 	<p>In fold mode, only one group can be open at a time. Opening a group automatically closes others:</p>
 	<div class="link_list_fold_container">
 		<nui-link-list id="demo-fold" mode="fold">
@@ -20,7 +21,8 @@
 	</div>
 	
 	<h3>Interactive Testing (Fold Mode)</h3>
-	<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1rem 0;">
+
+	<div class="demo-actions">
 		<nui-button data-action="set-active-fold:ESLint">
 			<button type="button">Set Active: ESLint</button>
 		</nui-button>
@@ -32,11 +34,14 @@
 		</nui-button>
 	</div>
 	
-	<div style="background: var(--nui-surface-2); padding: 1rem; border-radius: 0.5rem; margin-bottom: 2rem;">
-		<h4 style="margin-top: 0;">Fold Mode State:</h4>
-		<pre id="fold-state-display" style="margin: 0; font-family: monospace; font-size: 0.875rem;">No active item</pre>
+	<div class="demo-result">
+		<h4>Fold Mode State:</h4>
+		<pre id="fold-state-display">No active item</pre>
 	</div>
-	
+
+</section>
+
+<section>
 	<h2>Live Demo: Tree Mode (Masonry Layout)</h2>
 	<p>In tree mode, all groups can be open simultaneously. The masonry layout arranges groups in columns for efficient space usage:</p>
 	<div class="link_list_column_container">
@@ -240,11 +245,31 @@
 		</nui-link-list>
 	</div>
 
-	<div style="background: var(--nui-surface-2); padding: 1rem; border-radius: 0.5rem; margin: 1rem 0 2rem;">
-		<h4 style="margin-top: 0;">Last Clicked Path:</h4>
-		<pre id="tree-path-display" style="margin: 0; font-family: monospace; font-size: 0.875rem;">No item selected</pre>
+	<div class="demo-result">
+		<h4>Last Clicked Path:</h4>
+		<pre id="tree-path-display">No item selected</pre>
 	</div>
 	
+	<h3>Interactive Testing (Tree Mode)</h3>
+	<nui-button-container>
+		<nui-button data-action="set-active-tree:Subgroup Item 1">
+			<button type="button">Set Active: Sub Item</button>
+		</nui-button>
+		<nui-button data-action="get-active-tree">
+			<button type="button">Get Active State</button>
+		</nui-button>
+		<nui-button data-action="clear-active-tree">
+			<button type="button">Clear Active</button>
+		</nui-button>
+	</nui-button-container>
+	
+	<div class="demo-result">
+		<h4>Tree Mode State:</h4>
+		<pre id="tree-state-display">No active item</pre>
+	</div>
+</section>
+
+<section>
 	<h2>HTML Structure Example</h2>
 	<p>Basic structure with semantic HTML:</p>
 	<nui-code>
@@ -301,27 +326,9 @@
 const linkList = document.querySelector('nui-link-list');
 linkList.loadData(navigationData);</code></pre>
 	</nui-code>
-	
-	
-	
-	<h3>Interactive Testing (Tree Mode)</h3>
-	<nui-button-contaier>
-		<nui-button data-action="set-active-tree:Subgroup Item 1">
-			<button type="button">Set Active: Sub Item</button>
-		</nui-button>
-		<nui-button data-action="get-active-tree">
-			<button type="button">Get Active State</button>
-		</nui-button>
-		<nui-button data-action="clear-active-tree">
-			<button type="button">Clear Active</button>
-		</nui-button>
-	</nui-button-container>
-	
-	<div style="background: var(--nui-surface-2); padding: 1rem; border-radius: 0.5rem; margin-bottom: 2rem;">
-		<h4 style="margin-top: 0;">Tree Mode State:</h4>
-		<pre id="tree-state-display" style="margin: 0; font-family: monospace; font-size: 0.875rem;">No active item</pre>
-	</div>
-	
+</section>
+
+<section>
 	<h2>API Reference</h2>
 	<p>The link-list component provides methods for programmatic control:</p>
 	
@@ -347,21 +354,106 @@ linkList.clearActive();
 linkList.clearActive(true);</code></pre>
 	</nui-code>
 	
+	
 	<h3>Load from JSON</h3>
 	<nui-code>
 		<pre><code>// Generate navigation from data structure
 linkList.loadData(navigationData);</code></pre>
 	</nui-code>
-	
+</section>
+
+<section>
 	<h2>Complete Navigation Data Structure</h2>
 	<p>This is the data structure used in the live examples above:</p>
 	<details class="collapsible-section">
 		<summary>View Navigation Data Structure</summary>
 		<div>
-			<pre><code id="nav-structure-code">// Navigation data will be loaded here</code></pre>
+			<nui-code>
+				<pre><code data-lang="js">const demoNavigationData = [
+	{
+		label: 'Content & Windows',
+		icon: 'wysiwyg',
+		items: [
+			{ label: 'Content' },
+			{ label: 'Windows' }
+		]
+	},
+	{
+		label: 'Buttons & Fields',
+		icon: 'empty_dashboard',
+		items: [
+			{ label: 'Buttons' },
+			{ label: 'Fields' }
+		]
+	},
+	{
+		label: 'Group',
+		icon: 'folder',
+		items: [
+			{ label: 'Some Item' },
+			{ label: 'Another Item' },
+			{
+				label: 'Sub Group',
+				icon: 'calendar',
+				items: [
+					{ label: 'Subgroup Item 1' },
+					{ label: 'Subgroup Item 2' }
+				]
+			}
+		]
+	},
+	{
+		label: 'Functions & Objects',
+		icon: 'filter_list',
+		items: [
+			{ label: 'Function Item 1' },
+			{ label: 'Function Item 2' },
+			{ label: 'Function Item 3' },
+			{ separator: true },
+			{ label: 'Object Item 1' },
+			{ label: 'Object Item 2' }
+		]
+	},
+	{
+		label: 'Developer Tools',
+		icon: 'monitor',
+		items: [
+			{ label: 'Overview' },
+			{
+				label: 'Build Tools',
+				icon: 'settings',
+				items: [
+					{ label: 'Configuration' },
+					{ label: 'Scripts' },
+					{
+						label: 'Plugins',
+						icon: 'layers',
+						items: [
+							{ label: 'Babel' },
+							{ label: 'Webpack' },
+							{ label: 'ESLint' }
+						]
+					}
+				]
+			},
+			{
+				label: 'Testing',
+				icon: 'search',
+				items: [
+					{ label: 'Unit Tests' },
+					{ label: 'Integration Tests' },
+					{ label: 'E2E Tests' }
+				]
+			}
+		]
+	}
+];</code></pre>
+			</nui-code>
 		</div>
 	</details>
-	
+</section>
+
+<section>
 	<h2>Advanced Features</h2>
 	
 	<h3>Column Flow Layout</h3>
@@ -393,9 +485,10 @@ linkList.loadData(navigationData);</code></pre>
 	<nui-code>
 		<pre><code data-lang="html">&lt;li class="separator"&gt;&lt;hr&gt;&lt;/li&gt;</code></pre>
 	</nui-code>
-	
+</section>
+
+<section>
 	<h2>Accessibility</h2>
-	<p>The link-list component implements ARIA tree patterns:</p>
 	<ul>
 		<li><code>role="tree"</code> on container</li>
 		<li><code>role="group"</code> on collapsible sections</li>
@@ -403,7 +496,6 @@ linkList.loadData(navigationData);</code></pre>
 		<li>Arrow key navigation for keyboard users</li>
 		<li>Auto-expand on focus to prevent keyboard traps</li>
 	</ul>
-	
 </section>
 
 <script type="nui/page">
@@ -422,16 +514,6 @@ function init(element, params) {
 			label: 'Buttons & Fields',
 			icon: 'empty_dashboard',
 			items: [
-				{ label: 'Buttons' },
-				{ label: 'Fields' }
-			]
-		},
-		{
-			label: 'Group',
-			icon: 'folder',
-			items: [
-				{ label: 'Some Item' },
-				{ label: 'Another Item' },
 				{
 					label: 'Sub Group',
 					icon: 'calendar',
@@ -503,6 +585,11 @@ function init(element, params) {
 	const codeBlock = element.querySelector('#nav-structure-code');
 	if (codeBlock) {
 		codeBlock.textContent = JSON.stringify(demoNavigationData, null, 2);
+		// Trigger syntax highlighting after content update
+		const nuiCode = codeBlock.closest('nui-code');
+		if (nuiCode && nuiCode.highlight) {
+			nuiCode.highlight();
+		}
 	}
 	
 	// Setup interactive testing

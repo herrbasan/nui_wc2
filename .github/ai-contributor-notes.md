@@ -1070,3 +1070,47 @@ The component encodes a proven pattern covering ~80% of content layout needs. Fo
 - `nui-column-flow`: Still works but marked deprecated. Use `<nui-layout type="flow">` instead.
 
 **Last Updated:** December 17, 2025
+---
+
+## #4Mx7P1 - December 19, 2025
+**Playground Demo Cleanup & Consolidation**
+
+Systematic cleanup of Playground demo pages to establish consistent patterns and remove deprecated code.
+
+### Demo Structure Consolidation
+- **Created `Playground/DEMO_STRUCTURE.md`**: Reference guide documenting standard demo container classes (`.demo-area`, `.demo-result`, `.demo-chrome`, `.demo-callout`)
+- **Established pattern**: Single-column readability by default, multi-column (`<nui-layout>`) only for many small elements
+- **Removed `.state-display` class**: Consolidated with `.demo-result` (both serve same purpose - displaying output/state)
+- **Added `<pre>` tags**: All result containers now use `<pre>` for consistent formatting across pages
+
+### Files Cleaned
+- **storage.html**: Added `<pre>` to result displays, added TTL demo result output
+- **dialog.html**: Added `<pre>` to result container, fixed placement mode dialogs to use proper styling classes (`nui-dialog-alert`, `nui-headline`, `nui-copy`)
+- **code.html**: Removed Bash/Shell, SQL, and YAML examples (not core web languages), moved from components to addons folder
+- **accordion.html**: Split "Clean Variant" and "No Animation" into separate demos (each demonstrates one feature), fixed background color styling
+- **link-list.html**: Replaced `.state-display` with `.demo-result`
+
+### CSS Cleanup
+- **Removed unused styles**: Removed ~190 lines from `main.css` (`.highlight`, drag utility styles, animation page styles)
+- **Page-scoped CSS**: Added `.page-accordion .accordion-content` padding styling
+- **Theme CSS**: Updated `nui-accordion` to show background for default variant, `background: transparent` for clean variant
+
+### Navigation Updates
+- **Code component moved**: Updated `main.js` navigation to reflect `code.html` move from `components/` to `addons/` folder
+- **Proper categorization**: Code component is now listed under Addons section (matches its optional module status)
+
+### Bug Fixes
+- **storage.html script errors**: Fixed duplicate `case` statements causing "Identifier already declared" errors by wrapping cases with `const` declarations in blocks
+- **dialog placement examples**: Missing padding - added proper dialog styling structure to match system dialogs
+
+### Key Insights
+1. **Demo consistency matters**: LLMs and humans both benefit from predictable patterns across documentation
+2. **Result containers should use `<pre>`**: Consistent formatting, proper whitespace handling, matches code examples
+3. **Page-scoped CSS prevents conflicts**: `.page-{name}` pattern keeps styling isolated
+4. **State display is just result display**: No need for separate classes serving identical purposes
+5. **Component organization matters**: Addons should be in addons folder, not mixed with core components
+
+### Philosophy Validation
+The cleanup reinforces the "DOM as structure, CSS for presentation" principle. Inline styles were eliminated in favor of reusable classes, making demo pages serve as teaching examples for proper HTML/CSS architecture. The DEMO_STRUCTURE.md guide ensures future pages follow established patterns.
+
+**Last Updated:** December 19, 2025

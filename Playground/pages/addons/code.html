@@ -1,6 +1,5 @@
-<div class="page-code">
-	<header>
-		<h1>Code Component</h1>
+<header>
+	<h1>Code Component</h1>
 		<p class="lead">Lightweight syntax highlighting for documentation and code examples</p>
 	</header>
 	
@@ -287,78 +286,6 @@ processor = DataProcessor({'debug': True})
 data = processor.process(['valid1', 'invalid', 'valid2'])</code></pre>
 		</nui-code>
 		
-		<h3>Bash/Shell</h3>
-		<p>Shell scripting with variables and commands:</p>
-		<nui-code>
-			<pre><code>#!/bin/bash
-
-# Configuration
-APP_NAME="myapp"
-VERSION="1.0.0"
-BUILD_DIR="./build"
-
-# Functions
-function build() {
-	echo "Building ${APP_NAME} v${VERSION}..."
-	mkdir -p ${BUILD_DIR}
-	
-	if [ -d "src" ]; then
-		cp -r src/* ${BUILD_DIR}/
-		echo "Build complete!"
-	else
-		echo "Error: src directory not found" >&2
-		exit 1
-	fi
-}
-
-# Main
-for arg in "$@"; do
-	case $arg in
-		--clean)
-			rm -rf ${BUILD_DIR}
-			;;
-		--build)
-			build
-			;;
-		*)
-			echo "Unknown option: $arg"
-			;;
-	esac
-done</code></pre>
-		</nui-code>
-		
-		<h3>SQL</h3>
-		<p>Database queries with keywords and clauses:</p>
-		<nui-code>
-			<pre><code>-- User analytics query
-SELECT 
-	u.id,
-	u.name,
-	u.email,
-	COUNT(o.id) AS order_count,
-	SUM(o.total) AS total_spent
-FROM users u
-LEFT JOIN orders o ON u.id = o.user_id
-WHERE u.created_at >= '2024-01-01'
-	AND u.status = 'active'
-GROUP BY u.id, u.name, u.email
-HAVING COUNT(o.id) > 5
-ORDER BY total_spent DESC
-LIMIT 100;
-
-/* Create table */
-CREATE TABLE products (
-	id INT PRIMARY KEY,
-	name VARCHAR(255) NOT NULL,
-	price FLOAT,
-	created_at DATETIME DEFAULT NOW()
-);
-
--- Insert data
-INSERT INTO products (name, price) 
-VALUES ('Widget', 19.99), ('Gadget', 29.99);</code></pre>
-		</nui-code>
-		
 		<h3>Markdown</h3>
 		<p>Lightweight markup for documentation:</p>
 		<nui-code>
@@ -379,33 +306,6 @@ Here's a `code snippet` and a [link](https://example.com).
 ```javascript
 const greeting = 'Hello, World!';
 ```</code></pre>
-		</nui-code>
-		
-		<h3>YAML</h3>
-		<p>Configuration format with key-value pairs:</p>
-		<nui-code>
-			<pre><code># Application configuration
-app:
-  name: "My Application"
-  version: "1.0.0"
-  debug: true
-
-database:
-  host: "localhost"
-  port: 5432
-  name: "mydb"
-  credentials:
-    user: "admin"
-    password: "secret"
-
-features:
-  - authentication
-  - api
-  - caching
-
-server:
-  ssl: yes
-  timeout: null</code></pre>
 		</nui-code>
 		
 		<h3>PHP</h3>
@@ -683,4 +583,3 @@ return token;</code></pre>
 		<p><strong>Budget remaining:</strong> ~3.2KB within 10KB target</p>
 		<p><strong>Philosophy:</strong> Focused quality over broad support - the 5 core web languages done exceptionally well</p>
 	</section>
-</div>

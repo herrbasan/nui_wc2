@@ -28,7 +28,7 @@ btn.addEventListener('click', () => {
 	
 	<h3>Syntax</h3>
 	<p>Use the <code>data-action</code> attribute with the following format:</p>
-	<div style="padding: 1rem; background: var(--color-shade1); border-radius: var(--border-radius1); font-family: monospace; font-size: 1.2rem; margin-bottom: 1rem;">
+	<div class="demo-result syntax-display">
 		data-action="<span style="color: var(--color-highlight)">name</span>:<span style="color: var(--palette-mark)">param</span>@<span style="color: var(--palette-activate)">targetSelector</span>"
 	</div>
 	<ul>
@@ -71,8 +71,8 @@ btn.addEventListener('click', () => {
 &lt;/script&gt;</code></pre>
 	</nui-code>
 	
-	<div class="demo-area" style="padding: 1rem; border: 1px solid var(--border-shade1); border-radius: var(--border-radius1); margin-bottom: 1rem;">
-		<div id="demo-status-box" style="padding: 1rem; background: var(--color-shade2); margin-bottom: 1rem; transition: background 0.3s;">Waiting for action...</div>
+	<div class="demo-area">
+		<div id="demo-status-box" class="demo-result">Waiting for action...</div>
 		<nui-button data-action="demo-update@#demo-status-box">
 			<button type="button">Update Status Box</button>
 		</nui-button>
@@ -94,7 +94,7 @@ btn.addEventListener('click', () => {
 &lt;/script&gt;</code></pre>
 	</nui-code>
 	
-	<div class="demo-area" style="padding: 1rem; border: 1px solid var(--border-shade1); border-radius: var(--border-radius1); margin-bottom: 1rem;">
+	<div class="demo-area">
 		<p>Current Value: <strong id="demo-param-display">-</strong></p>
 		<nui-button-container>
 			<nui-button data-action="demo-select:Option A"><button type="button">Select A</button></nui-button>
@@ -124,10 +124,10 @@ btn.addEventListener('click', () => {
 	<h3>4. Component-Level Delegation</h3>
 	<p>The real power of this pattern is <strong>event delegation</strong>. Instead of attaching listeners to every button in a component, you attach <strong>one</strong> listener to the container to handle all actions within it.</p>
 	
-	<div id="task-card" style="padding: 1rem; border: 1px solid var(--border-shade1); border-radius: var(--border-radius1); max-width: 400px;">
-		<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-			<h4 style="margin: 0;">Task: Review Pull Request</h4>
-			<span id="task-status" style="font-size: 0.8rem; padding: 0.2rem 0.5rem; background: var(--color-shade2); border-radius: 4px;">Pending</span>
+	<div id="task-card" class="demo-area">
+		<div class="task-card-header">
+			<h4>Task: Review Pull Request</h4>
+			<span id="task-status" class="task-status-badge">Pending</span>
 		</div>
 		
 		<nui-button-container>
@@ -136,7 +136,7 @@ btn.addEventListener('click', () => {
 			<nui-button data-action="delete" variant="danger"><button type="button">Delete</button></nui-button>
 		</nui-button-container>
 		
-		<div id="task-log" style="margin-top: 1rem; font-size: 0.9rem; color: var(--text-color-dim); font-family: monospace;">Log: -</div>
+		<div id="task-log" class="task-log">Log: -</div>
 	</div>
 
 	<nui-code>
