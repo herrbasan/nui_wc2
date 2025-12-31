@@ -93,35 +93,31 @@ const cleanup = nui.util.enableDrag(element, (data) => {
 </section>
 
 <script type="nui/page">
-(function() {
-	// Demo 1: Basic
-	const slider1 = element.querySelector('#demo-slider-1 input');
-	const value1 = element.querySelector('#slider-value-1');
-	if (slider1 && value1) {
-		slider1.addEventListener('input', () => {
-			value1.textContent = slider1.value;
-		});
-	}
+	function init(element, params) {
+		function bindValueMirror(sliderSelector, outputSelector) {
+			const input = element.querySelector(sliderSelector);
+			const output = element.querySelector(outputSelector);
+			if (!input || !output) return;
 
-	// Demo 2: Custom range
-	const slider2 = element.querySelector('#demo-slider-2 input');
-	const value2 = element.querySelector('#slider-value-2');
-	if (slider2 && value2) {
-		slider2.addEventListener('input', () => {
-			value2.textContent = slider2.value;
-		});
-	}
+			output.textContent = input.value;
+			input.addEventListener('input', () => {
+				output.textContent = input.value;
+			});
+		}
 
-	// Demo 3: Events
-	const slider3 = element.querySelector('#demo-slider-3 input');
-	const events = element.querySelector('#slider-events');
-	if (slider3 && events) {
-		slider3.addEventListener('input', () => {
-			events.textContent = 'input: ' + slider3.value;
-		});
-		slider3.addEventListener('change', () => {
-			events.textContent = 'change (final): ' + slider3.value;
-		});
+		bindValueMirror('#demo-slider-1 input', '#slider-value-1');
+		bindValueMirror('#demo-slider-2 input', '#slider-value-2');
+
+		const slider3 = element.querySelector('#demo-slider-3 input');
+		const events = element.querySelector('#slider-events');
+		if (slider3 && events) {
+			events.textContent = 'Drag the slider...';
+			slider3.addEventListener('input', () => {
+				events.textContent = 'input: ' + slider3.value;
+			});
+			slider3.addEventListener('change', () => {
+				events.textContent = 'change (final): ' + slider3.value;
+			});
+		}
 	}
-})();
 </script>

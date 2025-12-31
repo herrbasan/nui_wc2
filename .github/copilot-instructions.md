@@ -414,13 +414,15 @@ Components use structured attributes for declarative configuration:
 <nui-modal nui-state-open="true">
 ```
 
-**Event Handling (`nui-event-*`):**
+**Declarative Actions (`data-action`):**
 ```html
-<button nui-event-click="toggle-theme">Dark/Light</button>
-<button nui-event-click="toggle@nui-side-nav">Menu</button>
+<button data-action="toggle-theme">Dark/Light</button>
+<button data-action="open@#my-dialog">Open</button>
 ```
-- Optional convenience layer - NOT the primary pattern
-- Direct JavaScript using platform APIs remains the recommended approach
+- Current, supported convenience layer (CSP-safe event delegation)
+- Prefer direct JavaScript when it’s clearer
+
+**Deprecated / removed:** `nui-event-*` (historical; not part of the current runtime)
 
 **Other Namespaces:**
 - `nui-url-*`: Resource references and API endpoints

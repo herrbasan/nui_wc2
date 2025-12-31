@@ -6,20 +6,18 @@
 <section>
 	<h2>Features</h2>
 	<ul>
-		<li><strong>Automatic Detection</strong> - Auto-generates links for common NUI app structure (top-nav, side-nav, main content)</li>
+		<li><strong>Automatic Detection</strong> - Auto-generates a “Skip to main content” link when a <code>&lt;main&gt;</code> exists</li>
 		<li><strong>Declarative HTML</strong> - Define custom skip links with simple anchor tags</li>
 		<li><strong>Keyboard Friendly</strong> - Links are hidden until focused via Tab key</li>
 		<li><strong>Smart Focus Management</strong> - Automatically adds tabindex="-1" to targets for proper focus handling</li>
-		<li><strong>Smooth Scrolling</strong> - Animated scroll to target section</li>
+		<li><strong>Direct Focus</strong> - Activating a skip link moves focus to the target (no scrolling animation)</li>
 	</ul>
 </section>
 
 <section>
 	<h2>Automatic Mode (Recommended)</h2>
-	<p>Simply add <code>&lt;nui-skip-links&gt;&lt;/nui-skip-links&gt;</code> to your app and it will automatically detect and create skip links for:</p>
+	<p>Simply add <code>&lt;nui-skip-links&gt;&lt;/nui-skip-links&gt;</code> to your app and it will automatically detect and create a skip link for:</p>
 	<ul>
-		<li><code>nui-top-nav</code> - Skip to navigation</li>
-		<li><code>nui-side-nav</code> - Skip to sidebar</li>
 		<li><code>main</code> - Skip to main content</li>
 	</ul>
 
@@ -139,16 +137,6 @@
 				</tr>
 			</thead>
 			<tbody>
-				<tr>
-					<td><code>nui-top-nav</code></td>
-					<td>"Skip to navigation"</td>
-					<td>If present in nui-app</td>
-				</tr>
-				<tr>
-					<td><code>nui-side-nav</code></td>
-					<td>"Skip to sidebar"</td>
-					<td>If present in nui-app</td>
-				</tr>
 				<tr>
 					<td><code>main</code></td>
 					<td>"Skip to main content"</td>

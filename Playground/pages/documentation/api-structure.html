@@ -263,8 +263,8 @@ nui.components.dataTable = {
 					<td>Create SVG elements in the SVG namespace</td>
 				</tr>
 				<tr>
-					<td><code>cssAnimation(el, class, cb)</code></td>
-					<td>Run CSS animation class, callback on complete, return cancel function</td>
+					<td><code>enableDrag(element, handlers)</code></td>
+					<td>Pointer-based drag utility, returns a cleanup function</td>
 				</tr>
 				<tr>
 					<td><code>storage</code></td>
@@ -293,20 +293,23 @@ nui.util.createElement('div', {
 });</code></pre>
 	</nui-code>
 
-	<h3>cssAnimation</h3>
-	<p>Run CSS animations with completion callbacks:</p>
+	<h3>enableDrag</h3>
+	<p>Pointer-based drag support with a cleanup function:</p>
 	<nui-code>
-		<pre><code data-lang="javascript">// Run animation, get cancel function
-const cancel = nui.util.cssAnimation(element, 'fade-in', () => {
-    console.log('Animation complete');
+		<pre><code data-lang="javascript">// Enable drag, get cleanup function
+const cleanup = nui.util.enableDrag(element, (d) => {
+	// d.type: 'start' | 'move' | 'end'
+	// d.x / d.y: relative to element
+	// d.percentX / d.percentY: 0..1
+	console.log(d.type, d.percentX, d.percentY);
 });
 
-// Cancel if needed
-cancel();</code></pre>
+// Later, remove listeners
+cleanup();</code></pre>
 	</nui-code>
 
 	<h3>storage</h3>
-	<p>See the <a href="#page=features/storage">Storage documentation</a> for full details.</p>
+	<p>See the <a href="#page=components/storage">Storage documentation</a> for full details.</p>
 	<nui-code>
 		<pre><code data-lang="javascript">// Set value
 nui.util.storage.set({ name: 'theme', value: 'dark', ttl: '30d' });
@@ -319,17 +322,16 @@ nui.util.storage.remove({ name: 'theme' });</code></pre>
 	</nui-code>
 
 	<h3>Extending with Addons</h3>
-	<p>Addon utilities register themselves under <code>nui.util</code>:</p>
+	<p>Addons can attach APIs under <code>nui.components</code> or <code>nui.util</code>, and can also add root functions when that fits (for example, the animation addon adds <code>nui.animate</code> and <code>Element.prototype.ani</code>).</p>
 	<nui-code>
-		<pre><code data-lang="javascript">// In nui-animation.js addon
-nui.util.animation = {
-    fadeIn(element, duration) { ... },
-    fadeOut(element, duration) { ... }
+		<pre><code data-lang="javascript">// Example: attach an addon utility
+nui.util.myAddon = {
+	formatBytes(n) { ... }
 };
 
-// In nui-syntax-highlight.js addon
-nui.util.syntaxHighlight = {
-    highlight(element, language) { ... }
+// Example: attach an addon component factory
+nui.components.myWidget = {
+	create(options) { ... }
 };</code></pre>
 	</nui-code>
 </section>
@@ -340,11 +342,11 @@ nui.util.syntaxHighlight = {
 	<nui-code>
 		<pre><code data-lang="javascript">// See all component factories
 console.log(Object.keys(nui.components));
-// → ['dialog', 'banner', 'linkList']
+// → ['dialog', 'banner', 'linkList', 'icon']
 
 // See all utilities
 console.log(Object.keys(nui.util));
-// → ['createElement', 'createSvgElement', 'cssAnimation', 'storage']
+// → ['createElement', 'createSvgElement', 'enableDrag', 'storage']
 
 // Destructure for convenience
 const { dialog, banner } = nui.components;
