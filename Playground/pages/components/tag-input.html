@@ -1,0 +1,319 @@
+<header>
+	<h1>Tag Input</h1>
+	<p>A reusable tag management component for lists of removable items. Used standalone or composed by multi-select components.</p>
+</header>
+
+<section>
+	<h2>Pre-populated Tags</h2>
+	<p>Initialize with tags using hidden inputs. These will be parsed on component upgrade.</p>
+
+	<nui-code>
+		<pre><code data-lang="html">&lt;nui-tag-input name="filters"&gt;
+  &lt;input type="hidden" name="filters" value="active"&gt;
+  &lt;input type="hidden" name="filters" value="published"&gt;
+&lt;/nui-tag-input&gt;</code></pre>
+	</nui-code>
+
+	<div class="demo-area">
+		<nui-tag-input name="filters" data-demo="prepopulated">
+			<input type="hidden" name="filters" value="active">
+			<input type="hidden" name="filters" value="published">
+			<input type="hidden" name="filters" value="featured">
+			<input type="hidden" name="filters" value="This Tag is way too long so it needs to be cutoff">
+		</nui-tag-input>
+		<div class="demo-result">
+			<pre data-output="prepopulated">Tags: active, published, featured</pre>
+		</div>
+	</div>
+
+	<div class="demo-callout">
+		<strong>Keyboard:</strong>
+		<ul>
+			<li><kbd>←</kbd> / <kbd>→</kbd> — Move between tags</li>
+			<li><kbd>Enter</kbd> / <kbd>Space</kbd> on tag — Remove tag</li>
+			<li><kbd>Home</kbd> — Jump to first tag</li>
+			<li><kbd>End</kbd> — Jump to last tag (or input if editable)</li>
+			<li><kbd>Escape</kbd> — Clear focus</li>
+		</ul>
+	</div>
+</section>
+
+<section>
+	<h2>Basic Usage</h2>
+	<p>Tags are managed programmatically via the component's API. Hidden inputs provide form compatibility.</p>
+
+	<nui-code>
+		<pre><code data-lang="html">&lt;nui-tag-input name="keywords"&gt;&lt;/nui-tag-input&gt;
+
+&lt;script&gt;
+const tagInput = document.querySelector('nui-tag-input');
+tagInput.addTag('javascript');
+tagInput.addTag('typescript');
+&lt;/script&gt;</code></pre>
+	</nui-code>
+
+	<div class="demo-area">
+		<nui-tag-input name="demo-tags" data-demo="basic"></nui-tag-input>
+		<div class="demo-result">
+			<pre data-output="basic">Tags: (none)</pre>
+		</div>
+	</div>
+
+	<div class="demo-actions">
+		<nui-button><button type="button" data-action="tag-add:basic">Add "sample"</button></nui-button>
+		<nui-button><button type="button" data-action="tag-remove:basic">Remove last</button></nui-button>
+		<nui-button><button type="button" data-action="tag-clear:basic">Clear all</button></nui-button>
+	</div>
+</section>
+
+<section>
+	<h2>Editable Mode</h2>
+	<p>Add the <code>editable</code> attribute to allow users to type and add new tags.</p>
+
+	<nui-code>
+		<pre><code data-lang="html">&lt;nui-tag-input name="keywords" editable placeholder="Add keyword..."&gt;
+&lt;/nui-tag-input&gt;</code></pre>
+	</nui-code>
+
+	<div class="demo-area">
+		<nui-input-group>
+			<label>Keywords</label>
+			<nui-tag-input name="keywords" editable placeholder="Type and press Enter..." data-demo="editable"></nui-tag-input>
+		</nui-input-group>
+		<div class="demo-result">
+			<pre data-output="editable">Tags: (none)</pre>
+		</div>
+	</div>
+
+	<div class="demo-callout">
+		<strong>Additional keys in editable mode:</strong>
+		<ul>
+			<li><kbd>Enter</kbd> — Add tag from input</li>
+			<li><kbd>Backspace</kbd> on empty input — Focus last tag</li>
+			<li><kbd>←</kbd> at input start — Navigate to tags</li>
+		</ul>
+	</div>
+</section>
+
+<section>
+	<h2>API Methods</h2>
+	<p>Full programmatic control over tag management.</p>
+
+	<div class="demo-area">
+		<nui-tag-input name="api-demo" data-demo="api"></nui-tag-input>
+		<div class="demo-result">
+			<pre data-output="api">Ready for API calls</pre>
+		</div>
+	</div>
+
+	<div class="demo-actions">
+		<nui-button><button type="button" data-action="api-add:api">addTag('Lion')</button></nui-button>
+		<nui-button><button type="button" data-action="api-add2:api">addTag('Tiger', 'Tiger 🐯')</button></nui-button>
+		<nui-button><button type="button" data-action="api-remove:api">removeTag('Lion')</button></nui-button>
+		<nui-button><button type="button" data-action="api-has:api">hasTag('Tiger')</button></nui-button>
+		<nui-button><button type="button" data-action="api-list:api">listTags()</button></nui-button>
+		<nui-button><button type="button" data-action="api-values:api">getValues()</button></nui-button>
+		<nui-button><button type="button" data-action="api-clear:api">clear()</button></nui-button>
+	</div>
+</section>
+
+<section>
+	<h2>Events</h2>
+	<p>The component dispatches events when tags are added, removed, or the list changes.</p>
+
+	<nui-code>
+		<pre><code data-lang="javascript">tagInput.addEventListener('nui-tag-add', (e) => {
+  console.log('Added:', e.detail.value, e.detail.label);
+});
+
+tagInput.addEventListener('nui-tag-remove', (e) => {
+  console.log('Removed:', e.detail.value);
+});
+
+tagInput.addEventListener('nui-change', (e) => {
+  console.log('All values:', e.detail.values);
+});</code></pre>
+	</nui-code>
+
+	<div class="demo-area">
+		<nui-tag-input name="events" editable placeholder="Add tags to see events..." data-demo="events"></nui-tag-input>
+		<div class="demo-result">
+			<pre data-output="events">Events will appear here...</pre>
+		</div>
+	</div>
+</section>
+
+<section>
+	<h2>Form Submission</h2>
+	<p>Tags are stored as hidden inputs for native form submission. Each tag creates a hidden input with the component's <code>name</code> attribute.</p>
+
+	<div class="demo-area">
+		<form data-demo-form>
+			<nui-input-group>
+				<label>Tags for form</label>
+				<nui-tag-input name="form-tags" editable placeholder="Add tags..." data-demo="form">
+					<input type="hidden" name="form-tags" value="default">
+				</nui-tag-input>
+			</nui-input-group>
+			<div class="demo-actions">
+				<nui-button><button type="submit">Submit Form</button></nui-button>
+			</div>
+			<div class="demo-result">
+				<pre data-output="form">Submit to see form data...</pre>
+			</div>
+		</form>
+	</div>
+</section>
+
+<script type="nui/page">
+function init(element, params, nui) {
+	// Helper to get output element
+	function out(name) {
+		return element.querySelector(`[data-output="${name}"]`);
+	}
+
+	// Helper to get tag-input by demo name
+	function tagInput(name) {
+		return element.querySelector(`[data-demo="${name}"]`);
+	}
+
+	// Helper to update output with current tags
+	function showTags(name) {
+		const ti = tagInput(name);
+		if (!ti || !ti.listTags) return;
+		const tags = ti.listTags();
+		const output = out(name);
+		if (output) {
+			output.textContent = tags.length 
+				? `Tags: ${tags.map(t => t.label || t.value).join(', ')}`
+				: 'Tags: (none)';
+		}
+	}
+
+	// Basic demo actions
+	element.addEventListener('nui-action-tag-add', (e) => {
+		const ti = tagInput(e.detail.param);
+		if (ti && ti.addTag) {
+			ti.addTag('sample-' + Date.now().toString(36));
+			showTags(e.detail.param);
+		}
+	});
+
+	element.addEventListener('nui-action-tag-remove', (e) => {
+		const ti = tagInput(e.detail.param);
+		if (ti && ti.listTags && ti.removeTag) {
+			const tags = ti.listTags();
+			if (tags.length > 0) {
+				ti.removeTag(tags[tags.length - 1].value);
+				showTags(e.detail.param);
+			}
+		}
+	});
+
+	element.addEventListener('nui-action-tag-clear', (e) => {
+		const ti = tagInput(e.detail.param);
+		if (ti && ti.clear) {
+			ti.clear();
+			showTags(e.detail.param);
+		}
+	});
+
+	// API demo actions
+	element.addEventListener('nui-action-api-add', (e) => {
+		const ti = tagInput('api');
+		if (ti && ti.addTag) {
+			const result = ti.addTag('Lion');
+			out('api').textContent = `addTag('Lion') → ${result}`;
+		}
+	});
+
+	element.addEventListener('nui-action-api-add2', (e) => {
+		const ti = tagInput('api');
+		if (ti && ti.addTag) {
+			const result = ti.addTag('Tiger', 'Tiger 🐯');
+			out('api').textContent = `addTag('Tiger', 'Tiger 🐯') → ${result}`;
+		}
+	});
+
+	element.addEventListener('nui-action-api-remove', (e) => {
+		const ti = tagInput('api');
+		if (ti && ti.removeTag) {
+			const result = ti.removeTag('Lion');
+			out('api').textContent = `removeTag('Lion') → ${result}`;
+		}
+	});
+
+	element.addEventListener('nui-action-api-has', (e) => {
+		const ti = tagInput('api');
+		if (ti && ti.hasTag) {
+			const result = ti.hasTag('Tiger');
+			out('api').textContent = `hasTag('Tiger') → ${result}`;
+		}
+	});
+
+	element.addEventListener('nui-action-api-list', (e) => {
+		const ti = tagInput('api');
+		if (ti && ti.listTags) {
+			const result = ti.listTags();
+			out('api').textContent = `listTags() → ${JSON.stringify(result, null, 2)}`;
+		}
+	});
+
+	element.addEventListener('nui-action-api-values', (e) => {
+		const ti = tagInput('api');
+		if (ti && ti.getValues) {
+			const result = ti.getValues();
+			out('api').textContent = `getValues() → ${JSON.stringify(result)}`;
+		}
+	});
+
+	element.addEventListener('nui-action-api-clear', (e) => {
+		const ti = tagInput('api');
+		if (ti && ti.clear) {
+			ti.clear();
+			out('api').textContent = `clear() → done`;
+		}
+	});
+
+	// Events demo - listen to tag events
+	const eventsInput = tagInput('events');
+	if (eventsInput) {
+		const eventsLog = [];
+		
+		eventsInput.addEventListener('nui-tag-add', (e) => {
+			eventsLog.unshift(`+ Added: "${e.detail.label || e.detail.value}"`);
+			out('events').textContent = eventsLog.slice(0, 5).join('\n');
+		});
+
+		eventsInput.addEventListener('nui-tag-remove', (e) => {
+			eventsLog.unshift(`- Removed: "${e.detail.label || e.detail.value}"`);
+			out('events').textContent = eventsLog.slice(0, 5).join('\n');
+		});
+	}
+
+	// Form submission demo
+	const form = element.querySelector('[data-demo-form]');
+	if (form) {
+		form.addEventListener('submit', (e) => {
+			e.preventDefault();
+			const formData = new FormData(form);
+			const entries = [...formData.entries()];
+			out('form').textContent = `Form data:\n${entries.map(([k, v]) => `  ${k}: ${v}`).join('\n') || '  (empty)'}`;
+		});
+	}
+
+	// Editable demo - update output on change
+	const editableInput = tagInput('editable');
+	if (editableInput) {
+		editableInput.addEventListener('nui-change', () => {
+			showTags('editable');
+		});
+	}
+
+	// Initial display for prepopulated
+	// (wait for component to upgrade)
+	requestAnimationFrame(() => {
+		showTags('prepopulated');
+	});
+}
+</script>

@@ -13,9 +13,9 @@
 	--nui-space-triple: calc(var(--nui-space) * 3);
 	--nui-space-quadruple: calc(var(--nui-space) * 4);
 
-	--space-scrollbar-width: 0.7rem;
+	--space-scrollbar-width: 0.3rem;
 	--space-page-maxwidth: 56rem;
-
+	--nui-form-row-height: 2.2rem;
 	--icon-size: 1.2rem;
 	--text-color: light-dark(rgb(30, 30, 30), rgb(230, 230, 230));
 	--text-color-dim: light-dark(rgb(90, 90, 90), rgb(180, 180, 180));
@@ -36,7 +36,8 @@
 
 /* ################################# UTILITY CLASSES */
 
-.nui-hidden {
+.nui-hidden,
+[hidden] {
 	display: none !important;
 }
 
@@ -210,7 +211,6 @@ main:focus {
 	outline: none;
 }
 
-
 footer {
 	font-size: 0.9rem;
 	color: var(--color-text-muted);
@@ -323,6 +323,10 @@ nui-link-list ul li.group-header button.group-toggle {
 	cursor: pointer;
 	font: inherit;
 	text-align: left;
+}
+nui-link-list ul li a span,
+nui-link-list ul li.group-header button.group-toggle span {
+	line-height: 1;
 }
 
 /* Override base button styles for group-toggle */
@@ -811,18 +815,24 @@ nui-icon {
 	justify-content: center;
 	width: var(--icon-size);
 	height: var(--icon-size);
-	color: currentColor;
+	color: var(--color-text);
 	flex-shrink: 0;
+	vertical-align: middle;
+	position: relative;
 }
 
 /* Icon in text flow - optically align with baseline when followed by text */
-nui-icon:has(+ span),
-nui-icon:has(+ p),
-nui-icon:has(+ a) {
+p > nui-icon,
+span > nui-icon,
+a >nui-icon {
 	vertical-align: middle;
 	position: relative;
 	top: -0.1rem;
+	margin-left: 0.1rem;
+	margin-right: 0.1rem;
 }
+
+
 
 /* Placeholder text shown in plain HTML mode (removed by JavaScript) */
 nui-icon:empty::before {
@@ -1372,6 +1382,35 @@ nui-banner:not([placement])>.nui-banner-progress {
 	}
 }
 
+/* =============================================================================
+   WARNING ELEMENT (Simple inline notice)
+   ========================================================================== */
+
+nui-warning {
+	display: block;
+	padding: var(--nui-space);
+	margin: var(--nui-space) 0;
+	border-radius: var(--border-radius2);
+	border-left: 4px solid;
+	background: var(--color-shade1);
+	color: var(--text-color);
+}
+
+nui-warning[level="1"] {
+	border-color: var(--palette-alert);
+	background: light-dark(rgb(255, 240, 240), rgb(60, 30, 30));
+}
+
+nui-warning[level="2"] {
+	border-color: var(--palette-mark);
+	background: light-dark(rgb(255, 250, 230), rgb(60, 55, 30));
+}
+
+nui-warning[level="3"] {
+	border-color: var(--palette-activate);
+	background: light-dark(rgb(240, 255, 240), rgb(30, 60, 30));
+}
+
 /* Banner slide animations */
 .ani-slide-in-top {
 	animation: ani-slide-in-top 0.3s forwards ease-out;
@@ -1826,59 +1865,105 @@ nui-input-group.is-disabled {
 }
 
 /* =============================================================================
+   NUI-FORM-ROW - Horizontal Row with Uniform Height
+   Use for placing inputs, selects, and buttons side by side at matching height.
+   ============================================================================= */
+
+nui-form-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--nui-space);
+	align-items: stretch;
+}
+
+nui-form-row > * {
+	min-height: var(--nui-form-row-height);
+	box-sizing: border-box;
+}
+
+/* Direct children that are form controls get exact height */
+nui-form-row > input,
+nui-form-row > select,
+nui-form-row > button,
+nui-form-row > nui-button > button,
+nui-form-row > nui-input,
+nui-form-row > nui-tag-input,
+nui-form-row > nui-select {
+	height: var(--nui-form-row-height);
+	width: auto;
+}
+
+/* Buttons inside nui-button wrapper */
+nui-form-row > nui-button {
+	display: contents;
+}
+
+/* =============================================================================
    NUI-INPUT - Text Input Component
    ============================================================================= */
 
 nui-input {
-	display: block;
+	display: flex;
+	align-items: center;
 	position: relative;
-}
-
-nui-input input:focus {
-	outline: none;
-	border: solid var(--border-thickness) var(--color-highlight);
-}
-
-nui-input input {
-	width: 100%;
-	min-height: calc(var(--nui-space) * 2.5);
-	padding: 0 var(--nui-space);
+	height: var(--nui-form-row-height);
 	background: light-dark(var(--color-white), var(--color-shade3));
 	border: solid var(--border-thickness) transparent;
 	border-bottom: solid var(--border-thickness) var(--color-shade4);
-	color: var(--color-text-dim);
+	box-sizing: border-box;
+	transition: background-color 0.15s, border-color 0.15s;
+}
+
+nui-input:hover:not(:has(input:disabled)) {
+	background: var(--color-shade1);
+	border-color: var(--color-shade5);
+}
+
+nui-input:has(input:focus-visible) {
+	background: var(--color-shade1);
+	border-color: var(--color-highlight);
+}
+
+nui-input:has(input:disabled) {
+	background: var(--color-shade2);
+	cursor: not-allowed;
+}
+
+nui-input:has(input:read-only) {
+	background: var(--color-shade2);
+}
+
+nui-input input[type] {
+	flex: 1;
+	width: 100%;
+	height: 100%;
+	padding: 0 var(--nui-space-half);
+	background: transparent;
+	border: none;
+	color: var(--color-text);
 	font-family: var(--system-ui);
 	font-size: 1rem;
 	line-height: 1.5;
 	outline: none;
-	transition: background-color 0.15s, border-color 0.15s, color 0.15s;
 	box-sizing: border-box;
 	margin: 0;
+}
+
+nui-input input[type]:focus,
+nui-input input[type]:hover,
+nui-input input[type]:focus-visible {
+	outline: none;
+	border: none;
+	background-color: none;
 }
 
 nui-input input::placeholder {
 	color: var(--color-shade5);
 }
 
-nui-input input:hover:not(:disabled) {
-	background: var(--color-shade1);
-	border-color: var(--color-shade5);
-}
-
-nui-input input:focus {
-	background: var(--color-shade1);
-	border-color: var(--color-shade6);
-	color: var(--color-text);
-}
-
 nui-input input:disabled {
-	background: var(--color-shade2);
 	color: var(--color-shade4);
 	cursor: not-allowed;
-}
-
-nui-input input:read-only {
-	background: var(--color-shade2);
 }
 
 /* Validation states */
@@ -1935,21 +2020,291 @@ nui-input[clearable] input {
 	padding-right: calc(var(--nui-space) + 2rem);
 }
 
-/* Hide clear button when disabled */
-nui-input:has(input:disabled) .nui-clear-btn {
-	display: none;
-}
+/* =============================================================================
+   NUI-SELECT - Enhanced Select Component
+   ============================================================================= */
 
-/* Error message inside input component */
-nui-input .nui-error-message {
-	display: none;
-	font-size: 0.85rem;
-	color: var(--palette-alert);
-	margin-top: var(--nui-space-quarter);
-}
-
-nui-input.is-invalid .nui-error-message {
+nui-select {
 	display: block;
+	position: relative;
+	width: 100%;
+	min-width: 10rem;
+	height: var(--nui-form-row-height);
+	box-sizing: border-box;
+}
+
+nui-select select {
+	position: absolute;
+	opacity: 0;
+	pointer-events: none;
+	width: 1px;
+	height: 1px;
+}
+
+.nui-select-control {
+	position: relative;
+	display: flex;
+	align-items: center;
+	width: 100%;
+	height: var(--nui-form-row-height);
+	padding: 0 var(--nui-space);
+	background: light-dark(var(--color-white), var(--color-shade3));
+	border: solid var(--border-thickness) var(--color-shade4);
+	border-bottom: solid var(--border-thickness) var(--color-shade4);
+	border-radius: var(--border-radius2);
+	filter: drop-shadow(0 0.05rem 0.2rem light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.4)));
+	color: var(--color-text);
+	font-family: var(--system-ui);
+	font-size: 1rem;
+	text-align: left;
+	cursor: pointer;
+	transition: background-color 0.15s, border-color 0.15s;
+	box-sizing: border-box;
+	overflow: hidden;
+}
+
+.nui-select-control:hover:not(:disabled) {
+	background: var(--color-shade4);
+	border-color: var(--color-shade5);
+}
+
+nui-select.is-open .nui-select-control {
+	background: var(--color-shade3);
+	border-color: var(--color-shade3);
+	border-radius: var(--border-radius2) var(--border-radius2) 0 0;
+	filter: drop-shadow(0 0 0.5rem light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.4)));
+	z-index: 1001;
+}
+
+nui-select.is-disabled .nui-select-control {
+	background: var(--color-shade2);
+	cursor: not-allowed;
+	opacity: 0.6;
+}
+
+/* Value Display */
+.nui-select-value {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	height: 100%;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	line-height: 1;
+}
+
+.nui-select-value.is-placeholder {
+	color: var(--color-shade5);
+}
+
+/* Multi-select Preview */
+.nui-select-preview {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	overflow: hidden;
+	position: relative;
+	height: 100%;
+}
+
+.nui-select-preview-tags {
+	display: flex;
+	gap: var(--nui-space-quarter);
+	white-space: nowrap;
+}
+
+.nui-select-preview-tags .nui-tag {
+	font-size: 0.8rem;
+	padding: 2px 8px;
+	background: var(--color-shade2);
+	border-radius: var(--border-radius1);
+	color: var(--color-text-dim);
+}
+
+.nui-select-preview-fade {
+	position: absolute;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	width: 2rem;
+	background: linear-gradient(to right, transparent, light-dark(var(--color-white), var(--color-shade3)));
+	pointer-events: none;
+}
+
+.nui-select-control:hover .nui-select-preview-fade {
+	background: linear-gradient(to right, transparent, var(--color-shade1));
+}
+
+.nui-select-count {
+	font-size: 0.8rem;
+	font-weight: bold;
+	color: var(--color-highlight);
+	margin: 0 var(--nui-space-half);
+}
+
+.nui-select-arrow {
+	width: 1.2rem;
+	height: 1.2rem;
+	margin-left: auto;
+	background-color: var(--color-shade5);
+	-webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+	mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+	-webkit-mask-repeat: no-repeat;
+	mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	mask-position: center;
+	transition: transform 0.2s;
+}
+
+nui-select.is-open .nui-select-arrow {
+	transform: rotate(180deg);
+}
+
+/* Popup */
+.nui-select-popup {
+	display: none;
+	position: absolute;
+	z-index: 1000;
+	top: calc(var(--nui-form-row-height) - 2px);
+	left: 0;
+	right: 0;
+	min-width: 320px;
+	background: light-dark(var(--color-white), var(--color-shade2));
+	border: solid var(--border-thickness) var(--color-shade3);
+	border-radius: 0 0 var(--border-radius2) var(--border-radius2);
+	box-shadow: var(--shadow-large);
+	margin-top: 2px;
+	flex-direction: column;
+	max-height: 400px;
+	overflow: hidden;
+	filter: drop-shadow(0 0 0.5rem light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.4)));
+}
+
+nui-select.is-open {
+	z-index: 1001;
+}
+
+nui-select.is-open .nui-select-popup {
+	display: flex;
+}
+
+nui-select.is-above .nui-select-popup {
+	bottom: 100%;
+	margin-top: 0;
+	margin-bottom: 2px;
+}
+
+/* Search */
+.nui-select-search {
+	border-bottom: solid var(--border-thickness) var(--color-shade4);
+	background: var(--color-shade1);
+}
+
+.nui-select-search nui-input {
+	background: light-dark(var(--color-white), var(--color-shade3));
+	border-radius: var(--border-radius1);
+	border: solid var(--border-thickness) var(--color-shade4);
+}
+
+.nui-select-search nui-input:has(input:focus-visible) {
+	border-color: var(--color-highlight);
+	box-shadow: 0 0 0 1px var(--color-highlight);
+}
+
+.nui-select-search input:focus-visible {
+	outline: none;
+	box-shadow: none;
+}
+
+/* Popup Tags (Multi-select) */
+.nui-select-popup-tags {
+	padding: var(--nui-space-half);
+	border-bottom: solid var(--border-thickness) var(--color-shade4);
+	max-height: 120px;
+	overflow-y: auto;
+}
+
+/* Options List */
+.nui-select-options {
+	flex: 1;
+	overflow-y: auto;
+	padding: var(--nui-space-quarter) 0;
+}
+
+.nui-select-option {
+	display: flex;
+	align-items: center;
+	padding: var(--nui-space-half) var(--nui-space);
+	cursor: pointer;
+	transition: background-color 0.1s;
+	color: var(--color-text-dim);
+}
+
+.nui-select-option:hover:not(.is-disabled) {
+	background: var(--color-shade1);
+	color: var(--color-text);
+}
+
+.nui-select-option.is-selected {
+	background: var(--color-highlight-dim);
+	color: var(--color-white);
+}
+
+.nui-select-option.is-disabled {
+	opacity: 0.4;
+	cursor: not-allowed;
+}
+
+.nui-select-option-check {
+	width: 1.2rem;
+	height: 1.2rem;
+	margin-right: var(--nui-space-half);
+	flex-shrink: 0;
+}
+
+.nui-select-option.is-selected .nui-select-option-check {
+	background-color: currentColor;
+	-webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+	mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+	-webkit-mask-repeat: no-repeat;
+	mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	mask-position: center;
+	-webkit-mask-size: 100%;
+	mask-size: 100%;
+}
+
+.nui-select-option-text {
+	flex: 1;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* Groups */
+.nui-select-group-label {
+	padding: var(--nui-space-half) var(--nui-space);
+	font-size: 0.75rem;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--color-shade5);
+	font-weight: bold;
+	background: var(--color-shade1);
+	pointer-events: none;
+	user-select: none;
+}
+
+.nui-select-no-results {
+	padding: var(--nui-space-double);
+	text-align: center;
+	color: var(--color-shade5);
+	font-style: italic;
+}
+
+/* Validation */
+nui-select.is-invalid .nui-select-control {
+	border-bottom-color: var(--palette-alert);
 }
 
 /* =============================================================================
@@ -2264,6 +2619,126 @@ nui-textarea textarea:-webkit-autofill:focus {
 	-webkit-box-shadow: 0 0 0 10rem var(--color-shade1) inset !important;
 	box-shadow: 0 0 0 10rem var(--color-shade1) inset !important;
 	-webkit-text-fill-color: var(--color-text) !important;
+}
+
+
+/* =============================================================================
+   NUI-TAG-INPUT COMPONENT
+   ============================================================================= */
+
+nui-tag-input {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	height: var(--nui-form-row-height);
+	gap: var(--nui-space-quarter);
+	padding: var(--nui-space-half);
+	background: var(--color-shade3);
+	border: 1px solid var(--color-shade3);
+	border-radius: var(--border-radius);
+}
+
+nui-tag-input:focus-within {
+	border-color: var(--color-accent);
+	outline: 2px solid var(--color-focus-ring);
+	outline-offset: 1px;
+}
+
+/* Tags container */
+.nui-tag-input-tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--nui-space-half);
+	border-radius: var(--border-radius1);
+}
+
+
+/* Individual tag */
+.nui-tag {
+	display: inline-flex;
+	align-items: center;
+	background: var(--color-shade2);
+	border-radius: var(--border-radius1);
+	padding-left: var(--nui-space-half);
+	font-size: 0.85rem;
+	height: 100%;
+	color: var(--color-text);
+}
+
+.nui-tag-text {
+	max-width: 12rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* Tag remove button */
+.nui-tag-remove {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	padding: 0;
+	margin: 0;
+	background: transparent;
+	border: none;
+	color: var(--color-text-muted);
+	font-size: 0.875rem;
+	line-height: 1;
+	cursor: pointer;
+	transition: background-color 0.1s, color 0.1s;
+}
+
+.nui-tag-remove:hover {
+	color: var(--color-text);
+	background: none
+}
+
+.nui-tag-remove:focus-visible {
+	outline: 2px solid var(--color-focus-ring);
+	outline-offset: 1px;
+}
+
+/* Tag focus/active state (keyboard navigation via aria-activedescendant) */
+.nui-tag.is-active {
+	background: var(--color-shade4);
+	outline: 2px solid var(--color-focus-ring);
+	outline-offset: 1px;
+}
+
+/* Text input for adding tags (editable mode) */
+.nui-tag-input-field {
+	flex: 1 1 8rem;
+	min-width: 4rem;
+	padding: 0.25rem;
+	background: transparent;
+	border: none;
+	outline: none;
+	font: inherit;
+	color: var(--color-text);
+}
+
+.nui-tag-input-field::placeholder {
+	color: var(--color-text-muted);
+}
+
+/* State classes */
+nui-tag-input.is-empty .nui-tag-input-tags {
+	display: none;
+}
+
+/* Read-only tags (used in select preview) */
+.nui-tag--readonly {
+	cursor: default;
+}
+
+.nui-tag--readonly .nui-tag-remove {
+	display: none;
+}
+
+/* Inside input-group */
+nui-input-group nui-tag-input {
+	width: 100%;
 }
 
 
@@ -2857,77 +3332,7 @@ input[type="time"] {
 	display: block;
 }
 
-input[type="text"]::placeholder,
-input[type="email"]::placeholder,
-input[type="password"]::placeholder,
-input[type="url"]::placeholder,
-input[type="tel"]::placeholder,
-input[type="search"]::placeholder,
-input[type="number"]::placeholder {
-	color: var(--color-shade5);
-}
 
-input[type="text"]:hover:not(:disabled),
-input[type="email"]:hover:not(:disabled),
-input[type="password"]:hover:not(:disabled),
-input[type="url"]:hover:not(:disabled),
-input[type="tel"]:hover:not(:disabled),
-input[type="search"]:hover:not(:disabled),
-input[type="number"]:hover:not(:disabled),
-input[type="date"]:hover:not(:disabled),
-input[type="datetime-local"]:hover:not(:disabled),
-input[type="month"]:hover:not(:disabled),
-input[type="week"]:hover:not(:disabled),
-input[type="time"]:hover:not(:disabled) {
-	background: var(--color-shade1);
-	border-color: var(--color-shade5);
-}
-
-input[type="text"]:focus,
-input[type="email"]:focus,
-input[type="password"]:focus,
-input[type="url"]:focus,
-input[type="tel"]:focus,
-input[type="search"]:focus,
-input[type="number"]:focus,
-input[type="date"]:focus,
-input[type="datetime-local"]:focus,
-input[type="month"]:focus,
-input[type="week"]:focus,
-input[type="time"]:focus {
-	outline: none;
-	border: solid var(--border-thickness) var(--color-highlight);
-	background: var(--color-shade1);
-	border-color: var(--color-shade6);
-	color: var(--color-text);
-}
-
-input[type="text"]:disabled,
-input[type="email"]:disabled,
-input[type="password"]:disabled,
-input[type="url"]:disabled,
-input[type="tel"]:disabled,
-input[type="search"]:disabled,
-input[type="number"]:disabled,
-input[type="date"]:disabled,
-input[type="datetime-local"]:disabled,
-input[type="month"]:disabled,
-input[type="week"]:disabled,
-input[type="time"]:disabled {
-	background: var(--color-shade2);
-	color: var(--color-shade4);
-	cursor: not-allowed;
-}
-
-input[type="text"]:read-only,
-input[type="email"]:read-only,
-input[type="password"]:read-only,
-input[type="url"]:read-only,
-input[type="tel"]:read-only,
-input[type="search"]:read-only,
-input[type="number"]:read-only {
-	background: var(--color-shade2);
-}
 
 
 /* =============================================================================
@@ -2968,13 +3373,6 @@ input[type="reset"]:hover,
 input[type="button"]:hover {
 	background-color: var(--color-highlight);
 	color: var(--color-white);
-}
-
-button:active,
-input[type="submit"]:active,
-input[type="reset"]:active,
-input[type="button"]:active {
-	transform: translateY(1px);
 }
 
 button:focus-visible,
@@ -3052,4 +3450,24 @@ nui-layout[banner] {
 nui-layout[banner] .maxwidth-container {
 	padding: var(--nui-space) var(--nui-space-double);
 	max-width: var(--space-page-maxwidth);
+}
+
+
+/* nui Scrollbar */
+/* ######################################################################################### */
+::-webkit-scrollbar {
+    width: var(--space-scrollbar-width);
+}
+
+::-webkit-scrollbar-track {
+	background: light-dark(var(--color-shade2), var(--color-shade3));
+}
+ 
+::-webkit-scrollbar-thumb {
+    background: light-dark(var(--color-shade3), var(--color-shade5));
+	min-height: 5rem;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: light-dark(var(--color-shade4), var(--color-shade6));  
 }

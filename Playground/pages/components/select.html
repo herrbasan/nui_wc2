@@ -1,0 +1,226 @@
+<header>
+	<h1>Select Component</h1>
+	<p>Enhanced select elements with search, multi-select, and accessible custom UI</p>
+</header>
+
+<section>
+    <nui-warning level="1">
+        This is early development. This doesn't work yet!
+    </nui-warning>
+</section>
+
+<section>
+	<h2>Overview</h2>
+	<p>The <code>&lt;nui-select&gt;</code> component enhances native <code>&lt;select&gt;</code> elements with a custom UI,
+		search capabilities, and multi-select tag management, while maintaining full accessibility and form
+		compatibility.</p>
+</section>
+
+<section>
+	<h2>Basic Single Select</h2>
+	<div class="demo-container">
+		<nui-input-group>
+			<label>Choose a Fruit</label>
+			<nui-select>
+				<select name="fruit">
+					<option value="">Select a fruit...</option>
+					<option value="apple">Apple</option>
+					<option value="banana">Banana</option>
+					<option value="cherry">Cherry</option>
+					<option value="date">Date</option>
+					<option value="stuff">Stuff</option>
+				</select>
+			</nui-select>
+		</nui-input-group>
+	</div>
+</section>
+
+<section>
+	<h2>Searchable Single Select</h2>
+	<div class="demo-container">
+		<nui-input-group>
+			<label>Country</label>
+			<nui-select searchable>
+				<select name="country">
+					<option value="">Select a country...</option>
+					<option value="no">Norway</option>
+					<option value="se">Sweden</option>
+					<option value="dk">Denmark</option>
+					<option value="fi">Finland</option>
+					<option value="is">Iceland</option>
+					<option value="de">Germany</option>
+					<option value="fr">France</option>
+					<option value="it">Italy</option>
+					<option value="es">Spain</option>
+					<option value="uk">United Kingdom</option>
+				</select>
+			</nui-select>
+		</nui-input-group>
+	</div>
+</section>
+
+<section>
+	<h2>Multi-select with Tags</h2>
+	<div class="demo-container">
+		<nui-input-group>
+			<label>Programming Languages</label>
+			<nui-select searchable>
+				<select name="languages" multiple>
+					<option value="js" selected>JavaScript</option>
+					<option value="ts" selected>TypeScript</option>
+					<option value="py">Python</option>
+					<option value="rb">Ruby</option>
+					<option value="go">Go</option>
+					<option value="rust">Rust</option>
+					<option value="java">Java</option>
+					<option value="cpp">C++</option>
+				</select>
+			</nui-select>
+		</nui-input-group>
+	</div>
+</section>
+
+<section>
+	<h2>Option Groups</h2>
+	<div class="demo-container">
+		<nui-input-group>
+			<label>Car Brand & Model</label>
+			<nui-select searchable>
+				<select name="vehicle">
+					<option value="">Select a car...</option>
+					<optgroup label="German">
+						<option value="audi-a3">Audi A3</option>
+						<option value="audi-a4">Audi A4</option>
+						<option value="audi-a6">Audi A6</option>
+						<option value="audi-q5">Audi Q5</option>
+						<option value="bmw-3">BMW 3 Series</option>
+						<option value="bmw-5">BMW 5 Series</option>
+						<option value="bmw-x3">BMW X3</option>
+						<option value="bmw-x5">BMW X5</option>
+						<option value="mercedes-c">Mercedes C-Class</option>
+						<option value="mercedes-e">Mercedes E-Class</option>
+						<option value="mercedes-glc">Mercedes GLC</option>
+						<option value="porsche-911">Porsche 911</option>
+						<option value="porsche-cayenne">Porsche Cayenne</option>
+					</optgroup>
+					<optgroup label="Japanese">
+						<option value="honda-civic">Honda Civic</option>
+						<option value="honda-accord">Honda Accord</option>
+						<option value="honda-crv">Honda CR-V</option>
+						<option value="mazda-3">Mazda 3</option>
+						<option value="mazda-cx5">Mazda CX-5</option>
+						<option value="nissan-altima">Nissan Altima</option>
+						<option value="nissan-rogue">Nissan Rogue</option>
+						<option value="toyota-camry">Toyota Camry</option>
+						<option value="toyota-corolla">Toyota Corolla</option>
+						<option value="toyota-rav4">Toyota RAV4</option>
+						<option value="toyota-highlander">Toyota Highlander</option>
+						<option value="subaru-outback">Subaru Outback</option>
+						<option value="subaru-forester">Subaru Forester</option>
+					</optgroup>
+					<optgroup label="American">
+						<option value="ford-f150">Ford F-150</option>
+						<option value="ford-mustang">Ford Mustang</option>
+						<option value="ford-explorer">Ford Explorer</option>
+						<option value="chevy-silverado">Chevrolet Silverado</option>
+						<option value="chevy-tahoe">Chevrolet Tahoe</option>
+						<option value="chevy-corvette">Chevrolet Corvette</option>
+						<option value="tesla-model3">Tesla Model 3</option>
+						<option value="tesla-modely">Tesla Model Y</option>
+						<option value="tesla-models">Tesla Model S</option>
+						<option value="dodge-ram">Dodge RAM</option>
+						<option value="jeep-wrangler">Jeep Wrangler</option>
+						<option value="jeep-grand">Jeep Grand Cherokee</option>
+					</optgroup>
+					<optgroup label="Korean">
+						<option value="hyundai-elantra">Hyundai Elantra</option>
+						<option value="hyundai-sonata">Hyundai Sonata</option>
+						<option value="hyundai-tucson">Hyundai Tucson</option>
+						<option value="kia-forte">Kia Forte</option>
+						<option value="kia-optima">Kia Optima</option>
+						<option value="kia-sportage">Kia Sportage</option>
+						<option value="genesis-g70">Genesis G70</option>
+						<option value="genesis-gv80">Genesis GV80</option>
+					</optgroup>
+				</select>
+			</nui-select>
+		</nui-input-group>
+	</div>
+</section>
+
+<section>
+	<h2>Disabled States</h2>
+	<div class="demo-container">
+		<div style="display: flex; flex-direction: column; gap: var(--nui-space-double);">
+			<nui-input-group>
+				<label>Disabled Select</label>
+				<nui-select>
+					<select name="disabled-select" disabled>
+						<option value="1">Option 1</option>
+						<option value="2">Option 2</option>
+					</select>
+				</nui-select>
+			</nui-input-group>
+
+			<nui-input-group>
+				<label>Disabled Options</label>
+				<nui-select>
+					<select name="disabled-options">
+						<option value="1">Available Option</option>
+						<option value="2" disabled>Disabled Option</option>
+						<option value="3">Another Available</option>
+					</select>
+				</nui-select>
+			</nui-input-group>
+		</div>
+	</div>
+</section>
+
+<section>
+	<h2>Validation (Required)</h2>
+	<div class="demo-container">
+		<form id="demo-form">
+			<nui-input-group>
+				<label>Required Selection</label>
+				<nui-select>
+					<select name="required-select" required>
+						<option value="">Please select...</option>
+						<option value="yes">Yes</option>
+						<option value="no">No</option>
+					</select>
+				</nui-select>
+				<div class="nui-error-message">This field is required</div>
+			</nui-input-group>
+			<nui-button>
+				<button type="submit">Submit Form</button>
+			</nui-button>
+		</form>
+	</div>
+</section>
+
+<section>
+	<h2>Keyboard Navigation</h2>
+	<ul>
+		<li><code>Enter</code> / <code>Space</code> / <code>ArrowDown</code>: Open popup</li>
+		<li><code>ArrowUp</code> / <code>ArrowDown</code>: Navigate options</li>
+		<li><code>Enter</code>: Select active option</li>
+		<li><code>Escape</code>: Close popup</li>
+		<li><code>Tab</code>: Close and move to next field</li>
+	</ul>
+</section>
+
+<script>
+    // Form validation demo
+    const form = document.getElementById("demo-form");
+    if (form) {
+        form.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const select = form.querySelector("nui-select");
+            if (select.validate()) {
+                alert("Form submitted successfully!");
+            } else {
+                alert("Please correct the errors in the form.");
+            }
+        });
+    }
+</script>

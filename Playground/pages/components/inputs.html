@@ -4,6 +4,49 @@
 </header>
 
 <section>
+	<h2>Form Row</h2>
+	<p>Use <code>&lt;nui-form-row&gt;</code> to place inputs, checkboxes, and buttons side by side at uniform height.</p>
+
+	<nui-code>
+		<pre><code data-lang="html">&lt;nui-form-row&gt;
+  &lt;nui-input&gt;&lt;input type="text" placeholder="Search..."&gt;&lt;/nui-input&gt;
+  &lt;nui-checkbox&gt;
+    &lt;input type="checkbox" name="exact"&gt;
+    &lt;label&gt;Exact match&lt;/label&gt;
+  &lt;/nui-checkbox&gt;
+  &lt;nui-button&gt;&lt;button type="button"&gt;Search&lt;/button&gt;&lt;/nui-button&gt;
+&lt;/nui-form-row&gt;</code></pre>
+	</nui-code>
+
+	<div class="demo-area">
+		<nui-form-row>
+			<nui-select>
+				<select name="fruit">
+					<option value="">Select a fruit...</option>
+					<option value="apple">Apple</option>
+					<option value="banana">Banana</option>
+					<option value="cherry">Cherry</option>
+					<option value="date">Date</option>
+				</select>
+			</nui-select>
+			
+			<nui-input>
+				<input type="text" placeholder="Search...">
+			</nui-input>
+			
+			<nui-button><button type="button">Search</button></nui-button>
+
+			<nui-checkbox>
+				<input type="checkbox" name="exact">
+				<label>Exact match</label>
+			</nui-checkbox>
+
+			
+		</nui-form-row>
+	</div>
+</section>
+
+<section>
 	<h2>Text Input</h2>
 	<p>Basic text input with the <code>&lt;nui-input&gt;</code> component. Works standalone or wrapped in <code>&lt;nui-input-group&gt;</code> for labels.</p>
 

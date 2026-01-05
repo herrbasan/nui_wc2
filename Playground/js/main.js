@@ -131,19 +131,47 @@ const navigationData = [
 		label: 'Components',
 		icon: 'empty_dashboard',
 		items: [
-			{ label: 'App Layout', href: '#page=components/app-layout' },
-			{ label: 'Storage', href: '#page=components/storage' },
-			{ label: 'Link List', href: '#page=components/link-list' },
-			{ label: 'Skip Links', href: '#page=components/skip-links' },
-			{ label: 'Icon', href: '#page=components/icon' },
-			{ label: 'Button', href: '#page=components/button' },
-			{ label: 'Dialog', href: '#page=components/dialog' },
-			{ label: 'Banner', href: '#page=components/banner' },
-			{ label: 'Tabs', href: '#page=components/tabs' },
-			{ label: 'Accordion', href: '#page=components/accordion' },
-			{ label: 'Inputs', href: '#page=components/inputs' },
-			{ label: 'Table', href: '#page=components/table' },
-			{ label: 'Slider', href: '#page=components/slider' }
+			{
+				label: 'Layout & Structure',
+				items: [
+					{ label: 'App Layout', href: '#page=components/app-layout' },
+					{ label: 'Layout', href: '#page=components/layout' },
+					{ label: 'Skip Links', href: '#page=components/skip-links' }
+				]
+			},
+			{
+				label: 'Forms & Inputs',
+				items: [
+					{ label: 'Button', href: '#page=components/button' },
+					{ label: 'Inputs', href: '#page=components/inputs' },
+					{ label: 'Tag Input', href: '#page=components/tag-input' },
+					{ label: 'Select', href: '#page=components/select' },
+					{ label: 'Slider', href: '#page=components/slider' }
+				]
+			},
+			{
+				label: 'Content & Display',
+				items: [
+					{ label: 'Tabs', href: '#page=components/tabs' },
+					{ label: 'Accordion', href: '#page=components/accordion' },
+					{ label: 'Table', href: '#page=components/table' },
+					{ label: 'Dialog', href: '#page=components/dialog' },
+					{ label: 'Banner', href: '#page=components/banner' }
+				]
+			},
+			{
+				label: 'Navigation',
+				items: [
+					{ label: 'Link List', href: '#page=components/link-list' }
+				]
+			},
+			{
+				label: 'Elements & Utilities',
+				items: [
+					{ label: 'Icon', href: '#page=components/icon' },
+					{ label: 'Storage', href: '#page=components/storage' }
+				]
+			}
 		]
 	},
 	{
@@ -160,7 +188,6 @@ const navigationData = [
 		icon: 'settings',
 		items: [
 			{ label: 'Dashboard', href: '#feature=dashboard' },
-			{ label: 'Layout', href: '#page=experiments/layout' },
 			{ label: 'HTML Standards', href: '#page=experiments/html-standards' },
 		]
 	}
