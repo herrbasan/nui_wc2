@@ -2001,6 +2001,9 @@ registerComponent('nui-tag-input', (element) => {
 // ################################# nui-select COMPONENT
 // Enhanced select with search and multi-select tag support
 
+// Track all open selects to ensure only one is open at a time
+const openSelects = new Set();
+
 registerComponent('nui-select', (element) => {
 	const select = element.el('select');
 	if (!select) return;
@@ -2162,7 +2165,16 @@ registerComponent('nui-select', (element) => {
 	// Open/close
 	const open = () => {
 		if (isOpen || select.disabled) return;
+		
+		// Close all other open selects
+		openSelects.forEach(otherSelect => {
+			if (otherSelect !== element && otherSelect.close) {
+				otherSelect.close();
+			}
+		});
+		
 		isOpen = true;
+		openSelects.add(element);
 		element.classList.add('is-open');
 		popup.hidden = false;
 		
@@ -2183,6 +2195,7 @@ registerComponent('nui-select', (element) => {
 	const close = () => {
 		if (!isOpen) return;
 		isOpen = false;
+		openSelects.delete(element);
 		element.classList.remove('is-open', 'is-above', 'is-below');
 		popup.hidden = true;
 		element.dispatchEvent(new CustomEvent('nui-close', { bubbles: true }));
@@ -2210,7 +2223,10 @@ registerComponent('nui-select', (element) => {
 	};
 	
 	// Cleanup function
-	return () => document.removeEventListener('click', onOutsideClick);
+	return () => {
+		openSelects.delete(element);
+		document.removeEventListener('click', onOutsideClick);
+	};
 });
 
 // ################################# BANNER FACTORY

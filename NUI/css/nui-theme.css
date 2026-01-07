@@ -13,7 +13,7 @@
 	--nui-space-triple: calc(var(--nui-space) * 3);
 	--nui-space-quadruple: calc(var(--nui-space) * 4);
 
-	--space-scrollbar-width: 0.3rem;
+	--space-scrollbar-width: 0.5rem;
 	--space-page-maxwidth: 56rem;
 	--nui-form-row-height: 2.2rem;
 	--icon-size: 1.2rem;
@@ -2050,7 +2050,7 @@ nui-select select {
 	padding: 0 var(--nui-space);
 	background: light-dark(var(--color-white), var(--color-shade3));
 	border: solid var(--border-thickness) var(--color-shade4);
-	border-bottom: solid var(--border-thickness) var(--color-shade4);
+	
 	border-radius: var(--border-radius2);
 	filter: drop-shadow(0 0.05rem 0.2rem light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.4)));
 	color: var(--color-text);
@@ -2064,20 +2064,38 @@ nui-select select {
 }
 
 .nui-select-control:hover:not(:disabled) {
-	background: var(--color-shade4);
-	border-color: var(--color-shade5);
+	background-color: var(--color-shade4);
+	
 }
 
 nui-select.is-open .nui-select-control {
-	background: var(--color-shade3);
-	border-color: var(--color-shade3);
+	background-color: var(--color-shade3);
 	border-radius: var(--border-radius2) var(--border-radius2) 0 0;
 	filter: drop-shadow(0 0 0.5rem light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.4)));
 	z-index: 1001;
+	border: solid var(--border-thickness) light-dark(var(--color-shade5), var(--color-shade4));
+	border-bottom: solid var(--border-thickness) light-dark(var(--color-shade4), var(--color-shade3));
+}
+
+nui-select.is-above.is-open .nui-select-control {
+	border-radius: 0 0 var(--border-radius2) var(--border-radius2);
+	border-bottom: solid var(--border-thickness) light-dark(var(--color-shade5), var(--color-shade4));
+	border-top: solid var(--border-thickness) light-dark(var(--color-shade4), var(--color-shade3));
+}
+
+
+nui-select.is-open .nui-select-control:hover {
+	border: solid var(--border-thickness) light-dark(var(--color-shade5), var(--color-shade4));
+	border-bottom: solid var(--border-thickness) light-dark(var(--color-shade4), var(--color-shade3));
+}
+
+nui-select.is-above.is-open .nui-select-control:hover {
+	border-bottom: solid var(--border-thickness) light-dark(var(--color-shade5), var(--color-shade4));
+	border-top: solid var(--border-thickness) light-dark(var(--color-shade4), var(--color-shade3));
 }
 
 nui-select.is-disabled .nui-select-control {
-	background: var(--color-shade2);
+	background-color: var(--color-shade2);
 	cursor: not-allowed;
 	opacity: 0.6;
 }
@@ -2108,18 +2126,28 @@ nui-select.is-disabled .nui-select-control {
 	height: 100%;
 }
 
+.is-open .nui-select-preview,
+.is-open .nui-select-count {
+	display: none;
+}
+
 .nui-select-preview-tags {
 	display: flex;
 	gap: var(--nui-space-quarter);
 	white-space: nowrap;
+	height: 100%;
+	padding-top: 0.3rem;
+	padding-bottom: 0.3rem;
+	box-sizing: border-box;
 }
 
 .nui-select-preview-tags .nui-tag {
-	font-size: 0.8rem;
-	padding: 2px 8px;
+	font-size: 0.7rem;
+	padding-left: var(--nui-space-half);
+	padding-right: var(--nui-space-half);
 	background: var(--color-shade2);
 	border-radius: var(--border-radius1);
-	color: var(--color-text-dim);
+	color: var(--color-text);
 }
 
 .nui-select-preview-fade {
@@ -2128,13 +2156,11 @@ nui-select.is-disabled .nui-select-control {
 	top: 0;
 	bottom: 0;
 	width: 2rem;
-	background: linear-gradient(to right, transparent, light-dark(var(--color-white), var(--color-shade3)));
+	/*background: linear-gradient(to right, transparent, light-dark(var(--color-white), var(--color-shade3)));*/
 	pointer-events: none;
 }
 
-.nui-select-control:hover .nui-select-preview-fade {
-	background: linear-gradient(to right, transparent, var(--color-shade1));
-}
+
 
 .nui-select-count {
 	font-size: 0.8rem;
@@ -2187,24 +2213,46 @@ nui-select.is-open {
 
 nui-select.is-open .nui-select-popup {
 	display: flex;
+	border: solid var(--border-thickness) light-dark(var(--color-shade5), var(--color-shade4));
 }
 
 nui-select.is-above .nui-select-popup {
+	top: auto;
 	bottom: 100%;
 	margin-top: 0;
 	margin-bottom: 2px;
+	border-radius: var(--border-radius2) var(--border-radius2) 0 0;
+	flex-direction: column-reverse;
+}
+
+/* Mobile: reverse order so options are at top, keyboard doesn't cover them */
+@media (max-width: 768px) {
+	.nui-select-popup {
+		flex-direction: column-reverse;
+	}
 }
 
 /* Search */
 .nui-select-search {
-	border-bottom: solid var(--border-thickness) var(--color-shade4);
-	background: var(--color-shade1);
+	border-bottom: solid var(--border-thickness) var(--color-shade3);
+	background: light-dark(var(--color-white), rgb(55, 55, 55));
 }
 
-.nui-select-search nui-input {
-	background: light-dark(var(--color-white), var(--color-shade3));
-	border-radius: var(--border-radius1);
-	border: solid var(--border-thickness) var(--color-shade4);
+/* When reversed, search should have top border instead of bottom */
+nui-select.is-above .nui-select-search {
+	border-bottom: none;
+	border-top: solid var(--border-thickness) var(--color-shade3);
+}
+
+@media (max-width: 400px) {
+	.nui-select-search {
+		border-bottom: none;
+		border-top: solid var(--border-thickness) var(--color-shade3);
+	}
+}
+
+.nui-select-popup .nui-select-search input {
+	background-color: transparent;
 }
 
 .nui-select-search nui-input:has(input:focus-visible) {
@@ -2218,18 +2266,44 @@ nui-select.is-above .nui-select-popup {
 }
 
 /* Popup Tags (Multi-select) */
-.nui-select-popup-tags {
-	padding: var(--nui-space-half);
-	border-bottom: solid var(--border-thickness) var(--color-shade4);
-	max-height: 120px;
-	overflow-y: auto;
+.nui-select-popup-tags * {
+	box-sizing: border-box;
 }
+
+.nui-select-popup-tags {
+	border-bottom: solid var(--border-thickness) var(--color-shade4);
+	background-color: var(--color-shade3);
+	max-height: 160px;
+	height: auto;
+	overflow-y: hidden;
+	overflow-x: hidden;
+	padding: 0.4rem;
+}
+
+.nui-select-popup-tags nui-tag-input{
+	margin: 0;
+	padding: 0;
+	height: 100%;
+}
+
+/* When reversed, tags should have top border instead of bottom */
+nui-select.is-above .nui-select-popup-tags {
+	border-bottom: none;
+	border-top: solid var(--border-thickness) var(--color-shade4);
+}
+
+@media (max-width: 768px) {
+	.nui-select-popup-tags {
+		border-bottom: none;
+		border-top: solid var(--border-thickness) var(--color-shade4);
+	}
+}
+
 
 /* Options List */
 .nui-select-options {
 	flex: 1;
 	overflow-y: auto;
-	padding: var(--nui-space-quarter) 0;
 }
 
 .nui-select-option {
@@ -2242,12 +2316,12 @@ nui-select.is-above .nui-select-popup {
 }
 
 .nui-select-option:hover:not(.is-disabled) {
-	background: var(--color-shade1);
+	background: var(--color-shade4);
 	color: var(--color-text);
 }
 
 .nui-select-option.is-selected {
-	background: var(--color-highlight-dim);
+	background: light-dark(var(--color-highlight-dim), rgb(50,50,50));
 	color: var(--color-white);
 }
 
@@ -2630,7 +2704,7 @@ nui-tag-input {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
-	height: var(--nui-form-row-height);
+	min-height: var(--nui-form-row-height);
 	gap: var(--nui-space-quarter);
 	padding: var(--nui-space-half);
 	background: var(--color-shade3);
@@ -3470,4 +3544,16 @@ nui-layout[banner] .maxwidth-container {
 
 ::-webkit-scrollbar-thumb:hover {
     background: light-dark(var(--color-shade4), var(--color-shade6));  
+}
+
+.visually-hidden {
+	position: absolute !important;
+	width: 1px !important;
+	height: 1px !important;
+	padding: 0 !important;
+	margin: -1px !important;
+	overflow: hidden !important;
+	clip: rect(0, 0, 0, 0) !important;
+	white-space: nowrap !important;
+	border: 0 !important;
 }
