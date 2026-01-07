@@ -2195,7 +2195,7 @@ nui-select.is-open .nui-select-arrow {
 	top: calc(var(--nui-form-row-height) - 2px);
 	left: 0;
 	right: 0;
-	min-width: 320px;
+	min-width: 10rem;
 	background: light-dark(var(--color-white), var(--color-shade2));
 	border: solid var(--border-thickness) var(--color-shade3);
 	border-radius: 0 0 var(--border-radius2) var(--border-radius2);

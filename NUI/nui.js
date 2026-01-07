@@ -2178,6 +2178,9 @@ registerComponent('nui-select', (element) => {
 		element.classList.add('is-open');
 		popup.hidden = false;
 		
+		// Reset scroll position
+		list.scrollTop = 0;
+		
 		// Position above/below
 		const rect = control.getBoundingClientRect();
 		const below = window.innerHeight - rect.bottom;
