@@ -113,6 +113,15 @@
 	}
 }
 
+/* Text box trim - toggle with Ctrl+Alt+T */
+:root[data-text-box-trim="true"] * {
+	text-box: trim-start !important;
+}
+
+:root[data-text-box-trim="true"] button {
+	text-box: trim-both !important;
+}
+
 .content-page:focus {
 	outline: none;
 }
@@ -192,7 +201,7 @@ body {
 	font-size: var(--nui-rem-base);
 	background: light-dark(var(--color-shade2), var(--color-shade1));
 	color: var(--text-color);
-	line-height: 1.6;
+	line-height: 2;
 }
 
 pre {
@@ -326,10 +335,6 @@ nui-link-list ul li.group-header button.group-toggle {
 	text-align: left;
 }
 
-nui-link-list ul li a span,
-nui-link-list ul li.group-header button.group-toggle span {
-	line-height: 1;
-}
 
 /* Override base button styles for group-toggle */
 nui-link-list ul li.group-header button.group-toggle {
@@ -1562,7 +1567,7 @@ nui-dialog dialog:not(:modal) {
 .nui-copy {
 	display: block;
 	margin-bottom: var(--nui-space-double);
-	line-height: 1.6;
+	line-height: 2;
 	color: var(--text-color);
 }
 
@@ -1914,6 +1919,7 @@ nui-input {
 	box-sizing: border-box;
 	filter: drop-shadow(0 0 0.15rem light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.2)));
 	transition: background-color 0.15s, border-color 0.15s, filter 0.3s;
+	border-radius: var(--border-radius1);
 }
 
 nui-input:hover:not(:has(input:disabled)) {
@@ -1950,7 +1956,7 @@ nui-input input[type] {
 	color: var(--color-text);
 	font-family: var(--system-ui);
 	font-size: inherit;
-	line-height: 1.5;
+	line-height: 2;
 	outline: none;
 	box-sizing: border-box;
 	margin: 0;
@@ -2122,7 +2128,7 @@ nui-select.is-disabled .nui-select-control {
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
-	line-height: 1;
+	line-height: 2;
 }
 
 .nui-select-value.is-placeholder {
@@ -2407,21 +2413,20 @@ nui-textarea {
 }
 
 nui-textarea textarea {
+	display: block;
 	width: 100%;
 	min-height: calc(calc(var(--nui-space) * 2.5) * 2);
 	padding: var(--nui-space);
-	background: var(--color-base);
-	border: solid var(--border-thickness) var(--color-shade4);
-	border-radius: var(--border-radius1);
 	color: var(--color-text-dim);
-	font-family: var(--system-ui);
-	font-size: 1rem;
-	line-height: 1.5;
-	outline: none;
-	transition: background-color 0.15s, border-color 0.15s, color 0.15s;
-	box-sizing: border-box;
+	font-family: inherit;
 	margin: 0;
 	resize: vertical;
+	background: light-dark(var(--color-white), rgb(45, 45, 45));
+	border: solid var(--border-thickness) var(--color-shade3);
+	box-sizing: border-box;
+	filter: drop-shadow(0 0 0.15rem light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.2)));
+	transition: background-color 0.15s, border-color 0.15s, filter 0.3s;
+	border-radius: var(--border-radius1);
 }
 
 nui-textarea textarea::placeholder {
@@ -2495,6 +2500,7 @@ nui-checkbox {
 	cursor: pointer;
 	position: relative;
 	min-height: 2rem;
+	margin-right: var(--nui-space);
 }
 
 /* Hide native checkbox visually but keep accessible */
@@ -2603,6 +2609,7 @@ nui-radio {
 	cursor: pointer;
 	position: relative;
 	min-height: 2rem;
+	margin-right: var(--nui-space);
 }
 
 /* Hide native radio visually but keep accessible */

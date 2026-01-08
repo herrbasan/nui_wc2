@@ -119,6 +119,27 @@ document.addEventListener('focusin', (e) => {
 	infoEl.textContent = formatAccessibleInfo(e.target);
 });
 
+// Text-box trim toggle (Ctrl+Alt+T)
+document.addEventListener('keydown', (e) => {
+	if (e.ctrlKey && e.altKey && e.key === 't') {
+		e.preventDefault();
+		const current = document.documentElement.getAttribute('data-text-box-trim') === 'true';
+		document.documentElement.setAttribute('data-text-box-trim', !current);
+		localStorage.setItem('nui-text-box-trim', !current);
+		console.log(`Text-box trim: ${!current ? 'ON' : 'OFF'}`);
+		
+		// Show banner notification
+		const message = !current ? 'Text-box trim enabled (CSS text-box: trim-both text)' : 'Text-box trim disabled';
+		nui.components.banner.show({ content: message, priority: 'info', duration: 2000 });
+	}
+});
+
+// Restore text-box trim preference (default: ON)
+const savedTrim = localStorage.getItem('nui-text-box-trim');
+if (savedTrim === null || savedTrim === 'true') {
+	document.documentElement.setAttribute('data-text-box-trim', 'true');
+}
+
 // Parse URL parameters
 const urlParams = new URLSearchParams(window.location.search);
 const skipInit = urlParams.has('skip-init');

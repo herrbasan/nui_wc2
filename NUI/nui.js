@@ -1685,8 +1685,30 @@ function setupInputBehavior(element, input, config = {}) {
 
 	const updateState = () => {
 		if (autoResize) {
-			input.style.height = 'auto';
-			input.style.height = input.scrollHeight + 'px';
+			// Get min/max rows from attributes
+			const minRows = parseInt(element.getAttribute('min-rows')) || 1;
+			const maxRows = parseInt(element.getAttribute('max-rows')) || 999;
+			
+			// Calculate line height
+			const style = getComputedStyle(input);
+			const lineHeight = parseInt(style.lineHeight) || parseInt(style.fontSize) * 1.5;
+			const padding = parseInt(style.paddingTop) + parseInt(style.paddingBottom);
+			const border = parseInt(style.borderTopWidth) + parseInt(style.borderBottomWidth);
+			
+			// Set min height based on min-rows
+			const minHeight = (lineHeight * minRows) + padding + border;
+			const maxHeight = (lineHeight * maxRows) + padding + border;
+			
+			// Reset and measure
+			input.style.height = minHeight + 'px';
+			const scrollHeight = input.scrollHeight;
+			
+			// Constrain to min/max
+			let newHeight = Math.max(minHeight, Math.min(scrollHeight, maxHeight));
+			input.style.height = newHeight + 'px';
+			
+			// Set overflow based on whether we hit max
+			input.style.overflowY = scrollHeight > maxHeight ? 'auto' : 'hidden';
 		}
 		if (showCount) {
 			const el = ensureEl('count', 'nui-char-count');
