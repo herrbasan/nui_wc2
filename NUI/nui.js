@@ -20,6 +20,11 @@ const builtinActionHandlers = {
 	'banner-close': (t, _, e, p) => {
 		if (t?.close) { e.stopPropagation(); t.close(p); return true; }
 		return false;
+	},
+	'scroll-to-top': (t, el) => {
+		const scrollable = (t !== el) ? t : el.closest('nui-main') || document.querySelector('nui-main');
+		if (scrollable) { scrollable.scrollTo({ top: 0, behavior: 'smooth' }); return true; }
+		return false;
 	}
 };
 

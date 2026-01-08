@@ -10,6 +10,115 @@ console.log('nui imported');
 // Development-only: Enable monitoring
 //const monitor = createMonitor(nui);
 
+// Accessibility info display - shows what screen readers would announce
+function getAccessibleName(el) {
+	if (!el) return '';
+	
+	// aria-labelledby takes precedence
+	const labelledBy = el.getAttribute('aria-labelledby');
+	if (labelledBy) {
+		const labels = labelledBy.split(/\s+/).map(id => document.getElementById(id)?.textContent?.trim()).filter(Boolean);
+		if (labels.length) return labels.join(' ');
+	}
+	
+	// aria-label
+	const ariaLabel = el.getAttribute('aria-label');
+	if (ariaLabel) return ariaLabel;
+	
+	// For inputs, check associated label
+	if (el.id) {
+		const label = document.querySelector(`label[for="${el.id}"]`);
+		if (label) return label.textContent?.trim();
+	}
+	
+	// title attribute
+	const title = el.getAttribute('title');
+	if (title) return title;
+	
+	// Text content for simple elements
+	const text = el.textContent?.trim();
+	if (text && text.length < 100) return text;
+	
+	return '';
+}
+
+function getAccessibleRole(el) {
+	if (!el) return '';
+	
+	// Explicit role
+	const role = el.getAttribute('role');
+	if (role) return role;
+	
+	// Implicit roles from HTML semantics
+	const tag = el.tagName.toLowerCase();
+	const implicitRoles = {
+		'button': 'button',
+		'a': el.hasAttribute('href') ? 'link' : '',
+		'input': el.type === 'checkbox' ? 'checkbox' : el.type === 'radio' ? 'radio' : 'textbox',
+		'select': 'combobox',
+		'textarea': 'textbox',
+		'img': 'img',
+		'nav': 'navigation',
+		'main': 'main',
+		'header': 'banner',
+		'footer': 'contentinfo',
+		'article': 'article',
+		'aside': 'complementary',
+		'ul': 'list',
+		'ol': 'list',
+		'li': 'listitem',
+		'table': 'table',
+		'h1': 'heading',
+		'h2': 'heading',
+		'h3': 'heading',
+		'h4': 'heading',
+		'h5': 'heading',
+		'h6': 'heading'
+	};
+	return implicitRoles[tag] || '';
+}
+
+function getAccessibleState(el) {
+	const states = [];
+	
+	if (el.getAttribute('aria-expanded') === 'true') states.push('expanded');
+	if (el.getAttribute('aria-expanded') === 'false') states.push('collapsed');
+	if (el.getAttribute('aria-selected') === 'true') states.push('selected');
+	if (el.getAttribute('aria-checked') === 'true') states.push('checked');
+	if (el.getAttribute('aria-checked') === 'false') states.push('not checked');
+	if (el.getAttribute('aria-pressed') === 'true') states.push('pressed');
+	if (el.getAttribute('aria-disabled') === 'true' || el.disabled) states.push('disabled');
+	if (el.getAttribute('aria-required') === 'true' || el.required) states.push('required');
+	if (el.getAttribute('aria-invalid') === 'true') states.push('invalid');
+	if (el.getAttribute('aria-current')) states.push(`current: ${el.getAttribute('aria-current')}`);
+	
+	const level = el.getAttribute('aria-level') || (el.tagName.match(/^H([1-6])$/)?.[1]);
+	if (level) states.push(`level ${level}`);
+	
+	return states.join(', ');
+}
+
+function formatAccessibleInfo(el) {
+	const role = getAccessibleRole(el);
+	const name = getAccessibleName(el);
+	const state = getAccessibleState(el);
+	const tag = el.tagName.toLowerCase();
+	
+	let announcement = '';
+	if (name) announcement += name;
+	if (role) announcement += announcement ? `, ${role}` : role;
+	if (state) announcement += announcement ? `, ${state}` : state;
+	
+	return announcement || `<${tag}>`;
+}
+
+document.addEventListener('focusin', (e) => {
+	const infoEl = document.querySelector('nui-app-footer #appFooterInfo');
+	if (!infoEl) return;
+	
+	infoEl.textContent = formatAccessibleInfo(e.target);
+});
+
 // Parse URL parameters
 const urlParams = new URLSearchParams(window.location.search);
 const skipInit = urlParams.has('skip-init');
