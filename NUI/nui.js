@@ -431,7 +431,11 @@ registerComponent('nui-app', (element) => {
 		if (!m) return cachedBreakpoint = 768;
 
 		const v = parseFloat(m[1]);
-		return cachedBreakpoint = (m[2] === 'rem' || m[2] === 'em') ? v * 16 : v;
+		if (m[2] === 'rem' || m[2] === 'em') {
+			const remBase = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+			return cachedBreakpoint = v * remBase;
+		}
+		return cachedBreakpoint = v;
 	}
 
 	function dispatchSideNavEvent(state) {
@@ -523,6 +527,7 @@ registerComponent('nui-app', (element) => {
 	updateLayoutClasses(element);
 
 	element.toggleSideNav = () => toggleSideNav(element);
+	element.invalidateBreakpointCache = () => { cachedBreakpoint = null; updateResponsiveState(element); };
 
 	element.addEventListener('click', (e) => {
 		if (element.classList.contains('sidenav-open') &&
@@ -1636,6 +1641,15 @@ function generateInputId(prefix = 'nui-input') {
 function setupInputBehavior(element, input, config = {}) {
 	const { autoResize, showCount } = config;
 	let errorEl, countEl, clearBtn;
+	
+	// Cache computed styles for auto-resize (calculated once)
+	let cachedLineHeight, cachedPadding, cachedBorder;
+	if (autoResize) {
+		const style = getComputedStyle(input);
+		cachedLineHeight = parseInt(style.lineHeight) || parseInt(style.fontSize) * 1.5;
+		cachedPadding = parseInt(style.paddingTop) + parseInt(style.paddingBottom);
+		cachedBorder = parseInt(style.borderTopWidth) + parseInt(style.borderBottomWidth);
+	}
 
 	const dispatch = (name, detail = {}) => {
 		element.dispatchEvent(new CustomEvent(name, {
@@ -1685,29 +1699,16 @@ function setupInputBehavior(element, input, config = {}) {
 
 	const updateState = () => {
 		if (autoResize) {
-			// Get min/max rows from attributes
 			const minRows = parseInt(element.getAttribute('min-rows')) || 1;
 			const maxRows = parseInt(element.getAttribute('max-rows')) || 999;
 			
-			// Calculate line height
-			const style = getComputedStyle(input);
-			const lineHeight = parseInt(style.lineHeight) || parseInt(style.fontSize) * 1.5;
-			const padding = parseInt(style.paddingTop) + parseInt(style.paddingBottom);
-			const border = parseInt(style.borderTopWidth) + parseInt(style.borderBottomWidth);
+			const minHeight = (cachedLineHeight * minRows) + cachedPadding + cachedBorder;
+			const maxHeight = (cachedLineHeight * maxRows) + cachedPadding + cachedBorder;
 			
-			// Set min height based on min-rows
-			const minHeight = (lineHeight * minRows) + padding + border;
-			const maxHeight = (lineHeight * maxRows) + padding + border;
-			
-			// Reset and measure
 			input.style.height = minHeight + 'px';
 			const scrollHeight = input.scrollHeight;
 			
-			// Constrain to min/max
-			let newHeight = Math.max(minHeight, Math.min(scrollHeight, maxHeight));
-			input.style.height = newHeight + 'px';
-			
-			// Set overflow based on whether we hit max
+			input.style.height = Math.max(minHeight, Math.min(scrollHeight, maxHeight)) + 'px';
 			input.style.overflowY = scrollHeight > maxHeight ? 'auto' : 'hidden';
 		}
 		if (showCount) {
@@ -1739,8 +1740,9 @@ function setupInputBehavior(element, input, config = {}) {
 
 	input.addEventListener('input', () => {
 		updateState();
-		if (input.value !== '') validate();
-		else {
+		if (input.value !== '') {
+			validate();
+		} else {
 			element.classList.remove('is-valid', 'is-invalid');
 			if (errorEl) errorEl.textContent = '';
 			input.removeAttribute('aria-invalid');
@@ -1769,12 +1771,7 @@ function setupInputBehavior(element, input, config = {}) {
 
 	element.focus = () => input.focus();
 
-	if (autoResize) {
-		input.style.boxSizing = 'border-box';
-		updateState();
-	} else {
-		updateState();
-	}
+	updateState();
 }
 
 function setupCheckableBehavior(element, type) {

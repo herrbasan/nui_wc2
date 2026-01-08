@@ -3,7 +3,7 @@
 	--nui-version: "3.0.0";
 
 	/* Foundation: body font-size defines what 1rem equals throughout the system */
-	--nui-rem-base: 14px;
+	--nui-rem-base: 16px;
 
 	--nui-space: 1rem;
 	--nui-space-eighth: calc(var(--nui-space) / 8);
@@ -15,7 +15,15 @@
 
 	--space-scrollbar-width: 0.5rem;
 	--space-page-maxwidth: 56rem;
-	--nui-form-row-height: 2.2rem;
+	--nui-form-row-height: 2.5rem;
+	
+	--font-size-base: 1rem;
+	--font-size-xsmall: 0.75rem;
+	--font-size-small: 0.85rem;
+	--font-size-medium: 1.2rem;
+	--font-size-large: 1.5rem;
+	--font-size-xlarge: 2rem;
+
 	--icon-size: 1.2rem;
 	--text-color: light-dark(rgb(30, 30, 30), rgb(230, 230, 230));
 	--text-color-dim: light-dark(rgb(90, 90, 90), rgb(180, 180, 180));
@@ -186,6 +194,11 @@ item {
 	display: contents;
 }
 
+/* Set rem base on html (rem units are relative to :root/html, not body) */
+html {
+	font-size: var(--nui-rem-base);
+}
+
 /* Prevent scroll in app layout */
 html:has(nui-app[data-layout="app"]),
 body:has(nui-app[data-layout="app"]) {
@@ -198,7 +211,7 @@ body {
 	margin: 0;
 	padding: 0;
 	font-family: var(--system-ui);
-	font-size: var(--nui-rem-base);
+	letter-spacing: 0.02rem;
 	background: light-dark(var(--color-shade2), var(--color-shade1));
 	color: var(--text-color);
 	line-height: 2;
@@ -222,7 +235,7 @@ main:focus {
 }
 
 footer {
-	font-size: 0.9rem;
+	font-size: var(--font-size-small);
 	color: var(--color-text-muted);
 	text-align: center;
 	padding: var(--nui-space);
@@ -231,12 +244,12 @@ footer {
 }
 
 footer h1 {
-	font-size: 1rem;
+	font-size: var(--font-size-base);
 }
 
 h1 {
 	color: var(--color-highlight);
-	font-size: 2rem;
+	font-size: var(--font-size-xlarge);
 	line-height: 2.2rem;
 	margin-bottom: var(--nui-space);
 	font-weight: 300;
@@ -244,32 +257,32 @@ h1 {
 
 h2 {
 	color: var(--color-highlight);
-	font-size: 1.4rem;
+	font-size: var(--font-size-large);
 	line-height: 1.8rem;
 	font-weight: 300;
 }
 
 h3 {
 	font-weight: 400;
-	font-size: 1.3rem;
+	font-size: var(--font-size-medium);
 	line-height: 2rem;
 	color: var(--color-text);
 }
 
 h4 {
 	font-weight: 600;
-	font-size: 1.2rem;
+	font-size: var(--font-size-medium);
 	line-height: 1.5rem;
 }
 
 h5 {
 	font-weight: 600;
-	font-size: 1rem;
+	font-size: var(--font-size-base);
 }
 
 h6 {
 	font-weight: 600;
-	font-size: 0.8rem;
+	font-size: var(--font-size-small);
 }
 
 iframe {
@@ -285,6 +298,7 @@ nui-side-nav nui-link-list {
 
 nui-link-list {
 	display: block;
+	font-size: var(--font-size-small);
 }
 
 nui-link-list ul {
@@ -313,7 +327,6 @@ nui-link-list ul li {
 
 nui-link-list:first-child ul li:first-child {
 	font-weight: 200;
-	font-size: 1rem;
 	color: var(--color-highlight);
 }
 
@@ -518,7 +531,7 @@ nui-link-list[mode="fold"] ul li {
 
 nui-link-list[mode="fold"] ul li.group-header button.group-toggle::after {
 	content: '▸';
-	font-size: 1.4rem;
+	font-size: var(--font-size-large);
 	opacity: 0.2;
 	transition: all 0.2s;
 	position: absolute;
@@ -698,6 +711,7 @@ nui-button-container.gap-large {
 /* nui-button enhancements - builds on base button styles */
 nui-button button {
 	min-width: 6rem;
+	font-size: var(--font-size-xsmall);
 	text-transform: uppercase;
 }
 
@@ -893,7 +907,7 @@ nui-top-nav header {
 nui-top-nav header h1 {
 	margin: 0;
 	padding: 0;
-	font-size: 1rem;
+	font-size: var(--font-size-base);
 	font-weight: 200;
 	color: var(--color-white)
 }
@@ -1267,7 +1281,7 @@ nui-loading[mode="overlay"] .loading-spinner {
 
 nui-loading[mode="overlay"] .loading-text {
 	color: var(--color-white);
-	font-size: 1rem;
+	font-size: var(--font-size-base);
 	font-weight: 500;
 }
 
@@ -1315,7 +1329,7 @@ nui-banner>.nui-banner-wrapper>.nui-banner-close {
 	background: none;
 	border: none;
 	cursor: pointer;
-	font-size: 1.25rem;
+	font-size: var(--font-size-medium);
 	padding: 0.25rem;
 	flex-shrink: 0;
 	color: inherit;
@@ -1558,7 +1572,7 @@ nui-dialog dialog:not(:modal) {
 }
 
 .nui-headline {
-	font-size: 1.4rem;
+	font-size: var(--font-size-large);
 	font-weight: 200;
 	margin-bottom: var(--nui-space);
 	color: var(--color-highlight);
@@ -1580,7 +1594,7 @@ dialog nui-button-container button {
 	min-width: 5rem;
 	min-height: var(--nui-space-double);
 	padding: var(--nui-space-quarter) var(--nui-space-half);
-	font-size: 0.8rem;
+	font-size: var(--font-size-small);
 	background: var(--color-highlight-dim);
 	color: var(--color-white);
 	border: solid var(--border-thickness) rgba(255, 255, 255, 0.1);
@@ -1635,7 +1649,7 @@ dialog nui-button-container button.outline:hover {
 
 .nui-dialog-body .nui-input label {
 	color: light-dark(rgba(0, 0, 0, 0.5), rgba(255, 255, 255, 0.5));
-	font-size: 0.8rem;
+	font-size: var(--font-size-small);
 	text-transform: uppercase;
 }
 
@@ -1843,7 +1857,7 @@ nui-input-group {
 nui-input-group>label {
 	display: block;
 	color: light-dark(rgba(0, 0, 0, 0.5), rgba(255, 255, 255, 0.5));
-	font-size: 0.75rem;
+	font-size: var(--font-size-xsmall);
 	text-transform: uppercase;
 	letter-spacing: 0.02em;
 	padding: 0;
@@ -1851,13 +1865,13 @@ nui-input-group>label {
 }
 
 nui-input-group>.description {
-	font-size: 0.85rem;
+	font-size: var(--font-size-small);
 	color: var(--color-text-muted);
 	margin-top: calc(var(--nui-space-quarter) * -0.5);
 }
 
 nui-input-group>.nui-error-message {
-	font-size: 0.85rem;
+	font-size: var(--font-size-small);
 	color: var(--palette-alert);
 }
 
@@ -1932,11 +1946,6 @@ nui-input:has(input:focus) {
 	background-color: light-dark(var(--color-white), var(--color-shade3));
 }
 
-nui-input:has(input:focus-visible) {
-	
-}
-
-
 nui-input:has(input:disabled) {
 	background: var(--color-shade2);
 	cursor: not-allowed;
@@ -1973,7 +1982,7 @@ nui-input input[type]:hover,
 nui-input input[type]:focus-visible {
 	outline: none;
 	border: none;
-	background-color: none;
+	background-color: transparent;
 }
 
 nui-input input::placeholder {
@@ -2039,6 +2048,21 @@ nui-input[clearable] input {
 	padding-right: calc(var(--nui-space) + 2rem);
 }
 
+/* Error message */
+nui-input .nui-error-message {
+	position: absolute;
+	top: 100%;
+	left: 0;
+	font-size: var(--font-size-small);
+	color: var(--palette-alert);
+	margin-top: var(--nui-space-quarter);
+	display: none;
+}
+
+nui-input.is-invalid .nui-error-message {
+	display: block;
+}
+
 /* =============================================================================
    NUI-SELECT - Enhanced Select Component
    ============================================================================= */
@@ -2074,7 +2098,7 @@ nui-select select {
 	filter: drop-shadow(0 0.05rem 0.2rem light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.4)));
 	color: var(--color-text);
 	font-family: var(--system-ui);
-	font-size: 1rem;
+	font-size: var(--font-size-base);
 	text-align: left;
 	cursor: pointer;
 	transition: background-color 0.15s, border-color 0.15s;
@@ -2161,7 +2185,7 @@ nui-select.is-disabled .nui-select-control {
 }
 
 .nui-select-preview-tags .nui-tag {
-	font-size: 0.7rem;
+	font-size: var(--font-size-xsmall);
 	padding-left: var(--nui-space-half);
 	padding-right: var(--nui-space-half);
 	background: var(--color-shade2);
@@ -2182,7 +2206,7 @@ nui-select.is-disabled .nui-select-control {
 
 
 .nui-select-count {
-	font-size: 0.8rem;
+	font-size: var(--font-size-small);
 	font-weight: bold;
 	color: var(--color-highlight);
 	margin: 0 var(--nui-space-half);
@@ -2381,7 +2405,7 @@ nui-select.is-above .nui-select-popup-tags {
 /* Groups */
 .nui-select-group-label {
 	padding: var(--nui-space-half) var(--nui-space);
-	font-size: 0.75rem;
+	font-size: var(--font-size-xsmall);
 	text-transform: uppercase;
 	letter-spacing: 0.05em;
 	color: var(--color-shade5);
@@ -2458,7 +2482,7 @@ nui-textarea[auto-resize] textarea {
 
 /* Character count */
 nui-textarea .nui-char-count {
-	font-size: 0.75rem;
+	font-size: var(--font-size-xsmall);
 	color: var(--color-text-muted);
 	text-align: right;
 	margin-top: var(--nui-space-quarter);
@@ -2480,7 +2504,7 @@ nui-textarea.is-valid textarea {
 /* Error message */
 nui-textarea .nui-error-message {
 	display: none;
-	font-size: 0.85rem;
+	font-size: var(--font-size-small);
 	color: var(--palette-alert);
 	margin-top: var(--nui-space-quarter);
 }
@@ -2755,7 +2779,7 @@ nui-tag-input:focus-within {
 	background: var(--color-shade2);
 	border-radius: var(--border-radius1);
 	padding-left: var(--nui-space-half);
-	font-size: 0.85rem;
+	font-size: var(--font-size-small);
 	height: 100%;
 	color: var(--color-text);
 }
@@ -2778,7 +2802,7 @@ nui-tag-input:focus-within {
 	background: transparent;
 	border: none;
 	color: var(--color-text-muted);
-	font-size: 0.875rem;
+	font-size: var(--font-size-small);
 	line-height: 1;
 	cursor: pointer;
 	transition: background-color 0.1s, color 0.1s;
@@ -2864,7 +2888,7 @@ nui-tabs [role="tab"] {
 	color: var(--color-text-dim);
 	cursor: pointer;
 	font-family: var(--system-ui);
-	font-size: 1rem;
+	font-size: var(--font-size-base);
 	padding: var(--nui-space-half) var(--nui-space);
 	transition: all 0.2s ease;
 	text-decoration: none;
@@ -3307,7 +3331,7 @@ nui-table {
 		font-weight: 500;
 		color: var(--color-text-dim);
 		opacity: 0.8;
-		font-size: 0.85em;
+		font-size: var(--font-size-small);
 		content: attr(data-label);
 		box-sizing: border-box;
 	}
@@ -3338,7 +3362,7 @@ figcaption {
 	padding: var(--nui-space-half);
 	background-color: light-dark(var(--color-shade2), var(--color-shade3));
 	color: var(--color-text);
-	font-size: 0.9rem;
+	font-size: var(--font-size-small);
 	line-height: 1.4;
 	box-sizing: border-box;
 }
@@ -3359,7 +3383,7 @@ fieldset {
 legend {
 	padding: 0 var(--nui-space-half);
 	color: var(--color-text);
-	font-size: 0.75rem;
+	font-size: var(--font-size-xsmall);
 	letter-spacing: 0.02em;
 	text-transform: uppercase;
 }
@@ -3377,7 +3401,7 @@ fieldset label {
 	display: block;
 	margin-bottom: var(--nui-space-quarter);
 	color: var(--color-text-dim);
-	font-size: 0.9rem;
+	font-size: var(--font-size-small);
 }
 
 textarea {
@@ -3418,7 +3442,7 @@ input[type="time"] {
 	border-bottom: solid var(--border-thickness) var(--color-shade4);
 	color: var(--color-text-dim);
 	font-family: var(--system-ui);
-	font-size: 1rem;
+	font-size: var(--font-size-base);
 	line-height: 1.5;
 	outline: none;
 	transition: background-color 0.15s, border-color 0.15s, color 0.15s;
@@ -3443,7 +3467,7 @@ input[type="button"] {
 	min-height: var(--nui-space-double);
 	padding: var(--nui-space-quarter) var(--nui-space);
 	margin: 0;
-	font-size: 0.8rem;
+	font-size: var(--font-size-small);
 	line-height: 0.8rem;
 	font-family: var(--system-ui);
 	background-color: var(--color-highlight-dim);

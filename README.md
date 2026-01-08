@@ -1,4 +1,4 @@
-# NUI - Platform-Native UI Component Library
+# NUI - High-Performance, Accessible UI Component Library
 
 > ⚠️ **Early Development** — API may change. Feedback welcome!
 

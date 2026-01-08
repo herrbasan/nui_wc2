@@ -1175,4 +1175,73 @@ The `<script type="example">` pattern is now standardized across entire Playgrou
 
 This pattern serves as reference implementation for documentation pages, making code examples both human-readable and machine-processable.
 
+---
+
+## #9Kp3M7 - January 8, 2026
+**Responsive Scaling & Typography Consistency**
+
+Session focused on rem-based scaling fixes and typography variable standardization.
+
+### Critical rem Fix
+- **Problem**: `--nui-rem-base` was set on `body`, but `rem` units are relative to `html` (root element)
+- **Impact**: Sidebar width (`21rem`), spacing, and all rem-based measurements weren't scaling with base changes
+- **Solution**: Moved `font-size: var(--nui-rem-base)` from `body` to new `html` rule
+- **Result**: At 14px base → 21rem = 294px sidebar; at 24px base → 21rem = 504px sidebar
+
+### JavaScript Breakpoint Fix
+- **Problem**: `calculateBreakpoint()` in nui-app used hardcoded `16` for rem→px conversion
+- **Solution**: Read actual rem base from computed styles: `parseFloat(getComputedStyle(document.documentElement).fontSize)`
+- **Added**: `invalidateBreakpointCache()` method for future runtime rem changes
+
+### Font Size Variables
+Added standardized typography scale to reduce arbitrary font-size values:
+```css
+--font-size-xsmall: 0.75rem;  /* New */
+--font-size-small: 0.85rem;
+--font-size-base: 1rem;
+--font-size-medium: 1.2rem;
+--font-size-large: 1.5rem;
+--font-size-xlarge: 2rem;     /* New */
+```
+
+Replaced 36 hardcoded `font-size` values across nui-theme.css:
+- `2rem` → `--font-size-xlarge` (h1)
+- `1.4rem`, `1.3rem`, `1.25rem`, `1.2rem` → `--font-size-large` / `--font-size-medium` (h2-h4, headlines)
+- `1rem` → `--font-size-base` (body text, inputs, tabs)
+- `0.9rem`, `0.875rem`, `0.85rem`, `0.8rem` → `--font-size-small` (labels, captions, buttons)
+- `0.75rem`, `0.7rem` → `--font-size-xsmall` (group labels, char counts)
+- `0.85em` → `--font-size-small` (converted from em to rem)
+
+### Letter Spacing
+Added `letter-spacing: 0.02em` to body for consistent typography baseline.
+
+### App Footer Enhancements
+- **Scroll-to-top button**: Added built-in `scroll-to-top` action handler that finds `nui-main` and scrolls to top
+- **Accessibility info display**: Added `#appFooterInfo` div that shows what screen readers would announce for focused element
+- **Functions**: `getAccessibleName()`, `getAccessibleRole()`, `getAccessibleState()`, `formatAccessibleInfo()`
+
+### Text-box CSS Toggle
+Added experimental Ctrl+Alt+T keybinding to toggle `text-box: trim-both cap alphabetic` CSS property for testing vertical text centering.
+
+### Textarea Auto-resize Fix
+- **Problem**: Textarea was growing from bottom up instead of top down
+- **Solution**: Added `display: block` and `vertical-align: top` to textarea base styles
+
+### Input Component Optimization
+- Cached `getComputedStyle()` result in auto-resize to avoid recalculating for each resize
+- Removed empty `:focus-visible` rule
+- Fixed `background-color: none` → `background-color: transparent`
+
+### Documentation Updates
+- **README.md**: Changed title from "Platform-Native" to "High-Performance, Accessible"
+- **introduction.html**: Updated lead and core principles to emphasize performance and accessibility over platform claims
+
+### Key Insights
+1. **rem is "root em"**: Always relative to `<html>`, not `<body>` - fundamental CSS knowledge
+2. **Typography scales need limits**: 6 variables cover ~95% of use cases, reducing arbitrary decisions
+3. **15% tolerance rule**: Values within 15% of a variable should use that variable (e.g., 0.9rem → small at 6% diff)
+4. **Consistency compounds**: Standardized values make future changes easier (update variable, not 36 places)
+
+**Contributor**: Claude Opus 4.5 - GitHub Copilot
+
 **Last Updated:** January 8, 2026
