@@ -21,9 +21,11 @@
 	</div>
 
 	<nui-code>
-		<pre><code data-lang="html">&lt;nui-slider&gt;
-    &lt;input type="range" min="0" max="100" value="50"&gt;
-&lt;/nui-slider&gt;</code></pre>
+		<script type="example" data-lang="html">
+<nui-slider>
+	<input type="range" min="0" max="100" value="50">
+</nui-slider>
+		</script>
 	</nui-code>
 </section>
 
@@ -41,9 +43,11 @@
 	</div>
 
 	<nui-code>
-		<pre><code data-lang="html">&lt;nui-slider&gt;
-    &lt;input type="range" min="0" max="10" step="1" value="5"&gt;
-&lt;/nui-slider&gt;</code></pre>
+		<script type="example" data-lang="html">
+<nui-slider>
+	<input type="range" min="0" max="10" step="1" value="5">
+</nui-slider>
+		</script>
 	</nui-code>
 </section>
 
@@ -61,16 +65,18 @@
 	</div>
 
 	<nui-code>
-		<pre><code data-lang="javascript">const slider = document.querySelector('nui-slider');
+		<script type="example" data-lang="js">
+const slider = document.querySelector('nui-slider');
 const input = slider.querySelector('input');
 
 input.addEventListener('input', (e) => {
-    console.log('Value:', e.target.value);
+	console.log('Value:', e.target.value);
 });
 
 input.addEventListener('change', (e) => {
-    console.log('Final value:', e.target.value);
-});</code></pre>
+	console.log('Final value:', e.target.value);
+});
+		</script>
 	</nui-code>
 </section>
 
@@ -79,16 +85,18 @@ input.addEventListener('change', (e) => {
 	<p>The slider component uses <code>nui.util.enableDrag</code> internally. You can use this utility directly for custom drag interactions like video scrubbers or 2D controls.</p>
 	
 	<nui-code>
-		<pre><code data-lang="javascript">// Enable drag on any element
+		<script type="example" data-lang="js">
+// Enable drag on any element
 const cleanup = nui.util.enableDrag(element, (data) => {
-    // data.type: 'start', 'move', or 'end'
-    // data.x, data.y: position relative to element
-    // data.percentX, data.percentY: 0-1 range
-    // data.clientX, data.clientY: screen coordinates
-    // data.isTouch: true if touch event
+	// data.type: 'start', 'move', or 'end'
+	// data.x, data.y: position relative to element
+	// data.percentX, data.percentY: 0-1 range
+	// data.clientX, data.clientY: screen coordinates
+	// data.isTouch: true if touch event
 });
 
-// Call cleanup() to remove listeners</code></pre>
+// Call cleanup() to remove listeners
+		</script>
 	</nui-code>
 </section>
 

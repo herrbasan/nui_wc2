@@ -1114,3 +1114,65 @@ Systematic cleanup of Playground demo pages to establish consistent patterns and
 The cleanup reinforces the "DOM as structure, CSS for presentation" principle. Inline styles were eliminated in favor of reusable classes, making demo pages serve as teaching examples for proper HTML/CSS architecture. The DEMO_STRUCTURE.md guide ensures future pages follow established patterns.
 
 **Last Updated:** December 19, 2025
+---
+
+## #8Nx5Q2 - January 8, 2026
+**Code Example Pattern Migration & Indentation Control**
+
+Completed systematic migration of all Playground code examples from escaped HTML in `<pre><code>` to unescaped content in `<script type="example">` pattern.
+
+### Pattern Migration Complete
+- **Component pages (15 files)**: Converted all code examples to `<script type="example" data-lang="...">` pattern
+- **Documentation pages**: declarative-actions.html (8 examples), api-structure.html (12 examples)
+- **Addon pages (3 files)**: animation.html, menu.html, code.html - all converted
+- **Total**: ~60+ code examples migrated across 20+ files
+
+### Critical Fix: Indentation Rendering
+- **Problem discovered**: Initial conversion added leading tabs to script content (following HTML indentation), breaking nui-code rendering
+- **Root cause**: Component expects content to start at column 0 for proper display
+- **Solution pattern**:
+  ```html
+  <nui-code>
+      <script type="example" data-lang="html">
+  <!-- Content at column 0, no leading tabs -->
+  <nui-slider>
+      <input type="range">
+  </nui-slider>
+      </script>
+  </nui-code>
+  ```
+- **Systematic fix**: Used multi_replace_string_in_file to fix all converted files, preserving internal code indentation while removing leading offset
+
+### Tab Size Control
+- **Added `tab-size: 4`** to `pre` element in `NUI/css/nui-theme.css`
+- **Rationale**: Browser default (8 spaces) was too wide, making code examples hard to read
+- **User preference**: Settled on 4 (standard in many editors) after testing 2 (too compact)
+
+### Documentation Optimization
+- **code.html cleanup**: Removed showcase examples for non-core languages (Python, Ruby, PHP, Java, C/C++, XML, Markdown)
+- **Replaced with note**: "The component safely displays code in other languages without syntax highlighting. Focus is on 5 core web languages—HTML, CSS, JavaScript, TypeScript, JSON—done exceptionally well."
+- **Philosophy**: Quality over breadth, clear priorities, reduced noise in documentation
+
+### Bug Fix: banner.html
+- **Issue**: Nested `<script>` tags in declarative banner example caused parser conflict
+- **Solution**: Split into two separate code blocks (HTML example + JS example)
+- **Lesson**: Can't nest `<script>` tags even inside `<script type="example">` - browser parsing precedence
+
+### Key Insights
+1. **Column 0 requirement**: Content extraction from `<script type="example">` must start at line beginning
+2. **Indentation is visual, not structural**: HTML structure uses tabs, but extracted content needs clean left margin
+3. **Tab size matters**: Default browser rendering (8 spaces) rarely matches developer intent
+4. **Multi-file fixes need batching**: multi_replace_string_in_file is essential for systematic corrections
+5. **Parser rules trump custom types**: Even `type="example"` doesn't prevent browser from parsing nested `<script>` tags
+
+### Pattern Established
+The `<script type="example">` pattern is now standardized across entire Playground:
+- Clean, unescaped code content
+- Proper syntax highlighting via `data-lang` attribute
+- Content starts at column 0 for correct rendering
+- Tab size of 4 for optimal readability
+- No nested script tags (split into separate examples)
+
+This pattern serves as reference implementation for documentation pages, making code examples both human-readable and machine-processable.
+
+**Last Updated:** January 8, 2026

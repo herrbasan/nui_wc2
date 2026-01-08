@@ -14,9 +14,11 @@
 	<h2>Basic Usage</h2>
 	<p>Wrap a standard button element:</p>
 	<nui-code>
-		<pre><code data-lang="html">&lt;nui-button&gt;
-  &lt;button type="button"&gt;Click Me&lt;/button&gt;
-&lt;/nui-button&gt;</code></pre>
+		<script type="example" data-lang="html">
+<nui-button>
+	<button type="button">Click Me</button>
+</nui-button>
+		</script>
 	</nui-code>
 	<nui-button-container>
 		<nui-button>
@@ -27,37 +29,40 @@
 
 <section>
 	<h2>Button Variants</h2>
-	<p>Use the <code>type</code> or <code>variant</code> attribute on the <code>&lt;nui-button&gt;</code> element to apply different visual styles:</p>
+	<p>Use the <code>type</code> or <code>variant</code> attribute on the <code>&lt;nui-button&gt;</code> element to
+		apply different visual styles:</p>
 	<nui-code>
-		<pre><code data-lang="html">&lt;!-- Default (No Type) --&gt;
-&lt;nui-button&gt;
-  &lt;button type="button"&gt;Default&lt;/button&gt;
-&lt;/nui-button&gt;
+		<script type="example" data-lang="html">
+<!-- Default (No Type) -->
+<nui-button>
+	<button type="button">Default</button>
+</nui-button>
 
-&lt;!-- Primary (Explicit) --&gt;
-&lt;nui-button type="primary"&gt;
-  &lt;button type="button"&gt;Primary&lt;/button&gt;
-&lt;/nui-button&gt;
+<!-- Primary (Explicit) -->
+<nui-button type="primary">
+	<button type="button">Primary</button>
+</nui-button>
 
-&lt;!-- Outline --&gt;
-&lt;nui-button type="outline"&gt;
-  &lt;button type="button"&gt;Outline&lt;/button&gt;
-&lt;/nui-button&gt;
+<!-- Outline -->
+<nui-button type="outline">
+	<button type="button">Outline</button>
+</nui-button>
 
-&lt;!-- Submit / Success --&gt;
-&lt;nui-button variant="submit"&gt;
-  &lt;button type="submit"&gt;Submit&lt;/button&gt;
-&lt;/nui-button&gt;
+<!-- Submit / Success -->
+<nui-button variant="submit">
+	<button type="submit">Submit</button>
+</nui-button>
 
-&lt;!-- Danger / Delete --&gt;
-&lt;nui-button variant="danger"&gt;
-  &lt;button type="button"&gt;Delete&lt;/button&gt;
-&lt;/nui-button&gt;
+<!-- Danger / Delete -->
+<nui-button variant="danger">
+	<button type="button">Delete</button>
+</nui-button>
 
-&lt;!-- Warning --&gt;
-&lt;nui-button variant="warning"&gt;
-  &lt;button type="button"&gt;Warning&lt;/button&gt;
-&lt;/nui-button&gt;</code></pre>
+<!-- Warning -->
+<nui-button variant="warning">
+	<button type="button">Warning</button>
+</nui-button>
+		</script>
 	</nui-code>
 	<nui-button-container>
 		<nui-button>
@@ -85,26 +90,28 @@
 	<h2>Buttons with Icons</h2>
 	<p>Combine buttons with the <code>&lt;nui-icon&gt;</code> component:</p>
 	<nui-code>
-		<pre><code data-lang="html">&lt;nui-button&gt;
-  &lt;button type="button"&gt;
-    &lt;nui-icon name="save"&gt;&lt;/nui-icon&gt;
-    Save
-  &lt;/button&gt;
-&lt;/nui-button&gt;
+		<script type="example" data-lang="html">
+<nui-button>
+	<button type="button">
+		<nui-icon name="save"></nui-icon>
+		Save
+	</button>
+</nui-button>
 
-&lt;nui-button&gt;
-  &lt;button type="button"&gt;
-    Delete
-    &lt;nui-icon name="delete"&gt;&lt;/nui-icon&gt;
-  &lt;/button&gt;
-&lt;/nui-button&gt;
+<nui-button>
+	<button type="button">
+		Delete
+		<nui-icon name="delete"></nui-icon>
+	</button>
+</nui-button>
 
 <!-- Icon-only button -->
-&lt;nui-button&gt;
-  &lt;button type="button" aria-label="Settings"&gt;
-    &lt;nui-icon name="settings"&gt;&lt;/nui-icon&gt;
-  &lt;/button&gt;
-&lt;/nui-button&gt;</code></pre>
+<nui-button>
+	<button type="button" aria-label="Settings">
+		<nui-icon name="settings"></nui-icon>
+	</button>
+</nui-button>
+		</script>
 	</nui-code>
 	<nui-button-container>
 		<nui-button>
@@ -131,9 +138,11 @@
 	<h2>Disabled State</h2>
 	<p>Use the standard <code>disabled</code> attribute:</p>
 	<nui-code>
-		<pre><code data-lang="html">&lt;nui-button&gt;
-  &lt;button type="button" disabled&gt;Disabled Button&lt;/button&gt;
-&lt;/nui-button&gt;</code></pre>
+		<script type="example" data-lang="html">
+<nui-button>
+	<button type="button" disabled>Disabled Button</button>
+</nui-button>
+		</script>
 	</nui-code>
 	<nui-button-container>
 		<nui-button>
@@ -155,7 +164,8 @@
 	<h3>Attributes</h3>
 	<ul>
 		<li><code>align</code>: Controls horizontal alignment. Options: <code>start</code> (default),
-			<code>center</code>, <code>end</code>, <code>between</code>.</li>
+			<code>center</code>, <code>end</code>, <code>between</code>.
+		</li>
 		<li><code>gap</code>: Controls spacing between buttons. Keywords: <code>none</code>, <code>small</code>,
 			<code>medium</code>, <code>large</code>. Also accepts custom values like <code>2rem</code> or CSS variables
 			(e.g., <code>var(--nui-space)</code>). Default is <code>small</code> (<code>var(--nui-space-half)</code>).
@@ -164,13 +174,16 @@
 	</ul>
 
 	<h3>Fill Mode</h3>
-	<p>Use the <code>fill</code> class to make buttons expand equally to fill the available space. Useful for action bars, mobile layouts, or when you want uniform button widths.</p>
+	<p>Use the <code>fill</code> class to make buttons expand equally to fill the available space. Useful for action
+		bars, mobile layouts, or when you want uniform button widths.</p>
 	<nui-code>
-		<pre><code data-lang="html">&lt;nui-button-container class="fill"&gt;
-  &lt;nui-button&gt;&lt;button type="button"&gt;Action 1&lt;/button&gt;&lt;/nui-button&gt;
-  &lt;nui-button&gt;&lt;button type="button"&gt;Action 2&lt;/button&gt;&lt;/nui-button&gt;
-  &lt;nui-button&gt;&lt;button type="button"&gt;Action 3&lt;/button&gt;&lt;/nui-button&gt;
-&lt;/nui-button-container&gt;</code></pre>
+		<script type="example" data-lang="html">
+<nui-button-container class="fill">
+	<nui-button><button type="button">Action 1</button></nui-button>
+	<nui-button><button type="button">Action 2</button></nui-button>
+	<nui-button><button type="button">Action 3</button></nui-button>
+</nui-button-container>
+		</script>
 	</nui-code>
 	<nui-button-container class="fill">
 		<nui-button><button type="button">Action 1</button></nui-button>
@@ -185,35 +198,44 @@
 	<h3>Examples</h3>
 	<p><strong>Right Aligned:</strong></p>
 	<nui-code>
-		<pre><code data-lang="html">&lt;nui-button-container align="end"&gt;
-  &lt;nui-button&gt;&lt;button type="button"&gt;Cancel&lt;/button&gt;&lt;/nui-button&gt;
-  &lt;nui-button&gt;&lt;button type="button"&gt;Confirm&lt;/button&gt;&lt;/nui-button&gt;
-&lt;/nui-button-container&gt;</code></pre>
+		<script type="example" data-lang="html">
+<nui-button-container align="end">
+	<nui-button><button type="button">Cancel</button></nui-button>
+	<nui-button><button type="button">Confirm</button></nui-button>
+</nui-button-container>
+		</script>
 	</nui-code>
 	<p><strong>Centered with Large Gap:</strong></p>
 	<nui-code>
-		<pre><code data-lang="html">&lt;nui-button-container align="center" gap="large"&gt;
-  &lt;nui-button&gt;&lt;button type="button"&gt;Option A&lt;/button&gt;&lt;/nui-button&gt;
-  &lt;nui-button&gt;&lt;button type="button"&gt;Option B&lt;/button&gt;&lt;/nui-button&gt;
-&lt;/nui-button-container&gt;</code></pre>
+		<script type="example" data-lang="html">
+<nui-button-container align="center" gap="large">
+	<nui-button><button type="button">Option A</button></nui-button>
+	<nui-button><button type="button">Option B</button></nui-button>
+</nui-button-container>
+		</script>
 	</nui-code>
 	<p><strong>Column Layout:</strong></p>
 	<nui-code>
-		<pre><code data-lang="html">&lt;nui-button-container direction="column" align="stretch"&gt;
-  &lt;nui-button&gt;&lt;button type="button" style="width: 100%"&gt;Top&lt;/button&gt;&lt;/nui-button&gt;
-  &lt;nui-button&gt;&lt;button type="button" style="width: 100%"&gt;Bottom&lt;/button&gt;&lt;/nui-button&gt;
-&lt;/nui-button-container&gt;</code></pre>
+		<script type="example" data-lang="html">
+<nui-button-container direction="column" align="stretch">
+	<nui-button><button type="button" style="width: 100%">Top</button></nui-button>
+	<nui-button><button type="button" style="width: 100%">Bottom</button></nui-button>
+</nui-button-container>
+		</script>
 	</nui-code>
 </section>
 
 <section>
 	<h2>Interactive Examples</h2>
 	<h3>Toggle Theme</h3>
-	<p>Toggle between light and dark mode using a <code>data-action</code> attribute (handled in your app's JavaScript):</p>
+	<p>Toggle between light and dark mode using a <code>data-action</code> attribute (handled in your app's JavaScript):
+	</p>
 	<nui-code>
-		<pre><code data-lang="html">&lt;nui-button data-action="toggle-theme"&gt;
-  &lt;button type="button"&gt;Toggle Theme&lt;/button&gt;
-&lt;/nui-button&gt;</code></pre>
+		<script type="example" data-lang="html">
+<nui-button data-action="toggle-theme">
+	<button type="button">Toggle Theme</button>
+</nui-button>
+		</script>
 	</nui-code>
 	<nui-button-container>
 		<nui-button data-action="toggle-theme">
@@ -241,13 +263,15 @@
 		}
 	</style>
 	<nui-code>
-		<pre><code data-lang="html">&lt;!-- Target element --&gt;
-&lt;div id="demo-box" class="demo-box"&gt;Target Box&lt;/div&gt;
+		<script type="example" data-lang="html">
+<!-- Target element -->
+<div id="demo-box" class="demo-box">Target Box</div>
 
-&lt;!-- Button toggles 'highlight' class on #demo-box --&gt;
-&lt;nui-button data-action="toggle-highlight@#demo-box"&gt;
-  &lt;button type="button"&gt;Toggle Highlight&lt;/button&gt;
-&lt;/nui-button&gt;</code></pre>
+<!-- Button toggles 'highlight' class on #demo-box -->
+<nui-button data-action="toggle-highlight@#demo-box">
+	<button type="button">Toggle Highlight</button>
+</nui-button>
+		</script>
 	</nui-code>
 	<div class="demo-area">
 		<div id="demo-box" class="demo-box">Target Box</div>
@@ -259,33 +283,38 @@
 	</div>
 
 	<h3>Declarative Actions</h3>
-	<p>Use the <code>data-action</code> attribute to wire up interactions without manual query selectors. The <code>nui-action</code> event provides the action name and automatically resolved target element.</p>
-	
-	<nui-code>
-		<pre><code data-lang="html">&lt;!-- 1. Define the target element --&gt;
-&lt;form id="login-form"&gt;...&lt;/form&gt;
+	<p>Use the <code>data-action</code> attribute to wire up interactions without manual query selectors. The
+		<code>nui-action</code> event provides the action name and automatically resolved target element.</p>
 
-&lt;!-- 2. Define the action and target (action@target) --&gt;
-&lt;nui-button data-action="submit-form@#login-form"&gt;
-  &lt;button type="button"&gt;Login&lt;/button&gt;
-&lt;/nui-button&gt;</code></pre>
+	<nui-code>
+		<script type="example" data-lang="html">
+<!-- 1. Define the target element -->
+<form id="login-form">...</form>
+
+<!-- 2. Define the action and target (action@target) -->
+<nui-button data-action="submit-form@#login-form">
+	<button type="button">Login</button>
+</nui-button>
+		</script>
 	</nui-code>
 
 	<nui-code>
-		<pre><code data-lang="javascript">// 3. Handle the generic event
+		<script type="example" data-lang="javascript">
+// 3. Handle the generic event
 document.addEventListener('nui-action', (e) => {
-  const { name, target } = e.detail;
-  
-  if (name === 'submit-form') {
-    // 'target' is the #login-form element - no querySelector needed!
-    console.log('Submitting form:', target);
-  }
-});</code></pre>
+	const { name, target } = e.detail;
+	
+	if (name === 'submit-form') {
+		// 'target' is the #login-form element - no querySelector needed!
+		console.log('Submitting form:', target);
+	}
+});
+		</script>
 	</nui-code>
 
 	<div class="demo-area">
 		<div id="demo-target">Target Element (#demo-target)</div>
-		
+
 		<nui-button-container>
 			<nui-button data-action="highlight-target@#demo-target">
 				<button type="button">Highlight Target</button>
@@ -322,29 +351,31 @@ document.addEventListener('nui-action', (e) => {
 	<p>Button appearance is controlled via CSS. Customize using CSS custom properties or by targeting the button
 		element:</p>
 	<nui-code>
-		<pre><code data-lang="css">/* Custom button styling */
+		<script type="example" data-lang="css">
+/* Custom button styling */
 nui-button button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  border-radius: 4px;
-  background: var(--nui-accent);
-  color: var(--nui-text-on-accent);
-  border: none;
-  cursor: pointer;
-  font-weight: 600;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	padding: 0.75rem 1.5rem;
+	border-radius: 4px;
+	background: var(--nui-accent);
+	color: var(--nui-text-on-accent);
+	border: none;
+	cursor: pointer;
+	font-weight: 600;
 }
 
 nui-button button:hover {
-  background: var(--nui-accent-hover);
+	background: var(--nui-accent-hover);
 }
 
 nui-button button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}</code></pre>
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+		</script>
 	</nui-code>
 </section>
 
@@ -353,7 +384,8 @@ nui-button button:disabled {
 	<p>The button component maintains full accessibility by using semantic HTML:</p>
 	<ul>
 		<li><strong>Semantic Element:</strong> Uses standard <code>&lt;button&gt;</code> element with proper
-			<code>type</code> attribute.</li>
+			<code>type</code> attribute.
+		</li>
 		<li><strong>Keyboard Navigation:</strong> Native focus and activation with Tab and Enter/Space keys.</li>
 		<li><strong>Screen Reader Support:</strong> Button role and label automatically recognized.</li>
 		<li><strong>Icon-Only Buttons:</strong> Use <code>aria-label</code> for buttons with only icons.</li>
@@ -361,20 +393,22 @@ nui-button button:disabled {
 			technology.</li>
 	</ul>
 	<nui-code>
-		<pre><code data-lang="html">&lt;!-- Good: Icon-only button with aria-label --&gt;
-&lt;nui-button&gt;
-  &lt;button type="button" aria-label="Close dialog"&gt;
-    &lt;nui-icon name="close"&gt;&lt;/nui-icon&gt;
-  &lt;/button&gt;
-&lt;/nui-button&gt;
+		<script type="example" data-lang="html">
+<!-- Good: Icon-only button with aria-label -->
+<nui-button>
+	<button type="button" aria-label="Close dialog">
+		<nui-icon name="close"></nui-icon>
+	</button>
+</nui-button>
 
-&lt;!-- Good: Button with visible text --&gt;
-&lt;nui-button&gt;
-  &lt;button type="button"&gt;
-    &lt;nui-icon name="save"&gt;&lt;/nui-icon&gt;
-    Save Changes
-  &lt;/button&gt;
-&lt;/nui-button&gt;</code></pre>
+<!-- Good: Button with visible text -->
+<nui-button>
+	<button type="button">
+		<nui-icon name="save"></nui-icon>
+		Save Changes
+	</button>
+</nui-button>
+		</script>
 	</nui-code>
 </section>
 

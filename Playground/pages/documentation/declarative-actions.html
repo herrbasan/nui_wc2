@@ -12,13 +12,15 @@
 		<li>Write JavaScript to find both elements and connect them.</li>
 	</ol>
 	<nui-code>
-		<pre><code data-lang="javascript">// The "Old" Way
+		<script type="example" data-lang="js">
+// The "Old" Way
 const btn = document.querySelector('#my-btn');
 const form = document.querySelector('#my-form'); // Manual query
 
 btn.addEventListener('click', () => {
-    submitForm(form);
-});</code></pre>
+	submitForm(form);
+});
+		</script>
 	</nui-code>
 </section>
 
@@ -52,23 +54,26 @@ btn.addEventListener('click', () => {
 	</ul>
 
 	<nui-code>
-		<pre><code data-lang="html">&lt;!-- The Target --&gt;
-&lt;div id="status-box"&gt;Waiting...&lt;/div&gt;
+		<script type="example" data-lang="html">
+<!-- The Target -->
+<div id="status-box">Waiting...</div>
 
-&lt;!-- The Trigger --&gt;
-&lt;nui-button data-action="update-status@#status-box"&gt;
-    &lt;button type="button"&gt;Update Status&lt;/button&gt;
-&lt;/nui-button&gt;
-
-&lt;script&gt;
-  // The Listener (Required)
-  document.addEventListener('nui-action', (e) => {
-    if (e.detail.name === 'update-status') {
-      // e.detail.target is automatically resolved to #status-box
-      e.detail.target.textContent = 'Updated!';
-    }
-  });
-&lt;/script&gt;</code></pre>
+<!-- The Trigger -->
+<nui-button data-action="update-status@#status-box">
+	<button type="button">Update Status</button>
+</nui-button>
+		</script>
+	</nui-code>
+	<nui-code>
+		<script type="example" data-lang="js">
+// The Listener (Required)
+document.addEventListener('nui-action', (e) => {
+	if (e.detail.name === 'update-status') {
+		// e.detail.target is automatically resolved to #status-box
+		e.detail.target.textContent = 'Updated!';
+	}
+});
+		</script>
 	</nui-code>
 	
 	<div class="demo-area">
@@ -81,17 +86,20 @@ btn.addEventListener('click', () => {
 	<h3>2. Action with Parameter</h3>
 	<p>Pass data directly to your handler without parsing <code>data-</code> attributes manually.</p>
 	<nui-code>
-		<pre><code data-lang="html">&lt;nui-button data-action="set-theme:dark"&gt;Dark&lt;/nui-button&gt;
-&lt;nui-button data-action="set-theme:light"&gt;Light&lt;/nui-button&gt;
-
-&lt;script&gt;
-  document.addEventListener('nui-action', (e) => {
-    if (e.detail.name === 'set-theme') {
-      // e.detail.param contains "dark" or "light"
-      console.log('Theme:', e.detail.param);
-    }
-  });
-&lt;/script&gt;</code></pre>
+		<script type="example" data-lang="html">
+<nui-button data-action="set-theme:dark">Dark</nui-button>
+<nui-button data-action="set-theme:light">Light</nui-button>
+		</script>
+	</nui-code>
+	<nui-code>
+		<script type="example" data-lang="js">
+document.addEventListener('nui-action', (e) => {
+	if (e.detail.name === 'set-theme') {
+		// e.detail.param contains "dark" or "light"
+		console.log('Theme:', e.detail.param);
+	}
+});
+		</script>
 	</nui-code>
 	
 	<div class="demo-area">
@@ -106,19 +114,21 @@ btn.addEventListener('click', () => {
 	<h3>3. Handling the Event</h3>
 	<p>Listen for the global <code>nui-action</code> event. The <code>detail</code> object contains everything you need.</p>
 	<nui-code>
-		<pre><code data-lang="javascript">document.addEventListener('nui-action', (e) => {
-    const { name, target, param } = e.detail;
+		<script type="example" data-lang="js">
+document.addEventListener('nui-action', (e) => {
+	const { name, target, param } = e.detail;
 
-    if (name === 'update-status') {
-        // 'target' is the #status-box element
-        target.textContent = 'Updated!';
-        target.style.background = '#e6f4ea';
-    }
-    
-    if (name === 'set-theme') {
-        console.log('Setting theme to:', param);
-    }
-});</code></pre>
+	if (name === 'update-status') {
+		// 'target' is the #status-box element
+		target.textContent = 'Updated!';
+		target.style.background = '#e6f4ea';
+	}
+	
+	if (name === 'set-theme') {
+		console.log('Setting theme to:', param);
+	}
+});
+		</script>
 	</nui-code>
 
 	<h3>4. Component-Level Delegation</h3>
@@ -140,25 +150,27 @@ btn.addEventListener('click', () => {
 	</div>
 
 	<nui-code>
-		<pre><code data-lang="javascript">const card = document.getElementById('task-card');
+		<script type="example" data-lang="js">
+const card = document.getElementById('task-card');
 
 // ONE listener handles ALL buttons in the card
 card.addEventListener('nui-action', (e) => {
-    e.stopPropagation(); // Keep events inside the component
-    const { name } = e.detail;
-    
-    switch(name) {
-        case 'approve':
-            updateStatus('Approved', 'green');
-            break;
-        case 'reject':
-            updateStatus('Rejected', 'red');
-            break;
-        case 'delete':
-            card.remove();
-            break;
-    }
-});</code></pre>
+	e.stopPropagation(); // Keep events inside the component
+	const { name } = e.detail;
+	
+	switch(name) {
+		case 'approve':
+			updateStatus('Approved', 'green');
+			break;
+		case 'reject':
+			updateStatus('Rejected', 'red');
+			break;
+		case 'delete':
+			card.remove();
+			break;
+	}
+});
+		</script>
 	</nui-code>
 </section>
 
@@ -178,24 +190,26 @@ card.addEventListener('nui-action', (e) => {
 	<h3>The Pattern "Under the Hood"</h3>
 	<p>To prove this isn't "magic", here is the simplified logic that powers the system. It's just a global event listener that parses the attribute and dispatches a clean event:</p>
 	<nui-code>
-		<pre><code data-lang="javascript">// The core logic (simplified)
+		<script type="example" data-lang="js">
+// The core logic (simplified)
 document.addEventListener('click', (e) => {
-    const trigger = e.target.closest('[data-action]');
-    if (!trigger) return;
+	const trigger = e.target.closest('[data-action]');
+	if (!trigger) return;
 
-    // 1. Parse the attribute
-    const [actionSpec, selector] = trigger.dataset.action.split('@');
-    const [name, param] = actionSpec.split(':');
+	// 1. Parse the attribute
+	const [actionSpec, selector] = trigger.dataset.action.split('@');
+	const [name, param] = actionSpec.split(':');
 
-    // 2. Find the target
-    const target = selector ? document.querySelector(selector) : trigger;
+	// 2. Find the target
+	const target = selector ? document.querySelector(selector) : trigger;
 
-    // 3. Dispatch the clean event
-    trigger.dispatchEvent(new CustomEvent('nui-action', {
-        bubbles: true,
-        detail: { name, param, target }
-    }));
-});</code></pre>
+	// 3. Dispatch the clean event
+	trigger.dispatchEvent(new CustomEvent('nui-action', {
+		bubbles: true,
+		detail: { name, param, target }
+	}));
+});
+		</script>
 	</nui-code>
 </section>
 

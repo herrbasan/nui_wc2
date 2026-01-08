@@ -273,27 +273,30 @@
 	<h2>HTML Structure Example</h2>
 	<p>Basic structure with semantic HTML:</p>
 	<nui-code>
-		<pre><code data-lang="html">&lt;nui-link-list mode="fold"&gt;
-	&lt;ul&gt;
-		&lt;li class="group-header"&gt;
-			&lt;span&gt;
-				&lt;nui-icon name="folder"&gt;&lt;/nui-icon&gt;
-				&lt;span&gt;Group Name&lt;/span&gt;
-			&lt;/span&gt;
-		&lt;/li&gt;
-		&lt;li&gt;
-			&lt;a href="#item"&gt;
-				&lt;span&gt;Item Name&lt;/span&gt;
-			&lt;/a&gt;
-		&lt;/li&gt;
-	&lt;/ul&gt;
-&lt;/nui-link-list&gt;</code></pre>
+		<script type="example" data-lang="html">
+<nui-link-list mode="fold">
+	<ul>
+		<li class="group-header">
+			<span>
+				<nui-icon name="folder"></nui-icon>
+				<span>Group Name</span>
+			</span>
+		</li>
+		<li>
+			<a href="#item">
+				<span>Item Name</span>
+			</a>
+		</li>
+	</ul>
+</nui-link-list>
+		</script>
 	</nui-code>
 	
 	<h2>JavaScript Data Structure</h2>
 	<p>Generate navigation from JSON using <code>loadData()</code>:</p>
 	<nui-code>
-		<pre><code data-lang="js">const navigationData = [
+		<script type="example" data-lang="js">
+const navigationData = [
 	{
 		label: 'Group Name',
 		icon: 'folder',
@@ -324,7 +327,8 @@
 ];
 
 const linkList = document.querySelector('nui-link-list');
-linkList.loadData(navigationData);</code></pre>
+linkList.loadData(navigationData);
+		</script>
 	</nui-code>
 </section>
 
@@ -334,12 +338,13 @@ linkList.loadData(navigationData);</code></pre>
 	
 	<h3>Active State Management</h3>
 	<nui-code>
-		<pre><code data-lang="js">const linkList = document.querySelector('nui-link-list');
+		<script type="example" data-lang="js">
+const linkList = document.querySelector('nui-link-list');
 
 // Set active item (auto-expands parent groups)
 linkList.setActive('a[href="#overview"]');
 
-// Get current active element (returns &lt;li&gt;)
+// Get current active element (returns <li>)
 const activeElement = linkList.getActive();
 
 // Get active data object
@@ -351,14 +356,17 @@ console.log(data.text);  // "Overview"
 linkList.clearActive();
 
 // Clear active and close all groups
-linkList.clearActive(true);</code></pre>
+linkList.clearActive(true);
+		</script>
 	</nui-code>
 	
 	
 	<h3>Load from JSON</h3>
 	<nui-code>
-		<pre><code>// Generate navigation from data structure
-linkList.loadData(navigationData);</code></pre>
+		<script type="example" data-lang="js">
+// Generate navigation from data structure
+linkList.loadData(navigationData);
+		</script>
 	</nui-code>
 </section>
 
@@ -369,7 +377,8 @@ linkList.loadData(navigationData);</code></pre>
 		<summary>View Navigation Data Structure</summary>
 		<div>
 			<nui-code>
-				<pre><code data-lang="js">const demoNavigationData = [
+				<script type="example" data-lang="js">
+const demoNavigationData = [
 	{
 		label: 'Content & Windows',
 		icon: 'wysiwyg',
@@ -447,7 +456,8 @@ linkList.loadData(navigationData);</code></pre>
 			}
 		]
 	}
-];</code></pre>
+];
+				</script>
 			</nui-code>
 		</div>
 	</details>
@@ -459,31 +469,37 @@ linkList.loadData(navigationData);</code></pre>
 	<h3>Column Flow Layout</h3>
 	<p>Use <code>&lt;nui-column-flow&gt;</code> for multi-column tree layouts:</p>
 	<nui-code>
-		<pre><code data-lang="html">&lt;nui-link-list mode="tree"&gt;
-	&lt;nui-column-flow column-width="/3" sort="height"&gt;
-		&lt;!-- Tree structure here --&gt;
-	&lt;/nui-column-flow&gt;
-&lt;/nui-link-list&gt;</code></pre>
+		<script type="example" data-lang="html">
+<nui-link-list mode="tree">
+	<nui-column-flow column-width="/3" sort="height">
+		<!-- Tree structure here -->
+	</nui-column-flow>
+</nui-link-list>
+		</script>
 	</nui-code>
 	
 	<h3>Action Buttons</h3>
 	<p>Add action buttons to group headers:</p>
 	<nui-code>
-		<pre><code data-lang="html">&lt;li class="group-header"&gt;
-	&lt;span&gt;
-		&lt;nui-icon name="folder"&gt;&lt;/nui-icon&gt;
-		&lt;span&gt;Group Name&lt;/span&gt;
-	&lt;/span&gt;
-	&lt;button type="button" class="action" data-action="edit-group"&gt;
-		&lt;nui-icon name="settings"&gt;&lt;/nui-icon&gt;
-	&lt;/button&gt;
-&lt;/li&gt;</code></pre>
+		<script type="example" data-lang="html">
+<li class="group-header">
+	<span>
+		<nui-icon name="folder"></nui-icon>
+		<span>Group Name</span>
+	</span>
+	<button type="button" class="action" data-action="edit-group">
+		<nui-icon name="settings"></nui-icon>
+	</button>
+</li>
+		</script>
 	</nui-code>
 	
 	<h3>Separators</h3>
 	<p>Add visual separators between items:</p>
 	<nui-code>
-		<pre><code data-lang="html">&lt;li class="separator"&gt;&lt;hr&gt;&lt;/li&gt;</code></pre>
+		<script type="example" data-lang="html">
+<li class="separator"><hr></li>
+		</script>
 	</nui-code>
 </section>
 

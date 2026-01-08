@@ -4,14 +4,15 @@
 </header>
 
 <section>
-    <nui-warning level="1">
-        This is early development. This doesn't work yet!
-    </nui-warning>
+	<nui-warning level="1">
+		This is early development. This doesn't work yet!
+	</nui-warning>
 </section>
 
 <section>
 	<h2>Overview</h2>
-	<p>The <code>&lt;nui-select&gt;</code> component enhances native <code>&lt;select&gt;</code> elements with a custom UI,
+	<p>The <code>&lt;nui-select&gt;</code> component enhances native <code>&lt;select&gt;</code> elements with a custom
+		UI,
 		search capabilities, and multi-select tag management, while maintaining full accessibility and form
 		compatibility.</p>
 </section>
@@ -29,6 +30,103 @@
 					<option value="cherry">Cherry</option>
 					<option value="date">Date</option>
 					<option value="stuff">Stuff</option>
+				</select>
+			</nui-select>
+		</nui-input-group>
+	</div>
+	</div>
+</section>
+
+<section>
+	<h2>Mobile Bottom Sheet (Experimental)</h2>
+	<p>These selects use the <code>mobile-sheet</code> attribute to trigger a bottom sheet UI on restricted screens
+		(Width &le; 500px AND Height &gt; 500px).</p>
+	<nui-warning level="2">Resize your browser window to mobile width (and ensure height > 500px) to test.</nui-warning>
+
+	<div class="demo-container">
+		<nui-input-group>
+			<label>Mobile Single Select</label>
+			<nui-select mobile-sheet>
+				<select>
+					<option value="">Select a fruit...</option>
+					<option value="apple">Apple</option>
+					<option value="banana">Banana</option>
+					<option value="cherry">Cherry</option>
+					<option value="date">Date</option>
+					<option value="elderberry">Elderberry</option>
+					<option value="fig">Fig</option>
+					<option value="grape">Grape</option>
+				</select>
+			</nui-select>
+		</nui-input-group>
+
+		<nui-input-group>
+			<label>Mobile Searchable</label>
+			<nui-select mobile-sheet searchable>
+				<select>
+					<option value="">Select a country...</option>
+					<option value="us">United States</option>
+					<option value="ca">Canada</option>
+					<option value="uk">United Kingdom</option>
+					<option value="fr">France</option>
+					<option value="de">Germany</option>
+					<option value="jp">Japan</option>
+					<option value="au">Australia</option>
+				</select>
+			</nui-select>
+		</nui-input-group>
+
+		<nui-input-group>
+			<label>Mobile Multi-Select</label>
+			<nui-select mobile-sheet searchable>
+				<select multiple>
+					<option value="assembly">Assembly</option>
+					<option value="bash">Bash</option>
+					<option value="c">C</option>
+					<option value="cpp">C++</option>
+					<option value="csharp">C#</option>
+					<option value="clojure">Clojure</option>
+					<option value="cobol">COBOL</option>
+					<option value="crystal">Crystal</option>
+					<option value="css">CSS</option>
+					<option value="dart">Dart</option>
+					<option value="elixir">Elixir</option>
+					<option value="elm">Elm</option>
+					<option value="erlang">Erlang</option>
+					<option value="fsharp">F#</option>
+					<option value="fortran">Fortran</option>
+					<option value="go">Go</option>
+					<option value="groovy">Groovy</option>
+					<option value="haskell">Haskell</option>
+					<option value="html">HTML</option>
+					<option value="java">Java</option>
+					<option value="js">JavaScript</option>
+					<option value="julia">Julia</option>
+					<option value="kotlin">Kotlin</option>
+					<option value="lisp">Lisp</option>
+					<option value="lua">Lua</option>
+					<option value="matlab">MATLAB</option>
+					<option value="nim">Nim</option>
+					<option value="objc">Objective-C</option>
+					<option value="ocaml">OCaml</option>
+					<option value="pascal">Pascal</option>
+					<option value="perl">Perl</option>
+					<option value="php">PHP</option>
+					<option value="powershell">PowerShell</option>
+					<option value="prolog">Prolog</option>
+					<option value="python">Python</option>
+					<option value="r">R</option>
+					<option value="racket">Racket</option>
+					<option value="ruby">Ruby</option>
+					<option value="rust">Rust</option>
+					<option value="scala">Scala</option>
+					<option value="scheme">Scheme</option>
+					<option value="smalltalk">Smalltalk</option>
+					<option value="sql">SQL</option>
+					<option value="swift">Swift</option>
+					<option value="ts">TypeScript</option>
+					<option value="vb">Visual Basic</option>
+					<option value="zig">Zig</option>
 				</select>
 			</nui-select>
 		</nui-input-group>
@@ -210,17 +308,17 @@
 </section>
 
 <script>
-    // Form validation demo
-    const form = document.getElementById("demo-form");
-    if (form) {
-        form.addEventListener("submit", (e) => {
-            e.preventDefault();
-            const select = form.querySelector("nui-select");
-            if (select.validate()) {
-                alert("Form submitted successfully!");
-            } else {
-                alert("Please correct the errors in the form.");
-            }
-        });
-    }
+	// Form validation demo
+	const form = document.getElementById("demo-form");
+	if (form) {
+		form.addEventListener("submit", (e) => {
+			e.preventDefault();
+			const select = form.querySelector("nui-select");
+			if (select.validate()) {
+				alert("Form submitted successfully!");
+			} else {
+				alert("Please correct the errors in the form.");
+			}
+		});
+	}
 </script>

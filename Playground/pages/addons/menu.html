@@ -52,19 +52,21 @@
 	</div>
 
 	<nui-code>
-		<pre><code data-lang="html">&lt;nui-menu&gt;
-  &lt;nav&gt;
-    &lt;button&gt;File&lt;/button&gt;
-    &lt;ul&gt;
-      &lt;li&gt;&lt;button data-action="new-file" data-shortcut="Ctrl+N"&gt;New File&lt;/button&gt;&lt;/li&gt;
-      &lt;li&gt;&lt;button data-action="open" data-shortcut="Ctrl+O"&gt;Open...&lt;/button&gt;&lt;/li&gt;
-      &lt;li class="separator"&gt;&lt;/li&gt;
-      &lt;li&gt;&lt;button data-action="save" data-shortcut="Ctrl+S"&gt;Save&lt;/button&gt;&lt;/li&gt;
-    &lt;/ul&gt;
-    &lt;button&gt;Edit&lt;/button&gt;
-    &lt;ul&gt;...&lt;/ul&gt;
-  &lt;/nav&gt;
-&lt;/nui-menu&gt;</code></pre>
+		<script type="example" data-lang="html">
+<nui-menu>
+	<nav>
+		<button>File</button>
+		<ul>
+			<li><button data-action="new-file" data-shortcut="Ctrl+N">New File</button></li>
+			<li><button data-action="open" data-shortcut="Ctrl+O">Open...</button></li>
+			<li class="separator"></li>
+			<li><button data-action="save" data-shortcut="Ctrl+S">Save</button></li>
+		</ul>
+		<button>Edit</button>
+		<ul>...</ul>
+	</nav>
+</nui-menu>
+		</script>
 	</nui-code>
 </section>
 
@@ -99,7 +101,8 @@
 	</div>
 
 	<nui-code>
-		<pre><code data-lang="javascript">const menuData = {
+		<script type="example" data-lang="js">
+const menuData = {
 	items: [
 		{
 			label: 'File',
@@ -137,7 +140,8 @@
 
 const menu = document.createElement('nui-menu');
 menu.loadData(menuData);
-document.body.appendChild(menu);</code></pre>
+document.body.appendChild(menu);
+		</script>
 	</nui-code>
 </section>
 
@@ -150,7 +154,8 @@ document.body.appendChild(menu);</code></pre>
 	</div>
 
 	<nui-code>
-		<pre><code data-lang="javascript">const nestedData = {
+		<script type="example" data-lang="js">
+const nestedData = {
 	items: [
 		{
 			label: 'File',
@@ -183,7 +188,8 @@ document.body.appendChild(menu);</code></pre>
 			]
 		}
 	]
-};</code></pre>
+};
+		</script>
 	</nui-code>
 </section>
 

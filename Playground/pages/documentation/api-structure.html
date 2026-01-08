@@ -18,7 +18,8 @@
 	<h2>Root Functions</h2>
 	<p>Core library initialization and maintenance functions. These are essential and always present.</p>
 	<nui-code>
-		<pre><code data-lang="javascript">// Initialize NUI (auto-called unless ?skip-init in URL)
+		<script type="example" data-lang="js">
+// Initialize NUI (auto-called unless ?skip-init in URL)
 nui.init(options);
 
 // Update configuration
@@ -34,7 +35,8 @@ nui.registerType('markdown', (container, content) => { ... });
 const router = nui.createRouter(container, options);
 
 // Enable SPA content loading
-nui.enableContentLoading(options);</code></pre>
+nui.enableContentLoading(options);
+		</script>
 	</nui-code>
 	
 	<h3>Available Root Members</h3>
@@ -103,36 +105,40 @@ nui.enableContentLoading(options);</code></pre>
 		<div>
 			<p>Ephemeral components are created, shown, and then destroyed when dismissed:</p>
 			<nui-code>
-				<pre><code data-lang="javascript">// Show an instance, get a controller back
+				<script type="example" data-lang="js">
+// Show an instance, get a controller back
 const controller = nui.components.banner.show({
-    content: 'Saved successfully!',
-    autoClose: 3000
+	content: 'Saved successfully!',
+	autoClose: 3000
 });
 
 // Later: hide specific instance
 nui.components.banner.hide(controller);
 
 // Or hide all
-nui.components.banner.hideAll();</code></pre>
+nui.components.banner.hideAll();
+				</script>
 			</nui-code>
 		</div>
 		<div>
 			<p>Persistent components are created and remain in the DOM:</p>
 			<nui-code>
-				<pre><code data-lang="javascript">// Create element from data
+				<script type="example" data-lang="js">
+// Create element from data
 const list = nui.components.linkList.create([
-    { label: 'Home', href: '/' },
-    { label: 'Settings', icon: 'settings', items: [
-        { label: 'Profile', href: '/profile' },
-        { label: 'Security', href: '/security' }
-    ]}
+	{ label: 'Home', href: '/' },
+	{ label: 'Settings', icon: 'settings', items: [
+		{ label: 'Profile', href: '/profile' },
+		{ label: 'Security', href: '/security' }
+	]}
 ]);
 
 // Append to DOM
 container.appendChild(list);
 
 // Element has instance methods
-list.setActive('a[href="/profile"]');</code></pre>
+list.setActive('a[href="/profile"]');
+				</script>
 			</nui-code>
 		</div>
 	</nui-tabs>
@@ -170,73 +176,81 @@ list.setActive('a[href="/profile"]');</code></pre>
 	<h3>Dialog</h3>
 	<p>System dialogs for alerts, confirmations, and prompts:</p>
 	<nui-code>
-		<pre><code data-lang="javascript">// Simple alert
+		<script type="example" data-lang="js">
+// Simple alert
 await nui.components.dialog.alert('Success', 'Your changes have been saved.');
 
 // Confirmation dialog
 const confirmed = await nui.components.dialog.confirm(
-    'Delete Item?', 
-    'This action cannot be undone.'
+	'Delete Item?', 
+	'This action cannot be undone.'
 );
 if (confirmed) { ... }
 
 // Prompt for input
 const name = await nui.components.dialog.prompt(
-    'Rename File',
-    'Enter a new filename:',
-    { defaultValue: 'document.txt' }
-);</code></pre>
+	'Rename File',
+	'Enter a new filename:',
+	{ defaultValue: 'document.txt' }
+);
+		</script>
 	</nui-code>
 
 	<h3>Banner</h3>
 	<p>Toast-style notifications:</p>
 	<nui-code>
-		<pre><code data-lang="javascript">// Show a banner
+		<script type="example" data-lang="js">
+// Show a banner
 const banner = nui.components.banner.show({
-    content: 'Changes saved',
-    placement: 'bottom',    // 'top' or 'bottom'
-    priority: 'info',       // 'info' or 'alert'
-    autoClose: 3000         // ms, 0 = no auto-close
+	content: 'Changes saved',
+	placement: 'bottom',    // 'top' or 'bottom'
+	priority: 'info',       // 'info' or 'alert'
+	autoClose: 3000         // ms, 0 = no auto-close
 });
 
 // Hide specific banner
 nui.components.banner.hide(banner);
 
 // Hide all banners
-nui.components.banner.hideAll();</code></pre>
+nui.components.banner.hideAll();
+		</script>
 	</nui-code>
 
 	<h3>Link List</h3>
 	<p>Create navigation lists from data:</p>
 	<nui-code>
-		<pre><code data-lang="javascript">const nav = nui.components.linkList.create([
-    { label: 'Dashboard', icon: 'dashboard', href: '#dashboard' },
-    { label: 'Users', icon: 'people', items: [
-        { label: 'All Users', href: '#users' },
-        { label: 'Add User', href: '#users/new' }
-    ]},
-    { separator: true },
-    { label: 'Settings', icon: 'settings', href: '#settings' }
+		<script type="example" data-lang="js">
+const nav = nui.components.linkList.create([
+	{ label: 'Dashboard', icon: 'dashboard', href: '#dashboard' },
+	{ label: 'Users', icon: 'people', items: [
+		{ label: 'All Users', href: '#users' },
+		{ label: 'Add User', href: '#users/new' }
+	]},
+	{ separator: true },
+	{ label: 'Settings', icon: 'settings', href: '#settings' }
 ], { mode: 'fold' });
 
 // Instance methods
 nav.setActive('a[href="#users"]');
 nav.getActive();
-nav.clearActive();</code></pre>
+nav.clearActive();
+		</script>
 	</nui-code>
 
 	<h3>Extending with Addons</h3>
 	<p>Addon components register themselves under <code>nui.components</code>:</p>
 	<nui-code>
-		<pre><code data-lang="javascript">// In nui-gallery.js addon
+		<script type="example" data-lang="js">
+// In nui-gallery.js addon
 nui.components.gallery = {
-    create(images, options) { ... }
+	create(images, options) { ... }
 };
 
 // In nui-data-table.js addon  
 nui.components.dataTable = {
-    create(data, options) { ... }
-};</code></pre>
+	create(data, options) { ... }
+};
+		</script>
 	</nui-code>
 </section>
 
@@ -277,26 +291,29 @@ nui.components.dataTable = {
 	<h3>createElement</h3>
 	<p>Create DOM elements with a single options object:</p>
 	<nui-code>
-		<pre><code data-lang="javascript">const button = nui.util.createElement('button', {
-    class: ['btn', 'btn-primary'],
-    attrs: { type: 'submit', disabled: true },
-    data: { action: 'save' },
-    events: { click: handleClick },
-    content: 'Save Changes'
+		<script type="example" data-lang="js">
+const button = nui.util.createElement('button', {
+	class: ['btn', 'btn-primary'],
+	attrs: { type: 'submit', disabled: true },
+	data: { action: 'save' },
+	events: { click: handleClick },
+	content: 'Save Changes'
 });
 
 // Append directly
 nui.util.createElement('div', {
-    class: 'notification',
-    content: 'Hello!',
-    target: document.body  // Appends to body
-});</code></pre>
+	class: 'notification',
+	content: 'Hello!',
+	target: document.body  // Appends to body
+});
+		</script>
 	</nui-code>
 
 	<h3>enableDrag</h3>
 	<p>Pointer-based drag support with a cleanup function:</p>
 	<nui-code>
-		<pre><code data-lang="javascript">// Enable drag, get cleanup function
+		<script type="example" data-lang="js">
+// Enable drag, get cleanup function
 const cleanup = nui.util.enableDrag(element, (d) => {
 	// d.type: 'start' | 'move' | 'end'
 	// d.x / d.y: relative to element
@@ -305,26 +322,30 @@ const cleanup = nui.util.enableDrag(element, (d) => {
 });
 
 // Later, remove listeners
-cleanup();</code></pre>
+cleanup();
+		</script>
 	</nui-code>
 
 	<h3>storage</h3>
 	<p>See the <a href="#page=components/storage">Storage documentation</a> for full details.</p>
 	<nui-code>
-		<pre><code data-lang="javascript">// Set value
+		<script type="example" data-lang="js">
+// Set value
 nui.util.storage.set({ name: 'theme', value: 'dark', ttl: '30d' });
 
 // Get value
 const theme = nui.util.storage.get({ name: 'theme' });
 
 // Remove value
-nui.util.storage.remove({ name: 'theme' });</code></pre>
+nui.util.storage.remove({ name: 'theme' });
+		</script>
 	</nui-code>
 
 	<h3>Extending with Addons</h3>
 	<p>Addons can attach APIs under <code>nui.components</code> or <code>nui.util</code>, and can also add root functions when that fits (for example, the animation addon adds <code>nui.animate</code> and <code>Element.prototype.ani</code>).</p>
 	<nui-code>
-		<pre><code data-lang="javascript">// Example: attach an addon utility
+		<script type="example" data-lang="js">
+// Example: attach an addon utility
 nui.util.myAddon = {
 	formatBytes(n) { ... }
 };
@@ -332,7 +353,8 @@ nui.util.myAddon = {
 // Example: attach an addon component factory
 nui.components.myWidget = {
 	create(options) { ... }
-};</code></pre>
+};
+		</script>
 	</nui-code>
 </section>
 
@@ -340,7 +362,8 @@ nui.components.myWidget = {
 	<h2>Inspecting the API</h2>
 	<p>The namespace structure makes the API self-documenting:</p>
 	<nui-code>
-		<pre><code data-lang="javascript">// See all component factories
+		<script type="example" data-lang="js">
+// See all component factories
 console.log(Object.keys(nui.components));
 // → ['dialog', 'banner', 'linkList', 'icon']
 
@@ -352,6 +375,7 @@ console.log(Object.keys(nui.util));
 const { dialog, banner } = nui.components;
 const { storage } = nui.util;
 
-await dialog.confirm('Delete?', 'Are you sure?');</code></pre>
+await dialog.confirm('Delete?', 'Are you sure?');
+		</script>
 	</nui-code>
 </section>

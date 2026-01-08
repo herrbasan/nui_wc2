@@ -26,9 +26,11 @@
 		<h2>Basic Usage</h2>
 		<p>Use the <code>name</code> attribute to specify which icon to display:</p>
 		<nui-code>
-			<pre><code>&lt;nui-icon name="settings"&gt;&lt;/nui-icon&gt;
-&lt;nui-icon name="person"&gt;&lt;/nui-icon&gt;
-&lt;nui-icon name="search"&gt;&lt;/nui-icon&gt;</code></pre>
+			<script type="example" data-lang="html">
+<nui-icon name="settings"></nui-icon>
+<nui-icon name="person"></nui-icon>
+<nui-icon name="search"></nui-icon>
+			</script>
 		</nui-code>
 		
 		<div class="icon-demo">
@@ -42,10 +44,12 @@
 		<h2>Sizing</h2>
 		<p>Icons inherit font-size from their container or can be sized directly with CSS:</p>
 		<nui-code>
-			<pre><code>&lt;nui-icon name="notifications" style="font-size: 1rem;"&gt;&lt;/nui-icon&gt;
-&lt;nui-icon name="notifications" style="font-size: 1.5rem;"&gt;&lt;/nui-icon&gt;
-&lt;nui-icon name="notifications" style="font-size: 2rem;"&gt;&lt;/nui-icon&gt;
-&lt;nui-icon name="notifications" style="font-size: 3rem;"&gt;&lt;/nui-icon&gt;</code></pre>
+			<script type="example" data-lang="html">
+<nui-icon name="notifications" style="font-size: 1rem;"></nui-icon>
+<nui-icon name="notifications" style="font-size: 1.5rem;"></nui-icon>
+<nui-icon name="notifications" style="font-size: 2rem;"></nui-icon>
+<nui-icon name="notifications" style="font-size: 3rem;"></nui-icon>
+			</script>
 		</nui-code>
 		
 		<div class="icon-demo">
@@ -60,10 +64,12 @@
 		<h2>Coloring</h2>
 		<p>Icons inherit the current text color and can be styled with CSS:</p>
 		<nui-code>
-			<pre><code>&lt;nui-icon name="security" style="color: red;"&gt;&lt;/nui-icon&gt;
-&lt;nui-icon name="analytics" style="color: orange;"&gt;&lt;/nui-icon&gt;
-&lt;nui-icon name="done" style="color: green;"&gt;&lt;/nui-icon&gt;
-&lt;nui-icon name="info" style="color: blue;"&gt;&lt;/nui-icon&gt;</code></pre>
+			<script type="example" data-lang="html">
+<nui-icon name="security" style="color: red;"></nui-icon>
+<nui-icon name="analytics" style="color: orange;"></nui-icon>
+<nui-icon name="done" style="color: green;"></nui-icon>
+<nui-icon name="info" style="color: blue;"></nui-icon>
+			</script>
 		</nui-code>
 		
 		<div class="icon-demo">
@@ -78,12 +84,14 @@
 		<h2>Inline with Text</h2>
 		<p>Icons can be used inline with text and will align with the baseline:</p>
 		<nui-code>
-			<pre><code>&lt;p&gt;
-	&lt;nui-icon name="mail"&gt;&lt;/nui-icon&gt; Email Settings
-&lt;/p&gt;
-&lt;p&gt;
-	&lt;nui-icon name="person"&gt;&lt;/nui-icon&gt; User Profile
-&lt;/p&gt;</code></pre>
+			<script type="example" data-lang="html">
+<p>
+	<nui-icon name="mail"></nui-icon> Email Settings
+</p>
+<p>
+	<nui-icon name="person"></nui-icon> User Profile
+</p>
+			</script>
 		</nui-code>
 		
 		<div class="icon-demo icon-demo-block">
@@ -105,21 +113,25 @@
 		<h3>SVG Sprite System</h3>
 		<p>All icons are stored in a single SVG sprite file with symbol definitions:</p>
 		<nui-code>
-			<pre><code>&lt;svg xmlns="http://www.w3.org/2000/svg"&gt;
-	&lt;symbol id="icon-search" viewBox="0 0 24 24"&gt;
-		&lt;path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/&gt;
-	&lt;/symbol&gt;
-&lt;/svg&gt;</code></pre>
+			<script type="example" data-lang="html">
+<svg xmlns="http://www.w3.org/2000/svg">
+	<symbol id="icon-search" viewBox="0 0 24 24">
+		<path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+	</symbol>
+</svg>
+			</script>
 		</nui-code>
 		
 		<h3>Component Usage</h3>
 		<p>The component references sprite symbols using SVG <code>&lt;use&gt;</code> element:</p>
 		<nui-code>
-			<pre><code>&lt;nui-icon name="search"&gt;
-	&lt;svg&gt;
-		&lt;use href="material-icons-sprite.svg#icon-search"&gt;&lt;/use&gt;
-	&lt;/svg&gt;
-&lt;/nui-icon&gt;</code></pre>
+			<script type="example" data-lang="html">
+<nui-icon name="search">
+	<svg>
+		<use href="material-icons-sprite.svg#icon-search"></use>
+	</svg>
+</nui-icon>
+			</script>
 		</nui-code>
 		
 		<h3>Benefits</h3>
@@ -139,7 +151,9 @@
 			This allows easy addition of new icons - just add SVG files and regenerate the sprite.
 		</p>
 		<nui-code>
-			<pre><code>python assets/generate_icon_sprite.py</code></pre>
+			<script type="example" data-lang="bash">
+python assets/generate_icon_sprite.py
+			</script>
 		</nui-code>
 	</section>
 </div>

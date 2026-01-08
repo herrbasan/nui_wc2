@@ -19,11 +19,11 @@ console.log('URL params:', { skipInit, mode });
 
 // Setup action handlers using event delegation on data-action attributes
 document.addEventListener('click', (e) => {
-	
+
 	const actionEl = e.target.closest('[data-action]');
 	if (!actionEl) return;
 	const action = actionEl.dataset.action;
-	
+
 	switch (action) {
 		case 'toggle-sidebar':
 			const app = document.querySelector('nui-app');

@@ -8,10 +8,12 @@
 	<p>Initialize with tags using hidden inputs. These will be parsed on component upgrade.</p>
 
 	<nui-code>
-		<pre><code data-lang="html">&lt;nui-tag-input name="filters"&gt;
-  &lt;input type="hidden" name="filters" value="active"&gt;
-  &lt;input type="hidden" name="filters" value="published"&gt;
-&lt;/nui-tag-input&gt;</code></pre>
+		<script type="example" data-lang="html">
+<nui-tag-input name="filters">
+	<input type="hidden" name="filters" value="active">
+	<input type="hidden" name="filters" value="published">
+</nui-tag-input>
+		</script>
 	</nui-code>
 
 	<div class="demo-area">
@@ -43,13 +45,16 @@
 	<p>Tags are managed programmatically via the component's API. Hidden inputs provide form compatibility.</p>
 
 	<nui-code>
-		<pre><code data-lang="html">&lt;nui-tag-input name="keywords"&gt;&lt;/nui-tag-input&gt;
-
-&lt;script&gt;
+		<script type="example" data-lang="html">
+<nui-tag-input name="keywords"></nui-tag-input>
+		</script>
+	</nui-code>
+	<nui-code>
+		<script type="example" data-lang="js">
 const tagInput = document.querySelector('nui-tag-input');
 tagInput.addTag('javascript');
 tagInput.addTag('typescript');
-&lt;/script&gt;</code></pre>
+		</script>
 	</nui-code>
 
 	<div class="demo-area">
@@ -71,8 +76,10 @@ tagInput.addTag('typescript');
 	<p>Add the <code>editable</code> attribute to allow users to type and add new tags.</p>
 
 	<nui-code>
-		<pre><code data-lang="html">&lt;nui-tag-input name="keywords" editable placeholder="Add keyword..."&gt;
-&lt;/nui-tag-input&gt;</code></pre>
+		<script type="example" data-lang="html">
+<nui-tag-input name="keywords" editable placeholder="Add keyword...">
+</nui-tag-input>
+		</script>
 	</nui-code>
 
 	<div class="demo-area">
@@ -122,17 +129,19 @@ tagInput.addTag('typescript');
 	<p>The component dispatches events when tags are added, removed, or the list changes.</p>
 
 	<nui-code>
-		<pre><code data-lang="javascript">tagInput.addEventListener('nui-tag-add', (e) => {
-  console.log('Added:', e.detail.value, e.detail.label);
+		<script type="example" data-lang="js">
+tagInput.addEventListener('nui-tag-add', (e) => {
+	console.log('Added:', e.detail.value, e.detail.label);
 });
 
 tagInput.addEventListener('nui-tag-remove', (e) => {
-  console.log('Removed:', e.detail.value);
+	console.log('Removed:', e.detail.value);
 });
 
 tagInput.addEventListener('nui-change', (e) => {
-  console.log('All values:', e.detail.values);
-});</code></pre>
+	console.log('All values:', e.detail.values);
+});
+		</script>
 	</nui-code>
 
 	<div class="demo-area">

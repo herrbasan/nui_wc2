@@ -22,16 +22,18 @@
 	</ul>
 
 	<nui-code>
-		<pre><code data-lang="html">&lt;nui-app&gt;
-	&lt;!-- Auto-generates skip links for nui-app structure --&gt;
-	&lt;nui-skip-links&gt;&lt;/nui-skip-links&gt;
+		<script type="example" data-lang="html">
+<nui-app>
+	<!-- Auto-generates skip links for nui-app structure -->
+	<nui-skip-links></nui-skip-links>
 	
-	&lt;nui-top-nav&gt;...&lt;/nui-top-nav&gt;
-	&lt;nui-side-nav&gt;...&lt;/nui-side-nav&gt;
-	&lt;nui-content&gt;
-		&lt;main&gt;...&lt;/main&gt;
-	&lt;/nui-content&gt;
-&lt;/nui-app&gt;</code></pre>
+	<nui-top-nav>...</nui-top-nav>
+	<nui-side-nav>...</nui-side-nav>
+	<nui-content>
+		<main>...</main>
+	</nui-content>
+</nui-app>
+		</script>
 	</nui-code>
 </section>
 
@@ -40,16 +42,18 @@
 	<p>Define custom skip links by providing anchor tags inside the component:</p>
 
 	<nui-code>
-		<pre><code data-lang="html">&lt;nui-skip-links&gt;
-	&lt;a href="#main-content"&gt;Skip to main content&lt;/a&gt;
-	&lt;a href="#search"&gt;Skip to search&lt;/a&gt;
-	&lt;a href="#footer"&gt;Skip to footer&lt;/a&gt;
-&lt;/nui-skip-links&gt;
+		<script type="example" data-lang="html">
+<nui-skip-links>
+	<a href="#main-content">Skip to main content</a>
+	<a href="#search">Skip to search</a>
+	<a href="#footer">Skip to footer</a>
+</nui-skip-links>
 
-&lt;header&gt;...&lt;/header&gt;
-&lt;main id="main-content"&gt;...&lt;/main&gt;
-&lt;div id="search"&gt;...&lt;/div&gt;
-&lt;footer id="footer"&gt;...&lt;/footer&gt;</code></pre>
+<header>...</header>
+<main id="main-content">...</main>
+<div id="search">...</div>
+<footer id="footer">...</footer>
+		</script>
 	</nui-code>
 </section>
 

@@ -93,11 +93,13 @@
 	</nui-layout>
 
 	<nui-code>
-		<pre><code data-lang="html">&lt;nui-layout columns="2"&gt;
-  &lt;div class="nui-card"&gt;Card 1&lt;/div&gt;
-  &lt;div class="nui-card"&gt;Card 2&lt;/div&gt;
-  ...
-&lt;/nui-layout&gt;</code></pre>
+		<script type="example" data-lang="html">
+<nui-layout columns="2">
+	<div class="nui-card">Card 1</div>
+	<div class="nui-card">Card 2</div>
+	...
+</nui-layout>
+		</script>
 	</nui-code>
 </section>
 
@@ -151,12 +153,14 @@
 	</nui-layout>
 
 	<nui-code>
-		<pre><code data-lang="html">&lt;nui-layout columns="3"&gt;
-  &lt;div class="nui-card"&gt;Card 1&lt;/div&gt;
-  &lt;div class="nui-card"&gt;Card 2&lt;/div&gt;
-  &lt;div class="nui-card"&gt;Card 3&lt;/div&gt;
-  ...
-&lt;/nui-layout&gt;</code></pre>
+		<script type="example" data-lang="html">
+<nui-layout columns="3">
+	<div class="nui-card">Card 1</div>
+	<div class="nui-card">Card 2</div>
+	<div class="nui-card">Card 3</div>
+	...
+</nui-layout>
+		</script>
 	</nui-code>
 </section>
 
@@ -208,11 +212,13 @@
 	</nui-layout>
 
 	<nui-code>
-		<pre><code data-lang="html">&lt;nui-layout type="flow" columns="3"&gt;
-  &lt;!-- Items flow down, then across --&gt;
-  &lt;div class="nui-card"&gt;...&lt;/div&gt;
-  &lt;div class="nui-card"&gt;...&lt;/div&gt;
-&lt;/nui-layout&gt;</code></pre>
+		<script type="example" data-lang="html">
+<nui-layout type="flow" columns="3">
+	<!-- Items flow down, then across -->
+	<div class="nui-card">...</div>
+	<div class="nui-card">...</div>
+</nui-layout>
+		</script>
 	</nui-code>
 
 	<h3>Sorted Flow</h3>
@@ -241,10 +247,12 @@
 	</nui-layout>
 
 	<nui-code>
-		<pre><code data-lang="html">&lt;nui-layout type="flow" columns="3" sort="height"&gt;
-  &lt;!-- JS will reorder these by height --&gt;
-  &lt;div class="nui-card"&gt;...&lt;/div&gt;
-&lt;/nui-layout&gt;</code></pre>
+		<script type="example" data-lang="html">
+<nui-layout type="flow" columns="3" sort="height">
+	<!-- JS will reorder these by height -->
+	<div class="nui-card">...</div>
+</nui-layout>
+		</script>
 	</nui-code>
 </section>
 
@@ -304,11 +312,13 @@
 
 <section>
 	<nui-code>
-		<pre><code data-lang="html">&lt;nui-layout banner&gt;
-  &lt;div class="nui-card"&gt;
-    &lt;!-- Content is still max-width constrained --&gt;
-  &lt;/div&gt;
-&lt;/nui-layout&gt;</code></pre>
+		<script type="example" data-lang="html">
+<nui-layout banner>
+	<div class="nui-card">
+		<!-- Content is still max-width constrained -->
+	</div>
+</nui-layout>
+		</script>
 	</nui-code>
 
 	<p><strong>How it works:</strong> The <code>banner</code> attribute removes the max-width on the container itself (<code>max-width: 100%</code>), but the children retain proper padding and max-width constraints. This gives you full-bleed backgrounds while keeping content readable.</p>

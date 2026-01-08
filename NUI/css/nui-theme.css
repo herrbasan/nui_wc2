@@ -202,6 +202,7 @@ pre {
 	border: solid var(--border-thickness) var(--border-shade2);
 	overflow-x: auto;
 	padding: var(--nui-space);
+	tab-size: 4; /* Control tab width rendering (default: 8) */
 }
 
 h1:focus,
@@ -324,6 +325,7 @@ nui-link-list ul li.group-header button.group-toggle {
 	font: inherit;
 	text-align: left;
 }
+
 nui-link-list ul li a span,
 nui-link-list ul li.group-header button.group-toggle span {
 	line-height: 1;
@@ -822,9 +824,9 @@ nui-icon {
 }
 
 /* Icon in text flow - optically align with baseline when followed by text */
-p > nui-icon,
-span > nui-icon,
-a >nui-icon {
+p>nui-icon,
+span>nui-icon,
+a>nui-icon {
 	vertical-align: middle;
 	position: relative;
 	top: -0.1rem;
@@ -1876,25 +1878,25 @@ nui-form-row {
 	align-items: stretch;
 }
 
-nui-form-row > * {
+nui-form-row>* {
 	min-height: var(--nui-form-row-height);
 	box-sizing: border-box;
 }
 
 /* Direct children that are form controls get exact height */
-nui-form-row > input,
-nui-form-row > select,
-nui-form-row > button,
-nui-form-row > nui-button > button,
-nui-form-row > nui-input,
-nui-form-row > nui-tag-input,
-nui-form-row > nui-select {
+nui-form-row>input,
+nui-form-row>select,
+nui-form-row>button,
+nui-form-row>nui-button>button,
+nui-form-row>nui-input,
+nui-form-row>nui-tag-input,
+nui-form-row>nui-select {
 	height: var(--nui-form-row-height);
 	width: auto;
 }
 
 /* Buttons inside nui-button wrapper */
-nui-form-row > nui-button {
+nui-form-row>nui-button {
 	display: contents;
 }
 
@@ -1907,22 +1909,27 @@ nui-input {
 	align-items: center;
 	position: relative;
 	height: var(--nui-form-row-height);
-	background: light-dark(var(--color-white), var(--color-shade3));
-	border: solid var(--border-thickness) transparent;
-	border-bottom: solid var(--border-thickness) var(--color-shade4);
+	background: light-dark(var(--color-white), rgb(45, 45, 45));
+	border: solid var(--border-thickness) var(--color-shade3);
 	box-sizing: border-box;
-	transition: background-color 0.15s, border-color 0.15s;
+	filter: drop-shadow(0 0 0.15rem light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.2)));
+	transition: background-color 0.15s, border-color 0.15s, filter 0.3s;
 }
 
 nui-input:hover:not(:has(input:disabled)) {
-	background: var(--color-shade1);
 	border-color: var(--color-shade5);
 }
 
-nui-input:has(input:focus-visible) {
-	background: var(--color-shade1);
-	border-color: var(--color-highlight);
+nui-input:has(input:focus) {
+	border-color: var(--color-shade5);
+	filter: drop-shadow(0 0 0.3rem light-dark(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)));
+	background-color: light-dark(var(--color-white), var(--color-shade3));
 }
+
+nui-input:has(input:focus-visible) {
+	
+}
+
 
 nui-input:has(input:disabled) {
 	background: var(--color-shade2);
@@ -1942,11 +1949,17 @@ nui-input input[type] {
 	border: none;
 	color: var(--color-text);
 	font-family: var(--system-ui);
-	font-size: 1rem;
+	font-size: inherit;
 	line-height: 1.5;
 	outline: none;
 	box-sizing: border-box;
 	margin: 0;
+	padding-bottom: 0.08rem;
+}
+
+/* Hide native search clear button */
+nui-input input[type="search"]::-webkit-search-cancel-button {
+	display: none;
 }
 
 nui-input input[type]:focus,
@@ -2050,7 +2063,7 @@ nui-select select {
 	padding: 0 var(--nui-space);
 	background: light-dark(var(--color-white), var(--color-shade3));
 	border: solid var(--border-thickness) var(--color-shade4);
-	
+
 	border-radius: var(--border-radius2);
 	filter: drop-shadow(0 0.05rem 0.2rem light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.4)));
 	color: var(--color-text);
@@ -2064,8 +2077,8 @@ nui-select select {
 }
 
 .nui-select-control:hover:not(:disabled) {
-	background-color: var(--color-shade4);
-	
+	background-color: light-dark(var(--color-shade2), var(--color-shade4));
+	border: solid var(--border-thickness) light-dark(var(--color-shade5), var(--color-shade5));
 }
 
 nui-select.is-open .nui-select-control {
@@ -2244,7 +2257,7 @@ nui-select.is-above .nui-select-search {
 	border-top: solid var(--border-thickness) var(--color-shade3);
 }
 
-@media (max-width: 400px) {
+@media (max-width: 430px) {
 	.nui-select-search {
 		border-bottom: none;
 		border-top: solid var(--border-thickness) var(--color-shade3);
@@ -2255,12 +2268,15 @@ nui-select.is-above .nui-select-search {
 	background-color: transparent;
 }
 
-.nui-select-search nui-input:has(input:focus-visible) {
-	border-color: var(--color-highlight);
-	box-shadow: 0 0 0 1px var(--color-highlight);
+.nui-select-search nui-input:has(input:focus-visible),
+.nui-select-search nui-input:has(input:focus) {
+	background: transparent;
+	border-color: transparent;
+	box-shadow: none;
 }
 
-.nui-select-search input:focus-visible {
+.nui-select-search input:focus-visible,
+.nui-select-search input:focus {
 	outline: none;
 	box-shadow: none;
 }
@@ -2280,7 +2296,7 @@ nui-select.is-above .nui-select-search {
 	padding: 0.4rem;
 }
 
-.nui-select-popup-tags nui-tag-input{
+.nui-select-popup-tags nui-tag-input {
 	margin: 0;
 	padding: 0;
 	height: 100%;
@@ -2321,7 +2337,7 @@ nui-select.is-above .nui-select-popup-tags {
 }
 
 .nui-select-option.is-selected {
-	background: light-dark(var(--color-highlight-dim), rgb(50,50,50));
+	background: light-dark(var(--color-highlight-dim), rgb(50, 50, 50));
 	color: var(--color-white);
 }
 
@@ -2682,17 +2698,15 @@ nui-radio label {
    ============================================================================= */
 
 nui-input input:-webkit-autofill,
-nui-textarea textarea:-webkit-autofill {
-	-webkit-box-shadow: 0 0 0 10rem var(--color-base) inset !important;
-	box-shadow: 0 0 0 10rem var(--color-base) inset !important;
-	-webkit-text-fill-color: var(--color-text-dim) !important;
-}
-
+nui-textarea textarea:-webkit-autofill,
+nui-input input:-webkit-autofill:hover,
 nui-input input:-webkit-autofill:focus,
+nui-textarea textarea:-webkit-autofill:hover,
 nui-textarea textarea:-webkit-autofill:focus {
-	-webkit-box-shadow: 0 0 0 10rem var(--color-shade1) inset !important;
-	box-shadow: 0 0 0 10rem var(--color-shade1) inset !important;
-	-webkit-text-fill-color: var(--color-text) !important;
+	border: none;
+	-webkit-text-fill-color: var(--color-text);
+	transition: background-color 5000s ease-in-out 0s;
+	background-color: transparent !important;
 }
 
 
@@ -3511,6 +3525,7 @@ input[type="reset"]:hover {
 .nui-card h5 {
 	margin-top: 0;
 }
+
 /* Full-width banner - override content-page max-width constraint */
 nui-main>.content-page>nui-layout[banner],
 nui-main>.content-feature>nui-layout[banner],
@@ -3530,20 +3545,20 @@ nui-layout[banner] .maxwidth-container {
 /* nui Scrollbar */
 /* ######################################################################################### */
 ::-webkit-scrollbar {
-    width: var(--space-scrollbar-width);
+	width: var(--space-scrollbar-width);
 }
 
 ::-webkit-scrollbar-track {
 	background: light-dark(var(--color-shade2), var(--color-shade3));
 }
- 
+
 ::-webkit-scrollbar-thumb {
-    background: light-dark(var(--color-shade3), var(--color-shade5));
+	background: light-dark(var(--color-shade3), var(--color-shade5));
 	min-height: 5rem;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: light-dark(var(--color-shade4), var(--color-shade6));  
+	background: light-dark(var(--color-shade4), var(--color-shade6));
 }
 
 .visually-hidden {
@@ -3556,4 +3571,121 @@ nui-layout[banner] .maxwidth-container {
 	clip: rect(0, 0, 0, 0) !important;
 	white-space: nowrap !important;
 	border: 0 !important;
+}
+
+
+/* =============================================================================
+   MOBILE SELECT MODAL
+   ============================================================================= */
+
+/* Mobile Bottom Sheet */
+.nui-modal-backdrop {
+	position: fixed;
+	inset: 0;
+	background: light-dark(rgba(0, 0, 0, .5), rgba(0, 0, 0, .7));
+	z-index: 9998;
+	opacity: 0;
+	transition: opacity .2s;
+}
+
+.nui-modal-backdrop[hidden] {
+	display: none;
+}
+
+.nui-modal-backdrop.is-open {
+	opacity: 1;
+}
+
+.nui-select-sheet {
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	max-height: 90vh;
+	background: var(--color-shade1);
+	z-index: 9999;
+	border-radius: var(--border-radius2) var(--border-radius2) 0 0;
+	display: flex;
+	flex-direction: column;
+	transform: translateY(100%);
+	transition: transform .2s cubic-bezier(.1, .9, .2, 1);
+	box-shadow: 0 -4px 12px rgba(0, 0, 0, .15);
+}
+
+.nui-modal-backdrop.is-open .nui-select-sheet {
+	transform: translateY(0);
+}
+
+.nui-select-sheet-tags {
+	padding: var(--nui-space-half);
+	border-bottom: 1px solid var(--border-shade1);
+}
+
+.nui-sheet-tags-toggle {
+	width: 100%;
+	text-align: left;
+	padding: var(--nui-space-half);
+	background: transparent;
+	border: none;
+	font-weight: 500;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	cursor: pointer;
+	font-size: .9rem;
+	color: var(--color-highlight);
+}
+
+.nui-sheet-tags-toggle.is-expanded span:last-child {
+	transform: rotate(180deg);
+}
+
+.nui-select-sheet-content {
+	flex: 1;
+	overflow-y: auto;
+	-webkit-overflow-scrolling: touch;
+}
+
+.nui-select-sheet-content .nui-select-options {
+	position: static;
+	border: none;
+	box-shadow: none;
+	max-height: none;
+	background: transparent;
+}
+
+.nui-select-sheet-search {
+	padding: var(--nui-space-half);
+	background: var(--color-shade2);
+	border-top: 1px solid var(--border-shade1);
+}
+
+.nui-select-sheet-search .nui-select-search {
+	position: static;
+	border: none;
+	padding: 0;
+	background: transparent;
+}
+
+.nui-select-sheet-footer {
+	padding: var(--nui-space);
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	border-top: 1px solid var(--border-shade1);
+	background: var(--color-shade1);
+	padding-bottom: max(var(--nui-space), env(safe-area-inset-bottom));
+}
+
+.nui-select-sheet-footer span {
+	font-weight: 600;
+}
+
+.nui-select-sheet-footer button {
+	background: transparent;
+	border: none;
+	color: var(--color-highlight);
+	font-weight: 600;
+	padding: var(--nui-space-half) var(--nui-space);
+	cursor: pointer;
 }

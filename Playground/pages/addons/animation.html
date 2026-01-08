@@ -7,14 +7,18 @@
 	<h2>Overview</h2>
 	<p>The <code>nui.animate()</code> function wraps the native Web Animations API, adding convenience features while maintaining direct platform access. Every element also gets an <code>.ani()</code> method for fluent chaining.</p>
 	
-	<nui-code><pre><code>// Two equivalent ways to animate
+	<nui-code>
+		<script type="example" data-lang="js">
+// Two equivalent ways to animate
 element.ani(duration, properties, options);
 nui.animate(element, duration, properties, options);
 
 // Returns animation controller with play/pause/cancel
 const ani = element.ani(1000, { x: 200 });
 ani.pause();
-ani.play();</code></pre></nui-code>
+ani.play();
+		</script>
+	</nui-code>
 </section>
 
 <section>
@@ -44,14 +48,18 @@ ani.play();</code></pre></nui-code>
 		</div>
 	</div>
 
-	<nui-code><pre><code>// Shorthand → CSS transform
+	<nui-code>
+		<script type="example" data-lang="js">
+// Shorthand → CSS transform
 { x: 100 }      → translateX(100px)
 { y: 50 }       → translateY(50px)
 { scale: 1.5 }  → scale(1.5)
 { rotate: 45 }  → rotate(45deg)
 
 // Combine multiple transforms
-element.ani(800, { x: 100, y: 50, scale: 1.2, rotate: 15 });</code></pre></nui-code>
+element.ani(800, { x: 100, y: 50, scale: 1.2, rotate: 15 });
+		</script>
+	</nui-code>
 </section>
 
 <section>
@@ -71,11 +79,15 @@ element.ani(800, { x: 100, y: 50, scale: 1.2, rotate: 15 });</code></pre></nui-c
 		<nui-button><button type="button" data-action="anim-easing">Compare Easing</button></nui-button>
 	</nui-button-container>
 
-	<nui-code><pre><code>// Available presets: sine, quad, cubic, quart, quint, expo, circ, back
+	<nui-code>
+		<script type="example" data-lang="js">
+// Available presets: sine, quad, cubic, quart, quint, expo, circ, back
 // Each has: .in (slow start), .out (slow end), .inOut (slow both)
 
 element.ani(600, { x: 200, ease: 'expo.out' });
-element.ani(400, { scale: 1.2, ease: 'back.out' });</code></pre></nui-code>
+element.ani(400, { scale: 1.2, ease: 'back.out' });
+		</script>
+	</nui-code>
 </section>
 
 <section>
@@ -89,12 +101,16 @@ element.ani(400, { scale: 1.2, ease: 'back.out' });</code></pre></nui-code>
 		<nui-button><button type="button" data-action="anim-keyframes">Play Sequence</button></nui-button>
 	</nui-button-container>
 
-	<nui-code><pre><code>element.ani(2000, [
+	<nui-code>
+		<script type="example" data-lang="js">
+element.ani(2000, [
 	{ x: 0, scale: 1, rotate: 0 },
 	{ x: 150, scale: 1.3, rotate: 0, offset: 0.3 },
 	{ x: 150, scale: 1.3, rotate: 180, offset: 0.6 },
 	{ x: 300, scale: 1, rotate: 360 }
-], { ease: 'cubic.inOut' });</code></pre></nui-code>
+], { ease: 'cubic.inOut' });
+		</script>
+	</nui-code>
 </section>
 
 <section>
@@ -128,7 +144,9 @@ element.ani(400, { scale: 1.2, ease: 'back.out' });</code></pre></nui-code>
 		</div>
 	</div>
 
-	<nui-code><pre><code>// Delay start and end
+	<nui-code>
+		<script type="example" data-lang="js">
+// Delay start and end
 element.ani(500, { x: 200 }, { delay: 300, endDelay: 200 });
 
 // Repeat 3 times
@@ -138,7 +156,9 @@ element.ani(400, { rotate: 360 }, { iterations: 3 });
 element.ani(600, { x: 200 }, { iterations: 4, direction: 'alternate' });
 
 // Loop forever
-element.ani(1000, { rotate: 360 }, { iterations: Infinity });</code></pre></nui-code>
+element.ani(1000, { rotate: 360 }, { iterations: Infinity });
+		</script>
+	</nui-code>
 </section>
 
 <section>
@@ -161,7 +181,9 @@ element.ani(1000, { rotate: 360 }, { iterations: Infinity });</code></pre></nui-
 		</nui-button-container>
 	</div>
 
-	<nui-code><pre><code>const ani = element.ani(3000, { x: 400 }, {
+	<nui-code>
+		<script type="example" data-lang="js">
+const ani = element.ani(3000, { x: 400 }, {
 	paused: true,  // Don't auto-start
 	update: (a) => {
 		console.log(a.currentTime, a.progress);
@@ -171,7 +193,9 @@ element.ani(1000, { rotate: 360 }, { iterations: Infinity });</code></pre></nui-
 ani.play();          // Start/resume
 ani.pause();         // Pause
 ani.cancel();        // Stop and reset
-ani.play(1500);      // Seek to 1500ms and play</code></pre></nui-code>
+ani.play(1500);      // Seek to 1500ms and play
+		</script>
+	</nui-code>
 </section>
 
 <section>
@@ -188,7 +212,9 @@ ani.play(1500);      // Seek to 1500ms and play</code></pre></nui-code>
 		</nui-button-container>
 	</div>
 
-	<nui-code><pre><code>element.ani(1500, [
+	<nui-code>
+		<script type="example" data-lang="js">
+element.ani(1500, [
 	{ x: 0, scale: 1 },
 	{ x: 150, scale: 1.5, offset: 0.5 },
 	{ x: 300, scale: 1 }
@@ -201,7 +227,9 @@ ani.play(1500);      // Seek to 1500ms and play</code></pre></nui-code>
 		// Called when animation completes
 		console.log('Done!', ani.progress);
 	}
-});</code></pre></nui-code>
+});
+		</script>
+	</nui-code>
 </section>
 
 <section>
@@ -215,14 +243,18 @@ ani.play(1500);      // Seek to 1500ms and play</code></pre></nui-code>
 		<nui-button><button type="button" data-action="anim-chain">Run Sequence</button></nui-button>
 	</nui-button-container>
 
-	<nui-code><pre><code>// Chain with callbacks
+	<nui-code>
+		<script type="example" data-lang="js">
+// Chain with callbacks
 box.ani(300, { scale: 1.4, ease: 'back.out' }, {
 	cb: () => box.ani(400, { rotate: 180, ease: 'expo.out' }, {
 		cb: () => box.ani(300, { scale: 1, ease: 'back.out' }, {
 			cb: () => box.ani(400, { rotate: 360, x: 200, ease: 'expo.out' })
 		})
 	})
-});</code></pre></nui-code>
+});
+		</script>
+	</nui-code>
 </section>
 
 <section>
@@ -235,7 +267,9 @@ box.ani(300, { scale: 1.4, ease: 'back.out' }, {
 		<nui-button><button type="button" class="feedback-btn" data-action="anim-practical:loading">Submit</button></nui-button>
 	</div>
 
-	<nui-code><pre><code>// Success pulse
+	<nui-code>
+		<script type="example" data-lang="js">
+// Success pulse
 btn.ani(150, { scale: 0.95 }, {
 	cb: () => btn.ani(300, { scale: 1, ease: 'back.out' })
 });
@@ -247,7 +281,9 @@ btn.ani(80, [
 
 // Loading state with infinite rotation
 const spinner = btn.ani(800, { rotate: 360 }, { iterations: Infinity });
-// Later: spinner.cancel();</code></pre></nui-code>
+// Later: spinner.cancel();
+		</script>
+	</nui-code>
 </section>
 
 <style>

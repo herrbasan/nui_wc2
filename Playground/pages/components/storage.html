@@ -21,14 +21,16 @@
 	<h2>Basic Usage</h2>
 	<p>Store and retrieve values with sensible defaults:</p>
 	<nui-code>
-		<pre><code data-lang="javascript">// Store a value (cookie, forever)
+		<script type="example" data-lang="js">
+// Store a value (cookie, forever)
 nui.util.storage.set({ name: 'theme', value: 'dark' });
 
 // Retrieve a value
 const theme = nui.util.storage.get({ name: 'theme' }); // 'dark' or undefined
 
 // Remove a value
-nui.util.storage.remove({ name: 'theme' }); // true if existed, false otherwise</code></pre>
+nui.util.storage.remove({ name: 'theme' }); // true if existed, false otherwise
+		</script>
 	</nui-code>
 	<h3>Try It</h3>
 	<nui-button-container gap="1rem">
@@ -45,14 +47,16 @@ nui.util.storage.remove({ name: 'theme' }); // true if existed, false otherwise<
 	<h2>Storage Targets</h2>
 	<p>Choose where to store your data:</p>
 	<nui-code>
-		<pre><code data-lang="javascript">// Cookie (default)
+		<script type="example" data-lang="js">
+// Cookie (default)
 nui.util.storage.set({ name: 'token', value: 'abc123' });
 
 // localStorage
 nui.util.storage.set({ name: 'prefs', value: 'compact', target: 'localStorage' });
 
 // Get from specific target
-nui.util.storage.get({ name: 'prefs', target: 'localStorage' });</code></pre>
+nui.util.storage.get({ name: 'prefs', target: 'localStorage' });
+		</script>
 	</nui-code>
 	<nui-table>
 		<table>
@@ -86,7 +90,8 @@ nui.util.storage.get({ name: 'prefs', target: 'localStorage' });</code></pre>
 	<h2>TTL (Time-to-Live)</h2>
 	<p>Control when stored values expire using flexible TTL formats:</p>
 	<nui-code>
-		<pre><code data-lang="javascript">// Forever (default) - 10 years for cookies
+		<script type="example" data-lang="js">
+// Forever (default) - 10 years for cookies
 nui.util.storage.set({ name: 'pref', value: 'x' });
 nui.util.storage.set({ name: 'pref', value: 'x', ttl: 'forever' });
 
@@ -103,7 +108,8 @@ nui.util.storage.set({ name: 'annual', value: 'sub', ttl: '1-year' });
 nui.util.storage.set({ name: 'promo', value: 'sale', ttl: '2025-12-31' });
 
 // Epoch timestamp (milliseconds if > 1e12, otherwise seconds)
-nui.util.storage.set({ name: 'exp', value: 'x', ttl: 1735689600000 });</code></pre>
+nui.util.storage.set({ name: 'exp', value: 'x', ttl: 1735689600000 });
+		</script>
 	</nui-code>
 	<h3>Try It</h3>
 	<nui-button-container gap="1rem">
@@ -192,9 +198,11 @@ nui.util.storage.set({ name: 'exp', value: 'x', ttl: 1735689600000 });</code></p
 		<li><strong>path=/</strong> — Cookie available site-wide</li>
 	</ul>
 	<nui-code>
-		<pre><code data-lang="javascript">// Cookie created with these attributes:
+		<script type="example" data-lang="js">
+// Cookie created with these attributes:
 // theme=dark; path=/; SameSite=Lax; Secure; expires=...
-nui.util.storage.set({ name: 'theme', value: 'dark' });</code></pre>
+nui.util.storage.set({ name: 'theme', value: 'dark' });
+		</script>
 	</nui-code>
 </section>
 
@@ -304,27 +312,28 @@ nui.util.storage.set({ name: 'theme', value: 'dark' });</code></pre>
 <section>
 	<h2>Practical Examples</h2>
 	<nui-code>
-		<pre><code data-lang="javascript">// Remember user's theme preference
+		<script type="example" data-lang="js">
+// Remember user's theme preference
 const theme = nui.util.storage.get({ name: 'theme' }) || 'light';
 document.documentElement.style.colorScheme = theme;
 
 function toggleTheme() {
-	 const current = nui.util.storage.get({ name: 'theme' }) || 'light';
-    const next = current === 'dark' ? 'light' : 'dark';
-	 nui.util.storage.set({ name: 'theme', value: next });
-    document.documentElement.style.colorScheme = next;
+	const current = nui.util.storage.get({ name: 'theme' }) || 'light';
+	const next = current === 'dark' ? 'light' : 'dark';
+	nui.util.storage.set({ name: 'theme', value: next });
+	document.documentElement.style.colorScheme = next;
 }
 
 // Session token with expiry
 nui.util.storage.set({ 
-    name: 'auth-token', 
-    value: 'jwt-token-here', 
-    ttl: '2-hours' 
+	name: 'auth-token', 
+	value: 'jwt-token-here', 
+	ttl: '2-hours' 
 });
 
 // Check if token exists
 if (nui.util.storage.get({ name: 'auth-token' })) {
-    // User is authenticated
+	// User is authenticated
 }
 
 // Clear on logout
@@ -332,11 +341,12 @@ nui.util.storage.remove({ name: 'auth-token' });
 
 // Use localStorage for larger data
 nui.util.storage.set({
-    name: 'user-settings',
-    value: 'sidebar:collapsed,density:compact',
-    target: 'localStorage',
-    ttl: '30-days'
-});</code></pre>
+	name: 'user-settings',
+	value: 'sidebar:collapsed,density:compact',
+	target: 'localStorage',
+	ttl: '30-days'
+});
+		</script>
 	</nui-code>
 </section>
 

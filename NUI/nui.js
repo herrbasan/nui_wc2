@@ -588,11 +588,37 @@ registerComponent('nui-side-nav', (element) => {
 });
 
 registerComponent('nui-code', (element) => {
+	// Check for <script type="example"> pattern first
+	const exampleScript = element.querySelector('script[type="example"]');
+	if (exampleScript) {
+		const lang = exampleScript.getAttribute('data-lang') || 'html';
+		const rawText = exampleScript.textContent.trim();
+		
+		// Create the structure
+		const pre = document.createElement('pre');
+		const codeBlock = document.createElement('code');
+		codeBlock.setAttribute('data-lang', lang);
+		codeBlock.textContent = rawText;
+		pre.appendChild(codeBlock);
+		
+		// Replace the script with the pre/code structure
+		exampleScript.replaceWith(pre);
+		
+		// Continue with normal processing
+		setupCodeBlock(element, pre, codeBlock, rawText);
+		return;
+	}
+	
+	// Original pattern: <pre><code>
 	const pre = element.el('pre');
 	const codeBlock = element.el('pre code');
 	if (!pre || !codeBlock) return;
 
 	const rawText = codeBlock.textContent;
+	setupCodeBlock(element, pre, codeBlock, rawText);
+});
+
+function setupCodeBlock(element, pre, codeBlock, rawText) {
 
 	const copyButton = dom.create('button', {
 		class: 'nui-code-copy',
@@ -646,7 +672,7 @@ registerComponent('nui-code', (element) => {
 			codeBlock.innerHTML = module.highlight(rawText, lang);
 		}
 	}).catch(() => { });
-});
+}
 
 registerComponent('nui-link-list', (element) => {
 	const mode = element.getAttribute('mode') || 'tree';
@@ -1625,8 +1651,19 @@ function setupInputBehavior(element, input, config = {}) {
 	const validate = () => {
 		const valid = input.validity.valid;
 		const hasValue = input.value !== '';
-		element.classList.toggle('is-valid', valid && hasValue);
-		element.classList.toggle('is-invalid', !valid);
+		const hasValidationRules = input.hasAttribute('required') || 
+			input.hasAttribute('pattern') || 
+			input.hasAttribute('minlength') || 
+			input.hasAttribute('maxlength') || 
+			input.hasAttribute('min') || 
+			input.hasAttribute('max') ||
+			element.hasAttribute('validate');
+		
+		// Show validation states if input has validation rules
+		if (hasValidationRules) {
+			element.classList.toggle('is-valid', valid && hasValue);
+			element.classList.toggle('is-invalid', !valid);
+		}
 
 		if (!valid && input.validationMessage) {
 			const el = ensureEl('error', 'nui-error-message', 'alert');
@@ -1823,11 +1860,11 @@ registerComponent('nui-tag-input', (element) => {
 	const name = element.getAttribute('name') || '';
 	const isEditable = element.hasAttribute('editable');
 	const placeholder = element.getAttribute('placeholder') || 'Add tag...';
-	
+
 	// Internal state
 	const tags = [];
 	let activeIdx = -1;
-	
+
 	// Parse existing hidden inputs
 	element.els('input[type="hidden"]').forEach(inp => {
 		const val = inp.value?.trim();
@@ -1835,7 +1872,7 @@ registerComponent('nui-tag-input', (element) => {
 			tags.push({ value: val, label: val });
 		}
 	});
-	
+
 	// Build DOM - tags container only focusable when there are tags to navigate
 	const container = dom.create('div', {
 		class: 'nui-tag-input-tags',
@@ -1845,7 +1882,7 @@ registerComponent('nui-tag-input', (element) => {
 	const liveRegion = dom.create('div', { class: 'visually-hidden', attrs: { 'aria-live': 'polite' }, target: element });
 	let input = null;
 	let nuiInput = null;
-	
+
 	// Keyboard navigation for tags container
 	container.addEventListener('keydown', e => {
 		if (!tags.length) return;
@@ -1873,10 +1910,10 @@ registerComponent('nui-tag-input', (element) => {
 			activeIdx = -1; updateHighlight(); container.blur();
 		}
 	});
-	
+
 	container.addEventListener('focus', () => { if (tags.length && activeIdx < 0) setActive(0); });
 	container.addEventListener('blur', () => { activeIdx = -1; updateHighlight(); });
-	
+
 	if (isEditable) {
 		// Use nui-input wrapper for consistent styling
 		nuiInput = dom.create('nui-input', { class: 'nui-tag-input-wrapper', target: element });
@@ -1904,9 +1941,9 @@ registerComponent('nui-tag-input', (element) => {
 			}
 		});
 	}
-	
+
 	const dispatch = (name, detail) => element.dispatchEvent(new CustomEvent(name, { bubbles: true, detail }));
-	
+
 	const setActive = idx => {
 		activeIdx = idx;
 		updateHighlight();
@@ -1918,16 +1955,16 @@ registerComponent('nui-tag-input', (element) => {
 			container.removeAttribute('aria-activedescendant');
 		}
 	};
-	
+
 	const updateHighlight = () => {
 		Array.from(container.children).forEach((el, i) => el.classList.toggle('is-active', i === activeIdx));
 	};
-	
+
 	const updateContainerTabindex = () => {
 		// Only focusable when there are tags to navigate; otherwise input gets focus
 		container.tabIndex = tags.length > 0 ? 0 : -1;
 	};
-	
+
 	const render = () => {
 		container.innerHTML = '';
 		tags.forEach((tag, i) => {
@@ -1952,7 +1989,7 @@ registerComponent('nui-tag-input', (element) => {
 		updateContainerTabindex();
 		syncHiddenInputs();
 	};
-	
+
 	const syncHiddenInputs = () => {
 		element.els('input[type="hidden"]').forEach(inp => inp.remove());
 		if (name) {
@@ -1961,9 +1998,9 @@ registerComponent('nui-tag-input', (element) => {
 			});
 		}
 	};
-	
+
 	const announce = msg => { liveRegion.textContent = msg; setTimeout(() => liveRegion.textContent = '', 1000); };
-	
+
 	// Public API
 	element.addTag = (value, label) => {
 		if (!value || typeof value !== 'string') return false;
@@ -1977,7 +2014,7 @@ registerComponent('nui-tag-input', (element) => {
 		dispatch('nui-change', { values: element.getValues(), tags: element.listTags() });
 		return true;
 	};
-	
+
 	element.removeTag = value => {
 		const idx = tags.findIndex(t => t.value === value);
 		if (idx === -1) return false;
@@ -1988,13 +2025,13 @@ registerComponent('nui-tag-input', (element) => {
 		dispatch('nui-change', { values: element.getValues(), tags: element.listTags() });
 		return true;
 	};
-	
+
 	element.hasTag = value => tags.some(t => t.value === value);
 	element.listTags = () => tags.map(t => ({ ...t }));
 	element.getValues = () => tags.map(t => t.value);
 	element.clear = () => { while (tags.length) element.removeTag(tags[0].value); };
 	element.focus = () => (input || container).focus();
-	
+
 	render();
 });
 
@@ -2004,34 +2041,107 @@ registerComponent('nui-tag-input', (element) => {
 // Track all open selects to ensure only one is open at a time
 const openSelects = new Set();
 
+// ################################# MOBILE MODAL (Singleton)
+let mobileModal = null;
+
+const getMobileSelectModal = () => {
+	if (mobileModal) return mobileModal;
+
+	const backdrop = dom.create('div', {
+		class: 'nui-modal-backdrop',
+		attrs: { hidden: '' },
+		events: { click: (e) => e.target === backdrop && mobileModal.activeSelect?.close() }
+	});
+
+	const modal = dom.create('div', { class: 'nui-select-sheet', target: backdrop });
+	const tags = dom.create('div', { class: 'nui-select-sheet-tags', attrs: { hidden: '' }, target: modal });
+	const content = dom.create('div', { class: 'nui-select-sheet-content', target: modal });
+	const search = dom.create('div', { class: 'nui-select-sheet-search', target: modal });
+	const footer = dom.create('div', { class: 'nui-select-sheet-footer', target: modal });
+	const label = dom.create('span', { target: footer });
+	dom.create('button', { text: 'Done', events: { click: () => mobileModal.activeSelect?.close() }, target: footer });
+
+	mobileModal = {
+		backdrop, modal, content, tags, search, label, activeSelect: null,
+		open(sel) {
+			this.activeSelect = sel;
+			document.body.append(backdrop);
+			backdrop.hidden = false;
+			requestAnimationFrame(() => backdrop.classList.add('is-open'));
+		},
+		close() {
+			if (!this.activeSelect) return;
+			backdrop.classList.remove('is-open');
+			setTimeout(() => {
+				backdrop.hidden = true;
+				backdrop.remove();
+				this.activeSelect.onMobileClose();
+				this.activeSelect = null;
+			}, 200);
+		}
+	};
+
+	return mobileModal;
+};
+
 registerComponent('nui-select', (element) => {
 	const select = element.el('select');
 	if (!select) return;
-	
+
 	const isMulti = select.multiple;
 	const isSearchable = element.hasAttribute('searchable');
-	const placeholder = element.getAttribute('placeholder') || 
-		select.querySelector('option[value=""]')?.textContent || 'Select...';
+	const isMobileEnabled = element.hasAttribute('mobile-sheet');
 	
+	// Ensure select has a placeholder option if not multi-select
+	if (!isMulti && !select.querySelector('option[value=""]')) {
+		const placeholderOpt = document.createElement('option');
+		placeholderOpt.value = '';
+		placeholderOpt.textContent = element.getAttribute('placeholder') || 'Select...';
+		select.prepend(placeholderOpt);
+	}
+	
+	const placeholder = element.getAttribute('placeholder') ||
+		select.querySelector('option[value=""]')?.textContent || 'Select...';
+
+	// Extract label from parent nui-input-group or element attributes
+	let label = element.getAttribute('label') || 
+		select.getAttribute('aria-label') || 
+		element.closest('nui-input-group')?.querySelector('label')?.textContent?.trim() || 
+		placeholder;
+	
+	// Store as data attribute for reference
+	element.dataset.label = label;
+
 	// Cache option->row mapping
 	const rowCache = new WeakMap();
 	let isOpen = false;
-	
+
 	// Hide native select (styled via CSS)
 	select.tabIndex = -1;
-	
+
 	// Build control button
 	const control = dom.create('button', {
 		class: 'nui-select-control',
 		attrs: { type: 'button' },
 		target: element
 	});
-	
+
+	// Set aria-label on control if not already present
+	if (!control.hasAttribute('aria-label') && label) {
+		control.setAttribute('aria-label', label);
+	}
+
 	// Control inner content
 	let valueDisplay, previewTags, countBadge;
 	if (isMulti) {
 		const preview = dom.create('span', { class: 'nui-select-preview', target: control });
 		previewTags = dom.create('span', { class: 'nui-select-preview-tags', target: preview });
+		// Add placeholder text for multi-select
+		const placeholderSpan = dom.create('span', { 
+			class: 'nui-select-value is-placeholder', 
+			text: placeholder, 
+			target: preview 
+		});
 		dom.create('span', { class: 'nui-select-preview-fade', attrs: { 'aria-hidden': 'true' }, target: preview });
 		countBadge = dom.create('span', { class: 'nui-select-count', target: control });
 	} else {
@@ -2039,10 +2149,10 @@ registerComponent('nui-select', (element) => {
 		valueDisplay.classList.add('is-placeholder');
 	}
 	dom.create('span', { class: 'nui-select-arrow', target: control });
-	
+
 	// Build popup
 	const popup = dom.create('div', { class: 'nui-select-popup', attrs: { hidden: '' }, target: element });
-	
+
 	// Tags section for multi-select
 	let tagInput = null;
 	if (isMulti) {
@@ -2053,26 +2163,27 @@ registerComponent('nui-select', (element) => {
 			if (opt?.selected) { opt.selected = false; syncState(); }
 		});
 	}
-	
+
 	// Search input
 	let searchInput = null;
 	if (isSearchable) {
 		const searchWrap = dom.create('div', { class: 'nui-select-search', target: popup });
+		const nuiInput = dom.create('nui-input', { target: searchWrap });
 		searchInput = dom.create('input', {
 			attrs: { type: 'text', placeholder: 'Search...', autocomplete: 'off' },
-			target: searchWrap
+			target: nuiInput
 		});
 		searchInput.addEventListener('input', () => filter(searchInput.value));
 	}
-	
+
 	// Options list
 	const list = dom.create('div', { class: 'nui-select-options', target: popup });
 	const noResults = dom.create('div', { class: 'nui-select-no-results', text: 'No results', attrs: { hidden: '' }, target: list });
-	
+
 	// Build option rows from native select
 	const buildOptions = () => {
 		list.els('.nui-select-option, .nui-select-group').forEach(el => el.remove());
-		
+
 		const addOption = (opt, parent) => {
 			if (opt.value === '' && !isMulti) return; // Skip placeholder
 			const row = dom.create('div', {
@@ -2085,7 +2196,7 @@ registerComponent('nui-select', (element) => {
 			row.onclick = e => { e.stopPropagation(); pick(opt); };
 			rowCache.set(opt, row);
 		};
-		
+
 		Array.from(select.children).forEach(child => {
 			if (child.tagName === 'OPTGROUP') {
 				const group = dom.create('div', { class: 'nui-select-group', target: list });
@@ -2097,17 +2208,17 @@ registerComponent('nui-select', (element) => {
 		});
 		syncState();
 	};
-	
+
 	// Sync visual state with native select
 	const syncState = () => {
 		const selected = Array.from(select.selectedOptions).filter(o => o.value !== '');
-		
+
 		// Update option rows
 		Array.from(select.options).forEach(opt => {
 			const row = rowCache.get(opt);
 			if (row) row.classList.toggle('is-selected', opt.selected);
 		});
-		
+
 		if (isMulti) {
 			// Sync tag input
 			if (tagInput?.addTag) {
@@ -2117,8 +2228,14 @@ registerComponent('nui-select', (element) => {
 				selected.forEach(o => { if (!current.has(o.value)) tagInput.addTag(o.value, o.textContent); });
 			}
 			// Update preview
+			const placeholderSpan = previewTags.parentElement.querySelector('.nui-select-value');
 			previewTags.innerHTML = '';
-			selected.slice(0, 3).forEach(o => dom.create('span', { class: 'nui-tag nui-tag--readonly', text: o.textContent, target: previewTags }));
+			if (selected.length) {
+				selected.slice(0, 3).forEach(o => dom.create('span', { class: 'nui-tag nui-tag--readonly', text: o.textContent, target: previewTags }));
+				if (placeholderSpan) placeholderSpan.hidden = true;
+			} else {
+				if (placeholderSpan) placeholderSpan.hidden = false;
+			}
 			countBadge.textContent = selected.length || '';
 			countBadge.hidden = !selected.length;
 		} else {
@@ -2126,11 +2243,11 @@ registerComponent('nui-select', (element) => {
 			valueDisplay.textContent = sel?.textContent || placeholder;
 			valueDisplay.classList.toggle('is-placeholder', !sel);
 		}
-		
+
 		element.classList.toggle('is-invalid', !select.validity.valid);
 		element.dispatchEvent(new CustomEvent('nui-change', { bubbles: true, detail: { values: selected.map(o => o.value) } }));
 	};
-	
+
 	// Pick an option
 	const pick = opt => {
 		if (opt.disabled) return;
@@ -2143,7 +2260,7 @@ registerComponent('nui-select', (element) => {
 		select.dispatchEvent(new Event('change', { bubbles: true }));
 		syncState();
 	};
-	
+
 	// Filter options
 	const filter = q => {
 		q = q.toLowerCase().trim();
@@ -2161,60 +2278,146 @@ registerComponent('nui-select', (element) => {
 		});
 		noResults.hidden = count > 0;
 	};
-	
+
 	// Open/close
 	const open = () => {
 		if (isOpen || select.disabled) return;
-		
+
+		// Check mobile
+		// User Req: "up to 500px if the viewport also has a significant larger height"
+		if (isMobileEnabled && window.innerWidth <= 500 && window.innerHeight > 500) {
+			openMobile();
+			return;
+		}
+
 		// Close all other open selects
 		openSelects.forEach(otherSelect => {
 			if (otherSelect !== element && otherSelect.close) {
 				otherSelect.close();
 			}
 		});
-		
+
 		isOpen = true;
 		openSelects.add(element);
 		element.classList.add('is-open');
 		popup.hidden = false;
-		
+
 		// Reset scroll position
 		list.scrollTop = 0;
-		
+
 		// Position above/below
 		const rect = control.getBoundingClientRect();
 		const below = window.innerHeight - rect.bottom;
 		element.classList.toggle('is-above', below < 300 && rect.top > below);
 		element.classList.toggle('is-below', !(below < 300 && rect.top > below));
-		
+
 		if (isSearchable) {
 			searchInput.value = '';
 			filter('');
-			requestAnimationFrame(() => searchInput.focus());
+			// Don't auto-focus to avoid showing focus ring on mouse/touch interaction
 		}
 		element.dispatchEvent(new CustomEvent('nui-open', { bubbles: true }));
 	};
-	
+
+	const openMobile = () => {
+		openSelects.forEach(s => s !== element && s.close?.());
+
+		const m = getMobileSelectModal();
+		isOpen = true;
+		openSelects.add(element);
+		element.classList.add('is-open');
+
+		// Move elements
+		m.content.appendChild(list);
+		list.hidden = false;
+
+		const searchWrap = popup.querySelector('.nui-select-search');
+		if (searchInput && searchWrap) {
+			m.search.appendChild(searchWrap);
+			searchInput.value = '';
+			filter('');
+		}
+
+		m.label.textContent = label;
+
+		// Multi-select tags
+		const desktopTags = popup.querySelector('.nui-select-popup-tags');
+		m.tags.innerHTML = '';
+		m.tags.hidden = !isMulti;
+
+		if (isMulti && desktopTags) {
+			const toggle = dom.create('button', { class: 'nui-sheet-tags-toggle', target: m.tags });
+			const text = dom.create('span', { target: toggle });
+			dom.create('span', { text: '▼', target: toggle });
+			const wrap = dom.create('div', { attrs: { hidden: '' }, target: m.tags });
+			wrap.appendChild(desktopTags);
+
+			toggle.onclick = () => {
+				wrap.hidden = !wrap.hidden;
+				toggle.classList.toggle('is-expanded', !wrap.hidden);
+			};
+
+			const updateCount = () => {
+				const count = select.selectedOptions.length;
+				text.textContent = `${count} items selected`;
+				m.tags.hidden = !count;
+			};
+			updateCount();
+			element.addEventListener('nui-change', updateCount);
+
+			element.onMobileClose = () => {
+				element.removeEventListener('nui-change', updateCount);
+				popup.appendChild(list);
+				searchWrap && popup.insertBefore(searchWrap, list);
+				popup.prepend(desktopTags);
+				element.onMobileClose = null;
+			};
+		} else {
+			element.onMobileClose = () => {
+				popup.appendChild(list);
+				searchWrap && popup.insertBefore(searchWrap, list);
+				element.onMobileClose = null;
+			};
+		}
+
+		m.open(element);
+		element.dispatchEvent(new CustomEvent('nui-open', { bubbles: true }));
+	};
+
 	const close = () => {
 		if (!isOpen) return;
+
+		// Check if we are in mobile mode
+		const mobileModal = getMobileSelectModal();
+		if (mobileModal.activeSelect === element) {
+			mobileModal.close(); // Triggers animation and eventually onMobileClose
+		}
+
 		isOpen = false;
 		openSelects.delete(element);
 		element.classList.remove('is-open', 'is-above', 'is-below');
 		popup.hidden = true;
 		element.dispatchEvent(new CustomEvent('nui-close', { bubbles: true }));
 	};
-	
+
 	// Event listeners
 	control.addEventListener('click', e => { e.stopPropagation(); isOpen ? close() : open(); });
-	
-	const onOutsideClick = e => { if (isOpen && !element.contains(e.target)) close(); };
+
+	const onOutsideClick = e => {
+		if (isOpen && !element.contains(e.target)) {
+			// Ignore if click is within mobile modal
+			const mobileModal = getMobileSelectModal();
+			if (mobileModal?.modal?.contains(e.target)) return;
+			close();
+		}
+	};
 	document.addEventListener('click', onOutsideClick);
-	
+
 	// Setup
 	element.classList.add(isMulti ? 'is-multi' : 'is-single');
 	if (select.disabled) element.classList.add('is-disabled');
 	buildOptions();
-	
+
 	// Public API
 	element.open = open;
 	element.close = close;
@@ -2224,7 +2427,7 @@ registerComponent('nui-select', (element) => {
 		element.classList.toggle('is-invalid', !valid);
 		return valid;
 	};
-	
+
 	// Cleanup function
 	return () => {
 		openSelects.delete(element);
@@ -2843,34 +3046,34 @@ function createRouter(container, options = {}) {
 
 	function handleHashChange() {
 		const route = parseUrl();
-		
+
 		// If parseUrl returns null, check if it's an anchor link (no route)
 		if (!route) {
 			const hash = location.hash.slice(1);
 			// If there's a hash but no route, it's an anchor link
 			if (hash) {
 				console.log('Anchor link detected:', hash);
-				
+
 				// Immediately reset any body scroll that may have occurred
 				window.scrollTo(0, 0);
 				document.documentElement.scrollTop = 0;
 				document.body.scrollTop = 0;
-				
+
 				console.log('Body scrollTop AFTER reset:', document.body.scrollTop, 'documentElement scrollTop:', document.documentElement.scrollTop);
 				console.log('Window pageYOffset:', window.pageYOffset, 'scrollY:', window.scrollY);
-				
+
 				// Find and scroll the content container
 				const target = document.getElementById(hash);
 				if (target) {
-					const contentScroll = document.querySelector('nui-main') || 
-					                      document.querySelector('nui-content');
+					const contentScroll = document.querySelector('nui-main') ||
+						document.querySelector('nui-content');
 					if (contentScroll) {
 						// Calculate position relative to content container
 						const containerRect = contentScroll.getBoundingClientRect();
 						const targetRect = target.getBoundingClientRect();
 						const scrollOffset = targetRect.top - containerRect.top + contentScroll.scrollTop;
 						console.log('Container top:', containerRect.top, 'Target top:', targetRect.top, 'Scrolling to:', scrollOffset);
-						
+
 						requestAnimationFrame(() => {
 							contentScroll.scrollTo({ top: scrollOffset, behavior: 'smooth' });
 							// Remove hash from URL
@@ -2882,67 +3085,67 @@ function createRouter(container, options = {}) {
 						history.replaceState(null, '', location.pathname + location.search);
 					}
 				}
-				
+
 				return;
 			}
 			// Otherwise, no hash at all - navigate to default
 		}
-		
+
 		navigate(route);
 	}
 
 	function handleAnchorClick(e) {
 		const link = e.target.closest('a[href^="#"]');
 		if (!link) return;
-		
+
 		const hash = link.getAttribute('href').slice(1);
 		// Skip if it's a route (contains '=')
 		if (hash.includes('=')) return;
-		
+
 		console.log('Intercepted anchor click:', hash);
 		e.preventDefault();
 		e.stopPropagation();
-		
+
 		// Find and scroll the content container
 		const target = document.getElementById(hash);
 		if (!target) {
 			console.log('Target not found:', hash);
 			return;
 		}
-		
+
 		// Find the scrollable container from the link's context
 		let contentScroll = link.closest('nui-main');
 		console.log('Link closest nui-main:', contentScroll);
-		
+
 		// If link is not inside nui-main, find the target's container
 		if (!contentScroll) {
 			contentScroll = target.closest('nui-main');
 			console.log('Target closest nui-main:', contentScroll);
 		}
-		
+
 		// Last resort: find first visible nui-main
 		if (!contentScroll) {
 			contentScroll = document.querySelector('nui-main:not([hidden])');
 			console.log('querySelector nui-main:', contentScroll);
 		}
-		
+
 		// Try without :not([hidden])
 		if (!contentScroll) {
 			contentScroll = document.querySelector('nui-main');
 			console.log('querySelector nui-main (any):', contentScroll);
 		}
-		
+
 		if (contentScroll) {
 			// Immediately prevent any pending scroll
 			window.scrollTo(0, 0);
-			
+
 			// Get positions
 			const containerRect = contentScroll.getBoundingClientRect();
 			const targetRect = target.getBoundingClientRect();
-			
+
 			// Calculate absolute position within scrollable content
 			const scrollOffset = targetRect.top - containerRect.top + contentScroll.scrollTop;
-			
+
 			// Use native smooth scroll
 			contentScroll.scrollTo({ top: scrollOffset, behavior: 'smooth' });
 		} else {

@@ -25,21 +25,25 @@
 		<h2>Usage</h2>
 		<p>Wrap your code blocks with <code>&lt;nui-code&gt;</code>:</p>
 		<nui-code>
-			<pre><code>&lt;nui-code&gt;
-	&lt;pre&gt;&lt;code&gt;
+			<script type="example" data-lang="html">
+<nui-code>
+	<pre><code>
 // Your code here
-	&lt;/code&gt;&lt;/pre&gt;
-&lt;/nui-code&gt;</code></pre>
+	</code></pre>
+</nui-code>
+			</script>
 		</nui-code>
 		
 		<h3>Explicit Language Specification</h3>
 		<p>Use <code>data-lang</code> attribute to force a specific language:</p>
 		<nui-code>
-			<pre><code>&lt;nui-code&gt;
-	&lt;pre&gt;&lt;code data-lang="js"&gt;
+			<script type="example" data-lang="html">
+<nui-code>
+	<pre><code data-lang="js">
 console.log('Explicitly JavaScript');
-	&lt;/code&gt;&lt;/pre&gt;
-&lt;/nui-code&gt;</code></pre>
+	</code></pre>
+</nui-code>
+			</script>
 		</nui-code>
 	</section>
 	
@@ -50,30 +54,33 @@ console.log('Explicitly JavaScript');
 		<h3>HTML</h3>
 		<p>Highlights tags, attributes, comments, and text content:</p>
 		<nui-code>
-			<pre><code>&lt;!DOCTYPE html&gt;
-&lt;html lang="en"&gt;
-&lt;head&gt;
-	&lt;meta charset="UTF-8"&gt;
-	&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
-	&lt;title&gt;Sample Page&lt;/title&gt;
-	&lt;link rel="stylesheet" href="styles.css"&gt;
-&lt;/head&gt;
-&lt;body&gt;
-	&lt;!-- Main content area --&gt;
-	&lt;main class="container"&gt;
-		&lt;h1 id="heading"&gt;Welcome&lt;/h1&gt;
-		&lt;p&gt;This is a &lt;strong&gt;sample&lt;/strong&gt; paragraph.&lt;/p&gt;
-		&lt;img src="image.jpg" alt="Description" /&gt;
-	&lt;/main&gt;
-	&lt;script src="app.js"&gt;&lt;/script&gt;
-&lt;/body&gt;
-&lt;/html&gt;</code></pre>
+			<script type="example" data-lang="html">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Sample Page</title>
+	<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+	<!-- Main content area -->
+	<main class="container">
+		<h1 id="heading">Welcome</h1>
+		<p>This is a <strong>sample</strong> paragraph.</p>
+		<img src="image.jpg" alt="Description" />
+	</main>
+	<script src="app.js"></script>
+</body>
+</html>
+			</script>
 		</nui-code>
 		
 		<h3>CSS</h3>
 		<p>Highlights selectors, properties, values, and comments:</p>
 		<nui-code>
-			<pre><code>/* Base styles */
+			<script type="example" data-lang="css">
+/* Base styles */
 :root {
 	--primary-color: #007bff;
 	--spacing: 1rem;
@@ -110,13 +117,15 @@ a:focus {
 button[disabled] {
 	opacity: 0.5;
 	cursor: not-allowed;
-}</code></pre>
+}
+			</script>
 		</nui-code>
 		
 		<h3>JavaScript</h3>
 		<p>Highlights keywords, strings, numbers, comments, and operators:</p>
 		<nui-code>
-			<pre><code>// ES6+ JavaScript examples
+			<script type="example" data-lang="js">
+// ES6+ JavaScript examples
 import { Component } from './framework.js';
 export default class App extends Component {
 	constructor(config) {
@@ -194,13 +203,15 @@ export default class App extends Component {
    with various content */
 const numbers = [1, 2, 3, 4.5, -10, 0xFF, 0b1010];
 const strings = ['single', "double", `template ${variable}`];
-const booleans = [true, false, null, undefined, NaN, Infinity];</code></pre>
+const booleans = [true, false, null, undefined, NaN, Infinity];
+			</script>
 		</nui-code>
 		
 		<h3>TypeScript</h3>
 		<p>Extends JavaScript with type annotations and interfaces:</p>
 		<nui-code>
-			<pre><code>interface User {
+			<script type="example" data-lang="typescript">
+interface User {
 	id: number;
 	name: string;
 	email: string;
@@ -226,13 +237,15 @@ class UserService {
 enum Status {
 	Active = 1,
 	Inactive = 0
-}</code></pre>
+}
+			</script>
 		</nui-code>
 		
 		<h3>JSON</h3>
 		<p>Data interchange format with key-value pairs:</p>
 		<nui-code>
-			<pre><code>{
+			<script type="example" data-lang="json">
+{
 	"name": "Example Project",
 	"version": "1.0.0",
 	"config": {
@@ -245,254 +258,12 @@ enum Status {
 		"express": "4.18.2",
 		"typescript": "5.0.0"
 	}
-}</code></pre>
-		</nui-code>
-		
-		<h3>Python</h3>
-		<p>Example code block (not syntax-highlighted; highlighting is optimized for the 5 core web languages):</p>
-		<nui-code>
-			<pre><code>from typing import List, Optional
-import asyncio
-
-class DataProcessor:
-	"""Process and analyze data"""
-	
-	def __init__(self, config: dict):
-		self.config = config
-		self.results = []
-	
-	@property
-	def count(self) -> int:
-		return len(self.results)
-	
-	async def fetch_data(self, url: str) -> Optional[dict]:
-		try:
-			response = await asyncio.get(url)
-			return response.json()
-		except Exception as e:
-			raise ValueError(f"Failed to fetch: {e}")
-	
-	def process(self, items: List[str]) -> None:
-		for item in items:
-			if item not in self.results:
-				self.results.append(item)
-		
-		# Filter and transform
-		filtered = [x for x in self.results if x.startswith('valid')]
-		return filtered
-
-# Usage
-processor = DataProcessor({'debug': True})
-data = processor.process(['valid1', 'invalid', 'valid2'])</code></pre>
-		</nui-code>
-		
-		<h3>Markdown</h3>
-		<p>Example code block (not syntax-highlighted):</p>
-		<nui-code>
-			<pre><code># Main Heading
-
-## Subheading
-
-This is a paragraph with **bold text** and *italic text*.
-
-Here's a `code snippet` and a [link](https://example.com).
-
-- List item 1
-- List item 2
-- List item 3
-
-### Code Block
-
-```javascript
-const greeting = 'Hello, World!';
-```</code></pre>
-		</nui-code>
-		
-		<h3>PHP</h3>
-		<p>Example code block (not syntax-highlighted):</p>
-		<nui-code>
-			<pre><code><?php
-namespace App\Controllers;
-
-use App\Models\User;
-
-class UserController {
-	private $db;
-	
-	public function __construct($database) {
-		$this->db = $database;
-	}
-	
-	public function getUser($id) {
-		try {
-			$stmt = $this->db->prepare("SELECT * FROM users WHERE id = ?");
-			$stmt->execute([$id]);
-			return $stmt->fetch();
-		} catch (Exception $e) {
-			echo "Error: " . $e->getMessage();
-			return null;
-		}
-	}
-	
-	public static function validateEmail($email) {
-		return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
-	}
 }
-
-$controller = new UserController($db);
-$user = $controller->getUser(123);
-?></code></pre>
+			</script>
 		</nui-code>
 		
-		<h3>Ruby</h3>
-		<p>Example code block (not syntax-highlighted):</p>
-		<nui-code>
-			<pre><code>class User
-	attr_accessor :name, :email
-	
-	def initialize(name, email)
-		@name = name
-		@email = email
-		@created_at = Time.now
-	end
-	
-	def greet
-		puts "Hello, #{@name}!"
-	end
-	
-	def self.find_by_email(email)
-		users.find { |u| u.email == email }
-	end
-end
-
-# Symbols and hashes
-config = {
-	debug: true,
-	port: 3000,
-	features: [:auth, :api, :cache]
-}
-
-# Blocks and iterators
-users.each do |user|
-	user.greet if user.email.include?('@example.com')
-end
-
-result = [1, 2, 3].map { |n| n * 2 }.select { |n| n > 2 }</code></pre>
-		</nui-code>
-		
-		<h3>C/C++</h3>
-		<p>Example code block (not syntax-highlighted):</p>
-		<nui-code>
-			<pre><code>#include <iostream>
-#include <vector>
-#include <string>
-
-#define MAX_SIZE 100
-
-class Person {
-private:
-	std::string name;
-	int age;
-	
-public:
-	Person(const std::string& n, int a) : name(n), age(a) {}
-	
-	virtual void introduce() const {
-		std::cout << "Name: " << name << ", Age: " << age << std::endl;
-	}
-	
-	static int count;
-};
-
-int Person::count = 0;
-
-template<typename T>
-class Stack {
-private:
-	std::vector<T> items;
-	
-public:
-	void push(const T& item) {
-		if (items.size() < MAX_SIZE) {
-			items.push_back(item);
-		}
-	}
-	
-	T pop() {
-		T item = items.back();
-		items.pop_back();
-		return item;
-	}
-};
-
-int main() {
-	Stack<int> numbers;
-	numbers.push(42);
-	return 0;
-}</code></pre>
-		</nui-code>
-		
-		<h3>Java</h3>
-		<p>Example code block (not syntax-highlighted):</p>
-		<nui-code>
-			<pre><code>package com.example.app;
-
-import java.util.*;
-
-public class UserService implements Service {
-	private final Map<Integer, User> users;
-	
-	@Autowired
-	private DatabaseConnection db;
-	
-	public UserService() {
-		this.users = new HashMap<>();
-	}
-	
-	@Override
-	public User findById(int id) throws UserNotFoundException {
-		if (!users.containsKey(id)) {
-			throw new UserNotFoundException("User not found: " + id);
-		}
-		return users.get(id);
-	}
-	
-	public List<User> getActiveUsers() {
-		return users.values()
-			.stream()
-			.filter(u -> u.isActive())
-			.collect(Collectors.toList());
-	}
-	
-	public static void main(String[] args) {
-		UserService service = new UserService();
-		try {
-			User user = service.findById(123);
-			System.out.println(user.getName());
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-}</code></pre>
-		</nui-code>
-		
-		<h3>XML</h3>
-		<p>Markup for data structure (uses HTML highlighting):</p>
-		<nui-code>
-			<pre><code>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
-&lt;configuration&gt;
-	&lt;database&gt;
-		&lt;host&gt;localhost&lt;/host&gt;
-		&lt;port&gt;5432&lt;/port&gt;
-		&lt;name&gt;mydb&lt;/name&gt;
-	&lt;/database&gt;
-	&lt;features&gt;
-		&lt;feature name="auth" enabled="true" /&gt;
-		&lt;feature name="cache" enabled="false" /&gt;
-	&lt;/features&gt;
-	&lt;!-- Configuration comments --&gt;
-&lt;/configuration&gt;</code></pre>
-		</nui-code>
+		<h3>Additional Languages</h3>
+		<p>The component safely displays code in other languages (Python, Ruby, PHP, Java, C/C++, Bash, XML, Markdown, etc.) without syntax highlighting. The focus is on the 5 core web development languages—HTML, CSS, JavaScript, TypeScript, and JSON—done exceptionally well.</p>
 	</section>
 	
 	<section>
@@ -502,9 +273,11 @@ public class UserService implements Service {
 			explicitly specify the language using the <code>data-lang</code> attribute:
 		</p>
 		<nui-code>
-			<pre><code>&lt;pre&gt;&lt;code data-lang="typescript"&gt;
+			<script type="example" data-lang="html">
+<pre><code data-lang="typescript">
 interface User { name: string; }
-&lt;/code&gt;&lt;/pre&gt;</code></pre>
+</code></pre>
+			</script>
 		</nui-code>
 		
 		<h3>Supported Language Identifiers</h3>
@@ -523,7 +296,8 @@ interface User { name: string; }
 		<h3>Automatic Detection</h3>
 		<p>The component detects languages based on content patterns:</p>
 		<nui-code>
-			<pre><code>// Detection logic (simplified)
+			<script type="example" data-lang="js">
+// Detection logic (simplified)
 if (code.startsWith('<')) {
 	language = 'html';
 } else if (/"[\w-]+":\s*/.test(code)) {
@@ -534,19 +308,22 @@ if (code.startsWith('<')) {
 	language = 'css';
 } else if (/\b(const|let|var|function)\b/.test(code)) {
 	language = 'js';
-}</code></pre>
+}
+			</script>
 		</nui-code>
 		
 		<h3>Token System</h3>
 		<p>Uses placeholder tokens to prevent nested span corruption during replacement:</p>
 		<nui-code>
-			<pre><code>// Placeholder prevents: &lt;span&gt;&lt;span&gt;&lt;span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;
+			<script type="example" data-lang="js">
+// Placeholder prevents: <span><span><span></span></span></span>
 const token = `~~TOKEN_${tokenId++}~~`;
 tokens.push({ 
 	token, 
-	html: `&lt;span class="hl-keyword"&gt;${match}&lt;/span&gt;` 
+	html: `<span class="hl-keyword">${match}</span>` 
 });
-return token;</code></pre>
+return token;
+			</script>
 		</nui-code>
 		
 		<h3>Performance</h3>
@@ -564,13 +341,15 @@ return token;</code></pre>
 			Colors automatically adapt to light/dark themes using <code>light-dark()</code> CSS function:
 		</p>
 		<nui-code>
-			<pre><code>.hl-keyword {
+			<script type="example" data-lang="css">
+.hl-keyword {
 	color: light-dark(#d73a49, #ff7b72);
 }
 
 .hl-string {
 	color: light-dark(#032f62, #a5d6ff);
-}</code></pre>
+}
+			</script>
 		</nui-code>
 		<p>
 			Override colors with CSS custom properties for full control over appearance.
