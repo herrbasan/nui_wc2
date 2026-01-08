@@ -7,6 +7,14 @@ body {
 	line-height: 1.6;
 }
 
+nui-app-footer {
+	display: flex;
+}
+
+#scrollToTop {
+	margin-left: auto;
+}
+
 /* Component demo page styles */
 .demo-container {
 	margin-bottom: var(--nui-space, 1rem);

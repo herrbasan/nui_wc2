@@ -94,7 +94,7 @@
 			</script>
 		</nui-code>
 		
-		<div class="icon-demo icon-demo-block">
+		<div class="icon-demo" style="display: block;">
 			<p><nui-icon name="mail"></nui-icon> Email Settings</p>
 			<p><nui-icon name="person"></nui-icon> User Profile</p>
 			<p><nui-icon name="notifications"></nui-icon> Notification Preferences</p>
@@ -113,13 +113,11 @@
 		<h3>SVG Sprite System</h3>
 		<p>All icons are stored in a single SVG sprite file with symbol definitions:</p>
 		<nui-code>
-			<script type="example" data-lang="html">
-<svg xmlns="http://www.w3.org/2000/svg">
-	<symbol id="icon-search" viewBox="0 0 24 24">
-		<path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
-	</symbol>
-</svg>
-			</script>
+			<pre><code data-lang="html">&lt;svg xmlns="http://www.w3.org/2000/svg"&gt;
+	&lt;symbol id="icon-search" viewBox="0 0 24 24"&gt;
+		&lt;path d="M15.5 14h-.79l-.28-.27A6.471..."/&gt;
+	&lt;/symbol&gt;
+&lt;/svg&gt;</code></pre>
 		</nui-code>
 		
 		<h3>Component Usage</h3>
@@ -161,21 +159,36 @@ python assets/generate_icon_sprite.py
 <script type="nui/page">
 async function init(element, params) {
 	const iconGrid = element.querySelector('#icon-grid');
-	if (!iconGrid) return;
+	if (!iconGrid) {
+		console.warn('[icon page] Icon grid element not found');
+		return;
+	}
 
 	iconGrid.innerHTML = '<div class="loading">Loading icons...</div>';
 
-	// All available Material Design icons in the sprite
-	const icons = await nui.components.icon.getAvailable();
+	try {
+		// Load icons dynamically from sprite
+		const icons = await nui.components.icon.getAvailable();
+		
+		if (!icons || icons.length === 0) {
+			iconGrid.innerHTML = '<p style="color: var(--color-error);">Failed to load icons from sprite.</p>';
+			return;
+		}
+		
+		iconGrid.innerHTML = icons.map(iconName => `
+			<div class="icon-item" data-action="copy-icon:${iconName}">
+				<nui-icon name="${iconName}" style="font-size: 2rem;"></nui-icon>
+				<code>${iconName}</code>
+			</div>
+		`).join('');
+		
+		console.log(`[icon page] Loaded ${icons.length} icons`);
+	} catch (err) {
+		console.error('[icon page] Error loading icons:', err);
+		iconGrid.innerHTML = `<p style="color: var(--color-error);">Error loading icons: ${err.message}</p>`;
+	}
 	
-	iconGrid.innerHTML = icons.map(iconName => `
-		<div class="icon-item" data-action="copy-icon:${iconName}">
-			<nui-icon name="${iconName}" style="font-size: 2rem;"></nui-icon>
-			<code>${iconName}</code>
-		</div>
-	`).join('');
-	
-	// Handle actions
+	// Handle copy actions
 	element.addEventListener('nui-action', async (e) => {
 		const { name, param, target } = e.detail;
 		

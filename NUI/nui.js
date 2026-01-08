@@ -2863,7 +2863,11 @@ async function loadFragment(url, wrapper, params) {
 			throw new Error(`Failed to load ${url} (${response.status})`);
 		}
 
-		const html = await response.text();
+		let html = await response.text();
+		
+		// Strip Live Server injection (development only)
+		html = html.replace(/<!-- Code injected by live-server -->[\s\S]*?<\/script>/gi, '');
+		
 		wrapper.innerHTML = html;
 
 		customElements.upgrade(wrapper);
