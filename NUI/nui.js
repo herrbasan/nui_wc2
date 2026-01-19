@@ -3462,8 +3462,98 @@ const iconSystem = {
 const util = {
 	createElement: dom.create,
 	createSvgElement: dom.svg,
+	dom,
 	enableDrag,
-	storage
+	storage,
+	
+	/**
+	 * Sort array by nested object key path
+	 * @param {Array} array - Array to sort
+	 * @param {string} path - Dot-notation path (e.g., 'data.name' or 'user.profile.age')
+	 * @param {boolean} numeric - Whether to sort numerically
+	 * @returns {Array} Sorted array (mutates original)
+	 */
+	sortByKey(array, path, numeric = false) {
+		const parts = path.split('.');
+		const getValue = (obj) => {
+			let value = obj;
+			for (const part of parts) {
+				value = value?.[part];
+				if (value === undefined) return undefined;
+			}
+			return value;
+		};
+		
+		return array.sort((a, b) => {
+			let x = getValue(a);
+			let y = getValue(b);
+			
+			if (x === undefined || y === undefined) return 0;
+			
+			if (typeof x === 'string' && typeof y === 'string') {
+				x = x.toLowerCase();
+				y = y.toLowerCase();
+			}
+			
+			if (numeric) return x - y;
+			return x < y ? -1 : x > y ? 1 : 0;
+		});
+	},
+	
+	/**
+	 * Filter array by search term across multiple properties
+	 * @param {Object} options - Filter options
+	 * @param {Array} options.data - Array to filter
+	 * @param {string} options.search - Search term
+	 * @param {Array<string>} options.prop - Array of property paths to search
+	 * @param {boolean} options.ignore_case - Case-insensitive search
+	 * @returns {Array} Filtered array
+	 */
+	filter(options) {
+		const { data, search, prop = [], ignore_case = true } = options;
+		if (!search || search.trim() === '') return data;
+		
+		const searchTerm = ignore_case ? search.toLowerCase() : search;
+		const results = [];
+		
+		for (const item of data) {
+			let found = false;
+			for (const path of prop) {
+				const parts = path.split('.');
+				let value = item;
+				for (const part of parts) {
+					value = value?.[part];
+					if (value === undefined) break;
+				}
+				
+				if (value !== undefined) {
+					const stringValue = ignore_case ? String(value).toLowerCase() : String(value);
+					if (stringValue.includes(searchTerm)) {
+						found = true;
+						break;
+					}
+				}
+			}
+			if (found) results.push(item);
+		}
+		
+		return results;
+	},
+	
+	/**
+	 * Detect browser/device environment
+	 * @returns {Object} Environment flags
+	 */
+	detectEnv() {
+		return {
+			isTouch: 'ontouchstart' in window || navigator.maxTouchPoints > 0,
+			isMac: window.navigator.platform.toUpperCase().indexOf('MAC') >= 0,
+			isIOS: ['iPad Simulator','iPhone Simulator','iPod Simulator','iPad','iPhone','iPod'].includes(navigator.platform) 
+				|| (navigator.userAgent.includes("Mac") && "ontouchend" in document),
+			isSafari: /^((?!chrome|android).)*safari/i.test(navigator.userAgent),
+			isFF: navigator.userAgent.toLowerCase().indexOf('firefox') > -1,
+		};
+	}
 };
 
 const componentsApi = {
