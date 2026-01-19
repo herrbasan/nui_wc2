@@ -148,6 +148,16 @@ const dom = {
 		return el;
 	},
 
+	fromHTML(html) {
+		const fragment = document.createRange().createContextualFragment(html);
+		if (fragment.children.length > 1) {
+			const wrapper = document.createElement('div');
+			wrapper.append(...fragment.children);
+			return wrapper;
+		}
+		return fragment.firstElementChild;
+	},
+
 	el: (s, c = document) => s instanceof Element ? s : c.querySelector(s),
 	els: (s, c = document) => s instanceof NodeList || s instanceof Array ? [...s] : [...c.querySelectorAll(s)]
 };
@@ -252,8 +262,8 @@ const a11y = {
 		if (this.hasLabel(button)) return;
 
 		const visibleText = Array.from(button.childNodes)
-			.filter(node => node.nodeType === Node.TEXT_NODE)
-			.map(node => node.textContent.trim())
+			.filter(n => n.nodeType === Node.TEXT_NODE && n.textContent.trim())
+			.map(n => n.textContent.trim())
 			.join(' ');
 
 		if (visibleText) return;
@@ -318,23 +328,15 @@ registerComponent('nui-button', (element) => {
 
 	upgradeAccessibility(element);
 
-	const buttonNodes = Array.from(button.childNodes);
-	const nonEmptyNodes = buttonNodes.filter(node => {
-		if (node.nodeType === Node.TEXT_NODE) {
-			return node.textContent.trim() !== '';
-		}
-		return true;
-	});
+	const nonEmptyNodes = Array.from(button.childNodes).filter(n => 
+		n.nodeType !== Node.TEXT_NODE || n.textContent.trim()
+	);
 
-	const hasOnlyIcon = nonEmptyNodes.length === 1 &&
-		nonEmptyNodes[0].nodeType === Node.ELEMENT_NODE &&
-		nonEmptyNodes[0].tagName === 'NUI-ICON';
-
-	if (hasOnlyIcon) {
+	if (nonEmptyNodes.length === 1 && nonEmptyNodes[0].tagName === 'NUI-ICON') {
 		element.classList.add('icon-only');
 	}
 
-	button.addEventListener('click', (e) => {
+	button.addEventListener('click', () => {
 		element.dispatchEvent(new CustomEvent('nui-click', {
 			bubbles: true,
 			detail: { source: element }
@@ -357,27 +359,19 @@ registerComponent('nui-icon', (element) => {
 	if (!name) return console.warn('nui-icon: Missing "name" attribute');
 
 	element.setAttribute('aria-hidden', 'true');
-	if (element.textContent.trim()) element.textContent = '';
+	element.textContent = '';
 
-	let svg = element.el('svg');
-	if (!svg) {
-		svg = iconTemplate.cloneNode(true);
-		element.append(svg);
-	}
+	let svg = element.el('svg') || iconTemplate.cloneNode(true);
+	if (!element.contains(svg)) element.append(svg);
 
-	let use = svg.el('use');
-	if (!use) {
-		use = dom.svg('use');
-		svg.append(use);
-	}
+	let use = svg.el('use') || dom.svg('use');
+	if (!svg.contains(use)) svg.append(use);
 
 	const updateIcon = (n) => use.setAttribute('href', n ? `${config.iconSpritePath}#${n}` : '');
 	updateIcon(name);
 
 	setupAttributeProxy(element, {
-		'name': (newValue, oldValue) => {
-			updateIcon(newValue);
-		}
+		'name': updateIcon
 	});
 
 	defineAttributeProperty(element, 'iconName', 'name');
@@ -477,15 +471,10 @@ registerComponent('nui-app', (element) => {
 		// Update menu toggle button state
 		const menuToggle = element.el('[data-action="toggle-sidebar"]');
 		if (menuToggle) {
-			if (isForced) {
-				menuToggle.setAttribute('disabled', 'true');
-				menuToggle.setAttribute('aria-hidden', 'true');
-				menuToggle.setAttribute('tabindex', '-1');
-			} else {
-				menuToggle.removeAttribute('disabled');
-				menuToggle.removeAttribute('aria-hidden');
-				menuToggle.removeAttribute('tabindex');
-			}
+			menuToggle.toggleAttribute('disabled', isForced);
+			menuToggle.toggleAttribute('aria-hidden', isForced);
+			if (isForced) menuToggle.setAttribute('tabindex', '-1');
+			else menuToggle.removeAttribute('tabindex');
 		}
 
 		dispatchSideNavEvent(newState);
@@ -497,18 +486,9 @@ registerComponent('nui-app', (element) => {
 
 	function toggleSideNav(element) {
 		if (element.classList.contains('sidenav-forced')) return;
-
-		const isOpen = element.classList.contains('sidenav-open');
-
-		if (isOpen) {
-			element.classList.remove('sidenav-open');
-			element.classList.add('sidenav-closed');
-			dispatchSideNavEvent('closed');
-		} else {
-			element.classList.remove('sidenav-closed');
-			element.classList.add('sidenav-open');
-			dispatchSideNavEvent('open');
-		}
+		const isOpen = element.classList.toggle('sidenav-open');
+		element.classList.toggle('sidenav-closed', !isOpen);
+		dispatchSideNavEvent(isOpen ? 'open' : 'closed');
 	}
 
 	function updateLayoutClasses(element) {
@@ -554,13 +534,10 @@ registerComponent('nui-app', (element) => {
 registerComponent('nui-top-nav', (element) => {
 	const header = element.el('header');
 	if (header) {
-		if (!header.hasAttribute('role') && !header.closest('[role="banner"]')) {
-			const isMainHeader = !header.closest('article, section, aside, main');
-			if (isMainHeader) {
-				header.setAttribute('role', 'banner');
-			}
+		if (!header.hasAttribute('role') && !header.closest('[role="banner"]') &&
+			!header.closest('article, section, aside, main')) {
+			header.setAttribute('role', 'banner');
 		}
-
 		upgradeAccessibility(header);
 	}
 });
@@ -657,24 +634,20 @@ function setupCodeBlock(element, pre, codeBlock, rawText) {
 
 		if (!lang) {
 			const code = codeBlock.textContent.trim();
-			if (/^<[!/?\w]/.test(code) || /<!DOCTYPE/i.test(code)) {
-				lang = 'html';
-			}
-			else if (/^\s*[{\[]/.test(code) && /"[\w-]+":\s*/.test(code)) {
-				lang = 'json';
-			}
-			else if (/\b(interface|type|enum|namespace|declare)\b/.test(code) || /:\s*(string|number|boolean|any)\b/.test(code)) {
-				lang = 'typescript';
-			}
-			else if (/[.#][\w-]+\s*{/.test(code) || /@media|@import/.test(code)) {
-				lang = 'css';
-			}
-			else if (/\b(const|let|var|function|import|export|class|=>)\b/.test(code)) {
-				lang = 'js';
-			}
-
-			if (lang) {
-				codeBlock.setAttribute('data-lang', lang);
+			const patterns = [
+				[/^<[!/?\w]|<!DOCTYPE/i, 'html'],
+				[/^\s*[{\[].*"[\w-]+":\s*/, 'json'],
+				[/\b(interface|type|enum|namespace|declare)\b|:\s*(string|number|boolean|any)\b/, 'typescript'],
+				[/[.#][\w-]+\s*{|@media|@import/, 'css'],
+				[/\b(const|let|var|function|import|export|class|=>)\b/, 'js']
+			];
+			
+			for (const [pattern, detected] of patterns) {
+				if (pattern.test(code)) {
+					lang = detected;
+					codeBlock.setAttribute('data-lang', lang);
+					break;
+				}
 			}
 		}
 
@@ -849,12 +822,11 @@ registerComponent('nui-link-list', (element) => {
 				next = next.nextElementSibling;
 			}
 			if (items.length) {
-				const div = dom.create('div', {
+				header.after(dom.create('div', {
 					class: 'group-items',
 					attrs: { role: 'presentation' },
 					content: items
-				});
-				header.after(div);
+				}));
 			}
 		});
 	}
@@ -1002,11 +974,10 @@ registerComponent('nui-skip-links', (element) => {
 		const targetEl = document.el(target);
 		if (!targetEl) return null;
 
-		let targetId = targetEl.id;
-		if (!targetId) {
-			targetId = `skip-target-${Math.random().toString(36).substr(2, 9)}`;
-			targetEl.id = targetId;
+		if (!targetEl.id) {
+			targetEl.id = `skip-target-${Math.random().toString(36).substr(2, 9)}`;
 		}
+		const targetId = targetEl.id;
 
 		if (!targetEl.hasAttribute('tabindex')) {
 			targetEl.setAttribute('tabindex', '-1');
@@ -1086,22 +1057,19 @@ registerComponent('nui-layout', (element) => {
 });
 
 function handleGridLayout(element) {
-	const columns = element.getAttribute('columns');
+	const n = parseInt(element.getAttribute('columns')) || 1;
 	const gap = element.getAttribute('gap');
-	const n = parseInt(columns) || 1;
 
 	if (gap) element.style.setProperty('--nui-layout-gap', gap);
-
 	element.style.setProperty('--nui-layout-columns', n);
 	element.style.setProperty('--nui-layout-columns-tablet', Math.min(n, 2));
 }
 
 function handleFlowLayout(element) {
-	const columns = element.getAttribute('columns');
+	const n = parseInt(element.getAttribute('columns')) || 1;
 	const columnWidth = element.getAttribute('column-width');
 	const sort = element.getAttribute('sort');
 	const gap = element.getAttribute('gap');
-	const n = parseInt(columns) || 1;
 
 	if (gap) element.style.setProperty('--nui-layout-gap', gap);
 
@@ -1132,9 +1100,7 @@ registerComponent('nui-column-flow', (element) => {
 	const columns = element.getAttribute('columns');
 	const columnWidth = element.getAttribute('column-width');
 
-	if (columns) {
-		element.style.columnCount = columns;
-	}
+	if (columns) element.style.columnCount = columns;
 	if (columnWidth) {
 		if (columnWidth.startsWith('/')) {
 			const divisor = parseInt(columnWidth.slice(1));
@@ -1217,10 +1183,7 @@ registerComponent('nui-dialog', (element) => {
 	});
 
 	dialog.addEventListener('click', (e) => {
-		if (element.hasAttribute('blocking')) return;
-		const rect = dialog.getBoundingClientRect();
-		if (rect.top <= e.clientY && e.clientY <= rect.top + rect.height &&
-			rect.left <= e.clientX && e.clientX <= rect.left + rect.width) return;
+		if (element.hasAttribute('blocking') || e.target !== dialog) return;
 		element.close('backdrop');
 	});
 });
@@ -1330,19 +1293,17 @@ registerComponent('nui-tabs', (element) => {
 		if (!currentTab) return;
 
 		const index = tabs.indexOf(currentTab);
-		let nextIndex = null;
+		const keyMap = {
+			'ArrowRight': (index + 1) % tabs.length,
+			'ArrowDown': (index + 1) % tabs.length,
+			'ArrowLeft': (index - 1 + tabs.length) % tabs.length,
+			'ArrowUp': (index - 1 + tabs.length) % tabs.length,
+			'Home': 0,
+			'End': tabs.length - 1
+		};
 
-		if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-			nextIndex = (index + 1) % tabs.length;
-		} else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-			nextIndex = (index - 1 + tabs.length) % tabs.length;
-		} else if (e.key === 'Home') {
-			nextIndex = 0;
-		} else if (e.key === 'End') {
-			nextIndex = tabs.length - 1;
-		}
-
-		if (nextIndex !== null) {
+		const nextIndex = keyMap[e.key];
+		if (nextIndex !== undefined) {
 			e.preventDefault();
 			const nextTab = tabs[nextIndex];
 			nextTab.focus();
@@ -1411,13 +1372,9 @@ registerComponent('nui-accordion', (element) => {
 		});
 	} else if (element.hasAttribute('exclusive')) {
 		details.forEach(targetDetail => {
-			targetDetail.addEventListener('toggle', (e) => {
+			targetDetail.addEventListener('toggle', () => {
 				if (targetDetail.open) {
-					details.forEach(d => {
-						if (d !== targetDetail && d.open) {
-							d.removeAttribute('open');
-						}
-					});
+					details.forEach(d => d !== targetDetail && d.open && d.removeAttribute('open'));
 				}
 			});
 		});
@@ -1443,7 +1400,7 @@ registerComponent('nui-table', (element) => {
 	let tableCellIndex = 1;
 
 	rows.forEach(row => {
-		const cells = Array.from(row.children);
+		const cells = [...row.children];
 		cells.forEach((cell, i) => {
 			if (headers[i]) {
 				cell.setAttribute('data-label', headers[i]);
@@ -1477,13 +1434,11 @@ registerComponent('nui-slider', (element) => {
 	const fill = dom.create('div', { class: 'nui-slider-fill', target: track });
 	const thumb = dom.create('div', { class: 'nui-slider-thumb', target: track });
 
-	// Get range properties
-	function getRange() {
-		const min = parseFloat(input.min) || 0;
-		const max = parseFloat(input.max) || 100;
-		const step = parseFloat(input.step) || 1;
-		return { min, max, step };
-	}
+	const getRange = () => ({
+		min: parseFloat(input.min) || 0,
+		max: parseFloat(input.max) || 100,
+		step: parseFloat(input.step) || 1
+	});
 
 	// Update visual position from input value
 	function updateVisuals() {
@@ -1550,13 +1505,12 @@ registerComponent('nui-slider', (element) => {
 registerComponent('nui-banner', (element) => {
 	let wrapper = element.el('.nui-banner-wrapper');
 	let contentEl = element.el('.nui-banner-content');
+	
 	if (!wrapper) {
-		const children = Array.from(element.childNodes);
-		contentEl = dom.create('div', { class: 'nui-banner-content', content: children });
+		contentEl = dom.create('div', { class: 'nui-banner-content', content: Array.from(element.childNodes) });
 		wrapper = dom.create('div', { class: 'nui-banner-wrapper', content: contentEl, target: element });
 	} else if (!contentEl) {
-		const children = Array.from(wrapper.childNodes);
-		contentEl = dom.create('div', { class: 'nui-banner-content', content: children, target: wrapper });
+		contentEl = dom.create('div', { class: 'nui-banner-content', content: Array.from(wrapper.childNodes), target: wrapper });
 	}
 
 	let autoCloseTimer = null;
@@ -1602,10 +1556,10 @@ registerComponent('nui-banner', (element) => {
 		element.setAttribute('open', '');
 		element.dispatchEvent(new CustomEvent('nui-banner-open', { bubbles: true }));
 
-		const autoClose = element.getAttribute('auto-close');
-		if (autoClose && parseInt(autoClose, 10) > 0) {
+		const autoClose = parseInt(element.getAttribute('auto-close'), 10);
+		if (autoClose > 0) {
 			if (autoCloseTimer) clearTimeout(autoCloseTimer);
-			autoCloseTimer = setTimeout(() => element.close('timeout'), parseInt(autoClose, 10));
+			autoCloseTimer = setTimeout(() => element.close('timeout'), autoClose);
 		}
 	};
 
@@ -1670,13 +1624,8 @@ function setupInputBehavior(element, input, config = {}) {
 	const validate = () => {
 		const valid = input.validity.valid;
 		const hasValue = input.value !== '';
-		const hasValidationRules = input.hasAttribute('required') || 
-			input.hasAttribute('pattern') || 
-			input.hasAttribute('minlength') || 
-			input.hasAttribute('maxlength') || 
-			input.hasAttribute('min') || 
-			input.hasAttribute('max') ||
-			element.hasAttribute('validate');
+		const hasValidationRules = ['required', 'pattern', 'minlength', 'maxlength', 'min', 'max']
+			.some(attr => input.hasAttribute(attr)) || element.hasAttribute('validate');
 		
 		// Show validation states if input has validation rules
 		if (hasValidationRules) {
@@ -2002,9 +1951,9 @@ registerComponent('nui-tag-input', (element) => {
 			const btn = dom.create('button', {
 				class: 'nui-tag-remove',
 				attrs: { type: 'button', 'aria-label': `Remove ${tag.label}`, tabindex: '-1' },
-				content: '×',
 				target: el
 			});
+			dom.create('nui-icon', { attrs: { name: 'close' }, target: btn });
 			btn.onclick = e => { e.stopPropagation(); element.removeTag(tag.value); };
 		});
 		element.classList.toggle('has-tags', tags.length > 0);
@@ -2128,12 +2077,11 @@ registerComponent('nui-select', (element) => {
 		select.querySelector('option[value=""]')?.textContent || 'Select...';
 
 	// Extract label from parent nui-input-group or element attributes
-	let label = element.getAttribute('label') || 
+	const label = element.getAttribute('label') || 
 		select.getAttribute('aria-label') || 
 		element.closest('nui-input-group')?.querySelector('label')?.textContent?.trim() || 
 		placeholder;
 	
-	// Store as data attribute for reference
 	element.dataset.label = label;
 
 	// Cache option->row mapping
@@ -2470,13 +2418,8 @@ const bannerFactory = {
 		if (!target) {
 			const contentArea = document.el('nui-app nui-content');
 			if (contentArea) {
-				let bannerLayer = contentArea.el(':scope > .nui-banner-layer');
-				if (!bannerLayer) {
-					bannerLayer = dom.create('div', {
-						class: 'nui-banner-layer',
-						target: contentArea
-					});
-				}
+				let bannerLayer = contentArea.el(':scope > .nui-banner-layer') || 
+					dom.create('div', { class: 'nui-banner-layer', target: contentArea });
 				target = bannerLayer;
 			} else {
 				target = document.body;
@@ -2775,11 +2718,7 @@ const dialogSystem = {
 				fields.forEach(f => {
 					const input = dialog.el(`#${f.id}`);
 					if (input) {
-						if (f.type === 'checkbox') {
-							values[f.id] = input.checked;
-						} else {
-							values[f.id] = input.value;
-						}
+						values[f.id] = f.type === 'checkbox' ? input.checked : input.value;
 					}
 				});
 				return values;
@@ -3200,9 +3139,8 @@ function createRouter(container, options = {}) {
 
 	function go(type, id, params = {}) {
 		const hashValue = `${type}=${id}`;
-		const searchParams = new URLSearchParams(params);
-		const search = searchParams.toString();
-
+		const search = new URLSearchParams(params).toString();
+		
 		if (search) {
 			history.pushState(null, '', `?${search}#${hashValue}`);
 		} else {
@@ -3416,16 +3354,15 @@ const storage = {
 		const exists = this.get({ name, target: 'cookie' }) !== undefined;
 		if (!exists) return false;
 
-		let cookie = `${encodeURIComponent(name)}=`;
-		cookie += '; path=/';
-		cookie += '; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-		cookie += '; SameSite=Lax';
+		const parts = [
+			`${encodeURIComponent(name)}=`,
+			'path=/',
+			'expires=Thu, 01 Jan 1970 00:00:00 GMT',
+			'SameSite=Lax'
+		];
+		if (location.protocol === 'https:') parts.push('Secure');
 
-		if (location.protocol === 'https:') {
-			cookie += '; Secure';
-		}
-
-		document.cookie = cookie;
+		document.cookie = parts.join('; ');
 		return true;
 	}
 };
@@ -3439,10 +3376,9 @@ function enableDrag(target, callback, options = {}) {
 		activePointerId = e.pointerId;
 		target.setPointerCapture(e.pointerId);
 
-		target.addEventListener('pointermove', handleMove);
-		target.addEventListener('pointerup', handleUp);
-		target.addEventListener('pointercancel', handleUp);
-		target.addEventListener('lostpointercapture', handleUp);
+		['pointermove', 'pointerup', 'pointercancel', 'lostpointercapture'].forEach(type => {
+			target.addEventListener(type, type === 'pointermove' ? handleMove : handleUp);
+		});
 
 		report(e, 'start');
 	}
