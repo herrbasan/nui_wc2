@@ -3465,14 +3465,7 @@ const util = {
 	dom,
 	enableDrag,
 	storage,
-	
-	/**
-	 * Sort array by nested object key path
-	 * @param {Array} array - Array to sort
-	 * @param {string} path - Dot-notation path (e.g., 'data.name' or 'user.profile.age')
-	 * @param {boolean} numeric - Whether to sort numerically
-	 * @returns {Array} Sorted array (mutates original)
-	 */
+
 	sortByKey(array, path, numeric = false) {
 		const parts = path.split('.');
 		const getValue = (obj) => {
@@ -3500,15 +3493,6 @@ const util = {
 		});
 	},
 	
-	/**
-	 * Filter array by search term across multiple properties
-	 * @param {Object} options - Filter options
-	 * @param {Array} options.data - Array to filter
-	 * @param {string} options.search - Search term
-	 * @param {Array<string>} options.prop - Array of property paths to search
-	 * @param {boolean} options.ignore_case - Case-insensitive search
-	 * @returns {Array} Filtered array
-	 */
 	filter(options) {
 		const { data, search, prop = [], ignore_case = true } = options;
 		if (!search || search.trim() === '') return data;

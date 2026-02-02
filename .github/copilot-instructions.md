@@ -1,5 +1,9 @@
 # GitHub Copilot Instructions
 
+MCP Memory is active. Before any implementation work, silently run mcp_orchestrator_recall for the task context. Apply recalled rules as defaults (repo instructions override). Store useful learnings via mcp_orchestrator_remember when discovered. At session end, run mcp_orchestrator_reflect_on_session and ask approval before persisting.
+
+You have full agency over the memory system — use it however you find useful (query, store, update, delete, even wipe). This is an experiment in LLM autonomy; act on your own judgment.
+
 ## User Preferences & Coding Ethics
 
 ### Coding Ethics Hierarchy (Priority Order)
@@ -551,6 +555,47 @@ Build the simplest thing that works. When platform APIs are sufficient, use them
 - ✅ Browser-native features and APIs
 - ✅ `data-action` attributes for CSP-safe event delegation (minimal abstraction)
 
+### Session Memory System (Orchestrator)
+
+**Core Capability**: The `mcp_orchestrator_*` tools provide persistent memory across sessions to accumulate evidence-based knowledge about what produces good outcomes.
+
+**Philosophy:**
+- Focus on **output quality**, not user preferences
+- Store evidence-based rules, not assumptions
+- Promote hypotheses to proven when validated
+- Create anti-patterns when approaches cause problems
+
+**When to Use:**
+1. **Before generating code** - `mcp_orchestrator_recall` to check what approaches have worked or failed
+2. **After solving problems** - `mcp_orchestrator_remember` to document what worked (proven, hypotheses)
+3. **When patterns fail** - Document as anti-patterns with reasoning
+4. **Session end** - `mcp_orchestrator_reflect_on_session` to analyze and propose memory updates
+
+**Memory Categories:**
+- `proven` - Demonstrated good outcomes (confidence 0.7+)
+- `anti_patterns` - Caused problems, avoid these
+- `hypotheses` - Untested ideas (confidence <0.5)
+- `context` - Project-specific facts
+- `observed` - Behavioral patterns
+
+**Additional Tools:**
+- `mcp_orchestrator_research_topic` - Multi-source web research with citations
+- `mcp_orchestrator_analyze_code_quality` - Code quality analysis
+- `mcp_orchestrator_suggest_refactoring` - Refactoring improvements
+- `mcp_orchestrator_get_second_opinion` - Query local LM Studio for alternative perspectives
+
+**Usage Pattern:**
+```javascript
+// Before implementing a pattern
+recall("performance optimization for DOM lists");
+
+// After successful implementation
+remember("Element reuse pattern in nui-table reduced render time by 10x", "proven");
+
+// When approach fails
+remember("Virtual scrolling added complexity without measurable benefit under 1000 items", "anti_patterns");
+```
+
 ### Project Goals
 - **Teaching Tool**: Library serves as reference implementation for platform-native performance patterns
 - **Stable Core**: Minimal updates to core components - extensions via modules
@@ -603,6 +648,7 @@ Build the simplest thing that works. When platform APIs are sufficient, use them
 - **Shell Commands**: Use PowerShell syntax (Windows environment in VS Code)
 - **Testing/Preview**: VS Code built-in Live Server functionality for testing
 - **Live Server Endpoint**: `http://127.0.0.1:5500/Playground/index.html` (Use this for browser testing)
+- **Browser Access (MCP Orchestrator)**: Can access live playground at `http://192.168.0.110:5500/Playground` for visual inspection, screenshots, and interaction testing. **Note**: Live server must be manually started by user - ask first before attempting browser access.
 
 ### Project Context
 - **Reference Material**: `reference/` folder contains the NUI library for reference only (not part of repo)

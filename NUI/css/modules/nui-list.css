@@ -1,8 +1,42 @@
 /* ################################# NUI-LIST COMPONENT
-   Virtualized list component with search, sort, and selection
+   High-performance virtualized list with search, sort, and selection.
+   Handles 50,000+ items smoothly through element reuse and virtual scrolling.
+   Theoretical max: ~300K items at 60px height (browser element height limits).
+   
    Based on reference/nui/css/nui_main.css superlist styles
    Modernized to use NUI theme system and components
 */
+
+/* ################################# LOCAL VARIABLES (with theme fallbacks) */
+
+nui-list {
+	/* Spacing - use theme vars if present, otherwise defaults */
+	--list-space-xs: var(--nui-space-quarter, 0.25rem);
+	--list-space-sm: var(--nui-space-half, 0.5rem);
+	--list-space-md: var(--nui-space, 1rem);
+	
+	/* Colors - map to actual theme variables */
+	--list-surface: var(--color-shade1, rgb(250, 250, 250));
+	--list-surface-hover: var(--color-shade2, rgb(240, 240, 240));
+	--list-border: var(--border-shade1, rgb(235, 235, 235));
+	--list-text: var(--color-text, rgb(30, 30, 30));
+	--list-text-secondary: var(--color-text-dim, rgb(80, 80, 80));
+	--list-text-tertiary: var(--color-text-muted, rgb(100, 100, 100));
+	--list-shade-1: var(--color-shade1, rgb(250, 250, 250));
+	--list-shade-2: var(--color-shade2, rgb(240, 240, 240));
+	--list-shade-3: var(--color-shade3, rgb(230, 230, 230));
+	
+	/* Accent colors */
+	--list-accent-subtle: var(--color-highlight, rgb(76, 132, 229));
+	--list-accent-text: var(--color-white, rgb(255, 255, 255));
+	
+	/* Typography */
+	--list-font-size-xs: var(--font-size-xsmall, 0.8rem);
+	--list-font-size-sm: var(--font-size-small, 0.9rem);
+	
+	/* Borders */
+	--list-radius-sm: var(--border-radius1, 0.125rem);
+}
 
 /* ################################# CONTAINER */
 
@@ -23,24 +57,24 @@ nui-list {
 	position: relative;
 	display: grid;
 	grid-template-columns: auto minmax(15rem, 20rem);
-	gap: var(--nui-space-md);
+	gap: var(--list-space-md);
 	align-items: center;
 	min-height: 4rem;
-	padding: var(--nui-space-md);
-	background-color: var(--nui-surface);
-	border-bottom: 1px solid var(--nui-border);
+	padding: var(--list-space-md);
+	background-color: var(--list-surface);
+	border-bottom: 1px solid var(--list-border);
 }
 
 .nui-list-sort {
 	display: flex;
 	align-items: center;
-	gap: var(--nui-space-sm);
+	gap: var(--list-space-sm);
 }
 
 .nui-list-sort label {
 	white-space: nowrap;
-	color: var(--nui-text-tertiary);
-	font-size: var(--nui-font-size-sm);
+	color: var(--list-text-tertiary);
+	font-size: var(--list-font-size-sm);
 }
 
 .nui-list-sort nui-select {
@@ -55,15 +89,15 @@ nui-list {
 	width: 2.5rem;
 	height: 2.5rem;
 	padding: 0;
-	border: 1px solid var(--nui-border);
-	border-radius: var(--nui-radius-sm);
-	background-color: var(--nui-surface);
+	border: 1px solid var(--list-border);
+	border-radius: var(--list-radius-sm);
+	background-color: var(--list-surface);
 	cursor: pointer;
 	transition: background-color 0.2s;
 }
 
 .nui-list-sort-direction:hover {
-	background-color: var(--nui-surface-hover);
+	background-color: var(--list-surface-hover);
 }
 
 .nui-list-sort-direction nui-icon {
@@ -84,13 +118,20 @@ nui-list {
 
 /* ################################# VIEWPORT */
 
-.nui-list-viewport {
+/* Body wrapper - contains viewport and fixed overlay */
+.nui-list-body {
 	position: relative;
 	flex: 1;
+	overflow: hidden;
+}
+
+.nui-list-viewport {
+	position: absolute;
+	inset: 0;
 	overflow-x: hidden;
 	overflow-y: auto;
-	padding: var(--nui-space-md);
-	padding-right: calc(var(--nui-space-md) * 2);
+	padding: var(--list-space-md);
+	padding-right: calc(var(--list-space-md) + 1rem);
 }
 
 .nui-list-container {
@@ -98,13 +139,13 @@ nui-list {
 	/* Height set by JS based on item count */
 }
 
-/* Fixed mode overlay (for large lists) */
+/* Fixed mode overlay (for large lists) - positioned over viewport area */
 .nui-list-fixed {
 	position: absolute;
-	top: var(--nui-space-md);
-	left: var(--nui-space-md);
-	right: calc(var(--nui-space-md) + 2rem);
-	bottom: var(--nui-space-md);
+	top: var(--list-space-md);
+	left: var(--list-space-md);
+	right: calc(var(--list-space-md) + 1rem);
+	bottom: var(--list-space-md);
 	overflow: hidden;
 	z-index: 2;
 	pointer-events: none;
@@ -112,10 +153,12 @@ nui-list {
 
 .nui-list-fixed > * {
 	pointer-events: auto;
+	width: 100%;
 }
 
 nui-list[data-mode="fixed"] .nui-list-fixed {
 	display: block;
+	pointer-events: auto;
 }
 
 nui-list:not([data-mode="fixed"]) .nui-list-fixed {
@@ -136,16 +179,16 @@ nui-list:not([data-mode="fixed"]) .nui-list-fixed {
 	grid-auto-flow: column;
 	align-items: center;
 	min-height: 4rem;
-	padding: var(--nui-space-md);
-	background-color: var(--nui-surface);
-	border-top: 1px solid var(--nui-border);
-	gap: var(--nui-space-md);
+	padding: var(--list-space-md);
+	background-color: var(--list-surface);
+	border-top: 1px solid var(--list-border);
+	gap: var(--list-space-md);
 }
 
 .nui-list-footer-left {
 	display: flex;
 	align-items: center;
-	gap: var(--nui-space-sm);
+	gap: var(--list-space-sm);
 }
 
 .nui-list-footer-center {
@@ -158,36 +201,37 @@ nui-list:not([data-mode="fixed"]) .nui-list-fixed {
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	font-size: var(--nui-font-size-sm);
+	font-size: var(--list-font-size-sm);
 	min-height: 1.8rem;
-	border-radius: var(--nui-radius-sm);
-	padding-inline: calc(var(--nui-space-md) * 1.5);
-	color: var(--nui-text-tertiary);
+	border-radius: var(--list-radius-sm);
+	padding-inline: calc(var(--list-space-md) * 1.5);
+	color: var(--list-text-tertiary);
 }
 
 .nui-list-footer-right {
 	display: flex;
 	justify-content: flex-end;
 	align-items: center;
-	gap: var(--nui-space-sm);
+	gap: var(--list-space-sm);
 }
 
 /* ################################# ITEMS (GENERAL) */
 
 .nui-list-item {
 	position: absolute;
-	width: 100%;
+	left: 0;
+	right: 0;
 	cursor: pointer;
 	transition: background-color 0.15s;
 }
 
 .nui-list-item:hover {
-	background-color: var(--nui-surface-hover);
+	background-color: var(--list-surface-hover);
 }
 
 .nui-list-item.selected {
-	background-color: var(--nui-accent-subtle);
-	color: var(--nui-accent-text);
+	background-color: var(--list-accent-subtle);
+	color: var(--list-accent-text);
 }
 
 /* ################################# ITEM VARIANTS */
@@ -197,22 +241,22 @@ nui-list:not([data-mode="fixed"]) .nui-list-fixed {
 	display: flex;
 	align-items: center;
 	height: 3rem;
-	margin-bottom: calc(var(--nui-space-xs) * 0.5);
+	margin-bottom: calc(var(--list-space-xs) * 0.5);
 	padding: 0;
-	background-color: var(--nui-shade-2);
-	color: var(--nui-text-secondary);
-	font-size: var(--nui-font-size-sm);
-	border-radius: var(--nui-radius-sm);
+	background-color: var(--list-shade-2);
+	color: var(--list-text-secondary);
+	font-size: var(--list-font-size-sm);
+	border-radius: var(--list-radius-sm);
 	overflow: hidden;
 }
 
 .nui-list-log-item:hover {
-	background-color: var(--nui-shade-3);
-	color: var(--nui-text);
+	background-color: var(--list-shade-3);
+	color: var(--list-text);
 }
 
 .nui-list-log-item.selected {
-	background-color: var(--nui-accent-subtle);
+	background-color: var(--list-accent-subtle);
 }
 
 .nui-list-log-item > div:nth-child(1) {
@@ -221,8 +265,8 @@ nui-list:not([data-mode="fixed"]) .nui-list-fixed {
 	align-items: center;
 	width: 60px;
 	height: 100%;
-	background-color: var(--nui-shade-1);
-	font-size: var(--nui-font-size-xs);
+	background-color: var(--list-shade-1);
+	font-size: var(--list-font-size-xs);
 	text-align: center;
 	pointer-events: none;
 }
@@ -231,7 +275,7 @@ nui-list:not([data-mode="fixed"]) .nui-list-fixed {
 	display: flex;
 	align-items: center;
 	flex: 1;
-	padding-inline: var(--nui-space-md);
+	padding-inline: var(--list-space-md);
 	height: 100%;
 	pointer-events: none;
 }
@@ -243,8 +287,8 @@ nui-list:not([data-mode="fixed"]) .nui-list-fixed {
 	width: 12rem;
 	height: 100%;
 	margin-left: auto;
-	background-color: var(--nui-shade-1);
-	font-size: var(--nui-font-size-sm);
+	background-color: var(--list-shade-1);
+	font-size: var(--list-font-size-sm);
 	opacity: 0.7;
 	pointer-events: none;
 }
@@ -254,21 +298,21 @@ nui-list:not([data-mode="fixed"]) .nui-list-fixed {
 	display: flex;
 	align-items: center;
 	height: 4rem;
-	margin-bottom: calc(var(--nui-space-xs) * 0.5);
+	margin-bottom: calc(var(--list-space-xs) * 0.5);
 	padding: 0;
-	background-color: var(--nui-shade-2);
-	color: var(--nui-text-secondary);
-	border-radius: var(--nui-radius-sm);
+	background-color: var(--list-shade-2);
+	color: var(--list-text-secondary);
+	border-radius: var(--list-radius-sm);
 	overflow: hidden;
 }
 
 .nui-list-standard-item:hover {
-	background-color: var(--nui-shade-3);
-	color: var(--nui-text);
+	background-color: var(--list-shade-3);
+	color: var(--list-text);
 }
 
 .nui-list-standard-item.selected {
-	background-color: var(--nui-accent-subtle);
+	background-color: var(--list-accent-subtle);
 }
 
 /* Index column */
@@ -278,8 +322,8 @@ nui-list:not([data-mode="fixed"]) .nui-list-fixed {
 	align-items: center;
 	width: 4rem;
 	height: 100%;
-	background-color: var(--nui-shade-1);
-	font-size: var(--nui-font-size-xs);
+	background-color: var(--list-shade-1);
+	font-size: var(--list-font-size-xs);
 	text-align: center;
 	pointer-events: none;
 }
@@ -291,7 +335,7 @@ nui-list:not([data-mode="fixed"]) .nui-list-fixed {
 	align-items: center;
 	width: calc(4rem * 1.77); /* 16:9 aspect ratio */
 	height: 100%;
-	background-color: var(--nui-shade-1);
+	background-color: var(--list-shade-1);
 	pointer-events: none;
 }
 
@@ -307,7 +351,7 @@ nui-list:not([data-mode="fixed"]) .nui-list-fixed {
 	display: flex;
 	align-items: center;
 	flex: 1;
-	padding-inline: var(--nui-space-md);
+	padding-inline: var(--list-space-md);
 	height: 100%;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -323,11 +367,11 @@ nui-list:not([data-mode="fixed"]) .nui-list-fixed {
 	align-items: flex-end;
 	width: 12rem;
 	height: 100%;
-	padding-inline: var(--nui-space-sm);
-	background-color: var(--nui-shade-1);
-	font-size: var(--nui-font-size-sm);
+	padding-inline: var(--list-space-sm);
+	background-color: var(--list-shade-1);
+	font-size: var(--list-font-size-sm);
 	pointer-events: none;
-	gap: calc(var(--nui-space-xs) * 0.5);
+	gap: calc(var(--list-space-xs) * 0.5);
 }
 
 .nui-list-standard-item > div:nth-child(4) div:nth-child(2) {
@@ -339,12 +383,12 @@ nui-list:not([data-mode="fixed"]) .nui-list-fixed {
 @media only screen and (max-width: 768px) {
 	.nui-list-header {
 		grid-template-columns: 1fr;
-		gap: var(--nui-space-sm);
+		gap: var(--list-space-sm);
 	}
 	
 	.nui-list-footer {
 		grid-template-columns: 1fr;
-		gap: var(--nui-space-sm);
+		gap: var(--list-space-sm);
 	}
 	
 	.nui-list-footer-left,
@@ -370,7 +414,7 @@ nui-list[data-scroll="false"] .nui-list-viewport {
 /* Compact mode - smaller items */
 nui-list[data-compact="true"] .nui-list-log-item {
 	height: 2rem;
-	font-size: calc(var(--nui-font-size-sm) * 0.9);
+	font-size: calc(var(--list-font-size-sm) * 0.9);
 }
 
 nui-list[data-compact="true"] .nui-list-standard-item {

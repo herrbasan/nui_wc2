@@ -18,8 +18,8 @@
 	--nui-form-row-height: 2.5rem;
 	
 	--font-size-base: 1rem;
-	--font-size-xsmall: 0.75rem;
-	--font-size-small: 0.85rem;
+	--font-size-xsmall: 0.8rem;
+	--font-size-small: 0.9rem;
 	--font-size-medium: 1.2rem;
 	--font-size-large: 1.5rem;
 	--font-size-xlarge: 2rem;
@@ -2167,6 +2167,7 @@ nui-select.is-disabled .nui-select-control {
 	overflow: hidden;
 	position: relative;
 	height: 100%;
+	opacity: 0.7;
 }
 
 .is-open .nui-select-preview,
@@ -2179,15 +2180,15 @@ nui-select.is-disabled .nui-select-control {
 	gap: var(--nui-space-quarter);
 	white-space: nowrap;
 	height: 100%;
-	padding-top: 0.3rem;
-	padding-bottom: 0.3rem;
 	box-sizing: border-box;
+	padding-top: 0.2rem;
+	padding-bottom: 0.2rem;
 }
 
 .nui-select-preview-tags .nui-tag {
+	height: auto;
 	font-size: var(--font-size-xsmall);
-	padding-left: var(--nui-space-half);
-	padding-right: var(--nui-space-half);
+	padding: 0.7rem;
 	background: var(--color-shade2);
 	border-radius: var(--border-radius1);
 	color: var(--color-text);
@@ -2749,12 +2750,12 @@ nui-tag-input {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
-	min-height: var(--nui-form-row-height);
+	min-height: 2rem;
 	gap: var(--nui-space-quarter);
 	padding: var(--nui-space-half);
 	background: var(--color-shade3);
 	border: 1px solid var(--color-shade3);
-	border-radius: var(--border-radius);
+	border-radius: var(--border-radius1);
 }
 
 nui-tag-input:focus-within {
@@ -2774,56 +2775,52 @@ nui-tag-input:focus-within {
 
 /* Individual tag */
 .nui-tag {
-	display: inline-flex;
+	display: flex;
+	height: 100%;
 	align-items: center;
 	background: var(--color-shade2);
-	border-radius: var(--border-radius1);
-	padding-left: var(--nui-space-half);
+	border: solid var(--border-thickness) var(--border-shade3);
+	border-radius: var(--border-radius2);
+	padding-left: 0.8rem;
+	padding-top: 0.2rem;
+	padding-bottom: 0.2rem;
 	font-size: var(--font-size-small);
-	height: 100%;
 	color: var(--color-text);
+	filter: drop-shadow(0.05rem 0.05rem 0.15rem light-dark(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.3)));
+	user-select: none;
 }
+
 
 .nui-tag-text {
 	max-width: 12rem;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+	text-transform: capitalize;
 }
 
 /* Tag remove button */
 .nui-tag-remove {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	height: 100%;
-	padding: 0;
-	margin: 0;
-	background: transparent;
+	background-color: transparent;
 	border: none;
 	color: var(--color-text-muted);
-	font-size: var(--font-size-small);
-	line-height: 1;
 	cursor: pointer;
-	transition: background-color 0.1s, color 0.1s;
+	transition: color 0.1s;
+	padding: 0;
+	width: 2.5rem;
+	min-height: none;
+	height: 100%;
+	opacity: 0.6;
+	transition: opacity 0.2s;
 }
+
+
 
 .nui-tag-remove:hover {
-	color: var(--color-text);
-	background: none
+	background-color: transparent;
+	opacity: 1;
 }
 
-.nui-tag-remove:focus-visible {
-	outline: 2px solid var(--color-focus-ring);
-	outline-offset: 1px;
-}
-
-/* Tag focus/active state (keyboard navigation via aria-activedescendant) */
-.nui-tag.is-active {
-	background: var(--color-shade4);
-	outline: 2px solid var(--color-focus-ring);
-	outline-offset: 1px;
-}
 
 /* Text input for adding tags (editable mode) */
 .nui-tag-input-field {

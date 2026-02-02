@@ -48,6 +48,31 @@ nui-app-footer {
 	margin: 1.5rem 0;
 }
 
+/* List page styles */
+.page-list .demo-list {
+	position: relative;
+	background: var(--nui-surface);
+	border: 1px solid var(--nui-border);
+	border-radius: var(--nui-radius-md);
+	overflow: hidden;
+}
+
+.page-list .demo-list--sm {
+	height: 300px;
+}
+
+.page-list .demo-list--md {
+	height: 400px;
+}
+
+.page-list .demo-list--lg {
+	height: 500px;
+}
+
+.page-list .demo-list--xl {
+	height: 600px;
+}
+
 .demo-actions {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));

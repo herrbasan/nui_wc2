@@ -1,0 +1,415 @@
+<div class="page-list">
+	<header>
+		<h1>List Component</h1>
+		<p class="lead">High-performance virtualized list with search, sort, and selection. Handles 50,000+ items smoothly through element reuse and virtual scrolling. Theoretical max: ~300K items at 60px height.</p>
+	</header>
+
+	<section>
+		<h2>Overview</h2>
+		<p>The <code>&lt;nui-list&gt;</code> component provides a performant, feature-rich list with:</p>
+		<ul>
+			<li><strong>Virtual Scrolling</strong> - Only renders visible items (~20-30) regardless of dataset size</li>
+			<li><strong>Element Reuse</strong> - DOM elements created once and reused for performance</li>
+			<li><strong>Search & Filter</strong> - Multi-property search with debounced input</li>
+			<li><strong>Sort</strong> - Multi-column sorting with direction toggle</li>
+			<li><strong>Selection</strong> - Single or multi-select with Ctrl/Shift support</li>
+			<li><strong>Two Modes</strong> - Normal (<1000 items) and Fixed (≥1000 items) for optimal performance</li>
+		</ul>
+	</section>
+
+	<section>
+		<h2>Import Requirements</h2>
+		<nui-code>
+			<script type="example" data-lang="html">
+<!-- CSS -->
+<link rel="stylesheet" href="NUI/css/nui-theme.css">
+<link rel="stylesheet" href="NUI/css/modules/nui-list.css">
+
+<!-- JS -->
+<script type="module" src="NUI/nui.js"></script>
+<script type="module" src="NUI/lib/modules/nui-list.js"></script>
+			</script>
+		</nui-code>
+	</section>
+
+	<section>
+		<h2>Basic List (Programmatic)</h2>
+		<p>Programmatic pattern with custom render function:</p>
+
+		<nui-code>
+			<script type="example" data-lang="html">
+<div class="demo-list demo-list--sm">
+	<nui-list id="basicList"></nui-list>
+</div>
+
+<script type="module">
+import { nui } from './NUI/nui.js';
+import './NUI/lib/modules/nui-list.js';
+
+const data = [];
+for (let i = 0; i < 100; i++) {
+	data.push({
+		id: i,
+		name: `Item ${i}`,
+		value: Math.floor(Math.random() * 1000)
+	});
+}
+
+const list = document.getElementById('basicList');
+list.loadData({
+	data: data,
+	render: (item) => {
+		const div = nui.util.dom.fromHTML(`
+			<div class="nui-list-log-item">
+				<div>${item.id}</div>
+				<div>${item.name}</div>
+				<div>${item.value}</div>
+			</div>
+		`);
+		return div;
+	}
+});
+</script>
+			</script>
+		</nui-code>
+
+		<div class="demo-list demo-list--sm">
+			<nui-list id="basicList"></nui-list>
+		</div>
+	</section>
+
+	<section>
+		<h2>Declarative Pattern (Template)</h2>
+		<p>Simpler syntax for basic lists using template placeholders:</p>
+
+		<nui-code>
+			<script type="example" data-lang="html">
+<div class="demo-list demo-list--sm">
+	<nui-list id="declarativeList">
+		<template data-item>
+			<div class="nui-list-log-item">
+				<div>{{id}}</div>
+				<div>{{name}}</div>
+				<div>{{value}}</div>
+			</div>
+		</template>
+	</nui-list>
+</div>
+
+<script type="module">
+const list = document.getElementById('declarativeList');
+list.loadData(data); // Just pass the array
+</script>
+			</script>
+		</nui-code>
+
+		<div class="demo-list demo-list--sm">
+			<nui-list id="declarativeList">
+				<template data-item>
+					<div class="nui-list-log-item">
+						<div>{{id}}</div>
+						<div>{{name}}</div>
+						<div>{{value}}</div>
+					</div>
+				</template>
+			</nui-list>
+		</div>
+	</section>
+
+	<section>
+		<h2>Search & Sort</h2>
+		<p>Full-featured list with search and multi-column sorting:</p>
+
+		<div class="demo-list demo-list--lg">
+			<nui-list id="searchSortList"></nui-list>
+		</div>
+	</section>
+
+	<section>
+		<h2>Performance Test (50,000 Items)</h2>
+		<p>Stress test with 50,000 items. Notice smooth scrolling and instant search/sort thanks to virtual scrolling and element reuse.</p>
+
+		<div class="demo-list demo-list--xl">
+			<nui-list id="performanceList"></nui-list>
+		</div>
+
+		<div class="demo-callout">
+			<strong>Performance Tip:</strong> With 50k items, the list automatically switches to "fixed mode" which uses percentage-based scrolling for even better performance.
+		</div>
+	</section>
+
+	<section>
+		<h2>Log Mode</h2>
+		<p>Auto-scrolling log viewer that stays at bottom when new items are added:</p>
+
+		<div class="demo-list demo-list--md">
+			<nui-list id="logList"></nui-list>
+		</div>
+
+		<div class="demo-callout">
+			New log entries are automatically added every 500-1500ms. List stays scrolled to bottom.
+		</div>
+	</section>
+
+	<section>
+		<h2>Selection & Footer</h2>
+		<p>List with footer buttons and selection tracking:</p>
+
+		<div class="demo-list demo-list--lg">
+			<nui-list id="selectionList"></nui-list>
+		</div>
+
+		<div class="demo-result">
+			<pre id="selectionOutput">Selection: None</pre>
+		</div>
+	</section>
+</div>
+
+<script type="nui/page">
+function init(element, params, nui) {
+	const api = window.nui || nui;
+	if (!api || !api.util) return;
+
+	// Generate test data
+	function generateData(count) {
+		const data = [];
+		const names = ['Alice', 'Bob', 'Charlie', 'Diana', 'Eve', 'Frank', 'Grace', 'Henry', 'Ivy', 'Jack'];
+		for (let i = 0; i < count; i++) {
+			data.push({
+				idx: i,
+				name: names[Math.floor(Math.random() * names.length)] + ' ' + i,
+				date: Date.now() - Math.floor(Math.random() * 10000000000),
+				value: Math.floor(Math.random() * 10000)
+			});
+		}
+		return data;
+	}
+
+	function formatDate(timestamp) {
+		const d = new Date(timestamp);
+		return d.toLocaleDateString() + ' ' + d.toLocaleTimeString();
+	}
+
+	const { fromHTML } = api.util.dom;
+
+	// Basic List
+	const basicData = generateData(100);
+	const basicList = element.querySelector('#basicList');
+
+	basicList.loadData({
+		data: basicData,
+		render: (item) => {
+			return fromHTML(`
+				<div class="nui-list-log-item">
+					<div>${item.idx}</div>
+					<div>${item.name}</div>
+					<div>${item.value}</div>
+				</div>
+			`);
+		}
+	});
+
+	// Declarative List
+	const declarativeList = element.querySelector('#declarativeList');
+	declarativeList.loadData(basicData);
+
+	// Search & Sort List
+	const searchSortData = generateData(1000);
+	const searchSortList = element.querySelector('#searchSortList');
+	searchSortList.loadData({
+		data: searchSortData,
+		render: (item) => {
+			return fromHTML(`
+				<div class="nui-list-log-item">
+					<div>${item.idx}</div>
+					<div>${item.name}</div>
+					<div>${formatDate(item.date)}</div>
+				</div>
+			`);
+		},
+		search: [
+			{ prop: 'name' },
+			{ prop: 'idx' }
+		],
+		sort: [
+			{ label: 'Index', prop: 'idx', numeric: true },
+			{ label: 'Name', prop: 'name' },
+			{ label: 'Date', prop: 'date', numeric: true }
+		],
+		sort_default: 0,
+		events: (e) => {
+			if (e.type === 'sort') {
+				console.log('Sort changed:', e.index, e.direction);
+			} else if (e.type === 'search_input') {
+				console.log('Search:', e.value);
+			}
+		}
+	});
+
+	// Performance Test (50k items)
+	console.time('Generate 50k items');
+	const perfData = generateData(50000);
+	console.timeEnd('Generate 50k items');
+
+	const perfList = element.querySelector('#performanceList');
+	console.time('Initialize list with 50k items');
+	perfList.loadData({
+		data: perfData,
+		render: (item) => {
+			return fromHTML(`
+				<div class="nui-list-standard-item">
+					<div>${String(item.idx).padStart(5, '0')}</div>
+					<div></div>
+					<div>${item.name}</div>
+					<div>
+						<div>${formatDate(item.date)}</div>
+						<div>Value: ${item.value}</div>
+					</div>
+				</div>
+			`);
+		},
+		search: [
+			{ prop: 'name' },
+			{ prop: 'idx' }
+		],
+		sort: [
+			{ label: 'Index', prop: 'idx', numeric: true },
+			{ label: 'Name', prop: 'name' },
+			{ label: 'Date', prop: 'date', numeric: true },
+			{ label: 'Value', prop: 'value', numeric: true }
+		],
+		sort_default: 0,
+		verbose: true
+	});
+	console.timeEnd('Initialize list with 50k items');
+
+	// Log Mode
+	const logData = [];
+	const logList = element.querySelector('#logList');
+
+	logList.loadData({
+		data: logData,
+		render: (item) => {
+			return fromHTML(`
+				<div class="nui-list-log-item">
+					<div>${item.idx}</div>
+					<div>${item.message}</div>
+					<div>${formatDate(item.date)}</div>
+				</div>
+			`);
+		},
+		logmode: true
+	});
+
+	// Add log entries periodically
+	let logCounter = 0;
+	let logTimer = null;
+
+	function addLogEntry() {
+		const messages = [
+			'System initialized',
+			'User logged in',
+			'Data synced',
+			'Cache cleared',
+			'Connection established',
+			'File uploaded',
+			'Task completed',
+			'Warning: Low memory',
+			'Info: Background task running',
+			'Error resolved'
+		];
+
+		logData.push({
+			idx: logCounter++,
+			message: messages[Math.floor(Math.random() * messages.length)],
+			date: Date.now()
+		});
+
+		logList.appendData();
+
+		if (logCounter < 100) {
+			logTimer = setTimeout(addLogEntry, Math.random() * 1000 + 500);
+		}
+	}
+
+	addLogEntry();
+
+	// Selection List with Footer
+	const selectionData = generateData(500);
+	const selectionList = element.querySelector('#selectionList');
+	const selectionOutput = element.querySelector('#selectionOutput');
+
+	selectionList.loadData({
+		data: selectionData,
+		render: (item) => {
+			return fromHTML(`
+				<div class="nui-list-log-item">
+					<div>${item.idx}</div>
+					<div>${item.name}</div>
+					<div>${item.value}</div>
+				</div>
+			`);
+		},
+		search: [
+			{ prop: 'name' }
+		],
+		sort: [
+			{ label: 'Index', prop: 'idx', numeric: true },
+			{ label: 'Name', prop: 'name' },
+			{ label: 'Value', prop: 'value', numeric: true }
+		],
+		footer: {
+			buttons_left: [
+				{
+					label: 'Delete Selected',
+					type: 'danger',
+					fnc: () => {
+						const selected = selectionList.getSelection();
+						console.log('Delete:', selected);
+						alert(`Would delete ${selected.length} items: ${selected.join(', ')}`);
+					}
+				},
+				{
+					label: 'Clear Selection',
+					type: 'outline',
+					fnc: () => {
+						selectionList.setSelection([]);
+					}
+				}
+			],
+			buttons_right: [
+				{
+					label: 'Select First 10',
+					type: 'primary',
+					fnc: () => {
+						selectionList.setSelection([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+					}
+				}
+			]
+		},
+		events: (e) => {
+			if (e.type === 'selection') {
+				const indices = selectionList.getSelection();
+				const items = selectionList.getSelection(true);
+				selectionOutput.textContent = `Selection: ${e.value} items\nIndices: [${indices.join(', ')}]\nFirst item: ${items[0] ? JSON.stringify(items[0].data, null, 2) : 'None'}`;
+			}
+		}
+	});
+
+	// Lifecycle hooks
+	element.show = () => {
+		if (!logTimer && logCounter < 100) {
+			logTimer = setTimeout(addLogEntry, 500);
+		}
+		console.log('List demo page visible');
+	};
+
+	element.hide = () => {
+		if (logTimer) {
+			clearTimeout(logTimer);
+			logTimer = null;
+		}
+		console.log('List demo page hidden');
+	};
+}
+</script>

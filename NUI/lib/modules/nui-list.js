@@ -1,5 +1,13 @@
 // nui-list.js - Virtualized list component with search, sort, and selection
 // Migrated from reference/nui/nui_list.js (superList)
+//
+// Performance Notes:
+// - Uses virtual scrolling: only renders visible items (~10-20) regardless of total count
+// - Fixed mode (1000+ items): uses percentage-based scroll positioning
+// - Theoretical max items: ~300,000 at 60px item height (limited by browser max element height)
+//   - Firefox limit: ~17.9 million pixels → ~298K items at 60px
+//   - Chrome limit: ~33.5 million pixels → ~559K items at 60px
+// - Practical limits: memory for data objects, search/sort iteration speed
 
 import { nui } from '../../nui.js';
 
@@ -36,6 +44,7 @@ function createList(element, options) {
 	// Options
 	list.options = options;
 	list.renderFn = options.render;
+	list.render = options.render;
 	list.eventCallback = options.events || (() => {});
 	list.verbose = options.verbose || false;
 	
@@ -78,9 +87,10 @@ function createList(element, options) {
 	
 	if (list.fixedList) {
 		list.fixedList.addEventListener('wheel', (e) => {
+			e.preventDefault();
 			list.viewport.scrollTop += e.deltaY;
 			list.scrollPos = list.viewport.scrollTop;
-		});
+		}, { passive: false });
 	}
 	
 	registerEvent(window, 'resize', () => resize());
@@ -119,6 +129,7 @@ function createList(element, options) {
 	// Initialize data
 	updateData();
 	reset();
+	requestAnimationFrame(() => update(true));
 	loop();
 	
 	return list;
@@ -128,14 +139,17 @@ function createList(element, options) {
 	function buildStructure() {
 		list.innerHTML = `
 			<div class="nui-list-header" style="display:none"></div>
-			<div class="nui-list-viewport">
-				<div class="nui-list-container"></div>
+			<div class="nui-list-body">
+				<div class="nui-list-fixed" style="display:none"></div>
+				<div class="nui-list-viewport">
+					<div class="nui-list-container"></div>
+				</div>
 			</div>
-			<div class="nui-list-fixed" style="display:none"></div>
 			<div class="nui-list-footer" style="display:none"></div>
 		`;
 		
 		list.header = list.querySelector('.nui-list-header');
+		list.body = list.querySelector('.nui-list-body');
 		list.viewport = list.querySelector('.nui-list-viewport');
 		list.container = list.querySelector('.nui-list-container');
 		list.fixedList = list.querySelector('.nui-list-fixed');
@@ -153,10 +167,17 @@ function createList(element, options) {
 			const sortDefault = options.sort_default || 0;
 			list.currentSort = options.sort[sortDefault];
 			list.currentOrder = options.sort_direction_default || 'up';
+			const sortOptionsHtml = options.sort.map((s, i) =>
+				`<option value="${i}"${i === sortDefault ? ' selected' : ''}>${s.label}</option>`
+			).join('');
 			
 			headerHTML += `
 				<label>Sort by:</label>
-				<nui-select></nui-select>
+				<nui-select>
+					<select aria-label="Sort by">
+						${sortOptionsHtml}
+					</select>
+				</nui-select>
 				<button class="nui-list-sort-direction ${list.currentOrder}" aria-label="Toggle sort direction">
 					<nui-icon name="arrow"></nui-icon>
 				</button>
@@ -179,15 +200,10 @@ function createList(element, options) {
 		// Initialize sort select
 		if (options.sort) {
 			const select = list.header.querySelector('nui-select');
-			const sortOptions = options.sort.map((s, i) => ({
-				label: s.label,
-				value: i,
-				selected: i === (options.sort_default || 0)
-			}));
-			
-			select.loadData({ options: sortOptions });
-			select.addEventListener('nui-select-change', (e) => {
-				const idx = parseInt(e.detail.value);
+			const nativeSelect = select.querySelector('select');
+			const handleSortChange = (value) => {
+				const idx = parseInt(value, 10);
+				if (Number.isNaN(idx)) return;
 				list.currentSort = options.sort[idx];
 				list.eventCallback({
 					target: list,
@@ -196,7 +212,18 @@ function createList(element, options) {
 					direction: list.currentOrder
 				});
 				filter();
+			};
+			
+			select.addEventListener('nui-change', (e) => {
+				const value = e.detail?.values?.[0];
+				if (value !== undefined) handleSortChange(value);
 			});
+			
+			if (nativeSelect) {
+				nativeSelect.addEventListener('change', (e) => {
+					handleSortChange(e.target.value);
+				});
+			}
 			
 			const sortDirBtn = list.header.querySelector('.nui-list-sort-direction');
 			sortDirBtn.addEventListener('click', () => {
@@ -392,14 +419,18 @@ function createList(element, options) {
 	}
 	
 	function setContainerHeight() {
-		list.container.style.height = list.filtered.length * list.itemHeight + 'px';
+		const height = list.filtered.length * list.itemHeight;
+		list.container.style.height = height + 'px';
 	}
 	
 	// ################################# RENDERING
 	
 	function update(force = false) {
 		const data = list.filtered;
-		if (data.length === 0) return;
+		if (data.length === 0) {
+			log('update: no data');
+			return;
+		}
 		
 		// Determine mode (normal vs fixed for large lists)
 		if (data.length < 1000 || list.env.isTouch) {
@@ -435,8 +466,8 @@ function createList(element, options) {
 					if (!data[i].el) {
 						data[i].el = renderItem(data[i]);
 					}
-					if (!data[i].el.parentNode) {
-						list.container.appendChild(data[i].el);
+					if (!data[i].el.parentNode || data[i].el.parentNode.nodeType === 11) {
+						appendItem(data[i].el);
 					}
 					
 					// Update selection state
@@ -459,10 +490,11 @@ function createList(element, options) {
 			list.fixedList.style.display = 'block';
 			list.setAttribute('data-mode', 'fixed');
 			
-			list.scrollProz = list.scrollPos / (list.container.offsetHeight - list.viewport.offsetHeight);
+			const scrollRange = list.container.offsetHeight - list.viewport.offsetHeight;
+			list.scrollProz = scrollRange > 0 ? list.scrollPos / scrollRange : 0;
 			
 			if (list.scrollProz !== list.lastScrollProz || force) {
-				list.maxVis = Math.ceil(list.viewport.offsetHeight / list.itemHeight);
+				list.maxVis = Math.ceil(list.viewport.offsetHeight / list.itemHeight) || 10;
 				list.offSet = Math.round(list.scrollProz * list.filtered.length);
 				if (list.offSet < 0) list.offSet = 0;
 				if (list.offSet > list.filtered.length - list.maxVis) {
@@ -470,7 +502,23 @@ function createList(element, options) {
 				}
 				
 				const startIdx = list.offSet;
-				const endIdx = Math.min(list.maxVis + list.offSet, data.length);
+				const endIdx = Math.min(list.maxVis + list.offSet, list.filtered.length);
+				
+				// Debug fixed mode once
+				if (!list._fixedModeLogged) {
+					console.log('[nui-list] Fixed mode render:', {
+						scrollRange,
+						scrollProz: list.scrollProz,
+						maxVis: list.maxVis,
+						offSet: list.offSet,
+						startIdx,
+						endIdx,
+						viewportHeight: list.viewport.offsetHeight,
+						containerHeight: list.container.offsetHeight,
+						fixedListDisplay: list.fixedList.style.display
+					});
+					list._fixedModeLogged = true;
+				}
 				
 				// Clear containers
 				list.container.innerHTML = '';
@@ -479,22 +527,22 @@ function createList(element, options) {
 				// Render visible items
 				let pos_idx = 0;
 				for (let i = startIdx; i < endIdx; i++) {
-					if (!data[i].el) {
-						data[i].el = renderItem(data[i]);
+					if (!list.filtered[i].el) {
+						list.filtered[i].el = renderItem(list.filtered[i]);
 					}
-					if (!data[i].el.parentNode) {
-						list.fixedList.appendChild(data[i].el);
+					if (!list.filtered[i].el.parentNode || list.filtered[i].el.parentNode.nodeType === 11) {
+						appendItem(list.filtered[i].el);
 					}
 					
 					// Update selection state
-					if (data[i].selected) {
-						data[i].el.classList.add('selected');
+					if (list.filtered[i].selected) {
+						list.filtered[i].el.classList.add('selected');
 					} else {
-						data[i].el.classList.remove('selected');
+						list.filtered[i].el.classList.remove('selected');
 					}
 					
-					data[i].el.fidx = i;
-					data[i].el.style.top = pos_idx * list.itemHeight + 'px';
+					list.filtered[i].el.fidx = i;
+					list.filtered[i].el.style.top = pos_idx * list.itemHeight + 'px';
 					pos_idx++;
 				}
 				
@@ -505,21 +553,35 @@ function createList(element, options) {
 	}
 	
 	function renderItem(dataObj) {
-		const el = list.renderFn(dataObj.data);
+		const render = list.renderFn || list.render;
+		const el = typeof render === 'function'
+			? render(dataObj.data)
+			: nui.util.dom.fromHTML(`<div class="nui-list-log-item"><div>${JSON.stringify(dataObj.data)}</div></div>`);
+		
+		if (!el) {
+			console.error('[nui-list] renderItem returned null/undefined for', dataObj.data);
+			return document.createElement('div');
+		}
+		
 		el.oidx = dataObj.oidx;
 		el.style.position = 'absolute';
 		el.classList.add('nui-list-item');
-		
-		// Call update callback if defined
-		if (el.update) {
-			if (el.update_delay) {
-				el.timeout = setTimeout(() => checkIfVisible(el), el.update_delay);
+		return el;
+	}
+
+	function appendItem(item) {
+		if (list.mode === 'fixed') {
+			list.fixedList.appendChild(item);
+		} else {
+			list.container.appendChild(item);
+		}
+		if (item.update) {
+			if (item.update_delay) {
+				item.timeout = setTimeout(() => checkIfVisible(item), item.update_delay);
 			} else {
-				checkIfVisible(el);
+				checkIfVisible(item);
 			}
 		}
-		
-		return el;
 	}
 	
 	function checkIfVisible(el) {
@@ -773,7 +835,7 @@ class NuiList extends HTMLElement {
 		}
 		
 		// Create the list instance
-		this._instance = createList(this, options);
+		createList(this, options);
 	}
 	
 	_renderFromTemplate(item) {
@@ -787,22 +849,9 @@ class NuiList extends HTMLElement {
 		return nui.util.dom.fromHTML(html);
 	}
 	
-	// Expose public API methods
-	get update() { return this._instance?.update; }
-	get getSelection() { return this._instance?.getSelection; }
-	get getSelectedListIndex() { return this._instance?.getSelectedListIndex; }
-	get setSelection() { return this._instance?.setSelection; }
-	get updateData() { return this._instance?.updateData; }
-	get appendData() { return this._instance?.appendData; }
-	get cleanUp() { return this._instance?.cleanUp; }
-	get reset() { return this._instance?.reset; }
-	get updateItem() { return this._instance?.updateItem; }
-	get updateItems() { return this._instance?.updateItems; }
-	get scrollToIndex() { return this._instance?.scrollToIndex; }
-	
 	disconnectedCallback() {
-		if (this._instance?.cleanUp) {
-			this._instance.cleanUp();
+		if (this.cleanUp) {
+			this.cleanUp();
 		}
 	}
 }
