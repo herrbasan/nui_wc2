@@ -44,7 +44,6 @@ function createList(element, options) {
 	// Options
 	list.options = options;
 	list.renderFn = options.render;
-	list.render = options.render;
 	list.eventCallback = options.events || (() => {});
 	list.verbose = options.verbose || false;
 	
@@ -82,7 +81,8 @@ function createList(element, options) {
 	// Setup event listeners
 	list.viewport.addEventListener('scroll', () => {
 		list.scrollPos = list.viewport.scrollTop;
-		list.scrollProz = list.scrollPos / (list.container.offsetHeight - list.viewport.offsetHeight);
+		const scrollRange = list.container.offsetHeight - list.viewport.offsetHeight;
+		list.scrollProz = scrollRange > 0 ? list.scrollPos / scrollRange : 0;
 	});
 	
 	if (list.fixedList) {
@@ -129,8 +129,19 @@ function createList(element, options) {
 	// Initialize data
 	updateData();
 	reset();
-	requestAnimationFrame(() => update(true));
-	loop();
+	
+	// Defer initial render to ensure CSS is applied and viewport has dimensions
+	requestAnimationFrame(() => {
+		update(true);
+		loop();
+
+		// Fallback: if viewport has no height, retry after a short delay
+		if (list.viewport.offsetHeight === 0) {
+			setTimeout(() => {
+				update(true);
+			}, 100);
+		}
+	});
 	
 	return list;
 	
@@ -376,7 +387,7 @@ function createList(element, options) {
 				prop: props,
 				ignore_case: true
 			});
-			list.container.innerHTML = '';
+			clearChildren(list.container);
 		} else {
 			list.filtered = list.clone;
 		}
@@ -422,24 +433,32 @@ function createList(element, options) {
 		const height = list.filtered.length * list.itemHeight;
 		list.container.style.height = height + 'px';
 	}
+
+	// ################################# UTILITIES
 	
+	// Fast container clearing - removeChild loop is faster than innerHTML = ''
+	function clearChildren(container) {
+		while (container.firstChild) {
+			container.removeChild(container.firstChild);
+		}
+	}
+
 	// ################################# RENDERING
 	
 	function update(force = false) {
 		const data = list.filtered;
 		if (data.length === 0) {
-			log('update: no data');
 			return;
 		}
-		
+
 		// Determine mode (normal vs fixed for large lists)
 		if (data.length < 1000 || list.env.isTouch) {
 			list.mode = 'normal';
 			list.fixedList.style.display = 'none';
 			list.setAttribute('data-mode', 'normal');
-			
+
 			list.scrollPos = Math.round(list.viewport.scrollTop);
-			
+
 			// Log mode auto-scroll
 			if (options.logmode && !list.scrollMute) {
 				if (list.viewport.scrollTop + list.viewport.offsetHeight > list.container.offsetHeight - (list.itemHeight + 1)) {
@@ -447,7 +466,7 @@ function createList(element, options) {
 					list.scrollPos = list.viewport.scrollTop;
 				}
 			}
-			
+
 			if (list.scrollPos !== list.lastScrollPos || force) {
 				list.maxVis = Math.ceil(list.viewport.offsetHeight / list.itemHeight) + 10;
 				list.offSet = Math.floor(list.scrollPos / list.itemHeight) - 5;
@@ -457,19 +476,19 @@ function createList(element, options) {
 				const startIdx = list.offSet;
 				const endIdx = Math.min(list.maxVis + list.offSet, data.length);
 				
-				// Clear containers
-				list.container.innerHTML = '';
-				list.fixedList.innerHTML = '';
+				// Clear containers using fast removeChild loop
+				clearChildren(list.container);
+				clearChildren(list.fixedList);
 				
 				// Render visible items
 				for (let i = startIdx; i < endIdx; i++) {
 					if (!data[i].el) {
 						data[i].el = renderItem(data[i]);
 					}
-					if (!data[i].el.parentNode || data[i].el.parentNode.nodeType === 11) {
+					if (!data[i].el.parentNode) {
 						appendItem(data[i].el);
 					}
-					
+
 					// Update selection state
 					if (data[i].selected) {
 						data[i].el.classList.add('selected');
@@ -504,25 +523,28 @@ function createList(element, options) {
 				const startIdx = list.offSet;
 				const endIdx = Math.min(list.maxVis + list.offSet, list.filtered.length);
 				
-				// Debug fixed mode once
+				// Debug fixed mode - log dimensions
 				if (!list._fixedModeLogged) {
-					console.log('[nui-list] Fixed mode render:', {
-						scrollRange,
-						scrollProz: list.scrollProz,
-						maxVis: list.maxVis,
-						offSet: list.offSet,
-						startIdx,
-						endIdx,
-						viewportHeight: list.viewport.offsetHeight,
-						containerHeight: list.container.offsetHeight,
-						fixedListDisplay: list.fixedList.style.display
-					});
+					console.warn('[nui-list] Fixed mode dimensions:',
+						'viewportH=', list.viewport.offsetHeight,
+						'containerH=', list.container.offsetHeight,
+						'scrollRange=', scrollRange,
+						'bodyH=', list.body?.offsetHeight,
+						'listH=', list.offsetHeight,
+						'startIdx=', startIdx,
+						'endIdx=', endIdx
+					);
 					list._fixedModeLogged = true;
 				}
 				
-				// Clear containers
-				list.container.innerHTML = '';
-				list.fixedList.innerHTML = '';
+				// Skip render if viewport has no height (not yet laid out)
+				if (list.viewport.offsetHeight ===0) {
+					return;
+				}
+				
+				// Clear containers using fast removeChild loop
+				clearChildren(list.container);
+				clearChildren(list.fixedList);
 				
 				// Render visible items
 				let pos_idx = 0;
@@ -530,10 +552,10 @@ function createList(element, options) {
 					if (!list.filtered[i].el) {
 						list.filtered[i].el = renderItem(list.filtered[i]);
 					}
-					if (!list.filtered[i].el.parentNode || list.filtered[i].el.parentNode.nodeType === 11) {
+					if (!list.filtered[i].el.parentNode) {
 						appendItem(list.filtered[i].el);
 					}
-					
+
 					// Update selection state
 					if (list.filtered[i].selected) {
 						list.filtered[i].el.classList.add('selected');
@@ -553,14 +575,37 @@ function createList(element, options) {
 	}
 	
 	function renderItem(dataObj) {
-		const render = list.renderFn || list.render;
-		const el = typeof render === 'function'
-			? render(dataObj.data)
-			: nui.util.dom.fromHTML(`<div class="nui-list-log-item"><div>${JSON.stringify(dataObj.data)}</div></div>`);
+		// renderFn is cached during initialization - no lookup needed
+		const renderFn = list.renderFn;
 		
+		// Safety check - render function must exist
+		if (typeof renderFn !== 'function') {
+			console.error('[nui-list] render function is missing');
+			const fallback = document.createElement('div');
+			fallback.oidx = dataObj.oidx;
+			fallback.style.position = 'absolute';
+			fallback.classList.add('nui-list-item');
+			fallback.textContent = `Item ${dataObj.oidx}`;
+			return fallback;
+		}
+		
+		const el = renderFn(dataObj.data);
+
+		// Detach from DocumentFragment if created via fromHTML()
+		// This ensures el.parentNode check works correctly in update()
+		if (el?.parentNode?.nodeType === 11) {
+			el.remove();
+		}
+
+		// Safety check - render function must return a DOM element
 		if (!el) {
-			console.error('[nui-list] renderItem returned null/undefined for', dataObj.data);
-			return document.createElement('div');
+			console.error('[nui-list] render function returned null/undefined for', dataObj.data);
+			const fallback = document.createElement('div');
+			fallback.oidx = dataObj.oidx;
+			fallback.style.position = 'absolute';
+			fallback.classList.add('nui-list-item');
+			fallback.textContent = `Item ${dataObj.oidx}`;
+			return fallback;
 		}
 		
 		el.oidx = dataObj.oidx;
