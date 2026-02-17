@@ -63,7 +63,7 @@
 	--color-shade9: light-dark(rgb(40, 40, 40), rgb(220, 220, 220));
 	--color-white: light-dark(rgb(255, 255, 255), rgb(255, 255, 255));
 	--color-black: light-dark(rgb(0, 0, 0), rgb(0, 0, 0));
-
+	
 	--border-thickness: thin;
 	--border-radius1: var(--nui-space-eighth);
 	--border-radius2: var(--nui-space-quarter);
@@ -2041,6 +2041,53 @@ nui-input .nui-clear-btn:hover {
 nui-input .nui-clear-btn nui-icon {
 	width: 1rem;
 	height: 1rem;
+}
+
+/* Input icon button (search prefix, etc.) */
+nui-input .nui-input-icon {
+	position: absolute;
+	top: 50%;
+	transform: translateY(-50%);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.5rem;
+	height: 1.5rem;
+	padding: 0;
+	background: transparent;
+	border: none;
+	border-radius: var(--border-radius1);
+	cursor: pointer;
+	color: var(--color-shade5);
+	transition: color 0.15s, background-color 0.15s;
+	flex-shrink: 0;
+}
+
+nui-input .nui-input-icon-start {
+	left: var(--nui-space-half);
+}
+
+nui-input .nui-input-icon-end {
+	right: var(--nui-space-half);
+}
+
+nui-input .nui-input-icon:hover {
+	color: var(--color-text-dim);
+	background: var(--color-shade2);
+}
+
+nui-input .nui-input-icon nui-icon {
+	width: 1rem;
+	height: 1rem;
+}
+
+/* Input padding when icons present */
+nui-input:has(.nui-input-icon-start) input {
+	padding-left: calc(var(--nui-space-half) + 1.5rem + var(--nui-space-half));
+}
+
+nui-input:has(.nui-input-icon-end) input {
+	padding-right: calc(var(--nui-space-half) + 1.5rem + var(--nui-space-half));
 }
 
 /* When clearable, add padding for the button */

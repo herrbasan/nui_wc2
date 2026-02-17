@@ -1595,6 +1595,17 @@ function generateInputId(prefix = 'nui-input') {
 function setupInputBehavior(element, input, config = {}) {
 	const { autoResize, showCount } = config;
 	let errorEl, countEl, clearBtn;
+
+	// Add search icon prefix for type="search" (as clickable button like clear button)
+	const isSearchInput = input.type === 'search';
+	if (isSearchInput) {
+		const searchBtn = dom.create('button', {
+			class: 'nui-input-icon nui-input-icon-start',
+			attrs: { type: 'button', 'aria-label': 'Search' },
+			content: '<nui-icon name="search"></nui-icon>'
+		});
+		element.insertBefore(searchBtn, input);
+	}
 	
 	// Cache computed styles for auto-resize (calculated once)
 	let cachedLineHeight, cachedPadding, cachedBorder;
@@ -1799,7 +1810,13 @@ registerComponent('nui-input-group', (element) => {
 
 registerComponent('nui-input', (element) => {
 	const input = element.el('input');
-	if (input) setupInputBehavior(element, input);
+	if (!input) return;
+
+	// Pass through type attribute from nui-input to internal input
+	const inputType = element.getAttribute('type');
+	if (inputType) input.type = inputType;
+
+	setupInputBehavior(element, input);
 });
 
 // ################################# nui-textarea COMPONENT

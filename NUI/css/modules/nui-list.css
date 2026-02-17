@@ -112,10 +112,6 @@ nui-list {
 	transform: rotate(90deg);
 }
 
-.nui-list-search {
-	display: flex;
-}
-
 /* ################################# VIEWPORT */
 
 /* Body wrapper - contains viewport and fixed overlay */

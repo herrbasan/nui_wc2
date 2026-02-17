@@ -199,10 +199,9 @@ function createList(element, options) {
 		
 		if (options.search) {
 			headerHTML += `
-				<nui-input-group class="nui-list-search">
-					<nui-icon name="search"></nui-icon>
+				<nui-input type="search" placeholder="Search" clearable>
 					<input type="search" placeholder="Search">
-				</nui-input-group>
+				</nui-input>
 			`;
 		}
 		
@@ -254,10 +253,10 @@ function createList(element, options) {
 		
 		// Initialize search input
 		if (options.search) {
-			const searchInput = list.header.querySelector('.nui-list-search input');
-			searchInput.addEventListener('input', (e) => {
+			const searchInput = list.header.querySelector('nui-input[type="search"]');
+			searchInput.addEventListener('nui-input', (e) => {
 				clearTimeout(list.filter_timeout);
-				list.currentSearch = e.target.value;
+				list.currentSearch = e.detail?.value || '';
 				list.eventCallback({ target: list, type: 'search_input', value: list.currentSearch });
 				list.filter_timeout = setTimeout(filter, 100);
 			});
