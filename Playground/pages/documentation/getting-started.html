@@ -1,99 +1,633 @@
 <div class="page-getting-started">
 	<header>
 		<h1>Getting Started with NUI</h1>
-		<p class="lead">Build your first NUI application in minutes</p>
+		<p class="lead">A complete guide to setting up a project with the NUI component library</p>
 	</header>
-	
+
 	<section>
-		<h2>Step 1: Include NUI</h2>
-		<p>Add NUI to your HTML file in the <code>&lt;head&gt;</code> section:</p>
+		<h2>Quick Start</h2>
+		<p>The minimal setup to start using NUI in your project:</p>
 		<nui-code>
 			<pre><code>&lt;!DOCTYPE html&gt;
 &lt;html lang="en"&gt;
 &lt;head&gt;
 	&lt;meta charset="UTF-8"&gt;
 	&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+	&lt;meta name="color-scheme" content="light dark"&gt;
+	&lt;!-- NUI Theme (REQUIRED) --&gt;
+	&lt;link rel="stylesheet" href="NUI/css/nui-theme.css"&gt;
+&lt;/head&gt;
+&lt;body&gt;
+	&lt;nui-button&gt;
+		&lt;button type="button"&gt;Click Me&lt;/button&gt;
+	&lt;/nui-button&gt;
+
+	&lt;script type="module" src="NUI/nui.js"&gt;&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+		</nui-code>
+		<div class="demo-callout">
+			<strong>Important:</strong> Include CSS in <code>&lt;head&gt;</code> and JS as ES Module to prevent Flash of Unstyled Content (FOUC).
+		</div>
+	</section>
+
+	<section>
+		<h2>Project Structure</h2>
+		<p>A typical NUI project follows this structure:</p>
+		<nui-code>
+			<pre><code>your-project/
+├── index.html              # Entry point
+├── NUI/                    # NUI library (copy or submodule)
+│   ├── nui.js              # Core library (ES Module)
+│   ├── css/
+│   │   ├── nui-theme.css           # REQUIRED - core theme
+│   │   └── modules/                # Optional module CSS
+│   │       ├── nui-menu.css
+│   │       ├── nui-list.css
+│   │       └── nui-syntax-highlight.css
+│   ├── lib/modules/                  # Optional addon JS
+│   │   ├── nui-animation.js
+│   │   ├── nui-list.js
+│   │   └── nui-menu.js
+│   └── assets/
+│       └── material-icons-sprite.svg
+├── js/
+│   └── main.js           # Your application code
+└── pages/                # Page fragments (if using SPA routing)
+    ├── index.html
+    └── components/
+        └── button.html</code></pre>
+		</nui-code>
+	</section>
+
+	<section>
+		<h2>Two Ways to Use NUI</h2>
+
+		<h3>1. Simple: Standalone Components</h3>
+		<p>Use NUI components on any HTML page without the SPA routing system:</p>
+		<nui-code>
+			<pre><code>&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
 	&lt;link rel="stylesheet" href="NUI/css/nui-theme.css"&gt;
 	&lt;script type="module" src="NUI/nui.js"&gt;&lt;/script&gt;
 &lt;/head&gt;
 &lt;body&gt;
-	&lt;!-- Your content here --&gt;
+	&lt;nui-button&gt;
+		&lt;button type="button"&gt;Save&lt;/button&gt;
+	&lt;/nui-button&gt;
+
+	&lt;nui-tabs&gt;
+		&lt;menu&gt;
+			&lt;button data-tab="info"&gt;Info&lt;/button&gt;
+			&lt;button data-tab="settings"&gt;Settings&lt;/button&gt;
+		&lt;/menu&gt;
+		&lt;section data-panel="info"&gt;
+			&lt;p&gt;This is the info tab.&lt;/p&gt;
+		&lt;/section&gt;
+		&lt;section data-panel="settings"&gt;
+			&lt;p&gt;Settings go here.&lt;/p&gt;
+		&lt;/section&gt;
+	&lt;/nui-tabs&gt;
 &lt;/body&gt;
 &lt;/html&gt;</code></pre>
 		</nui-code>
-	</section>
-	
-	<section>
-		<h2>Step 2: Choose Your Layout Mode</h2>
-		<p>NUI supports two layout modes:</p>
-		
-		<h3>App Mode (Desktop Applications)</h3>
+
+		<h3>2. Full: SPA Application</h3>
+		<p>Use the built-in router for multi-page applications with hash-based navigation:</p>
 		<nui-code>
-			<pre><code>&lt;nui-app&gt;
-	&lt;nui-top-nav&gt;
-		&lt;header&gt;&lt;h1&gt;My App&lt;/h1&gt;&lt;/header&gt;
-	&lt;/nui-top-nav&gt;
-	&lt;nui-side-nav&gt;
-		&lt;nav&gt;Navigation here&lt;/nav&gt;
-	&lt;/nui-side-nav&gt;
-	&lt;nui-content&gt;
-		&lt;main&gt;Content here&lt;/main&gt;
-	&lt;/nui-content&gt;
+			<pre><code>&lt;!-- index.html --&gt;
+&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+	&lt;link rel="stylesheet" href="NUI/css/nui-theme.css"&gt;
+	&lt;link rel="stylesheet" href="NUI/css/modules/nui-list.css"&gt;
+	&lt;script type="module" src="js/main.js"&gt;&lt;/script&gt;
+&lt;/head&gt;
+&lt;body&gt;
+	&lt;nui-loading mode="bar"&gt;&lt;/nui-loading&gt;
+	&lt;nui-app nui-vars-sidebar_width="15rem"&gt;
+		&lt;nui-top-nav&gt;
+			&lt;header&gt;
+				&lt;nui-button data-action="toggle-sidebar"&gt;
+					&lt;button type="button" aria-label="Toggle menu"&gt;☰&lt;/button&gt;
+				&lt;/nui-button&gt;
+				&lt;h1&gt;My App&lt;/h1&gt;
+			&lt;/header&gt;
+		&lt;/nui-top-nav&gt;
+		&lt;nui-side-nav&gt;
+			&lt;nui-link-list mode="fold"&gt;&lt;/nui-link-list&gt;
+		&lt;/nui-side-nav&gt;
+		&lt;nui-content&gt;
+			&lt;nui-main&gt;&lt;!-- Pages load here --&gt;&lt;/nui-main&gt;
+		&lt;/nui-content&gt;
+	&lt;/nui-app&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+		</nui-code>
+		<nui-code>
+			<pre><code>// js/main.js
+import { nui } from '../NUI/nui.js';
+import '../NUI/lib/modules/nui-list.js';
+
+// Navigation data
+const navigationData = [
+	{
+		label: 'Pages',
+		items: [
+			{ label: 'Home', href: '#page=home' },
+			{ label: 'About', href: '#page=about' }
+		]
+	}
+];
+
+// Load sidebar
+document.querySelector('nui-link-list').loadData(navigationData);
+
+// Enable SPA routing
+nui.enableContentLoading({
+	container: 'nui-main',
+	navigation: 'nui-side-nav',
+	basePath: 'pages',
+	defaultPage: 'home'
+});</code></pre>
+		</nui-code>
+	</section>
+
+	<section>
+		<h2>Layout Modes</h2>
+		<p>NUI supports two layout modes based on whether <code>&lt;nui-app&gt;</code> is present:</p>
+
+		<nui-tabs>
+			<nav>
+				<button data-tab="app-mode">App Mode</button>
+				<button data-tab="page-mode">Page Mode</button>
+			</nav>
+			<section data-panel="app-mode">
+				<p><strong>Use for:</strong> Desktop-style applications with sidebar navigation</p>
+				<nui-code>
+					<pre><code>&lt;nui-app nui-vars-sidebar_width="15rem"&gt;
+	&lt;nui-top-nav&gt;&lt;header&gt;&lt;h1&gt;My App&lt;/h1&gt;&lt;/header&gt;&lt;/nui-top-nav&gt;
+	&lt;nui-side-nav&gt;&lt;nav&gt;...&lt;/nav&gt;&lt;/nui-side-nav&gt;
+	&lt;nui-content&gt;&lt;nui-main&gt;...&lt;/nui-main&gt;&lt;/nui-content&gt;
+	&lt;nui-app-footer&gt;&lt;footer&gt;...&lt;/footer&gt;&lt;/nui-app-footer&gt;
 &lt;/nui-app&gt;</code></pre>
-		</nui-code>
-		
-		<h3>Page Mode (Websites)</h3>
-		<nui-code>
-			<pre><code>&lt;nui-top-nav&gt;
-	&lt;header&gt;&lt;h1&gt;My Site&lt;/h1&gt;&lt;/header&gt;
-&lt;/nui-top-nav&gt;
-&lt;nui-content&gt;
-	&lt;main&gt;Content flows naturally&lt;/main&gt;
-&lt;/nui-content&gt;</code></pre>
-		</nui-code>
+				</nui-code>
+				<p>Creates CSS Grid layout with fixed regions, independent scrolling, and responsive sidebar collapse.</p>
+			</section>
+			<section data-panel="page-mode">
+				<p><strong>Use for:</strong> Traditional websites, documentation, blogs</p>
+				<nui-code>
+					<pre><code>&lt;nui-top-nav&gt;&lt;header&gt;&lt;h1&gt;My Site&lt;/h1&gt;&lt;/header&gt;&lt;/nui-top-nav&gt;
+&lt;nui-content&gt;&lt;main&gt;...&lt;/main&gt;&lt;/nui-content&gt;
+&lt;nui-app-footer&gt;&lt;footer&gt;...&lt;/footer&gt;&lt;/nui-app-footer&gt;</code></pre>
+				</nui-code>
+				<p>Components flow naturally in document layout. No fixed positioning.</p>
+			</section>
+		</nui-tabs>
 	</section>
-	
+
 	<section>
-		<h2>Step 3: Add Components</h2>
-		<p>Use NUI components by wrapping semantic HTML:</p>
+		<h2>NUI API Reference</h2>
+		<p>The library exports a single <code>nui</code> object with three namespaces:</p>
+
+		<h3>Root Functions</h3>
+		<nui-table>
+			<table>
+				<thead>
+					<tr><th>Function</th><th>Description</th></tr>
+				</thead>
+				<tbody>
+					<tr><td><code>nui.init()</code></td><td>Initialize library (auto-called)</td></tr>
+					<tr><td><code>nui.configure({...})</code></td><td>Update config after init</td></tr>
+					<tr><td><code>nui.enableContentLoading({...})</code></td><td>Enable SPA routing</td></tr>
+					<tr><td><code>nui.registerFeature(name, fn)</code></td><td>Register JS-only page</td></tr>
+					<tr><td><code>nui.version</code></td><td>Library version string</td></tr>
+				</tbody>
+			</table>
+		</nui-table>
+
+		<h3>Components Namespace (<code>nui.components.*</code>)</h3>
+		<p>Factory APIs for data-driven components:</p>
+		<nui-table>
+			<table>
+				<thead>
+					<tr><th>Component</th><th>Type</th><th>Usage</th></tr>
+				</thead>
+				<tbody>
+					<tr><td><code>dialog</code></td><td>Ephemeral</td><td><code>nui.components.dialog.confirm(title, msg)</code></td></tr>
+					<tr><td><code>banner</code></td><td>Ephemeral</td><td><code>nui.components.banner.show({content, priority})</code></td></tr>
+					<tr><td><code>linkList</code></td><td>Persistent</td><td><code>nui.components.linkList.create(data, options)</code></td></tr>
+				</tbody>
+			</table>
+		</nui-table>
+
+		<h3>Utilities Namespace (<code>nui.util.*</code>)</h3>
+		<nui-table>
+			<table>
+				<thead>
+					<tr><th>Utility</th><th>Description</th></tr>
+				</thead>
+				<tbody>
+					<tr><td><code>storage</code></td><td>localStorage wrapper with TTL: <code>.get({name})</code>, <code>.set({name, value, ttl})</code></td></tr>
+					<tr><td><code>enableDrag(el, cb)</code></td><td>Pointer drag utility, returns cleanup function</td></tr>
+					<tr><td><code>createElement(tag, opts)</code></td><td>DOM creation helper</td></tr>
+				</tbody>
+			</table>
+		</nui-table>
+	</section>
+
+	<section>
+		<h2>Component Patterns</h2>
+		<p>Components follow two patterns - know which to use:</p>
+
+		<h3>Declarative (HTML-First) - Most Components</h3>
+		<p>Define structure in HTML, components enhance existing elements:</p>
 		<nui-code>
-			<pre><code>&lt;nui-button&gt;
-	&lt;button type="button"&gt;Action&lt;/button&gt;
+			<pre><code>&lt;!-- Button: wrap a button --&gt;
+&lt;nui-button&gt;
+	&lt;button type="button"&gt;Click Me&lt;/button&gt;
 &lt;/nui-button&gt;
 
-&lt;nui-link-list mode="tree"&gt;
-	&lt;ul&gt;
-		&lt;li&gt;&lt;a href="/home"&gt;Home&lt;/a&gt;&lt;/li&gt;
-		&lt;li&gt;&lt;a href="/about"&gt;About&lt;/a&gt;&lt;/li&gt;
-	&lt;/ul&gt;
-&lt;/nui-link-list&gt;</code></pre>
-		</nui-code>
-	</section>
-	
-	<section>
-		<h2>Step 4: Add Interactivity</h2>
-		<p>Use direct event listeners or <code>data-action</code> attributes for actions:</p>
-		<nui-code>
-			<pre><code>&lt;button data-action="toggle-theme"&gt;
-	Dark/Light Mode
-&lt;/button&gt;
+&lt;!-- Tabs: use data-tab/data-panel attributes --&gt;
+&lt;nui-tabs&gt;
+	&lt;menu&gt;
+		&lt;button data-tab="tab1"&gt;Tab 1&lt;/button&gt;
+		&lt;button data-tab="tab2"&gt;Tab 2&lt;/button&gt;
+	&lt;/menu&gt;
+	&lt;section data-panel="tab1"&gt;Content 1&lt;/section&gt;
+	&lt;section data-panel="tab2"&gt;Content 2&lt;/section&gt;
+&lt;/nui-tabs&gt;
 
-&lt;script type="module"&gt;
-// Handle actions with event delegation
-document.addEventListener('click', (e) => {
-	const action = e.target.closest('[data-action]')?.dataset.action;
-	if (action === 'toggle-theme') {
-		const current = document.documentElement.style.colorScheme || 'light';
-		document.documentElement.style.colorScheme = current === 'dark' ? 'light' : 'dark';
-	}
-});
+&lt;!-- Accordion: use details/summary --&gt;
+&lt;nui-accordion&gt;
+	&lt;details&gt;
+		&lt;summary&gt;Section 1&lt;/summary&gt;
+		&lt;p&gt;Content here&lt;/p&gt;
+	&lt;/details&gt;
+&lt;/nui-accordion&gt;</code></pre>
+		</nui-code>
+
+		<h3>Data-Driven (JavaScript) - Exceptions</h3>
+		<p>Use factory methods for complex runtime structures:</p>
+		<nui-code>
+			<pre><code>// Dialog - system modal
+await nui.components.dialog.confirm('Delete?', 'This cannot be undone');
+
+// Banner - toast notification
+nui.components.banner.show({ content: 'Saved!', priority: 'info', autoClose: 3000 });
+
+// LinkList - navigation tree
+const nav = nui.components.linkList.create([
+	{ label: 'Home', href: '#home' },
+	{ label: 'Settings', items: [
+		{ label: 'Profile', href: '#profile' },
+		{ label: 'Security', href: '#security' }
+	]}
+], { mode: 'fold' });
+document.querySelector('nav').appendChild(nav);</code></pre>
+		</nui-code>
+
+		<div class="demo-callout">
+			<strong>Rule:</strong> Default to declarative HTML. Only use data-driven APIs when content is dynamic or complex.
+		</div>
+	</section>
+
+	<section>
+		<h2>SPA Routing</h2>
+		<p>Hash-based navigation for multi-page applications:</p>
+
+		<h3>Enable Routing</h3>
+		<nui-code>
+			<pre><code>nui.enableContentLoading({
+	container: 'nui-main',              // Where content loads
+	navigation: 'nui-side-nav',            // Auto-close sidebar on navigate
+	basePath: 'pages',                    // Folder containing page fragments
+	defaultPage: 'home'                   // Default page (no hash in URL)
+});</code></pre>
+		</nui-code>
+
+		<h3>Navigation Links</h3>
+		<p>Use hash format <code>#page=path/to/page</code>:</p>
+		<nui-code>
+			<pre><code>{ label: 'Button', href: '#page=components/button' }
+{ label: 'Settings', href: '#page=pages/settings' }</code></pre>
+		</nui-code>
+
+		<h3>Page Fragments</h3>
+		<p>Pages are HTML fragments loaded into the container:</p>
+		<nui-code>
+			<pre><code>&lt;!-- pages/home.html --&gt;
+&lt;header&gt;
+	&lt;h1&gt;Welcome&lt;/h1&gt;
+&lt;/header&gt;
+&lt;section&gt;
+	&lt;p&gt;This content loads into nui-main.&lt;/p&gt;
+&lt;/section&gt;</code></pre>
+		</nui-code>
+
+		<h3>Page Scripts</h3>
+		<p>Add page-specific JavaScript with <code>&lt;script type="nui/page"&gt;</code>:</p>
+		<nui-code>
+			<pre><code>&lt;!-- pages/demo.html --&gt;
+&lt;header&gt;&lt;h1&gt;Demo&lt;/h1&gt;&lt;/header&gt;
+
+&lt;nui-button id="myButton"&gt;
+	&lt;button type="button"&gt;Click&lt;/button&gt;
+&lt;/nui-button&gt;
+&lt;div id="output"&gt;&lt;/div&gt;
+
+&lt;script type="nui/page"&gt;
+function init(element, params, nui) {
+	// element = page wrapper element
+	// params = parsed from URL hash
+	// nui = library reference
+
+	const btn = element.querySelector('#myButton');
+	const output = element.querySelector('#output');
+
+	btn?.addEventListener('click', () => {
+		output.textContent = 'Clicked at ' + new Date().toLocaleTimeString();
+	});
+}
 &lt;/script&gt;</code></pre>
 		</nui-code>
+
+		<h3>Features (JavaScript-Only Pages)</h3>
+		<p>Register pages built entirely in JavaScript:</p>
+		<nui-code>
+			<pre><code>// In main.js - register before enableContentLoading
+nui.registerFeature('dashboard', (container, params) => {
+	// Build UI programmatically
+	container.innerHTML = `
+		&lt;header&gt;&lt;h1&gt;Dashboard&lt;/h1&gt;&lt;/header&gt;
+		&lt;div class="stats"&gt;Loading...&lt;/div&gt;
+	`;
+
+	// Optional: add show/hide lifecycle
+	container.show = () => { console.log('Dashboard shown'); };
+	container.hide = () => { console.log('Dashboard hidden'); };
+});
+
+// Navigate to feature: #feature=dashboard</code></pre>
+		</nui-code>
 	</section>
-	
+
+	<section>
+		<h2>Interaction Patterns</h2>
+
+		<h3>Event Delegation with data-action</h3>
+		<p>Handle clicks without manual event listeners:</p>
+		<nui-code>
+			<pre><code>&lt;!-- Define action in HTML --&gt;
+&lt;nui-button data-action="save"&gt;
+	&lt;button type="button"&gt;Save&lt;/button&gt;
+&lt;/nui-button&gt;
+
+&lt;nui-button data-action="toggle-theme"&gt;
+	&lt;button type="button"&gt;Toggle Theme&lt;/button&gt;
+&lt;/nui-button&gt;</code></pre>
+		</nui-code>
+		<nui-code>
+			<pre><code>// Handle in JavaScript (event delegation)
+document.addEventListener('click', (e) => {
+	const el = e.target.closest('[data-action]');
+	if (!el) return;
+
+	const action = el.dataset.action;
+
+	switch (action) {
+		case 'save':
+			console.log('Saving...');
+			break;
+		case 'toggle-theme':
+			const current = document.documentElement.style.colorScheme || 'light';
+			document.documentElement.style.colorScheme = current === 'dark' ? 'light' : 'dark';
+			break;
+		case 'toggle-sidebar':
+			document.querySelector('nui-app')?.toggleSideNav();
+			break;
+	}
+});</code></pre>
+		</nui-code>
+
+		<h3>Custom Events</h3>
+		<p>Components dispatch standard CustomEvents:</p>
+		<nui-code>
+			<pre><code>// Listen for component events
+document.querySelector('nui-tabs').addEventListener('nui-tab-change', (e) => {
+	console.log('Tab changed to:', e.detail.tab);
+});
+
+// Dialog results
+document.querySelector('nui-dialog')?.addEventListener('nui-dialog-close', (e) => {
+	console.log('Dialog closed, confirmed:', e.detail.confirmed);
+});</code></pre>
+		</nui-code>
+	</section>
+
+	<section>
+		<h2>Loading Addons</h2>
+		<p>Some components require additional CSS and JS:</p>
+
+		<nui-tabs>
+			<nav>
+				<button data-tab="css">CSS</button>
+				<button data-tab="js">JavaScript</button>
+			</nav>
+			<section data-panel="css">
+				<nui-code>
+					<pre><code>&lt;!-- In &lt;head&gt; --&gt;
+&lt;link rel="stylesheet" href="NUI/css/nui-theme.css"&gt;
+&lt;link rel="stylesheet" href="NUI/css/modules/nui-menu.css"&gt;
+&lt;link rel="stylesheet" href="NUI/css/modules/nui-list.css"&gt;
+&lt;link rel="stylesheet" href="NUI/css/modules/nui-syntax-highlight.css"&gt;</code></pre>
+				</nui-code>
+			</section>
+			<section data-panel="js">
+				<nui-code>
+					<pre><code>// In main.js
+import { nui } from './NUI/nui.js';
+import './NUI/lib/modules/nui-animation.js';
+import './NUI/lib/modules/nui-list.js';
+import './NUI/lib/modules/nui-menu.js';</code></pre>
+				</nui-code>
+			</section>
+		</nui-tabs>
+
+		<h3>Required vs Optional CSS</h3>
+		<nui-table>
+			<table>
+				<thead>
+					<tr><th>File</th><th>Required</th><th>For</th></tr>
+				</thead>
+				<tbody>
+					<tr><td><code>nui-theme.css</code></td><td>Yes</td><td>All components</td></tr>
+					<tr><td><code>nui-menu.css</code></td><td>No</td><td>nui-menu component</td></tr>
+					<tr><td><code>nui-list.css</code></td><td>No</td><td>nui-list component</td></tr>
+					<tr><td><code>nui-syntax-highlight.css</code></td><td>No</td><td>Code blocks</td></tr>
+				</tbody>
+			</table>
+		</nui-table>
+	</section>
+
+	<section>
+		<h2>CSS Variables</h2>
+		<p>Customize appearance with CSS custom properties:</p>
+
+		<h3>Layout Variables</h3>
+		<nui-code>
+			<pre><code>/* On nui-app element */
+nui-app {
+	--nui-sidebar-width: 15rem;
+	--nui-sidebar-force-breakpoint: 75rem;
+	--nui-topnav-height: 3.5rem;
+}</code></pre>
+		</nui-code>
+
+		<h3>Theme Variables</h3>
+		<nui-code>
+			<pre><code>/* Global theming */
+:root {
+	--nui-accent: #0066cc;
+	--nui-accent-hover: #0052a3;
+	--nui-radius: 6px;
+	--nui-space: 1rem;
+}</code></pre>
+		</nui-code>
+		<p>Set via attributes on nui-app:</p>
+		<nui-code>
+			<pre><code>&lt;nui-app nui-vars-sidebar_width="20rem" nui-vars-accent="#e74c3c"&gt;</code></pre>
+		</nui-code>
+	</section>
+
+	<section>
+		<h2>Preventing Flash of Unstyled Content</h2>
+		<p>Add inline styles to hide content until components upgrade:</p>
+		<nui-code>
+			<pre><code>&lt;head&gt;
+	&lt;link rel="stylesheet" href="NUI/css/nui-theme.css"&gt;
+	&lt;style&gt;
+		body { margin: 0; overflow: hidden; }
+		nui-app:not(.nui-ready) { display: none; }
+		nui-loading:not(.active) { display: none; }
+	&lt;/style&gt;
+	&lt;script type="module" src="js/main.js"&gt;&lt;/script&gt;
+&lt;/head&gt;
+&lt;body&gt;
+	&lt;nui-loading mode="bar"&gt;&lt;/nui-loading&gt;
+	&lt;nui-app&gt;
+		&lt;!-- Content hidden until .nui-ready class added --&gt;
+	&lt;/nui-app&gt;
+&lt;/body&gt;</code></pre>
+		</nui-code>
+	</section>
+
+	<section>
+		<h2>Complete Example</h2>
+		<p>A working application combining all patterns:</p>
+		<nui-code>
+			<pre><code>&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+	&lt;meta charset="UTF-8"&gt;
+	&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+	&lt;meta name="color-scheme" content="light dark"&gt;
+	&lt;title&gt;My NUI App&lt;/title&gt;
+
+	&lt;link rel="stylesheet" href="NUI/css/nui-theme.css"&gt;
+	&lt;link rel="stylesheet" href="NUI/css/modules/nui-list.css"&gt;
+
+	&lt;style&gt;
+		body { margin: 0; overflow: hidden; }
+		nui-app:not(.nui-ready) { display: none; }
+	&lt;/style&gt;
+
+	&lt;script type="module" src="js/main.js"&gt;&lt;/script&gt;
+&lt;/head&gt;
+&lt;body&gt;
+	&lt;nui-loading mode="bar"&gt;&lt;/nui-loading&gt;
+
+	&lt;nui-app nui-vars-sidebar_width="15rem"&gt;
+		&lt;nui-top-nav&gt;
+			&lt;header&gt;
+				&lt;layout&gt;
+					&lt;item&gt;
+						&lt;nui-button data-action="toggle-sidebar"&gt;
+							&lt;button type="button" aria-label="Toggle menu"&gt;☰&lt;/button&gt;
+						&lt;/nui-button&gt;
+					&lt;/item&gt;
+					&lt;item&gt;&lt;h1&gt;My App&lt;/h1&gt;&lt;/item&gt;
+					&lt;item&gt;
+						&lt;nui-button data-action="toggle-theme"&gt;
+							&lt;button type="button" aria-label="Toggle theme"&gt;◐&lt;/button&gt;
+						&lt;/nui-button&gt;
+					&lt;/item&gt;
+				&lt;/layout&gt;
+			&lt;/header&gt;
+		&lt;/nui-top-nav&gt;
+
+		&lt;nui-side-nav&gt;
+			&lt;nui-link-list mode="fold"&gt;&lt;/nui-link-list&gt;
+		&lt;/nui-side-nav&gt;
+
+		&lt;nui-content&gt;
+			&lt;nui-main&gt;&lt;/nui-main&gt;
+		&lt;/nui-content&gt;
+	&lt;/nui-app&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+		</nui-code>
+		<nui-code>
+			<pre><code>// js/main.js
+import { nui } from '../NUI/nui.js';
+import '../NUI/lib/modules/nui-list.js';
+
+// Navigation
+const navigationData = [
+	{
+		label: 'Getting Started',
+		items: [
+			{ label: 'Introduction', href: '#page=introduction' },
+			{ label: 'Button', href: '#page=button' }
+		]
+	}
+];
+
+document.querySelector('nui-link-list').loadData(navigationData);
+
+// Action handling
+document.addEventListener('click', (e) => {
+	const action = e.target.closest('[data-action]')?.dataset.action;
+	if (!action) return;
+
+	switch (action) {
+		case 'toggle-sidebar':
+			document.querySelector('nui-app')?.toggleSideNav();
+			break;
+		case 'toggle-theme':
+			const current = document.documentElement.style.colorScheme || 'light';
+			document.documentElement.style.colorScheme = current === 'dark' ? 'light' : 'dark';
+			break;
+	}
+});
+
+// Enable routing
+nui.enableContentLoading({
+	container: 'nui-main',
+	navigation: 'nui-side-nav',
+	basePath: 'pages',
+	defaultPage: 'introduction'
+});</code></pre>
+		</nui-code>
+	</section>
+
 	<section class="next-steps">
-		<h2>What's Next?</h2>
-		<p>Explore the component documentation and examples in the sidebar to learn more about each component.</p>
-		<div id="page-load-time"></div>
+		<h2>Next Steps</h2>
+		<ul>
+			<li>Explore <strong>Components</strong> in the sidebar for detailed component docs</li>
+			<li>Check <strong>API Structure</strong> for programmatic usage</li>
+			<li>Review <strong>Declarative Actions</strong> for interaction patterns</li>
+		</ul>
 	</section>
 </div>
