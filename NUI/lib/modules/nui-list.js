@@ -46,7 +46,13 @@ function createList(element, options) {
 	list.renderFn = options.render;
 	list.eventCallback = options.events || (() => {});
 	list.verbose = options.verbose || false;
-	
+
+	// Log mode: initialize scrollMute for debouncing
+	if (options.logmode) {
+		list.scrollMute = false;
+		list.scrollMuteTimeout = null;
+	}
+
 	// Build UI structure
 	buildStructure();
 	
@@ -57,12 +63,6 @@ function createList(element, options) {
 	
 	if (options.footer) {
 		initFooter();
-	}
-	
-	// Log mode (auto-scroll to bottom)
-	if (options.logmode) {
-		log('List is in Log Mode');
-		registerEvent(list.container, 'wheel', logWheelMute, { passive: true });
 	}
 	
 	// Public API
@@ -92,7 +92,18 @@ function createList(element, options) {
 			list.scrollPos = list.viewport.scrollTop;
 		}, { passive: false });
 	}
-	
+
+	// Log mode: register wheel event for scrollMute
+	if (options.logmode) {
+		registerEvent(list.container, 'wheel', () => {
+			if (!list.scrollMute) {
+				clearTimeout(list.scrollMuteTimeout);
+				list.scrollMute = true;
+				list.scrollMuteTimeout = setTimeout(() => { list.scrollMute = false; }, 100);
+			}
+		}, { passive: true });
+	}
+
 	registerEvent(window, 'resize', () => resize());
 	registerEvent(list.container, 'click', containerClick);
 	if (list.fixedList) {
@@ -345,6 +356,7 @@ function createList(element, options) {
 			}
 			filter();
 			setContainerHeight();
+
 			update(true);
 		}
 	}
@@ -458,7 +470,7 @@ function createList(element, options) {
 
 			list.scrollPos = Math.round(list.viewport.scrollTop);
 
-			// Log mode auto-scroll
+			// Log mode auto-scroll (from original implementation)
 			if (options.logmode && !list.scrollMute) {
 				if (list.viewport.scrollTop + list.viewport.offsetHeight > list.container.offsetHeight - (list.itemHeight + 1)) {
 					list.viewport.scrollTop = list.container.offsetHeight;
@@ -466,19 +478,21 @@ function createList(element, options) {
 				}
 			}
 
+			// Only process if scroll changed or force - this is the key optimization!
 			if (list.scrollPos !== list.lastScrollPos || force) {
+
 				list.maxVis = Math.ceil(list.viewport.offsetHeight / list.itemHeight) + 10;
 				list.offSet = Math.floor(list.scrollPos / list.itemHeight) - 5;
 				if (list.offSet < 0) list.offSet = 0;
 				if (list.offSet > 0) list.offSet--;
-				
+
 				const startIdx = list.offSet;
 				const endIdx = Math.min(list.maxVis + list.offSet, data.length);
-				
+
 				// Clear containers using fast removeChild loop
 				clearChildren(list.container);
 				clearChildren(list.fixedList);
-				
+
 				// Render visible items
 				for (let i = startIdx; i < endIdx; i++) {
 					if (!data[i].el) {
@@ -494,11 +508,11 @@ function createList(element, options) {
 					} else {
 						data[i].el.classList.remove('selected');
 					}
-					
+
 					data[i].el.fidx = i;
 					data[i].el.style.top = i * list.itemHeight + 'px';
 				}
-				
+
 				list.lastScrollPos = list.scrollPos;
 				list.lastScrollProz = -1;
 			}
@@ -637,7 +651,7 @@ function createList(element, options) {
 	function reset() {
 		log('Reset List');
 		list.eventCallback({ target: list, type: 'list', value: 'reset' });
-		
+
 		if (options.logmode) {
 			list.viewport.scrollTop = list.container.offsetHeight;
 			list.scrollPos = list.viewport.scrollTop;
@@ -645,7 +659,7 @@ function createList(element, options) {
 			list.viewport.scrollTop = 0;
 			list.scrollPos = 0;
 		}
-		
+
 		list.lastScrollPos = -1;
 		list.lastScrollProz = -1;
 		clearSelection();
@@ -797,15 +811,7 @@ function createList(element, options) {
 		list.registeredEvents.push({ target, event, fnc });
 		target.addEventListener(event, fnc, options);
 	}
-	
-	function logWheelMute() {
-		if (!list.scrollMute) {
-			clearTimeout(list.scrollMuteTimeout);
-			list.scrollMute = true;
-			list.scrollMuteTimeout = setTimeout(() => { list.scrollMute = false; }, 100);
-		}
-	}
-	
+
 	function log(...args) {
 		if (list.verbose) {
 			console.log('%c NUI-LIST ', 'background:#41658a; color:#fff;', ...args);

@@ -49,6 +49,7 @@ nui-list {
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
+	user-select: none;
 }
 
 /* ################################# HEADER */
@@ -59,11 +60,13 @@ nui-list {
 	grid-template-columns: auto minmax(15rem, 20rem);
 	gap: var(--list-space-md);
 	align-items: center;
-	min-height: 4rem;
+	min-height: 2.5rem;
 	padding: var(--list-space-md);
-	background-color: var(--list-surface);
-	border-bottom: 1px solid var(--list-border);
+	background-color: light-dark(var(--color-shade3), var(--color-shade2));
+	border: solid thin var(--border-shade2);
+	border-bottom: none;
 }
+
 
 .nui-list-sort {
 	display: flex;
@@ -91,7 +94,7 @@ nui-list {
 	padding: 0;
 	border: 1px solid var(--list-border);
 	border-radius: var(--list-radius-sm);
-	background-color: var(--list-surface);
+	background-color: var(--color-shade3);
 	cursor: pointer;
 	transition: background-color 0.2s;
 }
@@ -119,6 +122,7 @@ nui-list {
 	position: relative;
 	flex: 1;
 	overflow: hidden;
+	border: solid thin var(--border-shade2);
 }
 
 .nui-list-viewport {
@@ -126,8 +130,6 @@ nui-list {
 	inset: 0;
 	overflow-x: hidden;
 	overflow-y: auto;
-	padding: var(--list-space-md);
-	padding-right: calc(var(--list-space-md) + 1rem);
 }
 
 .nui-list-container {
@@ -163,7 +165,20 @@ nui-list:not([data-mode="fixed"]) .nui-list-fixed {
 
 /* Scrollbar styling */
 .nui-list-viewport::-webkit-scrollbar {
-	width: 1rem;
+	width: var(--space-scrollbar-width);
+}
+
+.nui-list-viewport::-webkit-scrollbar-track {
+	background: light-dark(var(--color-shade2), var(--color-shade3));
+}
+
+.nui-list-viewport::-webkit-scrollbar-thumb {
+	background: light-dark(var(--color-shade3), var(--color-shade5));
+	min-height: 5rem;
+}
+
+.nui-list-viewport::-webkit-scrollbar-thumb:hover {
+	background: light-dark(var(--color-shade4), var(--color-shade6));
 }
 
 /* ################################# FOOTER */
@@ -176,8 +191,8 @@ nui-list:not([data-mode="fixed"]) .nui-list-fixed {
 	align-items: center;
 	min-height: 4rem;
 	padding: var(--list-space-md);
-	background-color: var(--list-surface);
-	border-top: 1px solid var(--list-border);
+	background-color: light-dark(var(--color-shade3), var(--color-shade2));
+	border: solid thin var(--border-shade2);
 	gap: var(--list-space-md);
 }
 
@@ -278,13 +293,14 @@ nui-list:not([data-mode="fixed"]) .nui-list-fixed {
 
 .nui-list-log-item > div:nth-child(3) {
 	display: flex;
-	justify-content: center;
+	justify-content: flex-start;
 	align-items: center;
 	width: 12rem;
 	height: 100%;
 	margin-left: auto;
 	background-color: var(--list-shade-1);
 	font-size: var(--list-font-size-sm);
+	padding-left: 1rem;
 	opacity: 0.7;
 	pointer-events: none;
 }
@@ -316,7 +332,7 @@ nui-list:not([data-mode="fixed"]) .nui-list-fixed {
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	width: 4rem;
+	width: 3rem;
 	height: 100%;
 	background-color: var(--list-shade-1);
 	font-size: var(--list-font-size-xs);
