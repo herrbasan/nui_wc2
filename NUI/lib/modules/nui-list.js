@@ -692,9 +692,17 @@ function createList(element, options) {
 				list.lastSelect = idx;
 			}
 		} else {
-			clearSelection();
-			list.filtered[idx].selected = true;
-			list.lastSelect = idx;
+			const selectionCount = getSelection().length;
+			if (list.filtered[idx].selected && selectionCount === 1) {
+				// Toggle off only if this is the sole selection
+				list.filtered[idx].selected = false;
+				list.lastSelect = null;
+			} else {
+				// Clear others and select this (or keep selected if part of multi)
+				clearSelection();
+				list.filtered[idx].selected = true;
+				list.lastSelect = idx;
+			}
 		}
 		
 		const selection = getSelection(true);
