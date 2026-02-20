@@ -294,10 +294,15 @@ document.querySelector('nav').appendChild(nav);</code></pre>
 	</section>
 
 	<section>
-		<h2>SPA Routing</h2>
-		<p>Hash-based navigation for multi-page applications:</p>
+		<h2>SPA Routing & Architecture</h2>
+		<p>NUI includes a flexible, hash-based routing system for building Single Page Applications (SPAs). The router acts as a state coordinator that translates URL hashes into DOM visibility.</p>
+
+		<div class="demo-callout">
+			<strong>Learn More:</strong> See the <a href="#page=documentation/architecture-patterns">Architecture Patterns</a> guide for a deep dive into the different ways to structure your application (Centralized vs. Fragment-Based vs. Hybrid).
+		</div>
 
 		<h3>Enable Routing</h3>
+		<p>The simplest way to get started is using the built-in content loader, which fetches HTML fragments based on the URL:</p>
 		<nui-code>
 			<pre><code>nui.enableContentLoading({
 	container: 'nui-main',              // Where content loads
@@ -308,53 +313,14 @@ document.querySelector('nav').appendChild(nav);</code></pre>
 		</nui-code>
 
 		<h3>Navigation Links</h3>
-		<p>Use hash format <code>#page=path/to/page</code>:</p>
+		<p>Use hash format <code>#type=path/to/page</code>. The router will automatically handle the navigation and history:</p>
 		<nui-code>
-			<pre><code>{ label: 'Button', href: '#page=components/button' }
-{ label: 'Settings', href: '#page=pages/settings' }</code></pre>
-		</nui-code>
-
-		<h3>Page Fragments</h3>
-		<p>Pages are HTML fragments loaded into the container:</p>
-		<nui-code>
-			<pre><code>&lt;!-- pages/home.html --&gt;
-&lt;header&gt;
-	&lt;h1&gt;Welcome&lt;/h1&gt;
-&lt;/header&gt;
-&lt;section&gt;
-	&lt;p&gt;This content loads into nui-main.&lt;/p&gt;
-&lt;/section&gt;</code></pre>
-		</nui-code>
-
-		<h3>Page Scripts</h3>
-		<p>Add page-specific JavaScript with <code>&lt;script type="nui/page"&gt;</code>:</p>
-		<nui-code>
-			<pre><code>&lt;!-- pages/demo.html --&gt;
-&lt;header&gt;&lt;h1&gt;Demo&lt;/h1&gt;&lt;/header&gt;
-
-&lt;nui-button id="myButton"&gt;
-	&lt;button type="button"&gt;Click&lt;/button&gt;
-&lt;/nui-button&gt;
-&lt;div id="output"&gt;&lt;/div&gt;
-
-&lt;script type="nui/page"&gt;
-function init(element, params, nui) {
-	// element = page wrapper element
-	// params = parsed from URL hash
-	// nui = library reference
-
-	const btn = element.querySelector('#myButton');
-	const output = element.querySelector('#output');
-
-	btn?.addEventListener('click', () => {
-		output.textContent = 'Clicked at ' + new Date().toLocaleTimeString();
-	});
-}
-&lt;/script&gt;</code></pre>
+			<pre><code>&lt;a href="#page=components/button"&gt;Button Docs&lt;/a&gt;
+&lt;a href="#feature=dashboard"&gt;Open Dashboard&lt;/a&gt;</code></pre>
 		</nui-code>
 
 		<h3>Features (JavaScript-Only Pages)</h3>
-		<p>Register pages built entirely in JavaScript:</p>
+		<p>For complex applications, you can register pages built entirely in JavaScript without fetching HTML fragments:</p>
 		<nui-code>
 			<pre><code>// In main.js - register before enableContentLoading
 nui.registerFeature('dashboard', (container, params) => {

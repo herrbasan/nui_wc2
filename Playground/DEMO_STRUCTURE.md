@@ -1,5 +1,7 @@
 # Playground Demo Authoring Guide (LLM-friendly)
 
+> **Note for AI Assistants & Developers:** This guide describes the "Fragment-Based" SPA pattern used specifically for the NUI Playground. This pattern (using `<script type="nui/page">`) is **not mandatory** for NUI applications. Apps can use centralized logic and just use the router to display different states. See `NUI/docs/router-patterns.md` for a complete guide on SPA architecture choices.
+
 This guide defines how to write and maintain demo pages in the NUI Playground.
 It is intentionally prescriptive so an LLM (and humans) can make changes without guessing.
 
