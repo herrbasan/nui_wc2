@@ -1,0 +1,158 @@
+<div class="page-architecture-patterns">
+	<header>
+		<h1>Architecture Patterns</h1>
+		<p class="lead">How to structure your NUI application using the Router.</p>
+	</header>
+
+	<section>
+		<p>The NUI Router (<code>nui.createRouter</code> and <code>nui.enableContentLoading</code>) is a flexible, hash-based routing system. A common misconception is that the router <em>requires</em> every page to be a separate HTML file with its own isolated <code>&lt;script type="nui/page"&gt;</code> block.</p>
+		
+		<div class="demo-callout">
+			<strong>Important:</strong> While the NUI Playground uses the "Fragment-Based" pattern heavily for demonstrations, it is <strong>not mandatory</strong>. The router is fundamentally just a state coordinator that translates URL hashes into DOM visibility.
+		</div>
+
+		<p>This guide outlines the three primary ways to architect an application using the NUI Router.</p>
+	</section>
+
+	<section>
+		<h2>Pattern 1: Centralized Application Logic (The "App" Pattern)</h2>
+		<p>In this pattern, your application logic lives in a central JavaScript bundle. The router is simply used to toggle the visibility of different pre-rendered or dynamically generated DOM elements based on the URL state.</p>
+
+		<h3>How it works</h3>
+		<ul>
+			<li>All HTML is either in the main <code>index.html</code> or generated dynamically by a central script.</li>
+			<li>You register custom route handlers using <code>nui.registerFeature</code> or <code>nui.registerType</code>.</li>
+			<li>No HTML fragments are fetched over the network.</li>
+		</ul>
+
+		<h3>Example</h3>
+		<nui-code>
+			<pre><code data-lang="javascript">// main.js
+import { nui } from './nui.js';
+
+// Register a feature that generates its own UI
+nui.registerFeature('dashboard', (element, params) => {
+    element.innerHTML = `
+        &lt;header&gt;&lt;h1&gt;Dashboard&lt;/h1&gt;&lt;/header&gt;
+        &lt;div class="stats"&gt;Loading stats...&lt;/div&gt;
+    `;
+    
+    // Centralized logic handles the data fetching
+    appState.fetchStats().then(data => {
+        element.querySelector('.stats').textContent = data;
+    });
+});
+
+// Register another feature that just shows an existing DOM element
+nui.registerFeature('settings', (element, params) => {
+    // Clone a template from the main document
+    const template = document.getElementById('settings-template');
+    element.appendChild(template.content.cloneNode(true));
+    
+    // Bind centralized event listeners
+    appSettings.bindForm(element.querySelector('form'));
+});
+
+// Start the router
+const router = nui.createRouter(document.querySelector('nui-main'), {
+    default: 'feature=dashboard'
+});
+router.start();</code></pre>
+		</nui-code>
+
+		<h3>When to use</h3>
+		<ul>
+			<li>Complex, highly interactive applications (like dashboards or editors).</li>
+			<li>Apps with shared state (e.g., a shopping cart) that needs to be accessed across different views.</li>
+			<li>When you want to bundle all your JavaScript together for performance and immediate execution.</li>
+		</ul>
+	</section>
+
+	<section>
+		<h2>Pattern 2: Fragment-Based Pages (The "Playground" Pattern)</h2>
+		<p>This is the pattern used by the NUI Playground. The router fetches HTML files from the server and injects them into the DOM. Each fragment can contain its own scoped JavaScript.</p>
+
+		<h3>How it works</h3>
+		<ul>
+			<li>You use <code>nui.enableContentLoading()</code> which automatically sets up a <code>page</code> route type.</li>
+			<li>Navigating to <code>#page=about</code> fetches <code>/pages/about.html</code>.</li>
+			<li>If the HTML contains <code>&lt;script type="nui/page"&gt;</code>, it is extracted and executed once with a scoped <code>init(element, params)</code> function.</li>
+		</ul>
+
+		<h3>Example</h3>
+		<nui-code>
+			<pre><code data-lang="html">&lt;!-- pages/about.html --&gt;
+&lt;h1&gt;About Us&lt;/h1&gt;
+&lt;button class="track-btn"&gt;Click Me&lt;/button&gt;
+
+&lt;script type="nui/page"&gt;
+function init(element, params) {
+    // Logic is scoped entirely to this fragment
+    const btn = element.querySelector('.track-btn');
+    btn.addEventListener('click', () => console.log('Clicked on About page'));
+    
+    // Optional lifecycle hooks
+    element.show = () => console.log('About page became visible');
+}
+&lt;/script&gt;</code></pre>
+		</nui-code>
+
+		<h3>When to use</h3>
+		<ul>
+			<li>Documentation sites, blogs, or content-heavy sites.</li>
+			<li>Playgrounds and component libraries (where isolation is a feature).</li>
+			<li>When you want to split code automatically without a complex bundler setup.</li>
+		</ul>
+	</section>
+
+	<section>
+		<h2>Pattern 3: The Hybrid Approach</h2>
+		<p>The NUI Router allows you to mix both patterns seamlessly. You can have a centralized app that handles complex features, while using the fragment loader for static content like help pages, documentation, or terms of service.</p>
+
+		<h3>How it works</h3>
+		<ul>
+			<li>You use <code>nui.enableContentLoading()</code> to handle <code>#page=...</code> routes automatically.</li>
+			<li>You use <code>nui.registerFeature()</code> to handle <code>#feature=...</code> routes with centralized logic.</li>
+		</ul>
+
+		<h3>Example</h3>
+		<nui-code>
+			<pre><code data-lang="javascript">// main.js
+import { nui } from './nui.js';
+
+// 1. Centralized logic for the complex app feature
+nui.registerFeature('editor', (element, params) => {
+    element.innerHTML = '&lt;div id="canvas"&gt;&lt;/div&gt;';
+    const editor = new ComplexEditor(element.querySelector('#canvas'));
+    
+    element.show = (params) => editor.loadDocument(params.docId);
+});
+
+// 2. Enable content loading for static pages (Help, About, etc.)
+nui.enableContentLoading({
+    container: 'nui-main',
+    basePath: '/pages',
+    defaultPage: 'home'
+});
+
+// Now the app responds to both:
+// #feature=editor&docId=123 -&gt; Runs centralized logic
+// #page=help/shortcuts      -&gt; Fetches /pages/help/shortcuts.html</code></pre>
+		</nui-code>
+
+		<h3>When to use</h3>
+		<ul>
+			<li>Almost any real-world application.</li>
+			<li>When you want to keep your main JavaScript bundle small by offloading static content to HTML fragments, while keeping core application logic centralized.</li>
+		</ul>
+	</section>
+
+	<section>
+		<h2>Key Takeaways</h2>
+		<ol>
+			<li><strong>Do not assume <code>&lt;script type="nui/page"&gt;</code> is required.</strong> If building an application, default to centralized logic (Pattern 1) unless fragment loading is specifically requested.</li>
+			<li><strong>The Router is just a visibility toggler.</strong> It creates a wrapper <code>div</code>, caches it, and calls <code>element.show()</code> / <code>element.hide()</code>. How that <code>div</code> gets populated (fetch vs. JS generation) is entirely up to the architecture choice.</li>
+			<li><strong>State lives in the URL.</strong> Regardless of the pattern chosen, the URL hash (<code>#type=id</code>) determines <em>what</em> is shown, and the search params (<code>?key=value</code>) provide the <em>data</em> for that view.</li>
+		</ol>
+	</section>
+</div>

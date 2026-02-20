@@ -1,5 +1,7 @@
 # Router & Content Loading Architecture
 
+> **See also:** [Router Usage Patterns & Best Practices](router-patterns.md) for a guide on how to architect your application (Centralized vs. Fragment-Based vs. Hybrid).
+
 ## Design Decisions
 
 ### Why Hash-Based Routing

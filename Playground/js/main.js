@@ -254,6 +254,7 @@ const navigationData = [
 		items: [
 			{ label: 'Introduction', href: '#page=documentation/introduction' },
 			{ label: 'Getting Started', href: '#page=documentation/getting-started' },
+			{ label: 'Architecture Patterns', href: '#page=documentation/architecture-patterns' },
 			{ label: 'Declarative Actions', href: '#page=documentation/declarative-actions' },
 			{ label: 'API Structure', href: '#page=documentation/api-structure' },
 		]
