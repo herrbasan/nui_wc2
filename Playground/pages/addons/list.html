@@ -10,7 +10,7 @@
 		<ul>
 			<li><strong>Virtual Scrolling</strong> - Only renders visible items (~20-30) regardless of dataset size</li>
 			<li><strong>Element Reuse</strong> - DOM elements created once and reused for performance</li>
-			<li><strong>Lazy Loading</strong> - Deferred content loading via <code>update()</code> callback when items enter DOM</li>
+			<li><strong>Lazy Loading</strong> - Deferred content loading via <code>update()</code> callback when items enter DOM; works for images, API calls, or any expensive operation</li>
 			<li><strong>Search & Filter</strong> - Multi-property search with debounced input</li>
 			<li><strong>Sort</strong> - Multi-column sorting with direction toggle</li>
 			<li><strong>Selection</strong> - Single or multi-select with Ctrl/Shift support</li>
@@ -166,34 +166,33 @@ list.loadData(data); // Just pass the array
 	</section>
 
 	<section>
-		<h2>Lazy Loading with Images</h2>
-		<p>Demonstrates deferred content loading. Images are only loaded when items are rendered to the DOM. This pattern is useful for expensive operations like fetching thumbnails or data from APIs.</p>
+		<h2>Lazy Loading</h2>
+		<p>The list supports deferred content loading through an <code>update()</code> callback. This pattern fires when items are rendered to the DOM, enabling on-demand loading for any expensive operation—not just images. Use it for API calls, complex DOM generation, or any content that shouldn't be created until needed.</p>
 
 		<nui-code>
 			<script type="example" data-lang="javascript">
 // Render function returns element with 'update' method
 render: (item) => {
 	const el = fromHTML(`
-		<div class="nui-list-image-item">
+		<div class="nui-list-item">
 			<div>${item.idx}</div>
-			<div><img src="" style="opacity:0"></div>
-			<div>${item.name}</div>
+			<div class="content-placeholder"></div>
 		</div>
 	`);
 	
-	// Reference to image element
-	const img = el.querySelector('img');
-	
-	// Delay before triggering update (ms)
+	// Optional: delay before triggering update (ms)
 	el.update_delay = 50;
 	
 	// Called when element is added to DOM
 	el.update = () => {
-		img.src = item.imageUrl;
-		img.addEventListener('load', () => {
-			img.style.opacity = '1';
-			el.update = null; // Cleanup
-		});
+		// Load expensive content: images, API data, complex widgets, etc.
+		fetch(`/api/details/${item.id}`)
+			.then(r => r.json())
+			.then(data => {
+				el.querySelector('.content-placeholder').innerHTML = 
+					`<img src="${data.thumbnail}" alt="">`;
+				el.update = null; // Cleanup when done
+			});
 	};
 	
 	return el;
@@ -201,12 +200,17 @@ render: (item) => {
 			</script>
 		</nui-code>
 
+		<div class="demo-callout">
+			<strong>How it works:</strong> Each rendered element can have an <code>update()</code> method that's called when the element is appended to the DOM. Add <code>update_delay</code> to defer execution. This is a general pattern—use it for images, API calls, map initialization, or any heavy lifting.
+		</div>
+	</section>
+
+	<section>
+		<h3>Example: Lazy Loading Images</h3>
+		<p>A practical example of the pattern—scroll through and watch images fade in as they enter the viewport:</p>
+
 		<div class="demo-list demo-list--lg">
 			<nui-list id="lazyList"></nui-list>
-		</div>
-
-		<div class="demo-callout">
-			<strong>How it works:</strong> Scroll through the list and watch images fade in as they enter the viewport. Each item has an <code>update()</code> method that's called when the element is appended to the DOM. This pattern enables on-demand loading for large datasets.
 		</div>
 	</section>
 </div>

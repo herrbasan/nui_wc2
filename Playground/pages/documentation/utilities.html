@@ -1,0 +1,218 @@
+<header>
+	<h1>Utilities</h1>
+	<p>Helper functions and utilities for common tasks</p>
+</header>
+
+<section>
+	<h2>Array Utilities</h2>
+	<p>NUI provides utilities for sorting and filtering arrays.</p>
+
+	<h3>sortByKey</h3>
+	<p>Sort an array of objects by a nested property path:</p>
+	<nui-code>
+		<script type="example" data-lang="js">
+const users = [
+	{ name: { first: 'Alice' }, age: 30 },
+	{ name: { first: 'Bob' }, age: 25 },
+	{ name: { first: 'Carol' }, age: 35 }
+];
+
+// Sort by nested property
+nui.util.sortByKey(users, 'name.first');
+// [{ name: { first: 'Alice' } }, { name: { first: 'Bob' } }, { name: { first: 'Carol' } }]
+
+// Numeric sort
+nui.util.sortByKey(users, 'age', true);
+// [{ name: { first: 'Bob' }, age: 25 }, { name: { first: 'Alice' }, age: 30 }, ...]
+		</script>
+	</nui-code>
+
+	<h3>filter</h3>
+	<p>Search/filter arrays with multiple property support:</p>
+	<nui-code>
+		<script type="example" data-lang="js">
+const items = [
+	{ title: 'Getting Started', category: 'docs' },
+	{ title: 'API Reference', category: 'docs' },
+	{ title: 'Button Component', category: 'component' },
+	{ title: 'Dialog Component', category: 'component' }
+];
+
+// Search across multiple properties
+nui.util.filter({
+	data: items,
+	search: 'button',
+	prop: ['title', 'category']
+});
+// [{ title: 'Button Component', category: 'component' }]
+
+// Case-insensitive by default
+nui.util.filter({
+	data: items,
+	search: 'DOCS',
+	prop: ['category']
+});
+// [{ title: 'Getting Started', category: 'docs' }, { title: 'API Reference', category: 'docs' }]
+		</script>
+	</nui-code>
+</section>
+
+<section>
+	<h2>DOM Utilities</h2>
+
+	<h3>createElement</h3>
+	<p>Create DOM elements with a concise API:</p>
+	<nui-code>
+		<script type="example" data-lang="js">
+// Create element with attributes and children
+const div = nui.util.createElement('div', {
+	class: 'card',
+	id: 'main',
+	'data-value': 42
+}, [
+	nui.util.createElement('h2', {}, 'Title'),
+	nui.util.createElement('p', {}, 'Content')
+]);
+		</script>
+	</nui-code>
+
+	<h3>createSvgElement</h3>
+	<p>Create SVG elements with proper namespace:</p>
+	<nui-code>
+		<script type="example" data-lang="js">
+const svg = nui.util.createSvgElement('svg', {
+	viewBox: '0 0 24 24',
+	width: 24,
+	height: 24
+}, [
+	nui.util.createSvgElement('circle', { cx: 12, cy: 12, r: 10 })
+]);
+		</script>
+	</nui-code>
+</section>
+
+<section>
+	<h2>Storage</h2>
+	<p>See the <a href="#page=components/storage">Storage page</a> for full documentation on <code>nui.util.storage</code>.</p>
+</section>
+
+<section>
+	<h2>Environment Detection</h2>
+
+	<h3>detectEnv</h3>
+	<p>Detect browser and device environment:</p>
+	<nui-code>
+		<script type="example" data-lang="js">
+const env = nui.util.detectEnv();
+
+// Returns object with boolean flags:
+{
+	isTouch: true/false,      // Touch device
+	isMac: true/false,        // macOS
+	isIOS: true/false,        // iOS device
+	isSafari: true/false,     // Safari browser
+	isFF: true/false          // Firefox
+}
+
+// Usage example
+if (env.isTouch) {
+	document.body.classList.add('touch-device');
+}
+		</script>
+	</nui-code>
+</section>
+
+<section>
+	<h2>Drag and Drop</h2>
+
+	<h3>enableDrag</h3>
+	<p>Add drag functionality to any element:</p>
+	<nui-code>
+		<script type="example" data-lang="js">
+const box = document.querySelector('.draggable');
+
+nui.util.enableDrag(box, {
+	onDragStart: (el, x, y) => {
+		el.classList.add('dragging');
+	},
+	onDrag: (el, x, y) => {
+		el.style.transform = `translate(${x}px, ${y}px)`;
+	},
+	onDragEnd: (el, x, y) => {
+		el.classList.remove('dragging');
+	}
+});
+		</script>
+	</nui-code>
+</section>
+
+<section>
+	<h2>Routing</h2>
+
+	<h3>createRouter</h3>
+	<p>Create a fragment-based SPA router:</p>
+	<nui-code>
+		<script type="example" data-lang="js">
+const router = nui.createRouter('#content', {
+	defaultPage: 'home',
+	onNavigate: (page, params) => {
+		console.log('Navigating to:', page);
+	}
+});
+		</script>
+	</nui-code>
+
+	<h3>enableContentLoading</h3>
+	<p>Enable automatic lazy loading of page fragments:</p>
+	<nui-code>
+		<script type="example" data-lang="js">
+nui.enableContentLoading({
+	container: '#content',
+	basePath: 'pages/',
+	cache: true
+});
+		</script>
+	</nui-code>
+</section>
+
+<section>
+	<h2>Configuration</h2>
+
+	<h3>configure</h3>
+	<p>Configure global NUI settings:</p>
+	<nui-code>
+		<script type="example" data-lang="js">
+nui.configure({
+	iconSpritePath: '/assets/icons.svg',
+	baseFontSize: 16,
+	animationDuration: 200
+});
+		</script>
+	</nui-code>
+
+	<h3>registerFeature</h3>
+	<p>Register custom features for use with <code>data-action</code>:</p>
+	<nui-code>
+		<script type="example" data-lang="js">
+nui.registerFeature('greet', (element, params) => {
+	alert('Hello, ' + (params.name || 'World') + '!');
+});
+
+// Now usable as: <button data-action="greet:name=Alice">
+		</script>
+	</nui-code>
+
+	<h3>registerType</h3>
+	<p>Register custom type handlers for dynamic content:</p>
+	<nui-code>
+		<script type="example" data-lang="js">
+nui.registerType('user-card', (element, data) => {
+	element.innerHTML = `
+		<img src="${data.avatar}" alt="${data.name}">
+		<h3>${data.name}</h3>
+		<p>${data.bio}</p>
+	`;
+});
+		</script>
+	</nui-code>
+</section>

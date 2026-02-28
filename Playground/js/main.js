@@ -257,6 +257,7 @@ const navigationData = [
 			{ label: 'Architecture Patterns', href: '#page=documentation/architecture-patterns' },
 			{ label: 'Declarative Actions', href: '#page=documentation/declarative-actions' },
 			{ label: 'API Structure', href: '#page=documentation/api-structure' },
+			{ label: 'Utilities', href: '#page=documentation/utilities' },
 		]
 	},
 	{

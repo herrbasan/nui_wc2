@@ -78,13 +78,27 @@ function setupButtonBehavior(element) {
 
 ## Core Components
 
-**Layout:** `nui-app`, `nui-top-nav`, `nui-side-nav`, `nui-content`, `nui-main`, `nui-app-footer`, `nui-layout`
+**Layout:** `nui-app`, `nui-top-nav`, `nui-side-nav`, `nui-content`, `nui-main`, `nui-app-footer`, `nui-layout`, `nui-skip-links`, `nui-column-flow`
 
-**UI:** `nui-button`, `nui-icon`, `nui-tabs`, `nui-accordion`, `nui-dialog`, `nui-banner`, `nui-table`, `nui-slider`, `nui-input`, `nui-link-list`, `nui-code`, `nui-loading`
+**UI:** `nui-button`, `nui-button-container`, `nui-icon`, `nui-tabs`, `nui-accordion`, `nui-dialog`, `nui-banner`, `nui-table`, `nui-slider`, `nui-input`, `nui-textarea`, `nui-checkbox`, `nui-radio`, `nui-tag-input`, `nui-select`, `nui-link-list`, `nui-code`, `nui-loading`
 
 **Planned:** `nui-tooltip`, `nui-progress`
 
 **Addons:** `nui-menu`, `nui-list`, `nui-animation`, `nui-syntax-highlight`
+
+## Utilities
+
+**Array:** `nui.util.sortByKey()`, `nui.util.filter()`
+
+**DOM:** `nui.util.createElement()`, `nui.util.createSvgElement()`, `nui.util.enableDrag()`
+
+**Storage:** `nui.util.storage`
+
+**Environment:** `nui.util.detectEnv()`
+
+**Routing:** `nui.createRouter()`, `nui.enableContentLoading()`
+
+**Registration:** `nui.registerFeature()`, `nui.registerType()`, `nui.configure()`
 
 ## Development Preferences
 
