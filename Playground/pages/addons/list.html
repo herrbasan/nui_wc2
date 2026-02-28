@@ -10,6 +10,7 @@
 		<ul>
 			<li><strong>Virtual Scrolling</strong> - Only renders visible items (~20-30) regardless of dataset size</li>
 			<li><strong>Element Reuse</strong> - DOM elements created once and reused for performance</li>
+			<li><strong>Lazy Loading</strong> - Deferred content loading via <code>update()</code> callback when items enter DOM</li>
 			<li><strong>Search & Filter</strong> - Multi-property search with debounced input</li>
 			<li><strong>Sort</strong> - Multi-column sorting with direction toggle</li>
 			<li><strong>Selection</strong> - Single or multi-select with Ctrl/Shift support</li>
@@ -161,6 +162,51 @@ list.loadData(data); // Just pass the array
 
 		<div class="demo-result">
 			<pre id="selectionOutput">Selection: None</pre>
+		</div>
+	</section>
+
+	<section>
+		<h2>Lazy Loading with Images</h2>
+		<p>Demonstrates deferred content loading. Images are only loaded when items are rendered to the DOM. This pattern is useful for expensive operations like fetching thumbnails or data from APIs.</p>
+
+		<nui-code>
+			<script type="example" data-lang="javascript">
+// Render function returns element with 'update' method
+render: (item) => {
+	const el = fromHTML(`
+		<div class="nui-list-image-item">
+			<div>${item.idx}</div>
+			<div><img src="" style="opacity:0"></div>
+			<div>${item.name}</div>
+		</div>
+	`);
+	
+	// Reference to image element
+	const img = el.querySelector('img');
+	
+	// Delay before triggering update (ms)
+	el.update_delay = 50;
+	
+	// Called when element is added to DOM
+	el.update = () => {
+		img.src = item.imageUrl;
+		img.addEventListener('load', () => {
+			img.style.opacity = '1';
+			el.update = null; // Cleanup
+		});
+	};
+	
+	return el;
+}
+			</script>
+		</nui-code>
+
+		<div class="demo-list demo-list--lg">
+			<nui-list id="lazyList"></nui-list>
+		</div>
+
+		<div class="demo-callout">
+			<strong>How it works:</strong> Scroll through the list and watch images fade in as they enter the viewport. Each item has an <code>update()</code> method that's called when the element is appended to the DOM. This pattern enables on-demand loading for large datasets.
 		</div>
 	</section>
 </div>
@@ -393,6 +439,63 @@ function init(element, params, nui) {
 				selectionOutput.textContent = `Selection: ${e.value} items\nIndices: [${indices.join(', ')}]\nFirst item: ${items[0] ? JSON.stringify(items[0].data, null, 2) : 'None'}`;
 			}
 		}
+	});
+
+	// Lazy Loading List with Images
+	const lazyData = [];
+	const imageNames = [];
+	for (let i = 1; i <= 118; i++) {
+		imageNames.push(String(i).padStart(3, '0') + '.webp');
+	}
+	const categories = ['Nature', 'Urban', 'Abstract', 'Portrait', 'Landscape', 'Architecture'];
+	
+	for (let i = 0; i < 500; i++) {
+		const imageIndex = i % imageNames.length;
+		lazyData.push({
+			idx: i,
+			name: `${categories[Math.floor(Math.random() * categories.length)]} Photo ${i}`,
+			image: imageNames[imageIndex],
+			date: Date.now() - Math.floor(Math.random() * 10000000000)
+		});
+	}
+
+	const lazyList = element.querySelector('#lazyList');
+	lazyList.loadData({
+		data: lazyData,
+		render: (item) => {
+			const el = fromHTML(`
+				<div class="nui-list-image-item">
+					<div>${item.idx}</div>
+					<div class="image-cell"><img src="" alt="${item.name}"></div>
+					<div>${item.name}</div>
+					<div>${formatDate(item.date)}</div>
+				</div>
+			`);
+			
+			const img = el.querySelector('img');
+			el.update_delay = 50;
+			
+			el.update = () => {
+				img.src = `images/Random_Picts/160p/${item.image}`;
+				img.addEventListener('load', function onLoad() {
+					img.removeEventListener('load', onLoad);
+					img.style.opacity = '1';
+					el.update = null;
+				});
+			};
+			
+			return el;
+		},
+		search: [
+			{ prop: 'name' },
+			{ prop: 'idx' }
+		],
+		sort: [
+			{ label: 'Index', prop: 'idx', numeric: true },
+			{ label: 'Name', prop: 'name' },
+			{ label: 'Date', prop: 'date', numeric: true }
+		],
+		sort_default: 0
 	});
 
 	// Lifecycle hooks
