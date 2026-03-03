@@ -1,141 +1,57 @@
 <header>
 	<h1>Select Component</h1>
-	<p>Enhanced select elements with search, multi-select, and accessible custom UI</p>
+	<p class="lead">Enhanced select elements with search, multi-select, and accessible custom UI</p>
 </header>
-
-<section>
-	<nui-warning level="1">
-		This is early development. This doesn't work yet!
-	</nui-warning>
-</section>
 
 <section>
 	<h2>Overview</h2>
 	<p>The <code>&lt;nui-select&gt;</code> component enhances native <code>&lt;select&gt;</code> elements with a custom
-		UI,
-		search capabilities, and multi-select tag management, while maintaining full accessibility and form
+		UI, search capabilities, and multi-select tag management, while maintaining full accessibility and form
 		compatibility.</p>
 </section>
 
 <section>
 	<h2>Basic Single Select</h2>
-	<div class="demo-container">
+	<p>A simple dropdown for selecting a single option. The first empty-value option serves as placeholder text.</p>
+
+	<div class="demo-area">
 		<nui-input-group>
 			<label>Choose a Fruit</label>
-			<nui-select>
+			<nui-select id="basic-select">
 				<select name="fruit">
 					<option value="">Select a fruit...</option>
 					<option value="apple">Apple</option>
 					<option value="banana">Banana</option>
 					<option value="cherry">Cherry</option>
 					<option value="date">Date</option>
-					<option value="stuff">Stuff</option>
-				</select>
-			</nui-select>
-		</nui-input-group>
-	</div>
-	</div>
-</section>
-
-<section>
-	<h2>Mobile Bottom Sheet (Experimental)</h2>
-	<p>These selects use the <code>mobile-sheet</code> attribute to trigger a bottom sheet UI on restricted screens
-		(Width &le; 500px AND Height &gt; 500px).</p>
-	<nui-warning level="2">Resize your browser window to mobile width (and ensure height > 500px) to test.</nui-warning>
-
-	<div class="demo-container">
-		<nui-input-group>
-			<label>Mobile Single Select</label>
-			<nui-select mobile-sheet>
-				<select>
-					<option value="">Select a fruit...</option>
-					<option value="apple">Apple</option>
-					<option value="banana">Banana</option>
-					<option value="cherry">Cherry</option>
-					<option value="date">Date</option>
 					<option value="elderberry">Elderberry</option>
-					<option value="fig">Fig</option>
-					<option value="grape">Grape</option>
-				</select>
-			</nui-select>
-		</nui-input-group>
-
-		<nui-input-group>
-			<label>Mobile Searchable</label>
-			<nui-select mobile-sheet searchable>
-				<select>
-					<option value="">Select a country...</option>
-					<option value="us">United States</option>
-					<option value="ca">Canada</option>
-					<option value="uk">United Kingdom</option>
-					<option value="fr">France</option>
-					<option value="de">Germany</option>
-					<option value="jp">Japan</option>
-					<option value="au">Australia</option>
-				</select>
-			</nui-select>
-		</nui-input-group>
-
-		<nui-input-group>
-			<label>Mobile Multi-Select</label>
-			<nui-select mobile-sheet searchable>
-				<select multiple>
-					<option value="assembly">Assembly</option>
-					<option value="bash">Bash</option>
-					<option value="c">C</option>
-					<option value="cpp">C++</option>
-					<option value="csharp">C#</option>
-					<option value="clojure">Clojure</option>
-					<option value="cobol">COBOL</option>
-					<option value="crystal">Crystal</option>
-					<option value="css">CSS</option>
-					<option value="dart">Dart</option>
-					<option value="elixir">Elixir</option>
-					<option value="elm">Elm</option>
-					<option value="erlang">Erlang</option>
-					<option value="fsharp">F#</option>
-					<option value="fortran">Fortran</option>
-					<option value="go">Go</option>
-					<option value="groovy">Groovy</option>
-					<option value="haskell">Haskell</option>
-					<option value="html">HTML</option>
-					<option value="java">Java</option>
-					<option value="js">JavaScript</option>
-					<option value="julia">Julia</option>
-					<option value="kotlin">Kotlin</option>
-					<option value="lisp">Lisp</option>
-					<option value="lua">Lua</option>
-					<option value="matlab">MATLAB</option>
-					<option value="nim">Nim</option>
-					<option value="objc">Objective-C</option>
-					<option value="ocaml">OCaml</option>
-					<option value="pascal">Pascal</option>
-					<option value="perl">Perl</option>
-					<option value="php">PHP</option>
-					<option value="powershell">PowerShell</option>
-					<option value="prolog">Prolog</option>
-					<option value="python">Python</option>
-					<option value="r">R</option>
-					<option value="racket">Racket</option>
-					<option value="ruby">Ruby</option>
-					<option value="rust">Rust</option>
-					<option value="scala">Scala</option>
-					<option value="scheme">Scheme</option>
-					<option value="smalltalk">Smalltalk</option>
-					<option value="sql">SQL</option>
-					<option value="swift">Swift</option>
-					<option value="ts">TypeScript</option>
-					<option value="vb">Visual Basic</option>
-					<option value="zig">Zig</option>
 				</select>
 			</nui-select>
 		</nui-input-group>
 	</div>
+
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-input-group>
+	<label>Choose a Fruit</label>
+	<nui-select>
+		<select name="fruit">
+			<option value="">Select a fruit...</option>
+			<option value="apple">Apple</option>
+			<option value="banana">Banana</option>
+			<option value="cherry">Cherry</option>
+		</select>
+	</nui-select>
+</nui-input-group>
+		</script>
+	</nui-code>
 </section>
 
 <section>
-	<h2>Searchable Single Select</h2>
-	<div class="demo-container">
+	<h2>Searchable Select</h2>
+	<p>Add the <code>searchable</code> attribute to enable filtering options by typing.</p>
+
+	<div class="demo-area">
 		<nui-input-group>
 			<label>Country</label>
 			<nui-select searchable>
@@ -155,14 +71,30 @@
 			</nui-select>
 		</nui-input-group>
 	</div>
+
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-select searchable>
+	<select name="country">
+		<option value="">Select a country...</option>
+		<option value="no">Norway</option>
+		<option value="se">Sweden</option>
+		<option value="dk">Denmark</option>
+	</select>
+</nui-select>
+		</script>
+	</nui-code>
 </section>
 
 <section>
 	<h2>Multi-select with Tags</h2>
-	<div class="demo-container">
+	<p>Use <code>&lt;select multiple&gt;</code> for multi-selection. Selected items appear as removable tags.
+		Pre-select options with the <code>selected</code> attribute.</p>
+
+	<div class="demo-area">
 		<nui-input-group>
 			<label>Programming Languages</label>
-			<nui-select searchable>
+			<nui-select id="multi-select" searchable>
 				<select name="languages" multiple>
 					<option value="js" selected>JavaScript</option>
 					<option value="ts" selected>TypeScript</option>
@@ -176,79 +108,248 @@
 			</nui-select>
 		</nui-input-group>
 	</div>
+
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-select searchable>
+	<select name="languages" multiple>
+		<option value="js" selected>JavaScript</option>
+		<option value="ts" selected>TypeScript</option>
+		<option value="py">Python</option>
+	</select>
+</nui-select>
+		</script>
+	</nui-code>
 </section>
 
 <section>
 	<h2>Option Groups</h2>
-	<div class="demo-container">
+	<p>Organize options into groups using <code>&lt;optgroup&gt;</code> elements.</p>
+
+	<div class="demo-area">
 		<nui-input-group>
 			<label>Car Brand & Model</label>
 			<nui-select searchable>
 				<select name="vehicle">
 					<option value="">Select a car...</option>
 					<optgroup label="German">
-						<option value="audi-a3">Audi A3</option>
 						<option value="audi-a4">Audi A4</option>
-						<option value="audi-a6">Audi A6</option>
-						<option value="audi-q5">Audi Q5</option>
 						<option value="bmw-3">BMW 3 Series</option>
-						<option value="bmw-5">BMW 5 Series</option>
-						<option value="bmw-x3">BMW X3</option>
-						<option value="bmw-x5">BMW X5</option>
 						<option value="mercedes-c">Mercedes C-Class</option>
-						<option value="mercedes-e">Mercedes E-Class</option>
-						<option value="mercedes-glc">Mercedes GLC</option>
-						<option value="porsche-911">Porsche 911</option>
-						<option value="porsche-cayenne">Porsche Cayenne</option>
 					</optgroup>
 					<optgroup label="Japanese">
 						<option value="honda-civic">Honda Civic</option>
-						<option value="honda-accord">Honda Accord</option>
-						<option value="honda-crv">Honda CR-V</option>
-						<option value="mazda-3">Mazda 3</option>
-						<option value="mazda-cx5">Mazda CX-5</option>
-						<option value="nissan-altima">Nissan Altima</option>
-						<option value="nissan-rogue">Nissan Rogue</option>
 						<option value="toyota-camry">Toyota Camry</option>
-						<option value="toyota-corolla">Toyota Corolla</option>
-						<option value="toyota-rav4">Toyota RAV4</option>
-						<option value="toyota-highlander">Toyota Highlander</option>
-						<option value="subaru-outback">Subaru Outback</option>
-						<option value="subaru-forester">Subaru Forester</option>
-					</optgroup>
-					<optgroup label="American">
-						<option value="ford-f150">Ford F-150</option>
-						<option value="ford-mustang">Ford Mustang</option>
-						<option value="ford-explorer">Ford Explorer</option>
-						<option value="chevy-silverado">Chevrolet Silverado</option>
-						<option value="chevy-tahoe">Chevrolet Tahoe</option>
-						<option value="chevy-corvette">Chevrolet Corvette</option>
-						<option value="tesla-model3">Tesla Model 3</option>
-						<option value="tesla-modely">Tesla Model Y</option>
-						<option value="tesla-models">Tesla Model S</option>
-						<option value="dodge-ram">Dodge RAM</option>
-						<option value="jeep-wrangler">Jeep Wrangler</option>
-						<option value="jeep-grand">Jeep Grand Cherokee</option>
-					</optgroup>
-					<optgroup label="Korean">
-						<option value="hyundai-elantra">Hyundai Elantra</option>
-						<option value="hyundai-sonata">Hyundai Sonata</option>
-						<option value="hyundai-tucson">Hyundai Tucson</option>
-						<option value="kia-forte">Kia Forte</option>
-						<option value="kia-optima">Kia Optima</option>
-						<option value="kia-sportage">Kia Sportage</option>
-						<option value="genesis-g70">Genesis G70</option>
-						<option value="genesis-gv80">Genesis GV80</option>
 					</optgroup>
 				</select>
 			</nui-select>
 		</nui-input-group>
 	</div>
+
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-select searchable>
+	<select name="vehicle">
+		<option value="">Select a car...</option>
+		<optgroup label="German">
+			<option value="audi-a4">Audi A4</option>
+			<option value="bmw-3">BMW 3 Series</option>
+		</optgroup>
+		<optgroup label="Japanese">
+			<option value="honda-civic">Honda Civic</option>
+		</optgroup>
+	</select>
+</nui-select>
+		</script>
+	</nui-code>
+</section>
+
+<section>
+	<h2>Programmatic API</h2>
+	<p>Control the select component programmatically using JavaScript methods.</p>
+
+	<div class="demo-chrome">
+		<nui-input-group>
+			<label>API Demo Select</label>
+			<nui-select id="api-demo-select" searchable>
+				<select name="api-demo">
+					<option value="">Select an item...</option>
+					<option value="opt1">Option 1</option>
+					<option value="opt2">Option 2</option>
+					<option value="opt3">Option 3</option>
+				</select>
+			</nui-select>
+		</nui-input-group>
+
+		<div class="demo-actions" style="margin-top: var(--nui-space-double);">
+			<nui-button><button data-action="select-demo:opt2">Select Option 2</button></nui-button>
+			<nui-button><button data-action="select-demo:clear">Clear</button></nui-button>
+			<nui-button><button data-action="select-demo:add">Add New Item</button></nui-button>
+			<nui-button><button data-action="select-demo:toggle">Toggle Disabled</button></nui-button>
+		</div>
+
+		<div class="demo-result" id="api-result">
+			<strong>Current Value:</strong> <span id="api-value">none</span>
+		</div>
+	</div>
+
+	<nui-code>
+		<script type="example" data-lang="javascript">
+const select = document.getElementById('my-select');
+
+// Get/set values
+select.setValue('option2');           // Set single value
+select.getValue();                    // Returns: "option2"
+
+// For multi-select
+select.setValue(['opt1', 'opt2']);    // Set multiple
+select.getValue();                    // Returns: ["opt1", "opt2"]
+
+// Selection control
+select.select('option3');             // Select a value
+select.unselect('option2');           // Unselect (multi only)
+select.clear();                       // Clear all selections
+
+// Options management
+select.addItem('new-value', 'New Label');
+select.removeItem('old-value');
+select.setItems([
+	{ value: 'a', label: 'Option A' },
+	{ value: 'b', label: 'Option B', disabled: true },
+	{ 
+		group: 'Group Name', 
+		options: [
+			{ value: 'c', label: 'Option C' }
+		]
+	}
+]);
+
+// State management
+select.disable();
+select.enable();
+select.setDisabled(true);
+
+// Popup control
+select.open();
+select.close();
+select.isOpen();  // true/false
+
+// Validation
+select.validate();  // Returns validity state
+
+// Sync UI after manual DOM changes
+select.syncOptions();  // Use after modifying native <select> options
+		</script>
+	</nui-code>
+
+	<div class="demo-callout" style="margin-top: var(--nui-space-double);">
+		<p><strong>Tip:</strong> Use <code>syncOptions()</code> when you've manually modified the native 
+		<code>&lt;select&gt;</code> element via DOM manipulation. Use <code>setItems()</code> to programmatically 
+		replace all items. <code>refresh()</code> is kept as an alias for backward compatibility.</p>
+	</div>
+</section>
+
+<section>
+	<h2>Multi-Select API Demo</h2>
+	<p>Programmatic control for multi-select with dynamic item management.</p>
+
+	<div class="demo-chrome">
+		<nui-input-group>
+			<label>Dynamic Multi-Select</label>
+			<nui-select id="multi-api-demo" searchable>
+				<select name="dynamic-multi" multiple>
+					<option value="red" selected>Red</option>
+					<option value="green">Green</option>
+					<option value="blue" selected>Blue</option>
+				</select>
+			</nui-select>
+		</nui-input-group>
+
+		<div class="demo-actions" style="margin-top: var(--nui-space-double);">
+			<nui-button><button data-action="multi-demo:select-all">Select All</button></nui-button>
+			<nui-button><button data-action="multi-demo:unselect-red">Unselect Red</button></nui-button>
+			<nui-button><button data-action="multi-demo:clear">Clear All</button></nui-button>
+			<nui-button><button data-action="multi-demo:add-random">Add Random Color</button></nui-button>
+		</div>
+
+		<div class="demo-result" id="multi-api-result">
+			<strong>Selected:</strong> <span id="multi-api-value">red, blue</span>
+		</div>
+	</div>
+</section>
+
+<section>
+	<h2>Events</h2>
+	<p>Listen to events to respond to user interactions and programmatic changes.</p>
+
+	<div class="demo-chrome">
+		<nui-input-group>
+			<label>Event Demo</label>
+			<nui-select id="event-demo" searchable>
+				<select name="event-test">
+					<option value="">Choose something...</option>
+					<option value="a">Choice A</option>
+					<option value="b">Choice B</option>
+					<option value="c">Choice C</option>
+				</select>
+			</nui-select>
+		</nui-input-group>
+
+		<div id="event-log" class="demo-result" style="margin-top: var(--nui-space);">
+			<strong>Event Log:</strong>
+			<div style="font-family: monospace; font-size: 0.875rem; margin-top: 0.5rem;">
+				<span style="color: var(--color-text-dim);">Interact with the select to see events...</span>
+			</div>
+		</div>
+	</div>
+
+	<nui-code>
+		<script type="example" data-lang="javascript">
+const select = document.getElementById('my-select');
+
+// Value changed (selection made)
+select.addEventListener('nui-change', (e) => {
+	console.log('Values:', e.detail.values);
+	console.log('Labels:', e.detail.labels);
+	console.log('Options:', e.detail.options);
+});
+
+// Individual option selected
+select.addEventListener('nui-select', (e) => {
+	console.log('Selected:', e.detail.value, e.detail.label);
+	console.log('Is now selected:', e.detail.selected);
+});
+
+// Popup opened/closed
+select.addEventListener('nui-open', () => console.log('Opened'));
+select.addEventListener('nui-close', () => console.log('Closed'));
+
+// Cleared
+select.addEventListener('nui-clear', () => console.log('Cleared'));
+
+// Enabled/disabled
+select.addEventListener('nui-enable', () => console.log('Enabled'));
+select.addEventListener('nui-disable', () => console.log('Disabled'));
+
+// Items changed
+select.addEventListener('nui-item-add', (e) => {
+	console.log('Item added:', e.detail.value);
+});
+select.addEventListener('nui-item-remove', (e) => {
+	console.log('Item removed:', e.detail.value);
+});
+select.addEventListener('nui-items-replace', (e) => {
+	console.log('Items replaced, count:', e.detail.count);
+});
+		</script>
+	</nui-code>
 </section>
 
 <section>
 	<h2>Disabled States</h2>
-	<div class="demo-container">
+	<p>Disable the entire select or individual options.</p>
+
+	<div class="demo-area">
 		<div style="display: flex; flex-direction: column; gap: var(--nui-space-double);">
 			<nui-input-group>
 				<label>Disabled Select</label>
@@ -272,11 +373,32 @@
 			</nui-input-group>
 		</div>
 	</div>
+
+	<nui-code>
+		<script type="example" data-lang="html">
+<!-- Disabled select -->
+<nui-select>
+	<select disabled>
+		<option value="1">Option 1</option>
+	</select>
+</nui-select>
+
+<!-- Disabled option -->
+<nui-select>
+	<select>
+		<option value="1">Available</option>
+		<option value="2" disabled>Disabled</option>
+	</select>
+</nui-select>
+		</script>
+	</nui-code>
 </section>
 
 <section>
 	<h2>Validation (Required)</h2>
-	<div class="demo-container">
+	<p>Use the <code>required</code> attribute on the native select for form validation.</p>
+
+	<div class="demo-area">
 		<form id="demo-form">
 			<nui-input-group>
 				<label>Required Selection</label>
@@ -287,38 +409,565 @@
 						<option value="no">No</option>
 					</select>
 				</nui-select>
-				<div class="nui-error-message">This field is required</div>
 			</nui-input-group>
 			<nui-button>
 				<button type="submit">Submit Form</button>
 			</nui-button>
 		</form>
 	</div>
+
+	<nui-code>
+		<script type="example" data-lang="html">
+<form id="demo-form">
+	<nui-select>
+		<select name="required" required>
+			<option value="">Please select...</option>
+			<option value="yes">Yes</option>
+		</select>
+	</nui-select>
+	<button type="submit">Submit</button>
+</form>
+
+<script>
+document.getElementById('demo-form').addEventListener('submit', (e) => {
+	e.preventDefault();
+	const select = e.target.querySelector('nui-select');
+	if (select.validate()) {
+		// Form is valid
+	}
+});
+</script>
+		</script>
+	</nui-code>
+</section>
+
+<section>
+	<h2>Mobile Bottom Sheet</h2>
+	<p>Add the <code>mobile-sheet</code> attribute for a touch-optimized bottom sheet on mobile devices
+		(viewport width &le; 500px and height &gt; 500px).</p>
+
+	<div class="demo-area">
+		<nui-input-group>
+			<label>Mobile Optimized</label>
+			<nui-select mobile-sheet searchable>
+				<select>
+					<option value="">Select an option...</option>
+					<option value="1">Option 1</option>
+					<option value="2">Option 2</option>
+					<option value="3">Option 3</option>
+					<option value="4">Option 4</option>
+					<option value="5">Option 5</option>
+				</select>
+			</nui-select>
+		</nui-input-group>
+	</div>
+
+	<nui-code>
+		<script type="example" data-lang="html">
+<!-- Bottom sheet appears on mobile viewport -->
+<nui-select mobile-sheet searchable>
+	<select>
+		<option value="">Select...</option>
+		<option value="1">Option 1</option>
+	</select>
+</nui-select>
+		</script>
+	</nui-code>
+</section>
+
+<section>
+	<h2>API Reference</h2>
+
+	<h3>Methods</h3>
+	<table class="api-table">
+		<thead>
+			<tr>
+				<th>Method</th>
+				<th>Returns</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>open()</code></td>
+				<td><code>void</code></td>
+				<td>Open the dropdown/mobile sheet</td>
+			</tr>
+			<tr>
+				<td><code>close()</code></td>
+				<td><code>void</code></td>
+				<td>Close the dropdown/mobile sheet</td>
+			</tr>
+			<tr>
+				<td><code>isOpen()</code></td>
+				<td><code>boolean</code></td>
+				<td>Check if dropdown is currently open</td>
+			</tr>
+			<tr>
+				<td><code>getValue()</code></td>
+				<td><code>string | string[]</code></td>
+				<td>Get current value(s)</td>
+			</tr>
+			<tr>
+				<td><code>setValue(value)</code></td>
+				<td><code>void</code></td>
+				<td>Set value(s) - string for single, array for multi</td>
+			</tr>
+			<tr>
+				<td><code>getSelected()</code></td>
+				<td><code>Array</code></td>
+				<td>Get detailed info about selected options</td>
+			</tr>
+			<tr>
+				<td><code>select(value)</code></td>
+				<td><code>void</code></td>
+				<td>Select a specific value</td>
+			</tr>
+			<tr>
+				<td><code>unselect(value)</code></td>
+				<td><code>void</code></td>
+				<td>Unselect a value (multi-select only)</td>
+			</tr>
+			<tr>
+				<td><code>clear()</code></td>
+				<td><code>void</code></td>
+				<td>Clear all selections</td>
+			</tr>
+			<tr>
+				<td><code>addItem(value, label?, opts?)</code></td>
+				<td><code>boolean</code></td>
+				<td>Add a new option. Returns false if value exists.</td>
+			</tr>
+			<tr>
+				<td><code>removeItem(value)</code></td>
+				<td><code>boolean</code></td>
+				<td>Remove an option by value</td>
+			</tr>
+			<tr>
+				<td><code>setItems(items)</code></td>
+				<td><code>void</code></td>
+				<td>Replace all options</td>
+			</tr>
+			<tr>
+				<td><code>getItems()</code></td>
+				<td><code>Array</code></td>
+				<td>Get all current options</td>
+			</tr>
+			<tr>
+				<td><code>enable()</code></td>
+				<td><code>void</code></td>
+				<td>Enable the select</td>
+			</tr>
+			<tr>
+				<td><code>disable()</code></td>
+				<td><code>void</code></td>
+				<td>Disable the select</td>
+			</tr>
+			<tr>
+				<td><code>setDisabled(bool)</code></td>
+				<td><code>void</code></td>
+				<td>Set disabled state</td>
+			</tr>
+			<tr>
+				<td><code>isDisabled()</code></td>
+				<td><code>boolean</code></td>
+				<td>Check if select is disabled</td>
+			</tr>
+			<tr>
+				<td><code>isMulti()</code></td>
+				<td><code>boolean</code></td>
+				<td>Check if multi-select mode</td>
+			</tr>
+			<tr>
+				<td><code>isSearchable()</code></td>
+				<td><code>boolean</code></td>
+				<td>Check if search is enabled</td>
+			</tr>
+			<tr>
+				<td><code>validate()</code></td>
+				<td><code>boolean</code></td>
+				<td>Validate the select</td>
+			</tr>
+			<tr>
+				<td><code>syncOptions()</code></td>
+				<td><code>void</code></td>
+				<td>Sync UI after native select DOM changes</td>
+			</tr>
+		</tbody>
+	</table>
+
+	<h3>Events</h3>
+	<table class="api-table">
+		<thead>
+			<tr>
+				<th>Event</th>
+				<th>Detail</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>nui-change</code></td>
+				<td><code>{ values, labels, options }</code></td>
+				<td>Selection changed</td>
+			</tr>
+			<tr>
+				<td><code>nui-select</code></td>
+				<td><code>{ value, label, selected }</code></td>
+				<td>Individual option selected/deselected</td>
+			</tr>
+			<tr>
+				<td><code>nui-open</code></td>
+				<td>-</td>
+				<td>Dropdown opened</td>
+			</tr>
+			<tr>
+				<td><code>nui-close</code></td>
+				<td>-</td>
+				<td>Dropdown closed</td>
+			</tr>
+			<tr>
+				<td><code>nui-clear</code></td>
+				<td>-</td>
+				<td>Selection cleared</td>
+			</tr>
+			<tr>
+				<td><code>nui-enable</code></td>
+				<td>-</td>
+				<td>Select enabled</td>
+			</tr>
+			<tr>
+				<td><code>nui-disable</code></td>
+				<td>-</td>
+				<td>Select disabled</td>
+			</tr>
+			<tr>
+				<td><code>nui-item-add</code></td>
+				<td><code>{ value, label, options }</code></td>
+				<td>New item added</td>
+			</tr>
+			<tr>
+				<td><code>nui-item-remove</code></td>
+				<td><code>{ value }</code></td>
+				<td>Item removed</td>
+			</tr>
+			<tr>
+				<td><code>nui-items-replace</code></td>
+				<td><code>{ count }</code></td>
+				<td>All items replaced</td>
+			</tr>
+		</tbody>
+	</table>
 </section>
 
 <section>
 	<h2>Keyboard Navigation</h2>
-	<ul>
-		<li><code>Enter</code> / <code>Space</code> / <code>ArrowDown</code>: Open popup</li>
-		<li><code>ArrowUp</code> / <code>ArrowDown</code>: Navigate options</li>
-		<li><code>Enter</code>: Select active option</li>
-		<li><code>Escape</code>: Close popup</li>
-		<li><code>Tab</code>: Close and move to next field</li>
-	</ul>
+	<p>The select component provides comprehensive keyboard accessibility following WAI-ARIA best practices.</p>
+
+	<h3>When Closed (Control Button Focused)</h3>
+	<table class="api-table">
+		<thead>
+			<tr>
+				<th>Key</th>
+				<th>Action</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>Enter</code> / <code>Space</code></td>
+				<td>Open popup. Focus search input (searchable) or first option</td>
+			</tr>
+			<tr>
+				<td><code>ArrowDown</code></td>
+				<td>Open popup and focus first option (or search input)</td>
+			</tr>
+			<tr>
+				<td><code>ArrowUp</code></td>
+				<td>Open popup and focus last option (or search input)</td>
+			</tr>
+			<tr>
+				<td><code>Home</code></td>
+				<td>Open popup and focus first option (non-searchable)</td>
+			</tr>
+			<tr>
+				<td><code>End</code></td>
+				<td>Open popup and focus last option (non-searchable)</td>
+			</tr>
+			<tr>
+				<td><code>A-Z, 0-9</code></td>
+				<td>Open popup. Focus search input (searchable) or jump to option</td>
+			</tr>
+			<tr>
+				<td><code>Tab</code></td>
+				<td>Move focus to next/previous field</td>
+			</tr>
+		</tbody>
+	</table>
+
+	<h3>Search Input (Searchable Selects)</h3>
+<table class="api-table">
+	<thead>
+		<tr>
+			<th>Key</th>
+			<th>Action</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td><code>ArrowDown</code> / <code>Tab</code></td>
+			<td>Move focus to first option</td>
+		</tr>
+		<tr>
+			<td><code>ArrowUp</code></td>
+			<td>Move focus to last option</td>
+		</tr>
+		<tr>
+			<td><code>Escape</code></td>
+			<td>Close popup, return focus to control</td>
+		</tr>
+	</tbody>
+</table>
+
+<h3>When Open (Options List Focused)</h3>
+	<table class="api-table">
+		<thead>
+			<tr>
+				<th>Key</th>
+				<th>Action</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>ArrowDown</code></td>
+				<td>Move focus to next option</td>
+			</tr>
+			<tr>
+				<td><code>ArrowUp</code></td>
+				<td>Move focus to previous option (or search input if at top)</td>
+			</tr>
+			<tr>
+				<td><code>Home</code></td>
+				<td>Move focus to first option</td>
+			</tr>
+			<tr>
+				<td><code>End</code></td>
+				<td>Move focus to last option</td>
+			</tr>
+			<tr>
+				<td><code>Enter</code> / <code>Space</code></td>
+				<td>Select focused option and close (single) or toggle (multi)</td>
+			</tr>
+			<tr>
+				<td><code>Escape</code></td>
+				<td>Close popup without selecting, return focus to control</td>
+			</tr>
+			<tr>
+				<td><code>Tab</code></td>
+				<td>Close popup and move to next field</td>
+			</tr>
+			<tr>
+				<td><code>A-Z, 0-9</code></td>
+				<td>Type-ahead search to jump to matching options</td>
+			</tr>
+		</tbody>
+	</table>
+
+	<div class="demo-callout" style="margin-top: var(--nui-space-double);">
+		<strong>Accessibility:</strong> The select component uses roving tabindex for option navigation, 
+		provides visual focus indicators, and maintains ARIA compliance for screen reader compatibility.
+	</div>
 </section>
 
-<script>
+<section>
+	<h2>Attributes</h2>
+	<table class="api-table">
+		<thead>
+			<tr>
+				<th>Attribute</th>
+				<th>Type</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>searchable</code></td>
+				<td>boolean</td>
+				<td>Enable search/filter functionality</td>
+			</tr>
+			<tr>
+				<td><code>mobile-sheet</code></td>
+				<td>boolean</td>
+				<td>Use bottom sheet on mobile viewports</td>
+			</tr>
+			<tr>
+				<td><code>placeholder</code></td>
+				<td>string</td>
+				<td>Placeholder text (also set via empty option)</td>
+			</tr>
+			<tr>
+				<td><code>label</code></td>
+				<td>string</td>
+				<td>Accessibility label (auto-detected from parent label)</td>
+			</tr>
+		</tbody>
+	</table>
+</section>
+
+<script type="nui/page">
+function init(element, params, nui) {
+	// API Demo handlers
+	const apiSelect = element.querySelector('#api-demo-select');
+	const apiValue = element.querySelector('#api-value');
+	
+	if (apiSelect) {
+		apiSelect.addEventListener('nui-change', (e) => {
+			const val = e.detail.values[0] || 'none';
+			if (apiValue) apiValue.textContent = val;
+		});
+		
+		apiSelect.addEventListener('nui-item-add', () => {
+			// Update display after adding item
+			setTimeout(() => {
+				const val = apiSelect.getValue() || 'none';
+				if (apiValue) apiValue.textContent = val;
+			}, 0);
+		});
+	}
+	
+	element.addEventListener('nui-action-select-demo', (e) => {
+		const param = e.detail.param;
+		if (!apiSelect) return;
+		
+		switch(param) {
+			case 'opt2':
+				apiSelect.select('opt2');
+				break;
+			case 'clear':
+				apiSelect.clear();
+				if (apiValue) apiValue.textContent = 'none';
+				break;
+			case 'add':
+				const num = apiSelect.getItems().length;
+				apiSelect.addItem(`opt${num + 1}`, `New Option ${num + 1}`);
+				break;
+			case 'toggle':
+				apiSelect.setDisabled(!apiSelect.isDisabled());
+				break;
+		}
+	});
+	
+	// Multi-select API demo
+	const multiSelect = element.querySelector('#multi-api-demo');
+	const multiValue = element.querySelector('#multi-api-value');
+	
+	function updateMultiValue() {
+		if (!multiSelect || !multiValue) return;
+		const vals = multiSelect.getValue();
+		multiValue.textContent = vals.length ? vals.join(', ') : 'none';
+	}
+	
+	if (multiSelect) {
+		multiSelect.addEventListener('nui-change', updateMultiValue);
+	}
+	
+	element.addEventListener('nui-action-multi-demo', (e) => {
+		const param = e.detail.param;
+		if (!multiSelect) return;
+		
+		switch(param) {
+			case 'select-all':
+				const allValues = multiSelect.getItems().map(i => i.value);
+				multiSelect.setValue(allValues);
+				break;
+			case 'unselect-red':
+				multiSelect.unselect('red');
+				break;
+			case 'clear':
+				multiSelect.clear();
+				break;
+			case 'add-random':
+				const colors = ['Yellow', 'Purple', 'Orange', 'Pink', 'Cyan', 'Magenta'];
+				const randomColor = colors[Math.floor(Math.random() * colors.length)];
+				const existing = multiSelect.getItems().find(i => 
+					i.label.toLowerCase() === randomColor.toLowerCase()
+				);
+				if (!existing) {
+					multiSelect.addItem(
+						randomColor.toLowerCase(), 
+						randomColor
+					);
+				}
+				break;
+		}
+		updateMultiValue();
+	});
+	
+	// Event demo
+	const eventSelect = element.querySelector('#event-demo');
+	const eventLog = element.querySelector('#event-log div');
+	const loggedEvents = [];
+	
+	function logEvent(name, detail) {
+		if (!eventLog) return;
+		const time = new Date().toLocaleTimeString();
+		let info = '';
+		if (detail && detail.values) {
+			info = `values: [${detail.values.join(', ')}]`;
+		} else if (detail && detail.value) {
+			info = `value: ${detail.value}`;
+		}
+		loggedEvents.unshift(`${time} - ${name}${info ? ' (' + info + ')' : ''}`);
+		if (loggedEvents.length > 5) loggedEvents.pop();
+		eventLog.innerHTML = loggedEvents.map(e => `<div>${e}</div>`).join('');
+	}
+	
+	if (eventSelect) {
+		eventSelect.addEventListener('nui-open', () => logEvent('nui-open'));
+		eventSelect.addEventListener('nui-close', () => logEvent('nui-close'));
+		eventSelect.addEventListener('nui-change', (e) => logEvent('nui-change', e.detail));
+		eventSelect.addEventListener('nui-select', (e) => logEvent('nui-select', e.detail));
+		eventSelect.addEventListener('nui-clear', () => logEvent('nui-clear'));
+	}
+	
 	// Form validation demo
-	const form = document.getElementById("demo-form");
+	const form = element.querySelector('#demo-form');
 	if (form) {
-		form.addEventListener("submit", (e) => {
+		form.addEventListener('submit', (e) => {
 			e.preventDefault();
-			const select = form.querySelector("nui-select");
-			if (select.validate()) {
-				alert("Form submitted successfully!");
-			} else {
-				alert("Please correct the errors in the form.");
+			const select = form.querySelector('nui-select');
+			if (select && select.validate()) {
+				nui.components.dialog?.alert('Success', 'Form submitted successfully!');
 			}
 		});
 	}
+}
 </script>
+
+<style>
+.api-table {
+	width: 100%;
+	border-collapse: collapse;
+	margin: var(--nui-space-double) 0;
+	font-size: 0.875rem;
+}
+
+.api-table th,
+.api-table td {
+	text-align: left;
+	padding: var(--nui-space) var(--nui-space);
+	border-bottom: 1px solid var(--nui-border-color);
+}
+
+.api-table th {
+	font-weight: 600;
+	background: var(--nui-surface-color);
+}
+
+.api-table code {
+	font-family: var(--nui-font-mono);
+	font-size: 0.8rem;
+	background: var(--nui-surface-color);
+	padding: 0.125rem 0.375rem;
+	border-radius: 3px;
+}
+</style>

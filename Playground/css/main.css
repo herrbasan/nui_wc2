@@ -617,3 +617,32 @@ font-size: 0.85rem;
 .page-icon .icon-demo-block {
 	display: block;
 }
+
+
+/* API Documentation Tables */
+.api-table {
+	width: 100%;
+	border-collapse: collapse;
+	margin: var(--nui-space-double, 1.5rem) 0;
+	font-size: 0.875rem;
+}
+
+.api-table th,
+.api-table td {
+	text-align: left;
+	padding: var(--nui-space) var(--nui-space);
+	border-bottom: 1px solid var(--nui-border, var(--border-shade1));
+}
+
+.api-table th {
+	font-weight: 600;
+	background: var(--nui-surface, var(--color-shade1));
+}
+
+.api-table code {
+	font-family: var(--nui-font-mono, monospace);
+	font-size: 0.8rem;
+	background: var(--nui-surface, var(--color-shade1));
+	padding: 0.125rem 0.375rem;
+	border-radius: 3px;
+}

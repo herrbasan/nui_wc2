@@ -2149,7 +2149,11 @@ registerComponent('nui-select', (element) => {
 		tagInput = dom.create('nui-tag-input', { target: tagsSection });
 		tagInput.addEventListener('nui-tag-remove', e => {
 			const opt = Array.from(select.options).find(o => o.value === e.detail.value);
-			if (opt?.selected) { opt.selected = false; syncState(); }
+			if (opt?.selected) { 
+				opt.selected = false; 
+				select.dispatchEvent(new Event('change', { bubbles: true }));
+				syncState(); 
+			}
 		});
 	}
 
@@ -2168,6 +2172,8 @@ registerComponent('nui-select', (element) => {
 	// Options list
 	const list = dom.create('div', { class: 'nui-select-options', target: popup });
 	const noResults = dom.create('div', { class: 'nui-select-no-results', text: 'No results', attrs: { hidden: '' }, target: list });
+
+	// ##### PRIVATE FUNCTIONS
 
 	// Build option rows from native select
 	const buildOptions = () => {
@@ -2199,7 +2205,7 @@ registerComponent('nui-select', (element) => {
 	};
 
 	// Sync visual state with native select
-	const syncState = () => {
+	const syncState = (dispatchChange = true) => {
 		const selected = Array.from(select.selectedOptions).filter(o => o.value !== '');
 
 		// Update option rows
@@ -2211,7 +2217,7 @@ registerComponent('nui-select', (element) => {
 		if (isMulti) {
 			// Sync tag input
 			if (tagInput?.addTag) {
-				const current = new Set(tagInput.getValues());
+				const current = new Set(tagInput.getValues?.() || []);
 				const wanted = new Set(selected.map(o => o.value));
 				current.forEach(v => { if (!wanted.has(v)) tagInput.removeTag(v); });
 				selected.forEach(o => { if (!current.has(o.value)) tagInput.addTag(o.value, o.textContent); });
@@ -2234,7 +2240,17 @@ registerComponent('nui-select', (element) => {
 		}
 
 		element.classList.toggle('is-invalid', !select.validity.valid);
-		element.dispatchEvent(new CustomEvent('nui-change', { bubbles: true, detail: { values: selected.map(o => o.value) } }));
+		
+		if (dispatchChange) {
+			element.dispatchEvent(new CustomEvent('nui-change', { 
+				bubbles: true, 
+				detail: { 
+					values: selected.map(o => o.value),
+					labels: selected.map(o => o.textContent),
+					options: selected.map(o => ({ value: o.value, label: o.textContent }))
+				} 
+			}));
+		}
 	};
 
 	// Pick an option
@@ -2248,6 +2264,14 @@ registerComponent('nui-select', (element) => {
 		}
 		select.dispatchEvent(new Event('change', { bubbles: true }));
 		syncState();
+		element.dispatchEvent(new CustomEvent('nui-select', { 
+			bubbles: true, 
+			detail: { 
+				value: opt.value, 
+				label: opt.textContent,
+				selected: opt.selected 
+			} 
+		}));
 	};
 
 	// Filter options
@@ -2273,7 +2297,6 @@ registerComponent('nui-select', (element) => {
 		if (isOpen || select.disabled) return;
 
 		// Check mobile
-		// User Req: "up to 500px if the viewport also has a significant larger height"
 		if (isMobileEnabled && window.innerWidth <= 500 && window.innerHeight > 500) {
 			openMobile();
 			return;
@@ -2300,11 +2323,20 @@ registerComponent('nui-select', (element) => {
 		element.classList.toggle('is-above', below < 300 && rect.top > below);
 		element.classList.toggle('is-below', !(below < 300 && rect.top > below));
 
+		// Make options focusable
+		const options = getVisibleOptions();
+		options.forEach(opt => opt.tabIndex = -1);
+
+		// Reset focus state
+		clearFocus();
+
 		if (isSearchable) {
 			searchInput.value = '';
 			filter('');
-			// Don't auto-focus to avoid showing focus ring on mouse/touch interaction
+			// Focus search input for immediate typing
+			queueMicrotask(() => searchInput.focus());
 		}
+		
 		element.dispatchEvent(new CustomEvent('nui-open', { bubbles: true }));
 	};
 
@@ -2379,17 +2411,461 @@ registerComponent('nui-select', (element) => {
 		// Check if we are in mobile mode
 		const mobileModal = getMobileSelectModal();
 		if (mobileModal.activeSelect === element) {
-			mobileModal.close(); // Triggers animation and eventually onMobileClose
+			mobileModal.close();
 		}
 
 		isOpen = false;
 		openSelects.delete(element);
 		element.classList.remove('is-open', 'is-above', 'is-below');
 		popup.hidden = true;
+
+		// Clear focus state
+		clearFocus();
+		typeAheadString = '';
+		if (typeAheadTimeout) {
+			clearTimeout(typeAheadTimeout);
+			typeAheadTimeout = null;
+		}
+
 		element.dispatchEvent(new CustomEvent('nui-close', { bubbles: true }));
 	};
 
-	// Event listeners
+	// ##### VALUE MANAGEMENT
+
+	const setValue = (value) => {
+		if (isMulti) {
+			// For multi-select, accept array or single value
+			const values = Array.isArray(value) ? value : value ? [value] : [];
+			Array.from(select.options).forEach(opt => {
+				opt.selected = values.includes(opt.value);
+			});
+		} else {
+			// For single select, find matching option
+			const targetOpt = Array.from(select.options).find(o => o.value === value);
+			Array.from(select.options).forEach(o => o.selected = (o === targetOpt));
+		}
+		select.dispatchEvent(new Event('change', { bubbles: true }));
+		syncState();
+	};
+
+	const getValue = () => {
+		if (isMulti) {
+			return Array.from(select.selectedOptions).map(o => o.value);
+		}
+		return select.value;
+	};
+
+	const getSelected = () => {
+		const selected = Array.from(select.selectedOptions);
+		return selected.map(o => ({ value: o.value, label: o.textContent, element: o }));
+	};
+
+	const selectValue = (value) => {
+		const opt = Array.from(select.options).find(o => o.value === value);
+		if (opt && !opt.disabled) {
+			if (isMulti) {
+				opt.selected = true;
+			} else {
+				Array.from(select.options).forEach(o => o.selected = (o === opt));
+			}
+			select.dispatchEvent(new Event('change', { bubbles: true }));
+			syncState();
+			element.dispatchEvent(new CustomEvent('nui-select', { 
+				bubbles: true, 
+				detail: { value: opt.value, label: opt.textContent, selected: opt.selected } 
+			}));
+		}
+	};
+
+	const unselectValue = (value) => {
+		if (!isMulti) return;
+		const opt = Array.from(select.options).find(o => o.value === value);
+		if (opt) {
+			opt.selected = false;
+			select.dispatchEvent(new Event('change', { bubbles: true }));
+			syncState();
+		}
+	};
+
+	const clear = () => {
+		if (isMulti) {
+			Array.from(select.options).forEach(o => o.selected = false);
+		} else {
+			select.value = '';
+		}
+		select.dispatchEvent(new Event('change', { bubbles: true }));
+		syncState();
+		element.dispatchEvent(new CustomEvent('nui-clear', { bubbles: true }));
+	};
+
+	// ##### OPTIONS MANAGEMENT
+
+	const addItem = (value, label, options = {}) => {
+		const existing = Array.from(select.options).find(o => o.value === value);
+		if (existing) return false;
+
+		const opt = document.createElement('option');
+		opt.value = value;
+		opt.textContent = label || value;
+		if (options.disabled) opt.disabled = true;
+		if (options.selected) opt.selected = true;
+
+		if (options.group) {
+			// Find or create optgroup
+			let group = Array.from(select.querySelectorAll('optgroup')).find(g => g.label === options.group);
+			if (!group) {
+				group = document.createElement('optgroup');
+				group.label = options.group;
+				select.appendChild(group);
+			}
+			group.appendChild(opt);
+		} else {
+			select.appendChild(opt);
+		}
+		buildOptions();
+		element.dispatchEvent(new CustomEvent('nui-item-add', { 
+			bubbles: true, 
+			detail: { value, label, options } 
+		}));
+		return true;
+	};
+
+	const removeItem = (value) => {
+		const opt = Array.from(select.options).find(o => o.value === value);
+		if (!opt) return false;
+		opt.remove();
+		rowCache.delete(opt);
+		buildOptions();
+		element.dispatchEvent(new CustomEvent('nui-item-remove', { 
+			bubbles: true, 
+			detail: { value } 
+		}));
+		return true;
+	};
+
+	const setItems = (items) => {
+		// Clear existing options (except placeholder for single select)
+		const placeholderOpt = !isMulti ? select.querySelector('option[value=""]') : null;
+		select.innerHTML = '';
+		if (placeholderOpt) select.appendChild(placeholderOpt);
+
+		// Add new items
+		items.forEach(item => {
+			if (typeof item === 'string') {
+				const opt = document.createElement('option');
+				opt.value = item;
+				opt.textContent = item;
+				select.appendChild(opt);
+			} else if (item.group) {
+				const group = document.createElement('optgroup');
+				group.label = item.group;
+				item.options?.forEach(sub => {
+					const opt = document.createElement('option');
+					opt.value = sub.value || sub;
+					opt.textContent = sub.label || sub.value || sub;
+					opt.disabled = sub.disabled || false;
+					group.appendChild(opt);
+				});
+				select.appendChild(group);
+			} else {
+				const opt = document.createElement('option');
+				opt.value = item.value;
+				opt.textContent = item.label || item.value;
+				opt.disabled = item.disabled || false;
+				select.appendChild(opt);
+			}
+		});
+		buildOptions();
+		element.dispatchEvent(new CustomEvent('nui-items-replace', { 
+			bubbles: true, 
+			detail: { count: items.length } 
+		}));
+	};
+
+	const getItems = () => {
+		return Array.from(select.options)
+			.filter(o => o.value !== '')
+			.map(o => ({ value: o.value, label: o.textContent, disabled: o.disabled }));
+	};
+
+	// ##### STATE MANAGEMENT
+
+	const enable = () => {
+		select.disabled = false;
+		control.disabled = false;
+		element.classList.remove('is-disabled');
+		element.dispatchEvent(new CustomEvent('nui-enable', { bubbles: true }));
+	};
+
+	const disable = () => {
+		select.disabled = true;
+		control.disabled = true;
+		element.classList.add('is-disabled');
+		close();
+		element.dispatchEvent(new CustomEvent('nui-disable', { bubbles: true }));
+	};
+
+	const setDisabled = (disabled) => {
+		disabled ? disable() : enable();
+	};
+
+	// ##### KEYBOARD NAVIGATION
+
+	let typeAheadString = '';
+	let typeAheadTimeout = null;
+	let activeOptionIndex = -1;
+
+	const getVisibleOptions = () => {
+		return Array.from(list.querySelectorAll('.nui-select-option:not([hidden])'))
+			.filter(opt => !opt.classList.contains('is-disabled'));
+	};
+
+	const focusOption = (index, scroll = true) => {
+		const options = getVisibleOptions();
+		if (!options.length) return;
+
+		// Clamp index
+		if (index < 0) index = 0;
+		if (index >= options.length) index = options.length - 1;
+
+		activeOptionIndex = index;
+
+		// Update tabindex and visual focus
+		options.forEach((opt, i) => {
+			opt.tabIndex = i === index ? 0 : -1;
+			opt.classList.toggle('is-focused', i === index);
+		});
+
+		if (scroll) {
+			options[index].scrollIntoView({ block: 'nearest' });
+		}
+
+		options[index].focus();
+	};
+
+	const clearFocus = () => {
+		list.querySelectorAll('.nui-select-option').forEach(opt => {
+			opt.classList.remove('is-focused');
+			opt.tabIndex = -1;
+		});
+		activeOptionIndex = -1;
+	};
+
+	const getOptionIndexByValue = (value) => {
+		const options = getVisibleOptions();
+		return options.findIndex(opt => opt.dataset.value === value);
+	};
+
+	const getOptionIndexByChar = (char) => {
+		const options = getVisibleOptions();
+		const search = char.toLowerCase();
+
+		// First try from current position
+		let startIdx = activeOptionIndex + 1;
+		for (let i = 0; i < options.length; i++) {
+			const idx = (startIdx + i) % options.length;
+			const text = options[idx].textContent.toLowerCase();
+			if (text.startsWith(search)) return idx;
+		}
+		return -1;
+	};
+
+	const getOptionIndexByString = (str) => {
+		const options = getVisibleOptions();
+		const search = str.toLowerCase();
+
+		for (let i = 0; i < options.length; i++) {
+			const text = options[i].textContent.toLowerCase();
+			if (text.startsWith(search)) return i;
+		}
+		return -1;
+	};
+
+	// Control button keyboard handling
+	control.addEventListener('keydown', (e) => {
+		switch (e.key) {
+			case 'Enter':
+			case ' ':
+				e.preventDefault();
+				if (isOpen) {
+					close();
+				} else {
+					open();
+					// If not searchable, focus first option
+					if (!isSearchable) {
+						const selected = list.querySelector('.nui-select-option.is-selected:not([hidden])');
+						if (selected) {
+							const idx = getVisibleOptions().indexOf(selected);
+							focusOption(idx >= 0 ? idx : 0);
+						} else {
+							focusOption(0);
+						}
+					}
+				}
+				break;
+
+			case 'ArrowDown':
+				e.preventDefault();
+				if (!isOpen) {
+					open();
+					// If not searchable, focus first option
+					if (!isSearchable) focusOption(0);
+				}
+				break;
+
+			case 'ArrowUp':
+				e.preventDefault();
+				if (!isOpen) {
+					open();
+					// If not searchable, focus last option
+					if (!isSearchable) {
+						const options = getVisibleOptions();
+						focusOption(options.length - 1);
+					}
+				}
+				break;
+
+			case 'Home':
+				e.preventDefault();
+				if (isOpen && !isSearchable) focusOption(0);
+				break;
+
+			case 'End':
+				e.preventDefault();
+				if (isOpen && !isSearchable) {
+					const options = getVisibleOptions();
+					focusOption(options.length - 1);
+				}
+				break;
+
+			default:
+				// Type-ahead when closed
+				if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+					e.preventDefault();
+					if (!isOpen) open();
+					// If not searchable, jump to matching option
+					if (!isSearchable) {
+						const idx = getOptionIndexByChar(e.key);
+						if (idx >= 0) focusOption(idx);
+					}
+				}
+				break;
+		}
+	});
+
+	// Options list keyboard handling
+	list.addEventListener('keydown', (e) => {
+		const options = getVisibleOptions();
+		if (!options.length) return;
+
+		switch (e.key) {
+			case 'ArrowDown':
+				e.preventDefault();
+				focusOption(activeOptionIndex + 1);
+				break;
+
+			case 'ArrowUp':
+				e.preventDefault();
+				if (activeOptionIndex <= 0 && isSearchable && searchInput) {
+					// Move focus to search input when at first option
+					clearFocus();
+					searchInput.focus();
+				} else {
+					focusOption(activeOptionIndex - 1);
+				}
+				break;
+
+			case 'Home':
+				e.preventDefault();
+				focusOption(0);
+				break;
+
+			case 'End':
+				e.preventDefault();
+				focusOption(options.length - 1);
+				break;
+
+			case 'Enter':
+			case ' ':
+				e.preventDefault();
+				if (activeOptionIndex >= 0 && activeOptionIndex < options.length) {
+					const value = options[activeOptionIndex].dataset.value;
+					const opt = Array.from(select.options).find(o => o.value === value);
+					if (opt) pick(opt);
+					if (!isMulti) {
+						control.focus();
+					}
+				}
+				break;
+
+			case 'Escape':
+				e.preventDefault();
+				close();
+				control.focus();
+				break;
+
+			case 'Tab':
+				// Close on tab, let default behavior move focus
+				close();
+				break;
+
+			default:
+				// Type-ahead search
+				if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+					e.preventDefault();
+
+					// Reset type-ahead after delay
+					if (typeAheadTimeout) clearTimeout(typeAheadTimeout);
+					typeAheadTimeout = setTimeout(() => {
+						typeAheadString = '';
+					}, 500);
+
+					typeAheadString += e.key;
+					const idx = getOptionIndexByString(typeAheadString);
+					if (idx >= 0) focusOption(idx);
+				}
+				break;
+		}
+	});
+
+	// Focus management for search input
+	if (searchInput) {
+		searchInput.addEventListener('keydown', (e) => {
+			switch (e.key) {
+				case 'ArrowDown':
+					e.preventDefault();
+					// Move focus to first option
+					focusOption(0);
+					break;
+
+				case 'ArrowUp':
+					e.preventDefault();
+					// Move focus to last option
+					{
+						const options = getVisibleOptions();
+						focusOption(options.length - 1);
+					}
+					break;
+
+				case 'Escape':
+					e.preventDefault();
+					close();
+					control.focus();
+					break;
+
+				case 'Tab':
+					// Tab from search moves to first option instead of closing
+					if (!e.shiftKey) {
+						e.preventDefault();
+						focusOption(0);
+					}
+					break;
+			}
+		});
+	}
+
+	// ##### EVENT LISTENERS
+
 	control.addEventListener('click', e => { e.stopPropagation(); isOpen ? close() : open(); });
 
 	const onOutsideClick = e => {
@@ -2404,18 +2880,47 @@ registerComponent('nui-select', (element) => {
 
 	// Setup
 	element.classList.add(isMulti ? 'is-multi' : 'is-single');
-	if (select.disabled) element.classList.add('is-disabled');
+	if (select.disabled) {
+		element.classList.add('is-disabled');
+		control.disabled = true;
+	}
 	buildOptions();
 
-	// Public API
+	// ##### PUBLIC API
 	element.open = open;
 	element.close = close;
-	element.refresh = buildOptions;
+	element.syncOptions = buildOptions;
+	element.refresh = buildOptions; // Proxy for backward compatibility
 	element.validate = () => {
 		const valid = select.checkValidity();
 		element.classList.toggle('is-invalid', !valid);
 		return valid;
 	};
+
+	// Value management
+	element.getValue = getValue;
+	element.setValue = setValue;
+	element.getSelected = getSelected;
+	element.select = selectValue;
+	element.unselect = unselectValue;
+	element.clear = clear;
+
+	// Options management
+	element.addItem = addItem;
+	element.removeItem = removeItem;
+	element.setItems = setItems;
+	element.getItems = getItems;
+
+	// State management
+	element.enable = enable;
+	element.disable = disable;
+	element.setDisabled = setDisabled;
+
+	// Status
+	element.isOpen = () => isOpen;
+	element.isMulti = () => isMulti;
+	element.isDisabled = () => select.disabled;
+	element.isSearchable = () => isSearchable;
 
 	// Cleanup function
 	return () => {

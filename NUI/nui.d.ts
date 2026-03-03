@@ -499,6 +499,155 @@ export interface NuiCheckboxElement extends HTMLElement {}
 export interface NuiRadioElement extends HTMLElement {}
 
 // =============================================================================
+// Select Component
+// =============================================================================
+
+export interface NuiSelectItem {
+	/** Option value */
+	value: string;
+	/** Option display label */
+	label?: string;
+	/** Whether the option is disabled */
+	disabled?: boolean;
+}
+
+export interface NuiSelectGroup {
+	/** Group label */
+	group: string;
+	/** Options in this group */
+	options?: NuiSelectItem[];
+}
+
+export interface NuiSelectAddOptions {
+	/** Whether the new item should be disabled */
+	disabled?: boolean;
+	/** Whether the new item should be selected */
+	selected?: boolean;
+	/** Group name to add item to (creates group if not exists) */
+	group?: string;
+}
+
+export interface NuiSelectSelected {
+	/** Selected option value */
+	value: string;
+	/** Selected option display label */
+	label: string;
+	/** Reference to the native option element */
+	element: HTMLOptionElement;
+}
+
+/**
+ * Enhanced select component with search, multi-select, and mobile bottom sheet
+ */
+export interface NuiSelectElement extends HTMLElement {
+	// Popup Control
+	/** Open the select dropdown/mobile sheet */
+	open(): void;
+	/** Close the select dropdown/mobile sheet */
+	close(): void;
+	/** Check if select is currently open */
+	isOpen(): boolean;
+
+	// Value Management
+	/** 
+	 * Get current value(s)
+	 * @returns Single value for single-select, array for multi-select
+	 */
+	getValue(): string | string[];
+	/** 
+	 * Set value(s) programmatically
+	 * @param value - Single value, array (multi), or null/empty to clear
+	 */
+	setValue(value: string | string[] | null | undefined): void;
+	/** Get detailed info about selected options */
+	getSelected(): NuiSelectSelected[];
+	/** Select a specific value (adds to selection in multi-select) */
+	select(value: string): void;
+	/** Unselect a specific value (multi-select only) */
+	unselect(value: string): void;
+	/** Clear all selections */
+	clear(): void;
+
+	// Options Management
+	/** 
+	 * Add a new option
+	 * @param value - Option value
+	 * @param label - Display label (defaults to value)
+	 * @param options - Additional options
+	 * @returns true if added, false if value already exists
+	 */
+	addItem(value: string, label?: string, options?: NuiSelectAddOptions): boolean;
+	/** 
+	 * Remove an option by value
+	 * @param value - Option value to remove
+	 * @returns true if removed, false if not found
+	 */
+	removeItem(value: string): boolean;
+	/** Replace all options */
+	setItems(items: (string | NuiSelectItem | NuiSelectGroup)[]): void;
+	/** Get all current options */
+	getItems(): NuiSelectItem[];
+
+	// State Management
+	/** Enable the select */
+	enable(): void;
+	/** Disable the select */
+	disable(): void;
+	/** Set disabled state */
+	setDisabled(disabled: boolean): void;
+	/** Check if select is disabled */
+	isDisabled(): boolean;
+	/** Check if select is multi-select mode */
+	isMulti(): boolean;
+	/** Check if select has search enabled */
+	isSearchable(): boolean;
+
+	// Validation & Refresh
+	/** Validate the select (for required fields) */
+	validate(): boolean;
+	/** Sync the custom UI with native select options (use after DOM manipulation) */
+	syncOptions(): void;
+	/** @deprecated Use syncOptions() instead */
+	refresh(): void;
+}
+
+// =============================================================================
+// Select Events
+// =============================================================================
+
+export interface NuiSelectChangeEventDetail {
+	/** Selected values */
+	values: string[];
+	/** Selected display labels */
+	labels: string[];
+	/** Full selected option details */
+	options: { value: string; label: string }[];
+}
+
+export interface NuiSelectSelectEventDetail {
+	/** Selected option value */
+	value: string;
+	/** Selected option label */
+	label: string;
+	/** Whether the option is now selected */
+	selected: boolean;
+}
+
+export interface NuiSelectItemAddEventDetail {
+	value: string;
+	label: string;
+	options: NuiSelectAddOptions;
+}
+
+export interface NuiSelectItemRemoveEventDetail {
+	value: string;
+}
+
+export interface NuiSelectItemsReplaceEventDetail {
+	count: number;
+}
+
+// =============================================================================
 // Input Events
 // =============================================================================
 
@@ -579,6 +728,14 @@ declare global {
 		'nui-change': NuiChangeEvent;
 		'nui-clear': NuiClearEvent;
 		'nui-validate': NuiValidateEvent;
+		'nui-open': CustomEvent;
+		'nui-close': CustomEvent;
+		'nui-select': CustomEvent<NuiSelectSelectEventDetail>;
+		'nui-enable': CustomEvent;
+		'nui-disable': CustomEvent;
+		'nui-item-add': CustomEvent<NuiSelectItemAddEventDetail>;
+		'nui-item-remove': CustomEvent<NuiSelectItemRemoveEventDetail>;
+		'nui-items-replace': CustomEvent<NuiSelectItemsReplaceEventDetail>;
 	}
 	
 	interface HTMLElementTagNameMap {
@@ -600,6 +757,7 @@ declare global {
 		'nui-textarea': NuiTextareaElement;
 		'nui-checkbox': NuiCheckboxElement;
 		'nui-radio': NuiRadioElement;
+		'nui-select': NuiSelectElement;
 	}
 }
 

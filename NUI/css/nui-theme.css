@@ -2160,6 +2160,11 @@ nui-select select {
 	border: solid var(--border-thickness) light-dark(var(--color-shade5), var(--color-shade5));
 }
 
+.nui-select-control:focus-visible {
+	outline: 2px solid var(--color-highlight);
+	outline-offset: 2px;
+}
+
 nui-select.is-open .nui-select-control {
 	background-color: var(--color-shade3);
 	border-radius: var(--border-radius2) var(--border-radius2) 0 0;
@@ -2419,6 +2424,11 @@ nui-select.is-above .nui-select-popup-tags {
 .nui-select-option.is-selected {
 	background: light-dark(var(--color-highlight-dim), rgb(50, 50, 50));
 	color: var(--color-white);
+}
+
+.nui-select-option.is-focused {
+	outline: 2px solid var(--color-highlight);
+	outline-offset: -2px;
 }
 
 .nui-select-option.is-disabled {
