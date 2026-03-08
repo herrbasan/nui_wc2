@@ -153,13 +153,16 @@ document.addEventListener('click', (e) => {
 
 	const actionEl = e.target.closest('[data-action]');
 	if (!actionEl) return;
-	const action = actionEl.dataset.action;
+	
+	const actionSpec = actionEl.dataset.action;
+	const [actionPart] = actionSpec.split('@');
+	const [action, param] = actionPart.split(':');
 
 	switch (action) {
 		case 'toggle-sidebar':
 			const app = document.querySelector('nui-app');
 			if (app?.toggleSideNav) {
-				app.toggleSideNav();
+				app.toggleSideNav(param || 'left');
 			}
 			break;
 		case 'toggle-theme':

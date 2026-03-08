@@ -174,11 +174,11 @@ nui-app-footer {
 .page-app-layout .app-mode-diagram {
 	display: grid;
 	grid-template-areas:
-		"topnav topnav"
-		"sidebar content"
-		"footer footer";
+		"topnav topnav topnav"
+		"sidebar content sidebar-right"
+		"footer footer footer";
 	grid-template-rows: 50px 200px 40px;
-	grid-template-columns: 150px 1fr;
+	grid-template-columns: 150px 1fr 150px;
 	gap: var(--nui-space-half, 0.5rem);
 	background: var(--color-base);
 	padding: var(--nui-space-half, 0.5rem);

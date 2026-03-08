@@ -514,55 +514,72 @@ registerComponent('nui-loading', (element) => {
 });
 
 registerComponent('nui-app', (element) => {
-	let cachedBreakpoint = null;
+	let cachedBreakpoint = { left: null, right: null };
 
-	function getBreakpoint(element) {
-		if (cachedBreakpoint !== null) return cachedBreakpoint;
-		if (!element.el('nui-side-nav')) return null;
+	function getSideNav(element, position) {
+		const sideNavs = element.querySelectorAll('nui-side-nav');
+		for (const nav of sideNavs) {
+			const pos = nav.getAttribute('position') || 'left';
+			if (pos === position) return nav;
+		}
+		return null;
+	}
 
-		const fb = element.getAttribute('nui-vars-sidebar_force-breakpoint');
+	function getBreakpoint(element, position) {
+		if (cachedBreakpoint[position] !== null) return cachedBreakpoint[position];
+		if (!getSideNav(element, position)) return null;
+
+		let fb = element.getAttribute(`nui-vars-sidebar-${position}_force-breakpoint`);
+		if (!fb && position === 'left') {
+			fb = element.getAttribute('nui-vars-sidebar_force-breakpoint');
+		}
+
+		if (fb === 'none' || fb === 'false' || fb === 'never') {
+			return cachedBreakpoint[position] = Infinity;
+		}
+
+		if (!fb && position !== 'left') {
+			return cachedBreakpoint[position] = Infinity;
+		}
+
 		const m = fb?.match(/^(\d+(?:\.\d+)?)(px|rem|em)?$/);
 
-		if (!m) return cachedBreakpoint = 768;
+		if (!m) return cachedBreakpoint[position] = 768;
 
 		const v = parseFloat(m[1]);
 		if (m[2] === 'rem' || m[2] === 'em') {
 			const remBase = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-			return cachedBreakpoint = v * remBase;
+			return cachedBreakpoint[position] = v * remBase;
 		}
-		return cachedBreakpoint = v;
+		return cachedBreakpoint[position] = v;
 	}
 
-	function dispatchSideNavEvent(state) {
+	function dispatchSideNavEvent(position, state) {
 		element.dispatchEvent(new CustomEvent('nui-sidenav-change', {
 			bubbles: true,
-			detail: { state }
+			detail: { position, state }
 		}));
 	}
 
-	function updateResponsiveState(element) {
-		const sideNav = element.el('nui-side-nav');
-		if (!sideNav) {
-			if (!element.classList.contains('nui-ready')) {
-				requestAnimationFrame(() => element.classList.add('nui-ready'));
-			}
-			return;
-		}
+	function updateResponsiveStateForPosition(element, position) {
+		const sideNav = getSideNav(element, position);
+		if (!sideNav) return;
 
-		const breakpoint = getBreakpoint(element);
+		const breakpoint = getBreakpoint(element, position);
 		const viewportWidth = window.innerWidth;
 		const isForced = viewportWidth >= breakpoint;
 
 		let newState;
+		const prefix = position === 'right' ? 'sidenav-right' : 'sidenav';
 
 		if (isForced) {
-			element.classList.remove('sidenav-open', 'sidenav-closed');
-			element.classList.add('sidenav-forced');
+			element.classList.remove(`${prefix}-open`, `${prefix}-closed`);
+			element.classList.add(`${prefix}-forced`);
 			newState = 'forced';
 		} else {
-			element.classList.remove('sidenav-forced');
-			if (!element.classList.contains('sidenav-open')) {
-				element.classList.add('sidenav-closed');
+			element.classList.remove(`${prefix}-forced`);
+			if (!element.classList.contains(`${prefix}-open`)) {
+				element.classList.add(`${prefix}-closed`);
 				newState = 'closed';
 			} else {
 				newState = 'open';
@@ -570,7 +587,9 @@ registerComponent('nui-app', (element) => {
 		}
 
 		// Update menu toggle button state
-		const menuToggle = element.el('[data-action="toggle-sidebar"]');
+		const menuToggle = element.querySelector(`[data-action="toggle-sidebar:${position}"]`) || 
+			(position === 'left' ? element.querySelector('[data-action="toggle-sidebar"]') : null);
+			
 		if (menuToggle) {
 			menuToggle.toggleAttribute('disabled', isForced);
 			menuToggle.toggleAttribute('aria-hidden', isForced);
@@ -578,27 +597,40 @@ registerComponent('nui-app', (element) => {
 			else menuToggle.removeAttribute('tabindex');
 		}
 
-		dispatchSideNavEvent(newState);
+		dispatchSideNavEvent(position, newState);
+	}
 
-		if (!element.classList.contains('nui-ready')) {
+	function updateResponsiveState(element) {
+		let hasAny = false;
+		['left', 'right'].forEach(pos => {
+			if (getSideNav(element, pos)) {
+				hasAny = true;
+				updateResponsiveStateForPosition(element, pos);
+			}
+		});
+
+		if (hasAny && !element.classList.contains('nui-ready')) {
 			requestAnimationFrame(() => element.classList.add('nui-ready'));
 		}
 	}
 
-	function toggleSideNav(element) {
-		if (element.classList.contains('sidenav-forced')) return;
-		const isOpen = element.classList.toggle('sidenav-open');
-		element.classList.toggle('sidenav-closed', !isOpen);
-		dispatchSideNavEvent(isOpen ? 'open' : 'closed');
+	function toggleSideNav(element, position = 'left') {
+		const prefix = position === 'right' ? 'sidenav-right' : 'sidenav';
+		if (element.classList.contains(`${prefix}-forced`)) return;
+		const isOpen = element.classList.toggle(`${prefix}-open`);
+		element.classList.toggle(`${prefix}-closed`, !isOpen);
+		dispatchSideNavEvent(position, isOpen ? 'open' : 'closed');
 	}
 
 	function updateLayoutClasses(element) {
 		const topNav = element.el('nui-top-nav');
-		const sideNav = element.el('nui-side-nav');
+		const sideNavLeft = getSideNav(element, 'left');
+		const sideNavRight = getSideNav(element, 'right');
 		const footer = element.el('nui-app-footer');
 
 		element.classList.toggle('has-top-nav', !!topNav);
-		element.classList.toggle('has-side-nav', !!sideNav);
+		element.classList.toggle('has-side-nav', !!sideNavLeft);
+		element.classList.toggle('has-side-nav-right', !!sideNavRight);
 		element.classList.toggle('has-footer', !!footer);
 
 		updateResponsiveState(element);
@@ -607,19 +639,32 @@ registerComponent('nui-app', (element) => {
 	element.setAttribute('data-layout', 'app');
 	updateLayoutClasses(element);
 
-	element.toggleSideNav = () => toggleSideNav(element);
-	element.invalidateBreakpointCache = () => { cachedBreakpoint = null; updateResponsiveState(element); };
+	element.toggleSideNav = (position = 'left') => toggleSideNav(element, position);
+	element.invalidateBreakpointCache = () => { cachedBreakpoint = { left: null, right: null }; updateResponsiveState(element); };
 
 	element.addEventListener('click', (e) => {
-		if (element.classList.contains('sidenav-open') &&
-			!element.classList.contains('sidenav-forced')) {
-			const sideNav = element.el('nui-side-nav');
-			const topNav = element.el('nui-top-nav');
+		['left', 'right'].forEach(pos => {
+			const prefix = pos === 'right' ? 'sidenav-right' : 'sidenav';
+			if (element.classList.contains(`${prefix}-open`) &&
+				!element.classList.contains(`${prefix}-forced`)) {
+				
+				const sideNav = getSideNav(element, pos);
+				// To allow both sidebars to be closed when clicking outside, adjust the condition
+				// Need to ensure clicking on ONE sidebar doesn't close the OTHER sidebar if it was open.
+				
+				const clickIsInThisNav = sideNav && sideNav.contains(e.target);
+				const clickIsInOtherNav = getSideNav(element, pos === 'left' ? 'right' : 'left')?.contains(e.target);
+				const clickIsInTopNav = element.el('nui-top-nav')?.contains(e.target);
 
-			if (sideNav && !sideNav.contains(e.target) && !topNav?.contains(e.target)) {
-				toggleSideNav(element);
+				if (!clickIsInThisNav && !clickIsInTopNav) {
+					// We close it unless maybe the backdrop itself caught the click.
+					// Actually, if we click anywhere outside THIS sidebar (and top nav), close it.
+					// Wait, if both are open and we click the right one, left should close. 
+					// That's exactly what this will do.
+					toggleSideNav(element, pos);
+				}
 			}
-		}
+		});
 	});
 
 	const resizeObserver = new ResizeObserver(() => {
@@ -661,16 +706,24 @@ registerComponent('nui-side-nav', (element) => {
 
 	if (app) {
 		element.addEventListener('focusin', () => {
-			if (app.classList.contains('sidenav-closed') && !app.classList.contains('sidenav-forced')) {
-				app.toggleSideNav?.();
+			const pos = element.getAttribute('position') || 'left';
+			const prefix = pos === 'right' ? 'sidenav-right' : 'sidenav';
+			if (app.classList.contains(`${prefix}-closed`) && !app.classList.contains(`${prefix}-forced`)) {
+				app.toggleSideNav?.(pos);
 			}
 		});
 
 		element.addEventListener('focusout', (event) => {
-			if (!app.classList.contains('sidenav-open') || app.classList.contains('sidenav-forced')) return;
+			const pos = element.getAttribute('position') || 'left';
+			const prefix = pos === 'right' ? 'sidenav-right' : 'sidenav';
+			if (!app.classList.contains(`${prefix}-open`) || app.classList.contains(`${prefix}-forced`)) return;
 			const next = event.relatedTarget;
-			if (next && element.contains(next)) return;
-			app.toggleSideNav?.();
+			
+			// If focus moves to null (clicking on non-focusable area) or inside the sidebar, don't close
+			if (!next || element.contains(next)) return;
+			
+			// Close if focus moved specifically outside the sidebar
+			app.toggleSideNav?.(pos);
 		});
 	}
 });

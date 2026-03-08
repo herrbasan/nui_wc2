@@ -4,6 +4,11 @@
 
 **NUI** is a sleek, high-performance, low-footprint UI library with accessibility built in wherever possible.
 
+### Agent Tool Usage Guidelines
+- **Use native VS Code tools first:** Always use `read_file`, `replace_string_in_file`, `grep_search`, etc. for file inspection, search, and editing.
+- **Do not use terminal scripts (Python, sed, awk) as a crutch for file edits or searches.** The terminal should be reserved for running tests, launching servers, executing git commands, or specific build scripts, not circumventing standard file operations.
+- If a native file edit fails, adjust your parameters and retry the native tool properly rather than switching to a terminal script.
+
 Core principles:
 1. **Performance First** - Minimal overhead, efficient rendering, zero bloat
 2. **Zero Dependencies** - Pure web platform APIs, no framework abstractions
@@ -82,9 +87,9 @@ function setupButtonBehavior(element) {
 
 **UI:** `nui-button`, `nui-button-container`, `nui-icon`, `nui-tabs`, `nui-accordion`, `nui-overlay`, `nui-dialog`, `nui-banner`, `nui-table`, `nui-slider`, `nui-input`, `nui-textarea`, `nui-checkbox`, `nui-radio`, `nui-tag-input`, `nui-select`, `nui-link-list`, `nui-code`, `nui-loading`, `nui-progress`
 
-**Planned:** `nui-tooltip`
-
 **Addons:** `nui-menu`, `nui-list`, `nui-animation`, `nui-syntax-highlight`
+
+**Planned:** `nui-tooltip`
 
 ## Utilities
 

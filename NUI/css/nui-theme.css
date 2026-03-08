@@ -914,13 +914,6 @@ nui-top-nav header h1 {
 	color: var(--color-white)
 }
 
-/* Dim menu toggle button when sidebar is forced open */
-nui-app.sidenav-forced [data-action="toggle-sidebar"] {
-	opacity: 0.3;
-	pointer-events: none;
-	cursor: default;
-}
-
 nui-top-nav ul {
 	list-style: none;
 	margin: 0;
@@ -1006,7 +999,7 @@ nui-app[data-layout="app"] nui-content {
 	left: 0;
 	right: 0;
 	bottom: 0;
-	transition: left 0.3s ease;
+	transition: left 0.3s ease, right 0.3s ease;
 	overflow: hidden;
 	padding: 0;
 }
@@ -1034,8 +1027,13 @@ nui-app[data-layout="app"]:has(nui-app-footer) nui-content {
 }
 
 /* Content offset when side nav forced */
-nui-app[data-layout="app"]:has(nui-side-nav).sidenav-forced nui-content {
+nui-app[data-layout="app"].has-side-nav.sidenav-forced nui-content {
 	left: var(--side-nav-width);
+}
+
+/* Content offset when right side nav forced */
+nui-app[data-layout="app"].has-side-nav-right.sidenav-right-forced nui-content {
+	right: var(--side-nav-width);
 }
 
 nui-app[data-layout="app"] nui-app-footer {
@@ -1063,16 +1061,43 @@ nui-app[data-layout="app"] nui-app-footer footer {
 	border: none;
 }
 
-nui-app[data-layout="app"].sidenav-closed nui-side-nav {
+/* Base side nav (left by default) */
+nui-app[data-layout="app"] nui-side-nav:not([position="right"]) {
 	transform: translateX(-100%);
 }
-
-nui-app[data-layout="app"].sidenav-open nui-side-nav {
+nui-app[data-layout="app"].sidenav-closed nui-side-nav:not([position="right"]) {
+	transform: translateX(-100%);
+}
+nui-app[data-layout="app"].sidenav-open nui-side-nav:not([position="right"]) {
 	transform: translateX(0);
 	z-index: 100;
 }
+nui-app[data-layout="app"].sidenav-forced nui-side-nav:not([position="right"]) {
+	transform: translateX(0);
+}
 
-nui-app[data-layout="app"].sidenav-open::before {
+/* Right side nav */
+nui-app[data-layout="app"] nui-side-nav[position="right"] {
+	left: auto;
+	right: 0;
+	border-right: none;
+	border-left: var(--border-thickness) solid var(--border-shade1);
+	transform: translateX(100%);
+}
+nui-app[data-layout="app"].sidenav-right-closed nui-side-nav[position="right"] {
+	transform: translateX(100%);
+}
+nui-app[data-layout="app"].sidenav-right-open nui-side-nav[position="right"] {
+	transform: translateX(0);
+	z-index: 100;
+}
+nui-app[data-layout="app"].sidenav-right-forced nui-side-nav[position="right"] {
+	transform: translateX(0);
+}
+
+/* Backdrops */
+nui-app[data-layout="app"].sidenav-open::before,
+nui-app[data-layout="app"].sidenav-right-open::after {
 	content: '';
 	position: fixed;
 	top: var(--top-nav-height);
@@ -1083,12 +1108,22 @@ nui-app[data-layout="app"].sidenav-open::before {
 	z-index: 99;
 }
 
-nui-app[data-layout="app"]:not(:has(nui-top-nav)).sidenav-open::before {
+nui-app[data-layout="app"]:not(:has(nui-top-nav)).sidenav-open::before,
+nui-app[data-layout="app"]:not(:has(nui-top-nav)).sidenav-right-open::after {
 	top: 0;
 }
 
-nui-app[data-layout="app"].sidenav-forced nui-side-nav {
-	transform: translateX(0);
+/* Dim menu toggle button when sidebar is forced open */
+nui-app.sidenav-forced [data-action="toggle-sidebar"],
+nui-app.sidenav-forced [data-action="toggle-sidebar:left"] {
+	opacity: 0.3;
+	pointer-events: none;
+	cursor: default;
+}
+nui-app.sidenav-right-forced [data-action="toggle-sidebar:right"] {
+	opacity: 0.3;
+	pointer-events: none;
+	cursor: default;
 }
 
 /* =================================

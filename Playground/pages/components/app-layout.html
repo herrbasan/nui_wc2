@@ -42,6 +42,9 @@
 					<span>nui-content</span>
 					<small>Main content area</small>
 				</div>
+				<div class="diagram-sidebar" style="grid-area: sidebar-right; border-style: dashed; opacity: 0.8;">
+					<span>nui-side-nav<br><small>[position="right"]</small></span>
+				</div>
 				<div class="diagram-footer">
 					<span>nui-app-footer</span>
 					<small>Fixed footer bar</small>
@@ -144,10 +147,10 @@
 		<h3>&lt;nui-side-nav&gt;</h3>
 		<p>Side navigation panel. In App Mode: fixed sidebar. In Page Mode: optional sidebar.</p>
 		<ul>
-			<li><strong>App Mode</strong> - Fixed sidebar with toggle capability</li>
+			<li><strong>App Mode</strong> - Fixed sidebar with toggle capability. Supports optional <code>position="right"</code> for dual sidebars.</li>
 			<li><strong>Page Mode</strong> - Can float beside content or stack</li>
-			<li><strong>Content</strong> - Should contain <code>&lt;nav&gt;</code> with navigation structure</li>
-			<li><strong>State Management</strong> - Collapsible via toggle button or resize</li>
+			<li><strong>Content</strong> - Should contain <code>&lt;nav&gt;</code> with navigation structure, or settings panels for right sidebars</li>
+			<li><strong>State Management</strong> - Collapsible via toggle button or resize. Toggle specific sidebars with <code>data-action="toggle-sidebar:left"</code> or <code>toggle-sidebar:right"</code></li>
 		</ul>
 		
 		<div class="component-diagram">

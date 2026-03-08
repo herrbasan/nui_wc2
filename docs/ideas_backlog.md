@@ -6,37 +6,6 @@ Future feature ideas to consider. These are not planned - just captured for late
 
 ## Core Library
 
-### Modal View Component
-
-**Purpose:** A foundational component for displaying any element in a modal context (shaded background overlay).
-
-**Concept:**
-- Generic modal container that takes any content and displays it centered over a shaded backdrop
-- Provides the modal shell: backdrop, positioning, focus trapping, close on backdrop click/Escape
-- Content-agnostic - just provides the modal "frame"
-
-**Use Cases:**
-- Basis for a `nui-lightbox` component (image gallery, media viewer)
-- Custom modal content without dialog semantics
-- Full-screen previews
-- Any developer need to display something modally
-
-**API Sketch:**
-```html
-<nui-modal-view>
-  <div class="my-custom-content">Any content here</div>
-</nui-modal-view>
-```
-
-**Key Features:**
-- Backdrop shading (configurable opacity)
-- Focus trap within modal
-- Close on Escape key, backdrop click
-- Optional blocking mode (must use close button)
-- Transition/animation support
-
-**Status:** Idea only - not planned
-
 ---
 
 ### Tooltip Component
@@ -70,32 +39,6 @@ Future feature ideas to consider. These are not planned - just captured for late
 **Status:** Idea only - not planned
 
 ---
-
-### Progress Component
-
-**Purpose:** Linear and circular progress indicators for loading states.
-
-**Concept:**
-- Determinate (percentage) and indeterminate (unknown duration) variants
-- Linear bar and circular spinner styles
-- Accessible progress announcements
-
-**API Sketch:**
-```html
-<!-- Linear determinate -->
-<nui-progress value="75" max="100"></nui-progress>
-
-<!-- Linear indeterminate -->
-<nui-progress indeterminate></nui-progress>
-
-<!-- Circular determinate -->
-<nui-progress type="circular" value="75"></nui-progress>
-
-<!-- With label -->
-<nui-progress value="75" aria-label="Upload progress"></nui-progress>
-```
-
-**Status:** Idea only - not planned
 
 ---
 
@@ -186,7 +129,8 @@ segment.addEventListener('nui-change', (e) => {
 
 ---
 
-### Dual Sidebar Support (nui-side-nav Enhancement)
+### ~~Dual Sidebar Support (nui-side-nav Enhancement)~~
+**(Status: Implemented)**
 
 **Purpose:** Support both left (navigation) and right (configuration/settings) sidebars in app layout.
 
@@ -265,51 +209,6 @@ Enhance existing `nui-side-nav` with a `position` attribute to support dual side
 **Decision:** Needs evaluation - likely will NOT implement
 
 **Status:** Under discussion
-
----
-
-### Dialog Progress Mode
-
-**Purpose:** Extend `nui-dialog` to support progress indication for long-running operations.
-
-**Concept:**
-- Add progress display capabilities to the existing dialog system
-- Support both determinate (percentage) and indeterminate (unknown duration) progress
-
-**Varieties:**
-1. **Percentage Progress:**
-   - Visual progress bar with percentage
-   - Optional step indicators ("Step 3 of 5")
-   - Cancel button (if interruptible)
-
-2. **Indeterminate Progress:**
-   - Spinner or pulsing animation
-   - Status message updates
-   - "Please wait..." style feedback
-
-**API Sketch:**
-```javascript
-// Determinate
-await nui.components.dialog.progress({
-  title: 'Uploading Files',
-  message: 'Uploading large_file.zip...',
-  determinate: true,
-  cancelable: true,
-  onCancel: () => abortUpload()
-});
-
-// Update progress
-controller.update({ percent: 45, message: 'Processing...' });
-
-// Indeterminate
-await nui.components.dialog.progress({
-  title: 'Processing',
-  message: 'This may take a few minutes...',
-  determinate: false
-});
-```
-
-**Status:** Idea only - not planned
 
 ---
 
@@ -449,66 +348,7 @@ document.querySelector('nui-button[type="browse"]')
 
 ---
 
-### Context Menu Component
-
-**Purpose:** Right-click context menus for applications.
-
-**Concept:**
-- Custom context menu that appears on right-click
-- Nested menu support (submenus)
-- Keyboard navigation (arrows, Enter, Escape)
-- Positioning that avoids screen edges
-- Can be attached to any element
-
-**API Sketch:**
-```html
-<div data-context-menu="file-menu">Right-click me</div>
-
-<nui-context-menu id="file-menu">
-  <menu>
-    <item data-action="open">Open</item>
-    <item data-action="rename">Rename</item>
-    <separator></separator>
-    <item data-action="delete" class="danger">Delete</item>
-  </menu>
-</nui-context-menu>
-```
-
-**Reference:** `reference/nui/ui_audio_context.js`
-
-**Status:** Idea only - not planned
-
 ---
-
-### Draggable/Sortable List Component
-
-**Purpose:** Lists that can be reordered via drag-and-drop.
-
-**Concept:**
-- Drag handles on list items
-- Visual feedback during drag (ghost element, drop zones)
-- Smooth animations on reorder
-- Touch support for mobile
-- Optional: nested/hierarchical sorting
-
-**API Sketch:**
-```html
-<nui-sortable-list>
-  <ul>
-    <li data-id="1">Item 1</li>
-    <li data-id="2">Item 2</li>
-    <li data-id="3">Item 3</li>
-  </ul>
-</nui-sortable-list>
-
-<script>
-list.addEventListener('nui-sort', (e) => {
-  console.log('New order:', e.detail.order); // [2, 1, 3]
-});
-</script>
-```
-
-**Status:** Idea only - not planned
 
 ---
 
