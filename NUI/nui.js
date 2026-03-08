@@ -373,9 +373,89 @@ registerComponent('nui-icon', (element) => {
 	setupAttributeProxy(element, {
 		'name': updateIcon
 	});
-
+	
 	defineAttributeProperty(element, 'iconName', 'name');
 });
+
+// ################################# nui-progress COMPONENT
+
+registerComponent('nui-progress', (element) => {
+	const render = () => {
+		const type = element.getAttribute('type') || 'bar';
+		const value = parseFloat(element.getAttribute('value')) || 0;
+		const max = parseFloat(element.getAttribute('max')) || 100;
+		const pct = Math.min(Math.max((value / max) * 100, 0), 100);
+		const hideText = element.hasAttribute('hide-text');
+		const size = element.getAttribute('size');
+
+		if (size) {
+			element.style.setProperty('--nui-progress-size', size);
+		} else {
+			element.style.removeProperty('--nui-progress-size');
+		}
+
+		if (type === 'circular') {
+			const labelHtml = hideText ? '' : `<div class="progress-label">${Math.round(pct)}%</div>`;
+			element.innerHTML = `
+				<div class="progress-circular-wrapper">
+					<svg class="progress-circular" viewBox="0 0 36 36">
+						<path class="progress-bg" stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+						<path class="progress-value" stroke-dasharray="${pct}, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+					</svg>
+					${labelHtml}
+				</div>
+			`;
+			element.setAttribute('aria-valuenow', pct.toString());
+			element.setAttribute('role', 'progressbar');
+			element.setAttribute('aria-valuemin', '0');
+			element.setAttribute('aria-valuemax', '100');
+		} else if (type === 'circular-busy') {
+			element.innerHTML = `
+				<div class="progress-circular-wrapper">
+					<svg class="progress-circular-busy" viewBox="0 0 36 36">
+						<path class="progress-bg" stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+						<path class="progress-value" stroke-dasharray="25, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+					</svg>
+				</div>
+			`;
+			element.setAttribute('role', 'progressbar');
+			element.removeAttribute('aria-valuenow');
+		} else if (type === 'busy') {
+			element.innerHTML = `<div class="progress-busy"></div>`;
+			element.setAttribute('role', 'progressbar');
+			element.removeAttribute('aria-valuenow');
+		} else {
+			const labelHtml = hideText ? '' : `<div class="progress-label">${Math.round(pct)}%</div>`;
+			element.innerHTML = `
+				<div class="progress-bar-wrapper">
+					<div class="progress-bar-track">
+						<div class="progress-bar-fill" style="width: ${pct}%"></div>
+					</div>
+					${labelHtml}
+				</div>
+			`;
+			element.setAttribute('aria-valuenow', pct.toString());
+			element.setAttribute('role', 'progressbar');
+			element.setAttribute('aria-valuemin', '0');
+			element.setAttribute('aria-valuemax', '100');
+		}
+	};
+	
+	render();
+
+	const observer = new MutationObserver((mutations) => {
+		for (const mutation of mutations) {
+			if (mutation.type === 'attributes' && ['value', 'max', 'type', 'hide-text', 'size'].includes(mutation.attributeName)) {
+				render();
+			}
+		}
+	});
+	observer.observe(element, { attributes: true, attributeFilter: ['value', 'max', 'type', 'hide-text', 'size'] });
+
+	return () => observer.disconnect();
+});
+
+// ################################# nui-loading COMPONENT (legacy overlay loader)
 
 registerComponent('nui-loading', (element) => {
 	const mode = element.getAttribute('mode') || 'overlay';

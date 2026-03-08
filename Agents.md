@@ -80,9 +80,9 @@ function setupButtonBehavior(element) {
 
 **Layout:** `nui-app`, `nui-top-nav`, `nui-side-nav`, `nui-content`, `nui-main`, `nui-app-footer`, `nui-layout`, `nui-skip-links`, `nui-column-flow`
 
-**UI:** `nui-button`, `nui-button-container`, `nui-icon`, `nui-tabs`, `nui-accordion`, `nui-dialog`, `nui-banner`, `nui-table`, `nui-slider`, `nui-input`, `nui-textarea`, `nui-checkbox`, `nui-radio`, `nui-tag-input`, `nui-select`, `nui-link-list`, `nui-code`, `nui-loading`
+**UI:** `nui-button`, `nui-button-container`, `nui-icon`, `nui-tabs`, `nui-accordion`, `nui-dialog`, `nui-banner`, `nui-table`, `nui-slider`, `nui-input`, `nui-textarea`, `nui-checkbox`, `nui-radio`, `nui-tag-input`, `nui-select`, `nui-link-list`, `nui-code`, `nui-loading`, `nui-progress`
 
-**Planned:** `nui-tooltip`, `nui-progress`
+**Planned:** `nui-tooltip`
 
 **Addons:** `nui-menu`, `nui-list`, `nui-animation`, `nui-syntax-highlight`
 
@@ -105,7 +105,7 @@ function setupButtonBehavior(element) {
 - **Indentation:** Tabs
 - **Comments:** Only for code structure, not explanations
 - **Shell:** PowerShell (Windows)
-- **Testing:** VS Code Live Server at `http://127.0.0.1:5500/Playground/index.html`
+- **Testing:** VS Code Live Server at `http://127.0.0.1:5500/Playground/index.html`. Make use of the browser tools of the orchestrator MCP to test and interact with this live-server endpoint. If the server is not started and the endpoint is unreachable, ask the user to start it.
 
 ## Accessibility
 

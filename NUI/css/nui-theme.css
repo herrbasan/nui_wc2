@@ -3834,3 +3834,137 @@ nui-layout[banner] .maxwidth-container {
 	padding: var(--nui-space-half) var(--nui-space);
 	cursor: pointer;
 }
+
+/* ==========================================================================
+   nui-progress component
+   ========================================================================== */
+
+nui-progress {
+	display: block;
+	width: 100%;
+}
+
+nui-progress[type="circular"] {
+	width: var(--nui-progress-size, clamp(2rem, 48px, 3rem));
+	height: var(--nui-progress-size, clamp(2rem, 48px, 3rem));
+	display: inline-flex;
+	vertical-align: middle;
+}
+
+nui-progress .progress-circular-wrapper {
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+}
+
+nui-progress .progress-circular {
+	width: 100%;
+	height: 100%;
+	display: block;
+	transform: rotate(-90deg);
+}
+
+nui-progress .progress-bg {
+	fill: none;
+	stroke: var(--color-shade3);
+	stroke-width: 3.8;
+}
+
+nui-progress .progress-value {
+	fill: none;
+	stroke: var(--color-highlight);
+	stroke-width: 3.8;
+	transition: stroke-dasharray 0.3s ease;
+}
+
+nui-progress .progress-bar-wrapper {
+	display: flex;
+	align-items: center;
+	gap: var(--nui-space);
+	width: 100%;
+}
+
+nui-progress .progress-bar-track {
+	flex: 1;
+	height: var(--nui-progress-size, var(--nui-space-half));
+	background: var(--color-shade3);
+	border-radius: var(--border-radius1);
+	overflow: hidden;
+}
+
+nui-progress .progress-bar-fill {
+	height: 100%;
+	background: var(--color-highlight);
+	transition: width 0.3s ease;
+}
+
+nui-progress .progress-label {
+	font-size: 0.75em;
+	font-weight: 600;
+	color: var(--color-text-light); /* Or default text color */
+	font-variant-numeric: tabular-nums;
+}
+
+nui-progress[type="circular"] .progress-label {
+	position: absolute;
+	font-size: 0.65em;
+}
+
+nui-progress .progress-busy {
+	width: 100%;
+	height: var(--nui-progress-size, var(--nui-space-half));
+	background: var(--color-shade3);
+	border-radius: var(--border-radius1);
+	overflow: hidden;
+	position: relative;
+}
+
+nui-progress .progress-busy::after {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	width: 30%;
+	background: var(--color-highlight);
+	animation: nui-progress-busy 1.5s infinite ease-in-out;
+}
+
+@keyframes nui-progress-busy {
+	0% { left: -30%; width: 30%; }
+	50% { width: 50%; }
+	100% { left: 100%; width: 30%; }
+}
+
+nui-progress[type="circular-busy"] {
+	width: var(--nui-progress-size, calc(var(--nui-space-double, 2rem) * 0.7));
+	height: var(--nui-progress-size, calc(var(--nui-space-double, 2rem) * 0.7));
+	display: inline-flex;
+	vertical-align: middle;
+}
+
+nui-progress .progress-circular-busy {
+	width: 100%;
+	height: 100%;
+	display: block;
+	transform-origin: center center;
+	animation: nui-progress-circular-rotate 1.5s linear infinite;
+}
+
+nui-progress .progress-circular-busy .progress-value {
+	animation: nui-progress-circular-dash 1.5s ease-in-out infinite;
+	stroke-linecap: round;
+}
+
+@keyframes nui-progress-circular-rotate {
+	100% { transform: rotate(360deg); }
+}
+
+@keyframes nui-progress-circular-dash {
+	0% { stroke-dasharray: 1, 100; stroke-dashoffset: 0; }
+	50% { stroke-dasharray: 60, 100; stroke-dashoffset: -25; }
+	100% { stroke-dasharray: 60, 100; stroke-dashoffset: -100; }
+}

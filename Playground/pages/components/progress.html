@@ -1,0 +1,126 @@
+<div class="page-progress">
+	<header>
+		<h1>Progress</h1>
+		<p class="lead">Provides visual feedback on the progress of a task, or indicates busy states. Optionally shows a percentage label.</p>
+	</header>
+
+	<section>
+		<h2>Linear Progress Bar</h2>
+		<p>The standard progress bar automatically displays numerical percentage based on its <code>value</code> and maximum <code>max</code> attribute (default 100). You can hide it using the <code>hide-text</code> attribute.</p>
+
+		<nui-code>
+			<script type="example" data-lang="html">
+<nui-progress value="30"></nui-progress>
+<nui-progress value="65" hide-text></nui-progress>
+			</script>
+		</nui-code>
+		<div class="demo-area" style="display: flex; flex-direction: column; gap: var(--nui-space);">
+			<nui-progress class="simulated-progress" value="30"></nui-progress>
+			<nui-progress class="simulated-progress" value="65" hide-text></nui-progress>
+		</div>
+	</section>
+
+	<section>
+		<h2>Circular Progress</h2>
+		<p>Set <code>type="circular"</code> for a spinner-like progress indicator. Similar to linear bars, text can be disabled using <code>hide-text</code>.</p>
+
+		<nui-code>
+			<script type="example" data-lang="html">
+<nui-progress type="circular" value="75"></nui-progress>
+<nui-progress type="circular" value="75" hide-text></nui-progress>
+			</script>
+		</nui-code>
+		<div class="demo-area" style="display: flex; gap: var(--nui-space);">
+			<nui-progress class="simulated-progress" type="circular" value="75"></nui-progress>
+			<nui-progress class="simulated-progress" type="circular" value="75" hide-text></nui-progress>
+		</div>
+	</section>
+
+	<section>
+		<h2>Indeterminate (Busy)</h2>
+		<p>Set <code>type="busy"</code> when the specific value is unknown or it implies an ongoing activity.</p>
+        
+		<nui-code>
+			<script type="example" data-lang="html">
+<nui-progress type="busy"></nui-progress>
+			</script>
+		</nui-code>
+		<div class="demo-area">
+			<nui-progress type="busy"></nui-progress>
+		</div>
+	</section>
+
+	<section>
+		<h2>Circular Indeterminate (Busy)</h2>
+		<p>Set <code>type="circular-busy"</code> for a compact, button-sized infinite spinner.</p>
+        
+		<nui-code>
+			<script type="example" data-lang="html">
+<nui-progress type="circular-busy"></nui-progress>
+			</script>
+		</nui-code>
+		<div class="demo-area" style="display: flex; gap: var(--nui-space); align-items: center;">
+			<nui-progress type="circular-busy"></nui-progress>
+			<nui-button variant="outline"><button>Load More</button></nui-button>
+		</div>
+	<section>
+		<h2>Custom Sizing & Alignment</h2>
+		<p>The <code>size</code> attribute accepts CSS dimension formats (e.g. <code>4rem</code>, <code>30px</code>, <code>100%</code>). For circular variants, it adjusts the diameter. For bars, it controls the thickness track height.</p>
+		<p>Because circular variants use an SVG with <code>100%</code> width/height internally, using <code>size="100%"</code> allows them to cleanly fill and center inside arbitrary container wrappers.</p>
+        
+		<nui-code>
+			<script type="example" data-lang="html">
+<nui-progress type="circular-busy" size="4rem"></nui-progress>
+
+<div style="width: 6rem; height: 6rem; border: 1px dashed var(--border-shade2); display: flex; align-items: center; justify-content: center;">
+	<nui-progress type="circular-busy" size="50%"></nui-progress>
+</div>
+
+<nui-progress type="bar" value="50" size="1.2rem"></nui-progress>
+			</script>
+		</nui-code>
+		<div class="demo-area" style="display: flex; gap: var(--nui-space-double); align-items: center;">
+			<nui-progress type="circular-busy" size="4rem"></nui-progress>
+			
+			<div style="width: 6rem; height: 6rem; border: 1px dashed var(--border-shade2); display: flex; align-items: center; justify-content: center;">
+				<nui-progress type="circular-busy" size="50%"></nui-progress>
+			</div>
+
+			<nui-progress style="flex: 1;" type="bar" value="50" size="1.2rem"></nui-progress>
+		</div>
+	</section>
+</div>
+
+<script type="nui/page">
+	function init(element, params, nui) {
+		let intervalId;
+
+		const updateProgress = () => {
+			const progressEls = element.querySelectorAll('.simulated-progress');
+			progressEls.forEach(el => {
+				const current = parseFloat(el.getAttribute('value')) || 0;
+				let next = current + (Math.random() * 5 + 1);
+				if (next >= 100) next = 0; // Reset back to 0
+				el.setAttribute('value', next.toString());
+			});
+		};
+
+		// Start background simulation when fragment is shown
+		element.show = () => {
+			if (!intervalId) {
+				intervalId = setInterval(updateProgress, 600);
+			}
+		};
+
+		// Clean up when fragment is hidden
+		element.hide = () => {
+			if (intervalId) {
+				clearInterval(intervalId);
+				intervalId = null;
+			}
+		};
+		
+		// If already visible on initial load, invoke show() directly
+		element.show();
+	}
+</script>

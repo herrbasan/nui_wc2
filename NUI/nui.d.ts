@@ -400,6 +400,27 @@ export interface NuiLoadingElement extends HTMLElement {
 }
 
 /**
+ * Progress indicating component
+ * Types: "bar" | "circular" | "busy" | "circular-busy"
+ */
+export interface NuiProgressElement extends HTMLElement {
+	/** Type of progress indicator: "bar" (default), "circular", "busy", "circular-busy" */
+	type: 'bar' | 'circular' | 'busy' | 'circular-busy';
+
+	/** Current progress value (0 to max) */
+	value: number;
+
+	/** Maximum progress value (default 100) */
+	max: number;
+
+	/** Hides the text percentage label when visually active */
+	hideText: boolean;
+
+	/** Changes the thickness of the track (bar) or diameter (circular) using CSS values */
+	size?: string;
+}
+
+/**
  * Tabs component
  * Manages tab panels and navigation
  */
@@ -752,6 +773,7 @@ declare global {
 		'nui-accordion': NuiAccordionElement;
 		'nui-dialog': NuiDialogElement;
 		'nui-banner': NuiBannerElement;
+		'nui-progress': NuiProgressElement;
 		'nui-input-group': NuiInputGroupElement;
 		'nui-input': NuiInputElement;
 		'nui-textarea': NuiTextareaElement;
