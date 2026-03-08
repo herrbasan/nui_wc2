@@ -58,6 +58,7 @@ The semantic `<button>` inside works on its own. The `<nui-button>` wrapper adds
 | `nui-loading` | Loading overlay / indicator |
 | `nui-tabs` | Tab panels with keyboard navigation |
 | `nui-accordion` | Collapsible sections |
+| `nui-overlay` | Generic modal backdrop / lightbox |
 | `nui-dialog` | Modal dialogs (wraps native `<dialog>`) |
 | `nui-banner` | Notifications and alerts |
 | `nui-table` | Table enhancements (responsive labels/card layout helpers) |

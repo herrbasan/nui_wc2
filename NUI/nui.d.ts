@@ -462,6 +462,21 @@ export interface NuiDialogElement extends HTMLElement {
 }
 
 /**
+ * Overlay component
+ * Provides a generic modal container over a shaded backdrop
+ */
+export interface NuiOverlayElement extends HTMLElement {
+	/** Show the overlay as a modal */
+	showModal(): void;
+	
+	/** Close the overlay */
+	close(action?: string): void;
+	
+	/** Check if overlay is open */
+	isOpen(): boolean;
+}
+
+/**
  * Banner component
  * Toast/Notification system
  */
@@ -782,6 +797,7 @@ declare global {
 		'nui-icon': NuiIconElement;
 		'nui-tabs': NuiTabsElement;
 		'nui-accordion': NuiAccordionElement;
+		'nui-overlay': NuiOverlayElement;
 		'nui-dialog': NuiDialogElement;
 		'nui-banner': NuiBannerElement;
 		'nui-progress': NuiProgressElement;

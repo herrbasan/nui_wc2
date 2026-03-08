@@ -1289,6 +1289,51 @@ registerComponent('nui-dialog', (element) => {
 	});
 });
 
+// ################################# nui-overlay COMPONENT
+
+registerComponent('nui-overlay', (element) => {
+	const dialog = element.el('dialog');
+	if (!dialog) return;
+
+	const close = (ret) => {
+		dialog.classList.add('closing');
+		dialog.addEventListener('transitionend', () => {
+			dialog.classList.remove('closing');
+			dialog.close(ret);
+			element.dispatchEvent(new CustomEvent('nui-overlay-close', { bubbles: true, detail: { returnValue: ret } }));
+		}, { once: true });
+	};
+
+	element.showModal = () => {
+		dialog.showModal();
+		element.dispatchEvent(new CustomEvent('nui-overlay-open', { bubbles: true }));
+	};
+
+	element.close = (ret) => {
+		if (!dialog.open || dialog.classList.contains('closing')) return;
+		close(ret);
+	};
+
+	element.isOpen = () => dialog.open;
+
+	dialog.addEventListener('close', () => {
+		if (!dialog.classList.contains('closing')) {
+			element.dispatchEvent(new CustomEvent('nui-overlay-close', { bubbles: true, detail: { returnValue: dialog.returnValue } }));
+		}
+	});
+
+	dialog.addEventListener('cancel', (e) => {
+		e.preventDefault();
+		if (!element.hasAttribute('blocking')) element.close('cancel');
+		element.dispatchEvent(new CustomEvent('nui-overlay-cancel', { bubbles: true }));
+	});
+
+	dialog.addEventListener('click', (e) => {
+		if (element.hasAttribute('blocking') || e.target !== dialog) return;
+		element.close('backdrop');
+	});
+});
+
 // ################################# nui-tabs COMPONENT
 
 registerComponent('nui-tabs', (element) => {
@@ -3214,10 +3259,10 @@ const dialogSystem = {
 	},
 
 	_buildButtonHtml(button) {
-		const type = button.type || 'outline';
+		const variant = button.type || 'outline';
 		const id = button.id ? `id="${button.id}"` : '';
 		const icon = button.icon ? `<nui-icon name="${button.icon}"></nui-icon>` : '';
-		return `<nui-button type="${type}"><button ${id}>${icon}${button.label}</button></nui-button>`;
+		return `<nui-button variant="${variant}"><button type="button" ${id}>${icon}${button.label}</button></nui-button>`;
 	},
 
 	_buildButtonsHtml(buttons) {
