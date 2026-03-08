@@ -127,6 +127,13 @@ Follow [W3C ARIA Authoring Practices Guide](https://www.w3.org/WAI/ARIA/apg/patt
 - CSS Variables for dynamic styling
 - Browser-native APIs
 
+## CSS & Theming Guidelines
+- **NEVER invent CSS variables.**
+- Always use the variables explicitly defined in the `:root` of `NUI/css/nui-theme.css`.
+- **Spacing:** Use `--nui-space`, `--nui-space-half`, `--nui-space-double`, etc. (No "md/lg/xl" suffixes).
+- **Colors:** Use `--color-base` and `--color-shade1` through `--color-shade9` for surfaces. Do not use words like "surface" or "background".
+- **Borders:** Use `--border-thickness`, `--border-shade1`, `--border-radius1`, etc.
+
 ## Workflow: Adding Components
 
 1. **Create component** in `NUI/nui.js` following existing patterns

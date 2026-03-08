@@ -1530,6 +1530,11 @@ nui-dialog dialog.closing::backdrop {
 	pointer-events: none;
 }
 
+/* Wrapper */
+nui-dialog {
+	display: contents;
+}
+
 /* Base dialog styling */
 nui-dialog dialog {
 	padding: 0;
@@ -1556,6 +1561,53 @@ nui-dialog[placement="bottom"] dialog {
 	margin-block: 0;
 	top: auto;
 	bottom: 16.67vh;
+}
+
+/* Enable the page layout on the dialog */
+nui-dialog[mode="page"] dialog[open],
+nui-dialog[mode="page"] dialog.closing {
+	display: flex;
+}
+
+nui-dialog[mode="page"] dialog {
+	flex-direction: column;
+	width: 90vw;
+	height: 90vh;
+	max-width: var(--space-page-maxwidth, 1200px);
+	max-height: 90vh;
+	padding: 0;
+	border-radius: var(--border-radius3);
+}
+
+/* Header structural styling */
+nui-dialog[mode="page"] dialog > header {
+	flex-shrink: 0;
+	padding: var(--nui-space) var(--nui-space-double);
+	background-color: var(--color-shade2);
+	border-bottom: var(--border-thickness) solid var(--border-shade2);
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+nui-dialog[mode="page"] dialog > header h2 {
+	margin: 0;
+	font-weight: 400;
+}
+
+/* Body container - takes up remaining space and scrolls */
+nui-dialog[mode="page"] dialog > main {
+	flex-grow: 1;
+	overflow-y: auto;
+	padding: var(--nui-space-double);
+}
+
+/* Footer structural styling */
+nui-dialog[mode="page"] dialog > footer {
+	flex-shrink: 0;
+	padding: var(--nui-space) var(--nui-space-double);
+	border-top: var(--border-thickness) solid var(--border-shade2);
+	background-color: var(--color-shade2);
 }
 
 /* Non-modal dialogs need fixed positioning (modal dialogs use top-layer) */
@@ -1587,12 +1639,14 @@ nui-dialog dialog:not(:modal) {
 	color: var(--text-color);
 }
 
-dialog nui-button-container {
+.nui-dialog-alert nui-button-container,
+.nui-dialog-prompt nui-button-container {
 	margin-top: var(--nui-space);
 }
 
-/* Button styling in dialogs */
-dialog nui-button-container button {
+/* Button styling in system dialogs */
+.nui-dialog-alert nui-button-container button,
+.nui-dialog-prompt nui-button-container button {
 	min-width: 5rem;
 	min-height: var(--nui-space-double);
 	padding: var(--nui-space-quarter) var(--nui-space-half);
@@ -1606,23 +1660,27 @@ dialog nui-button-container button {
 	text-transform: uppercase;
 }
 
-dialog nui-button-container button.outline {
+.nui-dialog-alert nui-button-container button.outline,
+.nui-dialog-prompt nui-button-container button.outline {
 	background: transparent;
 	color: var(--text-color);
 	border: solid var(--border-thickness) var(--border-shade3);
 }
 
-dialog nui-button-container button.primary {
+.nui-dialog-alert nui-button-container button.primary,
+.nui-dialog-prompt nui-button-container button.primary {
 	background: var(--color-highlight);
 	color: var(--color-white);
 }
 
-dialog nui-button-container button:hover {
+.nui-dialog-alert nui-button-container button:hover,
+.nui-dialog-prompt nui-button-container button:hover {
 	background: var(--color-highlight);
 	color: var(--color-white);
 }
 
-dialog nui-button-container button.outline:hover {
+.nui-dialog-alert nui-button-container button.outline:hover,
+.nui-dialog-prompt nui-button-container button.outline:hover {
 	background: var(--color-shade2);
 	border-color: var(--color-highlight);
 }

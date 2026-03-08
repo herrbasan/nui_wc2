@@ -330,6 +330,69 @@ if (dialog.isOpen()) { ... }
 </section>
 
 <section>
+	<h2>Page Mode</h2>
+	<p>Add <code>mode="page"</code> to a dialog to create a layout optimized for large structures like settings menus or forms. Page mode dialogs use CSS grid/flexbox to maximize use of the viewport while keeping the header and footer fixed and making the main content area scrollable.</p>
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-dialog id="page-dialog" mode="page">
+	<dialog>
+		<header>
+			<h2>Modal Page Title</h2>
+			<nui-button variant="icon" class="icon-only">
+				<button type="button" data-action="dialog-close@#page-dialog" aria-label="Close">
+					<nui-icon name="close"></nui-icon>
+				</button>
+			</nui-button>
+		</header>
+		<main>
+			<p>Your scrollable content goes here.</p>
+			<!-- Very large content to show scrolling -->
+			<div style="height: 150vh; background: repeating-linear-gradient(45deg, transparent, transparent 10px, var(--color-shade2) 10px, var(--color-shade2) 20px);"></div>
+		</main>
+		<footer>
+			<nui-button-container align="end">
+				<nui-button variant="outline"><button type="button" data-action="dialog-close@#page-dialog">Close</button></nui-button>
+				<nui-button variant="primary"><button type="button" class="primary" data-action="dialog-close:save@#page-dialog">Save Changes</button></nui-button>
+			</nui-button-container>
+		</footer>
+	</dialog>
+</nui-dialog>
+		</script>
+	</nui-code>
+	<h3>Try It</h3>
+	<nui-button-container gap="1rem">
+		<nui-button><button type="button" data-action="dialog-open@#page-dialog">Open Page Mode Dialog</button></nui-button>
+	</nui-button-container>
+
+	<nui-dialog id="page-dialog" mode="page">
+		<dialog>
+			<header>
+				<h2>Settings</h2>
+				<nui-button variant="icon" class="icon-only">
+					<button type="button" data-action="dialog-close@#page-dialog" aria-label="Close">
+						<nui-icon name="close"></nui-icon>
+					</button>
+				</nui-button>
+			</header>
+			<main>
+				<h3>General Settings</h3>
+				<p>This is a page-mode dialog with a lot of content to demonstrate scrolling while the header and footer remain fixed.</p>
+				<div style="height: 400px; margin: 2rem 0; background: var(--color-shade2); border-radius: var(--border-radius2); display: flex; align-items: center; justify-content: center;">Scroll down...</div>
+				<h3>Advanced Options</h3>
+				<p>More content down here.</p>
+				<div style="height: 400px; margin: 2rem 0; background: var(--color-shade2); border-radius: var(--border-radius2); display: flex; align-items: center; justify-content: center;">End of settings.</div>
+			</main>
+			<footer>
+				<nui-button-container align="end">
+					<nui-button variant="outline"><button type="button" data-action="dialog-close@#page-dialog">Cancel</button></nui-button>
+					<nui-button variant="primary"><button type="button" class="primary" data-action="dialog-close:save@#page-dialog">Save Changes</button></nui-button>
+				</nui-button-container>
+			</footer>
+		</dialog>
+	</nui-dialog>
+</section>
+
+<section>
 	<h2>Events</h2>
 	<p>Dialogs dispatch custom events for close and cancel actions:</p>
 	<nui-code>
