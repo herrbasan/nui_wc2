@@ -10,6 +10,17 @@
 export interface NuiConfig {
 	/** Path to icon sprite SVG file */
 	iconSpritePath?: string;
+	
+	/** Enable or disable debug warnings (default: true) */
+	debug?: boolean;
+	
+	/** Accessibility configuration */
+	a11y?: {
+		/** Warning verbosity: 'verbose' | 'auto' | 'silent' */
+		warnings?: 'verbose' | 'auto' | 'silent';
+		/** Automatically add missing aria labels (default: true) */
+		autoLabel?: boolean;
+	};
 }
 
 // =============================================================================

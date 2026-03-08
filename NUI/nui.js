@@ -7,7 +7,12 @@ const nuiBasePath = new URL('.', import.meta.url).pathname.replace(/\/$/, '');
 const config = {
 	sanitizeActions: true,
 	sanitizeRoutes: true,
-	iconSpritePath: `${nuiBasePath}/assets/material-icons-sprite.svg`
+	iconSpritePath: `${nuiBasePath}/assets/material-icons-sprite.svg`,
+	debug: true,
+	a11y: {
+		warnings: 'verbose', // 'verbose' | 'auto' | 'silent'
+		autoLabel: true
+	}
 };
 
 // ################################# MINIMAL EVENT DELEGATION
@@ -211,6 +216,20 @@ function registerLayoutComponent(tagName) {
 // ################################# ACCESSIBILITY
 
 const a11y = {
+	warn(type, message, element) {
+		const setting = config.a11y?.warnings || (config.debug === false ? 'silent' : 'verbose');
+		if (setting === 'silent' || config.debug === false) return;
+
+		if (setting === 'auto') {
+			this.warned = this.warned || new Set();
+			const key = `${type}:${message}`;
+			if (this.warned.has(key)) return;
+			this.warned.add(key);
+		}
+
+		console.warn(message, element);
+	},
+
 	hasLabel(element) {
 		return element.hasAttribute('aria-label') ||
 			element.hasAttribute('aria-labelledby') ||
@@ -260,6 +279,7 @@ const a11y = {
 
 	ensureButtonLabel(button) {
 		if (this.hasLabel(button)) return;
+		if (config.a11y?.autoLabel === false) return;
 
 		const visibleText = Array.from(button.childNodes)
 			.filter(n => n.nodeType === Node.TEXT_NODE && n.textContent.trim())
@@ -274,7 +294,7 @@ const a11y = {
 			if (iconName) {
 				const label = this.generateIconLabel(iconName, button);
 				button.setAttribute('aria-label', label);
-				console.warn(
+				this.warn('button-label',
 					`Icon-only button missing aria-label. Auto-generated: "${label}". ` +
 					`Consider adding explicit aria-label.`,
 					button
@@ -285,6 +305,7 @@ const a11y = {
 
 	ensureLandmarkLabel(landmark, fallbackLabel = 'Navigation') {
 		if (this.hasLabel(landmark)) return;
+		if (config.a11y?.autoLabel === false) return;
 
 		const heading = landmark.el('h1, h2, h3, h4, h5, h6');
 		if (heading) {
@@ -293,7 +314,7 @@ const a11y = {
 			landmark.setAttribute('aria-labelledby', id);
 		} else {
 			landmark.setAttribute('aria-label', fallbackLabel);
-			console.warn(`Landmark missing aria-label. Adding: "${fallbackLabel}"`, landmark);
+			this.warn('landmark-label', `Landmark missing aria-label. Adding: "${fallbackLabel}"`, landmark);
 		}
 	},
 
@@ -305,7 +326,7 @@ const a11y = {
 				if (!el.hasAttribute('role')) {
 					el.setAttribute('role', 'button');
 					el.setAttribute('tabindex', '0');
-					console.warn('Non-semantic clickable element. Adding role="button".', el);
+					this.warn('non-semantic', 'Non-semantic clickable element. Adding role="button".', el);
 				}
 			}
 		});
@@ -3832,7 +3853,9 @@ function ensureBaseStyles() {
 			target: document.head
 		});
 
-		console.warn('[NUI] Default theme auto-loaded from:', cssPath, '(Include nui.js in <head> to prevent layout shifts)');
+		if (config.debug !== false) {
+			console.warn('[NUI] Default theme auto-loaded from:', cssPath, '(Include nui.js in <head> to prevent layout shifts)');
+		}
 	}
 
 
@@ -4158,7 +4181,7 @@ export const nui = {
 
 	init(options) {
 		if (options) {
-			Object.assign(config, options);
+			this.configure(options);
 		}
 
 		ensureBaseStyles();
@@ -4190,7 +4213,14 @@ export const nui = {
 	},
 
 	configure(options) {
-		Object.assign(config, options);
+		if (!options) return;
+		if (options.a11y) {
+			config.a11y = { ...config.a11y, ...options.a11y };
+			const { a11y, ...rest } = options;
+			Object.assign(config, rest);
+		} else {
+			Object.assign(config, options);
+		}
 	},
 
 	createRouter(container, options = {}) {
