@@ -81,7 +81,7 @@
 	--color-text-subtle: var(--color-shade5);
 
 	--side-nav-width: 21rem;
-	--top-nav-height: var(--nui-space-quadruple);
+	--top-nav-height: 4rem;
 	--footer-height: var(--nui-space-double);
 
 	/* Breakpoints - use sparingly, only for fundamental layout changes */
@@ -903,15 +903,28 @@ nui-top-nav header {
 	align-items: center;
 	justify-content: space-between;
 	width: 100%;
+	line-height: 1;
 }
 
+nui-top-nav header > .left {
+	display: flex; 
+	align-items: center; 
+	gap: var(--nui-space);
+}
 
-nui-top-nav header h1 {
+nui-top-nav header > .right {
+	display: flex; 
+	align-items: center; 
+	gap: var(--nui-space-half);
+}
+
+nui-top-nav header .left h1 {
 	margin: 0;
 	padding: 0;
 	font-size: var(--font-size-base);
 	font-weight: 200;
-	color: var(--color-white)
+	color: var(--color-white);
+	line-height: 1;
 }
 
 nui-top-nav ul {
