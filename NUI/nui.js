@@ -3128,6 +3128,219 @@ registerComponent('nui-select', (element) => {
 	};
 });
 
+// ################################# nui-sortable COMPONENT
+
+registerComponent('nui-sortable', (element) => {
+	element.classList.add('nui-sortable');
+	let dragItem = null;
+	let dragOrigRect = null;
+	let pointerId = null;
+	let startX = 0;
+	let startY = 0;
+	
+	const animateFlip = (el, oldRect) => {
+		if (el.getAnimations) {
+			el.getAnimations().forEach(a => a.cancel());
+		}
+		const newRect = el.getBoundingClientRect();
+		const deltaX = oldRect.left - newRect.left;
+		const deltaY = oldRect.top - newRect.top;
+		if (deltaX === 0 && deltaY === 0) return;
+		
+		el.animate([
+			{ transform: `translate(${deltaX}px, ${deltaY}px)` },
+			{ transform: 'translate(0, 0)' }
+		], {
+			duration: 250,
+			easing: 'cubic-bezier(0.2, 0, 0, 1)'
+		});
+	};
+
+	const onPointerDown = (e) => {
+		if (e.button !== 0) return;
+		
+		const item = e.target.closest('nui-sortable-item');
+		if (!item || !element.contains(item)) return;
+		
+		// Ignore if clicking an interactive element (unless it specifically IS the drag handle)
+		const interactive = e.target.closest('button, a, input, select, textarea, [data-action]');
+		if (interactive && !interactive.closest('.drag-handle')) {
+			return;
+		}
+		
+		// If the item specifies a drag handle, ensure we clicked it
+		if (item.querySelector('.drag-handle') && !e.target.closest('.drag-handle')) {
+			return;
+		}
+		
+		e.preventDefault();
+		dragItem = item;
+		pointerId = e.pointerId;
+		startX = e.clientX;
+		startY = e.clientY;
+		dragOrigRect = dragItem.getBoundingClientRect();
+		
+		const containerRect = element.getBoundingClientRect();
+		const itemTop = dragOrigRect.top - containerRect.top - element.clientTop + element.scrollTop;
+		const itemLeft = dragOrigRect.left - containerRect.left - element.clientLeft + element.scrollLeft;
+		const itemWidth = dragOrigRect.width;
+		const itemHeight = dragOrigRect.height;
+
+		element.setPointerCapture(pointerId);
+		
+		const placeholder = document.createElement('div');
+		placeholder.className = 'nui-sortable-placeholder';
+		placeholder.style.width = `${itemWidth}px`;
+		placeholder.style.height = `${itemHeight}px`;
+		element.insertBefore(placeholder, dragItem);
+		
+		dragItem.classList.add('nui-sortable-dragged');
+		dragItem.style.top = `${itemTop}px`;
+		dragItem.style.left = `${itemLeft}px`;
+		dragItem.style.width = `${itemWidth}px`;
+		dragItem.style.height = `${itemHeight}px`;
+		dragItem.style.transform = `translate(0px, 0px)`;
+		
+		dragItem.dataset.isDragging = "true";
+	};
+
+	const onPointerMove = (e) => {
+		if (!dragItem || e.pointerId !== pointerId) return;
+		
+		const currentX = e.clientX - startX;
+		const currentY = e.clientY - startY;
+		dragItem.style.transform = `translate(${currentX}px, ${currentY}px)`;
+		
+		const placeholder = element.querySelector('.nui-sortable-placeholder');
+		const items = Array.from(element.children).filter(c => 
+			c !== dragItem && (c.tagName === 'NUI-SORTABLE-ITEM' || c === placeholder)
+		);
+		
+		const containerRect = element.getBoundingClientRect();
+		const scrollLeft = element.scrollLeft;
+		const scrollTop = element.scrollTop;
+		const clientLeft = element.clientLeft;
+		const clientTop = element.clientTop;
+		
+		let targetObj = null;
+		for (const item of items) {
+			if (item === placeholder) continue;
+			
+			const left = containerRect.left + clientLeft + item.offsetLeft - scrollLeft;
+			const top = containerRect.top + clientTop + item.offsetTop - scrollTop;
+			const right = left + item.offsetWidth;
+			const bottom = top + item.offsetHeight;
+			
+			if (e.clientX >= left && e.clientX <= right &&
+				e.clientY >= top && e.clientY <= bottom) {
+				targetObj = item;
+				break;
+			}
+		}
+		
+		if (targetObj) {
+			const currentIndex = items.indexOf(placeholder);
+			const targetIndex = items.indexOf(targetObj);
+			
+			const rects = new Map();
+			items.forEach(i => {
+				if (i !== placeholder) rects.set(i, i.getBoundingClientRect());
+			});
+			
+			if (currentIndex < targetIndex) {
+				element.insertBefore(placeholder, targetObj.nextSibling);
+			} else {
+				element.insertBefore(placeholder, targetObj);
+			}
+			
+			items.forEach(i => {
+				const oldRect = rects.get(i);
+				if (oldRect) animateFlip(i, oldRect);
+			});
+		}
+	};
+
+	const onPointerUp = (e) => {
+		if (!dragItem || e.pointerId !== pointerId) return;
+		
+		element.releasePointerCapture(pointerId);
+		
+		const placeholder = element.querySelector('.nui-sortable-placeholder');
+		if (placeholder) {
+			element.insertBefore(dragItem, placeholder);
+			placeholder.remove();
+		}
+		
+		dragItem.classList.remove('nui-sortable-dragged');
+		dragItem.style.transform = '';
+		dragItem.style.top = '';
+		dragItem.style.left = '';
+		dragItem.style.width = '';
+		dragItem.style.height = '';
+		delete dragItem.dataset.isDragging;
+		dragItem = null;
+		pointerId = null;
+		
+		const newOrder = Array.from(element.querySelectorAll('nui-sortable-item'))
+			.map(item => item.dataset.id || item.textContent.trim());
+		element.dispatchEvent(new CustomEvent('nui-sortable-change', {
+			bubbles: true,
+			detail: { order: newOrder }
+		}));
+	};
+
+	element.addEventListener('pointerdown', onPointerDown);
+	element.addEventListener('pointermove', onPointerMove);
+	element.addEventListener('pointerup', onPointerUp);
+	element.addEventListener('pointercancel', onPointerUp);
+	
+	element.addEventListener('nui-action-sortable-item-delete', (e) => {
+		const item = e.target.closest('nui-sortable-item');
+		if (item && element.contains(item)) {
+			const items = Array.from(element.querySelectorAll('nui-sortable-item'));
+			const rects = new Map();
+			items.forEach(i => rects.set(i, i.getBoundingClientRect()));
+			
+			item.remove();
+			
+			const remainingItems = Array.from(element.querySelectorAll('nui-sortable-item'));
+			remainingItems.forEach(i => {
+				const oldRect = rects.get(i);
+				if (oldRect) animateFlip(i, oldRect);
+			});
+		}
+	});
+
+	element.addItem = (htmlString) => {
+		const wrapper = document.createElement('div');
+		wrapper.innerHTML = htmlString.trim();
+		const item = wrapper.firstElementChild;
+		if (item) {
+			element.appendChild(item);
+		}
+	};
+	
+	element.getItems = () => {
+		return Array.from(element.querySelectorAll('nui-sortable-item')).map(item => ({
+			id: item.dataset.id || null,
+			element: item
+		}));
+	};
+
+	element.setItems = (htmlStrings) => {
+		element.innerHTML = '';
+		htmlStrings.forEach(html => element.addItem(html));
+	};
+
+	element.clear = () => {
+		element.innerHTML = '';
+	};
+});
+
+registerComponent('nui-sortable-item', (element) => {
+	element.classList.add('nui-sortable-item');
+});
+
 // ################################# BANNER FACTORY
 
 const activeBanners = { top: null, bottom: null };

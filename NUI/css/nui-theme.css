@@ -4033,3 +4033,100 @@ nui-progress .progress-circular-busy .progress-value {
 	50% { stroke-dasharray: 60, 100; stroke-dashoffset: -25; }
 	100% { stroke-dasharray: 60, 100; stroke-dashoffset: -100; }
 }
+
+/* =============================================================================
+   nui-sortable COMPONENT
+   ============================================================================= */
+
+nui-sortable {
+	display: flex;
+	flex-direction: column;
+	gap: var(--nui-space-eighth);
+	position: relative;
+}
+
+nui-sortable-item {
+	display: flex;
+	align-items: center;
+	padding: var(--nui-space-half) var(--nui-space);
+	background: light-dark(var(--color-shade1), var(--color-shade2));
+	border: solid var(--border-thickness) var(--border-shade2);
+	border-radius: var(--border-radius1);
+	gap: var(--nui-space-half);
+	user-select: none;
+	touch-action: none; /* Required for pointer events panning */
+	will-change: transform;
+	transition: background 0.2s;
+}
+
+nui-sortable-item:hover {
+	background: light-dark(var(--color-shade2), var(--color-shade3));
+}
+
+nui-sortable-item:not(:has(.drag-handle)) {
+	cursor: grab;
+}
+
+nui-sortable-item:not(:has(.drag-handle)):active {
+	cursor: grabbing;
+}
+
+nui-sortable-item .drag-handle {
+	cursor: grab;
+	padding: var(--nui-space-quarter);
+	margin-left: calc(-1 * var(--nui-space-quarter));
+	color: var(--color-text-muted);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+nui-sortable-item .drag-handle:active {
+	cursor: grabbing;
+}
+
+nui-sortable-item.nui-sortable-dragged {
+	position: absolute !important;
+	z-index: 100 !important;
+	box-shadow: 0 8px 16px var(--shadow-color);
+	opacity: 0.95;
+	margin: 0 !important;
+}
+
+nui-sortable[data-layout="grid"] > nui-sortable-item.nui-sortable-dragged {
+	grid-column: 1 / -1;
+	grid-row: 1 / -1;
+}
+
+nui-sortable[data-layout="horizontal"] {
+	flex-direction: row;
+	flex-wrap: wrap;
+	gap: var(--nui-space-half);
+}
+
+nui-sortable[data-layout="grid"] {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+	gap: var(--nui-space-half);
+}
+
+nui-sortable[data-layout="grid"] nui-sortable-item {
+	flex-direction: column;
+	justify-content: center;
+	text-align: center;
+	gap: var(--nui-space-quarter);
+	padding: var(--nui-space);
+}
+
+nui-sortable[data-layout="grid"] nui-sortable-item .drag-handle {
+	margin-left: 0;
+	margin-bottom: var(--nui-space-eighth);
+}
+
+.nui-sortable-placeholder {
+	background: transparent;
+	border: dashed var(--border-thickness) var(--border-shade3);
+	border-radius: var(--border-radius1);
+	opacity: 0.5;
+	pointer-events: none;
+}
