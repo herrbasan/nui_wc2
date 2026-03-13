@@ -548,3 +548,42 @@ uploader.addEventListener('nui-image-ready', (e) => {
 - Could this be CSS `resize` property instead?
 
 **Status:** Needs use case examples
+
+---
+
+### Sortable Component
+
+**Purpose:** A sortable list component that allows items to be dragged around to re-order them, delete them, and add new items programmatically.
+
+**Concept:**
+- Drag-and-drop reordering of items
+- Dynamic addition and deletion of list items
+- Custom implementation inspired by `sortable.js`
+- Focus on lightweight, native touch/pointer performance without external dependencies
+
+**API Sketch:**
+```html
+<nui-sortable>
+  <nui-sortable-item data-id="1">
+    <span class="drag-handle">☰</span> Item 1 <button data-action="sortable-item-delete">✕</button>
+  </nui-sortable-item>
+  <nui-sortable-item data-id="2">
+    <span class="drag-handle">☰</span> Item 2 <button data-action="sortable-item-delete">✕</button>
+  </nui-sortable-item>
+</nui-sortable>
+
+<script>
+const sortable = document.querySelector('nui-sortable');
+
+// Listen for reorder events
+sortable.addEventListener('nui-sortable-change', (e) => {
+  console.log('New order:', e.detail.order);
+});
+
+// Programmatic addition
+sortable.addItem('<nui-sortable-item data-id="3">Item 3</nui-sortable-item>');
+</script>
+```
+
+**Status:** Idea only - not planned
+
