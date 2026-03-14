@@ -103,6 +103,8 @@ function setupButtonBehavior(element) {
 
 **Routing:** `nui.createRouter()`, `nui.enableContentLoading()`
 
+**A11y:** `a11y.announce(message, assertive)`
+
 **Registration:** `nui.registerFeature()`, `nui.registerType()`, `nui.configure()`
 
 ## Development Preferences
@@ -114,7 +116,7 @@ function setupButtonBehavior(element) {
 
 ## Accessibility
 
-Follow [W3C ARIA Authoring Practices Guide](https://www.w3.org/WAI/ARIA/apg/patterns/). Use roving tabindex for composite components (menus, tabs, toolbars).
+Follow [W3C ARIA Authoring Practices Guide](https://www.w3.org/WAI/ARIA/apg/patterns/). Use roving tabindex for composite components (menus, tabs, toolbars). Use `a11y.announce(message)` for focus-driven state changes (like drag and drop).
 
 ## What to Avoid
 

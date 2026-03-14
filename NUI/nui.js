@@ -318,6 +318,25 @@ const a11y = {
 		}
 	},
 
+	announce(message, assertive = true) {
+		let announcer = document.getElementById('nui-a11y-announcer');
+		if (!announcer) {
+			announcer = dom.create('div', {
+				id: 'nui-a11y-announcer',
+				style: 'position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;',
+				attrs: { 'aria-live': 'polite', 'aria-atomic': 'true' },
+				target: document.body
+			});
+		}
+		
+		announcer.textContent = '';
+		announcer.setAttribute('aria-live', assertive ? 'assertive' : 'polite');
+		
+		setTimeout(() => {
+			announcer.textContent = message;
+		}, 50);
+	},
+
 	upgrade(element) {
 		element.els('button').forEach(btn => this.ensureButtonLabel(btn));
 
@@ -2068,7 +2087,6 @@ registerComponent('nui-tag-input', (element) => {
 		attrs: { role: 'listbox', 'aria-label': 'Selected tags' },
 		target: element
 	});
-	const liveRegion = dom.create('div', { class: 'visually-hidden', attrs: { 'aria-live': 'polite' }, target: element });
 	let input = null;
 	let nuiInput = null;
 
@@ -2188,8 +2206,6 @@ registerComponent('nui-tag-input', (element) => {
 		}
 	};
 
-	const announce = msg => { liveRegion.textContent = msg; setTimeout(() => liveRegion.textContent = '', 1000); };
-
 	// Public API
 	element.addTag = (value, label) => {
 		if (!value || typeof value !== 'string') return false;
@@ -2198,7 +2214,7 @@ registerComponent('nui-tag-input', (element) => {
 		const tag = { value, label: label || value };
 		tags.push(tag);
 		render();
-		announce(`${tag.label} added`);
+		a11y.announce(`${tag.label} added`);
 		dispatch('nui-tag-add', tag);
 		dispatch('nui-change', { values: element.getValues(), tags: element.listTags() });
 		return true;
@@ -2209,7 +2225,7 @@ registerComponent('nui-tag-input', (element) => {
 		if (idx === -1) return false;
 		const tag = tags.splice(idx, 1)[0];
 		render();
-		announce(`${tag.label} removed`);
+		a11y.announce(`${tag.label} removed`);
 		dispatch('nui-tag-remove', tag);
 		dispatch('nui-change', { values: element.getValues(), tags: element.listTags() });
 		return true;
@@ -3132,6 +3148,7 @@ registerComponent('nui-select', (element) => {
 
 registerComponent('nui-sortable', (element) => {
 	element.classList.add('nui-sortable');
+	element.setAttribute('role', 'list');
 	let dragItem = null;
 	let dragOrigRect = null;
 	let pointerId = null;
@@ -3335,10 +3352,122 @@ registerComponent('nui-sortable', (element) => {
 	element.clear = () => {
 		element.innerHTML = '';
 	};
+
+	element.addEventListener('keydown', (e) => {
+		const targetItem = e.target.closest('nui-sortable-item');
+		if (!targetItem || !element.contains(targetItem)) return;
+
+		const items = Array.from(element.querySelectorAll('nui-sortable-item'));
+		const currentIndex = items.indexOf(targetItem);
+		if (currentIndex === -1) return;
+
+		const isDragging = targetItem.dataset.keyboardDrag === "true";
+
+		if (e.key === ' ' || e.key === 'Enter') {
+			e.preventDefault();
+			if (isDragging) {
+				targetItem.removeAttribute('data-keyboard-drag');
+				a11y.announce(`Dropped item at position ${currentIndex + 1} of ${items.length}.`);
+				const newOrder = items.map(item => item.dataset.id || item.textContent.trim());
+				element.dispatchEvent(new CustomEvent('nui-sortable-change', {
+					bubbles: true,
+					detail: { order: newOrder }
+				}));
+			} else {
+				targetItem.dataset.keyboardDrag = "true";
+				a11y.announce(`Grabbed item ${currentIndex + 1} of ${items.length}. Use arrow keys to move, Space to drop, Escape to cancel.`);
+				targetItem.dataset.origIndex = currentIndex;
+			}
+			return;
+		}
+
+		if (e.key === 'Escape' && isDragging) {
+			e.preventDefault();
+			targetItem.removeAttribute('data-keyboard-drag');
+			const origIndex = parseInt(targetItem.dataset.origIndex, 10);
+			if (!isNaN(origIndex) && origIndex !== currentIndex) {
+				const rects = new Map();
+				items.forEach(i => rects.set(i, i.getBoundingClientRect()));
+				
+				if (origIndex >= items.length - 1) {
+					element.appendChild(targetItem);
+				} else if (origIndex < currentIndex) {
+					element.insertBefore(targetItem, items[origIndex]);
+				} else {
+					element.insertBefore(targetItem, items[origIndex].nextSibling);
+				}
+				
+				Array.from(element.querySelectorAll('nui-sortable-item')).forEach(i => {
+					const oldRect = rects.get(i);
+					if (oldRect) animateFlip(i, oldRect);
+				});
+				targetItem.focus();
+			}
+			a11y.announce('Drag cancelled.');
+			return;
+		}
+
+		if (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+			let nextIndex = currentIndex;
+			if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') nextIndex = Math.max(0, currentIndex - 1);
+			if (e.key === 'ArrowDown' || e.key === 'ArrowRight') nextIndex = Math.min(items.length - 1, currentIndex + 1);
+
+			if (nextIndex !== currentIndex) {
+				e.preventDefault();
+				
+				if (isDragging) {
+					const nextItem = items[nextIndex];
+					const rects = new Map();
+					items.forEach(i => rects.set(i, i.getBoundingClientRect()));
+					
+					if (nextIndex < currentIndex) {
+						element.insertBefore(targetItem, nextItem);
+					} else {
+						element.insertBefore(targetItem, nextItem.nextSibling);
+					}
+					
+					items.forEach(i => {
+						const oldRect = rects.get(i);
+						if (oldRect) animateFlip(i, oldRect);
+					});
+					
+					targetItem.focus();
+					a11y.announce(`Moved to position ${nextIndex + 1} of ${items.length}.`);
+				} else {
+					targetItem.setAttribute('tabindex', '-1');
+					items[nextIndex].setAttribute('tabindex', '0');
+					items[nextIndex].focus();
+				}
+			}
+		}
+	});
+
+	const observer = new MutationObserver((mutations) => {
+		const items = Array.from(element.querySelectorAll('nui-sortable-item'));
+		let hasFocusable = false;
+		items.forEach(i => {
+			if (i.getAttribute('tabindex') === '0') hasFocusable = true;
+			if (!i.hasAttribute('tabindex')) i.setAttribute('tabindex', '-1');
+		});
+		if (!hasFocusable && items.length > 0) {
+			items[0].setAttribute('tabindex', '0');
+		}
+	});
+	observer.observe(element, { childList: true });
+	
+	requestAnimationFrame(() => {
+		const items = Array.from(element.querySelectorAll('nui-sortable-item'));
+		items.forEach((item, index) => {
+			if (!item.hasAttribute('tabindex')) item.setAttribute('tabindex', index === 0 ? '0' : '-1');
+		});
+	});
+
+	return () => observer.disconnect();
 });
 
 registerComponent('nui-sortable-item', (element) => {
 	element.classList.add('nui-sortable-item');
+	element.setAttribute('role', 'listitem');
 });
 
 // ################################# BANNER FACTORY

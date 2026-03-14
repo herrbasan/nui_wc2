@@ -4063,6 +4063,25 @@ nui-sortable-item:hover {
 	background: light-dark(var(--color-shade2), var(--color-shade3));
 }
 
+nui-sortable-item:focus-visible {
+	outline: 2px solid var(--color-highlight);
+	outline-offset: -2px;
+	background: light-dark(var(--color-shade2), var(--color-shade3));
+	z-index: 10;
+}
+
+nui-sortable-item[data-keyboard-drag="true"] {
+	background: var(--color-highlight);
+	color: var(--color-white);
+	box-shadow: 0 8px 16px var(--shadow-color);
+	transform: scale(1.02);
+	z-index: 100;
+}
+
+nui-sortable-item[data-keyboard-drag="true"] .drag-handle {
+	color: var(--color-white);
+}
+
 nui-sortable-item:not(:has(.drag-handle)) {
 	cursor: grab;
 }

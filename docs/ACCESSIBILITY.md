@@ -284,6 +284,57 @@ subItem.addEventListener('focus', () => {
 - Item labels from `<span>` text content
 - Focus events maintain synchronization with visual state
 
+### nui-progress
+```html
+<nui-progress type="bar" value="45" max="100"></nui-progress>
+```
+**Automatic ARIA attributes added:**
+- `role="progressbar"`
+- `aria-valuenow="45"`
+- `aria-valuemin="0"`
+- `aria-valuemax="100"`
+
+### nui-table
+Uses a **responsive data-label pattern** to maintain context for screen readers in card-view (mobile):
+```html
+<nui-table>
+	<table>
+		<thead><tr><th>Name</th></tr></thead>
+		<tbody><tr><td data-label="Name">Project A</td></tr></tbody>
+	</table>
+</nui-table>
+```
+
+### nui-slider
+Leverages **Native Input Reuse** for zero-effort accessibility:
+```html
+<nui-slider>
+	<input type="range" min="0" max="100" value="50">
+</nui-slider>
+```
+The component hides the native input visually but retains it for keyboard interaction and screen reader announcements.
+
+### nui-select
+Implements a custom popup matching the **Native Select Pattern**:
+- **Role**: Combobox/Listbox pattern.
+- **Search**: Auto-focuses search input when opened for immediate filtering.
+- **Keyboard**: Full Arrow key navigation, Enter to select, Escape to close, and Type-ahead support.
+- **Mobile**: Transforms into a bottom sheet for better touch accessibility.
+
+### nui-sortable
+Implements **Keyboard Reordering** with live feedback:
+- **Grabbing**: `Space` or `Enter` to "pick up" an item.
+- **Moving**: `Arrow Keys` to reorder items within the list.
+- **Announcements**: Every move is announced via `a11y.announce` (e.g., "Moved to position 3 of 10").
+- **Dropping**: `Space` or `Enter` to commit the new position.
+- **Cancelling**: `Escape` to return to the original position.
+
+### nui-dialog & nui-overlay
+Built on the **Native `<dialog>` Element**:
+- Manages focus trap automatically.
+- `Escape` key support for closing.
+- Backdrop click-to-close (unless marked `blocking`).
+
 ### Focus Management
 
 **Visual Focus Indicators:**
@@ -304,6 +355,20 @@ subItem.addEventListener('focus', () => {
 	outline: none;
 }
 ```
+
+### 5. Screen Reader Announcements (`a11y.announce`)
+
+For dynamic content changes that aren't automatically picked up by screen readers (like reordering items in a list), use the global `a11y.announce` utility. This utility manages a hidden ARIA live region to speak messages to users.
+
+```javascript
+// Announce a message to screen readers
+a11y.announce('Moved to position 3 of 10');
+
+// Use assertive announcement for critical information
+a11y.announce('Drag cancelled', true);
+```
+
+The system automatically manages the persistence and cleanup of the live region singleton.
 
 ## Motion Preferences
 
