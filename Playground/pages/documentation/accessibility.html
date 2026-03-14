@@ -1,0 +1,145 @@
+<div class="page-accessibility">
+	<header>
+		<h1>Accessibility</h1>
+		<p class="lead">NUI is built with a "Performance & Accessibility First" mindset, ensuring high-quality experiences for everyone via intelligent platform integration.</p>
+	</header>
+
+	<section>
+		<h2>Philosophy: DOM-First Accessibility</h2>
+		<p>NUI follows a <strong>DOM-first accessibility approach</strong> with <strong>intelligent context detection</strong>. Instead of complex framework abstractions, we lean on the browser's native capabilities and enhance them with custom behaviors where necessary.</p>
+		
+		<div class="demo-callout">
+			<strong>Core Principle:</strong> Enhance, don't replace. We use native elements like <code>&lt;button&gt;</code>, <code>&lt;dialog&gt;</code>, and <code>&lt;input&gt;</code> as the foundation, ensuring they work even if JavaScript fails.
+		</div>
+
+		<h3>Intelligent Accessibility Upgrades</h3>
+		<p>One of NUI's most powerful features is its ability to automatically detect and fix common accessibility gaps during initialization.</p>
+		
+		<div class="demo-container">
+			<div class="demo-chrome">
+				<div class="nui-headline">Smart Label Generation</div>
+				<p>Icon-only buttons automatically receive <code>aria-label</code> attributes based on their icon names and surrounding context.</p>
+				<nui-code>
+					<script type="example" data-lang="html">
+						<!-- Developer writes: -->
+						<nui-button>
+							<button><nui-icon name="menu"></nui-icon></button>
+						</nui-button>
+
+						<!-- NUI upgrades to: -->
+						<button aria-label="Menu navigation">
+							<nui-icon name="menu" aria-hidden="true"></nui-icon>
+						</button>
+					</script>
+				</nui-code>
+			</div>
+		</div>
+	</section>
+
+	<section>
+		<h2>Keyboard Interactivity</h2>
+		<p>NUI implements a <strong>Hybrid Navigation Model</strong> that balances standard web expectations with application-like efficiency.</p>
+		
+		<div class="demo-actions">
+			<div class="demo-chrome">
+				<div class="nui-headline">Universal Keys</div>
+				<ul>
+					<li><code>Tab</code>: Navigate between interactive elements.</li>
+					<li><code>Enter / Space</code>: Activate buttons, links, and toggles.</li>
+					<li><code>Escape</code>: Close dialogs, overlays, and menus.</li>
+					<li><code>Arrows</code>: Navigate within lists, trees, and tab bars.</li>
+					<li><code>Home / End</code>: Jump to start or end of collections.</li>
+				</ul>
+			</div>
+		</div>
+	</section>
+
+	<section>
+		<h2>Focus Management</h2>
+		<p>NUI handles the complex logic of managing focus so you don't have to.</p>
+		
+		<div class="demo-container">
+			<div class="demo-chrome">
+				<div class="nui-headline">Focus Traps & Roving Tabindex</div>
+				<p>Dialogs automatically trap focus within their bounds. Composite components like <code>nui-tabs</code> and <code>nui-link-list</code> implement roving tabindices to reduce the number of tab stops while remaining navigable via arrows.</p>
+			</div>
+		</div>
+	</section>
+
+	<section>
+		<h2>Component Support</h2>
+		<p>Every NUI component is audited for ARIA compliance and keyboard support.</p>
+		
+		<div class="demo-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--nui-space);">
+			<div class="nui-card">
+				<div class="nui-headline">nui-sortable</div>
+				<div class="nui-copy">
+					<p>Implements <strong>Keyboard Reordering</strong>. Users can "grab" items with Space, move them with Arrows, and "drop" them to reorder. Every move is announced to screen readers.</p>
+				</div>
+			</div>
+
+			<div class="nui-card">
+				<div class="nui-headline">nui-tabs</div>
+				<div class="nui-copy">
+					<p>Follows the ARIA Tab Pattern. Uses <code>role="tablist"</code>, <code>role="tab"</code>, and <code>role="tabpanel"</code>. Supports arrow key switching and automatic focus state synchronization.</p>
+				</div>
+			</div>
+
+			<div class="nui-card">
+				<div class="nui-headline">nui-select</div>
+				<div class="nui-copy">
+					<p>Transforms from a <strong>Combobox</strong> on desktop to an accessible <strong>Mobile Bottom Sheet</strong>. Includes auto-focus for search for immediate filtering.</p>
+				</div>
+			</div>
+
+			<div class="nui-card">
+				<div class="nui-headline">nui-table</div>
+				<div class="nui-copy">
+					<p>Uses a <strong>Responsive Data-Label Pattern</strong>. On small screens, table rows transform into cards, but <code>data-label</code> attributes ensure screen readers maintain column context.</p>
+				</div>
+			</div>
+
+			<div class="nui-card">
+				<div class="nui-headline">nui-dialog</div>
+				<div class="nui-copy">
+					<p>Built on the native <code>&lt;dialog&gt;</code> element. Handles backdrop clicks, Escape key dismissal, and returns focus to the trigger on close.</p>
+				</div>
+			</div>
+
+			<div class="nui-card">
+				<div class="nui-headline">nui-progress</div>
+				<div class="nui-copy">
+					<p>Automatically maps <code>role="progressbar"</code> and standard ARIA range attributes (min/max/now) for accurate screen reader feedback.</p>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<section>
+		<h2>Developer Utilities</h2>
+		<p>NUI provides tools to help you build accessible apps and debug potential issues.</p>
+
+		<h3>a11y.announce()</h3>
+		<p>A hidden live-region utility for announcing dynamic state changes that aren't inherently visible (e.g., "Item deleted" or "Sort order changed").</p>
+		<nui-code>
+			<script type="example" data-lang="javascript">
+				// Speak a message politely
+				nui.a11y.announce('Saved successfully');
+			</script>
+		</nui-code>
+
+		<h3>a11y.warn()</h3>
+		<p>NUI audits your markup in real-time. If it finds a component missing critical accessibility data (like a label), it will fix it automatically and log a <strong>teaching warning</strong> in the console.</p>
+		<div class="demo-result">
+			<code>⚠️ nui-button: Icon-only button missing aria-label. Auto-generated: "Settings".</code>
+		</div>
+	</section>
+
+	<section>
+		<h2>Visual & Motion Preferences</h2>
+		<ul>
+			<li><strong>Reduced Motion:</strong> NUI respects <code>prefers-reduced-motion</code>, disabling or shortening animations automatically.</li>
+			<li><strong>High Contrast:</strong> Theme tokens use adaptive colors (<code>light-dark()</code>) and maintain WCAG AA contrast ratios (4.5:1 for text).</li>
+		</ul>
+	</section>
+</div>

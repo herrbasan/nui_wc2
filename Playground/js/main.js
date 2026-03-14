@@ -261,6 +261,7 @@ const navigationData = [
 			{ label: 'Declarative Actions', href: '#page=documentation/declarative-actions' },
 			{ label: 'API Structure', href: '#page=documentation/api-structure' },
 			{ label: 'Utilities', href: '#page=documentation/utilities' },
+			{ label: 'Accessibility', href: '#page=documentation/accessibility' },
 		]
 	},
 	{
