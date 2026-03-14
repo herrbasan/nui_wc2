@@ -4271,6 +4271,7 @@ nui-card,
 /* Image-only layout */
 nui-card[layout="image-only"] {
 	justify-content: flex-end;
+	padding: 0;
 }
 nui-card[layout="image-only"] img {
 	position: absolute;
@@ -4313,6 +4314,8 @@ nui-card[layout="flip"] {
 	border: none;
 	box-shadow: none;
 	overflow: visible;
+	padding: 0;
+	display: block;
 }
 nui-card[layout="flip"][interactive]:hover,
 nui-card[layout="flip"][interactive]:focus-within {
