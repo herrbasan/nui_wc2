@@ -103,7 +103,7 @@ export interface ContentLoadingOptions {
 	/** Container selector or element (default: 'nui-content nui-main') */
 	container?: string | HTMLElement;
 	
-	/** Navigation selector or element for active sync (default: 'nui-side-nav') */
+	/** Navigation selector or element for active sync (default: 'nui-sidebar') */
 	navigation?: string | HTMLElement | null;
 	
 	/** Base path for page files (default: '/pages') */
@@ -336,16 +336,16 @@ export interface NuiAppElement extends HTMLElement {
 }
 
 /**
- * Top navigation bar
+ * App header component
  * Automatically adds role="banner" if main site header
  */
-export interface NuiTopNavElement extends HTMLElement {}
+export interface NuiAppHeaderElement extends HTMLElement {}
 
 /**
- * Side navigation container
+ * Sidebar container
  * Automatically adds role="navigation" and aria-label
  */
-export interface NuiSideNavElement extends HTMLElement {}
+export interface NuiSidebarElement extends HTMLElement {}
 
 /**
  * Navigation link list with tree mode and accordion support
@@ -787,8 +787,8 @@ declare global {
 	
 	interface HTMLElementTagNameMap {
 		'nui-app': NuiAppElement;
-		'nui-top-nav': NuiTopNavElement;
-		'nui-side-nav': NuiSideNavElement;
+		'nui-app-header': NuiAppHeaderElement;
+		'nui-sidebar': NuiSidebarElement;
 		'nui-skip-links': HTMLElement;
 		'nui-link-list': NuiLinkListElement;
 		'nui-content': NuiContentElement;

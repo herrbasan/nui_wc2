@@ -84,7 +84,7 @@ function setupButtonBehavior(element) {
 
 ## Core Components
 
-**Layout:** `nui-app`, `nui-top-nav`, `nui-side-nav`, `nui-content`, `nui-main`, `nui-app-footer`, `nui-layout`, `nui-skip-links`, `nui-column-flow`
+**Layout:** `nui-app`, `nui-app-header`, `nui-sidebar`, `nui-content`, `nui-main`, `nui-app-footer`, `nui-layout`, `nui-skip-links`, `nui-column-flow`
 
 **UI:** `nui-button`, `nui-button-container`, `nui-icon`, `nui-tabs`, `nui-accordion`, `nui-overlay`, `nui-dialog`, `nui-banner`, `nui-table`, `nui-slider`, `nui-input`, `nui-textarea`, `nui-checkbox`, `nui-radio`, `nui-tag-input`, `nui-select`, `nui-link-list`, `nui-code`, `nui-loading`, `nui-progress`
 

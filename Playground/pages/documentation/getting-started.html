@@ -107,17 +107,17 @@
 &lt;body&gt;
 	&lt;nui-loading mode="bar"&gt;&lt;/nui-loading&gt;
 	&lt;nui-app nui-vars-sidebar_width="15rem"&gt;
-		&lt;nui-top-nav&gt;
+		&lt;nui-app-header&gt;
 			&lt;header&gt;
 				&lt;nui-button data-action="toggle-sidebar"&gt;
 					&lt;button type="button" aria-label="Toggle menu"&gt;☰&lt;/button&gt;
 				&lt;/nui-button&gt;
 				&lt;h1&gt;My App&lt;/h1&gt;
 			&lt;/header&gt;
-		&lt;/nui-top-nav&gt;
-		&lt;nui-side-nav&gt;
+		&lt;/nui-app-header&gt;
+		&lt;nui-sidebar&gt;
 			&lt;nui-link-list mode="fold"&gt;&lt;/nui-link-list&gt;
-		&lt;/nui-side-nav&gt;
+		&lt;/nui-sidebar&gt;
 		&lt;nui-content&gt;
 			&lt;nui-main&gt;&lt;!-- Pages load here --&gt;&lt;/nui-main&gt;
 		&lt;/nui-content&gt;
@@ -147,7 +147,7 @@ document.querySelector('nui-link-list').loadData(navigationData);
 // Enable SPA routing
 nui.enableContentLoading({
 	container: 'nui-main',
-	navigation: 'nui-side-nav',
+	navigation: 'nui-sidebar',
 	basePath: 'pages',
 	defaultPage: 'home'
 });</code></pre>
@@ -167,8 +167,8 @@ nui.enableContentLoading({
 				<p><strong>Use for:</strong> Desktop-style applications with sidebar navigation</p>
 				<nui-code>
 					<pre><code>&lt;nui-app nui-vars-sidebar_width="15rem"&gt;
-	&lt;nui-top-nav&gt;&lt;header&gt;&lt;h1&gt;My App&lt;/h1&gt;&lt;/header&gt;&lt;/nui-top-nav&gt;
-	&lt;nui-side-nav&gt;&lt;nav&gt;...&lt;/nav&gt;&lt;/nui-side-nav&gt;
+	&lt;nui-app-header&gt;&lt;header&gt;&lt;h1&gt;My App&lt;/h1&gt;&lt;/header&gt;&lt;/nui-app-header&gt;
+	&lt;nui-sidebar&gt;&lt;nav&gt;...&lt;/nav&gt;&lt;/nui-sidebar&gt;
 	&lt;nui-content&gt;&lt;nui-main&gt;...&lt;/nui-main&gt;&lt;/nui-content&gt;
 	&lt;nui-app-footer&gt;&lt;footer&gt;...&lt;/footer&gt;&lt;/nui-app-footer&gt;
 &lt;/nui-app&gt;</code></pre>
@@ -178,7 +178,7 @@ nui.enableContentLoading({
 			<section data-panel="page-mode">
 				<p><strong>Use for:</strong> Traditional websites, documentation, blogs</p>
 				<nui-code>
-					<pre><code>&lt;nui-top-nav&gt;&lt;header&gt;&lt;h1&gt;My Site&lt;/h1&gt;&lt;/header&gt;&lt;/nui-top-nav&gt;
+					<pre><code>&lt;nui-app-header&gt;&lt;header&gt;&lt;h1&gt;My Site&lt;/h1&gt;&lt;/header&gt;&lt;/nui-app-header&gt;
 &lt;nui-content&gt;&lt;main&gt;...&lt;/main&gt;&lt;/nui-content&gt;
 &lt;nui-app-footer&gt;&lt;footer&gt;...&lt;/footer&gt;&lt;/nui-app-footer&gt;</code></pre>
 				</nui-code>
@@ -306,7 +306,7 @@ document.querySelector('nav').appendChild(nav);</code></pre>
 		<nui-code>
 			<pre><code>nui.enableContentLoading({
 	container: 'nui-main',              // Where content loads
-	navigation: 'nui-side-nav',            // Auto-close sidebar on navigate
+	navigation: 'nui-sidebar',            // Auto-close sidebar on navigate
 	basePath: 'pages',                    // Folder containing page fragments
 	defaultPage: 'home'                   // Default page (no hash in URL)
 });</code></pre>
@@ -515,7 +515,7 @@ nui-app {
 	&lt;nui-loading mode="bar"&gt;&lt;/nui-loading&gt;
 
 	&lt;nui-app nui-vars-sidebar_width="15rem"&gt;
-		&lt;nui-top-nav&gt;
+		&lt;nui-app-header&gt;
 			&lt;header&gt;
 				&lt;layout&gt;
 					&lt;item&gt;
@@ -531,11 +531,11 @@ nui-app {
 					&lt;/item&gt;
 				&lt;/layout&gt;
 			&lt;/header&gt;
-		&lt;/nui-top-nav&gt;
+		&lt;/nui-app-header&gt;
 
-		&lt;nui-side-nav&gt;
+		&lt;nui-sidebar&gt;
 			&lt;nui-link-list mode="fold"&gt;&lt;/nui-link-list&gt;
-		&lt;/nui-side-nav&gt;
+		&lt;/nui-sidebar&gt;
 
 		&lt;nui-content&gt;
 			&lt;nui-main&gt;&lt;/nui-main&gt;
@@ -581,7 +581,7 @@ document.addEventListener('click', (e) => {
 // Enable routing
 nui.enableContentLoading({
 	container: 'nui-main',
-	navigation: 'nui-side-nav',
+	navigation: 'nui-sidebar',
 	basePath: 'pages',
 	defaultPage: 'introduction'
 });</code></pre>

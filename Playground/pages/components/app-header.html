@@ -1,0 +1,73 @@
+<div class="page-app-header">
+    <header>
+        <h1>App Header (<code>&lt;nui-app-header&gt;</code>)</h1>
+        <p class="lead">A standardized application top bar with built-in layout management and semantic zones.</p>
+    </header>
+
+    <section>
+        <h2>Overview</h2>
+        <p>The <code>&lt;nui-app-header&gt;</code> acts as a semantic flex-container, replacing complex monolithic top-bar code with a standard structure. It divides the space into three zones using the <code>slot</code> attribute (or class names for compatibility): <code>left</code>, <code>center</code>, and <code>right</code>.</p>
+        
+        <p>When placed inside an <code>&lt;nui-app&gt;</code> shell, it automatically docks to the top and works in tandem with <code>&lt;nui-sidebar&gt;</code> to manage screen real estate and keyboard accessibility zones.</p>
+
+        <nui-code>
+            <script type="example" data-lang="html">
+<nui-app-header>
+    <div slot="left">
+        <nui-button data-action="toggle-sidebar">
+            <button type="button" aria-label="Menu">
+                <nui-icon name="menu">☰</nui-icon>
+            </button>
+        </nui-button>
+        <h1>App Title</h1>
+    </div>
+    
+    <div slot="center">
+        <!-- Optional global search or central controls -->
+    </div>
+    
+    <div slot="right">
+        <nui-button data-action="show-notifications" data-badge="3">
+            <button type="button" aria-label="Notifications">
+                <nui-icon name="notifications">🔔</nui-icon>
+            </button>
+        </nui-button>
+    </div>
+</nui-app-header>
+            </script>
+        </nui-code>
+    </section>
+
+    <section>
+        <h2>Status Badges</h2>
+        <p>Any element inside the header can accept a <code>data-badge</code> attribute to display an overlaid indicator or notification count. This removes the need for extra markup wrapping.</p>
+        <p>An empty string <code>data-badge=""</code> creates a minimal dot indicator, while text or numbers create pill-shaped badges.</p>
+
+        <div class="demo-chrome" style="background: var(--color-shade2); padding: 2rem;">
+            <!-- Simulating the header look in a generic container for demo purposes -->
+            <nui-app-header style="position: relative; top: 0; box-shadow: none; border: solid var(--border-thickness) var(--border-shade2);">
+                <div slot="left">
+                    <h3>Mock Header</h3>
+                </div>
+                <div slot="right">
+                    <button style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--color-text); padding: 0.5rem;" data-badge="5" aria-label="Messages">
+                        <nui-icon name="mail">✉</nui-icon>
+                    </button>
+                    <button style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--color-text); padding: 0.5rem;" data-badge="" aria-label="Alerts">
+                        <nui-icon name="warning">⚠</nui-icon>
+                    </button>
+                </div>
+            </nui-app-header>
+        </div>
+    </section>
+
+    <section>
+        <h2>Interactive Delegation (<code>data-action</code>)</h2>
+        <p>The app shell relies heavily on standard <code>nui-action</code> events to communicate between the Header and the Sidebars without custom JavaScript wiring.</p>
+        <ul>
+            <li><code>data-action="toggle-sidebar"</code> - Toggles the left sidebar.</li>
+            <li><code>data-action="toggle-sidebar:right"</code> - Toggles the right sidebar.</li>
+        </ul>
+        <p>You can see this in action by clicking the menu button or settings button in the main header of the Playground above.</p>
+    </section>
+</div>

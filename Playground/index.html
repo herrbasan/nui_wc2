@@ -26,38 +26,44 @@
 			<!-- Skip links for keyboard accessibility (auto-generated for nui-app structure) -->
 			<nui-skip-links></nui-skip-links>
 
-            <nui-top-nav>
-                    <header>
-                        <div class="left">
-                            <nui-button data-action="toggle-sidebar">
-                                <button type="button" aria-label="Toggle navigation menu">
-                                    <nui-icon name="menu">☰</nui-icon>
-                                </button>
-                            </nui-button>
-                            <h1>NUI Playground</h1>
-                        </div>
-                        <div class="right">
-                            <nui-button data-action="toggle-theme">
-                                <button type="button" aria-label="Toggle light/dark theme">
-                                    <nui-icon name="brightness">⛭</nui-icon>
-                                </button>
-                            </nui-button>
-                            <nui-button data-action="toggle-sidebar:right">
-                                <button type="button" aria-label="Toggle right sidebar">
-                                    <nui-icon name="settings">⚙</nui-icon>
-                                </button>
-                            </nui-button>
-                        </div>
-                    </header>
-            </nui-top-nav>
+            <nui-app-header>
+                <div slot="left">
+                    <nui-button data-action="toggle-sidebar">
+                        <button type="button" aria-label="Toggle navigation menu">
+                            <nui-icon name="menu">☰</nui-icon>
+                        </button>
+                    </nui-button>
+                    <h1>NUI Playground</h1>
+                </div>
+                <div slot="center">
+                    <!-- Example empty center slot -->
+                </div>
+                <div slot="right">
+                    <nui-button data-action="toggle-theme">
+                        <button type="button" aria-label="Toggle light/dark theme">
+                            <nui-icon name="brightness">⛭</nui-icon>
+                        </button>
+                    </nui-button>
+                    <nui-button data-action="show-notifications" data-badge="3">
+                        <button type="button" aria-label="Notifications">
+                            <nui-icon name="notifications">🔔</nui-icon>
+                        </button>
+                    </nui-button>
+                    <nui-button data-action="toggle-sidebar:right">
+                        <button type="button" aria-label="Toggle right sidebar">
+                            <nui-icon name="settings">⚙</nui-icon>
+                        </button>
+                    </nui-button>
+                </div>
+            </nui-app-header>
 
-            <nui-side-nav>
+            <nui-sidebar>
                 <nui-link-list mode="fold">
                     <!-- Navigation loaded from JSON via JavaScript -->
                 </nui-link-list>
-            </nui-side-nav>
+            </nui-sidebar>
 
-            <nui-side-nav position="right">
+            <nui-sidebar position="right">
                 <div style="padding: var(--nui-space); display: flex; flex-direction: column; gap: var(--nui-space);">
                     <h3 style="margin-top: 0;">Demo Configuration</h3>
                     <p style="font-size: var(--font-size-small); color: var(--color-text-muted);">This right sidebar is a demonstration of the dual-sidebar layout feature. The controls below are non-functional placeholders.</p>
@@ -95,7 +101,7 @@
                         </nui-button>
                     </div>
                 </div>
-            </nui-side-nav>
+            </nui-sidebar>
 
             <nui-content>
                 <nui-main>

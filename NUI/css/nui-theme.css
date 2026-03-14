@@ -80,8 +80,8 @@
 	--color-text-muted: var(--color-shade6);
 	--color-text-subtle: var(--color-shade5);
 
-	--side-nav-width: 21rem;
-	--top-nav-height: 4rem;
+	--sidebar-width: 21rem;
+	--app-header-height: 4rem;
 	--footer-height: var(--nui-space-double);
 
 	/* Breakpoints - use sparingly, only for fundamental layout changes */
@@ -292,7 +292,7 @@ iframe {
 }
 
 
-nui-side-nav nui-link-list {
+nui-sidebar nui-link-list {
 	margin-top: var(--nui-space);
 	padding: 0;
 }
@@ -467,7 +467,7 @@ nui-link-list[mode="fold"]:first-child ul li:first-child:hover {
 }
 
 /* Lighter hover when inside side-nav */
-nui-side-nav nui-link-list[mode="fold"] li:hover {
+nui-sidebar nui-link-list[mode="fold"] li:hover {
 	background-color: var(--color-shade3);
 }
 
@@ -881,80 +881,118 @@ nui-app[data-layout="app"] {
 	overflow: hidden;
 }
 
-nui-app[data-layout="app"] nui-top-nav {
+nui-app[data-layout="app"] nui-app-header {
 	position: absolute;
 	top: 0;
 	left: 0;
 	right: 0;
-	height: var(--top-nav-height);
+	height: var(--app-header-height);
 	background: light-dark(var(--color-shade5), var(--color-shade2));
 	border-bottom: solid var(--border-thickness) var(--border-shade2);
-	padding: var(--nui-space-half) var(--nui-space);
+	padding: 0 var(--nui-space);
 	box-shadow: 0 0 var(--shadow-radius1) 0 var(--shadow-color);
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
 	z-index: 10;
 	box-sizing: border-box;
 }
 
-nui-top-nav header {
+nui-app-header, 
+nui-app-header > header {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
 	width: 100%;
+	height: 100%;
 	line-height: 1;
-}
-
-nui-top-nav header > .left {
-	display: flex; 
-	align-items: center; 
 	gap: var(--nui-space);
 }
 
-nui-top-nav header > .right {
-	display: flex; 
-	align-items: center; 
+/* De-nest wrapper container if present (nui-app-header often wraps a <header>) */
+nui-app-header > [slot],
+nui-app-header > header > [slot],
+nui-app-header > .left,
+nui-app-header > .right,
+nui-app-header > header > .left,
+nui-app-header > header > .right,
+nui-app-header > header > .center {
+	display: flex;
+	align-items: center;
 	gap: var(--nui-space-half);
 }
 
-nui-top-nav header .left h1 {
+nui-app-header [slot="left"], nui-app-header .left {
+	justify-content: flex-start;
+	flex: 0 1 auto;
+}
+
+nui-app-header [slot="center"], nui-app-header .center {
+	justify-content: center;
+	flex: 1 1 auto;
+}
+
+nui-app-header [slot="right"], nui-app-header .right {
+	justify-content: flex-end;
+	flex: 0 1 auto;
+}
+
+nui-app-header h1,
+nui-app-header .title {
 	margin: 0;
 	padding: 0;
 	font-size: var(--font-size-base);
-	font-weight: 200;
-	color: var(--color-white);
+	font-weight: 400; /* Bumping slightly from 200 for better readability */
+	color: light-dark(var(--color-white), var(--color-white));
 	line-height: 1;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
-nui-top-nav ul {
-	list-style: none;
-	margin: 0;
-	padding: 0;
-	display: flex;
-	align-items: center;
-	gap: var(--nui-space);
-}
-
-nui-top-nav li {
-	margin: 0;
-	padding: 0;
-}
-
-nui-top-nav button svg {
+nui-app-header button svg,
+nui-app-header nui-icon {
 	color: light-dark(var(--color-white), var(--color-white));
 }
 
+/* Integrated Status Badge */
+nui-app-header [data-badge] {
+	position: relative;
+}
+
+nui-app-header [data-badge]::after {
+	content: attr(data-badge);
+	position: absolute;
+	top: -4px;
+	right: -4px;
+	background: var(--color-danger);
+	color: var(--color-white);
+	font-size: 0.65rem;
+	font-weight: bold;
+	line-height: 1;
+	padding: 2px 5px;
+	border-radius: var(--border-radius-pill);
+	min-width: 1ch;
+	text-align: center;
+	pointer-events: none;
+}
+
+nui-app-header [data-badge=""]::after {
+	/* Dot mode when empty badge */
+	content: '';
+	padding: 4px;
+	border-radius: 50%;
+	top: 0;
+	right: 0;
+}
+
 /* =============================================================================
-   SIDEBAR - Container styles (nui-side-nav)
+   SIDEBAR - Container styles (nui-sidebar)
    ============================================================================= */
 
-nui-app[data-layout="app"] nui-side-nav {
+nui-app[data-layout="app"] nui-sidebar {
 	position: absolute;
 	top: 0;
 	left: 0;
 	bottom: 0;
-	width: var(--side-nav-width);
+	width: var(--sidebar-width);
 	background: var(--color-shade2);
 	padding: 0;
 	overflow-y: auto;
@@ -967,17 +1005,17 @@ nui-app[data-layout="app"] nui-side-nav {
 	z-index: 1;
 }
 
-nui-app[data-layout="app"].nui-ready nui-side-nav {
+nui-app[data-layout="app"].nui-ready nui-sidebar {
 	transition: transform 0.3s ease;
 }
 
 /* Side nav offset when top nav present */
-nui-app[data-layout="app"]:has(nui-top-nav) nui-side-nav {
-	top: var(--top-nav-height);
+nui-app[data-layout="app"]:has(nui-app-header) nui-sidebar {
+	top: var(--app-header-height);
 }
 
 /* Side nav offset when footer present */
-nui-app[data-layout="app"]:has(nui-app-footer) nui-side-nav {
+nui-app[data-layout="app"]:has(nui-app-footer) nui-sidebar {
 	bottom: var(--footer-height);
 }
 
@@ -1003,7 +1041,7 @@ nui-main>.content-feature>* {
 
 nui-page nui-content {
 	padding: 0;
-	margin-top: var(--top-nav-height);
+	margin-top: var(--app-header-height);
 }
 
 nui-app[data-layout="app"] nui-content {
@@ -1030,8 +1068,8 @@ nui-app[data-layout="app"] nui-content>nui-main {
 }
 
 /* Content offset when top nav present */
-nui-app[data-layout="app"]:has(nui-top-nav) nui-content {
-	top: var(--top-nav-height);
+nui-app[data-layout="app"]:has(nui-app-header) nui-content {
+	top: var(--app-header-height);
 }
 
 /* Content offset when footer present */
@@ -1041,12 +1079,12 @@ nui-app[data-layout="app"]:has(nui-app-footer) nui-content {
 
 /* Content offset when side nav forced */
 nui-app[data-layout="app"].has-side-nav.sidenav-forced nui-content {
-	left: var(--side-nav-width);
+	left: var(--sidebar-width);
 }
 
 /* Content offset when right side nav forced */
 nui-app[data-layout="app"].has-side-nav-right.sidenav-right-forced nui-content {
-	right: var(--side-nav-width);
+	right: var(--sidebar-width);
 }
 
 nui-app[data-layout="app"] nui-app-footer {
@@ -1075,36 +1113,36 @@ nui-app[data-layout="app"] nui-app-footer footer {
 }
 
 /* Base side nav (left by default) */
-nui-app[data-layout="app"] nui-side-nav:not([position="right"]) {
+nui-app[data-layout="app"] nui-sidebar:not([position="right"]) {
 	transform: translateX(-100%);
 }
-nui-app[data-layout="app"].sidenav-closed nui-side-nav:not([position="right"]) {
+nui-app[data-layout="app"].sidenav-closed nui-sidebar:not([position="right"]) {
 	transform: translateX(-100%);
 }
-nui-app[data-layout="app"].sidenav-open nui-side-nav:not([position="right"]) {
+nui-app[data-layout="app"].sidenav-open nui-sidebar:not([position="right"]) {
 	transform: translateX(0);
 	z-index: 100;
 }
-nui-app[data-layout="app"].sidenav-forced nui-side-nav:not([position="right"]) {
+nui-app[data-layout="app"].sidenav-forced nui-sidebar:not([position="right"]) {
 	transform: translateX(0);
 }
 
 /* Right side nav */
-nui-app[data-layout="app"] nui-side-nav[position="right"] {
+nui-app[data-layout="app"] nui-sidebar[position="right"] {
 	left: auto;
 	right: 0;
 	border-right: none;
 	border-left: var(--border-thickness) solid var(--border-shade1);
 	transform: translateX(100%);
 }
-nui-app[data-layout="app"].sidenav-right-closed nui-side-nav[position="right"] {
+nui-app[data-layout="app"].sidenav-right-closed nui-sidebar[position="right"] {
 	transform: translateX(100%);
 }
-nui-app[data-layout="app"].sidenav-right-open nui-side-nav[position="right"] {
+nui-app[data-layout="app"].sidenav-right-open nui-sidebar[position="right"] {
 	transform: translateX(0);
 	z-index: 100;
 }
-nui-app[data-layout="app"].sidenav-right-forced nui-side-nav[position="right"] {
+nui-app[data-layout="app"].sidenav-right-forced nui-sidebar[position="right"] {
 	transform: translateX(0);
 }
 
@@ -1113,7 +1151,7 @@ nui-app[data-layout="app"].sidenav-open::before,
 nui-app[data-layout="app"].sidenav-right-open::after {
 	content: '';
 	position: fixed;
-	top: var(--top-nav-height);
+	top: var(--app-header-height);
 	left: 0;
 	right: 0;
 	bottom: 0;
@@ -1121,8 +1159,8 @@ nui-app[data-layout="app"].sidenav-right-open::after {
 	z-index: 99;
 }
 
-nui-app[data-layout="app"]:not(:has(nui-top-nav)).sidenav-open::before,
-nui-app[data-layout="app"]:not(:has(nui-top-nav)).sidenav-right-open::after {
+nui-app[data-layout="app"]:not(:has(nui-app-header)).sidenav-open::before,
+nui-app[data-layout="app"]:not(:has(nui-app-header)).sidenav-right-open::after {
 	top: 0;
 }
 
@@ -1140,10 +1178,10 @@ nui-app.sidenav-right-forced [data-action="toggle-sidebar:right"] {
 }
 
 /* =================================
-   nui-side-nav Component Styles
+   nui-sidebar Component Styles
    ================================= */
 
-nui-side-nav {
+nui-sidebar {
 	display: block;
 	width: var(--nui-sidebar-width, 16rem);
 	height: 100%;

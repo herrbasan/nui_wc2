@@ -271,6 +271,7 @@ const navigationData = [
 			{
 				label: 'Layout & Structure',
 				items: [
+					{ label: 'App Header', href: '#page=components/app-header' },
 					{ label: 'App Layout', href: '#page=components/app-layout' },
 					{ label: 'Layout', href: '#page=components/layout' },
 					{ label: 'Skip Links', href: '#page=components/skip-links' }
@@ -334,7 +335,7 @@ const navigationData = [
 ];
 
 // Load side navigation from JSON
-const sideNav = document.querySelector('nui-side-nav nui-link-list');
+const sideNav = document.querySelector('nui-sidebar nui-link-list');
 if (sideNav && sideNav.loadData) {
 	sideNav.loadData(navigationData);
 	console.log('Side navigation loaded from JSON');
@@ -343,7 +344,7 @@ if (sideNav && sideNav.loadData) {
 // Setup content loading (simplified single call)
 nui.enableContentLoading({
 	container: 'nui-content nui-main',
-	navigation: 'nui-side-nav',
+	navigation: 'nui-sidebar',
 	basePath: 'pages',
 	defaultPage: 'documentation/introduction'
 });

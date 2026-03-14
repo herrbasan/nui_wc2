@@ -31,11 +31,11 @@
 			<div class="diagram-label">App Mode Structure:</div>
 			<div class="app-mode-diagram">
 				<div class="diagram-topnav">
-					<span>nui-top-nav</span>
+					<span>nui-app-header</span>
 					<small>Fixed header bar</small>
 				</div>
 				<div class="diagram-sidebar">
-					<span>nui-side-nav</span>
+					<span>nui-sidebar</span>
 					<small>Navigation sidebar</small>
 				</div>
 				<div class="diagram-content">
@@ -43,7 +43,7 @@
 					<small>Main content area</small>
 				</div>
 				<div class="diagram-sidebar" style="grid-area: sidebar-right; border-style: dashed; opacity: 0.8;">
-					<span>nui-side-nav<br><small>[position="right"]</small></span>
+					<span>nui-sidebar<br><small>[position="right"]</small></span>
 				</div>
 				<div class="diagram-footer">
 					<span>nui-app-footer</span>
@@ -54,13 +54,13 @@
 		
 		<nui-code>
 			<pre><code>&lt;nui-app&gt;
-	&lt;nui-top-nav&gt;
+	&lt;nui-app-header&gt;
 		&lt;header&gt;Site Title&lt;/header&gt;
-	&lt;/nui-top-nav&gt;
+	&lt;/nui-app-header&gt;
 	
-	&lt;nui-side-nav&gt;
+	&lt;nui-sidebar&gt;
 		&lt;nav&gt;Navigation links&lt;/nav&gt;
-	&lt;/nui-side-nav&gt;
+	&lt;/nui-sidebar&gt;
 	
 	&lt;nui-content&gt;
 		&lt;main&gt;Content here&lt;/main&gt;
@@ -79,11 +79,11 @@
 			<div class="diagram-label">Page Mode Structure:</div>
 			<div class="page-mode-diagram">
 				<div class="diagram-page-block">
-					<span>nui-top-nav</span>
+					<span>nui-app-header</span>
 					<small>Standard header</small>
 				</div>
 				<div class="diagram-page-block">
-					<span>nui-side-nav</span>
+					<span>nui-sidebar</span>
 					<small>Optional sidebar (floats/flexes)</small>
 				</div>
 				<div class="diagram-page-block">
@@ -99,9 +99,9 @@
 		
 		<nui-code>
 			<pre><code>&lt;!-- No nui-app wrapper --&gt;
-&lt;nui-top-nav&gt;
+&lt;nui-app-header&gt;
 	&lt;header&gt;Site Title&lt;/header&gt;
-&lt;/nui-top-nav&gt;
+&lt;/nui-app-header&gt;
 
 &lt;nui-content&gt;
 	&lt;main&gt;Content flows naturally&lt;/main&gt;
@@ -124,7 +124,7 @@
 			<li><strong>Responsive</strong> - Sidebar collapses on mobile breakpoints</li>
 		</ul>
 		
-		<h3>&lt;nui-top-nav&gt;</h3>
+		<h3>&lt;nui-app-header&gt;</h3>
 		<p>Top navigation bar. In App Mode: fixed header. In Page Mode: standard header element.</p>
 		<ul>
 			<li><strong>App Mode</strong> - Fixed at top, spans full width</li>
@@ -144,7 +144,7 @@
 			<small>Typical top-nav layout with title and actions</small>
 		</div>
 		
-		<h3>&lt;nui-side-nav&gt;</h3>
+		<h3>&lt;nui-sidebar&gt;</h3>
 		<p>Side navigation panel. In App Mode: fixed sidebar. In Page Mode: optional sidebar.</p>
 		<ul>
 			<li><strong>App Mode</strong> - Fixed sidebar with toggle capability. Supports optional <code>position="right"</code> for dual sidebars.</li>
@@ -210,8 +210,8 @@
 	overflow: hidden;
 }
 
-nui-top-nav    { grid-area: topnav; }
-nui-side-nav   { grid-area: sidebar; overflow-y: auto; }
+nui-app-header    { grid-area: topnav; }
+nui-sidebar   { grid-area: sidebar; overflow-y: auto; }
 nui-content    { grid-area: content; overflow-y: auto; }
 nui-app-footer { grid-area: footer; }</code></pre>
 		</nui-code>
@@ -308,8 +308,8 @@ nui-app-footer { grid-area: footer; }</code></pre>
 		<h3>Semantic HTML</h3>
 		<p>Custom elements serve as containers, semantic HTML provides structure:</p>
 		<ul>
-			<li><code>&lt;header&gt;</code> inside <code>&lt;nui-top-nav&gt;</code></li>
-			<li><code>&lt;nav&gt;</code> inside <code>&lt;nui-side-nav&gt;</code></li>
+			<li><code>&lt;header&gt;</code> inside <code>&lt;nui-app-header&gt;</code></li>
+			<li><code>&lt;nav&gt;</code> inside <code>&lt;nui-sidebar&gt;</code></li>
 			<li><code>&lt;main&gt;</code> inside <code>&lt;nui-content&gt;</code></li>
 			<li><code>&lt;footer&gt;</code> inside <code>&lt;nui-app-footer&gt;</code></li>
 		</ul>
@@ -317,7 +317,7 @@ nui-app-footer { grid-area: footer; }</code></pre>
 		<h3>ARIA Attributes</h3>
 		<p>Components automatically add appropriate ARIA attributes:</p>
 		<ul>
-			<li><strong>nui-side-nav</strong> - <code>role="navigation"</code> on nav element</li>
+			<li><strong>nui-sidebar</strong> - <code>role="navigation"</code> on nav element</li>
 			<li><strong>Overlay backdrop</strong> - <code>aria-hidden="true"</code></li>
 			<li><strong>Toggle button</strong> - <code>aria-expanded</code> state</li>
 		</ul>

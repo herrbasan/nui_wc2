@@ -43,8 +43,8 @@ The semantic `<button>` inside works on its own. The `<nui-button>` wrapper adds
 | Component | Description |
 |-----------|-------------|
 | `nui-app` | App shell with sidebar/topbar layout behavior |
-| `nui-top-nav` | Top navigation container (`<header>` accessibility upgrades) |
-| `nui-side-nav` | Side navigation container (integrates with `nui-link-list`) |
+| `nui-app-header` | Top navigation container (`<header>` accessibility upgrades) |
+| `nui-sidebar` | Side navigation container (integrates with `nui-link-list`) |
 | `nui-content` | Content container (layout + accessibility upgrades) |
 | `nui-main` | Main content container (layout + accessibility upgrades) |
 | `nui-app-footer` | App footer container |

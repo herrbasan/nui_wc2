@@ -273,7 +273,7 @@ const a11y = {
 			.map(word => word.charAt(0).toUpperCase() + word.slice(1))
 			.join(' ');
 
-		const parentNav = element.closest('nui-top-nav, nui-side-nav, nav, header');
+		const parentNav = element.closest('nui-app-header, nui-sidebar, nav, header');
 		return parentNav ? `${label} navigation` : label;
 	},
 
@@ -536,7 +536,7 @@ registerComponent('nui-app', (element) => {
 	let cachedBreakpoint = { left: null, right: null };
 
 	function getSideNav(element, position) {
-		const sideNavs = element.querySelectorAll('nui-side-nav');
+		const sideNavs = element.querySelectorAll('nui-sidebar');
 		for (const nav of sideNavs) {
 			const pos = nav.getAttribute('position') || 'left';
 			if (pos === position) return nav;
@@ -642,7 +642,7 @@ registerComponent('nui-app', (element) => {
 	}
 
 	function updateLayoutClasses(element) {
-		const topNav = element.el('nui-top-nav');
+		const topNav = element.el('nui-app-header');
 		const sideNavLeft = getSideNav(element, 'left');
 		const sideNavRight = getSideNav(element, 'right');
 		const footer = element.el('nui-app-footer');
@@ -673,7 +673,7 @@ registerComponent('nui-app', (element) => {
 				
 				const clickIsInThisNav = sideNav && sideNav.contains(e.target);
 				const clickIsInOtherNav = getSideNav(element, pos === 'left' ? 'right' : 'left')?.contains(e.target);
-				const clickIsInTopNav = element.el('nui-top-nav')?.contains(e.target);
+				const clickIsInTopNav = element.el('nui-app-header')?.contains(e.target);
 
 				if (!clickIsInThisNav && !clickIsInTopNav) {
 					// We close it unless maybe the backdrop itself caught the click.
@@ -696,7 +696,7 @@ registerComponent('nui-app', (element) => {
 	};
 });
 
-registerComponent('nui-top-nav', (element) => {
+registerComponent('nui-app-header', (element) => {
 	const header = element.el('header');
 	if (header) {
 		if (!header.hasAttribute('role') && !header.closest('[role="banner"]') &&
@@ -707,7 +707,7 @@ registerComponent('nui-top-nav', (element) => {
 	}
 });
 
-registerComponent('nui-side-nav', (element) => {
+registerComponent('nui-sidebar', (element) => {
 	const linkList = element.el('nui-link-list');
 	if (linkList && !linkList.hasAttribute('mode')) {
 		linkList.setAttribute('mode', 'fold');
@@ -4232,7 +4232,7 @@ function createRouter(container, options = {}) {
 
 function enableContentLoading(options = {}) {
 	const containerSelector = options.container || 'nui-content nui-main';
-	const navigationSelector = options.navigation || 'nui-side-nav';
+	const navigationSelector = options.navigation || 'nui-sidebar';
 	const basePath = options.basePath || '/pages';
 	const defaultPage = options.defaultPage || null;
 
