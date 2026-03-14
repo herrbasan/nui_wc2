@@ -290,6 +290,8 @@ const navigationData = [
 			{
 				label: 'Content & Display',
 				items: [
+					{ label: 'Badge', href: '#page=components/badge' },
+					{ label: 'Card', href: '#page=components/card' },
 					{ label: 'Tabs', href: '#page=components/tabs' },
 					{ label: 'Accordion', href: '#page=components/accordion' },
 					{ label: 'Table', href: '#page=components/table' },

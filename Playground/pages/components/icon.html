@@ -104,7 +104,9 @@
 	<section>
 		<h2>Available Icons</h2>
 		<p>Complete icon library from Material Design. Click to copy icon name:</p>
-		<div id="icon-grid"></div>
+		<div class="demo-list demo-list--md">
+			<nui-list id="icon-list"></nui-list>
+		</div>
 	</section>
 	
 	<section>
@@ -158,60 +160,71 @@ python assets/generate_icon_sprite.py
 
 <script type="nui/page">
 async function init(element, params) {
-	const iconGrid = element.querySelector('#icon-grid');
-	if (!iconGrid) {
-		console.warn('[icon page] Icon grid element not found');
+	const iconList = element.querySelector('#icon-list');
+	if (!iconList) {
+		console.warn('[icon page] Icon list element not found');
 		return;
 	}
-
-	iconGrid.innerHTML = '<div class="loading">Loading icons...</div>';
 
 	try {
 		// Load icons dynamically from sprite
 		const icons = await nui.components.icon.getAvailable();
 		
 		if (!icons || icons.length === 0) {
-			iconGrid.innerHTML = '<p style="color: var(--color-error);">Failed to load icons from sprite.</p>';
+			iconList.innerHTML = '<p style="color: var(--color-error);">Failed to load icons from sprite.</p>';
 			return;
 		}
 		
-		iconGrid.innerHTML = icons.map(iconName => `
-			<div class="icon-item" data-action="copy-icon:${iconName}">
-				<nui-icon name="${iconName}" style="font-size: 2rem;"></nui-icon>
-				<code>${iconName}</code>
-			</div>
-		`).join('');
+		// Load data into nui-list with search
+		const iconData = icons.map(name => ({ name }));
+		
+		iconList.loadData({
+			data: iconData,
+			render: (item) => {
+				const div = nui.util.dom.fromHTML(`
+					<div class="icon-list-item" data-icon-name="${item.name}">
+						<nui-icon name="${item.name}"></nui-icon>
+						<code>${item.name}</code>
+					</div>
+				`);
+				return div;
+			},
+			search: [
+				{ prop: 'name' }
+			]
+		});
 		
 		console.log(`[icon page] Loaded ${icons.length} icons`);
 	} catch (err) {
 		console.error('[icon page] Error loading icons:', err);
-		iconGrid.innerHTML = `<p style="color: var(--color-error);">Error loading icons: ${err.message}</p>`;
+		iconList.innerHTML = `<p style="color: var(--color-error);">Error loading icons: ${err.message}</p>`;
 	}
 	
-	// Handle copy actions
-	element.addEventListener('nui-action', async (e) => {
-		const { name, param, target } = e.detail;
+	// Handle copy actions via click on list items
+	element.addEventListener('click', async (e) => {
+		const item = e.target.closest('.icon-list-item');
+		if (!item) return;
 		
-		if (name === 'copy-icon') {
-			try {
-				await navigator.clipboard.writeText(param);
-				
-				// Visual feedback
-				const code = target.querySelector('code');
-				const originalText = code.textContent;
-				code.textContent = 'Copied!';
-				code.style.opacity = '1';
-				code.style.color = 'var(--nui-accent)';
-				
-				setTimeout(() => {
-					code.textContent = originalText;
-					code.style.opacity = '0.7';
-					code.style.color = '';
-				}, 1000);
-			} catch (err) {
-				console.error('Failed to copy:', err);
-			}
-			e.stopPropagation();
+		const iconName = item.dataset.iconName;
+		if (!iconName) return;
+		
+		try {
+			await navigator.clipboard.writeText(iconName);
+			
+			// Visual feedback
+			const code = item.querySelector('code');
+			const originalText = code.textContent;
+			code.textContent = 'Copied!';
+			code.style.opacity = '1';
+			code.style.color = 'var(--nui-accent)';
+			
+			setTimeout(() => {
+				code.textContent = originalText;
+				code.style.opacity = '0.7';
+				code.style.color = '';
+			}, 1000);
+		} catch (err) {
+			console.error('Failed to copy:', err);
 		}
 	});
 }

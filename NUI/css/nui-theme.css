@@ -829,6 +829,49 @@ nui-button[state="loading"] button::before {
 
 
 /* =============================================================================
+   BADGE COMPONENT
+   ============================================================================= */
+
+nui-badge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 0.75rem;
+	font-weight: bold;
+	line-height: 1;
+	padding: 0.25rem 0.6rem;
+	border-radius: var(--border-radius1);
+	background-color: var(--color-base);
+	color: var(--color-contrast);
+	border: var(--border-thickness) solid var(--border-shade3);
+	white-space: nowrap;
+	vertical-align: middle;
+	text-transform: uppercase;
+}
+
+/* Badge variants */
+nui-badge[variant="primary"] {
+	border-left: 6px solid var(--color-highlight);
+}
+
+nui-badge[variant="success"] {
+	border-left: 6px solid var(--palette-activate);
+}
+
+nui-badge[variant="danger"] {
+	border-left: 6px solid var(--palette-alert);
+}
+
+nui-badge[variant="warning"] {
+	border-left: 6px solid var(--palette-mark);
+}
+
+nui-badge[variant="info"] {
+	border-left: 6px solid var(--color-highlight-dim);
+}
+
+
+/* =============================================================================
    ICON COMPONENT
    ============================================================================= */
 
@@ -953,34 +996,41 @@ nui-app-header nui-icon {
 }
 
 /* Integrated Status Badge */
-nui-app-header [data-badge] {
+[data-badge] {
 	position: relative;
 }
 
-nui-app-header [data-badge]::after {
+[data-badge]::after {
 	content: attr(data-badge);
 	position: absolute;
-	top: -4px;
-	right: -4px;
-	background: var(--color-danger);
+	top: -8px;
+	right: -8px;
+	background: var(--palette-alert);
 	color: var(--color-white);
 	font-size: 0.65rem;
 	font-weight: bold;
-	line-height: 1;
-	padding: 2px 5px;
-	border-radius: var(--border-radius-pill);
-	min-width: 1ch;
-	text-align: center;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	min-width: 1.25rem;
+	height: 1.25rem;
+	padding: 0 0.35rem;
+	border-radius: 9999px; /* Pill shape */
 	pointer-events: none;
+	z-index: 10;
+	border: 1px solid light-dark(rgba(0, 0, 0, 0.05), rgba(255, 255, 255, 0.05));
+	box-shadow: 0 2px 4px var(--shadow-color);
 }
 
-nui-app-header [data-badge=""]::after {
+[data-badge=""]::after {
 	/* Dot mode when empty badge */
 	content: '';
-	padding: 4px;
-	border-radius: 50%;
-	top: 0;
-	right: 0;
+	min-width: 0.6rem;
+	height: 0.6rem;
+	padding: 0;
+	top: -2px;
+	right: -2px;
 }
 
 /* =============================================================================
@@ -3751,28 +3801,7 @@ input[type="reset"]:hover {
 }
 
 
-/* =============================================================================
-   NUI-CARD STYLING
-   ============================================================================= */
 
-.nui-card {
-	background: light-dark(var(--color-shade1), var(--color-shade2));
-	border: solid var(--border-thickness) light-dark(rgb(0, 0, 0, 0.2), var(--border-shade2));
-	border-radius: var(--border-radius2);
-	padding: var(--nui-space);
-	box-shadow: 0 0.3rem 1rem light-dark(rgb(0, 0, 0, 0.1), rgba(0, 0, 0, 0.3));
-	gap: var(--nui-space);
-	transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-	margin-bottom: var(--nui-space);
-}
-
-.nui-card h1,
-.nui-card h2,
-.nui-card h3,
-.nui-card h4,
-.nui-card h5 {
-	margin-top: 0;
-}
 
 /* Full-width banner - override content-page max-width constraint */
 nui-main>.content-page>nui-layout[banner],
@@ -4187,3 +4216,137 @@ nui-sortable[data-layout="grid"] nui-sortable-item .drag-handle {
 	opacity: 0.5;
 	pointer-events: none;
 }
+
+/* =============================================================================
+   nui-card Component
+   ============================================================================= */
+
+nui-card,
+  .nui-card {
+        display: flex;
+        flex-direction: column;
+        background: light-dark(var(--color-shade1), var(--color-shade2));
+        border: solid var(--border-thickness) light-dark(rgb(0, 0, 0, 0.2), var(--border-shade2));
+        border-radius: var(--border-radius2);
+        box-shadow: 0 0.3rem 1rem light-dark(rgb(0, 0, 0, 0.1), rgba(0, 0, 0, 0.3));
+        overflow: hidden;
+        position: relative;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+
+nui-card,
+  .nui-card {
+        padding: var(--nui-space);
+        gap: var(--nui-space);
+        margin-bottom: var(--nui-space);
+  }
+
+  nui-card[layout="horizontal"] {
+        flex-direction: row;
+  }
+
+  nui-card > img {
+        object-fit: cover;
+  }
+
+  nui-card:not([layout]) > img {
+        width: calc(100% + calc(var(--nui-space) * 2));
+        max-width: calc(100% + calc(var(--nui-space) * 2));
+        margin: calc(var(--nui-space) * -1);
+        margin-bottom: 0;
+        height: 40%;
+        min-height: 150px;
+  }
+
+  nui-card[layout="horizontal"] > img {
+        width: 35%;
+        min-width: 150px;
+        max-width: 250px;
+        margin: calc(var(--nui-space) * -1);
+        margin-right: 0;
+        width: 35%;
+        height: auto;
+}
+
+/* Image-only layout */
+nui-card[layout="image-only"] {
+	justify-content: flex-end;
+}
+nui-card[layout="image-only"] img {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	z-index: 0;
+}
+nui-card[layout="image-only"] > *:not(img) {
+	position: relative;
+	z-index: 1;
+}
+
+/* Interactive card */
+nui-card[interactive] {
+	cursor: pointer;
+}
+
+nui-card[interactive]:hover,
+nui-card[interactive]:focus-within {
+	box-shadow: 0 6px 12px var(--shadow-color);
+	transform: translateY(-2px);
+	border-color: var(--border-shade3);
+}
+
+/* Expandable Clickable Area */
+nui-card[interactive] a.nui-card-link::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: 10;
+}
+
+/* Flip Card Support */
+nui-card[layout="flip"] {
+	perspective: 1000px;
+	background: transparent;
+	border: none;
+	box-shadow: none;
+	overflow: visible;
+}
+nui-card[layout="flip"][interactive]:hover,
+nui-card[layout="flip"][interactive]:focus-within {
+	transform: none; /* Let the inner part rotate, outer container stays still */
+	box-shadow: none;
+	border-color: transparent;
+}
+nui-card[layout="flip"] .nui-card-inner {
+	display: block;
+	position: relative;
+	width: 100%;
+	height: 100%;
+	min-height: inherit; /* Ensure inner takes height of card */
+	transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+	transform-style: preserve-3d;
+}
+nui-card[layout="flip"][flipped] .nui-card-inner {
+	transform: rotateY(180deg);
+}
+nui-card[layout="flip"] .nui-card-front,
+nui-card[layout="flip"] .nui-card-back {
+	display: flex;
+	flex-direction: column;
+	position: absolute;
+	inset: 0;
+	backface-visibility: hidden;
+	-webkit-backface-visibility: hidden;
+	background-color: var(--color-base);
+	border: solid var(--border-thickness) var(--border-shade2);
+	border-radius: var(--border-radius2);
+	box-shadow: 0 2px 4px var(--shadow-color);
+	overflow: hidden;
+}
+nui-card[layout="flip"] .nui-card-back {
+	transform: rotateY(180deg);
+}
+

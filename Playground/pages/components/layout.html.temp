@@ -68,35 +68,35 @@
 				<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore
 					et dolore magna aliqua. Ut enim ad minim veniam.</p>
 			</div>
-		</nui-card>
+		</div>
 		<nui-card>
 			<div>
 				<h3>Card 2</h3>
 				<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore
 					et dolore magna aliqua. Ut enim ad minim veniam.</p>
 			</div>
-		</nui-card>
+		</div>
 		<nui-card>
 			<div>
 				<h3>Card 3</h3>
 				<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore
 					et dolore magna aliqua. Ut enim ad minim veniam.</p>
 			</div>
-		</nui-card>
+		</div>
 		<nui-card>
 			<div>
 				<h3>Card 4</h3>
 				<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore
 					et dolore magna aliqua. Ut enim ad minim veniam.</p>
 			</div>
-		</nui-card>
+		</div>
 	</nui-layout>
 
 	<nui-code>
 		<script type="example" data-lang="html">
 <nui-layout columns="2">
-	<nui-card>Card 1</nui-card>
-	<nui-card>Card 2</nui-card>
+	<nui-card>Card 1</div>
+	<nui-card>Card 2</div>
 	...
 </nui-layout>
 		</script>
@@ -109,61 +109,55 @@
 		stacks to 1.</p>
 	<nui-layout columns="3">
 		<nui-card>
-				<img src="images/Random_Picts/800p/006.webp" alt="Card Image 1" />
-				<div>
+			<div>
 				<h3>Card 1</h3>
 				<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore
 					et dolore magna aliqua.</p>
 			</div>
-		</nui-card>
+		</div>
 		<nui-card>
-				<img src="images/Random_Picts/800p/007.webp" alt="Card Image 2" />
-				<div>
+			<div>
 				<h3>Card 2</h3>
 				<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore
 					et dolore magna aliqua.</p>
 			</div>
-		</nui-card>
+		</div>
 		<nui-card>
-				<img src="images/Random_Picts/800p/008.webp" alt="Card Image 3" />
-				<div>
+			<div>
 				<h3>Card 3</h3>
 				<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore
 					et dolore magna aliqua.</p>
 			</div>
-		</nui-card>
+		</div>
 		<nui-card>
-				<img src="images/Random_Picts/800p/009.webp" alt="Card Image 4" />
-				<div>
+			<div>
 				<h3>Card 4</h3>
 				<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore
 					et dolore magna aliqua.</p>
 			</div>
-		</nui-card>
+		</div>
 		<nui-card>
-				<img src="images/Random_Picts/800p/010.webp" alt="Card Image 5" />
-				<div>
+			<div>
 				<h3>Card 5</h3>
 				<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore
 					et dolore magna aliqua.</p>
 			</div>
-		</nui-card>
+		</div>
 		<nui-card>
-				<img src="images/Random_Picts/800p/011.webp" alt="Card Image 6" />
-				<div>
+			<div>
 				<h3>Card 6</h3>
 				<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore
 					et dolore magna aliqua.</p>
 			</div>
-		</nui-card>
+		</div>
 	</nui-layout>
 
 	<nui-code>
 		<script type="example" data-lang="html">
 <nui-layout columns="3">
-	<nui-card>Card 1</nui-card>
-	<nui-card>Card 2</nui-card>
-	<nui-card>Card 3</nui-card>
+	<nui-card>Card 1</div>
+	<nui-card>Card 2</div>
+	<nui-card>Card 3</div>
 	...
 </nui-layout>
 		</script>
@@ -177,52 +171,52 @@
 
 	<h3>Basic Flow</h3>
 	<nui-layout type="flow" columns="3">
-		<nui-card  style="height: 100px">
+		<nui-card style="height: 100px">
 			<div>
 				<h3>Short</h3>
 				<p>Lorem ipsum dolor sit amet.</p>
 			</div>
-		</nui-card>
-		<nui-card  style="height: 200px">
+		</div>
+		<nui-card style="height: 200px">
 			<div>
 				<h3>Tall</h3>
 				<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore
 					et dolore magna aliqua.</p>
 			</div>
-		</nui-card>
-		<nui-card  style="height: 150px">
+		</div>
+		<nui-card style="height: 150px">
 			<div>
 				<h3>Medium</h3>
 				<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
 			</div>
-		</nui-card>
-		<nui-card  style="height: 120px">
+		</div>
+		<nui-card style="height: 120px">
 			<div>
 				<h3>Short-ish</h3>
 				<p>Lorem ipsum dolor sit amet.</p>
 			</div>
-		</nui-card>
-		<nui-card  style="height: 180px">
+		</div>
+		<nui-card style="height: 180px">
 			<div>
 				<h3>Tall-ish</h3>
 				<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore
 					et dolore magna aliqua.</p>
 			</div>
-		</nui-card>
-		<nui-card  style="height: 90px">
+		</div>
+		<nui-card style="height: 90px">
 			<div>
 				<h3>Tiny</h3>
 				<p>Lorem ipsum.</p>
 			</div>
-		</nui-card>
+		</div>
 	</nui-layout>
 
 	<nui-code>
 		<script type="example" data-lang="html">
 <nui-layout type="flow" columns="3">
 	<!-- Items flow down, then across -->
-	<nui-card>...</nui-card>
-	<nui-card>...</nui-card>
+	<nui-card>...</div>
+	<nui-card>...</div>
 </nui-layout>
 		</script>
 	</nui-code>
@@ -231,32 +225,32 @@
 	<p>Add <code>sort="height"</code> to automatically reorder items so tall items appear first, which can help create a
 		more balanced look in some cases.</p>
 	<nui-layout type="flow" columns="3" sort="height">
-		<nui-card  style="height: 80px">
+		<nui-card style="height: 80px">
 			<div>
 				<h3>80px</h3>
 				<p>Lorem ipsum.</p>
 			</div>
-		</nui-card>
-		<nui-card  style="height: 200px">
+		</div>
+		<nui-card style="height: 200px">
 			<div>
 				<h3>200px (Tallest)</h3>
 				<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore
 					et dolore magna aliqua.</p>
 			</div>
-		</nui-card>
-		<nui-card  style="height: 150px">
+		</div>
+		<nui-card style="height: 150px">
 			<div>
 				<h3>150px</h3>
 				<p>Lorem ipsum dolor sit amet.</p>
 			</div>
-		</nui-card>
+		</div>
 	</nui-layout>
 
 	<nui-code>
 		<script type="example" data-lang="html">
 <nui-layout type="flow" columns="3" sort="height">
 	<!-- JS will reorder these by height -->
-	<nui-card>...</nui-card>
+	<nui-card>...</div>
 </nui-layout>
 		</script>
 	</nui-code>
@@ -322,7 +316,7 @@
 <nui-layout banner>
 	<nui-card>
 		<!-- Content is still max-width constrained -->
-	</nui-card>
+	</div>
 </nui-layout>
 		</script>
 	</nui-code>

@@ -26,6 +26,11 @@ const builtinActionHandlers = {
 		if (t?.close) { e.stopPropagation(); t.close(p); return true; }
 		return false;
 	},
+	'card-flip': (t, el) => {
+		const card = (t !== el) ? t : el.closest('nui-card');
+		if (card) { card.toggleAttribute('flipped'); return true; }
+		return false;
+	},
 	'scroll-to-top': (t, el) => {
 		const scrollable = (t !== el) ? t : el.closest('nui-main') || document.querySelector('nui-main');
 		if (scrollable) { scrollable.scrollTo({ top: 0, behavior: 'smooth' }); return true; }
@@ -1215,6 +1220,67 @@ registerComponent('nui-skip-links', (element) => {
 });
 
 registerLayoutComponent('nui-icon-button');
+registerLayoutComponent('nui-badge');
+
+// ################################# nui-card COMPONENT
+
+registerComponent('nui-card', (element) => {
+	const layout = element.getAttribute('layout');
+	
+	if (layout === 'flip') {
+		if (!element.hasAttribute('role')) {
+			element.setAttribute('role', 'button');
+		}
+		if (!element.hasAttribute('tabindex')) {
+			element.setAttribute('tabindex', '0');
+		}
+
+		element.addEventListener('keydown', (e) => {
+			if (e.key === 'Enter' || e.key === ' ') {
+				e.preventDefault();
+				element.toggleAttribute('flipped');
+			}
+		});
+
+		// Accessible flip indication
+		const updateA11y = () => {
+			const isFlipped = element.hasAttribute('flipped');
+			element.setAttribute('aria-expanded', isFlipped);
+		};
+		updateA11y();
+
+		// Observer for 'flipped' attribute to keeping ARIA updated
+		const observer = new MutationObserver((mutations) => {
+			mutations.forEach(m => {
+				if (m.attributeName === 'flipped') {
+					updateA11y();
+				}
+			});
+		});
+		observer.observe(element, { attributes: true, attributeFilter: ['flipped'] });
+
+		return () => observer.disconnect();
+	}
+
+	if (element.hasAttribute('interactive')) {
+		// Keyboard support for interactive cards, if they don't have a focusable link.
+		// Usually handled better via standard a tags.
+		const mainLink = element.querySelector('a.nui-card-link');
+		if (mainLink) {
+			// pure CSS handles the "cover" clickable area, we don't need JS delegation.
+		} else {
+			if (!element.hasAttribute('tabindex')) {
+				element.setAttribute('tabindex', '0');
+			}
+			element.addEventListener('keydown', (e) => {
+				if (e.key === 'Enter' || e.key === ' ') {
+					e.preventDefault();
+					element.click();
+				}
+			});
+		}
+	}
+});
 
 // ################################# nui-layout COMPONENT
 
