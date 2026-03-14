@@ -15,6 +15,7 @@ Core principles:
 3. **Accessibility by Default** - ARIA compliance, keyboard navigation, screen reader support
 4. **Optimized for LLMs** - Code structure and patterns designed for AI understanding and maintenance
 5. **Documentation by Example** - The Playground serves as both documentation and live examples
+6. **Component Composition** - Reuse existing foundational elements (buttons, icons, inputs) when building larger modules rather than reinventing them
 
 ## Project Structure
 
