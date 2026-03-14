@@ -3536,6 +3536,125 @@ registerComponent('nui-sortable-item', (element) => {
 	element.setAttribute('role', 'listitem');
 });
 
+registerComponent('nui-tooltip', (element) => {
+	const targetParam = element.getAttribute('for');
+	let target = targetParam ? document.getElementById(targetParam) : element.previousElementSibling;
+	
+	if (!target || element._tooltipInitialized) return;
+	element._tooltipInitialized = true;
+
+	element.setAttribute('role', 'tooltip');
+	target.setAttribute('aria-describedby', element.id || (element.id = 'nui-tooltip-' + Math.random().toString(36).substr(2, 9)));
+
+	element.setAttribute('popover', 'manual');
+
+	const positionTip = () => {
+		const rect = target.getBoundingClientRect();
+		const tipRect = element.getBoundingClientRect();
+		let pos = element.getAttribute('position') || 'auto';
+		const offset = parseInt(element.getAttribute('offset') || '16', 10);
+
+		if (pos === 'auto') {
+			const spaceTop = rect.top;
+			const spaceBottom = window.innerHeight - rect.bottom;
+			const spaceLeft = rect.left;
+			const spaceRight = window.innerWidth - rect.right;
+
+			if (spaceTop >= tipRect.height + offset) {
+				pos = 'top';
+			} else if (spaceBottom >= tipRect.height + offset) {
+				pos = 'bottom';
+			} else if (spaceRight >= tipRect.width + offset) {
+				pos = 'right';
+			} else if (spaceLeft >= tipRect.width + offset) {
+				pos = 'left';
+			} else {
+				pos = spaceTop >= spaceBottom ? 'top' : 'bottom';
+			}
+		}
+
+		element.setAttribute('data-placement', pos);
+
+		let top, left;
+		if (pos === 'top') {
+			top = rect.top - tipRect.height - offset;
+			left = rect.left + (rect.width / 2) - (tipRect.width / 2);
+		} else if (pos === 'bottom') {
+			top = rect.bottom + offset;
+			left = rect.left + (rect.width / 2) - (tipRect.width / 2);
+		} else if (pos === 'left') {
+			top = rect.top + (rect.height / 2) - (tipRect.height / 2);
+			left = rect.left - tipRect.width - offset;
+		} else if (pos === 'right') {
+			top = rect.top + (rect.height / 2) - (tipRect.height / 2);
+			left = rect.right + offset;
+		}
+
+		const padding = 8;
+		top = Math.max(padding, Math.min(top, window.innerHeight - tipRect.height - padding));
+		left = Math.max(padding, Math.min(left, window.innerWidth - tipRect.width - padding));
+
+		element.style.top = `${top}px`;
+		element.style.left = `${left}px`;
+		element.style.margin = '0';
+
+		if (pos === 'top' || pos === 'bottom') {
+			let arrowLeft = (rect.left + rect.width / 2) - left;
+			arrowLeft = Math.max(16, Math.min(arrowLeft, tipRect.width - 16));
+			element.style.setProperty('--arrow-left', `${arrowLeft}px`);
+			element.style.removeProperty('--arrow-top');
+		} else {
+			let arrowTop = (rect.top + rect.height / 2) - top;
+			arrowTop = Math.max(16, Math.min(arrowTop, tipRect.height - 16));
+			element.style.setProperty('--arrow-top', `${arrowTop}px`);
+			element.style.removeProperty('--arrow-left');
+		}
+	};
+
+	let hideTimeout;
+
+	const show = () => {
+		if (element.hasAttribute('disabled')) return;
+		clearTimeout(hideTimeout);
+		try {
+			element.showPopover();
+			positionTip();
+		} catch (e) {}
+	};
+
+	const hide = () => {
+		hideTimeout = setTimeout(() => {
+			try {
+				element.hidePopover();
+			} catch (e) {}
+		}, 150);
+	};
+
+	target.addEventListener('mouseenter', show);
+	target.addEventListener('mouseleave', hide);
+	target.addEventListener('focus', show);
+	target.addEventListener('blur', hide);
+
+	element.addEventListener('mouseenter', show);
+	element.addEventListener('mouseleave', hide);
+
+	const hideOnScroll = () => { if (element.matches(':popover-open')) hide(); };
+	window.addEventListener('scroll', hideOnScroll, { passive: true, capture: true });
+
+	return () => {
+		if (target) {
+			target.removeAttribute('aria-describedby');
+			target.removeEventListener('mouseenter', show);
+			target.removeEventListener('mouseleave', hide);
+			target.removeEventListener('focus', show);
+			target.removeEventListener('blur', hide);
+		}
+		element.removeEventListener('mouseenter', show);
+		element.removeEventListener('mouseleave', hide);
+		window.removeEventListener('scroll', hideOnScroll, { capture: true });
+	};
+});
+
 // ################################# BANNER FACTORY
 
 const activeBanners = { top: null, bottom: null };

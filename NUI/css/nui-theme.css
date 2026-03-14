@@ -37,7 +37,7 @@
 	--color-banner-text: light-dark(var(--color-white), var(--color-white));
 	--color-banner-progress: light-dark(rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.3));
 
-	--shadow-color: rgba(0, 0, 0, 0.2);
+	--shadow-color: light-dark(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.4));
 	--shadow-radius0: var(--nui-space-half);
 	--shadow-radius1: var(--nui-space);
 	
@@ -4353,3 +4353,97 @@ nui-card[layout="flip"] .nui-card-back {
 	transform: rotateY(180deg);
 }
 
+/* ################################# nui-tooltip COMPONENT */
+nui-tooltip {
+--tooltip-bg: light-dark(var(--color-shade8), var(--color-shade4));
+--tooltip-text: light-dark(var(--color-base), var(--text-color));
+
+position: fixed;
+background-color: var(--tooltip-bg);
+color: var(--tooltip-text);
+padding: var(--nui-space);
+border-radius: var(--border-radius2);
+box-shadow: 0 4px 12px var(--shadow-color);
+z-index: 9999;
+border: none;
+max-width: 320px;
+word-wrap: break-word;
+overflow: visible;
+
+/* Use standard base size, but allow flexibility */
+font-size: var(--font-size-small);
+line-height: 1.4;
+
+/* Animation hooks */
+transition: opacity 0.2s allow-discrete;
+opacity: 0;
+}
+
+/* Rich content integration */
+nui-tooltip strong, nui-tooltip b, nui-tooltip .title {
+display: block;
+margin-bottom: var(--nui-space-quarter);
+font-size: var(--font-size-base);
+font-weight: 600;
+}
+
+nui-tooltip p {
+margin: 0 0 var(--nui-space-half) 0;
+}
+
+nui-tooltip p:last-child {
+margin-bottom: 0;
+}
+
+nui-tooltip nui-button {
+margin-top: var(--nui-space-quarter);
+/* Ensure buttons inside tooltips fit visually */
+--button-bg-color: var(--color-base);
+--button-text-color: var(--color-contrast);
+}
+
+/* Arrow Pointer */
+nui-tooltip::after {
+content: '';
+position: absolute;
+width: 12px;
+height: 12px;
+background-color: var(--tooltip-bg);
+border-radius: 2px;
+pointer-events: none;
+z-index: -1;
+}
+
+nui-tooltip[data-placement="top"]::after {
+bottom: -5px;
+left: var(--arrow-left, 50%);
+transform: translateX(-50%) rotate(45deg);
+}
+
+nui-tooltip[data-placement="bottom"]::after {
+top: -5px;
+left: var(--arrow-left, 50%);
+transform: translateX(-50%) rotate(45deg);
+}
+
+nui-tooltip[data-placement="left"]::after {
+right: -5px;
+top: var(--arrow-top, 50%);
+transform: translateY(-50%) rotate(45deg);
+}
+
+nui-tooltip[data-placement="right"]::after {
+left: -5px;
+top: var(--arrow-top, 50%);
+transform: translateY(-50%) rotate(45deg);
+}
+
+nui-tooltip:popover-open {
+opacity: 1;
+}
+
+@starting-style {
+nui-tooltip:popover-open {
+opacity: 0;
+}
+}

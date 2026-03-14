@@ -298,7 +298,9 @@ const navigationData = [
 					{ label: 'Sortable', href: '#page=components/sortable' },
 					{ label: 'Dialog', href: '#page=components/dialog' },
 					{ label: 'Overlay', href: '#page=components/overlay' },
-					{ label: 'Banner', href: '#page=components/banner' }, { label: 'Progress', href: '#page=components/progress' }
+					{ label: 'Banner', href: '#page=components/banner' },
+					{ label: 'Progress', href: '#page=components/progress' },
+					{ label: 'Tooltip', href: '#page=components/tooltip' }
 				]
 			},
 			{

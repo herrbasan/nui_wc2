@@ -411,6 +411,17 @@ export interface NuiLoadingElement extends HTMLElement {
 }
 
 /**
+ * Tooltip component
+ * Provides accessible, hover/focus-triggered contextual information
+ */
+export interface NuiTooltipElement extends HTMLElement {
+	/** Optional position attribute overriding default (top, bottom, left, right) */
+	position?: string;
+	/** Optional ID of target element */
+	for?: string;
+}
+
+/**
  * Progress indicating component
  * Types: "bar" | "circular" | "busy" | "circular-busy"
  */
@@ -800,6 +811,7 @@ declare global {
 		'nui-overlay': NuiOverlayElement;
 		'nui-dialog': NuiDialogElement;
 		'nui-banner': NuiBannerElement;
+		'nui-tooltip': NuiTooltipElement;
 		'nui-progress': NuiProgressElement;
 		'nui-input-group': NuiInputGroupElement;
 		'nui-input': NuiInputElement;
