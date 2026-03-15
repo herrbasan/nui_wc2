@@ -1,0 +1,76 @@
+<div class="page-lightbox">
+    <header>
+        <h1>Lightbox</h1>
+        <p class="lead">Dedicated lightbox for image and media galleries.</p>
+    </header>
+
+    <section>
+        <h2>Declarative Usage</h2>
+        <p>Wrap images in a <code>nui-lightbox</code> to automatically group them. Click on an image to open the lightbox.</p>
+
+        <nui-code>
+            <script type="example" data-lang="html">
+<nui-lightbox id="demo-lightbox" loop>
+    <img src="images/Random_Picts/320p/001.webp" data-lightbox-src="images/Random_Picts/1080p/001.webp" alt="Landscape 1" style="width: 240px; aspect-ratio: 16/9; cursor: pointer; object-fit: cover; border-radius: var(--border-radius-1); margin-right: 1rem;" />
+    <img src="images/Random_Picts/320p/002.webp" data-lightbox-src="images/Random_Picts/1080p/002.webp" alt="Landscape 2" style="width: 240px; aspect-ratio: 16/9; cursor: pointer; object-fit: cover; border-radius: var(--border-radius-1); margin-right: 1rem;" />
+    <img src="images/Random_Picts/320p/003.webp" data-lightbox-src="images/Random_Picts/1080p/003.webp" alt="Landscape 3" style="width: 240px; aspect-ratio: 16/9; cursor: pointer; object-fit: cover; border-radius: var(--border-radius-1);" />
+</nui-lightbox>
+            </script>
+        </nui-code>
+
+        <div class="demo-area" style="display: flex; flex-wrap: wrap; gap: var(--nui-space);">
+            <nui-lightbox id="demo-lightbox" loop>
+                <img src="images/Random_Picts/320p/001.webp" data-lightbox-src="images/Random_Picts/1080p/001.webp" alt="Landscape 1" style="width: 240px; aspect-ratio: 16/9; cursor: pointer; object-fit: cover; border-radius: var(--border-radius-1); margin-right: 1rem;" />
+                <img src="images/Random_Picts/320p/002.webp" data-lightbox-src="images/Random_Picts/1080p/002.webp" alt="Landscape 2" style="width: 240px; aspect-ratio: 16/9; cursor: pointer; object-fit: cover; border-radius: var(--border-radius-1); margin-right: 1rem;" />
+                <img src="images/Random_Picts/320p/003.webp" data-lightbox-src="images/Random_Picts/1080p/003.webp" alt="Landscape 3" style="width: 240px; aspect-ratio: 16/9; cursor: pointer; object-fit: cover; border-radius: var(--border-radius-1);" />
+            </nui-lightbox>
+        </div>
+    </section>
+
+    <section>
+        <h2>Programmatic Usage</h2>
+        <p>Call the API to show a lightbox without wrapping elements.</p>
+        
+        <nui-code>
+            <script type="example" data-lang="js">
+nui.components.lightbox.show([
+    { src: 'images/Random_Picts/1080p/084.webp', title: 'Forest' },
+    { src: 'images/Random_Picts/1080p/060.webp', title: 'River' }
+], 0); // show from index 0
+            </script>
+        </nui-code>
+
+        <div class="demo-area">
+            <nui-button>
+                <button type="button" data-action="lightbox-demo:programmatic">Open Programmatic Lightbox</button>
+            </nui-button>
+        </div>
+    </section>
+</div>
+
+<script type="nui/page">
+function init(element, params) {
+    // Declarative setup
+    const declarativeWrapper = element.querySelector('#demo-lightbox');
+    if (declarativeWrapper) {
+        const imgs = declarativeWrapper.querySelectorAll('img');
+        imgs.forEach((img, i) => {
+            img.addEventListener('click', () => {
+                declarativeWrapper.open([], i);
+            });
+        });
+    }
+
+    // Programmatic setup
+    element.addEventListener('nui-action', (e) => {
+        if (e.detail.name === 'lightbox-demo' && e.detail.param === 'programmatic') {
+            if (nui.components && nui.components.lightbox) {
+                nui.components.lightbox.show([
+                    { src: 'images/Random_Picts/1080p/054.webp', title: 'Forest' },
+                    { src: 'images/Random_Picts/1080p/060.webp', title: 'River' }
+                ], 0);
+            }
+        }
+    });
+}
+</script>

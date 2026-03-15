@@ -31,6 +31,12 @@ ui-tooltip)** - Completed. Universal lightweight accessibility tooltip using aut
 
 ## Phase 3: Form Enhancements & Actions
 
+### Select Component Enhancement
+**Status:** Planned
+**Purpose:** Improve the baseline UX of the select component.
+**Concept:**
+- Make the "mobile-sheet" behavior the default behavior for the `<nui-select>` component, prioritizing a unified, touch-friendly UI pattern across all screen sizes.
+
 ### Switch Component (
 ui-switch)
 **Status:** Planned
@@ -58,6 +64,14 @@ ui-file-upload / Browse Type)
 - Consistent button styling with file input behavior
 - Optional drag-and-drop overlay support
 - Emits dedicated component events on file selection
+
+### Async / Loading Button State
+**Status:** Planned
+**Purpose:** Built-in busy indicator for buttons to show progress and prevent duplicate clicks during async tasks.
+**Concept:**
+- Integrated loading spinner/indicator within the existing `<nui-button>`.
+- Temporarily disables the button (and pointer events) while the task is processing to prevent duplicate submissions.
+- Can be controlled programmatically (e.g. `button.setLoading(true)`) or declaratively via an attribute (e.g., `loading`).
 
 ---
 
