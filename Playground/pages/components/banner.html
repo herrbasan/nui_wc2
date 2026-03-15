@@ -17,8 +17,8 @@
 </section>
 
 <section>
-	<h2>Declarative Banners</h2>
-	<p>Define banners in HTML using the <code>&lt;nui-banner&gt;</code> element. Control visibility with the <code>.show()</code> and <code>.close()</code> methods, or use declarative actions.</p>
+	<h2>Declarative Usage (Default)</h2>
+	<p>Define banners in HTML using the <code>&lt;nui-banner&gt;</code> element. Control visibility declaratively without writing JavaScript.</p>
 	<nui-code>
 		<script type="example" data-lang="html">
 <nui-banner id="my-banner" placement="bottom" auto-close="5000">
@@ -36,16 +36,6 @@
 		</script>
 	</nui-code>
 
-	<nui-code>
-		<script type="example" data-lang="js">
-// Generic handler for banner actions
-document.addEventListener('nui-action', (e) => {
-	const { name, target, param } = e.detail;
-	if (name === 'banner-show') target.show();
-	if (name === 'banner-close') target.close(param);
-});
-		</script>
-	</nui-code>
 	<h3>Try It</h3>
 	<nui-button-container gap="1rem">
 		<nui-button><button type="button" data-action="banner-show@#demo-banner">Show Banner</button></nui-button>
@@ -61,16 +51,21 @@ document.addEventListener('nui-action', (e) => {
 </section>
 
 <section>
-	<h2>Programmatic Banners (Factory)</h2>
-	<p>Use <code>nui.components.banner.show()</code> to create banners programmatically. This is the recommended approach for dynamic notifications.</p>
+	<h2>Programmatic Usage (Advanced / Async)</h2>
+	<p>Use <code>nui.components.banner.show()</code> to create and manage banners purely within asynchronous workflows, or use standard methods on query-selected elements.</p>
 	<nui-code>
 		<script type="example" data-lang="javascript">
-// Basic banner with auto-close
+// Show banner mapped in HTML
+const banner = document.querySelector('#my-banner');
+banner.show();
+
+// Or create one via factory:
 nui.components.banner.show({
 	content: 'Your changes have been saved.',
 	placement: 'bottom',  // 'top' or 'bottom'
 	autoClose: 3000       // milliseconds (0 = no auto-close)
 });
+
 
 // Banner with priority for accessibility
 nui.components.banner.show({
@@ -246,6 +241,26 @@ nui.components.banner.show({
 		<nui-button><button type="button" data-action="show-progress-demo">With Progress</button></nui-button>
 		<nui-button><button type="button" data-action="show-no-progress-demo">Without Progress</button></nui-button>
 	</nui-button-container>
+</section>
+
+<section>
+	<h2>Available Events</h2>
+	<p>Listen for these custom events to react to banner state changes.</p>
+	<nui-code>
+		<script type="example" data-lang="javascript">
+const banner = document.querySelector('#my-banner');
+
+// Fired when the banner opens
+banner.addEventListener('nui-banner-open', () => {
+	console.log('Banner opened');
+});
+
+// Fired when the banner closes
+banner.addEventListener('nui-banner-close', (e) => {
+	console.log('Banner closed with action:', e.detail.returnValue);
+});
+		</script>
+	</nui-code>
 </section>
 
 <section>

@@ -22,9 +22,7 @@
 	</section>
 	
 	<section>
-		<h2>Layout Modes</h2>
-		
-		<h3>App Mode - Fixed Application Layout</h3>
+		<h2>Declarative Usage (Default)</h2>
 		<p>When <code>&lt;nui-app&gt;</code> is present, components create a fixed CSS Grid layout:</p>
 		
 		<div class="layout-diagram">
@@ -72,7 +70,7 @@
 &lt;/nui-app&gt;</code></pre>
 		</nui-code>
 		
-		<h3>Page Mode - Document Flow</h3>
+		<h3>Declarative Usage (Page Mode)</h3>
 		<p>Without <code>&lt;nui-app&gt;</code>, components follow normal document flow:</p>
 		
 		<div class="layout-diagram">
@@ -150,7 +148,7 @@
 			<li><strong>App Mode</strong> - Fixed sidebar with toggle capability. Supports optional <code>position="right"</code> for dual sidebars.</li>
 			<li><strong>Page Mode</strong> - Can float beside content or stack</li>
 			<li><strong>Content</strong> - Should contain <code>&lt;nav&gt;</code> with navigation structure, or settings panels for right sidebars</li>
-			<li><strong>State Management</strong> - Collapsible via toggle button or resize. Toggle specific sidebars with <code>data-action="toggle-sidebar:left"</code> or <code>toggle-sidebar:right"</code></li>
+			<li><strong>State Management</strong> - Collapsible via toggle button or resize. Toggle specific sidebars with <code>data-action="app-toggle-sidenav:left"</code> or <code>data-action="app-toggle-sidenav:right"</code></li>
 		</ul>
 		
 		<div class="component-diagram">

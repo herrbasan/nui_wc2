@@ -4,7 +4,7 @@
 </header>
 
 <section class="page-accordion">
-	<h2>Basic Usage</h2>
+	<h2>Declarative Usage (Default)</h2>
 	<p>Wraps standard HTML <code>&lt;details&gt;</code> elements. Provides consistent styling and optional behavior enhancements.</p>
 	
 	<div class="demo-container">
@@ -141,4 +141,49 @@
 			</details>
 		</nui-accordion>
 	</div>
+</section>
+
+<section class="page-accordion">
+	<h2>Programmatic Usage & Actions</h2>
+	<p>You can control the accordion declaratively using mapped data-actions or programmatically via its element methods.</p>
+	
+	<div class="demo-container">
+		<nui-button-container gap="1rem" style="margin-bottom: 1rem;">
+			<nui-button><button data-action="accordion-toggle:1@#prog-accordion">Toggle Item 2</button></nui-button>
+			<nui-button><button data-action="accordion-expand-all@#prog-accordion">Expand All</button></nui-button>
+			<nui-button><button data-action="accordion-collapse-all@#prog-accordion">Collapse All</button></nui-button>
+		</nui-button-container>
+		
+		<nui-accordion id="prog-accordion">
+			<details>
+				<summary>Item 1</summary>
+				<div class="accordion-content"><p>Content for item 1.</p></div>
+			</details>
+			<details>
+				<summary>Item 2</summary>
+				<div class="accordion-content"><p>Content for item 2.</p></div>
+			</details>
+			<details>
+				<summary>Item 3</summary>
+				<div class="accordion-content"><p>Content for item 3.</p></div>
+			</details>
+		</nui-accordion>
+	</div>
+
+	<nui-code>
+		<script type="example" data-lang="html">
+<!-- Declarative trigger examples -->
+<button data-action="accordion-toggle:1@#my-accordion">Toggle Item 2</button>
+<button data-action="accordion-expand-all@#my-accordion">Expand All</button>
+<button data-action="accordion-collapse-all@#my-accordion">Collapse All</button>
+
+<script>
+// Programmatic equivalent
+const acc = document.querySelector('#my-accordion');
+acc.toggle(1);       // Toggles the second item
+acc.expandAll();     // Expands all (unless exclusive)
+acc.collapseAll();   // Collapses all
+</script>
+		</script>
+	</nui-code>
 </section>

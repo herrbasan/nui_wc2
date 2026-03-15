@@ -11,10 +11,13 @@
 </section>
 
 <section>
-	<h2>Basic Single Select</h2>
-	<p>A simple dropdown for selecting a single option. The first empty-value option serves as placeholder text.</p>
+	<h2>Declarative Usage (Default)</h2>
+	<p>A simple dropdown for selecting a single option. The first empty-value option serves as placeholder text. You can toggle its state declaratively using <code>data-action="select-open"</code> or <code>select-close</code>.</p>
 
 	<div class="demo-area">
+		<nui-button-container gap="1rem" style="margin-bottom: 1rem;">
+			<nui-button><button data-action="select-open@#basic-select">Open Declaratively</button></nui-button>
+		</nui-button-container>
 		<nui-input-group>
 			<label>Choose a Fruit</label>
 			<nui-select id="basic-select">
@@ -32,9 +35,11 @@
 
 	<nui-code>
 		<script type="example" data-lang="html">
+<button data-action="select-open@#basic-select">Open Declaratively</button>
+
 <nui-input-group>
 	<label>Choose a Fruit</label>
-	<nui-select>
+	<nui-select id="basic-select">
 		<select name="fruit">
 			<option value="">Select a fruit...</option>
 			<option value="apple">Apple</option>
@@ -165,7 +170,7 @@
 </section>
 
 <section>
-	<h2>Programmatic API</h2>
+	<h2>Programmatic Usage (Advanced / Async)</h2>
 	<p>Control the select component programmatically using JavaScript methods.</p>
 
 	<div class="demo-chrome">
@@ -279,7 +284,7 @@ select.syncOptions();  // Use after modifying native <select> options
 </section>
 
 <section>
-	<h2>Events</h2>
+	<h2>Available Events</h2>
 	<p>Listen to events to respond to user interactions and programmatic changes.</p>
 
 	<div class="demo-chrome">
@@ -596,7 +601,7 @@ document.getElementById('demo-form').addEventListener('submit', (e) => {
 		</tbody>
 	</table>
 
-	<h3>Events</h3>
+	<>Available Events</>
 	<table class="api-table">
 		<thead>
 			<tr>

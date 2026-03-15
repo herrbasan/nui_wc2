@@ -5,16 +5,18 @@
 	</header>
 
 	<section>
-		<h2>Basic Usage</h2>
+		<h2>Declarative Usage (Default)</h2>
 		<p>The <code>&lt;nui-overlay&gt;</code> component acts as a generic container that leverages the native <code>&lt;dialog&gt;</code> API to present content centrally over a shaded backdrop. Unlike <code>&lt;nui-dialog&gt;</code>, it doesn't enforce any padding or borders.</p>
 
 		<nui-code>
 			<script type="example" data-lang="html">
+<!-- Open the overlay declaratively -->
 <button data-action="overlay-open@#my-overlay">Open Overlay</button>
 
 <nui-overlay id="my-overlay">
 	<dialog>
 		<img src="images/nui_1.webp" alt="Sample" style="border-radius: var(--border-radius2); max-width: 90vw; max-height: 90vh;" />
+		<button data-action="overlay-close@#my-overlay">Close</button>
 	</dialog>
 </nui-overlay>
 			</script>
@@ -23,32 +25,40 @@
 			<button data-action="overlay-open@#my-overlay">Open Overlay</button>
 			<nui-overlay id="my-overlay">
 				<dialog>
-					<img src="images/nui_1.webp" alt="Sample" style="border-radius: var(--border-radius2); max-width: 90vw; max-height: 90vh;" />
+					<div style="position: relative;">
+						<img src="images/nui_1.webp" alt="Sample" style="border-radius: var(--border-radius2); max-width: 90vw; max-height: 90vh; display: block;" />
+						<nui-button variant="icon" class="icon-only" style="position: absolute; top: var(--nui-space); right: var(--nui-space);">
+							<button type="button" data-action="overlay-close@#my-overlay" aria-label="Close" style="background: rgba(0,0,0,0.5); color: white;">
+								<nui-icon name="close"></nui-icon>
+							</button>
+						</nui-button>
+					</div>
 				</dialog>
 			</nui-overlay>
 		</div>
 	</section>
 
 	<section>
-		<h2>Blocking Overlay (Loading State)</h2>
-		<p>By adding the <code>blocking</code> attribute, the overlay will ignore backdrop clicks and Escape key presses. This is ideal for loading indicators.</p>
-
+		<h2>Programmatic Usage (Advanced / Async)</h2>
+		<p>Use the programmatic API when you need to control the overlay during asynchronous workflows, such as showing a loader while saving data.</p>
 		<nui-code>
-			<script type="example" data-lang="html">
-<button data-action="overlay-open-loader@#busy-overlay">Load for 3s</button>
+			<script type="example" data-lang="javascript">
+const overlay = document.querySelector('#busy-overlay');
 
-<nui-overlay id="busy-overlay" blocking>
-	<dialog>
-		<div style="display: flex; flex-direction: column; align-items: center; gap: var(--nui-space);">
-			<nui-progress type="circular-busy" style="--nui-progress-size: 48px; --color-highlight: var(--color-white);"></nui-progress>
-			<span style="color: var(--color-white)">Processing...</span>
-		</div>
-	</dialog>
-</nui-overlay>
+// Show the overlay programmatically
+overlay.showModal();
+
+// Perform some async async work
+await new Promise(resolve => setTimeout(resolve, 3000));
+
+// Close the overlay
+overlay.close();
 			</script>
 		</nui-code>
+		<p>By adding the <code>blocking</code> attribute, the overlay will ignore backdrop clicks and Escape key presses. This is ideal for loading indicators.</p>
+
 		<div class="demo-area">
-			<button data-action="overlay-open-loader@#busy-overlay">Load for 3s</button>
+			<button data-action="overlay-open-loader@#busy-overlay">Load Programmatically for 3s</button>
 			
 			<nui-overlay id="busy-overlay" blocking>
 				<dialog>
@@ -59,6 +69,25 @@
 				</dialog>
 			</nui-overlay>
 		</div>
+	</section>
+
+	<section>
+		<h2>Available Events</h2>
+		<p>Listen for these custom events to react when the overlay opens or closes.</p>
+		<nui-code>
+			<script type="example" data-lang="javascript">
+const overlay = document.querySelector('#my-overlay');
+
+overlay.addEventListener('nui-overlay-open', () => {
+    console.log('Overlay opened');
+});
+
+overlay.addEventListener('nui-overlay-close', (e) => {
+    // e.detail.returnValue contains the payload passed via data-action="overlay-close:payload@#id"
+    console.log('Overlay closed with value:', e.detail.returnValue);
+});
+			</script>
+		</nui-code>
 	</section>
 </div>
 

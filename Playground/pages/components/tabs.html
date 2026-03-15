@@ -4,7 +4,7 @@
 </header>
 
 <section>
-	<h2>Basic Usage</h2>
+	<h2>Declarative Usage (Default)</h2>
 	<p>The component automatically upgrades semantic HTML structure. Use a list or container for tabs, and separate containers for panels.</p>
 	
 	<div class="demo-container">
@@ -154,7 +154,7 @@
 </section>
 
 <section class="page-tabs">
-	<h2>Events</h2>
+	<h2>Available Events</h2>
 	<p>Listen for the <code>nui-tab-change</code> event to react to tab switches.</p>
 	
 	<div class="demo-container">
@@ -211,6 +211,42 @@
 	<div>...</div>
 	<div>...</div>
 </nui-tabs>
+		</script>
+	</nui-code>
+</section>
+
+<section class="page-tabs">
+	<h2>Programmatic Usage & Actions</h2>
+	<p>You can control the tabs declaratively using mapped data-actions or programmatically via element methods.</p>
+	
+	<div class="demo-container">
+		<nui-button-container gap="1rem" style="margin-bottom: 1rem;">
+			<nui-button><button data-action="tabs-select:0@#prog-tabs">Switch to Tab 1</button></nui-button>
+			<nui-button><button data-action="tabs-select:panel-b@#prog-tabs">Switch to Tab 2</button></nui-button>
+		</nui-button-container>
+		
+		<nui-tabs id="prog-tabs">
+			<nav>
+				<button id="tab-a" aria-controls="panel-a">Tab 1</button>
+				<button id="tab-b" aria-controls="panel-b">Tab 2</button>
+			</nav>
+			<div id="panel-a"><h3>Panel 1 Content</h3></div>
+			<div id="panel-b"><h3>Panel 2 Content</h3></div>
+		</nui-tabs>
+	</div>
+
+	<nui-code>
+		<script type="example" data-lang="html">
+<!-- Declarative trigger examples (by index or panel ID) -->
+<button data-action="tabs-select:0@#my-tabs">First Tab</button>
+<button data-action="tabs-select:panel-b@#my-tabs">Second Tab</button>
+
+<script>
+// Programmatic equivalent
+const tabs = document.querySelector('#my-tabs');
+tabs.selectTab(0);           // Switch by index
+tabs.selectTab('panel-b');   // Switch by associated panel ID or tab ID
+</script>
 		</script>
 	</nui-code>
 </section>

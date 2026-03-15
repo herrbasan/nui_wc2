@@ -53,7 +53,7 @@ if (result) {
 </section>
 
 <section>
-	<h2>Declarative Actions</h2>
+	<h2>Declarative Usage (Default)</h2>
 	<p>For simple cases, you can use <code>data-action</code> to trigger dialogs without writing JavaScript handlers:</p>
 	<nui-code>
 		<script type="example" data-lang="html">
@@ -69,8 +69,20 @@ if (result) {
 	</nui-code>
 	<h3>Try It</h3>
 	<nui-button-container gap="1rem">
-		<nui-button><button type="button" data-action="show-alert">Show Alert</button></nui-button>
+		<nui-button><button type="button" data-action="dialog-open@#test-declarative-dialog">Open Declarative Dialog</button></nui-button>
 	</nui-button-container>
+
+	<nui-dialog id="test-declarative-dialog">
+		<dialog>
+			<div class="nui-dialog-alert">
+				<div class="nui-headline">Welcome!</div>
+				<div class="nui-copy">This entire dialogue was opened declaratively without a single line of JS, just using <code>data-action="dialog-open@#test-declarative-dialog"</code>.</div>
+				<nui-button-container align="end">
+					<nui-button variant="primary"><button type="button" data-action="dialog-close:ok@#test-declarative-dialog">Awesome!</button></nui-button>
+				</nui-button-container>
+			</div>
+		</dialog>
+	</nui-dialog>
 </section>
 
 <section>
@@ -173,7 +185,7 @@ document.getElementById('ok-btn').onclick = () => {
 	</nui-code>
 	<h3>Try It</h3>
 	<nui-button-container gap="1rem" align="start">
-		<nui-button><button type="button" data-action="open-custom-confirm">Open Custom Confirm</button></nui-button>
+		<nui-button><button type="button" data-action="dialog-open@#custom-confirm">Open Custom Confirm</button></nui-button>
 		<span id="custom-confirm-state">State: closed | Result: -</span>
 	</nui-button-container>
 
@@ -183,47 +195,36 @@ document.getElementById('ok-btn').onclick = () => {
 				<div class="nui-headline">Confirm Action</div>
 				<div class="nui-copy">Do you want to proceed with this action?</div>
 				<nui-button-container align="end">
-					<nui-button variant="outline"><button type="button" id="custom-confirm-cancel">Cancel</button></nui-button>
-					<nui-button variant="primary"><button type="button" id="custom-confirm-ok">OK</button></nui-button>
+					<nui-button variant="outline"><button type="button" data-action="dialog-close:cancelled@#custom-confirm">Cancel</button></nui-button>
+					<nui-button variant="primary"><button type="button" data-action="dialog-close:confirmed@#custom-confirm">OK</button></nui-button>
 				</nui-button-container>
 			</div>
 		</dialog>
 	</nui-dialog>
 
-	<h3>Watching Dialog State with Events</h3>
+	<>Available Events</>
 	<p>Dialogs dispatch custom events when they open or close. Listen for these to react to state changes:</p>
 	<nui-code>
 		<script type="example" data-lang="javascript">
 const dialog = document.querySelector('#custom-confirm');
 const stateEl = document.querySelector('#custom-confirm-state');
-let lastResult = '-';
 
 // Listen for dialog open
 dialog.addEventListener('nui-dialog-open', () => {
-	stateEl.textContent = 'State: open | Result: ' + lastResult;
+	stateEl.textContent = 'State: open | Result: pending...';
 });
 
-// Listen for dialog close
-dialog.addEventListener('nui-dialog-close', () => {
-	stateEl.textContent = 'State: closed | Result: ' + lastResult;
-});
-
-// Handle button clicks
-document.querySelector('#custom-confirm-ok').addEventListener('click', () => {
-	lastResult = 'confirmed';
-	dialog.close();
-});
-
-document.querySelector('#custom-confirm-cancel').addEventListener('click', () => {
-	lastResult = 'cancelled';
-	dialog.close();
+// Listen for dialog close to capture native returnValues injected declaratively
+dialog.addEventListener('nui-dialog-close', (e) => {
+	// e.detail.returnValue corresponds to what was passed exactly in data-action="dialog-close:_____@#my-dialog"
+	stateEl.textContent = 'State: closed | Result: ' + e.detail.returnValue;
 });
 		</script>
 	</nui-code>
 </section>
 
 <section>
-	<h2>JavaScript Control</h2>
+	<h2>Programmatic Usage (Advanced / Async)</h2>
 	<p>Control dialogs programmatically using element methods:</p>
 	<nui-code>
 		<script type="example" data-lang="javascript">
@@ -393,7 +394,7 @@ if (dialog.isOpen()) { ... }
 </section>
 
 <section>
-	<h2>Events</h2>
+	<>Available Events</>
 	<p>Dialogs dispatch custom events for close and cancel actions:</p>
 	<nui-code>
 		<script type="example" data-lang="javascript">
@@ -479,7 +480,7 @@ nui.components.dialog.prompt('Title', 'Optional message text.', {
 </section>
 
 <section>
-	<h2>Programmatic Control</h2>
+	<h2>Programmatic Usage (Advanced / Async)</h2>
 	<p>Control dialogs using standard JavaScript methods:</p>
 	<nui-code>
 		<script type="example" data-lang="javascript">
@@ -514,25 +515,13 @@ function init(element, params) {
 	// Watch the custom-confirm state and display it
 	const stateEl = element.querySelector('#custom-confirm-state');
 	const customConfirm = element.querySelector('#custom-confirm');
-	let lastResult = '-';
 
 	customConfirm.addEventListener('nui-dialog-open', () => {
-		stateEl.textContent = 'State: open | Result: ' + lastResult;
+		stateEl.textContent = 'State: open | Result: pending...';
 	});
 
-	customConfirm.addEventListener('nui-dialog-close', () => {
-		stateEl.textContent = 'State: closed | Result: ' + lastResult;
-	});
-
-	// Handle custom confirm button clicks
-	element.querySelector('#custom-confirm-ok').addEventListener('click', () => {
-		lastResult = 'confirmed';
-		customConfirm.close();
-	});
-
-	element.querySelector('#custom-confirm-cancel').addEventListener('click', () => {
-		lastResult = 'cancelled';
-		customConfirm.close();
+	customConfirm.addEventListener('nui-dialog-close', (e) => {
+		stateEl.textContent = 'State: closed | Result: ' + e.detail.returnValue;
 	});
 
 	// Setup action handlers using data-action delegation
@@ -540,12 +529,6 @@ function init(element, params) {
 		const { name, target, param } = e.detail;
 
 		switch (name) {
-			case 'dialog-open':
-				if (target && target.showModal) target.showModal();
-				break;
-			case 'dialog-close':
-				if (target && target.close) target.close(param);
-				break;
 			case 'show-alert':
 				await nui.components.dialog.alert('Hello!', 'This is a standard system alert.', {placement: 'top'});
 				showResult('Alert closed');
@@ -578,14 +561,11 @@ function init(element, params) {
 				showResult('Blocking alert acknowledged');
 				break;
 			case 'show-blocking-confirm':
-				const blockingRes = await nui.components.dialog.confirm('Terms of Service', 'Do you accept the terms of service? You must choose an option.', { 
+				const blockingRes = await nui.components.dialog.confirm('Terms of Service', 'Do you accept the terms of service? You must choose an option.', {
 					blocking: true,
 					placement: 'top'
 				});
 				showResult(blockingRes ? 'Terms accepted' : 'Terms declined');
-				break;
-			case 'open-custom-confirm':
-				customConfirm.showModal();
 				break;
 		}
 	});

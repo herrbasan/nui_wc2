@@ -19,21 +19,65 @@ const config = {
 
 const builtinActionHandlers = {
 	'banner-show': (t, _, e) => {
-		if (t?.show) { e.stopPropagation(); t.show(); return true; }
+		if (t?.show) { e.stopImmediatePropagation(); t.show(); return true; }
 		return false;
 	},
 	'banner-close': (t, _, e, p) => {
-		if (t?.close) { e.stopPropagation(); t.close(p); return true; }
+		if (t?.close) { e.stopImmediatePropagation(); t.close(p); return true; }
 		return false;
 	},
-	'card-flip': (t, el) => {
+	'dialog-open': (t, _, e) => {
+		if (t?.showModal) { e.stopImmediatePropagation(); t.showModal(); return true; }
+		return false;
+	},
+	'dialog-show': (t, _, e) => {
+		if (t?.show) { e.stopImmediatePropagation(); t.show(); return true; }
+		return false;
+	},
+	'dialog-close': (t, _, e, p) => {
+		if (t?.close) { e.stopImmediatePropagation(); t.close(p); return true; }
+		return false;
+	},
+	'overlay-open': (t, _, e) => {
+		if (t?.showModal) { e.stopImmediatePropagation(); t.showModal(); return true; }
+		return false;
+	},
+	'overlay-close': (t, _, e, p) => {
+		if (t?.close) { e.stopImmediatePropagation(); t.close(p); return true; }
+		return false;
+	},
+	'select-open': (t, _, e) => {
+		if (t?.open) { e.stopImmediatePropagation(); t.open(); return true; }
+		return false;
+	},
+	'select-close': (t, _, e, p) => {
+		if (t?.close) { e.stopImmediatePropagation(); t.close(p); return true; }
+		return false;
+	},
+	'card-flip': (t, el, e) => {
 		const card = (t !== el) ? t : el.closest('nui-card');
-		if (card) { card.toggleAttribute('flipped'); return true; }
+		if (card) { e.stopImmediatePropagation(); card.toggleAttribute('flipped'); return true; }
 		return false;
 	},
-	'scroll-to-top': (t, el) => {
+	'tabs-select': (t, _, e, p) => {
+		if (t?.selectTab) { e.stopImmediatePropagation(); t.selectTab(p); return true; }
+		return false;
+	},
+	'accordion-toggle': (t, _, e, p) => {
+		if (t?.toggle) { e.stopImmediatePropagation(); t.toggle(p); return true; }
+		return false;
+	},
+	'accordion-expand-all': (t, _, e) => {
+		if (t?.expandAll) { e.stopImmediatePropagation(); t.expandAll(); return true; }
+		return false;
+	},
+	'accordion-collapse-all': (t, _, e) => {
+		if (t?.collapseAll) { e.stopImmediatePropagation(); t.collapseAll(); return true; }
+		return false;
+	},
+	'scroll-to-top': (t, el, e) => {
 		const scrollable = (t !== el) ? t : el.closest('nui-main') || document.querySelector('nui-main');
-		if (scrollable) { scrollable.scrollTo({ top: 0, behavior: 'smooth' }); return true; }
+		if (scrollable) { e.stopImmediatePropagation(); scrollable.scrollTo({ top: 0, behavior: 'smooth' }); return true; }
 		return false;
 	}
 };
@@ -1599,6 +1643,16 @@ registerComponent('nui-tabs', (element) => {
 	if (initialTab) {
 		activateTab(initialTab, false);
 	}
+
+	element.selectTab = (indexOrId) => {
+		let targetTab = null;
+		if (typeof indexOrId === 'number' || !isNaN(indexOrId)) {
+			targetTab = tabs[parseInt(indexOrId, 10)];
+		} else {
+			targetTab = tabs.find(t => t.id === indexOrId || t.getAttribute('aria-controls') === indexOrId);
+		}
+		if (targetTab) activateTab(targetTab);
+	};
 });
 
 // ################################# nui-accordion COMPONENT
@@ -1663,6 +1717,36 @@ registerComponent('nui-accordion', (element) => {
 			});
 		});
 	}
+
+	element.toggle = (index) => {
+		const target = details[index];
+		if (target) {
+			const summary = target.el('summary');
+			if (summary && animate) summary.click();
+			else target.open = !target.open;
+		}
+	};
+
+	element.expandAll = () => {
+		if (element.hasAttribute('exclusive')) return;
+		details.forEach(detail => {
+			if (!detail.open) {
+				const summary = detail.el('summary');
+				if (summary && animate) summary.click();
+				else detail.open = true;
+			}
+		});
+	};
+
+	element.collapseAll = () => {
+		details.forEach(detail => {
+			if (detail.open) {
+				const summary = detail.el('summary');
+				if (summary && animate) summary.click();
+				else detail.open = false;
+			}
+		});
+	};
 });
 
 // ################################# nui-table COMPONENT
