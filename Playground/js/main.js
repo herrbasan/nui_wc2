@@ -2,7 +2,6 @@
 console.log('main.js loading...');
 
 import { nui } from '../../NUI/nui.js';
-import '../../NUI/lib/modules/nui-animation.js';
 import '../../NUI/lib/modules/nui-list.js';
 import '../../NUI/lib/modules/nui-lightbox.js';
 //import { createMonitor } from '../../NUI/lib/modules/nui-monitor.js';
@@ -326,7 +325,6 @@ const navigationData = [
 			{ label: 'Code', href: '#page=addons/code' },
 			{ label: 'List', href: '#page=addons/list' },
 			{ label: 'Menu', href: '#page=addons/menu' },
-			{ label: 'Animation', href: '#page=addons/animation' },
 			{ label: 'Lightbox', href: '#page=addons/lightbox' }
 		]
 	},

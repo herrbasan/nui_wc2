@@ -88,7 +88,7 @@ function setupButtonBehavior(element) {
 
 **UI:** `nui-button`, `nui-button-container`, `nui-icon`, `nui-tabs`, `nui-accordion`, `nui-overlay`, `nui-dialog`, `nui-banner`, `nui-table`, `nui-slider`, `nui-input`, `nui-textarea`, `nui-checkbox`, `nui-radio`, `nui-tag-input`, `nui-select`, `nui-link-list`, `nui-code`, `nui-loading`, `nui-progress`
 
-**Addons:** `nui-menu`, `nui-list`, `nui-animation`, `nui-syntax-highlight`
+**Addons:** `nui-menu`, `nui-list`, `nui-syntax-highlight`
 
 **Planned:** `nui-tooltip`
 

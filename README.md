@@ -78,7 +78,6 @@ These are opt-in addons in `NUI/lib/modules/`.
 | Module | Type | What it does | CSS |
 |--------|------|--------------|-----|
 | `nui-menu` | Component | Adds the `<nui-menu>` addon component (supports `.loadData(...)` and declarative HTML) | `NUI/css/modules/nui-menu.css` |
-| `nui-animation` | Utility | Adds `nui.animate(...)` and `Element.prototype.ani(...)` (Web Animations wrapper) | — |
 | `nui-syntax-highlight` | Utility | Exports `highlight(code, lang)`; `nui-code` imports it on-demand automatically | `NUI/css/modules/nui-syntax-highlight.css` |
 | `nui-monitor` | Utility | Deprecated (was for removed Knower/Doer experiments) | — |
 
@@ -95,7 +94,6 @@ Minimal loading example:
 
 <!-- Optional modules -->
 <script type="module" src="NUI/lib/modules/nui-menu.js"></script>
-<script type="module" src="NUI/lib/modules/nui-animation.js"></script>
 ```
 
 ## Philosophy
