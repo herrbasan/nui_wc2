@@ -3,6 +3,7 @@
 /* Copy button */
 nui-code {
 	position: relative;
+	display: block;
 }
 
 nui-code .nui-code-copy {
