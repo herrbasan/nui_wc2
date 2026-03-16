@@ -66,6 +66,20 @@ nui-code-editor {
     border: none;
     box-shadow: none;
     display: block;
+    margin: 0; /* Clear margins for absolute layer alignment */
+}
+
+/* Virtualization structural classes */
+.nui-code-editor-spacer {
+    position: relative;
+    width: 100%;
+}
+
+.nui-code-editor-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
 }
 
 .nui-code-editor-input {
@@ -108,4 +122,4 @@ nui-code-editor {
     .nui-code-editor-input {
         caret-color: var(--color-base-text, #fff);
     }
-}
+}\n\n.nui-code-editor-layer {\n    pointer-events: none;\n}\n

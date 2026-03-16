@@ -5,6 +5,12 @@ class NuiCodeEditor extends HTMLElement {
     constructor() {
         super();
         this._value = '';
+        this._lineHeight = 0;
+        this._renderStart = -1;
+        this._renderEnd = -1;
+        this._lastScrollTop = -1;
+        this._lastScrollLeft = -1;
+        this._lineCount = -1;
     }
 
     connectedCallback() {
@@ -21,11 +27,35 @@ class NuiCodeEditor extends HTMLElement {
         this._container = document.createElement('div');
         this._container.className = 'nui-code-editor-container';
 
-        // Line Numbers
+        // Line Numbers Virtualization Array
         this._lines = document.createElement('div');
         this._lines.className = 'nui-code-editor-lines';
         this._lines.setAttribute('aria-hidden', 'true');
+        
+        this._linesSpacer = document.createElement('div');
+        this._linesSpacer.className = 'nui-code-editor-spacer';
+        
+        this._linesLayer = document.createElement('div');
+        this._linesLayer.className = 'nui-code-editor-layer';
+        
+        this._linesSpacer.appendChild(this._linesLayer);
+        this._lines.appendChild(this._linesSpacer);
+
         if (!this._showLines) this._lines.style.display = 'none';
+
+        // Syntax Highlight Display Virtualization Array
+        this._display = document.createElement('pre');
+        this._display.className = 'nui-code-editor-display';
+        this._display.setAttribute('aria-hidden', 'true');
+
+        this._codeSpacer = document.createElement('div');
+        this._codeSpacer.className = 'nui-code-editor-spacer';
+        
+        this._codeLayer = document.createElement('code');
+        this._codeLayer.className = 'nui-code-editor-layer';
+        
+        this._codeSpacer.appendChild(this._codeLayer);
+        this._display.appendChild(this._codeSpacer);
 
         // Textarea (Input)
         this._textarea = document.createElement('textarea');
@@ -37,25 +67,153 @@ class NuiCodeEditor extends HTMLElement {
         this._textarea.setAttribute('translate', 'no');
         this._textarea.setAttribute('aria-label', this.getAttribute('aria-label') || 'Code Editor');
 
-        // Syntax Highlight Display
-        this._display = document.createElement('pre');
-        this._display.className = 'nui-code-editor-display';
-        this._display.setAttribute('aria-hidden', 'true');
-        
-        this._code = document.createElement('code');
-        this._display.appendChild(this._code);
-
         this._container.appendChild(this._lines);
         this._container.appendChild(this._display);
         this._container.appendChild(this._textarea);
         this.appendChild(this._container);
 
+        // Dimensions Observer to handle window resizing properly
+        const ro = new ResizeObserver(() => this.measureDimensions(true));
+        ro.observe(this._container);
+
         // Binding events
-        this._textarea.addEventListener('input', () => this.updateDisplay());
-        this._textarea.addEventListener('scroll', () => this.syncScroll());
+        this._textarea.addEventListener('input', () => {
+            this.render(true);
+            this.dispatchEvent(new CustomEvent('nui-change', {
+                bubbles: true,
+                detail: { value: this._textarea.value, lang: this._lang }
+            }));
+        });
+        
+        this._textarea.addEventListener('scroll', () => {
+            requestAnimationFrame(() => this.syncScroll());
+        });
+        
         this._textarea.addEventListener('keydown', (e) => this.handleKeydown(e));
 
-        this.updateDisplay();
+        // Wait a frame to ensure CSS styles are attached before measuring
+        requestAnimationFrame(() => {
+            this.measureDimensions();
+            this.render(true);
+        });
+    }
+
+    measureDimensions(forceRender = false) {
+        const style = window.getComputedStyle(this._textarea);
+        this._paddingTop = parseFloat(style.paddingTop) || 0;
+        
+        // Use a dummy element to measure the exact font-specific pixel line-height
+        const dummy = document.createElement('div');
+        dummy.style.opacity = '0';
+        dummy.style.position = 'absolute';
+        dummy.style.fontFamily = style.fontFamily;
+        dummy.style.fontSize = style.fontSize;
+        dummy.style.lineHeight = style.lineHeight;
+        dummy.style.letterSpacing = style.letterSpacing;
+        dummy.style.whiteSpace = 'pre';
+        dummy.style.padding = '0';
+        dummy.style.margin = '0';
+        dummy.textContent = 'X';
+        
+        this.appendChild(dummy);
+        this._lineHeight = dummy.getBoundingClientRect().height || 21; // fallback ~1.5 * 14px
+        this.removeChild(dummy);
+
+        if (forceRender) this.render(true);
+    }
+
+    syncScroll() {
+        const st = this._textarea.scrollTop;
+        const sl = this._textarea.scrollLeft;
+
+        let needsRender = false;
+        if (this._lineHeight > 0) {
+            const startLine = Math.max(0, Math.floor((st - this._paddingTop) / this._lineHeight));
+            const endLine = Math.ceil((st + this._textarea.clientHeight - this._paddingTop) / this._lineHeight);
+            
+            // If the user scrolls outside our overscan boundary, trigger a redraw slice
+            if (startLine < this._renderStart || endLine > this._renderEnd) {
+                needsRender = true;
+            }
+        }
+
+        if (needsRender) {
+            this.render();
+        }
+
+        // Always smoothly sync the scrollbar visual tracking layers regardless of render state
+        if (this._lastScrollTop !== st) {
+            this._display.scrollTop = st;
+            if (this._showLines) this._lines.scrollTop = st;
+            this._lastScrollTop = st;
+        }
+        
+        if (this._lastScrollLeft !== sl) {
+            this._display.scrollLeft = sl;
+            this._lastScrollLeft = sl;
+        }
+    }
+
+    render(force = false) {
+        if (!this._lineHeight) return;
+
+        const val = this._textarea.value;
+        const lines = val.split('\n');
+        const totalLines = lines.length;
+
+        const st = this._textarea.scrollTop;
+        const ch = this._textarea.clientHeight;
+        
+        const startLine = Math.max(0, Math.floor(Math.max(0, st - this._paddingTop) / this._lineHeight));
+        const endLine = Math.ceil(Math.max(0, st + ch - this._paddingTop) / this._lineHeight);
+
+        // Render buffer overscans viewport by 15 lines visually off-screen to avoid scroll-stutter
+        const OVERSCAN = 15;
+        const renderStart = Math.max(0, startLine - OVERSCAN);
+        const renderEnd = Math.min(totalLines, endLine + OVERSCAN);
+
+        const needsRender = force || 
+                            totalLines !== this._lineCount || 
+                            renderStart < this._renderStart || 
+                            renderEnd > this._renderEnd;
+
+        // Ensure vertical scrollbars match exact sizes without needing identical DOM depths
+        if (totalLines !== this._lineCount) {
+            const totalTextHeight = totalLines * this._lineHeight;
+            this._codeSpacer.style.minHeight = `${totalTextHeight}px`;
+            if (this._showLines) {
+                this._linesSpacer.style.minHeight = `${totalTextHeight}px`;
+            }
+            this._lineCount = totalLines;
+        }
+
+        if (needsRender) {
+            const slice = lines.slice(renderStart, renderEnd);
+            let textSlice = slice.join('\n');
+            
+            // Textarea trailing newlines need a hidden space boundary match occasionally
+            if (textSlice.endsWith('\n')) textSlice += ' ';
+
+            // Highlight ONLY the 50 visible lines sliced directly from viewport frame
+            let highlighted = highlight(textSlice, this._lang, true);
+            
+            const topOffset = renderStart * this._lineHeight;
+            
+            this._codeLayer.innerHTML = highlighted;
+            this._codeLayer.style.top = `${topOffset}px`;
+
+            this._renderStart = renderStart;
+            this._renderEnd = renderEnd;
+
+            if (this._showLines) {
+                let linesHtml = '';
+                for (let i = renderStart + 1; i <= renderEnd; i++) {
+                    linesHtml += `<div>${i}</div>`;
+                }
+                this._linesLayer.innerHTML = linesHtml;
+                this._linesLayer.style.top = `${topOffset}px`;
+            }
+        }
     }
 
     get value() {
@@ -65,47 +223,10 @@ class NuiCodeEditor extends HTMLElement {
     set value(val) {
         if (this._textarea) {
             this._textarea.value = val;
-            this.updateDisplay();
+            this.render(true);
         } else {
             this.textContent = val;
         }
-    }
-
-    updateDisplay() {
-        const val = this._textarea.value;
-        let highlighted = highlight(val, this._lang, true);
-        
-        if (val.endsWith('\n')) {
-            highlighted += ' ';
-        }
-        
-        this._code.innerHTML = highlighted;
-
-        if (this._showLines) {
-            const lineCount = val.split('\n').length;
-            if (this._lineCount !== lineCount) {
-                // optimized string building for lines
-                let linesHtml = '';
-                for(let i = 1; i <= lineCount; i++) {
-                    linesHtml += `<div>${i}</div>`;
-                }
-                this._lines.innerHTML = linesHtml;
-                this._lineCount = lineCount;
-            }
-        }
-
-        this.dispatchEvent(new CustomEvent('nui-change', {
-            bubbles: true,
-            detail: { value: val, lang: this._lang }
-        }));
-    }
-
-    syncScroll() {
-        requestAnimationFrame(() => {
-            this._display.scrollTop = this._textarea.scrollTop;
-            this._display.scrollLeft = this._textarea.scrollLeft;
-            this._lines.scrollTop = this._textarea.scrollTop;
-        });
     }
 
     handleKeydown(e) {
@@ -119,7 +240,7 @@ class NuiCodeEditor extends HTMLElement {
             
             ta.value = ta.value.substring(0, start) + indent + ta.value.substring(end);
             ta.selectionStart = ta.selectionEnd = start + indent.length;
-            this.updateDisplay();
+            this.render(true);
         }
         else if (e.key === 'Enter') {
             const start = ta.selectionStart;
@@ -133,7 +254,7 @@ class NuiCodeEditor extends HTMLElement {
                 e.preventDefault();
                 ta.value = val.substring(0, start) + '\n' + indent + val.substring(ta.selectionEnd);
                 ta.selectionStart = ta.selectionEnd = start + 1 + indent.length;
-                this.updateDisplay();
+                this.render(true);
             }
         }
         else if (['(', '[', '{', '"', "'", '`'].includes(e.key)) {
@@ -167,7 +288,7 @@ class NuiCodeEditor extends HTMLElement {
                 ta.value = ta.value.substring(0, start) + wrapOpen + wrapClose + ta.value.substring(end);
                 ta.selectionStart = ta.selectionEnd = start + 1;
             }
-            this.updateDisplay();
+            this.render(true);
         }
     }
 }
