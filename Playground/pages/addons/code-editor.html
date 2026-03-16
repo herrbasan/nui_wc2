@@ -1,0 +1,72 @@
+<div class="page-code-editor">
+    <header>
+        <h1>Code Editor</h1>
+        <p class="lead">A lightweight, zero-dependency, native syntax-highlighting code editor component.</p>
+    </header>
+
+    <section>
+        <h2>Basic Usage</h2>
+        <p>The <code>&lt;nui-code-editor&gt;</code> element layers a native transparent <code>&lt;textarea&gt;</code> over a syntax-highlighted block, getting all the benefits of the mobile native keyboard and accessibility automatically.</p>
+
+        <nui-code>
+            <script type="example" data-lang="html">
+<nui-code-editor data-lang="js" data-line-numbers="true">
+function helloWorld() {
+    console.log("Hello natively!");
+}
+helloWorld();
+</nui-code-editor>
+            </script>
+        </nui-code>
+
+        <div class="demo-area">
+            <nui-code-editor data-lang="js" data-line-numbers="true" style="height: 300px;">
+function calculateLayout() {
+    // This is an editable syntax highlighted block!
+    const bounds = {
+        width: window.innerWidth,
+        height: window.innerHeight
+    };
+
+    if (bounds.width > 768) {
+        return 'desktop';
+    }
+    
+    return 'mobile';
+}
+            </nui-code-editor>
+        </div>
+    </section>
+
+    <section>
+        <h2>Events & Output</h2>
+        <p>Listen for <code>nui-change</code> events on the element to get the updated value.</p>
+        <div class="demo-area">
+            <nui-code-editor id="demo-editor" data-lang="css" data-line-numbers="false" style="height: 150px;">
+.demo-class {
+    color: red;
+    display: flex;
+}
+            </nui-code-editor>
+            
+            <div class="demo-result" style="margin-top: 1rem;">
+                <p><strong>Outputs:</strong></p>
+                <div data-output style="padding: 1rem; background: var(--color-shade2); border-radius: var(--border-radius1); font-family: monospace; white-space: pre;"></div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script type="nui/page">
+function init(element, params, nui) {
+    const editor = element.querySelector('#demo-editor');
+    const output = element.querySelector('[data-output]');
+
+    if (editor && output) {
+        output.textContent = editor.value; // init
+        editor.addEventListener('nui-change', (e) => {
+            output.textContent = e.detail.value;
+        });
+    }
+}
+</script>

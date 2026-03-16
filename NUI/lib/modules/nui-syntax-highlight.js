@@ -2,9 +2,9 @@
 // Languages: HTML, CSS, JavaScript, TypeScript, JSON
 // Target: ~3KB minified
 
-export function highlight(code, lang) {
+export function highlight(code, lang, forceEscape = false) {
 	// Check if code is already escaped (contains &lt; etc)
-	const isEscaped = /&[lg]t;/.test(code);
+	const isEscaped = !forceEscape && /&[lg]t;/.test(code);
 	let html = isEscaped ? code : escapeHtml(code);
 	
 	// Use placeholders to prevent nested replacements
@@ -110,7 +110,7 @@ export function highlight(code, lang) {
 	
 	// Replace all tokens with actual HTML
 	tokens.forEach(({ token, html: replacement }) => {
-		html = html.replace(token, replacement);
+		html = html.split(token).join(replacement);
 	});
 
 	return html;
