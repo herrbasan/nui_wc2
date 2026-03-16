@@ -838,7 +838,7 @@ function setupCodeBlock(element, pre, codeBlock, rawText) {
 	copyButton.addEventListener('click', async () => {
 		try {
 			await navigator.clipboard.writeText(rawText);
-			copyButton.innerHTML = '<nui-icon name="check"></nui-icon>';
+			copyButton.innerHTML = '<nui-icon name="done"></nui-icon>';
 			copyButton.classList.add('copied');
 			setTimeout(() => {
 				copyButton.innerHTML = '<nui-icon name="content_copy"></nui-icon>';
@@ -2409,12 +2409,22 @@ const getMobileSelectModal = () => {
 	});
 
 	const modal = dom.create('div', { class: 'nui-select-sheet', target: backdrop });
+	const header = dom.create('div', { class: 'nui-select-sheet-header', target: modal });
+	const label = dom.create('span', { class: 'nui-select-sheet-label', target: header });
+	
+	const closeWrap = dom.create('nui-button', { 
+		target: header 
+	});
+	dom.create('button', { 
+		attrs: { 'aria-label': 'Done', type: 'button' },
+		content: '<nui-icon name="done"></nui-icon>',
+		events: { click: () => mobileModal.activeSelect?.close() }, 
+		target: closeWrap 
+	});
+
 	const tags = dom.create('div', { class: 'nui-select-sheet-tags', attrs: { hidden: '' }, target: modal });
 	const content = dom.create('div', { class: 'nui-select-sheet-content', target: modal });
 	const search = dom.create('div', { class: 'nui-select-sheet-search', target: modal });
-	const footer = dom.create('div', { class: 'nui-select-sheet-footer', target: modal });
-	const label = dom.create('span', { target: footer });
-	dom.create('button', { text: 'Done', events: { click: () => mobileModal.activeSelect?.close() }, target: footer });
 
 	mobileModal = {
 		backdrop, modal, content, tags, search, label, activeSelect: null,
@@ -2661,8 +2671,8 @@ registerComponent('nui-select', (element) => {
 	const open = () => {
 		if (isOpen || select.disabled) return;
 
-		// Check mobile
-		if (isMobileEnabled && window.innerWidth <= 500 && window.innerHeight > 500) {
+		// Check mobile (auto-trigger below 640px or if explicitly set)
+		if ((isMobileEnabled || window.innerWidth <= 640) && window.innerHeight > 400) {
 			openMobile();
 			return;
 		}

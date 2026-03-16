@@ -109,6 +109,23 @@
 					<option value="rust">Rust</option>
 					<option value="java">Java</option>
 					<option value="cpp">C++</option>
+					<option value="csharp">C#</option>
+					<option value="swift">Swift</option>
+					<option value="php">PHP</option>
+					<option value="kotlin">Kotlin</option>
+					<option value="scala">Scala</option>
+					<option value="dart">Dart</option>
+					<option value="r">R</option>
+					<option value="lua">Lua</option>
+					<option value="perl">Perl</option>
+					<option value="haskell">Haskell</option>
+					<option value="elixir">Elixir</option>
+					<option value="clojure">Elixir</option>
+					<option value="julia">Julia</option>
+					<option value="fsharp">F#</option>
+					<option value="erlang">Erlang</option>
+					<option value="nim">Nim</option>
+					<option value="zig">Nim</option>
 				</select>
 			</nui-select>
 		</nui-input-group>
@@ -448,12 +465,12 @@ document.getElementById('demo-form').addEventListener('submit', (e) => {
 
 <section>
 	<h2>Mobile Bottom Sheet</h2>
-	<p>Add the <code>mobile-sheet</code> attribute for a touch-optimized bottom sheet on mobile devices
-		(viewport width &le; 500px and height &gt; 500px).</p>
+	<p>The <code>mobile-sheet</code> behavior automatically triggers on narrow viewports (&le; 640px). 
+		You can also explicitly add the attribute to force it on larger screens.</p>
 
 	<div class="demo-area">
 		<nui-input-group>
-			<label>Mobile Optimized</label>
+			<label>Mobile Optimized (Forced)</label>
 			<nui-select mobile-sheet searchable>
 				<select>
 					<option value="">Select an option...</option>
@@ -469,7 +486,7 @@ document.getElementById('demo-form').addEventListener('submit', (e) => {
 
 	<nui-code>
 		<script type="example" data-lang="html">
-<!-- Bottom sheet appears on mobile viewport -->
+<!-- Force bottom sheet on all viewports -->
 <nui-select mobile-sheet searchable>
 	<select>
 		<option value="">Select...</option>
@@ -802,7 +819,7 @@ document.getElementById('demo-form').addEventListener('submit', (e) => {
 			<tr>
 				<td><code>mobile-sheet</code></td>
 				<td>boolean</td>
-				<td>Use bottom sheet on mobile viewports</td>
+				<td>Force bottom sheet on all viewports (auto-triggers &le; 640px)</td>
 			</tr>
 			<tr>
 				<td><code>placeholder</code></td>

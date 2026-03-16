@@ -3878,7 +3878,8 @@ nui-layout[banner] .maxwidth-container {
 	bottom: 0;
 	left: 0;
 	right: 0;
-	max-height: 90vh;
+	max-height: 100vh;
+	max-height: 100dvh;
 	background: var(--color-shade1);
 	z-index: 9999;
 	border-radius: var(--border-radius2) var(--border-radius2) 0 0;
@@ -3921,6 +3922,11 @@ nui-layout[banner] .maxwidth-container {
 	flex: 1;
 	overflow-y: auto;
 	-webkit-overflow-scrolling: touch;
+	padding-bottom: env(safe-area-inset-bottom);
+}
+
+.nui-select-sheet-content:has(+ .nui-select-sheet-search:not(:empty)) {
+	padding-bottom: 0;
 }
 
 .nui-select-sheet-content .nui-select-options {
@@ -3933,8 +3939,13 @@ nui-layout[banner] .maxwidth-container {
 
 .nui-select-sheet-search {
 	padding: var(--nui-space-half);
+	padding-bottom: max(var(--nui-space-half), env(safe-area-inset-bottom));
 	background: var(--color-shade2);
 	border-top: 1px solid var(--border-shade1);
+}
+
+.nui-select-sheet-search:empty {
+	display: none;
 }
 
 .nui-select-sheet-search .nui-select-search {
@@ -3944,28 +3955,42 @@ nui-layout[banner] .maxwidth-container {
 	background: transparent;
 }
 
-.nui-select-sheet-footer {
-	padding: var(--nui-space);
+.nui-select-sheet-header {
 	display: flex;
 	justify-content: space-between;
-	align-items: center;
-	border-top: 1px solid var(--border-shade1);
+	align-items: stretch;
+	border-bottom: 1px solid var(--border-shade1);
 	background: var(--color-shade1);
-	padding-bottom: max(var(--nui-space), env(safe-area-inset-bottom));
+	border-radius: var(--border-radius2) var(--border-radius2) 0 0;
 }
 
-.nui-select-sheet-footer span {
-	font-weight: 600;
+.nui-select-sheet-label {
+	padding: var(--nui-space) 0 var(--nui-space) var(--nui-space-double);
+	font-weight: 500;
+	font-size: 1.1em;
+	display: flex;
+	align-items: center;
 }
 
-.nui-select-sheet-footer button {
+.nui-select-sheet-header nui-button {
+	margin: 0;
+	display: flex;
+}
+
+.nui-select-sheet-header nui-button button {
+	padding: 0 var(--nui-space-double) 0 var(--nui-space);
+	color: var(--color-highlight);
 	background: transparent;
 	border: none;
-	color: var(--color-highlight);
-	font-weight: 600;
-	padding: var(--nui-space-half) var(--nui-space);
+	height: 100%;
+	border-radius: 0 var(--border-radius2) 0 0;
 	cursor: pointer;
 }
+
+.nui-select-sheet-header nui-button nui-icon {
+	color: var(--color-highlight);
+}
+
 
 /* ==========================================================================
    nui-progress component
