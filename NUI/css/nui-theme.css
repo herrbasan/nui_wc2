@@ -205,8 +205,11 @@ html {
 html:has(nui-app[data-layout="app"]),
 body:has(nui-app[data-layout="app"]) {
 	overflow: hidden;
-	position: absolute;
-	inset: 0;
+	position: fixed;
+	width: 100vw;
+	height: 100dvh;
+	margin: 0;
+	padding: 0;
 }
 
 body {
@@ -217,6 +220,8 @@ body {
 	background: light-dark(var(--color-shade2), var(--color-shade1));
 	color: var(--text-color);
 	line-height: 2;
+	touch-action: pan-x pan-y;
+	-webkit-text-size-adjust: 100%;
 }
 
 pre {
@@ -1101,6 +1106,7 @@ nui-app[data-layout="app"] nui-sidebar {
 	top: 0;
 	left: 0;
 	bottom: 0;
+	height: auto;
 	width: var(--sidebar-width);
 	background: var(--color-shade2);
 	padding: 0;
@@ -1707,10 +1713,10 @@ nui-overlay dialog {
 	inset: 0;
 	margin: 0;
 	padding: 0;
-	width: 100vw;
-	height: 100vh;
-	max-width: 100vw;
-	max-height: 100vh;
+	width: 100dvw;
+	height: 100dvh;
+	max-width: 100dvw;
+	max-height: 100dvh;
 	border: none;
 	background: transparent;
 	display: flex;
