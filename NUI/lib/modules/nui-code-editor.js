@@ -5,266 +5,261 @@ class NuiCodeEditor extends HTMLElement {
     constructor() {
         super();
         this._value = '';
-        this._lineHeight = 0;
-        this._renderStart = -1;
-        this._renderEnd = -1;
-        this._lastScrollTop = -1;
-        this._lastScrollLeft = -1;
-        this._lineCount = -1;
     }
 
     connectedCallback() {
         if (this.hasAttribute('data-initialized')) return;
         this.setAttribute('data-initialized', 'true');
 
-        const initialText = this.textContent.trim();
-        this.innerHTML = '';
+        // Extract content and clean bounding empty newlines usually present from HTML structure
+        const initialText = this.textContent;
+        this._value = initialText.replace(/^\n/, '').replace(/\n\s*$/, '');
+        
+        while (this.firstChild) {
+            this.removeChild(this.firstChild);
+        }
 
         this._lang = this.getAttribute('data-lang') || 'js';
         this._showLines = this.getAttribute('data-line-numbers') !== 'false';
 
-        // Container
         this._container = document.createElement('div');
         this._container.className = 'nui-code-editor-container';
 
-        // Line Numbers Virtualization Array
         this._lines = document.createElement('div');
         this._lines.className = 'nui-code-editor-lines';
         this._lines.setAttribute('aria-hidden', 'true');
-        
-        this._linesSpacer = document.createElement('div');
-        this._linesSpacer.className = 'nui-code-editor-spacer';
-        
-        this._linesLayer = document.createElement('div');
-        this._linesLayer.className = 'nui-code-editor-layer';
-        
-        this._linesSpacer.appendChild(this._linesLayer);
-        this._lines.appendChild(this._linesSpacer);
-
         if (!this._showLines) this._lines.style.display = 'none';
 
-        // Syntax Highlight Display Virtualization Array
-        this._display = document.createElement('pre');
-        this._display.className = 'nui-code-editor-display';
-        this._display.setAttribute('aria-hidden', 'true');
+        this._editorWrapper = document.createElement('div');
+        this._editorWrapper.className = 'nui-code-editor-wrap';
 
-        this._codeSpacer = document.createElement('div');
-        this._codeSpacer.className = 'nui-code-editor-spacer';
-        
-        this._codeLayer = document.createElement('code');
-        this._codeLayer.className = 'nui-code-editor-layer';
-        
-        this._codeSpacer.appendChild(this._codeLayer);
-        this._display.appendChild(this._codeSpacer);
+        this._editor = document.createElement('code');
+        this._editor.className = 'nui-code-editor-input';
+        this._editor.setAttribute('contenteditable', 'true');
+        this._editor.setAttribute('spellcheck', 'false');
+        this._editor.setAttribute('autocorrect', 'off');
+        this._editor.setAttribute('autocapitalize', 'off');
+        this._editor.setAttribute('translate', 'no');
+        this._editor.setAttribute('aria-label', this.getAttribute('aria-label') || 'Code Editor');
 
-        // Textarea (Input)
-        this._textarea = document.createElement('textarea');
-        this._textarea.className = 'nui-code-editor-input';
-        this._textarea.value = initialText;
-        this._textarea.setAttribute('spellcheck', 'false');
-        this._textarea.setAttribute('autocorrect', 'off');
-        this._textarea.setAttribute('autocapitalize', 'off');
-        this._textarea.setAttribute('translate', 'no');
-        this._textarea.setAttribute('aria-label', this.getAttribute('aria-label') || 'Code Editor');
-
+        this._editorWrapper.appendChild(this._editor);
         this._container.appendChild(this._lines);
-        this._container.appendChild(this._display);
-        this._container.appendChild(this._textarea);
+        this._container.appendChild(this._editorWrapper);
         this.appendChild(this._container);
 
-        // Dimensions Observer to handle window resizing properly
-        const ro = new ResizeObserver(() => this.measureDimensions(true));
-        ro.observe(this._container);
-
-        // Binding events
-        this._textarea.addEventListener('input', () => {
-            this.render(true);
-            this.dispatchEvent(new CustomEvent('nui-change', {
-                bubbles: true,
-                detail: { value: this._textarea.value, lang: this._lang }
-            }));
-        });
+        // Events
+        this._editor.addEventListener('input', () => this.handleInput());
+        this._editor.addEventListener('keydown', (e) => this.handleKeydown(e));
+        this._editor.addEventListener('paste', (e) => this.handlePaste(e));
         
-        this._textarea.addEventListener('scroll', () => {
-            requestAnimationFrame(() => this.syncScroll());
-        });
-        
-        this._textarea.addEventListener('keydown', (e) => this.handleKeydown(e));
-
-        // Wait a frame to ensure CSS styles are attached before measuring
-        requestAnimationFrame(() => {
-            this.measureDimensions();
-            this.render(true);
-        });
-    }
-
-    measureDimensions(forceRender = false) {
-        const style = window.getComputedStyle(this._textarea);
-        this._paddingTop = parseFloat(style.paddingTop) || 0;
-        
-        // Use a dummy element to measure the exact font-specific pixel line-height
-        const dummy = document.createElement('div');
-        dummy.style.opacity = '0';
-        dummy.style.position = 'absolute';
-        dummy.style.fontFamily = style.fontFamily;
-        dummy.style.fontSize = style.fontSize;
-        dummy.style.lineHeight = style.lineHeight;
-        dummy.style.letterSpacing = style.letterSpacing;
-        dummy.style.whiteSpace = 'pre';
-        dummy.style.padding = '0';
-        dummy.style.margin = '0';
-        dummy.textContent = 'X';
-        
-        this.appendChild(dummy);
-        this._lineHeight = dummy.getBoundingClientRect().height || 21; // fallback ~1.5 * 14px
-        this.removeChild(dummy);
-
-        if (forceRender) this.render(true);
-    }
-
-    syncScroll() {
-        const st = this._textarea.scrollTop;
-        const sl = this._textarea.scrollLeft;
-
-        // Force exact internal dimensions to allow identical scrolling
-        if (this._lastScrollWidth !== this._textarea.scrollWidth) {
-            const innerWidth = this._textarea.scrollWidth;
-            this._codeSpacer.style.minWidth = `${innerWidth}px`;
-            this._lastScrollWidth = this._textarea.scrollWidth;
-        }
-
-        let needsRender = false;
-        if (this._lineHeight > 0) {
-            const startLine = Math.max(0, Math.floor((st - this._paddingTop) / this._lineHeight));
-            const endLine = Math.ceil((st + this._textarea.clientHeight - this._paddingTop) / this._lineHeight);
-            
-            // If the user scrolls outside our overscan boundary, trigger a redraw slice
-            if (startLine < this._renderStart || endLine > this._renderEnd) {
-                needsRender = true;
-            }
-        }
-
-        if (needsRender) {
-            this.render();
-        }
-
-        // Always smoothly sync the scrollbar visual tracking layers regardless of render state
-        if (this._lastScrollTop !== st) {
-            this._display.scrollTop = st;
-            if (this._showLines) this._lines.scrollTop = st;
-            this._lastScrollTop = st;
-        }
-        
-        if (this._lastScrollLeft !== sl) {
-            this._display.scrollLeft = sl;
-            this._lastScrollLeft = sl;
-        }
-    }
-
-    render(force = false) {
-        if (!this._lineHeight) return;
-
-        const val = this._textarea.value;
-        const lines = val.split('\n');
-        const totalLines = lines.length;
-
-        const st = this._textarea.scrollTop;
-        const ch = this._textarea.clientHeight;
-        
-        const startLine = Math.max(0, Math.floor(Math.max(0, st - this._paddingTop) / this._lineHeight));
-        const endLine = Math.ceil(Math.max(0, st + ch - this._paddingTop) / this._lineHeight);
-
-        // Render buffer overscans viewport by 15 lines visually off-screen to avoid scroll-stutter
-        const OVERSCAN = 15;
-        const renderStart = Math.max(0, startLine - OVERSCAN);
-        const renderEnd = Math.min(totalLines, endLine + OVERSCAN);
-
-        const needsRender = force || 
-                            totalLines !== this._lineCount || 
-                            renderStart < this._renderStart || 
-                            renderEnd > this._renderEnd;
-
-        // Ensure vertical scrollbars match exact sizes without needing identical DOM depths
-        if (totalLines !== this._lineCount) {
-            const totalTextHeight = totalLines * this._lineHeight;
-            this._codeSpacer.style.minHeight = `${totalTextHeight}px`;
+        this._editorWrapper.addEventListener('scroll', () => {
             if (this._showLines) {
-                this._linesSpacer.style.minHeight = `${totalTextHeight}px`;
+                this._lines.scrollTop = this._editorWrapper.scrollTop;
             }
-            this._lineCount = totalLines;
-        }
+        });
 
-        if (needsRender) {
-            const slice = lines.slice(renderStart, renderEnd);
-            let textSlice = slice.join('\n');
-            
-            // Textarea trailing newlines need a hidden space boundary match occasionally
-            if (textSlice.endsWith('\n')) textSlice += ' ';
-
-            // Highlight ONLY the visible lines sliced directly from viewport frame
-            let highlighted = highlight(textSlice, this._lang, true);
-            
-            const topOffset = renderStart * this._lineHeight;
-            
-            // PREVENT INNERHTML NEWLINE STRIPPING BY HTML PARSER (A zero-width span tricks the engine)
-            this._codeLayer.innerHTML = '<span aria-hidden="true"></span>' + highlighted;
-            this._codeLayer.style.top = `${topOffset}px`;
-
-            this._renderStart = renderStart;
-            this._renderEnd = renderEnd;
-
-            if (this._showLines) {
-                let linesHtml = '';
-                for (let i = renderStart + 1; i <= renderEnd; i++) {
-                    linesHtml += `<div>${i}</div>`;
-                }
-                this._linesLayer.innerHTML = linesHtml;
-                this._linesLayer.style.top = `${topOffset}px`;
-            }
-        }
+        this.renderBlock(this._value);
     }
 
     get value() {
-        return this._textarea ? this._textarea.value : this.textContent;
+        return this._value;
     }
 
     set value(val) {
-        if (this._textarea) {
-            this._textarea.value = val;
-            this.render(true);
+        this.renderBlock(val);
+    }
+
+    handleInput() {
+        // Save caret offset
+        const pos = this.getCaret();
+        
+        // Use textContent. In contenteditable, enter sometimes yields trailing <br> depending on browser
+        let rawText = this._editor.textContent;
+        if (this._editor.lastChild && this._editor.lastChild.nodeName === 'BR') {
+            rawText += '\n';
+        }
+        
+        this._value = rawText || ''; 
+        
+        // Highlight and ensure trailing newline retains height by appending a <br>
+        const html = highlight(this._value, this._lang, true);
+        this._editor.innerHTML = html + (this._value.endsWith('\n') ? '<br>' : '');
+        
+        this.restoreCaret(pos);
+        this.updateLines();
+
+        this.dispatchEvent(new CustomEvent('nui-change', {
+            bubbles: true,
+            detail: { value: this._value, lang: this._lang }
+        }));
+    }
+
+    handlePaste(e) {
+        e.preventDefault();
+        const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+        
+        // execCommand manages the undo stack perfectly but crashes the browser engine on massive block insertions
+        if (text.length > 2000) {
+            const pos = this.getCaret();
+            this._value = this._value.substring(0, pos) + text + this._value.substring(pos);
+            this.renderBlock(this._value);
+            this.restoreCaret(pos + text.length);
+            
+            this.dispatchEvent(new CustomEvent('nui-change', {
+                bubbles: true,
+                detail: { value: this._value, lang: this._lang }
+            }));
         } else {
-            this.textContent = val;
+            this.insertText(text);
         }
     }
 
-    handleKeydown(e) {
-        const ta = this._textarea;
-        
-        if (e.key === 'Tab') {
-            e.preventDefault();
-            const start = ta.selectionStart;
-            const end = ta.selectionEnd;
-            const indent = '    '; // Default to 4 spaces
-            
-            ta.value = ta.value.substring(0, start) + indent + ta.value.substring(end);
-            ta.selectionStart = ta.selectionEnd = start + indent.length;
-            this.render(true);
-        }
-        else if (e.key === 'Enter') {
-            const start = ta.selectionStart;
-            const val = ta.value;
-            const lineStart = val.lastIndexOf('\n', start - 1) + 1;
-            const line = val.substring(lineStart, start);
-            const match = line.match(/^(\s*)/);
-            const indent = match ? match[1] : '';
+    renderBlock(text) {
+        this._value = text || '';
+        const html = highlight(this._value, this._lang, true);
+        this._editor.innerHTML = html + (this._value.endsWith('\n') ? '<br>' : '');
+        this.updateLines();
+    }
 
-            if (indent) {
-                e.preventDefault();
-                ta.value = val.substring(0, start) + '\n' + indent + val.substring(ta.selectionEnd);
-                ta.selectionStart = ta.selectionEnd = start + 1 + indent.length;
-                this.render(true);
+    updateLines() {
+        if (!this._showLines) return;
+        const lineCount = this._value.split('\n').length;
+        if (this._lastLineCount !== lineCount) {
+            let nums = [];
+            for (let i = 1; i <= lineCount; i++) {
+                nums.push(i);
+            }
+            this._lines.textContent = nums.join('\n');
+            this._lastLineCount = lineCount;
+        }
+    }
+
+    getCaret() {
+        const sel = window.getSelection();
+        if (!sel || sel.rangeCount === 0) return 0;
+        
+        const targetNode = sel.anchorNode;
+        const targetOffset = sel.anchorOffset;
+        
+        // Make sure selection is inside this editor
+        if (!this._editor.contains(targetNode)) return 0;
+
+        let pos = 0;
+        let isFound = false;
+
+        // preCaretRange.toString() computes visual text layout metrics natively, crashing on massive DOM sizes.
+        // A pure TreeWalker approach calculates the position instantly.
+        function walk(node) {
+            if (isFound) return;
+            if (node === targetNode) {
+                isFound = true;
+                if (node.nodeType === Node.TEXT_NODE) {
+                    pos += targetOffset;
+                } else {
+                    for (let i = 0; i < targetOffset; i++) {
+                        if (node.childNodes[i]) {
+                            pos += node.childNodes[i].textContent.length;
+                        }
+                    }
+                }
+                return;
+            }
+            if (node.nodeType === Node.TEXT_NODE) {
+                pos += node.nodeValue.length;
+            } else {
+                for (let i = 0; i < node.childNodes.length; i++) {
+                    walk(node.childNodes[i]);
+                    if (isFound) break;
+                }
             }
         }
+        
+        walk(this._editor);
+        return pos;
+    }
+
+    restoreCaret(pos) {
+        const sel = window.getSelection();
+        if (!sel) return;
+
+        let currentPos = 0;
+        let node = null;
+        let offset = 0;
+
+        function traverse(currentNode) {
+            if (node) return;
+            if (currentNode.nodeType === Node.TEXT_NODE) {
+                const len = currentNode.nodeValue.length;
+                if (currentPos + len >= pos) {
+                    node = currentNode;
+                    offset = pos - currentPos;
+                } else {
+                    currentPos += len;
+                }
+            } else {
+                for (let i = 0; i < currentNode.childNodes.length; i++) {
+                    traverse(currentNode.childNodes[i]);
+                    if (node) break; // Optimization: Stop traversing elements once found
+                }
+            }
+        }
+
+        traverse(this._editor);
+
+        const range = document.createRange();
+        if (node && node.nodeType === Node.TEXT_NODE) {
+            range.setStart(node, offset);
+            range.setEnd(node, offset);
+        } else {
+            // Fallback to the end of the block
+            range.selectNodeContents(this._editor);
+            range.collapse(false);
+        }
+        
+        sel.removeAllRanges();
+        sel.addRange(range);
+    }
+
+    insertText(text) {
+        // execCommand covers inserting text seamlessly while managing the undo stack in contenteditables
+        document.execCommand('insertText', false, text);
+    }
+
+    handleKeydown(e) {
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            this.insertText('    ');
+        } 
+        else if (e.key === 'Backspace' || e.key === 'Delete') {
+            // Browsers freeze if you natively delete 10,000 spans at once because of the undo-history computation.
+            // If the user has selected a massive chunk, we bypass the native history stack to prevent freezing.
+            const sel = window.getSelection();
+            if (sel && !sel.isCollapsed && sel.toString().length > 1000) {
+                e.preventDefault();
+                const pos = this.getCaret();
+                const textLen = sel.toString().length;
+                this._value = this._value.substring(0, pos) + this._value.substring(pos + textLen);
+                this.renderBlock(this._value);
+                this.restoreCaret(pos);
+                this.dispatchEvent(new CustomEvent('nui-change', {
+                    bubbles: true,
+                    detail: { value: this._value, lang: this._lang }
+                }));
+            }
+        }
+        else if (e.key === 'Enter') {
+            e.preventDefault();
+            const pos = this.getCaret();
+            const val = this._editor.textContent;
+            
+            // Calc indent of current line
+            const lineStart = val.lastIndexOf('\n', pos - 1) + 1;
+            const line = val.substring(lineStart, pos);
+            const match = line.match(/^(\s*)/);
+            const indent = match ? match[1] : '';
+            
+            this.insertText('\n' + indent);
+        } 
         else if (['(', '[', '{', '"', "'", '`'].includes(e.key)) {
             const map = {
                 '(': ')',
@@ -274,29 +269,22 @@ class NuiCodeEditor extends HTMLElement {
                 "'": "'",
                 '`': '`'
             };
-            const start = ta.selectionStart;
-            const end = ta.selectionEnd;
             
-            // Prevent auto-wrap if typing normally next to a word
-            const nextChar = ta.value.charAt(start);
-            if (ta.selectionStart === ta.selectionEnd && nextChar && nextChar.match(/[\w]/)) {
-                return;
-            }
-
-            e.preventDefault();
-            const wrapOpen = e.key;
-            const wrapClose = map[e.key];
+            const sel = window.getSelection();
+            if(!sel || sel.rangeCount === 0) return;
+            const range = sel.getRangeAt(0);
             
-            if (start !== end) {
-                const selected = ta.value.substring(start, end);
-                ta.value = ta.value.substring(0, start) + wrapOpen + selected + wrapClose + ta.value.substring(end);
-                ta.selectionStart = start + 1;
-                ta.selectionEnd = end + 1;
+            if (!range.collapsed) {
+                e.preventDefault();
+                const selectedText = range.toString();
+                this.insertText(e.key + selectedText + map[e.key]);
             } else {
-                ta.value = ta.value.substring(0, start) + wrapOpen + wrapClose + ta.value.substring(end);
-                ta.selectionStart = ta.selectionEnd = start + 1;
+                e.preventDefault();
+                this.insertText(e.key + map[e.key]);
+                // Move cursor left by one to step inside the autocompleted bracket
+                const pos = this.getCaret();
+                this.restoreCaret(pos - 1);
             }
-            this.render(true);
         }
     }
 }

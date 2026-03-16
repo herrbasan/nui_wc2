@@ -48,13 +48,13 @@ export function highlight(code, lang, forceEscape = false) {
 		// Numbers with units
 		html = html.replace(/\b(\d+\.?\d*(?:px|em|rem|%|vh|vw|deg|s|ms)?)\b/g, (m) => wrap(m, 'number'));
 	} else if (lang === 'js' || lang === 'javascript') {
+		// Template literals
+		html = html.replace(/(`[^`\\]*(?:\\.[^`\\]*)*`)/g, (m) => wrap(m, 'template'));
+		// Strings
+		html = html.replace(/('[^'\\]*(?:\\.[^'\\]*)*'|"[^"\\]*(?:\\.[^"\\]*)*")/g, (m) => wrap(m, 'string'));
 		// Comments
 		html = html.replace(/(\/\/.*$)/gm, (m) => wrap(m, 'comment'));
 		html = html.replace(/(\/\*[\s\S]*?\*\/)/g, (m) => wrap(m, 'comment'));
-		// Template literals with ${} support
-		html = html.replace(/(`(?:[^`\\$]|\\.|(?:\$(?!{))|\$\{[^}]*\})*`)/g, (m) => wrap(m, 'template'));
-		// Strings
-		html = html.replace(/('(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*")/g, (m) => wrap(m, 'string'));
 		// Keywords
 		html = html.replace(/\b(const|let|var|function|return|if|else|for|while|do|break|continue|switch|case|default|class|extends|static|new|async|await|import|export|from|as|default|try|catch|finally|throw|typeof|instanceof|in|of|this|super|delete|void|yield|with)\b/g, (m) => wrap(m, 'keyword'));
 		// Built-in objects
@@ -68,13 +68,13 @@ export function highlight(code, lang, forceEscape = false) {
 		// Function calls (conservative: lowercase start, before parens)
 		html = html.replace(/\b([a-z_$][\w$]*)(?=\s*\()/g, (m) => wrap(m, 'function'));
 	} else if (lang === 'ts' || lang === 'typescript') {
+		// Template literals
+		html = html.replace(/(`[^`\\]*(?:\\.[^`\\]*)*`)/g, (m) => wrap(m, 'template'));
+		// Strings
+		html = html.replace(/('[^'\\]*(?:\\.[^'\\]*)*'|"[^"\\]*(?:\\.[^"\\]*)*")/g, (m) => wrap(m, 'string'));
 		// Comments
 		html = html.replace(/(\/\/.*$)/gm, (m) => wrap(m, 'comment'));
 		html = html.replace(/(\/\*[\s\S]*?\*\/)/g, (m) => wrap(m, 'comment'));
-		// Template literals
-		html = html.replace(/(`(?:[^`\\$]|\\.|(?:\$(?!{))|\$\{[^}]*\})*`)/g, (m) => wrap(m, 'template'));
-		// Strings
-		html = html.replace(/('(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*")/g, (m) => wrap(m, 'string'));
 		// TypeScript-specific keywords
 		html = html.replace(/\b(interface|type|enum|namespace|declare|public|private|protected|readonly|abstract|implements|keyof|infer|is|as)\b/g, (m) => wrap(m, 'keyword'));
 		// Regular JS keywords
@@ -108,10 +108,16 @@ export function highlight(code, lang, forceEscape = false) {
 		html = html.replace(/,\s*(-?\d+\.?\d*(?:[eE][+-]?\d+)?)/g, (m, p1) => ', ' + wrap(p1, 'number'));
 	}
 	
-	// Replace all tokens with actual HTML
-	tokens.forEach(({ token, html: replacement }) => {
-		html = html.split(token).join(replacement);
-	});
+	// Replace all tokens with actual HTML. 
+	// Because tokens can be nested (e.g. a comment containing a string token), we loop until all are resolved.
+	// But we use a single fast replace per pass instead of N loop allocations.
+	let pass = 0;
+	while (html.includes('~~TOKEN_') && pass < 10) {
+		html = html.replace(/~~TOKEN_(\d+)~~/g, (m, id) => {
+			return tokens[id] ? tokens[id].html : m;
+		});
+		pass++;
+	}
 
 	return html;
 }

@@ -7,23 +7,21 @@ nui-code-editor {
 }
 
 .nui-code-editor-container {
-    position: relative;
+    display: flex;
     width: 100%;
-    height: 100%; /* Important for host sizing to pass through */
-    /* Same background as highlighted blocks */
+    height: 100%;
     background: var(--color-shade2);
     border-radius: var(--border-radius1, 4px);
     overflow: hidden;
-    display: flex;
     font-family: monospace;
-    font-size: 0.9rem;
+    font-size: 14px;
     line-height: 1.5;
     border: 1px solid var(--border-shade1, rgba(0,0,0,0.1));
 }
 
 .nui-code-editor-lines {
     min-width: 3rem;
-    padding: 1rem 0;
+    padding: 1rem 0.5rem;
     text-align: right;
     background: var(--color-shade3);
     color: var(--color-base-text, #333);
@@ -31,94 +29,40 @@ nui-code-editor {
     user-select: none;
     overflow: hidden;
     border-right: 1px solid var(--border-shade2, rgba(0,0,0,0.1));
-    /* Inherit exact typography to match height logic */
-    font-family: inherit;
-    font-size: inherit;
-    line-height: inherit;
-    letter-spacing: inherit;
-    word-spacing: inherit;
+    white-space: pre;
+    box-sizing: border-box;
 }
 
-.nui-code-editor-lines div {
-    padding: 0 0.5rem;
-    height: auto; /* Let it natively assume standard line-height */
+.nui-code-editor-lines::-webkit-scrollbar {
+    display: none;
 }
 
-.nui-code-editor-display,
+.nui-code-editor-wrap {
+    flex-grow: 1;
+    overflow: auto;
+    position: relative;
+}
+
 .nui-code-editor-input {
-    /* Critical: both must have the exact same box model and typography */
+    display: block;
+    min-width: 100%;
+    min-height: 100%;
     margin: 0;
     padding: 1rem;
     font-family: inherit;
     font-size: inherit;
     line-height: inherit;
-    letter-spacing: inherit;
-    word-spacing: inherit;
+    white-space: pre; 
     tab-size: 4;
-    white-space: pre;
-    border: none;
-    box-sizing: border-box; /* Force padding consistency */
+    outline: none;
+    box-sizing: border-box;
+    caret-color: var(--color-base-text, #000);
 }
 
-.nui-code-editor-display {
-    flex-grow: 1;
-    overflow: hidden; /* Hide scrollbars, JS syncs scroll from textarea */
-    pointer-events: none; /* Let mouse events pass through */
-}
-
-.nui-code-editor-display code {
+.nui-code-editor-input * {
     font-family: inherit;
-    padding: 0;
-    background: none;
-    border: none;
-    box-shadow: none;
-    display: block;
-    margin: 0; /* Clear margins for absolute layer alignment */
-}
-
-/* Virtualization structural classes */
-.nui-code-editor-spacer {
-    position: relative;
-    /* Removed width: 100% so we can safely control max widths natively */
-}
-
-.nui-code-editor-layer {
-    position: absolute;
-    top: 0;
-    left: 0;
-    /* removed right: 0 to allow the pre/code string to run horizontally infinitely and sync with textarea scroll width */
-    pointer-events: none;
-    min-width: max-content; 
-}
-
-.nui-code-editor-input {
-    position: absolute;
-    top: 0;
-    left: 0;
-    overflow: auto; /* True scrolling container */
-    /* Account for line numbers width */
-    width: 100%;
-    height: 100%;
-    background: transparent;
-    color: transparent; /* Makes the textarea text invisible */
-    caret-color: var(--color-base-text, #000); /* Keep the cursor visible */
-    resize: none;
-    outline: none;
-    /* Move left edge to match the display element */
-    z-index: 1;
-    -webkit-appearance: none;
-    appearance: none;
-}
-
-/* If line numbers are active, we must offset the absolute textarea by the width of the lines container */
-.nui-code-editor-container:has(.nui-code-editor-lines:not([style*="none"])) .nui-code-editor-input {
-    left: 3rem; /* Same as min-width of lines */
-    width: calc(100% - 3rem);
-}
-
-/* Ensure no webkit focus rings */
-.nui-code-editor-input:focus {
-    outline: none;
+    font-size: inherit;
+    line-height: inherit;
 }
 
 /* Dark mode basic support */
@@ -133,8 +77,4 @@ nui-code-editor {
     .nui-code-editor-input {
         caret-color: var(--color-base-text, #fff);
     }
-}
-
-.nui-code-editor-layer {
-    pointer-events: none;
 }
