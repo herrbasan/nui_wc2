@@ -126,6 +126,13 @@ class NuiCodeEditor extends HTMLElement {
         const st = this._textarea.scrollTop;
         const sl = this._textarea.scrollLeft;
 
+        // Force exact internal dimensions to allow identical scrolling
+        if (this._lastScrollWidth !== this._textarea.scrollWidth) {
+            const innerWidth = this._textarea.scrollWidth;
+            this._codeSpacer.style.minWidth = `${innerWidth}px`;
+            this._lastScrollWidth = this._textarea.scrollWidth;
+        }
+
         let needsRender = false;
         if (this._lineHeight > 0) {
             const startLine = Math.max(0, Math.floor((st - this._paddingTop) / this._lineHeight));
@@ -194,12 +201,13 @@ class NuiCodeEditor extends HTMLElement {
             // Textarea trailing newlines need a hidden space boundary match occasionally
             if (textSlice.endsWith('\n')) textSlice += ' ';
 
-            // Highlight ONLY the 50 visible lines sliced directly from viewport frame
+            // Highlight ONLY the visible lines sliced directly from viewport frame
             let highlighted = highlight(textSlice, this._lang, true);
             
             const topOffset = renderStart * this._lineHeight;
             
-            this._codeLayer.innerHTML = highlighted;
+            // PREVENT INNERHTML NEWLINE STRIPPING BY HTML PARSER (A zero-width span tricks the engine)
+            this._codeLayer.innerHTML = '<span aria-hidden="true"></span>' + highlighted;
             this._codeLayer.style.top = `${topOffset}px`;
 
             this._renderStart = renderStart;

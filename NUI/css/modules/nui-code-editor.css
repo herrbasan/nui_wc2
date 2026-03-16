@@ -31,11 +31,17 @@ nui-code-editor {
     user-select: none;
     overflow: hidden;
     border-right: 1px solid var(--border-shade2, rgba(0,0,0,0.1));
+    /* Inherit exact typography to match height logic */
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    letter-spacing: inherit;
+    word-spacing: inherit;
 }
 
 .nui-code-editor-lines div {
     padding: 0 0.5rem;
-    height: 1.5em; /* matches line-height */
+    height: auto; /* Let it natively assume standard line-height */
 }
 
 .nui-code-editor-display,
@@ -51,6 +57,7 @@ nui-code-editor {
     tab-size: 4;
     white-space: pre;
     border: none;
+    box-sizing: border-box; /* Force padding consistency */
 }
 
 .nui-code-editor-display {
@@ -72,14 +79,16 @@ nui-code-editor {
 /* Virtualization structural classes */
 .nui-code-editor-spacer {
     position: relative;
-    width: 100%;
+    /* Removed width: 100% so we can safely control max widths natively */
 }
 
 .nui-code-editor-layer {
     position: absolute;
     top: 0;
     left: 0;
-    right: 0;
+    /* removed right: 0 to allow the pre/code string to run horizontally infinitely and sync with textarea scroll width */
+    pointer-events: none;
+    min-width: max-content; 
 }
 
 .nui-code-editor-input {
@@ -97,6 +106,8 @@ nui-code-editor {
     outline: none;
     /* Move left edge to match the display element */
     z-index: 1;
+    -webkit-appearance: none;
+    appearance: none;
 }
 
 /* If line numbers are active, we must offset the absolute textarea by the width of the lines container */
@@ -122,4 +133,8 @@ nui-code-editor {
     .nui-code-editor-input {
         caret-color: var(--color-base-text, #fff);
     }
-}\n\n.nui-code-editor-layer {\n    pointer-events: none;\n}\n
+}
+
+.nui-code-editor-layer {
+    pointer-events: none;
+}
