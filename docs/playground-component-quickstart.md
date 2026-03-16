@@ -75,6 +75,24 @@ Notes:
 | `nui-code` | Syntax-highlighted code wrapper used throughout the Playground for examples and snippets. | [Open route](../Playground/index.html#page=addons/code) and [Playground/pages/addons/code.html](../Playground/pages/addons/code.html) |
 | `nui.util.storage` | Minimal cookie and localStorage helper with TTL support and simple string-based API. | [Open route](../Playground/index.html#page=components/storage) and [Playground/pages/components/storage.html](../Playground/pages/components/storage.html) |
 
+### Compact `nui-icon` Inventory
+
+Authoritative source: [NUI/assets/material-icons-sprite.svg](../NUI/assets/material-icons-sprite.svg). The current sprite exposes 84 icon names. For a searchable live preview, use [Open route](../Playground/index.html#page=components/icon) or [Playground/pages/components/icon.html](../Playground/pages/components/icon.html).
+
+```text
+add, add_circle, analytics, arrow, article, aspect_ratio, assessment, attach_money,
+brightness, calendar, chat, check_circle, check_circle_filled, close, cognition,
+content_copy, credit_card, database, delete, done, download, drag_handle,
+drag_indicator, edit, edit_note, empty_dashboard, extension, eye_tracking, file_json,
+filter_list, folder, fullscreen, grid_on, headphones, id_card, image, info,
+install_desktop, invert_colors, key, keyboard, label, layers, lightbulb_2,
+location_on, lock, logout, mail, media_folder, menu, monitor, more, mouse,
+my_location, notifications, open_in_full, palette, pause, person, photo_camera,
+play, print, public, rainy, rss_feed, save, search, security, send, settings,
+sign_language, smart_display, sort, speaker, stadia_controller, star_rate,
+sticky_note, sync, upload, visibility, volume, warning, work, wysiwyg
+```
+
 ## Addon Components
 
 | Component | Short description | Playground docs |
