@@ -710,6 +710,57 @@ nui-button-container.gap-large {
 	gap: var(--nui-space-double);
 }
 
+/* 
+============================================================================= 
+   Segmented Control Mode for Button Container
+============================================================================= 
+*/
+
+nui-button-container[variant="segmented"],
+nui-button-container[mode="segmented"] {
+	gap: 0;
+	display: inline-flex;
+	border-radius: var(--border-radius1);
+}
+
+nui-button-container[variant="segmented"] nui-button button,
+nui-button-container[mode="segmented"] nui-button button {
+	border-radius: 0;
+	min-width: unset;
+	border-right: 1px solid var(--color-shade3);
+	background-color: var(--color-base);
+	color: var(--color-text);
+}
+
+nui-button-container[variant="segmented"] nui-button:last-child button,
+nui-button-container[mode="segmented"] nui-button:last-child button {
+	border-right: none;
+}
+
+nui-button-container[variant="segmented"] nui-button:first-child button,
+nui-button-container[mode="segmented"] nui-button:first-child button {
+	border-top-left-radius: var(--border-radius1);
+	border-bottom-left-radius: var(--border-radius1);
+}
+
+nui-button-container[variant="segmented"] nui-button:last-child button,
+nui-button-container[mode="segmented"] nui-button:last-child button {
+	border-top-right-radius: var(--border-radius1);
+	border-bottom-right-radius: var(--border-radius1);
+}
+
+nui-button-container[variant="segmented"] nui-button:hover button,
+nui-button-container[mode="segmented"] nui-button:hover button {
+	background-color: var(--color-shade2);
+}
+
+nui-button-container[variant="segmented"] nui-button[state="active"] button,
+nui-button-container[mode="segmented"] nui-button[state="active"] button {
+	background-color: var(--color-highlight);
+	color: var(--color-white);
+	border-color: var(--color-highlight);
+}
+
 /* nui-button enhancements - builds on base button styles */
 nui-button button {
 	min-width: 6rem;
@@ -805,20 +856,28 @@ nui-button button nui-icon {
 
 /* Progress state */
 nui-button[state="loading"] button {
-	background: var(--color-shade4);
+	background: var(--color-shade4) !important;
+	border-color: transparent !important;
 	pointer-events: none;
-	color: transparent;
+	color: transparent !important;
+}
+
+nui-button[state="loading"] button > * {
+	opacity: 0;
 }
 
 nui-button[state="loading"] button::before {
 	content: '';
 	position: absolute;
-	width: 1.2rem;
-	height: 1.2rem;
-	border: 2px solid var(--color-white);
+	inset: 0;
+	margin: auto;
+	width: 0.9rem;
+	height: 0.9rem;
+	border: 3px solid var(--color-white);
 	border-top-color: transparent;
 	border-radius: 50%;
 	animation: nui-button-spin 0.8s linear infinite;
+	opacity: 1;
 }
 
 @keyframes nui-button-spin {
@@ -2893,6 +2952,67 @@ nui-checkbox label {
 	user-select: none;
 }
 
+/*
+============================================================================= 
+   NUI-CHECKBOX (SWITCH VARIANT)
+============================================================================= 
+*/
+
+nui-checkbox[variant="switch"] .nui-check-box {
+	box-sizing: border-box;
+	width: 2.25em;
+	height: 1.25em;
+	padding: 0.1875em;
+	border-radius: 1em;
+	background: var(--color-shade4);
+	border: none;
+	transition: background-color 0.2s;
+	justify-content: flex-start;
+}
+
+nui-checkbox[variant="switch"] .nui-check-box svg {
+	display: none; /* Hide the checkmark */
+}
+
+/* The switch thumb */
+nui-checkbox[variant="switch"] .nui-check-box::before {
+	content: '';
+	display: block;
+	height: 100%;
+	aspect-ratio: 1 / 1;
+	background: white;
+	border-radius: 50%;
+	transition: transform 0.2s;
+	box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+nui-checkbox[variant="switch"]:hover .nui-check-box {
+	background: var(--color-shade5);
+}
+
+nui-checkbox[variant="switch"] input:checked ~ .nui-check-box {
+	background: var(--color-highlight);
+}
+
+nui-checkbox[variant="switch"] input:checked ~ .nui-check-box::before {
+	transform: translateX(1em); /* Exactly container width (2.25em) - container height (1.25em) */
+}
+
+nui-checkbox[variant="switch"] input:focus-visible ~ .nui-check-box {
+	outline: 2px solid var(--color-highlight);
+	outline-offset: 2px;
+}
+
+nui-checkbox[variant="switch"] input:disabled ~ .nui-check-box {
+	background: var(--color-shade4);
+	opacity: 1; /* prevent double opacity stacking with parent disabled state */
+}
+
+nui-checkbox[variant="switch"] input:disabled ~ .nui-check-box::before {
+	background: var(--color-shade1);
+	box-shadow: none;
+}
+
 /* =============================================================================
    NUI-RADIO - Custom Radio Button Component
    ============================================================================= */
@@ -3748,7 +3868,7 @@ input[type="button"] {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	gap: var(--nui-space-quarter);
+	gap: 0.375rem;
 	appearance: none;
 	vertical-align: top;
 }

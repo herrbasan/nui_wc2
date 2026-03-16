@@ -426,11 +426,34 @@ registerComponent('nui-button', (element) => {
 	}
 
 	button.addEventListener('click', () => {
+		const fileInput = element.el('input[type="file"]');
+		if (fileInput) { fileInput.click(); }
+		
 		element.dispatchEvent(new CustomEvent('nui-click', {
 			bubbles: true,
 			detail: { source: element }
 		}));
 	});
+
+	const fileInput = element.el('input[type="file"]');
+	if (fileInput) {
+		fileInput.addEventListener('change', () => {
+			element.dispatchEvent(new CustomEvent('nui-file-selected', {
+				bubbles: true,
+				detail: { source: element, files: fileInput.files }
+			}));
+		});
+	}
+
+	element.setLoading = (isLoading) => {
+		if (isLoading) {
+			element.setAttribute('state', 'loading');
+			button.disabled = true;
+		} else {
+			element.removeAttribute('state');
+			button.disabled = false;
+		}
+	};
 });
 
 const iconTemplate = dom.svg('svg', {
@@ -1415,10 +1438,31 @@ registerComponent('nui-button-container', (element) => {
 	const align = element.getAttribute('align') || 'start';
 	const gap = element.getAttribute('gap') || 'small';
 	const direction = element.getAttribute('direction') || 'row';
+	const mode = element.getAttribute('mode');
 
 	if (direction === 'column') element.classList.add('direction-column');
 	element.classList.add('align-' + align);
-	element.classList.add('gap-' + gap);
+
+	if (mode === 'segmented') {
+		element.setAttribute('variant', 'segmented');
+	} else {
+		element.classList.add('gap-' + gap);
+	}
+
+	if (mode === 'single-select' || mode === 'segmented' || element.getAttribute('variant') === 'segmented') {
+		element.addEventListener('nui-click', (e) => {
+			const btn = e.target.closest('nui-button');
+			if (btn && element.contains(btn)) {
+				element.els('nui-button').forEach(b => b.removeAttribute('state'));
+				btn.setAttribute('state', 'active');
+				element.value = btn.getAttribute('value') || btn.textContent.trim();
+				element.dispatchEvent(new CustomEvent('nui-change', {
+					bubbles: true,
+					detail: { selected: btn, value: element.value }
+				}));
+			}
+		});
+	}
 });
 
 // ################################# nui-dialog COMPONENT

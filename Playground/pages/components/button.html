@@ -223,6 +223,108 @@
 </nui-button-container>
 		</script>
 	</nui-code>
+
+	<h3>Segmented Control (Single Select Group)</h3>
+	<p>Use <code>mode="segmented"</code> (or <code>variant="segmented"</code>) to transform a button container into a single-select segmented control. Clicking a button makes it active, and dispatches a <code>nui-change</code> event on the container.</p>
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-button-container mode="segmented" id="demo-segmented">
+	<nui-button state="active" value="day"><button type="button">Day</button></nui-button>
+	<nui-button value="week"><button type="button">Week</button></nui-button>
+	<nui-button value="month"><button type="button">Month</button></nui-button>
+</nui-button-container>
+		</script>
+	</nui-code>
+	<div class="demo-area">
+		<nui-button-container mode="segmented" id="demo-segmented">
+			<nui-button state="active" value="day"><button type="button">Day</button></nui-button>
+			<nui-button value="week"><button type="button">Week</button></nui-button>
+			<nui-button value="month"><button type="button">Month</button></nui-button>
+		</nui-button-container>
+		<p id="demo-segmented-result" style="margin-top: 1rem; color: var(--color-shade6); font-size: 0.85rem;">Selected: day</p>
+	</div>
+</section>
+
+<section>
+	<h2>Busy State</h2>
+	<p>You can dynamically show a loading or busy state by calling <code>setLoading(true)</code> on the <code>&lt;nui-button&gt;</code> element. This will visually change the button and prevent interactions until <code>setLoading(false)</code> is called.</p>
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-button id="busy-btn">
+	<button type="button">Start Process</button>
+</nui-button>
+		</script>
+	</nui-code>
+
+	<p>Use the JavaScript API to trigger the state:</p>
+	<nui-code>
+		<script type="example" data-lang="javascript">
+const button = document.getElementById('busy-btn');
+
+button.addEventListener('click', async () => {
+    // 1. Set the button to a loading state
+    button.setLoading(true);
+    
+    try {
+        // 2. Perform your async task (e.g. fetch API)
+        await performSomeAsyncOperation();
+    } finally {
+        // 3. Always turn the loader off when finished
+        button.setLoading(false);
+    }
+});
+		</script>
+	</nui-code>
+
+	<div class="demo-area">
+		<nui-button-container>
+			<nui-button class="demo-busy-btn">
+				<button type="button">Default</button>
+			</nui-button>
+			
+			<nui-button class="demo-busy-btn" variant="danger">
+				<button type="button">Danger</button>
+			</nui-button>
+
+			<nui-button class="demo-busy-btn" variant="outline">
+				<button type="button">Outline</button>
+			</nui-button>
+
+			<nui-button class="demo-busy-btn" variant="icon">
+				<button type="button" aria-label="Settings">
+					<nui-icon name="settings"></nui-icon>
+				</button>
+			</nui-button>
+		</nui-button-container>
+	</div>
+</section>
+
+<section>
+	<h2>File Upload</h2>
+	<p>Wrap an <code>&lt;input type="file"&gt;</code> inside a <code>&lt;nui-button&gt;</code> to create a nice-looking file upload trigger. The file dialog opens when the button is clicked, and a <code>nui-file-selected</code> event is dispatched when files are selected.</p>
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-button>
+	<input type="file" style="display: none;" accept="image/*">
+	<button type="button">
+		<nui-icon name="upload"></nui-icon>
+		Upload File
+	</button>
+</nui-button>
+		</script>
+	</nui-code>
+	<div class="demo-area">
+		<nui-button-container>
+			<nui-button id="demo-upload-btn">
+				<input type="file" style="display: none;">
+				<button type="button">
+					<nui-icon name="upload"></nui-icon>
+					Upload File
+				</button>
+			</nui-button>
+		</nui-button-container>
+		<p id="demo-upload-result" style="margin-top: 1rem; color: var(--color-shade6); font-size: 0.85rem;"></p>
+	</div>
 </section>
 
 <section>
@@ -324,6 +426,37 @@ document.addEventListener('nui-action', (e) => {
 
 	<script type="nui/page">
 		function init(element) {
+			const busyBtns = element.querySelectorAll('.demo-busy-btn');
+			busyBtns.forEach(btn => {
+				btn.addEventListener('click', () => {
+					btn.setLoading(true);
+					setTimeout(() => {
+						btn.setLoading(false);
+					}, 2000);
+				});
+			});
+
+			const uploadBtn = element.querySelector('#demo-upload-btn');
+			const uploadResult = element.querySelector('#demo-upload-result');
+			if (uploadBtn) {
+				uploadBtn.addEventListener('nui-file-selected', (e) => {
+					const files = e.detail.files;
+					if (files.length > 0) {
+						uploadResult.textContent = `Selected: ${files[0].name} (${files[0].size} bytes)`;
+					} else {
+						uploadResult.textContent = 'Selection canceled';
+					}
+				});
+			}
+
+			const segmented = element.querySelector('#demo-segmented');
+			const segmentedResult = element.querySelector('#demo-segmented-result');
+			if (segmented) {
+				segmented.addEventListener('nui-change', (e) => {
+					segmentedResult.textContent = `Selected: ${e.detail.value}`;
+				});
+			}
+
 			element.addEventListener('nui-action', (e) => {
 				const { name, target } = e.detail;
 				
