@@ -156,22 +156,21 @@ nui-rich-text {
     height: auto;
     display: block; /* Treat as block element like blockquote */
     margin: var(--nui-space, 1rem) auto var(--nui-space, 1rem) 0; /* Align left */
-    border-radius: var(--border-radius1, 4px);
     cursor: default;
     user-select: none;
     outline: 2px solid transparent; /* Allows CSS transition */
+    outline-offset: 0;
     transition: outline-color var(--transition-fast, 0.2s);
 }
 
 .nui-rich-text-image.nui-image-selected {
-    outline-color: var(--color-primary);
+    outline-color: var(--color-highlight);
 }
 
 /* Image Resizer Overlay */
 .nui-rich-text-image-resizer {
     position: absolute;
     display: none;
-    border: 2px solid transparent; /* Image has the visible outline */
     z-index: 100;
     pointer-events: none; /* Passes clicks through */
 }
@@ -182,14 +181,32 @@ nui-rich-text {
 
 .nui-rich-text-image-resizer-handle {
     position: absolute;
-    right: -6px;
-    bottom: -6px;
-    width: 12px;
-    height: 12px;
-    background: var(--color-primary);
-    border: 2px solid var(--color-base, #fff);
-    border-radius: 50%;
-    cursor: nwse-resize;
+    width: 10px;
+    height: 10px;
+    background: var(--color-highlight);
     pointer-events: auto; /* Catch drags */
-    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.nui-rich-text-image-resizer-handle.nw {
+    top: -5px;
+    left: -5px;
+    cursor: nwse-resize;
+}
+
+.nui-rich-text-image-resizer-handle.ne {
+    top: -5px;
+    right: -5px;
+    cursor: nesw-resize;
+}
+
+.nui-rich-text-image-resizer-handle.sw {
+    bottom: -5px;
+    left: -5px;
+    cursor: nesw-resize;
+}
+
+.nui-rich-text-image-resizer-handle.se {
+    bottom: -5px;
+    right: -5px;
+    cursor: nwse-resize;
 }

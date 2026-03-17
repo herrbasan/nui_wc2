@@ -158,8 +158,12 @@ class NuiRichText extends HTMLElement {
         // Build Image Resizer Overlay
         this._imageResizer = document.createElement('div');
         this._imageResizer.className = 'nui-rich-text-image-resizer';
-        this._imageResizer.innerHTML = '<div class="nui-rich-text-image-resizer-handle"></div>';
-        this._imageResizerHandle = this._imageResizer.querySelector('.nui-rich-text-image-resizer-handle');
+        this._imageResizer.innerHTML = `
+            <div class="nui-rich-text-image-resizer-handle nw" data-corner="nw"></div>
+            <div class="nui-rich-text-image-resizer-handle ne" data-corner="ne"></div>
+            <div class="nui-rich-text-image-resizer-handle sw" data-corner="sw"></div>
+            <div class="nui-rich-text-image-resizer-handle se" data-corner="se"></div>
+        `;
         this._activeImage = null;
 
         this._container.appendChild(this._toolbar);
@@ -285,7 +289,120 @@ class NuiRichText extends HTMLElement {
             }
         });
 
-        this._imageResizerHandle.addEventListener('mousedown', this._onImageResizeStart.bind(this));
+        // Image Drag & Drop Logic
+        this._draggedImageWrapper = null;
+
+        this._editor.addEventListener('dragstart', (e) => {
+            if (e.target.tagName === 'IMG') {
+                const wrapper = e.target.closest('div[contenteditable="false"]');
+                if (wrapper) {
+                    this._hideContextMenu();
+                    this._hideImageResizer();
+                    
+                    this._draggedImageWrapper = wrapper;
+                    e.dataTransfer.effectAllowed = 'move';
+                    
+                    // Clone the wrapper and clean up active states for the drag transfer
+                    const clone = wrapper.cloneNode(true);
+                    const innerImg = clone.querySelector('img');
+                    if (innerImg) innerImg.classList.remove('nui-image-selected');
+                    
+                    e.dataTransfer.setData('text/html', clone.outerHTML);
+                    e.dataTransfer.setData('text/plain', innerImg ? innerImg.alt || 'Image' : 'Image');
+                }
+            }
+        });
+
+        this._editor.addEventListener('dragover', (e) => {
+            if (this._draggedImageWrapper) {
+                e.preventDefault(); // Allows drop
+                e.dataTransfer.dropEffect = 'move';
+
+                // Provide a native caret indicator while dragging over text
+                let range = null;
+                if (document.caretRangeFromPoint) {
+                    range = document.caretRangeFromPoint(e.clientX, e.clientY);
+                } else if (document.caretPositionFromPoint) {
+                    const pos = document.caretPositionFromPoint(e.clientX, e.clientY);
+                    if (pos) {
+                        range = document.createRange();
+                        range.setStart(pos.offsetNode, pos.offset);
+                        range.collapse(true);
+                    }
+                }
+
+                if (range) {
+                    const sel = window.getSelection();
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                }
+            }
+        });
+
+        this._editor.addEventListener('drop', (e) => {
+            if (this._draggedImageWrapper) {
+                e.preventDefault(); // Stop native HTML/image split drop
+
+                // Find cross-browser caret range
+                let range = null;
+                if (document.caretRangeFromPoint) {
+                    range = document.caretRangeFromPoint(e.clientX, e.clientY);
+                } else if (document.caretPositionFromPoint) {
+                    const pos = document.caretPositionFromPoint(e.clientX, e.clientY);
+                    if (pos) {
+                        range = document.createRange();
+                        range.setStart(pos.offsetNode, pos.offset);
+                        range.collapse(true);
+                    }
+                } else if (e.rangeParent) {
+                    range = document.createRange();
+                    range.setStart(e.rangeParent, e.rangeOffset);
+                    range.collapse(true);
+                }
+
+                if (range) {
+                    // Remove from old position
+                    this._draggedImageWrapper.remove();
+                    
+                    // Natively insert node cleanly
+                    range.insertNode(this._draggedImageWrapper);
+
+                    // Add an empty paragraph immediately after if needed to ensure typing isn't trapped
+                    const br = document.createElement('p');
+                    br.innerHTML = '<br>';
+                    this._draggedImageWrapper.after(br);
+                    
+                    // Reset ranges
+                    const sel = window.getSelection();
+                    sel.removeAllRanges();
+                    
+                    this._saveHistory();
+                    this._emitChange();
+                }
+                
+                this._draggedImageWrapper = null;
+            }
+        });
+
+        this._editor.addEventListener('dragend', (e) => {
+            if (this._draggedImageWrapper) {
+                // Browsers natively move the exact target (the img tag) to the new location and strip the datatransfer HTML wrapper 
+                // in rich text editors sometimes. 
+                // We'll clean up the entire source wrapper just in case.
+                if (e.dataTransfer.dropEffect === 'move') {
+                    this._draggedImageWrapper.remove();
+                }
+                this._draggedImageWrapper = null;
+                
+                // Let's enforce structural integrity in case it got dropped weirdly
+                setTimeout(() => {
+                    this._saveHistory();
+                    this._emitChange();
+                }, 10);
+            }
+        });
+
+        this._imageResizer.addEventListener('mousedown', this._onImageResizeStart.bind(this));
 
         // Editor scrolling (to update absolute overlays attached to container)
         this._editor.addEventListener('scroll', () => {
@@ -744,6 +861,25 @@ class NuiRichText extends HTMLElement {
             return;
         }
 
+        // Check if our active image is still within the current selection
+        if (this._activeImage && this._editor.contains(this._activeImage)) {
+            const range = sel.getRangeAt(0);
+            const targetNode = this._activeImage.closest('div[contenteditable="false"]') || this._activeImage;
+            
+            if (range.intersectsNode(targetNode)) {
+                // The selection still includes our image, keep the image context menu
+                if (this._contextType !== 'image' || this._activeContextElement !== this._activeImage) {
+                    this._showImageContext(this._activeImage);
+                } else {
+                    this._positionContextMenu(this._activeImage);
+                }
+                return;
+            } else {
+                // Selection moved away from the image via keyboard/mouse tracking
+                this._hideImageResizer();
+            }
+        }
+
         let node = sel.anchorNode;
         let elem = node.nodeType === 3 ? node.parentNode : node;
 
@@ -807,6 +943,33 @@ class NuiRichText extends HTMLElement {
         this._positionContextMenu(td);
     }
 
+    _showImageContext(img) {
+        this._activeContextElement = img;
+        this._contextType = 'image';
+        this._contextMenu.innerHTML = `
+            <div class="nui-rich-text-context-group">
+                <nui-button variant="ghost" data-action="imgSize100" aria-label="100% Width" title="100% Width">
+                    <button type="button" tabindex="-1" style="font-weight: 600; font-size: 0.8rem; padding: 0 0.5rem;">100%</button>
+                </nui-button>
+                <nui-button variant="ghost" data-action="imgSize50" aria-label="50% Width" title="50% Width">
+                    <button type="button" tabindex="-1" style="font-weight: 600; font-size: 0.8rem; padding: 0 0.5rem;">50%</button>
+                </nui-button>
+                <nui-button variant="ghost" data-action="imgSize25" aria-label="25% Width" title="25% Width">
+                    <button type="button" tabindex="-1" style="font-weight: 600; font-size: 0.8rem; padding: 0 0.5rem;">25%</button>
+                </nui-button>
+                <div class="nui-rich-text-separator"></div>
+                <nui-button variant="ghost" data-action="editImage" aria-label="Edit Source" title="Edit Source">
+                    <button type="button" tabindex="-1"><nui-icon name="edit"></nui-icon></button>
+                </nui-button>
+                <div class="nui-rich-text-separator"></div>
+                <nui-button variant="ghost" data-action="removeImage" aria-label="Remove Image" title="Remove Image">
+                    <button type="button" tabindex="-1"><nui-icon name="delete"></nui-icon></button>
+                </nui-button>
+            </div>
+        `;
+        this._positionContextMenu(img);
+    }
+
     _positionContextMenu(targetEl) {
         this._contextMenu.classList.add('visible');
         
@@ -830,13 +993,12 @@ class NuiRichText extends HTMLElement {
     }
 
     _selectImage(img) {
-        this._hideContextMenu();
+        this._showImageContext(img);
         this._activeImage = img;
         this._imageResizer.classList.add('visible');
-        this._imageResizer.style.borderColor = 'transparent';
         img.classList.add('nui-image-selected');
         this._positionImageResizer();
-        
+
         // Force native selection specifically around the wrapper block
         const containerDiv = img.closest('div[contenteditable="false"]');
         const range = document.createRange();
@@ -871,29 +1033,34 @@ class NuiRichText extends HTMLElement {
     }
 
     _onImageResizeStart(e) {
+        if (!e.target.classList.contains('nui-rich-text-image-resizer-handle')) return;
+
         e.preventDefault();
         e.stopPropagation();
 
         if (!this._activeImage) return;
+
+        const isLeftCorner = e.target.classList.contains('nw') || e.target.classList.contains('sw');
 
         const startX = e.clientX;
         const startWidth = this._activeImage.offsetWidth;
         const startHeight = this._activeImage.offsetHeight;
         const ratio = startWidth / startHeight;
 
-        // Optionally show selection/grab status on the image
-        this._imageResizer.style.borderColor = 'var(--color-primary)';
-        
         const onMouseMove = (moveEvent) => {
             const dx = moveEvent.clientX - startX;
+            // Left corners expand by dragging left (negative dx), right corners expand by dragging right (positive dx)
+            const adjustedDx = isLeftCorner ? -dx : dx;
+
             // Always calculate width directly and auto-set height to keep ratio via CSS
-            const newWidth = Math.max(50, startWidth + dx);
-            
+            const newWidth = Math.max(50, startWidth + adjustedDx);
             this._activeImage.style.width = `${newWidth}px`;
             this._activeImage.style.height = 'auto'; // ensure native browser scaling
-            
+
             // Re-sync resizer bounds immediately
             this._positionImageResizer();
+            // Also re-position the context menu to keep it affixed to the scaling image
+            this._positionContextMenu(this._activeImage);
         };
 
         const onMouseUp = () => {
@@ -992,6 +1159,49 @@ class NuiRichText extends HTMLElement {
             
             this._saveHistory();
             this._emitChange();
+        } else if (this._contextType === 'image') {
+            const img = this._activeContextElement;
+            const containerDiv = img.closest('div[contenteditable="false"]');
+            
+            if (action === 'imgSize100' || action === 'imgSize50' || action === 'imgSize25') {
+                const map = { 'imgSize100': '100%', 'imgSize50': '50%', 'imgSize25': '25%' };
+                img.style.width = map[action];
+                img.style.height = 'auto'; // Reset arbitrary dragging heights
+                this._positionImageResizer();
+                this._positionContextMenu(img);
+                this._saveHistory();
+                this._emitChange();
+            } else if (action === 'editImage') {
+                const result = await nui.components.dialog.prompt('Edit Image', null, {
+                    fields: [
+                        { id: 'url', label: 'Image URL', type: 'url', value: img.getAttribute('src') || '' },
+                        { id: 'alt', label: 'Alt Text', type: 'text', value: img.getAttribute('alt') || '' }
+                    ]
+                });
+                if (result && result.url) {
+                    img.setAttribute('src', result.url);
+                    img.setAttribute('alt', result.alt || '');
+                    
+                    // Wait for image to load to reposition resizer
+                    img.onload = () => {
+                        this._positionImageResizer();
+                        this._positionContextMenu(img);
+                    };
+                    
+                    this._saveHistory();
+                    this._emitChange();
+                }
+            } else if (action === 'removeImage') {
+                if (containerDiv) {
+                    containerDiv.remove();
+                } else {
+                    img.remove();
+                }
+                this._hideContextMenu();
+                this._hideImageResizer();
+                this._saveHistory();
+                this._emitChange();
+            }
         }
 
         this._updateContextualMenu();
@@ -999,7 +1209,7 @@ class NuiRichText extends HTMLElement {
 
     _handlePaste(e) {
         e.preventDefault();
-        
+
         let html = e.clipboardData.getData('text/html');
         if (html) {
             // Strip wrapper HTML to just the explicit fragment that was copied
