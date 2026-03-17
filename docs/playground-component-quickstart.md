@@ -100,6 +100,8 @@ sticky_note, sync, upload, visibility, volume, warning, work, wysiwyg
 | `nui-menu` | Application-style menubar with dropdowns, nested submenus, and full keyboard navigation. | [Open route](../Playground/index.html#page=addons/menu) and [Playground/pages/addons/menu.html](../Playground/pages/addons/menu.html) |
 | `nui-list` | Virtualized list for large datasets. *Notice: Requires constrained parent `height` or `flex: 1` boundaries to render natively!* | [Open route](../Playground/index.html#page=addons/list) and [Playground/pages/addons/list.html](../Playground/pages/addons/list.html) |
 | `nui-lightbox` | Image and media gallery lightbox that supports grouped declarative usage and programmatic opening. | [Open route](../Playground/index.html#page=addons/lightbox) and [Playground/pages/addons/lightbox.html](../Playground/pages/addons/lightbox.html) |
+| `nui-rich-text` | Native, dependency-free WYSIWYG editor with custom toolbars, multi-directional image resizing, and drag-and-drop. | [Open route](../Playground/index.html#page=addons/rich-text) and [Playground/pages/addons/rich-text.html](../Playground/pages/addons/rich-text.html) |
+| `nui-code-editor` | Lightweight syntax-highlighted code editor utilizing native overlapping textarea mechanisms. | [Open route](../Playground/index.html#page=addons/code-editor) and [Playground/pages/addons/code-editor.html](../Playground/pages/addons/code-editor.html) |
 
 ## Programmatic APIs and Patterns Documented in the Playground
 
@@ -151,3 +153,5 @@ If you want the shortest route from a component name to the right demo page, use
 - `addons/menu`: `nui-menu`
 - `addons/list`: `nui-list`
 - `addons/lightbox`: `nui-lightbox`, `nui.components.lightbox.show()`
+- `addons/rich-text`: `nui-rich-text`
+- `addons/code-editor`: `nui-code-editor`
