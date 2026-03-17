@@ -10,6 +10,9 @@ class NuiRichText extends HTMLElement {
         this._value = '';
         this._isUpdatingToolbar = false;
         this._savedRange = null;
+        this._history = [];
+        this._historyIndex = -1;
+        this._historyTimeout = null;
     }
 
     connectedCallback() {
@@ -22,6 +25,7 @@ class NuiRichText extends HTMLElement {
 
         this._render();
         this._attachEvents();
+        this._saveHistory(); // Save initial baseline state
     }
 
     _render() {
@@ -46,6 +50,9 @@ class NuiRichText extends HTMLElement {
             { separator: true },
             { icon: 'format_list_bulleted', command: 'insertUnorderedList', label: 'Bullet List' },
             { icon: 'format_list_numbered', command: 'insertOrderedList', label: 'Numbered List' },
+            { separator: true },
+            { icon: 'table_view', command: 'insertTable', label: 'Insert Table' },
+            { icon: 'image', command: 'insertImage', label: 'Insert Image' },
             { separator: true },
             { icon: 'link', command: 'createLink', label: 'Insert Link' },
             { icon: 'link_off', command: 'unlink', label: 'Remove Link' },
@@ -105,6 +112,11 @@ class NuiRichText extends HTMLElement {
             btn.setAttribute('aria-label', tool.label);
             btn.setAttribute('title', tool.label);
             btn.setAttribute('tabindex', '-1'); // Prevent focus steal for now
+            
+            // If it's a styling tool, expose it as a toggle button to screen readers
+            if (!['undo', 'redo', 'createLink', 'unlink', 'removeFormat', 'insertImage', 'insertTable'].includes(tool.command)) {
+                btn.setAttribute('aria-pressed', 'false');
+            }
 
             const icon = document.createElement('nui-icon');
             icon.setAttribute('name', tool.icon);
@@ -114,6 +126,10 @@ class NuiRichText extends HTMLElement {
 
             this._toolbar.appendChild(wrapper);
         });
+
+        // Setup Initial Roving TabIndex
+        const firstAction = this._toolbar.querySelector('button, select');
+        if (firstAction) firstAction.setAttribute('tabindex', '0');
 
         // Build Editor Area
         this._editor = document.createElement('div');
@@ -137,6 +153,9 @@ class NuiRichText extends HTMLElement {
             }
         });
 
+        // ARIA Toolbar Setup: Roving TabIndex and Keyboard Navigation
+        this._toolbar.addEventListener('keydown', this._handleToolbarKeyDown.bind(this));
+
         // Toolbar actions
         this._toolbar.addEventListener('click', async (e) => {
             const btn = e.target.closest('nui-button');
@@ -146,14 +165,87 @@ class NuiRichText extends HTMLElement {
             const arg = btn.dataset.arg || null;
 
             if (command === 'createLink') {
-                const result = await nui.dialog.prompt('Insert Link', null, {
+                // Try to find if we're currently on an existing link to pre-fill the URL
+                let existingUrl = '';
+                const sel = window.getSelection();
+                if (sel.rangeCount > 0) {
+                    let node = sel.anchorNode;
+                    let element = node && node.nodeType === 3 ? node.parentNode : node;
+                    let anchor = element ? element.closest('a') : null;
+                    if (anchor) {
+                        existingUrl = anchor.getAttribute('href') || '';
+                    }
+                }
+
+                const result = await nui.components.dialog.prompt('Insert Link', null, {
                     fields: [
-                        { id: 'url', label: 'Web Address (URL)', type: 'url' }
+                        { id: 'url', label: 'Web Address (URL)', type: 'url', value: existingUrl }
                     ]
                 });
 
                 if (result && result.url) {
-                    this._execCommand('createLink', result.url);
+                    // NUI prompt resolves immediately when the button is clicked,
+                    // but the native <dialog> is still technically open during its closing transition.
+                    // If we try to focus now, the inert state fails it. We wait until it clears.
+                    const applyLink = () => {
+                        if (document.querySelector('dialog[open]')) {
+                            requestAnimationFrame(applyLink);
+                        } else {
+                            setTimeout(() => this._execCommand('createLink', result.url), 10);
+                        }
+                    };
+                    applyLink();
+                }
+            } else if (command === 'insertImage') {
+                const result = await nui.components.dialog.prompt('Insert Image', null, {
+                    fields: [
+                        { id: 'url', label: 'Image URL', type: 'url', value: '' },
+                        { id: 'alt', label: 'Alternative Text', type: 'text', value: '' }
+                    ]
+                });
+
+                if (result && result.url) {
+                    const applyImage = () => {
+                        if (document.querySelector('dialog[open]')) {
+                            requestAnimationFrame(applyImage);
+                        } else {
+                            setTimeout(() => {
+                                // Instead of native insertImage we use insertHTML to easily add the alt attribute and classes
+                                const imgHtml = `<img src="${result.url}" alt="${result.alt || ''}" class="nui-rich-text-image" />`;
+                                this._execCommand('insertHTML', imgHtml);
+                            }, 10);
+                        }
+                    };
+                    applyImage();
+                }
+            } else if (command === 'insertTable') {
+                const result = await nui.components.dialog.prompt('Insert Table', null, {
+                    fields: [
+                        { id: 'cols', label: 'Columns', type: 'number', value: '3', min: 1, max: 20 },
+                        { id: 'rows', label: 'Rows', type: 'number', value: '3', min: 1, max: 50 }
+                    ]
+                });
+
+                if (result && result.cols && result.rows) {
+                    const applyTable = () => {
+                        if (document.querySelector('dialog[open]')) {
+                            requestAnimationFrame(applyTable);
+                        } else {
+                            setTimeout(() => {
+                                let tableHtml = '<table class="nui-table"><tbody>';
+                                for (let r = 0; r < result.rows; r++) {
+                                    tableHtml += '<tr>';
+                                    for (let c = 0; c < result.cols; c++) {
+                                        tableHtml += '<td><br></td>'; // Empty cells need a <br> to be selectable in some browsers
+                                    }
+                                    tableHtml += '</tr>';
+                                }
+                                tableHtml += '</tbody></table><p><br></p>';
+                                this._execCommand('insertHTML', tableHtml);
+                            }, 10);
+                        }
+                    };
+                    applyTable();
                 }
             } else {
                 this._execCommand(command, arg);
@@ -162,11 +254,237 @@ class NuiRichText extends HTMLElement {
 
         // Update toolbar state on selection change
         document.addEventListener('selectionchange', () => this._updateToolbarState());
-        this._editor.addEventListener('keyup', () => this._updateToolbarState());
+        this._editor.addEventListener('keydown', this._handleKeyDown.bind(this));
+        this._editor.addEventListener('keyup', this._handleKeyUp.bind(this));
         this._editor.addEventListener('mouseup', () => this._updateToolbarState());
+
+        // Set default block separator to DIV recursively on focus
+        this._editor.addEventListener('focus', () => {
+            try { document.execCommand('defaultParagraphSeparator', false, 'DIV'); } catch(e) {}
+        });
+        
+        // Debounce structural input for history
+        this._editor.addEventListener('input', () => {
+            clearTimeout(this._historyTimeout);
+            this._historyTimeout = setTimeout(() => this._saveHistory(), 500);
+            this._emitChange(false);
+        });
 
         // Handle Paste (strip complex formatting)
         this._editor.addEventListener('paste', this._handlePaste.bind(this));
+    }
+
+    _handleKeyDown(e) {
+        // Accessibility Jump to Toolbar
+        if (e.key === 'F10' && e.altKey) {
+            e.preventDefault();
+            e.stopPropagation();
+            const activeTool = this._toolbar.querySelector('[tabindex="0"]') || this._toolbar.querySelector('button, select');
+            // Timeout escapes the native OS/Browser Alt-Menu trap on Windows
+            if (activeTool) setTimeout(() => activeTool.focus(), 10);
+            return;
+        }
+
+        // Custom Undo/Redo Shortcuts
+        if (e.ctrlKey || e.metaKey) {
+            if (e.key === 'z') {
+                e.preventDefault();
+                if (e.shiftKey) this._redo();
+                else this._undo();
+                return;
+            }
+            if (e.key === 'y') {
+                e.preventDefault();
+                this._redo();
+                return;
+            }
+        }
+
+        if (e.key === 'Enter') {
+            if (e.shiftKey) {
+                // Force a <br> explicitly to avoid breaking into a new paragraph/div
+                e.preventDefault();
+                document.execCommand('insertLineBreak');
+            } else {
+                // Structural normalization for Enter key on block elements
+                const sel = window.getSelection();
+                if (!sel.rangeCount) return;
+                
+                const node = sel.anchorNode;
+                const elem = node.nodeType === 3 ? node.parentNode : node;
+                
+                // Pre formatting: standard enter should just be a newline
+                if (elem.closest('PRE')) {
+                    e.preventDefault();
+                    document.execCommand('insertText', false, '\n');
+                    return;
+                }
+
+                // Blockquote handling (Double Enter to break out)
+                const activeBlock = elem.closest('BLOCKQUOTE');
+                if (activeBlock) {
+                    // Identify the innermost block element of the blockquote the cursor is resting in
+                    let currentLine = elem;
+                    while (currentLine && currentLine.parentNode !== activeBlock && currentLine !== activeBlock) {
+                        currentLine = currentLine.parentNode;
+                    }
+                    
+                    // If the current line is effectively empty (e.g. they hit enter twice)
+                    if (currentLine && currentLine.textContent.trim() === '') {
+                        e.preventDefault(); // Stop standard browser action (cloning quote framework)
+                        
+                        // Remove the empty line from inside the blockquote
+                        if (currentLine !== activeBlock) {
+                            currentLine.remove();
+                        }
+                        
+                        // Create a clean DIV to escape into
+                        const newDiv = document.createElement('div');
+                        newDiv.innerHTML = '<br>';
+                        
+                        // Insert safely outside the blockquote
+                        if (activeBlock.parentNode) {
+                            activeBlock.parentNode.insertBefore(newDiv, activeBlock.nextSibling);
+                        } else {
+                            this._editor.appendChild(newDiv);
+                        }
+
+                        // Cleanup old shell if blockquote is entirely barren
+                        if (activeBlock.textContent.trim() === '') {
+                            activeBlock.remove();
+                        }
+                        
+                        // Definitively move cursor into the new clean container
+                        const newRange = document.createRange();
+                        newRange.selectNodeContents(newDiv);
+                        newRange.collapse(true);
+                        sel.removeAllRanges();
+                        sel.addRange(newRange);
+
+                        this._saveHistory();
+                        this._emitChange(false);
+                        return;
+                    }
+                }
+            }
+        }
+
+        // Empty Trap Evader (Fix for unbreakable empty containers)
+        if (e.key === 'Backspace' || e.key === 'Delete') {
+            const sel = window.getSelection();
+            if (sel.rangeCount > 0) {
+                const node = sel.anchorNode;
+                const elem = node.nodeType === 3 ? node.parentNode : node;
+                const stuckBlock = elem.closest('BLOCKQUOTE, PRE, H1, H2, H3, H4, H5, H6');
+                
+                // If they try to backspace but are stuck in an empty formatting block
+                if (stuckBlock && stuckBlock.textContent.trim() === '') {
+                    e.preventDefault();
+                    const newDiv = document.createElement('div');
+                    newDiv.innerHTML = '<br>';
+                    stuckBlock.parentNode.insertBefore(newDiv, stuckBlock);
+                    stuckBlock.remove();
+                    
+                    const newRange = document.createRange();
+                    newRange.selectNodeContents(newDiv);
+                    newRange.collapse(true);
+                    sel.removeAllRanges();
+                    sel.addRange(newRange);
+                    return;
+                }
+            }
+        }
+    }
+
+    _handleKeyUp(e) {
+        this._updateToolbarState();
+
+        if (e.key === ' ' || e.code === 'Space') {
+            this._handleMarkdownShortcuts();
+        }
+    }
+
+    _handleMarkdownShortcuts() {
+        const sel = window.getSelection();
+        if (sel.rangeCount === 0) return;
+        const range = sel.getRangeAt(0);
+        
+        if (range.startContainer.nodeType !== Node.TEXT_NODE) return;
+        
+        const textNode = range.startContainer;
+        const text = textNode.textContent.substring(0, range.startOffset);
+        
+        // Match standard markdown triggers: headings, bullets, ordered list, blockquote
+        const match = text.match(/^(#{1,6}|\*|-|1\.|>)\s$/);
+        if (!match) return;
+
+        // Ensure we are not already inside an incompatible block (like a code block)
+        let parent = textNode.parentNode;
+        while (parent && parent !== this._editor) {
+            if (['PRE', 'CODE'].includes(parent.tagName)) return;
+            parent = parent.parentNode;
+        }
+
+        // Delete the markdown trigger text
+        const prefixLen = match[0].length;
+        range.setStart(textNode, range.startOffset - prefixLen);
+        range.deleteContents();
+        
+        // Execute corresponding command natively to avoid stealing/replacing the live range
+        const trigger = match[1];
+        if (trigger.startsWith('#')) {
+            document.execCommand('formatBlock', false, `H${trigger.length}`);
+        } else if (trigger === '*' || trigger === '-') {
+            document.execCommand('insertUnorderedList', false, null);
+        } else if (trigger === '1.') {
+            document.execCommand('insertOrderedList', false, null);
+        } else if (trigger === '>') {
+            document.execCommand('formatBlock', false, 'BLOCKQUOTE');
+        }
+
+        this._saveHistory();
+        this._updateToolbarState();
+        this._emitChange();
+    }
+
+    _handleToolbarKeyDown(e) {
+        const items = Array.from(this._toolbar.querySelectorAll('button:not([disabled]), select:not([disabled])'));
+        if (!items.length) return;
+
+        let currentIndex = items.indexOf(document.activeElement);
+        // Fallback if focus is on a wrapper element
+        if (currentIndex === -1) {
+            currentIndex = items.findIndex(item => item.contains(document.activeElement));
+        }
+        if (currentIndex === -1) return;
+
+        let nextIndex = currentIndex;
+        
+        switch (e.key) {
+            case 'ArrowRight':
+                nextIndex = (currentIndex + 1) % items.length;
+                e.preventDefault();
+                break;
+            case 'ArrowLeft':
+                nextIndex = (currentIndex - 1 + items.length) % items.length;
+                e.preventDefault();
+                break;
+            case 'Home':
+                nextIndex = 0;
+                e.preventDefault();
+                break;
+            case 'End':
+                nextIndex = items.length - 1;
+                e.preventDefault();
+                break;
+            default:
+                return; // Let space/enter act naturally
+        }
+
+        // Apply Roving TabIndex
+        items[currentIndex].setAttribute('tabindex', '-1');
+        items[nextIndex].setAttribute('tabindex', '0');
+        items[nextIndex].focus();
     }
 
     _saveSelection() {
@@ -187,10 +505,57 @@ class NuiRichText extends HTMLElement {
         sel.addRange(this._savedRange);
     }
 
+    _saveHistory() {
+        const currentHTML = this.value;
+        if (this._historyIndex >= 0 && this._history[this._historyIndex] === currentHTML) return;
+        
+        // Truncate future history if we are overwriting from a past Undo state
+        this._history = this._history.slice(0, this._historyIndex + 1);
+        this._history.push(currentHTML);
+        
+        // Keep memory footprint small (max 50 states)
+        if (this._history.length > 50) this._history.shift(); 
+        else this._historyIndex++;
+    }
+
+    _undo() {
+        if (this._historyIndex > 0) {
+            this._historyIndex--;
+            this._editor.innerHTML = this._history[this._historyIndex];
+            this._updateToolbarState();
+            this._emitChange();
+        }
+    }
+
+    _redo() {
+        if (this._historyIndex < this._history.length - 1) {
+            this._historyIndex++;
+            this._editor.innerHTML = this._history[this._historyIndex];
+            this._updateToolbarState();
+            this._emitChange();
+        }
+    }
+
     _execCommand(command, arg = null) {
+        // Track where the command originated so we don't accidentally rip keyboard users out of the toolbar
+        const activeEl = document.activeElement;
+        const wasInToolbar = this._toolbar.contains(activeEl);
+
         this._editor.focus();
         this._restoreSelection();
         
+        // Route undo/redo through custom history
+        if (command === 'undo') {
+            this._undo();
+            if (wasInToolbar) activeEl.focus();
+            return;
+        }
+        if (command === 'redo') {
+            this._redo();
+            if (wasInToolbar) activeEl.focus();
+            return;
+        }
+
         if (command === 'removeFormat') {
             // clear inline formats safely
             document.execCommand('removeFormat', false, null);
@@ -238,8 +603,15 @@ class NuiRichText extends HTMLElement {
             document.execCommand(command, false, arg);
         }
         
+        this._saveHistory();
         this._updateToolbarState();
         this._emitChange();
+
+        // Restore focus to the exact toolbar button if it was triggered via keyboard
+        // This allows chaining (e.g. hitting space on Bold, Right Arrow, hit space on Italic, then Tab back to text)
+        if (wasInToolbar && activeEl && activeEl !== this._editor) {
+            activeEl.focus();
+        }
     }
 
     _updateToolbarState() {
@@ -273,6 +645,12 @@ class NuiRichText extends HTMLElement {
             } else {
                 wrapper.removeAttribute('state');
                 wrapper.setAttribute('variant', 'ghost');
+            }
+
+            // Sync ARIA pressed state for screen readers
+            const btn = wrapper.querySelector('button');
+            if (btn && btn.hasAttribute('aria-pressed')) {
+                btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
             }
         });
 
@@ -345,14 +723,17 @@ class NuiRichText extends HTMLElement {
             });
             
             document.execCommand('insertHTML', false, temp.innerHTML);
+            this._saveHistory();
         } else {
             // Fallback for plain text
             const text = e.clipboardData.getData('text/plain');
             document.execCommand('insertText', false, text);
+            this._saveHistory();
         }
     }
 
-    _emitChange() {
+    _emitChange(saveHistory = true) {
+        if (saveHistory) this._saveHistory();
         this.dispatchEvent(new CustomEvent('nui-change', {
             detail: { value: this.innerHTML },
             bubbles: true
