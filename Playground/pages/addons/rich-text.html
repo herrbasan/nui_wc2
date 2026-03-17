@@ -71,8 +71,8 @@
                 link.rel = 'stylesheet';
                 link.href = '../NUI/css/modules/nui-rich-text.css';
                 document.head.appendChild(link);
-                
-                await import('../../NUI/lib/modules/nui-rich-text.js');
+
+                await import('../NUI/lib/modules/nui-rich-text.js');
             }
             if (!customElements.get('nui-list')) {
                 const linkList = document.createElement('link');
@@ -80,7 +80,7 @@
                 linkList.href = '../NUI/css/modules/nui-list.css';
                 document.head.appendChild(linkList);
 
-                await import('../../NUI/lib/modules/nui-list.js');
+                await import('../NUI/lib/modules/nui-list.js');
             }
         };
 
