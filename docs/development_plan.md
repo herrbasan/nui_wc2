@@ -37,14 +37,6 @@ These components have clear use cases, align with NUI's zero-dependency / simpli
 - Simple, extensible toolbar utilizing standard `<nui-button>` and `<nui-icon>` elements.
 - Clean and semantic HTML output.
 
-### Code Editor Component (ui-code-editor)
-**Status:** Planned  
-**Purpose:** Syntax-highlighted code editing with essential development features.  
-**Concept:**
-- Built-in syntax highlighting using an optimized, lightweight engine.
-- Essential editor features like tab support, automatic indentation, and line numbering.
-- Low-footprint alternative to massive libraries like Monaco or CodeMirror.
-
 ### Media Player Component (ui-media-player)
 **Status:** Planned  
 **Purpose:** Accessible and customizable video and audio player controls.  

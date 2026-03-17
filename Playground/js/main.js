@@ -327,7 +327,8 @@ const navigationData = [
 			{ label: 'List', href: '#page=addons/list' },
 			{ label: 'Menu', href: '#page=addons/menu' },
 			{ label: 'Lightbox', href: '#page=addons/lightbox' },
-			{ label: 'Code Editor', href: '#page=addons/code-editor' }
+			{ label: 'Code Editor', href: '#page=addons/code-editor' },
+			{ label: 'Rich-Text', href: '#page=addons/rich-text' }
 		]
 	},
 	{

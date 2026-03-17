@@ -1,0 +1,113 @@
+/* nui-rich-text.css */
+
+nui-rich-text {
+    display: block;
+    width: 100%;
+}
+
+.nui-rich-text-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    background: var(--color-shade2);
+    border-radius: var(--border-radius1, 4px);
+    border: 1px solid var(--border-shade1, rgba(0,0,0,0.1));
+    overflow: visible;
+    transition: border-color var(--transition-fast, 0.2s);
+}
+
+.nui-rich-text-container:hover {
+    border-color: var(--color-shade5);
+}
+
+.nui-rich-text-container:has(.nui-rich-text-editor:focus) {
+    border-color: var(--color-shade5);
+    filter: drop-shadow(0 0 0.3rem light-dark(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)));
+    background-color: light-dark(var(--color-white), var(--color-shade3));
+}
+
+.nui-rich-text-editor:focus-visible {
+    outline: none !important;
+}
+
+.nui-rich-text-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--nui-space-half, 0.25rem);
+    padding: var(--nui-space-half, 0.25rem);
+    background: var(--color-shade3);
+    border-bottom: 1px solid var(--border-shade1, rgba(0,0,0,0.1));
+    border-radius: var(--border-radius1, 4px) var(--border-radius1, 4px) 0 0;
+}
+
+.nui-rich-text-toolbar nui-select {
+    --nui-form-row-height: 34px;
+    min-width: 130px;
+    width: 140px;
+    margin: 0;
+}
+
+.nui-rich-text-toolbar nui-select .nui-select-control {
+    font-size: var(--font-size-xsmall);
+}
+
+.nui-rich-text-toolbar nui-button button {
+    min-width: unset;
+    min-height: unset;
+    padding: var(--nui-space-third, 0.3rem) var(--nui-space-third, 0.3rem);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nui-rich-text-toolbar nui-button[state="active"] button {
+    background-color: var(--color-shade2);
+    color: var(--color-highlight);
+    border-radius: var(--border-radius1);
+}
+.nui-rich-text-editor {
+    min-height: 150px;
+    padding: var(--nui-space, 1rem);
+    background: var(--color-base);
+    color: var(--color-text, #333);
+    outline: none;
+    overflow-y: auto;
+    font-size: 1rem;
+    line-height: 1.6;
+    border-radius: 0 0 var(--border-radius1, 4px) var(--border-radius1, 4px);
+}
+
+/* Base styles for editor content */
+.nui-rich-text-editor h3 {
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    font-size: 1.25rem;
+}
+
+.nui-rich-text-editor p {
+    margin-bottom: 1em;
+}
+
+.nui-rich-text-editor p:last-child {
+    margin-bottom: 0;
+}
+
+.nui-rich-text-editor ul, 
+.nui-rich-text-editor ol {
+    margin: 0 0 1em 1.5em;
+    padding: 0;
+}
+
+.nui-rich-text-editor blockquote {
+    margin: 1em 0;
+    padding: 0.5em 1em;
+    border-left: 4px solid var(--color-highlight);
+    background: var(--color-shade2);
+    color: var(--color-text-dim);
+}
+
+.nui-rich-text-editor a {
+    color: var(--color-highlight);
+    text-decoration: underline;
+}

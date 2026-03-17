@@ -1,0 +1,86 @@
+<div class="page-rich-text">
+    <header>
+        <h1>Rich-Text Editor</h1>
+        <p class="lead">A lightweight, dependency-free rich text editor utilizing native browser APIs.</p>
+        <div class="demo-callout">
+            <strong>Experimental:</strong> This component is currently in an experimental phase. Features, API, and styling are subject to change.
+        </div>
+    </header>
+
+    <section>
+        <h2>Basic Usage</h2>
+        <p>Use the <code>&lt;nui-rich-text&gt;</code> element to provide an accessible WYSIWYG editing experience. It leverages existing NUI components for its toolbar.</p>
+
+        <nui-code>
+            <script type="example" data-lang="html">
+<nui-rich-text id="editor1">
+    <h3>Welcome to NUI Rich Text</h3>
+    <p>This is a <strong>lightweight</strong> editor that supports essential formatting.</p>
+    <ul>
+        <li>No heavy dependencies</li>
+        <li>Uses native browser APIs</li>
+        <li>Clean, semantic output</li>
+    </ul>
+    <p>Try editing this text!</p>
+</nui-rich-text>
+            </script>
+        </nui-code>
+
+        <div class="demo-area">
+            <nui-rich-text id="editor1">
+                <h3>Welcome to NUI Rich Text</h3>
+                <p>This is a <strong>lightweight</strong> editor that supports essential formatting.</p>
+                <ul>
+                    <li>No heavy dependencies</li>
+                    <li>Uses native browser APIs</li>
+                    <li>Clean, semantic output</li>
+                </ul>
+                <p>Try editing this text!</p>
+            </nui-rich-text>
+        </div>
+    </section>
+
+    <section>
+        <h2>Retrieving Content</h2>
+        <p>You can get or set the HTML content via the <code>value</code> property, or listen to the <code>nui-change</code> event.</p>
+        
+        <div class="demo-area">
+            <nui-rich-text id="editor2">
+                <p>Edit this text and click the button below to extract the HTML.</p>
+            </nui-rich-text>
+            <div class="demo-actions" style="margin-top: 1rem;">
+                <nui-button data-action="rich-text:get">Get HTML Output</nui-button>
+            </div>
+            <pre class="demo-chrome" id="output-area" style="margin-top: 1rem; min-height: 50px; white-space: pre-wrap; word-break: break-all; font-family: monospace; padding: 1rem; background: var(--color-shade2);"></pre>
+        </div>
+    </section>
+</div>
+
+<script type="nui/page">
+    function init(element, params, nui) {
+        // We ensure NUI is ready and dynamically load the JS and CSS for the module if not already loaded by the page lifecycle
+        const loadDependencies = async () => {
+            if (!customElements.get('nui-rich-text')) {
+                const link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = '../NUI/css/modules/nui-rich-text.css';
+                document.head.appendChild(link);
+                
+                await import('../../NUI/lib/modules/nui-rich-text.js');
+            }
+        };
+
+        const outputArea = element.querySelector('#output-area');
+        const editor2 = element.querySelector('#editor2');
+
+        element.addEventListener('nui-action-rich-text:get', () => {
+            if (editor2 && outputArea) {
+                // Escape HTML for display
+                const html = editor2.value;
+                outputArea.textContent = html;
+            }
+        });
+
+        loadDependencies().catch(console.error);
+    }
+</script>
