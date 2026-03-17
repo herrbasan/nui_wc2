@@ -20,7 +20,7 @@
 * [x] **Enter Key Normalization:** Intercept the `Enter` key to guarantee consistent HTML block generation (`<p>`, `<div>`) across browsers, and `Shift+Enter` for `<br>`.
 * [x] **Undo / Redo Safety:** Implement a lightweight, memory-efficient history stack for manual undo/redo. Native `execCommand('undo')` breaks rapidly when combining native commands with custom DOM paste formatting.
 * [x] **Toolbar Accessibility (ARIA):** Improve the toolbar with a roving `tabindex`. Keyboard users must be able to use `Alt+F10` (or `Shift+Tab`) into the toolbar and use arrow keys to navigate buttons.
-* [ ] **Contextual Link Editor:** Show a fast, tiny embedded UI near the cursor when inside a link (`<a>`) to edit or remove it cleanly.
+* [x] **Contextual Link Editor:** Show a fast, tiny embedded UI near the cursor when inside a link (`<a>`) to edit or remove it cleanly.
 
 ## 3. Markdown Support
 * [x] **Auto-Formatting on Type:** Listen to text expansion (typing `Space` or `Enter`) to convert basic Markdown syntax on the fly (e.g., typing `# ` converts to `H1`, `* ` to a bullet list).
@@ -29,7 +29,7 @@
 
 ## 4. Tables and Media
 * [x] **Table Insertion:** Add a toolbar button to call an NUI dialog (Rows/Columns) and insert a semantic `<table class="nui-table">`.
-* [ ] **Contextual Table Editing:** Provide simple native DOM operations (Add Row, Add Column, Delete) when the user places the cursor inside a `<td>`. (No drag handles).
+* [x] **Contextual Table Editing:** Provide simple native DOM operations (Add Row, Add Column, Delete) when the user places the cursor inside a `<td>`. (No drag handles).
 * [x] **Image Insertion via Dialog:** Insert an image via a URL prompt.
 * [ ] **Image Drop/Paste Eventing:** Intercept pasted/dropped image files. Crucially, don't insert Base64! Emit a `nui-image-upload` CustomEvent, passing the `File`, letting the host application resolve a real server URL.
 * [ ] **Image Alignment:** Click an image to set an `active` state and expose simple toolbar options to toggle alignment classes (`.align-left`, `.align-center`, etc.) using CSS rather than JS resizing mechanics.

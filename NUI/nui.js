@@ -4040,6 +4040,7 @@ const dialogSystem = {
 				</div>
 			`;
 			const dialog = this._show(html, { classes: ['nui-alert'], ...options });
+			const nativeDialog = dialog.el('dialog');
 
 			buttons.forEach(btn => {
 				const el = dialog.el(`#${btn.id}`);
@@ -4051,7 +4052,19 @@ const dialogSystem = {
 				}
 			});
 
-			dialog.el('dialog').addEventListener('close', () => resolve(), { once: true });
+			nativeDialog.addEventListener('close', () => resolve(), { once: true });
+
+			// Enter key submits the OK button
+			nativeDialog.addEventListener('keydown', (e) => {
+				if (e.key === 'Enter') {
+					e.preventDefault();
+					const okBtn = buttons.find(b => b.value === 'ok');
+					if (okBtn) {
+						dialog.close(okBtn.value);
+						resolve(okBtn.value);
+					}
+				}
+			}, { once: true });
 		});
 	},
 
@@ -4067,6 +4080,7 @@ const dialogSystem = {
 				</div>
 			`;
 			const dialog = this._show(html, { classes: ['nui-alert'], ...options });
+			const nativeDialog = dialog.el('dialog');
 
 			buttons.forEach(btn => {
 				const el = dialog.el(`#${btn.id}`);
@@ -4078,7 +4092,19 @@ const dialogSystem = {
 				}
 			});
 
-			dialog.el('dialog').addEventListener('close', () => resolve(false), { once: true });
+			nativeDialog.addEventListener('close', () => resolve(false), { once: true });
+
+			// Enter key submits the OK button
+			nativeDialog.addEventListener('keydown', (e) => {
+				if (e.key === 'Enter') {
+					e.preventDefault();
+					const okBtn = buttons.find(b => b.value === 'ok');
+					if (okBtn) {
+						dialog.close(okBtn.value);
+						resolve(true);
+					}
+				}
+			}, { once: true });
 		});
 	},
 
@@ -4098,6 +4124,7 @@ const dialogSystem = {
 				</div>
 			`;
 			const dialog = this._show(html, { classes: ['nui-prompt'], ...options });
+			const nativeDialog = dialog.el('dialog');
 
 			const getValues = () => {
 				const values = {};
@@ -4124,7 +4151,19 @@ const dialogSystem = {
 				}
 			});
 
-			dialog.el('dialog').addEventListener('close', () => resolve(null), { once: true });
+			nativeDialog.addEventListener('close', () => resolve(null), { once: true });
+
+			// Enter key submits on single-line inputs, not on textarea
+			nativeDialog.addEventListener('keydown', (e) => {
+				if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+					e.preventDefault();
+					const okBtn = buttons.find(b => b.value === 'ok');
+					if (okBtn) {
+						dialog.close(okBtn.value);
+						resolve(getValues());
+					}
+				}
+			}, { once: true });
 
 			setTimeout(() => {
 				const first = dialog.el('input, textarea');

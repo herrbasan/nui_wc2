@@ -9,6 +9,7 @@ nui-rich-text {
     display: flex;
     flex-direction: column;
     width: 100%;
+    position: relative;
     background: var(--color-shade2);
     border-radius: var(--border-radius1, 4px);
     border: 1px solid var(--border-shade1, rgba(0,0,0,0.1));
@@ -110,4 +111,85 @@ nui-rich-text {
 .nui-rich-text-editor a {
     color: var(--color-highlight);
     text-decoration: underline;
+}
+
+/* Contextual Menu */
+.nui-rich-text-context-menu {
+    position: absolute;
+    z-index: 1000;
+    top: 0;
+    left: 0;
+    display: none;
+    background: var(--color-shade2);
+    border: 1px solid var(--border-shade1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    border-radius: var(--border-radius1);
+    padding: var(--nui-space-third, 0.3rem);
+    transform: translateX(-50%);
+    transition: opacity var(--transition-fast, 0.2s) ease;
+    opacity: 0;
+}
+
+.nui-rich-text-context-menu.visible {
+    display: flex;
+    opacity: 1;
+}
+
+.nui-rich-text-context-group {
+    display: flex;
+    align-items: center;
+    gap: var(--nui-space-half, 0.25rem);
+}
+
+.nui-rich-text-context-menu nui-button button {
+    min-width: unset;
+    min-height: unset;
+    padding: var(--nui-space-third, 0.3rem) var(--nui-space-third, 0.3rem);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Image Enhancements */
+.nui-rich-text-image {
+    max-width: 100%;
+    height: auto;
+    display: block; /* Treat as block element like blockquote */
+    margin: var(--nui-space, 1rem) auto var(--nui-space, 1rem) 0; /* Align left */
+    border-radius: var(--border-radius1, 4px);
+    cursor: default;
+    user-select: none;
+    outline: 2px solid transparent; /* Allows CSS transition */
+    transition: outline-color var(--transition-fast, 0.2s);
+}
+
+.nui-rich-text-image.nui-image-selected {
+    outline-color: var(--color-primary);
+}
+
+/* Image Resizer Overlay */
+.nui-rich-text-image-resizer {
+    position: absolute;
+    display: none;
+    border: 2px solid transparent; /* Image has the visible outline */
+    z-index: 100;
+    pointer-events: none; /* Passes clicks through */
+}
+
+.nui-rich-text-image-resizer.visible {
+    display: block;
+}
+
+.nui-rich-text-image-resizer-handle {
+    position: absolute;
+    right: -6px;
+    bottom: -6px;
+    width: 12px;
+    height: 12px;
+    background: var(--color-primary);
+    border: 2px solid var(--color-base, #fff);
+    border-radius: 50%;
+    cursor: nwse-resize;
+    pointer-events: auto; /* Catch drags */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }

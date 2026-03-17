@@ -98,7 +98,7 @@ sticky_note, sync, upload, visibility, volume, warning, work, wysiwyg
 | Component | Short description | Playground docs |
 | --- | --- | --- |
 | `nui-menu` | Application-style menubar with dropdowns, nested submenus, and full keyboard navigation. | [Open route](../Playground/index.html#page=addons/menu) and [Playground/pages/addons/menu.html](../Playground/pages/addons/menu.html) |
-| `nui-list` | Virtualized list for large datasets with search, sort, and high-throughput rendering. | [Open route](../Playground/index.html#page=addons/list) and [Playground/pages/addons/list.html](../Playground/pages/addons/list.html) |
+| `nui-list` | Virtualized list for large datasets. *Notice: Requires constrained parent `height` or `flex: 1` boundaries to render natively!* | [Open route](../Playground/index.html#page=addons/list) and [Playground/pages/addons/list.html](../Playground/pages/addons/list.html) |
 | `nui-lightbox` | Image and media gallery lightbox that supports grouped declarative usage and programmatic opening. | [Open route](../Playground/index.html#page=addons/lightbox) and [Playground/pages/addons/lightbox.html](../Playground/pages/addons/lightbox.html) |
 
 ## Programmatic APIs and Patterns Documented in the Playground

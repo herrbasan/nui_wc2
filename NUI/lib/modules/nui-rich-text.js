@@ -139,8 +139,33 @@ class NuiRichText extends HTMLElement {
         this._editor.setAttribute('aria-multiline', 'true');
         this._editor.innerHTML = this._value;
 
+        // Build Contextual Menu
+        this._contextMenu = document.createElement('div');
+        this._contextMenu.className = 'nui-rich-text-context-menu';
+        
+        // Prevent context menu clicks from stealing focus
+        this._contextMenu.addEventListener('mousedown', (e) => {
+            const btn = e.target.closest('button, nui-button');
+            if (btn) e.preventDefault(); 
+        });
+        
+        this._contextMenu.addEventListener('click', (e) => {
+            const btn = e.target.closest('nui-button[data-action]');
+            if (!btn) return;
+            this._handleContextAction(btn.dataset.action);
+        });
+
+        // Build Image Resizer Overlay
+        this._imageResizer = document.createElement('div');
+        this._imageResizer.className = 'nui-rich-text-image-resizer';
+        this._imageResizer.innerHTML = '<div class="nui-rich-text-image-resizer-handle"></div>';
+        this._imageResizerHandle = this._imageResizer.querySelector('.nui-rich-text-image-resizer-handle');
+        this._activeImage = null;
+
         this._container.appendChild(this._toolbar);
         this._container.appendChild(this._editor);
+        this._container.appendChild(this._contextMenu);
+        this._container.appendChild(this._imageResizer);
         this.appendChild(this._container);
     }
 
@@ -197,6 +222,16 @@ class NuiRichText extends HTMLElement {
                     applyLink();
                 }
             } else if (command === 'insertImage') {
+                const event = new CustomEvent('nui-image-request', {
+                    bubbles: true,
+                    cancelable: true
+                });
+                
+                if (!this.dispatchEvent(event)) {
+                    // Prevented by host application, assume they will handle insertion via insertImage()
+                    return;
+                }
+
                 const result = await nui.components.dialog.prompt('Insert Image', null, {
                     fields: [
                         { id: 'url', label: 'Image URL', type: 'url', value: '' },
@@ -205,18 +240,7 @@ class NuiRichText extends HTMLElement {
                 });
 
                 if (result && result.url) {
-                    const applyImage = () => {
-                        if (document.querySelector('dialog[open]')) {
-                            requestAnimationFrame(applyImage);
-                        } else {
-                            setTimeout(() => {
-                                // Instead of native insertImage we use insertHTML to easily add the alt attribute and classes
-                                const imgHtml = `<img src="${result.url}" alt="${result.alt || ''}" class="nui-rich-text-image" />`;
-                                this._execCommand('insertHTML', imgHtml);
-                            }, 10);
-                        }
-                    };
-                    applyImage();
+                    this.insertImage(result.url, result.alt);
                 }
             } else if (command === 'insertTable') {
                 const result = await nui.components.dialog.prompt('Insert Table', null, {
@@ -251,6 +275,27 @@ class NuiRichText extends HTMLElement {
                 this._execCommand(command, arg);
             }
         });
+
+        // Image Selection and Resizing Hook
+        this._editor.addEventListener('click', (e) => {
+            if (e.target.tagName === 'IMG') {
+                this._selectImage(e.target);
+            } else {
+                this._hideImageResizer();
+            }
+        });
+
+        this._imageResizerHandle.addEventListener('mousedown', this._onImageResizeStart.bind(this));
+
+        // Editor scrolling (to update absolute overlays attached to container)
+        this._editor.addEventListener('scroll', () => {
+            if (this._activeContextElement) {
+                this._positionContextMenu(this._activeContextElement);
+            }
+            if (this._activeImage) {
+                this._positionImageResizer();
+            }
+        }, { passive: true });
 
         // Update toolbar state on selection change
         document.addEventListener('selectionchange', () => this._updateToolbarState());
@@ -677,6 +722,279 @@ class NuiRichText extends HTMLElement {
         }
         
         this._isUpdatingToolbar = false;
+        this._updateContextualMenu();
+    }
+
+    _updateContextualMenu() {
+        // Determine if focus is still here
+        if (!this._editor || document.activeElement !== this._editor) {
+            this._hideContextMenu();
+            this._hideImageResizer();
+            return;
+        }
+
+        // Hide overlay if the active image was deleted
+        if (this._activeImage && !this._editor.contains(this._activeImage)) {
+            this._hideImageResizer();
+        }
+
+        const sel = window.getSelection();
+        if (sel.rangeCount === 0 || !sel.anchorNode) {
+            this._hideContextMenu();
+            return;
+        }
+
+        let node = sel.anchorNode;
+        let elem = node.nodeType === 3 ? node.parentNode : node;
+
+        const anchor = elem.closest('a');
+        const td = elem.closest('td, th');
+        const table = elem.closest('table');
+
+        if (anchor && this._editor.contains(anchor)) {
+            this._showLinkContext(anchor);
+        } else if (td && table && this._editor.contains(table)) {
+            this._showTableContext(td, table);
+        } else {
+            this._hideContextMenu();
+        }
+    }
+
+    _showLinkContext(anchor) {
+        this._activeContextElement = anchor;
+        this._contextType = 'link';
+        this._contextMenu.innerHTML = `
+            <div class="nui-rich-text-context-group">
+                <nui-button variant="ghost" data-action="editLink" aria-label="Edit Link" title="Edit Link">
+                    <button type="button" tabindex="-1"><nui-icon name="edit"></nui-icon></button>
+                </nui-button>
+                <nui-button variant="ghost" data-action="openLink" aria-label="Open Link" title="Open Link">
+                    <button type="button" tabindex="-1"><nui-icon name="public"></nui-icon></button>
+                </nui-button>
+                <div class="nui-rich-text-separator"></div>
+                <nui-button variant="ghost" data-action="removeLink" aria-label="Remove Link" title="Remove Link">
+                    <button type="button" tabindex="-1"><nui-icon name="link_off"></nui-icon></button>
+                </nui-button>
+            </div>
+        `;
+        this._positionContextMenu(anchor);
+    }
+
+    _showTableContext(td, table) {
+        this._activeContextElement = { td, table };
+        this._contextType = 'table';
+        this._contextMenu.innerHTML = `
+            <div class="nui-rich-text-context-group">
+                <nui-button variant="ghost" data-action="addRow" aria-label="Insert Row" title="Insert Row">
+                    <button type="button" tabindex="-1"><nui-icon name="table_rows"></nui-icon></button>
+                </nui-button>
+                <nui-button variant="ghost" data-action="addCol" aria-label="Insert Column" title="Insert Column">
+                    <button type="button" tabindex="-1"><nui-icon name="view_column"></nui-icon></button>
+                </nui-button>
+                <div class="nui-rich-text-separator"></div>
+                <nui-button variant="ghost" data-action="delRow" aria-label="Delete Row" title="Delete Row">
+                    <button type="button" tabindex="-1"><nui-icon name="horizontal_rule"></nui-icon></button>
+                </nui-button>
+                <nui-button variant="ghost" data-action="delCol" aria-label="Delete Column" title="Delete Column">
+                    <button type="button" tabindex="-1"><nui-icon name="vertical_align_center"></nui-icon></button>
+                </nui-button>
+                <div class="nui-rich-text-separator"></div>
+                <nui-button variant="ghost" data-action="delTable" aria-label="Delete Table" title="Delete Table">
+                    <button type="button" tabindex="-1"><nui-icon name="delete"></nui-icon></button>
+                </nui-button>
+            </div>
+        `;
+        this._positionContextMenu(td);
+    }
+
+    _positionContextMenu(targetEl) {
+        this._contextMenu.classList.add('visible');
+        
+        // Use container as bounding box
+        const containerRect = this._container.getBoundingClientRect();
+        const targetRect = targetEl.getBoundingClientRect();
+        
+        // Position roughly centered below the element
+        let top = (targetRect.bottom - containerRect.top) + 8;
+        let left = (targetRect.left - containerRect.left) + (targetRect.width / 2);
+
+        this._contextMenu.style.top = `${top}px`;
+        this._contextMenu.style.left = `${left}px`;
+        this._contextMenu.style.transform = 'translateX(-50%)';
+    }
+
+    _hideContextMenu() {
+        this._contextMenu.classList.remove('visible');
+        this._activeContextElement = null;
+        this._contextType = null;
+    }
+
+    _selectImage(img) {
+        this._hideContextMenu();
+        this._activeImage = img;
+        this._imageResizer.classList.add('visible');
+        this._imageResizer.style.borderColor = 'transparent';
+        img.classList.add('nui-image-selected');
+        this._positionImageResizer();
+        
+        // Force native selection specifically around the wrapper block
+        const containerDiv = img.closest('div[contenteditable="false"]');
+        const range = document.createRange();
+        range.selectNode(containerDiv || img);
+        
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+    }
+
+    _hideImageResizer() {
+        if (!this._activeImage) return;
+        this._imageResizer.classList.remove('visible');
+        this._activeImage.classList.remove('nui-image-selected');
+        this._activeImage = null;
+    }
+
+    _positionImageResizer() {
+        if (!this._activeImage || !this._imageResizer.classList.contains('visible')) return;
+        
+        const containerRect = this._container.getBoundingClientRect();
+        const imgRect = this._activeImage.getBoundingClientRect();
+
+        // Target position in the container
+        let top = (imgRect.top - containerRect.top);
+        let left = (imgRect.left - containerRect.left);
+
+        this._imageResizer.style.top = `${top}px`;
+        this._imageResizer.style.left = `${left}px`;
+        this._imageResizer.style.width = `${imgRect.width}px`;
+        this._imageResizer.style.height = `${imgRect.height}px`;
+    }
+
+    _onImageResizeStart(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!this._activeImage) return;
+
+        const startX = e.clientX;
+        const startWidth = this._activeImage.offsetWidth;
+        const startHeight = this._activeImage.offsetHeight;
+        const ratio = startWidth / startHeight;
+
+        // Optionally show selection/grab status on the image
+        this._imageResizer.style.borderColor = 'var(--color-primary)';
+        
+        const onMouseMove = (moveEvent) => {
+            const dx = moveEvent.clientX - startX;
+            // Always calculate width directly and auto-set height to keep ratio via CSS
+            const newWidth = Math.max(50, startWidth + dx);
+            
+            this._activeImage.style.width = `${newWidth}px`;
+            this._activeImage.style.height = 'auto'; // ensure native browser scaling
+            
+            // Re-sync resizer bounds immediately
+            this._positionImageResizer();
+        };
+
+        const onMouseUp = () => {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+            this._emitChange(true); // Treat resize as a structural change to store in history
+        };
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    }
+
+    async _handleContextAction(action) {
+        if (!this._activeContextElement) return;
+
+        // Restore focus to editor first to keep native cursor location alive if possible
+        this._editor.focus();
+        
+        if (this._contextType === 'link') {
+            const anchor = this._activeContextElement;
+            if (action === 'editLink') {
+                const result = await nui.components.dialog.prompt('Edit Link', null, {
+                    fields: [
+                        { id: 'url', label: 'Web Address (URL)', type: 'url', value: anchor.getAttribute('href') || '' }
+                    ]
+                });
+                if (result && result.url) {
+                    anchor.setAttribute('href', result.url);
+                    this._saveHistory();
+                    this._emitChange();
+                }
+            } else if (action === 'openLink') {
+                let url = (anchor.getAttribute('href') || '').trim();
+                // Ensure the URL is treated as absolute if it doesn't have a protocol or explicitly starts with / or #
+                if (url && !/^https?:\/\//i.test(url) && !/^(mailto|tel|sms):/i.test(url) && !url.startsWith('/') && !url.startsWith('#')) {
+                    url = 'https://' + url;
+                }
+                window.open(url, '_blank');
+            } else if (action === 'removeLink') {
+                const text = document.createTextNode(anchor.textContent);
+                anchor.parentNode.replaceChild(text, anchor);
+                
+                // Select the text cleanly after removing link
+                const range = document.createRange();
+                range.selectNode(text);
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(range);
+                
+                this._saveHistory();
+                this._emitChange();
+            }
+        } else if (this._contextType === 'table') {
+            const { td, table } = this._activeContextElement;
+            const tr = td.parentNode;
+            const tbody = tr.parentNode;
+            
+            // Get index of current cell to know where to insert columns
+            const cellIndex = Array.from(tr.children).indexOf(td);
+
+            if (action === 'addRow') {
+                const newRow = document.createElement('tr');
+                Array.from(tr.children).forEach(() => {
+                    const newCell = document.createElement('td');
+                    newCell.innerHTML = '<br>';
+                    newRow.appendChild(newCell);
+                });
+                tr.parentNode.insertBefore(newRow, tr.nextSibling);
+            } else if (action === 'addCol') {
+                Array.from(tbody.children).forEach(row => {
+                    const newCell = document.createElement('td');
+                    newCell.innerHTML = '<br>';
+                    // insert after current cell index
+                    if (row.children.length > cellIndex) {
+                        row.insertBefore(newCell, row.children[cellIndex].nextSibling);
+                    } else {
+                        row.appendChild(newCell);
+                    }
+                });
+            } else if (action === 'delRow') {
+                tr.remove();
+                if (tbody.children.length === 0) table.remove();
+            } else if (action === 'delCol') {
+                Array.from(tbody.children).forEach(row => {
+                    if (row.children.length > cellIndex) {
+                        row.children[cellIndex].remove();
+                    }
+                });
+                // If table has no columns left, delete table
+                if (tbody.children.length > 0 && tbody.children[0].children.length === 0) {
+                    table.remove();
+                }
+            } else if (action === 'delTable') {
+                table.remove();
+            }
+            
+            this._saveHistory();
+            this._emitChange();
+        }
+
+        this._updateContextualMenu();
     }
 
     _handlePaste(e) {
@@ -740,8 +1058,29 @@ class NuiRichText extends HTMLElement {
         }));
     }
 
+    /**
+     * Public method to insert an image into the editor at the current selection
+     */
+    insertImage(url, alt = '') {
+        const applyImage = () => {
+            if (document.querySelector('dialog[open]')) {
+                requestAnimationFrame(applyImage);
+            } else {
+                setTimeout(() => {
+                    // Wrap image inside a DIV to force block layout separation natively
+                    // rather than injecting it inline into existing paragraphs
+                    const imgHtml = `<div contenteditable="false" style="display: block; width: fit-content; max-width: 100%;"><img src="${url}" alt="${alt}" class="nui-rich-text-image" style="width: 300px;" /></div><p><br></p>`;
+                    this._execCommand('insertHTML', imgHtml);
+                }, 10);
+            }
+        };
+        applyImage();
+    }
+
     get value() {
-        return this._editor.innerHTML;
+        if (!this._editor) return this._value;
+        // Clean up temporary internal states
+        return this._editor.innerHTML.replace(/ nui-image-selected|nui-image-selected/g, '').trim();
     }
 
     set value(html) {

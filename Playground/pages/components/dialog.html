@@ -333,6 +333,11 @@ if (dialog.isOpen()) { ... }
 <section>
 	<h2>Page Mode</h2>
 	<p>Add <code>mode="page"</code> to a dialog to create a layout optimized for large structures like settings menus or forms. Page mode dialogs use CSS grid/flexbox to maximize use of the viewport while keeping the header and footer fixed and making the main content area scrollable.</p>
+	
+	<div class="demo-callout">
+		<strong>Virtual Scroller Boundaries:</strong> If embedding a full-height virtual scroller like <code>&lt;nui-list&gt;</code> that physically dictates its own inner layout measurements based on viewport calculations, add the additional <code>content-scroll="false"</code> parameter to the <code>&lt;nui-dialog&gt;</code>. This prevents the dialog's default content wrapper from pushing the list down infinitely causing it to collapse.
+	</div>
+
 	<nui-code>
 		<script type="example" data-lang="html">
 <nui-dialog id="page-dialog" mode="page">

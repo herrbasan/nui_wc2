@@ -1861,6 +1861,14 @@ nui-dialog[mode="page"] dialog > main {
 	padding: var(--nui-space-double);
 }
 
+/* Optional: Support for embedded virtual scrollers like nui-list inside page dialogs (no native scroll, no padding) */
+nui-dialog[mode="page"][content-scroll="false"] dialog > main {
+	overflow: hidden;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+}
+
 /* Footer structural styling */
 nui-dialog[mode="page"] dialog > footer {
 	flex-shrink: 0;

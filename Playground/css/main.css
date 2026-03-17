@@ -22,15 +22,17 @@ nui-app-footer {
 
 /* Demo area containers - for interactive examples */
 .demo-area {
-	padding: 1rem;
-	border: 1px solid var(--border-shade1);
-	border-radius: var(--border-radius1);
+	
 	margin-bottom: 1rem;
 }
 
 .demo-result {
-	border-bottom: solid var(--border-thickness) var(--border-shade2);
-	margin-top: 1rem;
+	border: solid var(--border-thickness) var(--border-shade2);
+	padding-top: 1rem;
+	padding-left: 1rem;
+	padding-right: 1rem;
+	padding-bottom: 1rem;
+	margin-bottom: 1rem;
 }
 
 .demo-callout {

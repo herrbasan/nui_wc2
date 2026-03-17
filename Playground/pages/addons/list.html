@@ -34,6 +34,21 @@
 	</section>
 
 	<section>
+		<h2>Layout Constraints (Important)</h2>
+		<div class="demo-callout">
+			<strong>Virtual Scroller Boundaries:</strong> Because <code>&lt;nui-list&gt;</code> is a virtual scroller, it needs to know what is currently visible on the screen. <strong>It MUST be placed inside a container with a constrained height.</strong>
+		</div>
+		<p>If you place the list in a container that dictates its height by its children (e.g., standard document flow, or <code>&lt;main overflow-y="auto"&gt;</code>), the list will think its viewport is infinite, breaking virtual memory and potentially returning 0 visual space.</p>
+		
+		<p>Rules:</p>
+		<ul>
+			<li>Use exact boundaries like <code>height: 300px;</code> on the parent wrapping the list.</li>
+			<li>If using flexbox, make sure the parental container has fixed bounds and the list wrapper has <code>flex: 1; overflow: hidden;</code>.</li>
+			<li>If inserting into a <strong><code>&lt;nui-dialog mode="page"&gt;</code></strong>, you must add <strong><code>content-scroll="false"</code></strong> to the dialog to disable native HTML scroll physics and permit the list to own the bounds!</li>
+		</ul>
+	</section>
+
+	<section>
 		<h2>Programmatic Usage (Advanced / Async)</h2>
 		<p>Programmatic pattern with custom render function:</p>
 
