@@ -922,7 +922,7 @@ class NuiRichText extends HTMLElement {
                 }
             } else if (action === 'openLink') {
                 let url = (anchor.getAttribute('href') || '').trim();
-                if (url && !/^https?:\/\
+                if (url && !/^https?:\/\//i.test(url)) {
                     url = 'https://' + url;
                 }
                 window.open(url, '_blank');
