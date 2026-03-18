@@ -686,7 +686,7 @@ function createList(element, options) {
 				list.filtered[i].selected = true;
 			}
 			list.lastSelect = last;
-		} else if (e.ctrlKey && !options.single) {
+		} else if ((e.ctrlKey || options.multiple) && !options.single) {
 			list.filtered[idx].selected = !list.filtered[idx].selected;
 			if (list.filtered[idx].selected) {
 				list.lastSelect = idx;
