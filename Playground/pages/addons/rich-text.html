@@ -58,7 +58,97 @@
         </div>
     </section>
 
-
+    <!-- Declarative Dialog for Image Picker -->
+    <nui-dialog id="dynamic-image-picker-dialog" mode="page" content-scroll="false">
+        <dialog>
+            <header>
+                <h2>Select an Image</h2>
+                <nui-button variant="icon" class="icon-only">
+                    <button type="button" data-action="dialog-close@#dynamic-image-picker-dialog" aria-label="Close">
+                        <nui-icon name="close"></nui-icon>
+                    </button>
+                </nui-button>
+            </header>
+            <main style="display: flex; flex-direction: column; padding: 0;">
+                <style>
+                    #dynamic-image-list-container {
+                        flex: 1;
+                        min-height: 0;
+                        display: flex;
+                        flex-direction: column;
+                    }
+                    #dynamic-image-list-wrapper {
+                        position: relative;
+                        flex: 1;
+                        min-height: 0;
+                    }
+                    #dynamic-image-list {
+                        --nui-list-item-height: 90px;
+                        flex: 1;
+                        height: 100%;
+                    }
+                    .demo-img-list-item {
+                        display: grid;
+                        grid-template-columns: 80px 1fr;
+                        gap: var(--nui-space);
+                        align-items: center;
+                        padding: 0 var(--nui-space);
+                        height: 90px;
+                        border-bottom: 1px solid var(--border-shade1);
+                        cursor: pointer;
+                        user-select: none;
+                    }
+                    .demo-img-list-item:hover {
+                        background-color: var(--color-shade1);
+                    }
+                    .demo-img-list-item.selected {
+                        background-color: var(--color-highlight-dim);
+                        border-left: 4px solid var(--color-primary);
+                        color: white;
+                    }
+                    .demo-img-list-item.selected .demo-img-list-meta {
+                        color: rgba(255, 255, 255, 0.8);
+                    }
+                    .demo-img-list-item.selected:hover {
+                        background-color: var(--color-highlight);
+                    }
+                    .demo-img-list-thumb {
+                        width: 70px;
+                        height: 70px;
+                        object-fit: cover;
+                        border-radius: var(--border-radius1);
+                        border: 1px solid var(--border-shade1);
+                        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                    }
+                    .demo-img-list-title {
+                        font-weight: 500;
+                        margin: 0;
+                    }
+                    .demo-img-list-meta {
+                        font-size: var(--font-size-small);
+                        color: var(--color-text-dim);
+                        margin: 0;
+                    }
+                </style>
+                <div id="dynamic-image-list-container">
+                    <div id="dynamic-image-list-wrapper">
+                        <nui-list id="dynamic-image-list"></nui-list>
+                    </div>
+                </div>
+            </main>
+            <footer>
+                <div class="nui-flex nui-gap" style="align-items: center; justify-content: flex-end; width: 100%;">
+                    <nui-button variant="ghost" style="margin-right: auto;">
+                        <button type="button" data-action="dialog-close@#dynamic-image-picker-dialog">Cancel</button>
+                    </nui-button>
+                    <span id="image-picker-status" style="line-height: var(--nui-form-row-height); font-size: var(--font-size-small); color: var(--color-text-dim); display: none;">1 Selected</span>
+                    <nui-button variant="primary">
+                        <button type="button" id="image-picker-confirm" class="primary" disabled>Insert Image</button>
+                    </nui-button>
+                </div>
+            </footer>
+        </dialog>
+    </nui-dialog>
 
 </div>
 
@@ -90,8 +180,12 @@
         
         let currentEditor = null; // Track which editor triggered it
         let selectedItemData = null;
-        let imageDialog = null; // The programmatic dialog instance
-        let imageList = null;   // The programmatic list instance
+        
+        // Grab elements from the newly declarative dialog
+        const imageDialog = element.querySelector('#dynamic-image-picker-dialog');
+        const imageList = element.querySelector('#dynamic-image-list');
+        const confirmBtn = element.querySelector('#image-picker-confirm');
+        const statusEl = element.querySelector('#image-picker-status');
 
         // Generate mock image data
         const imageData = [];
@@ -108,235 +202,94 @@
         // Ensure dependencies are loaded
         loadDependencies().catch(console.error);
 
-        function buildImagePickerDialog() {
-            // NUI Page Mode Dialog programmatic generation
-            const wrapper = document.createElement('nui-dialog');
-            wrapper.id = 'dynamic-image-picker-dialog';
-            wrapper.setAttribute('mode', 'page');
-            
-            const dialogEl = document.createElement('dialog');
-            
-            // Header
-            const header = document.createElement('header');
-            header.innerHTML = `
-                <h2>Select an Image</h2>
-                <nui-button variant="icon" class="icon-only">
-                    <button type="button" data-action="dialog-close@#dynamic-image-picker-dialog" aria-label="Close">
-                        <nui-icon name="close"></nui-icon>
-                    </button>
-                </nui-button>
-            `;
-            dialogEl.appendChild(header);
-            
-            // Main content area
-            const main = document.createElement('main');
-            main.style.display = 'flex';
-            main.style.flexDirection = 'column';
-            main.style.padding = '0';
-            
-            // Inject structural CSS
-            const style = document.createElement('style');
-            style.textContent = `
-                #dynamic-image-list-container {
-                    flex: 1;
-                    min-height: 0; /* Important for flex virtualization boundaries */
-                    display: flex;
-                    flex-direction: column;
-                    position: relative;
-                }
-                #dynamic-image-list {
-                    --nui-list-item-height: 90px;
-                    flex: 1;
-                    height: 100%;
-                }
-                .demo-img-list-item {
-                    display: grid;
-                    grid-template-columns: 80px 1fr;
-                    gap: var(--nui-space);
-                    align-items: center;
-                    padding: 0 var(--nui-space);
-                    height: 90px;
-                    border-bottom: 1px solid var(--border-shade1);
-                    cursor: pointer;
-                    user-select: none;
-                }
-                .demo-img-list-item:hover {
-                    background-color: var(--color-shade1);
-                }
-                .demo-img-list-item.selected {
-                    background-color: var(--color-highlight-dim);
-                    border-left: 4px solid var(--color-primary);
-                    color: white; /* Ensure text matches the highlight background */
-                }
-                .demo-img-list-item.selected .demo-img-list-meta {
-                    color: rgba(255, 255, 255, 0.8);
-                }
-                .demo-img-list-item.selected:hover {
-                    background-color: var(--color-highlight);
-                }
-                .demo-img-list-thumb {
-                    width: 70px;
-                    height: 70px;
-                    object-fit: cover;
-                    border-radius: var(--border-radius1);
-                    border: 1px solid var(--border-shade1);
-                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                }
-                .demo-img-list-title {
-                    font-weight: 500;
-                    margin: 0;
-                }
-                .demo-img-list-meta {
-                    font-size: var(--font-size-small);
-                    color: var(--color-text-dim);
-                    margin: 0;
-                }
-            `;
-            main.appendChild(style);
-            
-            // Flex container needed for NUI Virtual Scroller bounds
-            const listContainer = document.createElement('div');
-            listContainer.id = 'dynamic-image-list-container';
-            listContainer.style.display = 'flex';
-            listContainer.style.flexDirection = 'column';
-            listContainer.style.height = '100%';
-            main.appendChild(listContainer);
-            
-            // Container specifically for absolute nui-list 
-            const listWrapper = document.createElement('div');
-            listWrapper.style.position = 'relative';
-            listWrapper.style.flex = '1';
-            listWrapper.style.minHeight = '0';
-            listContainer.appendChild(listWrapper);
-            
-            // Programmatically generate nui-list
-            const list = document.createElement('nui-list');
-            list.id = 'dynamic-image-list';
-            listWrapper.appendChild(list);
-            dialogEl.appendChild(main);
-            
-            // Footer area
-            const footer = document.createElement('footer');
-            footer.innerHTML = `
-                <div class="nui-flex nui-gap" style="align-items: center; justify-content: flex-end; width: 100%;">
-                    <nui-button variant="ghost" style="margin-right: auto;">
-                        <button type="button" data-action="dialog-close@#dynamic-image-picker-dialog">Cancel</button>
-                    </nui-button>
-                    <!-- Selection counter -->
-                    <span id="image-picker-status" style="line-height: var(--nui-form-row-height); font-size: var(--font-size-small); color: var(--color-text-dim); display: none;">1 Selected</span>
-                    <nui-button variant="primary">
-                        <button type="button" id="image-picker-confirm" class="primary" disabled>Insert Image</button>
-                    </nui-button>
+        function renderListItem(item) {
+            const el = document.createElement('div');
+            el.className = 'demo-img-list-item';
+            el.tabIndex = 0;
+            el.innerHTML = `
+                <img class="demo-img-list-thumb" alt="Image ${item.id}" />
+                <div>
+                    <p class="demo-img-list-title">Image ${item.id}</p>
+                    <p class="demo-img-list-meta">Random Nature Collection</p>
                 </div>
             `;
-            dialogEl.appendChild(footer);
-            wrapper.appendChild(dialogEl);
             
-            // WIRING inside the builder
-            const confirmBtn = footer.querySelector('#image-picker-confirm');
-            const statusEl = footer.querySelector('#image-picker-status');
+            const img = el.querySelector('img');
             
-            function renderListItem(item) {
-                const el = document.createElement('div');
-                el.className = 'demo-img-list-item';
-                el.tabIndex = 0;
-                el.innerHTML = `
-                    <img class="demo-img-list-thumb" alt="Image ${item.id}" />
-                    <div>
-                        <p class="demo-img-list-title">Image ${item.id}</p>
-                        <p class="demo-img-list-meta">Random Nature Collection</p>
-                    </div>
-                `;
-                
-                // Using update pattern that nui-list calls when appending to DOM
-                const img = el.querySelector('img');
-                
-                el.update = () => {
-                    if (item._imageLoaded) {
-                        img.src = item.url_160;
-                        return;
-                    }
-                    
+            el.update = () => {
+                if (item._imageLoaded) {
                     img.src = item.url_160;
-                    img.onload = () => {
-                        item._imageLoaded = true;
-                        el.update = null; // Clean up so bounds tracking doesn't refire
-                    };
-                };
+                    return;
+                }
                 
-                return el;
-            }
+                img.src = item.url_160;
+                img.onload = () => {
+                    item._imageLoaded = true;
+                    el.update = null; // Clean up so bounds tracking doesn't refire
+                };
+            };
+            
+            return el;
+        }
 
-            function handleListEvents(e) {
-                if (e.type === 'selection') {
-                    const selected = list.getSelection ? list.getSelection(true) : [];
-                    if (selected && selected.length > 0) {
-                        selectedItemData = selected[0].data; // Data is nested inside .data
-                        confirmBtn.disabled = false;
-                        statusEl.style.display = 'block';
-                        statusEl.textContent = '1 Selected';
-                    } else {
-                        selectedItemData = null;
-                        confirmBtn.disabled = true;
-                        statusEl.style.display = 'none';
-                    }
+        function handleListEvents(e) {
+            if (e.type === 'selection') {
+                const selected = imageList.getSelection ? imageList.getSelection(true) : [];
+                if (selected && selected.length > 0) {
+                    selectedItemData = selected[0].data; // Data is nested inside .data
+                    confirmBtn.disabled = false;
+                    statusEl.style.display = 'block';
+                    statusEl.textContent = '1 Selected';
+                } else {
+                    selectedItemData = null;
+                    confirmBtn.disabled = true;
+                    statusEl.style.display = 'none';
                 }
             }
-            
-            // Expose the config so the initial load can use it
-            list._initialConfig = {
+        }
+
+        function initList() {
+            imageList.loadData({ 
+                data: imageData, 
                 render: renderListItem,
                 events: handleListEvents,
                 search: [{ prop: 'id' }],
                 idField: 'id'
-            };
-            
-            // Insert Image logic
-            confirmBtn.addEventListener('click', () => {
-                if (selectedItemData && currentEditor) {
-                    currentEditor.insertImage(selectedItemData.url_1080, "Placeholder Image " + selectedItemData.id);
-                    if (wrapper.close) wrapper.close();
-                }
             });
-            
-            return { wrapper, list, confirmBtn, statusEl };
         }
+
+        // Insert Image logic
+        confirmBtn.addEventListener('click', () => {
+            if (selectedItemData && currentEditor) {
+                currentEditor.insertImage(selectedItemData.url_1080, "Placeholder Image " + selectedItemData.id);
+                if (imageDialog.close) imageDialog.close();
+            }
+        });
 
         // 1. Hook custom event from editor to open the dialog
         element.addEventListener('nui-image-request', async (e) => {
             e.preventDefault(); // Stop default generic prompt
             currentEditor = e.target;
-            
-            // Build dialog instance if we haven't already
-            if (!imageDialog) {
-                const parts = buildImagePickerDialog();
-                imageDialog = parts.wrapper;
-                imageList = parts.list;
-                
-                // Append to element scope to inherit cached router lifecycle without leaking
-                element.appendChild(imageDialog);
-                
-                // Ensure list depends are fully processed if they are slow
-                if (imageList.loadData && imageList._initialConfig) {
-                    imageList.loadData({ 
-                        data: imageData, 
-                        ...imageList._initialConfig 
-                    });
-                }
-            } else {
-                // Reset state
-                selectedItemData = null;
-                if (imageList && imageList.setSelection) imageList.setSelection([]);
-                const btn = imageDialog.querySelector('#image-picker-confirm');
-                const stat = imageDialog.querySelector('#image-picker-status');
-                if (btn) btn.disabled = true;
-                if (stat) stat.style.display = 'none';
-            }
 
-            // Show it
+            // Show it BEFORE calculating list items so its viewport dimensions exist!
             if (imageDialog && typeof imageDialog.showModal === 'function') {
                 imageDialog.showModal();
             }
+
+            // Always call loadData when it opens. 
+            // `nui-list` virtual scroller relies on CSS heights that become zeroed out 
+            // when the dialog closes. Loading data while the dialog is visible 
+            // resets its internal ResizeObserver/Heights and guarantees it paints the body!
+            selectedItemData = null;
+            if (imageList.loadData) {
+                // Ensure there is no brief flash of old render heights
+                initList();
+            } else {
+                customElements.whenDefined('nui-list').then(initList);
+            }
+            
+            confirmBtn.disabled = true;
+            statusEl.style.display = 'none';
         });
 
         // Add proper cleanup
