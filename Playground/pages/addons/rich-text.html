@@ -59,24 +59,14 @@
     </section>
 
     <!-- Declarative Dialog for Image Picker -->
-    <nui-dialog id="dynamic-image-picker-dialog" mode="page" content-scroll="false">
-        <dialog>
-            <header>
-                <h2>Select an Image</h2>
-                <nui-button variant="icon" class="icon-only">
-                    <button type="button" data-action="dialog-close@#dynamic-image-picker-dialog" aria-label="Close">
-                        <nui-icon name="close"></nui-icon>
-                    </button>
-                </nui-button>
-            </header>
-            <main style="display: flex; flex-direction: column; padding: 0;">
-                <style>
-                    #dynamic-image-list-container {
-                        flex: 1;
-                        min-height: 0;
-                        display: flex;
-                        flex-direction: column;
-                    }
+    <nui-dialog id="dynamic-image-picker-dialog" mode="page" content-scroll="false" title="Select an Image" data-buttons='[{"label": "Cancel", "type": "outline", "value": "cancel"}]'>
+        <style>
+            #dynamic-image-list-container {
+                flex: 1;
+                min-height: 0;
+                display: flex;
+                flex-direction: column;
+            }
                     #dynamic-image-list-wrapper {
                         position: relative;
                         flex: 1;
@@ -181,24 +171,6 @@
         let currentEditor = null; // Track which editor triggered it
         let selectedItemData = null;
         
-        // Grab elements from the newly declarative dialog
-        const imageDialog = element.querySelector('#dynamic-image-picker-dialog');
-        const imageList = element.querySelector('#dynamic-image-list');
-        const confirmBtn = element.querySelector('#image-picker-confirm');
-        const statusEl = element.querySelector('#image-picker-status');
-
-        // Generate mock image data
-        const imageData = [];
-        for(let i=1; i<=118; i++) {
-            const pad = i.toString().padStart(3, '0');
-            imageData.push({ 
-                id: pad, 
-                url_160: `images/Random_Picts/160p/${pad}.webp`, 
-                url_1080: `images/Random_Picts/1080p/${pad}.webp`, 
-                url_orig: `images/Random_Picts/Original/${pad}.webp` 
-            });
-        }
-        
         // Ensure dependencies are loaded
         loadDependencies().catch(console.error);
 
@@ -232,64 +204,83 @@
             return el;
         }
 
-        function handleListEvents(e) {
-            if (e.type === 'selection') {
-                const selected = imageList.getSelection ? imageList.getSelection(true) : [];
-                if (selected && selected.length > 0) {
-                    selectedItemData = selected[0].data; // Data is nested inside .data
-                    confirmBtn.disabled = false;
-                    statusEl.style.display = 'block';
-                    statusEl.textContent = '1 Selected';
-                } else {
-                    selectedItemData = null;
-                    confirmBtn.disabled = true;
-                    statusEl.style.display = 'none';
-                }
-            }
-        }
-
-        function initList() {
-            imageList.loadData({ 
-                data: imageData, 
-                render: renderListItem,
-                events: handleListEvents,
-                search: [{ prop: 'id' }],
-                idField: 'id'
-            });
-        }
-
-        // Insert Image logic
-        confirmBtn.addEventListener('click', () => {
-            if (selectedItemData && currentEditor) {
-                currentEditor.insertImage(selectedItemData.url_1080, "Placeholder Image " + selectedItemData.id);
-                if (imageDialog.close) imageDialog.close();
-            }
-        });
-
-        // 1. Hook custom event from editor to open the dialog
         element.addEventListener('nui-image-request', async (e) => {
             e.preventDefault(); // Stop default generic prompt
-            currentEditor = e.target;
+            const currentEditor = e.target;
 
-            // Show it BEFORE calculating list items so its viewport dimensions exist!
-            if (imageDialog && typeof imageDialog.showModal === 'function') {
-                imageDialog.showModal();
-            }
-
-            // Always call loadData when it opens. 
-            // `nui-list` virtual scroller relies on CSS heights that become zeroed out 
-            // when the dialog closes. Loading data while the dialog is visible 
-            // resets its internal ResizeObserver/Heights and guarantees it paints the body!
-            selectedItemData = null;
-            if (imageList.loadData) {
-                // Ensure there is no brief flash of old render heights
-                initList();
-            } else {
-                customElements.whenDefined('nui-list').then(initList);
-            }
+            const container = document.createElement('div');
+            container.style.cssText = 'flex: 1; min-height: 0; display: flex; flex-direction: column;';
             
-            confirmBtn.disabled = true;
-            statusEl.style.display = 'none';
+            const listStyles = document.createElement('style');
+            listStyles.textContent = `
+                .demo-img-list-item { display: flex; align-items: center; gap: var(--nui-space-double); padding: var(--nui-space); border-bottom: 1px solid var(--border-shade1); cursor: pointer; transition: background-color var(--transition-fast); }
+                .demo-img-list-item:hover { background-color: var(--color-shade1); }
+                .demo-img-list-item.selected { background-color: var(--color-highlight-dim); border-left: 4px solid var(--color-primary); color: white; }
+                .demo-img-list-item.selected .demo-img-list-meta { color: rgba(255, 255, 255, 0.8); }
+                .demo-img-list-item.selected:hover { background-color: var(--color-highlight); }
+                .demo-img-list-thumb { width: 70px; height: 70px; object-fit: cover; border-radius: var(--border-radius1); border: 1px solid var(--border-shade1); background-color: var(--color-shade2); }
+                .demo-img-list-meta { display: flex; flex-direction: column; gap: 4px; color: var(--color-text-dim); font-size: var(--font-size-small); }
+                .demo-img-list-title { color: var(--color-text); font-weight: 500; font-size: var(--font-size-normal); }
+                .demo-img-list-item.selected .demo-img-list-title { color: white; }
+            `;
+            
+            const listWrapper = document.createElement('div');
+            listWrapper.style.cssText = 'flex: 1; min-height: 0; position: relative;';
+            
+            const listElement = document.createElement('nui-list');
+            listElement.style.cssText = '--nui-list-item-height: 90px; flex: 1; height: 100%;';
+            
+            listWrapper.appendChild(listElement);
+            container.appendChild(listStyles);
+            container.appendChild(listWrapper);
+
+            const nuiApi = window.nui || nui;
+            const { dialog, main, result } = await nuiApi.dialog.page("Select an Image", container, {
+                contentScroll: false,
+                buttons: [
+                    { label: "Cancel", type: "outline", value: "cancel" },
+                    { label: "Insert Image", type: "primary", value: "insert" }
+                ]
+            });
+            
+            const confirmBtn = dialog.querySelector('button[data-value="insert"]');
+            if (confirmBtn) confirmBtn.disabled = true;
+            
+            let selectedItemData = null;
+            function onListEvents(ev) {
+                if (ev.type === 'selection') {
+                    const selected = listElement.getSelection ? listElement.getSelection(true) : [];
+                    if (selected && selected.length > 0) {
+                        selectedItemData = selected[0].data;
+                        if (confirmBtn) {
+                            confirmBtn.disabled = false;
+                            confirmBtn.textContent = 'Insert Image (1 Selected)';
+                        }
+                    } else {
+                        selectedItemData = null;
+                        if (confirmBtn) {
+                            confirmBtn.disabled = true;
+                            confirmBtn.textContent = 'Insert Image';
+                        }
+                    }
+                }
+            }
+
+            customElements.whenDefined('nui-list').then(() => {
+                listElement.loadData({ 
+                    data: imageData, 
+                    render: renderListItem,
+                    events: onListEvents,
+                    search: [{ prop: 'id' }],
+                    idField: 'id'
+                });
+            });
+
+            // Wait for user interaction from the dialog's result promise
+            const action = await result;
+            if (action === 'insert' && selectedItemData) {
+                currentEditor.insertImage(selectedItemData.url_1080, "Placeholder Image " + selectedItemData.id);
+            }
         });
 
         // Add proper cleanup

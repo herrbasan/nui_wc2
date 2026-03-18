@@ -1468,8 +1468,91 @@ registerComponent('nui-button-container', (element) => {
 // ################################# nui-dialog COMPONENT
 
 registerComponent('nui-dialog', (element) => {
-	const dialog = element.el('dialog');
-	if (!dialog) return;
+	let dialog = element.el('dialog');
+	const mode = element.getAttribute('mode');
+
+	if (!dialog) {
+		dialog = document.createElement('dialog');
+		
+		if (mode === 'page') {
+			const title = element.getAttribute('title') || '';
+			const hasTitle = element.hasAttribute('title');
+			
+			// Move children that are NOT the new <dialog> into a <main> wrapper
+			const main = document.createElement('main');
+			while (element.firstChild) {
+				main.appendChild(element.firstChild);
+			}
+			
+			if (hasTitle || title) {
+				const header = document.createElement('header');
+				header.innerHTML = `
+					<h2>${title}</h2>
+					<nui-button variant="icon" class="icon-only">
+						<button type="button" aria-label="Close" data-action="dialog-close">
+							<nui-icon name="close"></nui-icon>
+						</button>
+					</nui-button>
+				`;
+				const closeBtn = header.querySelector('button');
+				if (closeBtn) {
+					closeBtn.addEventListener('click', (e) => {
+						e.preventDefault();
+						e.stopPropagation();
+						element.close('cancel');
+					});
+				}
+				dialog.appendChild(header);
+			}
+			
+			dialog.appendChild(main);
+			element._mainEl = main; // Expose main specifically
+			
+			const buttonsAttr = element.getAttribute('data-buttons');
+			let buttons = element.buttons || [];
+			if (buttonsAttr && (!buttons || buttons.length === 0)) {
+				try { buttons = JSON.parse(buttonsAttr); } catch (e) {}
+			}
+			
+			if (buttons && buttons.length) {
+				const footer = document.createElement('footer');
+				const container = document.createElement('nui-button-container');
+				container.setAttribute('align', 'end');
+				
+				buttons.forEach(btn => {
+					const variant = btn.type || 'outline';
+					const iconHtml = btn.icon ? `<nui-icon name="${btn.icon}"></nui-icon>` : '';
+					const btnHtml = `<nui-button variant="${variant}"><button type="button" data-value="${btn.value || btn.id || ''}">${iconHtml}${btn.label}</button></nui-button>`;
+					
+					const temp = document.createElement('div');
+					temp.innerHTML = btnHtml;
+					const btnEl = temp.firstElementChild;
+					
+					const nativeBtn = btnEl.querySelector('button');
+					if (nativeBtn) {
+						nativeBtn.addEventListener('click', (e) => {
+							e.preventDefault();
+							e.stopPropagation();
+							element.close(btn.value || btn.id);
+						});
+					}
+					
+					container.appendChild(btnEl);
+				});
+				footer.appendChild(container);
+				dialog.appendChild(footer);
+			}
+		} else {
+			const content = document.createElement('div');
+			content.className = 'nui-dialog-content';
+			while (element.firstChild) {
+				content.appendChild(element.firstChild);
+			}
+			dialog.appendChild(content);
+		}
+		
+		element.appendChild(dialog);
+	}
 
 	const close = (ret) => {
 		dialog.classList.add('closing');
@@ -3986,6 +4069,49 @@ const dialogSystem = {
 	_buildButtonsHtml(buttons) {
 		if (!buttons || buttons.length === 0) return '';
 		return `<nui-button-container align="end">${buttons.map(b => this._buildButtonHtml(b)).join('')}</nui-button-container>`;
+	},
+
+	page(title, htmlContent, options = {}) {
+		const buttons = options.buttons || [];
+
+		return new Promise((resolve) => {
+			const dialog = dom.create('nui-dialog', {
+				id: 'nui-system-dialog-' + Date.now(),
+				attrs: {
+					mode: 'page',
+					title: title,
+					blocking: options.blocking ? '' : null,
+					'content-scroll': options.contentScroll === false ? 'false' : null
+				},
+				content: htmlContent
+			});
+
+			dialog.buttons = buttons;
+
+			const target = options.target || document.body;
+			target.appendChild(dialog);
+
+			// Now it has been upgraded (or will be immediately)
+			// Return a custom object containing the resolution and references
+			resolve({
+				dialog: dialog,
+				main: dialog._mainEl || dialog.querySelector('main'),
+				result: new Promise((res) => {
+					dialog.addEventListener('nui-dialog-close', (e) => {
+						dialog.remove();
+						res(e.detail?.returnValue);
+					}, { once: true });
+				})
+			});
+			
+			// Show it automatically or let user do it?
+			// Other dialogs show automatically:
+			if (options.modal !== false) {
+				dialog.showModal();
+			} else {
+				dialog.show();
+			}
+		});
 	},
 
 	_defaultButtons: {
