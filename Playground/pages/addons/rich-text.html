@@ -52,7 +52,9 @@
                 <p>Edit this text and click the button below to extract the HTML.</p>
             </nui-rich-text>
             <div class="demo-actions" style="margin-top: 1rem;">
-                <nui-button data-action="rich-text:get">Get HTML Output</nui-button>
+                <nui-button>
+                    <button type="button" data-action="get-html@#editor2">Get HTML Output</button>
+                </nui-button>
             </div>
             <pre class="demo-chrome" id="output-area" style="margin-top: 1rem; min-height: 50px; white-space: pre-wrap; word-break: break-all; font-family: monospace; padding: 1rem; background: var(--color-shade2);"></pre>
         </div>
@@ -307,10 +309,11 @@
         };
 
         // --- Demo Out Logic ---
-        element.addEventListener('nui-action-rich-text:get', () => {
-            if (editor2 && outputArea) {
+        element.addEventListener('nui-action-get-html', (e) => {
+            const targetEditor = e.detail.target;
+            if (targetEditor && outputArea) {
                 // Escape HTML for display
-                const html = editor2.value;
+                const html = targetEditor.value;
                 outputArea.textContent = html;
             }
         });

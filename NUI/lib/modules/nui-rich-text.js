@@ -985,9 +985,12 @@ class NuiRichText extends HTMLElement {
             const containerDiv = img.closest('div[contenteditable="false"]');
             
             if (action === 'imgSize100' || action === 'imgSize50' || action === 'imgSize25') {
-                const map = { 'imgSize100': '100%', 'imgSize50': '50%', 'imgSize25': '25%' };
-                img.style.width = map[action];
-                img.style.height = 'auto'; 
+                img.classList.remove('rte_100', 'rte_50', 'rte_25');
+                const map = { 'imgSize100': 'rte_100', 'imgSize50': 'rte_50', 'imgSize25': 'rte_25' };
+                img.classList.add(map[action]);
+                img.style.width = '';
+                img.style.height = ''; 
+                if (!img.getAttribute('style')) img.removeAttribute('style');
                 this._positionImageResizer();
                 this._positionContextMenu(img);
                 this._saveHistory();
@@ -1085,7 +1088,7 @@ class NuiRichText extends HTMLElement {
                 requestAnimationFrame(applyImage);
             } else {
                 setTimeout(() => {
-                    const imgHtml = `<div contenteditable="false" style="display: block; width: fit-content; max-width: 100%;"><img src="${url}" alt="${alt}" class="nui-rich-text-image" style="width: 300px;" /></div><p><br></p>`;
+                    const imgHtml = `<div contenteditable="false" class="nui-rich-text-image-wrapper"><img src="${url}" alt="${alt}" class="nui-rich-text-image rte_50" /></div><p><br></p>`;
                     this._execCommand('insertHTML', imgHtml);
                 }, 10);
             }

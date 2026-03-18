@@ -167,6 +167,23 @@ nui-rich-text {
     outline-color: var(--color-highlight);
 }
 
+.nui-rich-text-image-wrapper {
+    display: block;
+    max-width: 100%;
+}
+
+.rte_100 {
+    width: 100%;
+}
+
+.rte_50 {
+    width: 50%;
+}
+
+.rte_25 {
+    width: 25%;
+}
+
 /* Image Resizer Overlay */
 .nui-rich-text-image-resizer {
     position: absolute;
