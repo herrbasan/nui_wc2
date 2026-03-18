@@ -614,12 +614,16 @@ font-size: 0.85rem;
 	color: white;
 }
 
+#demo-target {
+	margin-bottom: 1rem;
+}
+
 .page-button #demo-target {
 	padding: 0.5rem;
 	background: var(--color-shade2);
-	margin-bottom: 1rem;
 	transition: background 0.3s;
 }
+
 
 /* Banner page styles */
 .page-banner nui-banner > div {
