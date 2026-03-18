@@ -235,7 +235,7 @@
             container.appendChild(listWrapper);
 
             const nuiApi = window.nui || nui;
-            const { dialog, main, result } = await nuiApi.dialog.page("Select an Image", container, {
+            const { dialog, main, result } = await nuiApi.components.dialog.page("Select an Image", container, {
                 contentScroll: false,
                 buttons: [
                     { label: "Cancel", type: "outline", value: "cancel" },

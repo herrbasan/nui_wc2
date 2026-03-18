@@ -86,6 +86,34 @@ if (result) {
 </section>
 
 <section>
+	<h2>Programmatic Page Mode</h2>
+	<p>For complex full-page dialogs constructed via JavaScript, use the <code>page()</code> system factory. This abstracts away the boilerplate of standard modals, returning an interaction object that enables you to mount content dynamically into the <code>main</code> element, and gracefully awaits interactions on user-defined <code>buttons</code>.</p>
+	<nui-code>
+		<script type="example" data-lang="javascript">
+// Create the page and retrieve its state pointers
+const { dialog, main, result } = await nui.components.dialog.page('Dynamic Title', '<p>Initial layout...</p>', {
+	contentScroll: true, // Auto-scroll behavior
+	buttons: [
+		{ label: 'Cancel', type: 'outline', value: 'cancel' },
+		{ label: 'Submit', type: 'primary', value: 'submit' }
+	]
+});
+
+// Since `main` exposes a direct pointer to the inner DOM, you can safely append!
+const child = document.createElement('div');
+child.textContent = 'Appended dynamically!';
+main.appendChild(child);
+
+// Wait for a button to be clicked (returns the 'value' defined in the button config)
+const action = await result;
+if (action === 'submit') {
+	console.log('User submitted the programmatic page!');
+}
+		</script>
+	</nui-code>
+</section>
+
+<section>
 	<h2>System Dialog Options</h2>
 	<p>All system dialogs accept an options object as the last parameter:</p>
 	<nui-code>
@@ -340,28 +368,10 @@ if (dialog.isOpen()) { ... }
 
 	<nui-code>
 		<script type="example" data-lang="html">
-<nui-dialog id="page-dialog" mode="page">
-	<dialog>
-		<header>
-			<h2>Modal Page Title</h2>
-			<nui-button variant="icon" class="icon-only">
-				<button type="button" data-action="dialog-close@#page-dialog" aria-label="Close">
-					<nui-icon name="close"></nui-icon>
-				</button>
-			</nui-button>
-		</header>
-		<main>
-			<p>Your scrollable content goes here.</p>
-			<!-- Very large content to show scrolling -->
-			<div style="height: 150vh; background: repeating-linear-gradient(45deg, transparent, transparent 10px, var(--color-shade2) 10px, var(--color-shade2) 20px);"></div>
-		</main>
-		<footer>
-			<nui-button-container align="end">
-				<nui-button variant="outline"><button type="button" data-action="dialog-close@#page-dialog">Close</button></nui-button>
-				<nui-button variant="primary"><button type="button" class="primary" data-action="dialog-close:save@#page-dialog">Save Changes</button></nui-button>
-			</nui-button-container>
-		</footer>
-	</dialog>
+<nui-dialog id="page-dialog" mode="page" title="Modal Page Title" data-buttons='[{"label": "Close", "type": "outline", "value": "close"}, {"label": "Save Changes", "type": "primary", "value": "save"}]'>
+	<p>Your scrollable content goes here.</p>
+	<!-- Very large content to show scrolling -->
+	<div style="height: 150vh; background: repeating-linear-gradient(45deg, transparent, transparent 10px, var(--color-shade2) 10px, var(--color-shade2) 20px);"></div>
 </nui-dialog>
 		</script>
 	</nui-code>
@@ -370,31 +380,13 @@ if (dialog.isOpen()) { ... }
 		<nui-button><button type="button" data-action="dialog-open@#page-dialog">Open Page Mode Dialog</button></nui-button>
 	</nui-button-container>
 
-	<nui-dialog id="page-dialog" mode="page">
-		<dialog>
-			<header>
-				<h2>Settings</h2>
-				<nui-button variant="icon" class="icon-only">
-					<button type="button" data-action="dialog-close@#page-dialog" aria-label="Close">
-						<nui-icon name="close"></nui-icon>
-					</button>
-				</nui-button>
-			</header>
-			<main>
-				<h3>General Settings</h3>
-				<p>This is a page-mode dialog with a lot of content to demonstrate scrolling while the header and footer remain fixed.</p>
-				<div style="height: 400px; margin: 2rem 0; background: var(--color-shade2); border-radius: var(--border-radius2); display: flex; align-items: center; justify-content: center;">Scroll down...</div>
-				<h3>Advanced Options</h3>
-				<p>More content down here.</p>
-				<div style="height: 400px; margin: 2rem 0; background: var(--color-shade2); border-radius: var(--border-radius2); display: flex; align-items: center; justify-content: center;">End of settings.</div>
-			</main>
-			<footer>
-				<nui-button-container align="end">
-					<nui-button variant="outline"><button type="button" data-action="dialog-close@#page-dialog">Cancel</button></nui-button>
-					<nui-button variant="primary"><button type="button" class="primary" data-action="dialog-close:save@#page-dialog">Save Changes</button></nui-button>
-				</nui-button-container>
-			</footer>
-		</dialog>
+	<nui-dialog id="page-dialog" mode="page" title="Settings" data-buttons='[{"label": "Cancel", "type": "outline", "value": "cancel"}, {"label": "Save Changes", "type": "primary", "value": "save"}]'>
+		<h3>General Settings</h3>
+		<p>This is a page-mode dialog with a lot of content to demonstrate scrolling while the header and footer remain fixed.</p>
+		<div style="height: 400px; margin: 2rem 0; background: var(--color-shade2); border-radius: var(--border-radius2); display: flex; align-items: center; justify-content: center;">Scroll down...</div>
+		<h3>Advanced Options</h3>
+		<p>More content down here.</p>
+		<div style="height: 400px; margin: 2rem 0; background: var(--color-shade2); border-radius: var(--border-radius2); display: flex; align-items: center; justify-content: center;">End of settings.</div>
 	</nui-dialog>
 </section>
 
