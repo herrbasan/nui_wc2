@@ -828,17 +828,19 @@ nui-button.icon-only button,
 nui-button[variant="icon"] button {
 	background-color: transparent;
 	border: none;
-	padding: var(--nui-space-quarter);
-	min-width: unset;
-	min-height: unset;
+	padding: 0;
+	min-width: var(--nui-space-double);
+	min-height: var(--nui-space-double);
 	color: var(--color-text-dim);
 }
 
 nui-button.icon-only button:hover,
 nui-button[variant="icon"] button:hover {
 	color: var(--color-highlight);
-	background-color: transparent;
+	fill: var(--color-highlight);
+	background-color: var(--color-shade3);
 }
+
 
 /* Ghost button (text only, subtle) */
 nui-button[variant="ghost"] button {
