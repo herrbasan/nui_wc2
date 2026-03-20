@@ -29,8 +29,8 @@ These components have clear use cases, align with NUI's zero-dependency / simpli
 - Dropdown/panel shows recent notifications with timestamps.
 - Clear all / mark as read functionality.
 
-### Rich-Text Editor Component (ui-rich-text)
-**Status:** Planned  
+### ~~Rich-Text Editor Component (ui-rich-text)~~
+**Status:** Completed  
 **Purpose:** Provide a robust, accessible WYSIWYG editing experience.  
 **Concept:**
 - Native execution of rich text commands without heavy framework dependencies.
