@@ -120,15 +120,21 @@ nui-rich-text {
     top: 0;
     left: 0;
     display: none;
-    background: var(--color-shade2);
-    border: 1px solid var(--border-shade1);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    border-radius: var(--border-radius1);
+    color: light-dark(white, var(--color-text-dim));
+    background: light-dark(var(--color-shade6), var(--color-shade4));
+    border: 1px solid light-dark(var(--border-shade2), var(--border-shade3));
+    box-shadow: 0 4px 12px light-dark(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.3));
+    border-radius: var(--border-radius2);
     padding: var(--nui-space-third, 0.3rem);
     transform: translateX(-50%);
     transition: opacity var(--transition-fast, 0.2s) ease;
     opacity: 0;
 }
+
+.nui-rich-text-context-menu nui-icon svg {
+    color: light-dark(white, var(--color-text-dim));
+}
+
 
 .nui-rich-text-context-menu.visible {
     display: flex;
@@ -142,6 +148,7 @@ nui-rich-text {
 }
 
 .nui-rich-text-context-menu nui-button button {
+    color: light-dark(white, var(--color-text-dim));
     min-width: unset;
     min-height: unset;
     padding: var(--nui-space-third, 0.3rem) var(--nui-space-third, 0.3rem);

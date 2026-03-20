@@ -2703,7 +2703,7 @@ registerComponent('nui-select', (element) => {
 				addOption(child, list);
 			}
 		});
-		syncState();
+		syncState(false); // Don't dispatch change event during initial build
 	};
 
 	// Sync visual state with native select

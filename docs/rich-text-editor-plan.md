@@ -29,7 +29,7 @@
 
 ## 4. Tables and Media
 * [x] **Table Insertion:** Add a toolbar button to call an NUI dialog (Rows/Columns) and insert a semantic `<table class="nui-table">`.
-* [x] **Contextual Table Editing:** Provide simple native DOM operations (Add Row, Add Column, Delete) when the user places the cursor inside a `<td>`. (No drag handles).
+* [x] **Contextual Table Editing:** Provide simple native DOM operations (Add Row, Add Column, Delete) when the user places the cursor inside a `<td>`. *(Note: Needs more work to handle edge cases and advanced selections, but sufficient for current beta).*
 * [x] **Image Insertion via Dialog:** Insert an image via a URL prompt.
 * [ ] **Image Drop/Paste Eventing:** Intercept pasted/dropped image files. Crucially, don't insert Base64! Emit a `nui-image-upload` CustomEvent, passing the `File`, letting the host application resolve a real server URL.
 * [ ] **Image Alignment:** Click an image to set an `active` state and expose simple toolbar options to toggle alignment classes (`.align-left`, `.align-center`, etc.) using CSS rather than JS resizing mechanics.

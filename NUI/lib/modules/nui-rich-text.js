@@ -594,12 +594,54 @@ class NuiRichText extends HTMLElement {
         }
     }
 
+    _expandSelectionToWord(sel) {
+        if (!sel.isCollapsed || sel.rangeCount === 0) return;
+        const range = sel.getRangeAt(0);
+        const node = range.startContainer;
+        if (node.nodeType !== Node.TEXT_NODE) return;
+        
+        const text = node.textContent;
+        let start = range.startOffset;
+        let end = range.endOffset;
+        
+        // Find word boundaries (letters, numbers, and common word characters)
+        const isWordChar = (char) => /[\p{L}\p{N}_\-]/u.test(char);
+
+        // If we are at the end of a word, we might want to look backwards
+        if (start > 0 && !isWordChar(text[start]) && isWordChar(text[start - 1])) {
+            start--;
+            end--;
+        }
+
+        while (start > 0 && isWordChar(text[start - 1])) {
+            start--;
+        }
+        
+        while (end < text.length && isWordChar(text[end])) {
+            end++;
+        }
+        
+        if (start < end) {
+            range.setStart(node, start);
+            range.setEnd(node, end);
+            sel.removeAllRanges();
+            sel.addRange(range);
+        }
+    }
+
     _execCommand(command, arg = null) {
         const activeEl = document.activeElement;
         const wasInToolbar = this._toolbar.contains(activeEl);
 
         this._editor.focus();
         this._restoreSelection();
+
+        const sel = window.getSelection();
+        const inlineStyles = ['bold', 'italic', 'underline', 'strikeThrough', 'removeFormat'];
+        if (sel && sel.isCollapsed && inlineStyles.includes(command)) {
+            this._expandSelectionToWord(sel);
+        }
+
         if (command === 'undo') {
             this._undo();
             if (wasInToolbar) activeEl.focus();
@@ -790,11 +832,14 @@ class NuiRichText extends HTMLElement {
         this._activeContextElement = { td, table };
         this._contextType = 'table';
         this._renderContextMenu([
-            { action: 'addRow', label: 'Insert Row', icon: 'table_rows' },
-            { action: 'addCol', label: 'Insert Column', icon: 'view_column' },
+            { action: 'addRowAbove', label: 'Insert Row Above', icon: 'add_row_above' },
+            { action: 'addRowBelow', label: 'Insert Row Below', icon: 'add_row_below' },
             'separator',
-            { action: 'delRow', label: 'Delete Row', icon: 'horizontal_rule' },
-            { action: 'delCol', label: 'Delete Column', icon: 'vertical_align_center' },
+            { action: 'addColLeft', label: 'Insert Column Left', icon: 'add_column_left' },
+            { action: 'addColRight', label: 'Insert Column Right', icon: 'add_column_right' },
+            'separator',
+            { action: 'delRow', label: 'Delete Row', icon: 'playlist_remove' },
+            { action: 'delCol', label: 'Delete Column', icon: 'variable_remove' },
             'separator',
             { action: 'delTable', label: 'Delete Table', icon: 'delete' }
         ], td);
@@ -944,7 +989,15 @@ class NuiRichText extends HTMLElement {
             const tbody = tr.parentNode;
             const cellIndex = Array.from(tr.children).indexOf(td);
 
-            if (action === 'addRow') {
+            if (action === 'addRowAbove') {
+                const newRow = document.createElement('tr');
+                Array.from(tr.children).forEach(() => {
+                    const newCell = document.createElement('td');
+                    newCell.innerHTML = '<br>';
+                    newRow.appendChild(newCell);
+                });
+                tr.parentNode.insertBefore(newRow, tr);
+            } else if (action === 'addRowBelow') {
                 const newRow = document.createElement('tr');
                 Array.from(tr.children).forEach(() => {
                     const newCell = document.createElement('td');
@@ -952,12 +1005,18 @@ class NuiRichText extends HTMLElement {
                     newRow.appendChild(newCell);
                 });
                 tr.parentNode.insertBefore(newRow, tr.nextSibling);
-            } else if (action === 'addCol') {
+            } else if (action === 'addColLeft') {
                 Array.from(tbody.children).forEach(row => {
                     const newCell = document.createElement('td');
                     newCell.innerHTML = '<br>';
-                    if (row.children.length > cellIndex) {
-                        row.insertBefore(newCell, row.children[cellIndex].nextSibling);
+                    row.insertBefore(newCell, row.children[cellIndex]);
+                });
+            } else if (action === 'addColRight') {
+                Array.from(tbody.children).forEach(row => {
+                    const newCell = document.createElement('td');
+                    newCell.innerHTML = '<br>';
+                    if (row.children.length > cellIndex + 1) {
+                        row.insertBefore(newCell, row.children[cellIndex + 1]);
                     } else {
                         row.appendChild(newCell);
                     }
@@ -1032,7 +1091,23 @@ class NuiRichText extends HTMLElement {
     _handlePaste(e) {
         e.preventDefault();
 
+        const types = e.clipboardData.types ? Array.from(e.clipboardData.types) : [];
         let html = e.clipboardData.getData('text/html');
+        let text = e.clipboardData.getData('text/plain');
+
+        const isLikelyMarkdown = text && /(^#{1,6}\s|\[.+\]\(.+\)|(\*\*|__)[^\s].+[^\s]\2|^\s*[\*\-]\s|^\s*\d+\.\s|^\s*>|^\|.+\|\s*$|```)/m.test(text);
+        const isFromCodeEditor = types.includes('vscode-editor-data') || types.includes('text/x-moz-mac-specific');
+        // Also check if HTML is just a pre/code block wrapped
+        const isCodeBlockHTML = html && (html.includes('<pre') || html.includes('font-family: Consolas') || html.includes('font-family: monospace'));
+
+        if (text && isLikelyMarkdown && (!html || isFromCodeEditor || isCodeBlockHTML)) {
+            const parsedHtml = this._parseMarkdown(text);
+            document.execCommand('insertHTML', false, parsedHtml);
+            this._saveHistory();
+            this._forceComponentUpgrade();
+            return;
+        }
+
         if (html) {
             const fragmentMatch = html.match(/<!--StartFragment-->([\s\S]*?)<!--EndFragment-->/i);
             if (fragmentMatch) {
@@ -1041,7 +1116,7 @@ class NuiRichText extends HTMLElement {
 
             const temp = document.createElement('div');
             temp.innerHTML = html;
-            const allowedTags = ['B', 'I', 'U', 'S', 'STRONG', 'EM', 'MARK', 'A', 'P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'UL', 'OL', 'LI', 'BR', 'BLOCKQUOTE', 'PRE', 'DIV', 'SPAN'];
+            const allowedTags = ['B', 'I', 'U', 'S', 'STRONG', 'EM', 'MARK', 'A', 'P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'UL', 'OL', 'LI', 'BR', 'BLOCKQUOTE', 'PRE', 'DIV', 'SPAN', 'CODE', 'NUI-CODE'];
             temp.querySelectorAll('script, style, meta, iframe, link, object, embed, base').forEach(el => el.remove());
             Array.from(temp.querySelectorAll('*')).reverse().forEach(el => {
                 if (!allowedTags.includes(el.tagName)) {
@@ -1064,11 +1139,73 @@ class NuiRichText extends HTMLElement {
             
             document.execCommand('insertHTML', false, temp.innerHTML);
             this._saveHistory();
-        } else {
-            const text = e.clipboardData.getData('text/plain');
+            this._forceComponentUpgrade();
+        } else if (text) {
             document.execCommand('insertText', false, text);
             this._saveHistory();
         }
+    }
+
+    _forceComponentUpgrade() {
+        setTimeout(() => {
+            this._editor.querySelectorAll('nui-code').forEach(codeEl => {
+                if (!codeEl.querySelector('.nui-code-copy')) {
+                    const clone = codeEl.cloneNode(true);
+                    codeEl.parentNode.replaceChild(clone, codeEl);
+                }
+            });
+        }, 10);
+    }
+
+    _parseMarkdown(md) {
+        md = md.trim().replace(/\r\n/g, '\n');
+        md = md.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+        md = md.replace(/^[ \t]*```(\w+)?\n([\s\S]*?)\n[ \t]*```/gm, (match, lang, code) => {
+            return `<nui-code><pre><code${lang ? ` data-lang="${lang}"` : ''}>${code}</code></pre></nui-code>`;
+        });
+        
+        md = md.replace(/^[ \t]*\|(.+)\|\n[ \t]*\|([ -:]+)\|\n((?:[ \t]*\|.+\|\n?)*)/gm, (match, header, sep, body) => {
+            const headCells = header.trim().replace(/^\||\|$/g, '').split('|').map(c => `<th>${c.trim()}</th>`).join('');
+            const bodyRows = body.trim().split('\n').filter(r => r).map(row => {
+                const cells = row.trim().replace(/^\||\|$/g, '').split('|').map(c => `<td>${c.trim()}</td>`).join('');
+                return `<tr>${cells}</tr>`;
+            }).join('');
+            return `<table class="nui-table"><thead><tr>${headCells}</tr></thead><tbody>${bodyRows}</tbody></table>`;
+        });
+
+        md = md.replace(/^[ \t]*(#{1,6})\s+(.+)$/gm, (match, hashes, text) => `<h${hashes.length}>${text}</h${hashes.length}>`);
+        md = md.replace(/^[ \t]*(>\s+.+(?:\n[ \t]*>\s+.+)*)/gm, (match) => `<blockquote>${match.replace(/^[ \t]*>\s+/gm, '')}</blockquote>`);
+
+        md = md.replace(/^((?:[ \t]*(?:-|\*)\s+.+\n?)+)/gm, (match) => {
+            const items = match.trim().split('\n').map(item => `<li>${item.replace(/^[ \t]*(?:-|\*)\s+/, '')}</li>`).join('');
+            return `<ul>${items}</ul>`;
+        });
+        
+        md = md.replace(/^((?:[ \t]*\d+\.\s+.+\n?)+)/gm, (match) => {
+            const items = match.trim().split('\n').map(item => `<li>${item.replace(/^[ \t]*\d+\.\s+/, '')}</li>`).join('');
+            return `<ol>${items}</ol>`;
+        });
+
+        md = md.replace(/^[ \t]*(-*_){3,}[ \t]*$/gm, '<hr>');
+
+        const blocks = md.split(/\n{2,}/);
+        const htmlBlocks = blocks.map(block => {
+            block = block.trim();
+            if (!block) return '';
+            if (/^<(h\d|ul|ol|pre|blockquote|table|hr|nui-code)/i.test(block)) return block;
+            return `<p>${block.replace(/\n/g, '<br>')}</p>`;
+        });
+        md = htmlBlocks.join('\n');
+
+        md = md.replace(/!\[([^\]]+)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">');
+        md = md.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+        md = md.replace(/(\*\*|__)(.*?)\1/g, '<strong>$2</strong>');
+        md = md.replace(/(\*|_)(.*?)\1/g, '<em>$2</em>');
+        md = md.replace(/~~(.*?)~~/g, '<s>$1</s>');
+        md = md.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+        return md;
     }
 
     _emitChange(saveHistory = true) {
@@ -1107,6 +1244,117 @@ class NuiRichText extends HTMLElement {
         } else {
             this._value = html;
         }
+    }
+
+    get markdown() {
+        return this._htmlToMarkdown(this.value);
+    }
+
+    _htmlToMarkdown(html) {
+        const temp = document.createElement('div');
+        temp.innerHTML = html;
+
+        function renderText(text) {
+            return text.replace(/\s+/g, ' '); 
+        }
+
+        function walk(node, inPre = false) {
+            let md = '';
+            for (const child of node.childNodes) {
+                if (child.nodeType === Node.TEXT_NODE) {
+                    md += inPre ? child.textContent : renderText(child.textContent);
+                } else if (child.nodeType === Node.ELEMENT_NODE) {
+                    const tag = child.tagName.toLowerCase();
+                    const inner = walk(child, inPre || tag === 'pre');
+                    
+                    switch (tag) {
+                        case 'b':
+                        case 'strong': md += `**${inner}**`; break;
+                        case 'i':
+                        case 'em': md += `*${inner}*`; break;
+                        case 'u': md += `<u>${inner}</u>`; break; 
+                        case 's':
+                        case 'strike': md += `~~${inner}~~`; break;
+                        case 'code': 
+                            if (child.parentNode && child.parentNode.tagName === 'PRE') {
+                                md += inner; // Don't add backticks for code blocks, pre handles it
+                            } else {
+                                md += `\`${inner}\``; 
+                            }
+                            break;
+                        case 'pre': {
+                            let lang = '';
+                            const codeNode = child.querySelector('code');
+                            if (codeNode) {
+                                lang = codeNode.getAttribute('data-lang') || '';
+                            }
+                            // Only trim trailing whitespace to preserve indentation, 
+                            // replace any leftover copy buttons or icons that might have sneaked in
+                            let cleanInner = inner.trimEnd();
+                            md += `\n\`\`\`${lang}\n${cleanInner}\n\`\`\`\n`; 
+                            break;
+                        }
+                        case 'a': {
+                            const href = child.getAttribute('href') || '';
+                            const resolvedHref = (href.match(/^(?:https?|mailto|data|tel|ftp):/i) || !href) ? href : new URL(href, window.location.href).href;
+                            md += `[${inner}](${resolvedHref})`; 
+                            break;
+                        }
+                        case 'button':
+                            if (child.classList.contains('nui-code-copy')) break;
+                            md += inner;
+                            break;
+                        case 'img': {
+                            const src = child.getAttribute('src') || '';
+                            const resolvedSrc = (src.match(/^(?:https?|data):/i) || !src) ? src : new URL(src, window.location.href).href;
+                            md += `![${child.getAttribute('alt') || ''}](${resolvedSrc})`; 
+                            break;
+                        }
+                        case 'h1': md += `\n# ${inner}\n\n`; break;
+                        case 'h2': md += `\n## ${inner}\n\n`; break;
+                        case 'h3': md += `\n### ${inner}\n\n`; break;
+                        case 'h4': md += `\n#### ${inner}\n\n`; break;
+                        case 'h5': md += `\n##### ${inner}\n\n`; break;
+                        case 'h6': md += `\n###### ${inner}\n\n`; break;
+                        case 'p':
+                        case 'div': 
+                            if (inner.trim() === '') md += '\n'; // keep intentional empty lines
+                            else md += `${inner}\n\n`; 
+                            break;
+                        case 'br': md += `\n`; break;
+                        case 'hr': md += `\n---\n\n`; break;
+                        case 'blockquote': md += `\n> ${inner.trim().replace(/\n/g, '\n> ')}\n\n`; break;
+                        case 'ul': 
+                        case 'ol': md += `\n${inner}\n`; break;
+                        case 'li': {
+                            const isOrdered = child.parentNode && child.parentNode.tagName === 'OL';
+                            const index = isOrdered ? Array.from(child.parentNode.children).indexOf(child) + 1 : '-';
+                            const marker = isOrdered ? `${index}.` : '-';
+                            md += `${marker} ${inner.trim()}\n`;
+                            break;
+                        }
+                        case 'table': {
+                            md += '\n';
+                            const rows = Array.from(child.querySelectorAll('tr'));
+                            rows.forEach((row, i) => {
+                                const cells = Array.from(row.children);
+                                md += '| ' + cells.map(c => walk(c).replace(/\|/g, '\\|').trim()).join(' | ') + ' |\n';
+                                if (i === 0 && row.parentNode.tagName === 'THEAD' || (i === 0 && rows.length > 1 && !child.querySelector('thead'))) {
+                                    md += '| ' + cells.map(() => '---').join(' | ') + ' |\n';
+                                }
+                            });
+                            md += '\n';
+                            break;
+                        }
+                        default:
+                            md += inner;
+                    }
+                }
+            }
+            return md;
+        }
+
+        return walk(temp).trim().replace(/\n{3,}/g, '\n\n'); 
     }
 }
 

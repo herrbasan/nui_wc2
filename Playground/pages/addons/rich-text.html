@@ -17,20 +17,13 @@
 <nui-rich-text id="editor1">
     <h3>Welcome to NUI Rich Text</h3>
     <p>This is a <strong>lightweight</strong> editor that supports essential formatting.</p>
-    <p>You can also insert <a href="http://www.raum.com">external links</a> easily for testing!</p>
-    <ul>
-        <li>No heavy dependencies</li>
-        <li>Uses native browser APIs</li>
-        <li>Clean, semantic output</li>
-    </ul>
-    <p>Try editing this text!</p>
 </nui-rich-text>
             </script>
         </nui-code>
 
         <div class="demo-area">
             <nui-rich-text id="editor1">
-                <h3>Welcome to NUI Rich Text</h3>
+                <h2>Welcome to NUI Rich Text</h2>
                 <p>This is a <strong>lightweight</strong> editor that supports essential formatting.</p>
                 <p>You can also insert <a href="http://www.raum.com">external links</a> easily for testing!</p>
                 <ul>
@@ -38,25 +31,52 @@
                     <li>Uses native browser APIs</li>
                     <li>Clean, semantic output</li>
                 </ul>
+
+                <p>We even properly render your inline <code>let x = 1;</code> snippets, as well as code blocks like:</p>
+                <nui-code><pre><code data-lang="js">function hello() {
+    console.log("Hello Rich Text!");
+}</code></pre></nui-code>
+                
+                <h4>Rich Media & Tables</h4>
+                <p>We support inserting images and building neat semantic tables using our dialogs and native HTML components:</p>
+                
+                <table class="nui-table">
+                    <tbody>
+                        <tr>
+                            <td><strong>Feature</strong></td>
+                            <td><strong>Status</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Basic Formatting</td>
+                            <td>Done</td>
+                        </tr>
+                        <tr>
+                            <td>Tables</td>
+                            <td>Done</td>
+                        </tr>
+                        <tr>
+                            <td>Images</td>
+                            <td>Done</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <p>Here is an example image:</p>
+                <p><img src="images/Random_Picts/800p/024.webp" alt="A nice scenery picture from the demo folder" class="rte_50"></p>
+
                 <p>Try editing this text!</p>
             </nui-rich-text>
-        </div>
-    </section>
-
-    <section>
-        <h2>Retrieving Content</h2>
-        <p>You can get or set the HTML content via the <code>value</code> property, or listen to the <code>nui-change</code> event.</p>
-        
-        <div class="demo-area">
-            <nui-rich-text id="editor2">
-                <p>Edit this text and click the button below to extract the HTML.</p>
-            </nui-rich-text>
-            <div class="demo-actions" style="margin-top: 1rem;">
+            
+            <div class="nui-flex nui-gap" style="margin-top: 1rem; align-items: center;">
+                <span style="font-weight: 600; font-size: 0.85rem;">Export:</span>
                 <nui-button>
-                    <button type="button" data-action="get-html@#editor2">Get HTML Output</button>
+                    <button type="button" data-action="get-html@#editor1">HTML</button>
+                </nui-button>
+                <nui-button>
+                    <button type="button" data-action="get-markdown@#editor1">Markdown</button>
                 </nui-button>
             </div>
-            <pre class="demo-chrome" id="output-area" style="margin-top: 1rem; min-height: 50px; white-space: pre-wrap; word-break: break-all; font-family: monospace; padding: 1rem; background: var(--color-shade2);"></pre>
+            <pre class="demo-chrome" id="output-area" style="margin-top: 1rem; min-height: 50px; white-space: pre-wrap; word-break: break-all; font-family: monospace; padding: 1rem; background: var(--color-shade2); font-size: 0.85rem;">Click an export button to see the output here.</pre>
         </div>
     </section>
 
@@ -315,6 +335,13 @@
                 // Escape HTML for display
                 const html = targetEditor.value;
                 outputArea.textContent = html;
+            }
+        });
+        
+        element.addEventListener('nui-action-get-markdown', (e) => {
+            const targetEditor = e.detail.target;
+            if (targetEditor && outputArea) {
+                outputArea.textContent = targetEditor.markdown;
             }
         });
 
