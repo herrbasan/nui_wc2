@@ -1340,7 +1340,7 @@ class NuiRichText extends HTMLElement {
                         }
                         case 'a': {
                             const href = child.getAttribute('href') || '';
-                            const resolvedHref = (href.match(/^(?:https?|mailto|data|tel|ftp):/i) || !href) ? href : new URL(href, window.location.href).href;
+                            const resolvedHref = href ? new URL(href, window.location.href).href : '';
                             md += `[${inner}](${resolvedHref})`; 
                             break;
                         }
@@ -1350,7 +1350,7 @@ class NuiRichText extends HTMLElement {
                             break;
                         case 'img': {
                             const src = child.getAttribute('src') || '';
-                            const resolvedSrc = (src.match(/^(?:https?|data):/i) || !src) ? src : new URL(src, window.location.href).href;
+                            const resolvedSrc = src ? new URL(src, window.location.href).href : '';
                             md += `![${child.getAttribute('alt') || ''}](${resolvedSrc})`; 
                             break;
                         }
