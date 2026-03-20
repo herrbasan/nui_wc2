@@ -66,18 +66,90 @@
 
                 <p>Try editing this text!</p>
             </nui-rich-text>
-            
-            <div class="nui-flex nui-gap" style="margin-top: 1rem; align-items: center;">
-                <span style="font-weight: 600; font-size: 0.85rem;">Export:</span>
+            <p style="font-weight: 600; font-size: 0.85rem;">Input / Output:</p>
+            <nui-button-container style="margin-top: 1rem; align-items: center;">
+                
                 <nui-button>
-                    <button type="button" data-action="get-html@#editor1">HTML</button>
+                    <button type="button" data-action="set-html@#editor1">Insert HTML</button>
                 </nui-button>
                 <nui-button>
-                    <button type="button" data-action="get-markdown@#editor1">Markdown</button>
+                    <button type="button" data-action="set-markdown@#editor1">Insert Markdown</button>
                 </nui-button>
-            </div>
+                <div style="flex: 1;"></div>
+                <nui-button variant="primary">
+                    <button type="button" data-action="get-html@#editor1">Get HTML</button>
+                </nui-button>
+                <nui-button variant="primary">
+                    <button type="button" data-action="get-markdown@#editor1">Get Markdown</button>
+                </nui-button>
+            </nui-button-container>
             <pre class="demo-chrome" id="output-area" style="margin-top: 1rem; min-height: 50px; white-space: pre-wrap; word-break: break-all; font-family: monospace; padding: 1rem; background: var(--color-shade2); font-size: 0.85rem;">Click an export button to see the output here.</pre>
         </div>
+    </section>
+
+    <section>
+        <h2>Component API</h2>
+        <p>The rich text editor exposes properties, methods, and events for programmatic control and integration.</p>
+
+        <h3>Properties & Methods</h3>
+        <table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+            <thead>
+                <tr>
+                    <th style="width: 25%;">Signature</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>value</code></td>
+                    <td>Gets or sets the raw HTML content of the editor.</td>
+                </tr>
+                <tr>
+                    <td><code>markdown</code></td>
+                    <td>Gets the content formatted as Markdown, or sets the content by parsing Markdown into HTML.</td>
+                </tr>
+                <tr>
+                    <td><code>getValue()</code></td>
+                    <td>Standard method alias for getting the <code>value</code> (HTML).</td>
+                </tr>
+                <tr>
+                    <td><code>setValue(html)</code></td>
+                    <td>Standard method alias for setting the <code>value</code> (HTML).</td>
+                </tr>
+                <tr>
+                    <td><code>getMarkdown()</code></td>
+                    <td>Method alias for reading the <code>markdown</code> content.</td>
+                </tr>
+                <tr>
+                    <td><code>setMarkdown(md)</code></td>
+                    <td>Method alias for loading Markdown content into the editor.</td>
+                </tr>
+                <tr>
+                    <td><code>insertImage(url, alt)</code></td>
+                    <td>Programmatically inserts an image into the editor at the current cursor position.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>Events</h3>
+        <table class="nui-table" style="width: 100%; font-size: 0.9em;">
+            <thead>
+                <tr>
+                    <th style="width: 25%;">Event Name</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>nui-change</code></td>
+                    <td>Fired whenever the content of the editor changes (like native <code>input</code> events). <code>event.detail.value</code> contains the updated HTML.</td>
+                </tr>
+                <tr>
+                    <td><code>nui-image-request</code></td>
+                    <td>Fired when the user clicks the "Insert Image" icon in the toolbar. Use `e.preventDefault()` to intercept this event and open your own custom media browser dialog. To complete the insertion, call <code>target.insertImage(url, alt)</code>.</td>
+                </tr>
+            </tbody>
+        </table>
     </section>
 
     <!-- Declarative Dialog for Image Picker -->
@@ -155,7 +227,7 @@
                     </nui-button>
                     <span id="image-picker-status" style="line-height: var(--nui-form-row-height); font-size: var(--font-size-small); color: var(--color-text-dim); display: none;">1 Selected</span>
                     <nui-button variant="primary">
-                        <button type="button" id="image-picker-confirm" class="primary" disabled>Insert Image</button>
+                        <button type="button" id="image-picker-confirm" disabled>Insert Image</button>
                     </nui-button>
                 </div>
             </footer>
@@ -328,7 +400,27 @@
              selectedItems = [];
         };
 
-        // --- Demo Out Logic ---
+        // --- Demo Input/Output Logic ---
+        element.addEventListener('nui-action-set-html', (e) => {
+            const targetEditor = e.detail.target;
+            if (targetEditor) {
+                targetEditor.setValue(`<h2>Inserted HTML</h2><p>This was added programmatically at <strong>${new Date().toLocaleTimeString()}</strong>.</p>`);
+                if (outputArea) {
+                    outputArea.textContent = 'Loaded new HTML into editor.';
+                }
+            }
+        });
+
+        element.addEventListener('nui-action-set-markdown', (e) => {
+            const targetEditor = e.detail.target;
+            if (targetEditor) {
+                targetEditor.setMarkdown(`## Inserted Markdown\n\nThis was parsed from markdown programmatically at **${new Date().toLocaleTimeString()}**.\n\n* List item 1\n* List item 2\n\n\`\`\`javascript\nconsole.log("Hello from Markdown");\n\`\`\``);
+                if (outputArea) {
+                    outputArea.textContent = 'Loaded parsed Markdown into editor.';
+                }
+            }
+        });
+
         element.addEventListener('nui-action-get-html', (e) => {
             const targetEditor = e.detail.target;
             if (targetEditor && outputArea) {

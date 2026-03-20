@@ -1246,8 +1246,44 @@ class NuiRichText extends HTMLElement {
         }
     }
 
+    /**
+     * Standard NUI programmatic getter
+     * @returns {string} The current HTML value
+     */
+    getValue() {
+        return this.value;
+    }
+
+    /**
+     * Standard NUI programmatic setter
+     * @param {string} val The HTML value to set
+     */
+    setValue(val) {
+        this.value = val;
+    }
+
     get markdown() {
         return this._htmlToMarkdown(this.value);
+    }
+
+    set markdown(md) {
+        this.value = this._parseMarkdown(md);
+    }
+
+    /**
+     * Set content from Markdown programmatically
+     * @param {string} md The Markdown text
+     */
+    setMarkdown(md) {
+        this.markdown = md;
+    }
+
+    /**
+     * Get content as Markdown programmatically
+     * @returns {string} Markdown representation of the content
+     */
+    getMarkdown() {
+        return this.markdown;
     }
 
     _htmlToMarkdown(html) {
