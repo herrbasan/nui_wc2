@@ -179,6 +179,28 @@ nui-rich-text {
     max-width: 100%;
 }
 
+.nui-rich-text-image-wrapper.align-left,
+.align-left {
+    float: left;
+    margin-right: var(--nui-space);
+    margin-bottom: var(--nui-space);
+}
+
+.nui-rich-text-image-wrapper.align-center,
+.align-center {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+}
+
+.nui-rich-text-image-wrapper.align-right,
+.align-right {
+    float: right;
+    margin-left: var(--nui-space);
+    margin-bottom: var(--nui-space);
+}
+
 .rte_100 {
     width: 100%;
 }

@@ -128,6 +128,10 @@
                     <td><code>insertImage(url, alt)</code></td>
                     <td>Programmatically inserts an image into the editor at the current cursor position.</td>
                 </tr>
+                <tr>
+                    <td><code>getInlinedImages()</code></td>
+                    <td>Returns an array of `{ src, alt, element }` objects for all images in the editor that use <code>data:image/</code> or <code>blob:</code> URLs. Useful before saving content to a server.</td>
+                </tr>
             </tbody>
         </table>
 
@@ -309,6 +313,19 @@
             
             return el;
         }
+
+        element.addEventListener('nui-image-upload', (e) => {
+            const file = e.detail.file;
+            const editor = e.target;
+            
+            // In a real app, you would upload to a server and get a URL back.
+            // For this demo, we read the File as a data URL to show that the event fired successfully.
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                editor.insertImage(event.target.result, file.name || 'Pasted Image');
+            };
+            reader.readAsDataURL(file);
+        });
 
         element.addEventListener('nui-image-request', async (e) => {
             e.preventDefault(); // Stop default generic prompt

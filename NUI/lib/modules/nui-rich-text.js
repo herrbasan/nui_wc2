@@ -309,6 +309,42 @@ class NuiRichText extends HTMLElement {
         });
 
         this._editor.addEventListener('drop', (e) => {
+            let hasImage = false;
+            
+            if (e.dataTransfer) {
+                const items = e.dataTransfer.items;
+                if (items) {
+                    for (let i = 0; i < items.length; i++) {
+                        if (items[i].kind === 'file' && items[i].type.startsWith('image/')) {
+                            const file = items[i].getAsFile();
+                            if (file) {
+                                hasImage = true;
+                                this.dispatchEvent(new CustomEvent('nui-image-upload', {
+                                    detail: { file: file, clientX: e.clientX, clientY: e.clientY },
+                                    bubbles: true
+                                }));
+                            }
+                        }
+                    }
+                } else if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    for (let i = 0; i < e.dataTransfer.files.length; i++) {
+                        const file = e.dataTransfer.files[i];
+                        if (file.type.startsWith('image/')) {
+                            hasImage = true;
+                            this.dispatchEvent(new CustomEvent('nui-image-upload', {
+                                detail: { file: file, clientX: e.clientX, clientY: e.clientY },
+                                bubbles: true
+                            }));
+                        }
+                    }
+                }
+            }
+            
+            if (hasImage) {
+                e.preventDefault();
+                return;
+            }
+
             if (this._draggedImageWrapper) {
                 e.preventDefault(); 
                 let range = null;
@@ -856,6 +892,11 @@ class NuiRichText extends HTMLElement {
         this._activeContextElement = img;
         this._contextType = 'image';
         this._renderContextMenu([
+            // { action: 'alignNone', label: 'Default Block', icon: 'format_image_break_left' },
+            // { action: 'alignLeft', label: 'Align Left', icon: 'format_image_left' },
+            // { action: 'alignCenter', label: 'Align Center', icon: 'format_image_front' },
+            // { action: 'alignRight', label: 'Align Right', icon: 'format_image_right' },
+            // 'separator',
             { action: 'imgSize100', label: '100% Width', text: '100%' },
             { action: 'imgSize50', label: '50% Width', text: '50%' },
             { action: 'imgSize25', label: '25% Width', text: '25%' },
@@ -1049,7 +1090,21 @@ class NuiRichText extends HTMLElement {
         } else if (this._contextType === 'image') {
             const img = this._activeContextElement;
             const containerDiv = img.closest('div[contenteditable="false"]');
-            
+
+            /*
+            if (action === 'alignLeft' || action === 'alignCenter' || action === 'alignRight' || action === 'alignNone') {
+                const target = containerDiv || img;
+                target.classList.remove('align-left', 'align-center', 'align-right');
+                if (action !== 'alignNone') {
+                    const map = { 'alignLeft': 'align-left', 'alignCenter': 'align-center', 'alignRight': 'align-right' };
+                    target.classList.add(map[action]);
+                }
+                this._positionImageResizer();
+                this._positionContextMenu(img);
+                this._saveHistory();
+                this._emitChange();
+            } else
+            */
             if (action === 'imgSize100' || action === 'imgSize50' || action === 'imgSize25') {
                 img.classList.remove('rte_100', 'rte_50', 'rte_25');
                 const map = { 'imgSize100': 'rte_100', 'imgSize50': 'rte_50', 'imgSize25': 'rte_25' };
@@ -1096,6 +1151,41 @@ class NuiRichText extends HTMLElement {
     }
 
     _handlePaste(e) {
+        let hasImage = false;
+        if (e.clipboardData) {
+            const items = e.clipboardData.items;
+            if (items) {
+                for (let i = 0; i < items.length; i++) {
+                    if (items[i].type.startsWith('image/')) {
+                        const file = items[i].getAsFile();
+                        if (file) {
+                            hasImage = true;
+                            this.dispatchEvent(new CustomEvent('nui-image-upload', {
+                                detail: { file: file },
+                                bubbles: true
+                            }));
+                        }
+                    }
+                }
+            } else if (e.clipboardData.files && e.clipboardData.files.length > 0) {
+                for (let i = 0; i < e.clipboardData.files.length; i++) {
+                    const file = e.clipboardData.files[i];
+                    if (file.type.startsWith('image/')) {
+                        hasImage = true;
+                        this.dispatchEvent(new CustomEvent('nui-image-upload', {
+                            detail: { file: file },
+                            bubbles: true
+                        }));
+                    }
+                }
+            }
+        }
+        
+        if (hasImage) {
+            e.preventDefault();
+            return;
+        }
+
         e.preventDefault();
 
         const types = e.clipboardData.types ? Array.from(e.clipboardData.types) : [];
@@ -1292,6 +1382,22 @@ class NuiRichText extends HTMLElement {
      */
     getMarkdown() {
         return this.markdown;
+    }
+
+    /**
+     * Get all inlined images (data:image/ or blob:) from the editor.
+     * @returns {Array<{src: string, alt: string, element: HTMLImageElement}>}
+     */
+    getInlinedImages() {
+        if (!this._editor) return [];
+        const images = Array.from(this._editor.querySelectorAll('img'));
+        return images
+            .filter(img => img.src && (img.src.startsWith('data:image/') || img.src.startsWith('blob:')))
+            .map(img => ({
+                src: img.src,
+                alt: img.getAttribute('alt') || '',
+                element: img
+            }));
     }
 
     _htmlToMarkdown(html) {
