@@ -123,6 +123,9 @@ class NuiRichText extends HTMLElement {
         this._editor.setAttribute('contenteditable', 'true');
         this._editor.setAttribute('role', 'textbox');
         this._editor.setAttribute('aria-multiline', 'true');
+        if (this.hasAttribute('placeholder')) {
+            this._editor.setAttribute('data-placeholder', this.getAttribute('placeholder'));
+        }
         this._editor.innerHTML = this._value;
         this._contextMenu = document.createElement('div');
         this._contextMenu.className = 'nui-rich-text-context-menu';
@@ -146,7 +149,9 @@ class NuiRichText extends HTMLElement {
         `;
         this._activeImage = null;
 
-        this._container.appendChild(this._toolbar);
+        if (!this.hasAttribute('no-toolbar')) {
+            this._container.appendChild(this._toolbar);
+        }
         this._container.appendChild(this._editor);
         this._container.appendChild(this._contextMenu);
         this._container.appendChild(this._imageResizer);
@@ -188,7 +193,8 @@ class NuiRichText extends HTMLElement {
 
                 if (result && result.url) {
                     const applyLink = () => {
-                        if (document.querySelector('dialog[open]')) {
+                        const blockerDialog = Array.from(document.querySelectorAll('dialog[open]')).find(d => !d.contains(this));
+                        if (blockerDialog) {
                             requestAnimationFrame(applyLink);
                         } else {
                             setTimeout(() => this._execCommand('createLink', result.url), 10);
@@ -226,7 +232,8 @@ class NuiRichText extends HTMLElement {
 
                 if (result && result.cols && result.rows) {
                     const applyTable = () => {
-                        if (document.querySelector('dialog[open]')) {
+                        const blockerDialog = Array.from(document.querySelectorAll('dialog[open]')).find(d => !d.contains(this));
+                        if (blockerDialog) {
                             requestAnimationFrame(applyTable);
                         } else {
                             setTimeout(() => {
@@ -1116,7 +1123,7 @@ class NuiRichText extends HTMLElement {
 
             const temp = document.createElement('div');
             temp.innerHTML = html;
-            const allowedTags = ['B', 'I', 'U', 'S', 'STRONG', 'EM', 'MARK', 'A', 'P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'UL', 'OL', 'LI', 'BR', 'BLOCKQUOTE', 'PRE', 'DIV', 'SPAN', 'CODE', 'NUI-CODE'];
+            const allowedTags = ['B', 'I', 'U', 'S', 'STRONG', 'EM', 'MARK', 'A', 'P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'UL', 'OL', 'LI', 'BR', 'BLOCKQUOTE', 'PRE', 'DIV', 'SPAN', 'CODE', 'NUI-CODE', 'TABLE', 'THEAD', 'TBODY', 'TR', 'TH', 'TD'];
             temp.querySelectorAll('script, style, meta, iframe, link, object, embed, base').forEach(el => el.remove());
             Array.from(temp.querySelectorAll('*')).reverse().forEach(el => {
                 if (!allowedTags.includes(el.tagName)) {
@@ -1164,8 +1171,8 @@ class NuiRichText extends HTMLElement {
         md = md.replace(/^[ \t]*```(\w+)?\n([\s\S]*?)\n[ \t]*```/gm, (match, lang, code) => {
             return `<nui-code><pre><code${lang ? ` data-lang="${lang}"` : ''}>${code}</code></pre></nui-code>`;
         });
-        
-        md = md.replace(/^[ \t]*\|(.+)\|\n[ \t]*\|([ -:]+)\|\n((?:[ \t]*\|.+\|\n?)*)/gm, (match, header, sep, body) => {
+
+        md = md.replace(/^[ \t]*\|(.+)\|\n[ \t]*\|([-:| ]+)\|\n((?:[ \t]*\|.+\|\n?)*)/gm, (match, header, sep, body) => {
             const headCells = header.trim().replace(/^\||\|$/g, '').split('|').map(c => `<th>${c.trim()}</th>`).join('');
             const bodyRows = body.trim().split('\n').filter(r => r).map(row => {
                 const cells = row.trim().replace(/^\||\|$/g, '').split('|').map(c => `<td>${c.trim()}</td>`).join('');
@@ -1221,7 +1228,8 @@ class NuiRichText extends HTMLElement {
      */
     insertImage(url, alt = '') {
         const applyImage = () => {
-            if (document.querySelector('dialog[open]')) {
+            const blockerDialog = Array.from(document.querySelectorAll('dialog[open]')).find(d => !d.contains(this));
+            if (blockerDialog) {
                 requestAnimationFrame(applyImage);
             } else {
                 setTimeout(() => {

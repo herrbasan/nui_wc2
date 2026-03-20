@@ -234,3 +234,9 @@ nui-rich-text {
     right: -5px;
     cursor: nwse-resize;
 }
+.nui-rich-text-editor[data-placeholder]:empty:before {
+    content: attr(data-placeholder);
+    color: var(--color-text-dim, #888);
+    pointer-events: none;
+    display: block;
+}
