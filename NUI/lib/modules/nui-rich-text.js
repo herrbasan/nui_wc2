@@ -1444,6 +1444,23 @@ class NuiRichText extends HTMLElement {
                             md += `\n\`\`\`${lang}\n${cleanInner}\n\`\`\`\n`; 
                             break;
                         }
+                        case 'nui-code': {
+                            // Handle nui-code wrapper - extract code content and convert to markdown
+                            const preNode = child.querySelector('pre');
+                            const codeNode = child.querySelector('code');
+                            let lang = '';
+                            let codeText = '';
+                            if (codeNode) {
+                                lang = codeNode.getAttribute('data-lang') || '';
+                                codeText = codeNode.textContent;
+                            } else if (preNode) {
+                                codeText = preNode.textContent;
+                            } else {
+                                codeText = child.textContent;
+                            }
+                            md += `\n\`\`\`${lang}\n${codeText}\n\`\`\`\n`; 
+                            break;
+                        }
                         case 'a': {
                             const href = child.getAttribute('href') || '';
                             const resolvedHref = href ? new URL(href, window.location.href).href : '';
