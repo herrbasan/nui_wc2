@@ -5,6 +5,7 @@ import { nui } from '../../NUI/nui.js';
 import '../../NUI/lib/modules/nui-list.js';
 import '../../NUI/lib/modules/nui-lightbox.js';
 import '../../NUI/lib/modules/nui-code-editor.js';
+import '../../NUI/lib/modules/nui-media-player.js';
 //import { createMonitor } from '../../NUI/lib/modules/nui-monitor.js';
 
 console.log('nui imported');
@@ -324,10 +325,11 @@ const navigationData = [
 		icon: 'extension',
 		items: [
 			{ label: 'Code', href: '#page=addons/code' },
-			{ label: 'List', href: '#page=addons/list' },
-			{ label: 'Menu', href: '#page=addons/menu' },
-			{ label: 'Lightbox', href: '#page=addons/lightbox' },
 			{ label: 'Code Editor', href: '#page=addons/code-editor' },
+			{ label: 'Lightbox', href: '#page=addons/lightbox' },
+			{ label: 'List', href: '#page=addons/list' },
+			{ label: 'Media Player', href: '#page=addons/media-player' },
+			{ label: 'Menu', href: '#page=addons/menu' },
 			{ label: 'Rich-Text', href: '#page=addons/rich-text' }
 		]
 	},

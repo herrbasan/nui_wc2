@@ -1,0 +1,133 @@
+<div class="page-media-player">
+    <header>
+        <h1>Media Player</h1>
+        <p class="lead">An experimental and customizable video and audio player component built on top of native media elements.</p>
+        <div class="demo-callout">
+            <strong>Experimental:</strong> This component is currently in an experimental phase. Features, API, accessibility and styling are subject to change.
+        </div>
+    </header>
+
+    <section>
+        <h2>Video Player</h2>
+        <p>Wrap a native <code>&lt;video&gt;</code> element with <code>&lt;nui-media-player&gt;</code> to create a custom, skinnable UI.</p>
+
+        <nui-code>
+            <script type="example" data-lang="html">
+<nui-media-player pause-others>
+    <video src="videos/video1.mp4" poster="images/poster1.jpg"></video>
+</nui-media-player>
+            </script>
+        </nui-code>
+
+        <div class="demo-area">
+            <nui-media-player pause-others style="max-width: 600px; margin: 0 auto; aspect-ratio: 16/9; display: block;">
+                <!-- Using a placeholder video URL or sample video if available. In dev we can use big buck bunny -->
+                <video src="http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" poster="http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg"></video>
+            </nui-media-player>
+        </div>
+    </section>
+
+    <section>
+        <h2>Audio Player</h2>
+        <p>Wrap a native <code>&lt;audio&gt;</code> element to render only the audio track controls.</p>
+
+        <nui-code>
+            <script type="example" data-lang="html">
+<nui-media-player pause-others>
+    <audio src="audio/track1.mp3"></audio>
+</nui-media-player>
+<nui-media-player pause-others>
+    <audio src="audio/track2.mp3"></audio>
+</nui-media-player>
+            </script>
+        </nui-code>
+
+        <div class="demo-area" style="display: flex; flex-direction: column; gap: var(--nui-space);">
+            <nui-media-player pause-others style="max-width: 600px; width: 100%; margin: 0 auto; display: block; --media-box-back: var(--color-shade2);">
+                <audio src="https://herrbasan.com/files/Misc/herrbasan_Play_11.mp3"></audio>
+            </nui-media-player>
+            <nui-media-player pause-others style="max-width: 600px; width: 100%; margin: 0 auto; display: block; --media-box-back: var(--color-shade2);">
+                <audio src="https://herrbasan.com/files/Misc/herrbasan_Brattle.mp3"></audio>
+            </nui-media-player>
+        </div>
+    </section>
+
+    <section>
+        <h2>Programmatic Creation</h2>
+        <p>You can dynamically inject a player instance into the DOM using the <code>nui.components.mediaPlayer.create()</code> factory pattern.</p>
+        
+        <nui-code>
+            <script type="example" data-lang="javascript">
+// Inject a player directly into a container
+nui.components.mediaPlayer.create('#my-target', {
+    url: 'https://myserver.com/video.mp4',
+    type: 'video', // or 'audio'
+    poster: 'https://myserver.com/poster.jpg',
+    pauseOthers: true, // Default true
+    attributes: {
+        loop: true,
+        crossorigin: 'anonymous'
+    },
+    playerAttributes: {
+        style: 'aspect-ratio: 16/9; max-width: 600px;'
+    }
+});
+            </script>
+        </nui-code>
+        
+        <div class="demo-area" style="text-align: center;">
+            <div id="prog-player-target" style="max-width: 600px; margin: 0 auto 1rem auto; display: block; background: var(--color-shade2); border-radius: var(--border-radius1); display: flex; align-items: center; justify-content: center; min-height: 4rem;">
+                <span style="color: var(--color-text-muted);">Target Container</span>
+            </div>
+            <div style="display: flex; gap: var(--nui-space); justify-content: center;">
+                <nui-button data-action="demo-media:createVideo">
+                    <button type="button">Create Video</button>
+                </nui-button>
+                <nui-button data-action="demo-media:createAudio">
+                    <button type="button">Create Audio</button>
+                </nui-button>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script type="nui/page">
+function init(element, params) {
+    element.addEventListener('nui-action-demo-media', (e) => {
+        const target = element.querySelector('#prog-player-target');
+        if (!target) return;
+        
+        if (e.detail.param === 'createVideo') {
+            target.innerHTML = '';
+            target.style.display = 'block';
+            
+            nui.components.mediaPlayer.create(target, {
+                url: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
+                type: 'video',
+                poster: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/Sintel.jpg',
+                attributes: {
+                    loop: true
+                },
+                playerAttributes: {
+                    style: 'width: 100%; aspect-ratio: 16/9; display: block;'
+                }
+            });
+        }
+        else if (e.detail.param === 'createAudio') {
+            target.innerHTML = '';
+            target.style.display = 'block';
+
+            nui.components.mediaPlayer.create(target, {
+                url: 'https://herrbasan.com/files/AlmostFinished/herrbasan_Baer.mp3',
+                type: 'audio',
+                attributes: {
+                    loop: true
+                },
+                playerAttributes: {
+                    style: 'width: 100%; display: block;'
+                }
+            });
+        }
+    });
+}
+</script>

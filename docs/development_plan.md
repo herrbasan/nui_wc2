@@ -37,8 +37,8 @@ These components have clear use cases, align with NUI's zero-dependency / simpli
 - Simple, extensible toolbar utilizing standard `<nui-button>` and `<nui-icon>` elements.
 - Clean and semantic HTML output.
 
-### Media Player Component (ui-media-player)
-**Status:** Planned  
+### ~~Media Player Component (ui-media-player)~~
+**Status:** Completed  
 **Purpose:** Accessible and customizable video and audio player controls.  
 **Concept:**
 - Ported and modernized from the original NUI library (`reference/nui/nui_media_player.js`).
