@@ -1,0 +1,378 @@
+/* =============================================================================
+   NUI-MEDIA-PLAYER COMPONENT
+   ============================================================================= */
+
+   nui-media-player {
+	--media-control-height: 4rem;
+	--media-control-maxwidth: 65rem;
+	--media-control-shade: light-dark(linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 100%), linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.7) 100%));
+	--media-text: light-dark(rgb(0,0,0), rgb(255,255,255));
+	--media-text-dim: light-dark(rgb(100,100,100), rgb(220,220,220));
+	--media-bar-back: light-dark(rgba(0,0,0,0.1), rgba(180,180,180,0.4));
+	--media-bar-proz: light-dark(rgba(100,100,100,0.8), rgba(180,180,180));
+	--media-bar-proz-playing: light-dark(var(--color-highlight), rgb(255,255,255));
+	--media-timeline-height: 0.4rem;
+	--media-volume-width: 7rem;
+	--media-text-shadow: light-dark(none, 0.1rem 0.1rem 0.1rem rgba(0,0,0,0.3));
+	--media-widget-back: light-dark(rgb(220,220,220), rgb(110,110,110));
+	--media-widget-text: light-dark(rgb(0,0,0), rgba(255,255,255));
+	--media-widget-arrow: 0.8rem;
+	--media-widget-offset: calc(var(--media-control-height)*0.7);
+	--media-box-back: light-dark(rgba(0,0,0,0.05), rgba(0,0,0,0.2));
+	--media-box-radius: var(--border-radius2);
+	--media-box-shadow: 0 0 0.5rem 0 rgba(0,0,0,0.1);
+
+	display: flex;
+	position: relative;
+	padding: 0;
+	border-radius: var(--media-box-radius);
+	box-shadow: var(--media-box-shadow);
+	overflow: hidden;
+	align-items: center;
+	background-color: var(--media-box-back);
+	z-index: 1;
+	transition: opacity 0.3s;
+}
+
+nui-media-player[type="video"] {
+	--media-control-shade: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.7) 100%);
+	--media-text: rgb(255,255,255);
+	--media-text-dim: rgb(220,220,220);
+	--media-bar-back: rgba(180,180,180,0.4);
+	--media-bar-proz: rgba(180,180,180);
+	--media-bar-proz-playing: rgb(255,255,255);
+	--media-text-shadow: 0.1rem 0.1rem 0.1rem rgba(0,0,0,0.3);
+	--media-box-back: rgba(0,0,0,0.1);
+}
+
+nui-media-player[type="video"] {
+	background-color: black;
+}
+
+nui-media-player[type="audio"] {
+	min-height: var(--media-control-height);
+	margin-bottom: var(--nui-space);
+	overflow: visible;
+}
+
+nui-media-player[type="audio"] .controls .bottom {
+	bottom: 0;
+	opacity: 1;
+}
+
+nui-media-player[type="audio"] .bottom_shade {
+	display: none;
+}
+
+nui-media-player video {
+	display: block;
+	object-fit: cover;
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	outline: 0;
+	padding: 0;
+}
+
+nui-media-player .wrap {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	z-index: 1;
+	left: 0;
+	top: 0;
+	pointer-events: none;
+}
+
+nui-media-player.init .wrap {
+	pointer-events: all;
+}
+
+nui-media-player .controls {
+	position: absolute;
+	bottom: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 1;
+	color: var(--media-text);
+	text-shadow: var(--media-text-shadow);
+	display: flex;
+	justify-content: center;
+	overflow: hidden;
+	pointer-events: none;
+	opacity: 1;
+	transition: opacity 0.3s;
+}
+
+nui-media-player.init .controls {
+	pointer-events: all;
+}
+
+nui-media-player .fullscreen {
+	position: absolute;
+	top: 1rem;
+	right: 1rem;
+	width: 2.5rem;
+	height: 2.5rem;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	background-color: rgba(0,0,0,0.2);
+	border-radius: var(--border-radius1);
+	color: var(--media-text-dim);
+	text-shadow: var(--media-text-shadow);
+	opacity: 0;
+	transform: scale(0);
+	transition: all 0.3s ease-in-out;
+	cursor: pointer;
+	z-index: 2;
+	pointer-events: auto;
+}
+
+nui-media-player.init:hover .fullscreen,
+nui-media-player.controls-show .fullscreen {
+	opacity: 1;
+	transform: scale(1);
+}
+
+nui-media-player .fullscreen nui-icon {
+	width: 1.5rem;
+	height: 1.5rem;
+	color: var(--media-text-dim);
+	transition: all 0.3s;
+}
+
+nui-media-player .fullscreen:hover {
+	background-color: rgba(0,0,0,0.7);
+}
+
+nui-media-player .fullscreen:hover nui-icon {
+	color: var(--media-text);
+}
+
+nui-media-player .info {
+	position: absolute;
+	top: 1rem;
+	left: 1rem;
+	width: 2.2rem;
+	height: 2.2rem;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	background-color: rgba(0,0,0,0);
+	color: var(--media-text-dim);
+	text-shadow: var(--media-text-shadow);
+	opacity: 0;
+	transition: all 0.3s ease-in-out;
+	cursor: pointer;
+	z-index: 2;
+	pointer-events: none;
+}
+
+nui-media-player .info.loading {
+	opacity: 1;
+}
+
+nui-media-player .info nui-icon {
+	position: absolute;
+	z-index: 10;
+	color: var(--media-text);
+	width: 1.7rem;
+	height: 1.7rem;
+}
+
+nui-media-player .info.loading nui-icon {
+	animation: ani-spin 1.5s linear infinite;
+}
+
+nui-media-player[type="video"] .info {
+	width: 4rem;
+	height: 4rem;
+	background-color: rgba(0,0,0,0.3);
+	top: calc(50% - 2rem);
+	left: calc(50% - 2rem);
+	border-radius: var(--border-radius1);
+}
+
+nui-media-player[type="video"] .info nui-icon {
+	width: 2.5rem;
+	height: 2.5rem;
+}
+
+/* Media Bottom */
+
+nui-media-player .controls .bottom {
+	position: absolute;
+	bottom: calc(var(--media-control-height)*-1);
+	width: 100%;
+	max-width: var(--media-control-maxwidth);
+	height: var(--media-control-height);
+	display: inline-flex;
+	align-items: center;
+	opacity: 0;
+	transition: all 0.4s;
+	transition-property: bottom, opacity;
+	z-index: 1;
+	user-select: none;
+}
+
+nui-media-player.controls-show .controls .bottom {
+	bottom: 0;
+	opacity: 1;
+}
+
+nui-media-player .bottom_shade {
+	position: absolute;
+	bottom: calc(var(--media-control-height)*-1);
+	width: 100%;
+	height: calc(var(--media-control-height)*1.5);
+	background: var(--media-control-shade);
+	pointer-events: none;
+	opacity: 0;
+	transition: all 0.5s;
+	transition-property: bottom, opacity;
+}
+
+nui-media-player.controls-show .bottom_shade {
+	bottom: 0;
+	opacity: 1;
+}
+
+nui-media-player .controls .bottom > div {
+	height: 100%;
+	width: 3rem;
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	transition: width 0.3s ease-in-out;
+	overflow: hidden;
+}
+
+nui-media-player .controls .bottom .playpause {
+	width: 4rem;
+	justify-content: center;
+	cursor: pointer;
+}
+
+nui-media-player .controls .bottom .playpause nui-icon {
+	position: absolute;
+	color: var(--media-text-dim);
+	transition: transform 0.2s ease-in-out;
+	height: 1.5rem;
+	width: 1.5rem;
+}
+
+nui-media-player .controls .bottom .playpause .icon-pause {
+	transform: scale(0);
+}
+
+nui-media-player.playing .controls .bottom .playpause .icon-play {
+	transform: scale(0);
+}
+nui-media-player.playing .controls .bottom .playpause .icon-pause {
+	transform: scale(1);
+}
+
+nui-media-player .controls .bottom .time {
+	padding-right: 0.5rem;
+	font-family: var(--system-ui);
+	font-variant-numeric: tabular-nums;
+	font-size: var(--font-size-small);
+}
+
+nui-media-player .controls .bottom .duration {
+	justify-content: flex-start;
+	color: var(--media-text-dim);
+	font-family: var(--system-ui);
+	font-variant-numeric: tabular-nums;
+	font-size: var(--font-size-small);
+}
+
+nui-media-player .controls .bottom .volume_icon {
+	width: 4rem;
+	justify-content: center;
+	transition: all 0.3s ease-in-out;
+	cursor: pointer;
+}
+
+nui-media-player .controls .bottom .volume_icon nui-icon {
+	position: absolute;
+	width: 1.5rem;
+	height: 1.5rem;
+	color: var(--media-text-dim);
+}
+
+/* Media Sliders */
+
+nui-media-player .controls .bottom .volume {
+	width: 0rem;
+	transition: all 0.3s ease-in-out;
+	cursor: pointer;
+}
+
+nui-media-player.volume-show .controls .bottom .volume {
+    width: var(--media-volume-width);
+}
+
+nui-media-player .controls .bottom .timeline {
+	position: relative;
+	flex-grow: 1;
+	cursor: pointer;
+}
+
+nui-media-player .controls .bottom .bar {
+	position: relative;
+	height: var(--media-timeline-height);
+	width: 100%;
+	background-color: var(--media-bar-back);
+	pointer-events: none;
+	border-radius: 0.2rem;
+	overflow: hidden;
+}
+
+nui-media-player .controls .bottom .bar .proz {
+	position: absolute;
+	left: 0;
+	height: 100%;
+	width: 0%;
+	background-color: var(--media-bar-proz);
+	transition: width 0.05s;
+}
+
+nui-media-player.playing .controls .bottom .bar .proz {
+	background-color: var(--media-bar-proz-playing);
+}
+
+nui-media-player .widget {
+	position: absolute;
+	bottom: var(--media-widget-offset);
+	left: 0;
+	display: flex;
+	justify-content: center;
+	padding: 0.2rem 0.7rem;
+	background-color: var(--media-widget-back);
+	color: var(--media-widget-text);
+	border-radius: var(--border-radius1);
+	font-size: var(--font-size-xsmall);
+	font-family: inherit;
+	transform: translateX(-50%) scale(0);
+	transition: transform 0.2s;
+	pointer-events: none;
+	z-index: 2;
+}
+
+nui-media-player .widget::after {
+	content: '';
+	position: absolute;
+	bottom: calc(var(--media-widget-arrow) * -1);
+	left: calc(50% - (var(--media-widget-arrow) / 2));
+	border-width: calc(var(--media-widget-arrow) / 2);
+	border-style: solid;
+	border-color: var(--media-widget-back) transparent transparent transparent;
+	transform: translateY(-1px);
+	z-index: 3;
+}
+
+nui-media-player.widget-show .widget {
+	transform: translateX(-50%) scale(1);
+}
