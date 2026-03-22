@@ -36,13 +36,14 @@
 	<section>
 		<h2>Layout Constraints (Important)</h2>
 		<div class="demo-callout">
-			<strong>Virtual Scroller Boundaries:</strong> Because <code>&lt;nui-list&gt;</code> is a virtual scroller, it needs to know what is currently visible on the screen. <strong>It MUST be placed inside a container with a constrained height.</strong>
+			<strong>Virtual Scroller Boundaries:</strong> Because <code>&lt;nui-list&gt;</code> is a virtual scroller, it needs to know what is currently visible on the screen. <strong>It MUST be placed inside a container with a determinable height.</strong>
 		</div>
 		<p>If you place the list in a container that dictates its height by its children (e.g., standard document flow, or <code>&lt;main overflow-y="auto"&gt;</code>), the list will think its viewport is infinite, breaking virtual memory and potentially returning 0 visual space.</p>
 		
 		<p>Rules:</p>
 		<ul>
 			<li>Provide an <strong>explicit height constraint</strong> on the list's parent. The container must not rely on intrinsic sizing (growing based on its contents). Instead, it must have a determinable, bounded dimension (e.g., via <code>flex-grow</code>, <code>height: 100%</code>, or Grid layouts) so the virtual scroller can accurately measure its viewport.</li>
+			<li><strong>All items must be the same height.</strong> The virtual scroller calculates positions based on a fixed <code>itemHeight</code> (default: 60px). If items vary in height, visibility detection will be incorrect and items may be skipped or duplicated during scroll. Use the <strong>Lazy Loading</strong> pattern with <code>update_delay</code> to defer rendering of complex content until after the item is positioned.</li>
 			<li>If using flexbox, make sure the parental container has fixed bounds and the list wrapper has <code>flex: 1; overflow: hidden;</code>.</li>
 			<li>If inserting into a <strong><code>&lt;nui-dialog mode="page"&gt;</code></strong>, you must add <strong><code>content-scroll="false"</code></strong> to the dialog to disable native HTML scroll physics and permit the list to own the bounds!</li>
 			<li><strong>Visibility Contexts (e.g. Dialogs):</strong> The virtual scroller measures layout height. If housed in a container that uses <code>display: none</code> (like a hidden <code>&lt;dialog&gt;</code> or tab), it cannot calculate how many rows to render and will paint a blank view. Be sure to call <code>list.loadData(...)</code> <strong>AFTER</strong> the display state becomes visible (e.g., after calling <code>dialog.showModal()</code>) so the list measures its bounds correctly!</li>
@@ -169,8 +170,8 @@ list.loadData(data); // Just pass the array
 	</section>
 
 	<section>
-		<h2>Selection & Footer</h2>
-		<p>List with footer buttons and selection tracking:</p>
+		<h2>Selection, Filter & Footer</h2>
+		<p>List with filter dropdown, search, sort, footer buttons and selection tracking:</p>
 
 		<div class="demo-list demo-list--lg">
 			<nui-list id="selectionList"></nui-list>
@@ -219,6 +220,36 @@ render: (item) => {
 		<div class="demo-callout">
 			<strong>How it works:</strong> Each rendered element can have an <code>update()</code> method that's called when the element is appended to the DOM. Add <code>update_delay</code> to defer execution. This is a general pattern—use it for images, API calls, map initialization, or any heavy lifting.
 		</div>
+
+		<section>
+			<h4>Render Function API</h4>
+			<p>The render function can return an element with an <code>update()</code> method for deferred content loading:</p>
+
+			<nui-code>
+				<script type="example" data-lang="javascript">
+render: (item) => {
+	const el = document.createElement('div');
+	el.innerHTML = `<div class="placeholder"></div>`;
+
+	// Optional: delay before update() is called
+	el.update_delay = 50;
+
+	// Called when element is added to DOM
+	el.update = () => {
+		// Load expensive content here
+		fetch(`/api/item/${item.id}`)
+			.then(r => r.json())
+			.then(data => {
+				el.querySelector('.placeholder').innerHTML = data.content;
+				el.update = null; // Cleanup
+			});
+	};
+
+	return el;
+}
+				</script>
+			</nui-code>
+		</section>
 	</section>
 
 	<section>
@@ -228,6 +259,248 @@ render: (item) => {
 		<div class="demo-list demo-list--lg">
 			<nui-list id="lazyList"></nui-list>
 		</div>
+	</section>
+
+	<section>
+		<h2>API Reference</h2>
+
+		<section>
+			<h3>loadData(options)</h3>
+			<p>Initializes or updates the list with data and configuration. Call this on an <code>&lt;nui-list&gt;</code> element.</p>
+
+			<nui-code>
+				<script type="example" data-lang="javascript">
+// Programmatic usage
+const list = document.getElementById('myList');
+list.loadData({
+	data: myArray,
+	render: (item) => {
+		const el = document.createElement('div');
+		el.textContent = item.name;
+		return el;
+	},
+	search: [{ prop: 'name' }],
+	sort: [{ label: 'Name', prop: 'name' }],
+	filters: [{ prop: 'category', label: 'Category', options: [...] }],
+	events: (e) => console.log(e)
+});
+
+// Declarative usage (data only, uses template)
+list.loadData(myArray);
+				</script>
+			</nui-code>
+		</section>
+
+		<section>
+			<h3>Configuration Options</h3>
+
+			<table class="api-table">
+				<thead>
+					<tr>
+						<th>Option</th>
+						<th>Type</th>
+						<th>Description</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td><code>data</code></td>
+						<td><code>array</code></td>
+						<td>Array of data items to display in the list.</td>
+					</tr>
+					<tr>
+						<td><code>render</code></td>
+						<td><code>function(item)</code></td>
+						<td>Function that receives a data item and returns an HTMLElement to render it. See <strong>Lazy Loading</strong> section for the optional <code>update()</code> method pattern.</td>
+					</tr>
+					<tr>
+						<td><code>search</code></td>
+						<td><code>array</code></td>
+						<td>Properties to search. Each entry is <code>{ prop: 'fieldName' }</code>. Adds a search input to the header.</td>
+					</tr>
+					<tr>
+						<td><code>sort</code></td>
+						<td><code>array</code></td>
+						<td>Sort options. Each entry is <code>{ label: 'Display Name', prop: 'fieldName', numeric?: boolean }</code>. Adds a sort dropdown and direction toggle to the header.</td>
+					</tr>
+					<tr>
+						<td><code>sort_default</code></td>
+						<td><code>number</code></td>
+						<td>Index of the default sort option (default: 0).</td>
+					</tr>
+					<tr>
+						<td><code>sort_direction_default</code></td>
+						<td><code>'up' | 'down'</code></td>
+						<td>Default sort direction (default: 'up' = ascending).</td>
+					</tr>
+					<tr>
+						<td><code>filters</code></td>
+						<td><code>array</code></td>
+						<td>Filter dropdowns to add to the header. Each entry:
+							<code>{ prop: 'fieldName', label?: 'Label', options: [{ value: 'val', label: 'Label' }], default?: 'val' }</code>
+						</td>
+					</tr>
+					<tr>
+						<td><code>footer</code></td>
+						<td><code>object</code></td>
+						<td>Footer configuration with <code>buttons_left</code> and/or <code>buttons_right</code> arrays. Each button: <code>{ label: 'Text', type: 'primary|danger|outline', fnc: () => {} }</code></td>
+					</tr>
+					<tr>
+						<td><code>events</code></td>
+						<td><code>function(event)</code></td>
+						<td>Callback for list events. See <strong>Events</strong> below.</td>
+					</tr>
+					<tr>
+						<td><code>logmode</code></td>
+						<td><code>boolean</code></td>
+						<td>When true, list auto-scrolls to bottom when new items are appended. Useful for log/chat interfaces.</td>
+					</tr>
+					<tr>
+						<td><code>single</code></td>
+						<td><code>boolean</code></td>
+						<td>When true, only one item can be selected at a time (no multi-select with Ctrl/Shift).</td>
+					</tr>
+					<tr>
+						<td><code>verbose</code></td>
+						<td><code>boolean</code></td>
+						<td>When true, enables debug console logging.</td>
+					</tr>
+				</tbody>
+			</table>
+		</section>
+
+		<section>
+			<h3>Component Methods</h3>
+
+			<table class="api-table">
+				<thead>
+					<tr>
+						<th>Method</th>
+						<th>Returns</th>
+						<th>Description</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td><code>loadData(options)</code></td>
+						<td><code>void</code></td>
+						<td>Initialize the list with data and options.</td>
+					</tr>
+					<tr>
+						<td><code>update(force?)</code></td>
+						<td><code>void</code></td>
+						<td>Re-renders visible items. Use <code>update(true)</code> to force a full re-render.</td>
+					</tr>
+					<tr>
+						<td><code>updateData(data, skipFilter?)</code></td>
+						<td><code>void</code></td>
+						<td>Replace the data array. Set <code>skipFilter=true</code> to skip re-applying current filters.</td>
+					</tr>
+					<tr>
+						<td><code>appendData()</code></td>
+						<td><code>void</code></td>
+						<td>Append new items that were pushed to the original data array. Use with <code>logmode</code>.</td>
+					</tr>
+					<tr>
+						<td><code>getSelection(full?)</code></td>
+						<td><code>array</code></td>
+						<td>Get selected items. If <code>full=true</code>, returns full data objects; otherwise returns original indices.</td>
+					</tr>
+					<tr>
+						<td><code>getSelectedListIndex()</code></td>
+						<td><code>array</code></td>
+						<td>Returns array of selected indices in the filtered/sorted list (not original indices).</td>
+					</tr>
+					<tr>
+						<td><code>setSelection(indexArray)</code></td>
+						<td><code>void</code></td>
+						<td>Set selected items by original indices. Pass empty array to clear selection.</td>
+					</tr>
+					<tr>
+						<td><code>updateOptions(options)</code></td>
+						<td><code>void</code></td>
+						<td>Update options after initialization. Can add/replace search, sort, or filters.</td>
+					</tr>
+					<tr>
+						<td><code>updateItem(idx, data?, force?)</code></td>
+						<td><code>void</code></td>
+						<td>Update a single item by original index. Optionally provide new data and force re-render.</td>
+					</tr>
+					<tr>
+						<td><code>updateItems(items)</code></td>
+						<td><code>void</code></td>
+						<td>Batch update multiple items. Each entry is <code>{ idx: number, data?: any }</code> or just a number.</td>
+					</tr>
+					<tr>
+						<td><code>scrollToIndex(index)</code></td>
+						<td><code>void</code></td>
+						<td>Scroll to bring the item at the given filtered list index into view.</td>
+					</tr>
+					<tr>
+						<td><code>reset()</code></td>
+						<td><code>void</code></td>
+						<td>Reset scroll position and re-render current view.</td>
+					</tr>
+					<tr>
+						<td><code>cleanUp()</code></td>
+						<td><code>void</code></td>
+						<td>Remove the list, clean up event listeners and observers. Call before removing from DOM.</td>
+					</tr>
+				</tbody>
+			</table>
+		</section>
+
+		<section>
+			<h3>Events</h3>
+			<p>The <code>events</code> callback receives an event object with <code>type</code>, <code>value</code>, and other properties:</p>
+
+			<table class="api-table">
+				<thead>
+					<tr>
+						<th>Event Type</th>
+						<th>Properties</th>
+						<th>Description</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td><code>'selection'</code></td>
+						<td><code>value</code> (count)</td>
+						<td>Fired when selection changes. Use <code>getSelection()</code> to get actual items.</td>
+					</tr>
+					<tr>
+						<td><code>'sort'</code></td>
+						<td><code>index, direction</code></td>
+						<td>Fired when sort column or direction changes.</td>
+					</tr>
+					<tr>
+						<td><code>'filter'</code></td>
+						<td><code>prop, value</code></td>
+						<td>Fired when a filter dropdown value changes.</td>
+					</tr>
+					<tr>
+						<td><code>'search_input'</code></td>
+						<td><code>value</code></td>
+						<td>Fired when search input changes (debounced 100ms).</td>
+					</tr>
+					<tr>
+						<td><code>'visibility'</code></td>
+						<td><code>value</code> (true/false)</td>
+						<td>Fired when list enters or leaves the viewport.</td>
+					</tr>
+					<tr>
+						<td><code>'height_change'</code></td>
+						<td><code>value</code> (height)</td>
+						<td>Fired when an item's height changes (for virtual scroll recalculation).</td>
+					</tr>
+					<tr>
+						<td><code>'list'</code></td>
+						<td><code>value</code> ('filtered' | 'reset')</td>
+						<td>General list events.</td>
+					</tr>
+				</tbody>
+			</table>
+		</section>
 	</section>
 </div>
 
@@ -240,10 +513,12 @@ function init(element, params, nui) {
 	function generateData(count) {
 		const data = [];
 		const names = ['Alice', 'Bob', 'Charlie', 'Diana', 'Eve', 'Frank', 'Grace', 'Henry', 'Ivy', 'Jack'];
+		const categories = ['Electronics', 'Clothing', 'Food', 'Books', 'Home'];
 		for (let i = 0; i < count; i++) {
 			data.push({
 				idx: i,
 				name: names[Math.floor(Math.random() * names.length)] + ' ' + i,
+				category: categories[Math.floor(Math.random() * categories.length)],
 				date: Date.now() - Math.floor(Math.random() * 10000000000),
 				value: Math.floor(Math.random() * 10000)
 			});
@@ -411,17 +686,35 @@ function init(element, params, nui) {
 				<div class="nui-list-log-item">
 					<div>${item.idx}</div>
 					<div>${item.name}</div>
+					<div>${item.category}</div>
 					<div>${item.value}</div>
 				</div>
 			`);
 		},
 		search: [
-			{ prop: 'name' }
+			{ prop: 'name' },
+			{ prop: 'category' }
 		],
 		sort: [
 			{ label: 'Index', prop: 'idx', numeric: true },
 			{ label: 'Name', prop: 'name' },
+			{ label: 'Category', prop: 'category' },
 			{ label: 'Value', prop: 'value', numeric: true }
+		],
+		filters: [
+			{
+				prop: 'category',
+				label: 'Category',
+				options: [
+					{ value: '', label: 'All Categories' },
+					{ value: 'Electronics', label: 'Electronics' },
+					{ value: 'Clothing', label: 'Clothing' },
+					{ value: 'Food', label: 'Food' },
+					{ value: 'Books', label: 'Books' },
+					{ value: 'Home', label: 'Home' }
+				],
+				default: ''
+			}
 		],
 		footer: {
 			buttons_left: [
