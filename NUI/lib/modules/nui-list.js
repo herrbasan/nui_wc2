@@ -57,7 +57,7 @@ function createList(element, options) {
 	buildStructure();
 	
 	// Initialize features
-	if (options.search || options.sort) {
+	if (options.search || options.sort || options.filters) {
 		initHeader();
 	}
 	
@@ -70,6 +70,7 @@ function createList(element, options) {
 	list.getSelection = getSelection;
 	list.getSelectedListIndex = getSelectedListIndex;
 	list.setSelection = setSelection;
+	list.updateOptions = updateOptions;
 	list.updateData = updateData;
 	list.appendData = appendData;
 	list.cleanUp = cleanUp;
@@ -184,7 +185,7 @@ function createList(element, options) {
 		list.header.style.display = '';
 		
 		let headerHTML = '<div class="nui-list-sort">';
-		
+
 		if (options.sort) {
 			const sortDefault = options.sort_default || 0;
 			list.currentSort = options.sort[sortDefault];
@@ -192,7 +193,7 @@ function createList(element, options) {
 			const sortOptionsHtml = options.sort.map((s, i) =>
 				`<option value="${i}"${i === sortDefault ? ' selected' : ''}>${s.label}</option>`
 			).join('');
-			
+
 			headerHTML += `
 				<label>Sort by:</label>
 				<nui-select>
@@ -205,7 +206,30 @@ function createList(element, options) {
 				</button>
 			`;
 		}
-		
+
+		if (options.filters) {
+			if (!list.currentFilters) list.currentFilters = {};
+			options.filters.forEach(f => {
+				const filterDefault = list.currentFilters[f.prop] || f.default || '';
+				list.currentFilters[f.prop] = filterDefault;
+				
+				const filterOptionsHtml = f.options.map(opt =>
+					`<option value="${opt.value}"${opt.value === filterDefault ? ' selected' : ''}>${opt.label}</option>`
+				).join('');
+				
+				if (f.label) {
+					headerHTML += `<label>${f.label}</label>`;
+				}
+				
+				headerHTML += `
+					<nui-select class="nui-list-filter-select" data-prop="${f.prop}">
+						<select aria-label="${f.label || 'Filter'}">
+							${filterOptionsHtml}
+						</select>
+					</nui-select>
+				`;
+			});
+		}
 		headerHTML += '</div>';
 		
 		if (options.search) {
@@ -217,7 +241,38 @@ function createList(element, options) {
 		}
 		
 		list.header.innerHTML = headerHTML;
-		
+
+		// Initialize filter selects
+		if (options.filters) {
+			const selects = list.header.querySelectorAll('.nui-list-filter-select');
+			selects.forEach(select => {
+				const prop = select.getAttribute('data-prop');
+				const nativeSelect = select.querySelector('select');
+				
+				const handleFilterChange = (value) => {
+					list.currentFilters[prop] = value;
+					list.eventCallback({
+						target: list,
+						type: 'filter',
+						prop: prop,
+						value: value
+					});
+					filter();
+				};
+				
+				select.addEventListener('nui-change', (e) => {
+					const value = e.detail?.values?.[0];
+					if (value !== undefined) handleFilterChange(value);
+				});
+				
+				if (nativeSelect) {
+					nativeSelect.addEventListener('change', (e) => {
+						handleFilterChange(e.target.value);
+					});
+				}
+			});
+		}
+
 		// Initialize sort select
 		if (options.sort) {
 			const select = list.header.querySelector('nui-select');
@@ -317,7 +372,16 @@ function createList(element, options) {
 	}
 	
 	// ################################# DATA MANAGEMENT
-	
+
+	function updateOptions(newOptions) {
+		options = { ...options, ...newOptions };
+		list.options = options;
+		
+		if (options.search || options.sort || options.filters) {
+			initHeader();
+		}
+	}
+
 	function updateData(data, skip_filter = false) {
 		if (data) {
 			options.data = data;
@@ -389,20 +453,41 @@ function createList(element, options) {
 	
 	function filter() {
 		const bench = performance.now();
-		
+
+		let tempFiltered = list.clone;
+
+		// Apply select filters
+		if (options.filters && list.currentFilters) {
+			for (const f of options.filters) {
+				const filterVal = list.currentFilters[f.prop];
+				if (filterVal !== '') {
+					tempFiltered = tempFiltered.filter(item => {
+						let val = item.data;
+						const parts = f.prop.split('.');
+						for (const part of parts) {
+							val = val?.[part];
+							if (val === undefined) break;
+						}
+						return String(val) === String(filterVal);
+					});
+				}
+			}
+		}
+
 		if (options.search && list.currentSearch !== '') {
 			const props = options.search.map(s => 'data.' + s.prop);
 			list.filtered = nui.util.filter({
-				data: list.clone,
+				data: tempFiltered,
 				search: list.currentSearch,
 				prop: props,
 				ignore_case: true
 			});
 			clearChildren(list.container);
 		} else {
-			list.filtered = list.clone;
+			list.filtered = [...tempFiltered];
+			clearChildren(list.container);
 		}
-		
+
 		setContainerHeight();
 		sort();
 		list.lastSelect = null;
@@ -413,28 +498,21 @@ function createList(element, options) {
 		log(`Filtered Items: ${list.filtered.length}`);
 	}
 	
-	function sort() {
+	function sort(force = false) {
 		if (!options.sort || !list.currentSort) return;
-		
+
 		if (!list.last_direction) {
 			list.last_direction = options.sort_direction_default || 'up';
 		}
-		
+
 		const directionChanged = list.last_direction !== list.currentOrder;
 		const columnChanged = list.last_sort !== list.currentSort;
-		
-		if (columnChanged || directionChanged) {
-			if (directionChanged && !columnChanged) {
-				// Just reverse
+
+		if (force || columnChanged || directionChanged) {
+			nui.util.sortByKey(list.filtered, 'data.' + list.currentSort.prop, list.currentSort.numeric);
+			if (list.currentOrder === 'down') {
 				list.filtered.reverse();
-			} else {
-				// Full sort
-				nui.util.sortByKey(list.filtered, 'data.' + list.currentSort.prop, list.currentSort.numeric);
-				if (list.currentOrder === 'down') {
-					list.filtered.reverse();
-				}
 			}
-			
 			list.last_sort = list.currentSort;
 			list.last_direction = list.currentOrder;
 		}
