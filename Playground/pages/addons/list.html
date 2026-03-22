@@ -1,7 +1,7 @@
 <div class="page-list">
 	<header>
 		<h1>List Component</h1>
-		<p class="lead">High-performance virtualized list with search, sort, and selection. Handles 50,000+ items smoothly through element reuse and virtual scrolling. Theoretical max: ~300K items at 60px height.</p>
+		<p class="lead">High-performance virtualized list with search, sort, and selection. Handles 50,000+ items smoothly through element reuse and virtual scrolling. Theoretical max: ~300K items (at 60px height; actual height is auto-detected from the first rendered item).</p>
 	</header>
 
 	<section>
@@ -43,7 +43,7 @@
 		<p>Rules:</p>
 		<ul>
 			<li>Provide an <strong>explicit height constraint</strong> on the list's parent. The container must not rely on intrinsic sizing (growing based on its contents). Instead, it must have a determinable, bounded dimension (e.g., via <code>flex-grow</code>, <code>height: 100%</code>, or Grid layouts) so the virtual scroller can accurately measure its viewport.</li>
-			<li><strong>All items must be the same height.</strong> The virtual scroller calculates positions based on a fixed <code>itemHeight</code> (default: 60px). If items vary in height, visibility detection will be incorrect and items may be skipped or duplicated during scroll. Use the <strong>Lazy Loading</strong> pattern with <code>update_delay</code> to defer rendering of complex content until after the item is positioned.</li>
+			<li><strong>All items must be the same height.</strong> The virtual scroller auto-detects height from the first rendered item and uses that for all calculations. If items vary in height, visibility detection will be incorrect and items may be skipped or duplicated during scroll. Use the <strong>Lazy Loading</strong> pattern with <code>update_delay</code> to defer rendering of complex content until after the item is positioned.</li>
 			<li>If using flexbox, make sure the parental container has fixed bounds and the list wrapper has <code>flex: 1; overflow: hidden;</code>.</li>
 			<li>If inserting into a <strong><code>&lt;nui-dialog mode="page"&gt;</code></strong>, you must add <strong><code>content-scroll="false"</code></strong> to the dialog to disable native HTML scroll physics and permit the list to own the bounds!</li>
 			<li><strong>Visibility Contexts (e.g. Dialogs):</strong> The virtual scroller measures layout height. If housed in a container that uses <code>display: none</code> (like a hidden <code>&lt;dialog&gt;</code> or tab), it cannot calculate how many rows to render and will paint a blank view. Be sure to call <code>list.loadData(...)</code> <strong>AFTER</strong> the display state becomes visible (e.g., after calling <code>dialog.showModal()</code>) so the list measures its bounds correctly!</li>
