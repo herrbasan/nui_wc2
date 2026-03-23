@@ -2249,7 +2249,13 @@ function setupCheckableBehavior(element, type) {
 	input.after(indicator);
 
 	element.addEventListener('click', (e) => {
-		if (e.target === input || e.target === label || input.disabled) return;
+		if (input.disabled) return;
+		if (e.target === input) return;
+		
+		// If clicked inside a label that controls this input, let the browser handle it natively
+		const clickLabel = e.target.closest && e.target.closest('label');
+		if (clickLabel && clickLabel.control === input) return;
+
 		if (isRadio && input.checked) return;
 
 		input.checked = isRadio ? true : !input.checked;
@@ -2265,6 +2271,15 @@ function setupCheckableBehavior(element, type) {
 				name: input.name || input.id || ''
 			}
 		}));
+	});
+
+	// Expose checked property on the element for external access
+	Object.defineProperty(element, 'checked', {
+		get() { return input.checked; },
+		set(val) {
+			input.checked = val;
+			input.dispatchEvent(new Event('change', { bubbles: true }));
+		}
 	});
 }
 
