@@ -1692,7 +1692,9 @@ registerComponent('nui-tabs', (element) => {
 
 		if (animate) {
 			startHeight = element.offsetHeight;
-			element.style.cssText = `height: ${startHeight}px; overflow: hidden; transition: height 0.3s ease-out`;
+			element.style.height = `${startHeight}px`;
+			element.style.overflow = 'hidden';
+			element.style.transition = 'height 0.3s ease-out';
 		}
 
 		tabs.forEach(t => {
@@ -1722,12 +1724,19 @@ registerComponent('nui-tabs', (element) => {
 
 			element.style.height = `${newHeight}px`;
 
-			const onEnd = (e) => {
-				if (e.target !== element) return;
-				element.style.cssText = '';
-				element.removeEventListener('transitionend', onEnd);
+			const cleanup = () => {
+				element.style.height = '';
+				element.style.overflow = '';
+				element.removeEventListener('transitionend', cleanup);
+				element.removeEventListener('transitioncancel', cleanup);
 			};
-			element.addEventListener('transitionend', onEnd);
+
+			element.addEventListener('transitionend', cleanup);
+			element.addEventListener('transitioncancel', cleanup);
+
+			// Fallback: ensure styles are cleaned up even if transitionend never fires
+			// (e.g., when startHeight equals newHeight, no transition occurs)
+			element._tabsCleanupTimeout = setTimeout(cleanup, 400);
 		}
 
 		element.dispatchEvent(new CustomEvent('nui-tab-change', {
