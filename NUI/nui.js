@@ -232,6 +232,8 @@ if (typeof window !== 'undefined') {
 function createComponent(tagName, setupFn, cleanupFn) {
 	return class extends HTMLElement {
 		connectedCallback() {
+			if (this._nui_initialized) return;
+			this._nui_initialized = true;
 			const c = setupFn?.(this);
 			if (typeof c === 'function') this._c = c;
 		}

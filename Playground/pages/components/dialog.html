@@ -383,6 +383,20 @@ if (dialog.isOpen()) { ... }
 	<nui-dialog id="page-dialog" mode="page" title="Settings" data-buttons='[{"label": "Cancel", "type": "outline", "value": "cancel"}, {"label": "Save Changes", "type": "primary", "value": "save"}]'>
 		<h3>General Settings</h3>
 		<p>This is a page-mode dialog with a lot of content to demonstrate scrolling while the header and footer remain fixed.</p>
+
+		<nui-input-group>
+			<label>Default Model</label>
+			<nui-select id="page-dialog-select" searchable>
+				<select>
+					<option value="">Select a model...</option>
+					<option value="gpt-4">GPT-4</option>
+					<option value="gpt-3.5">GPT-3.5</option>
+					<option value="claude">Claude</option>
+					<option value="gemini">Gemini</option>
+				</select>
+			</nui-select>
+		</nui-input-group>
+
 		<div style="height: 400px; margin: 2rem 0; background: var(--color-shade2); border-radius: var(--border-radius2); display: flex; align-items: center; justify-content: center;">Scroll down...</div>
 		<h3>Advanced Options</h3>
 		<p>More content down here.</p>
