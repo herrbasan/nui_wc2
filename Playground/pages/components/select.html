@@ -272,6 +272,80 @@ select.syncOptions();  // Use after modifying native <select> options
 </section>
 
 <section>
+	<h2>Async Data Loading Pattern</h2>
+	<p>Common pattern: disable the select while loading data, then populate options and enable when ready. The select can be updated at any point—add options, change selection, query state—all synchronously once the component is defined.</p>
+
+	<div class="demo-chrome">
+		<nui-input-group>
+			<label>Select with Async Data</label>
+			<nui-select id="async-demo-select" searchable>
+				<select name="async-demo">
+					<option value="">Select an item...</option>
+				</select>
+			</nui-select>
+		</nui-input-group>
+
+		<div class="demo-actions" style="margin-top: var(--nui-space-double);">
+			<nui-button id="async-demo-load"><button>Load Data</button></nui-button>
+		</div>
+
+		<div class="demo-result" id="async-result" style="margin-top: var(--nui-space);">
+			<strong>Current Value:</strong> <span id="async-value">none</span><br>
+			<strong>Is Disabled:</strong> <span id="async-disabled">no</span><br>
+			<strong>Option Count:</strong> <span id="async-count">1</span>
+		</div>
+	</div>
+
+	<nui-code>
+		<script type="example" data-lang="javascript">
+// 1. Reference the select (declarative or created programmatically)
+const select = document.getElementById('my-select');
+
+// 2. Set up event handlers FIRST (before data arrives)
+select.addEventListener('nui-change', (e) => {
+	console.log('Selected:', e.detail.values);
+});
+
+// Simple one-liner using loadOptions():
+// The async function handles loading state automatically
+const { data, error } = await select.loadOptions(async () => {
+	// Shows "Loading..." and disables while pending
+	// Reverts to original state on success or error
+	return await fetchModelsFromAPI();
+});
+
+if (data) {
+	// Options are already populated and select is enabled
+	select.setItems([{ value: '', label: 'Select...' }, ...data]);
+}
+
+// Manual approach (for more control):
+select.showLoading(); // Shows "Loading..." and disables
+// ... async work ...
+select.hideLoading(); // Enables and restores placeholder
+// Or with custom placeholder on restore:
+select.hideLoading('Choose an option...');
+
+// Query state at any time
+console.log('Is loading:', select.isLoading());
+console.log('Current value:', select.getValue());
+console.log('Is disabled:', select.isDisabled());
+		</script>
+	</nui-code>
+
+	<div class="demo-callout" style="margin-top: var(--nui-space-double);">
+		<p><strong>Key Points:</strong></p>
+		<ul>
+			<li>Use <code>loadOptions()</code> for the simplest async pattern—it handles all loading states</li>
+			<li>Use <code>showLoading()</code>/<code>hideLoading()</code> for manual control</li>
+			<li>Use <code>isLoading()</code> to query current state</li>
+			<li>Use <code>disable()</code>/<code>enable()</code> or <code>setDisabled(bool)</code> to control availability</li>
+			<li>Query state anytime with <code>getValue()</code>, <code>isDisabled()</code>, <code>isOpen()</code>, <code>getItems()</code></li>
+		</ul>
+	</div>
+</section>
+
+<section>
 	<h2>Multi-Select API Demo</h2>
 	<p>Programmatic control for multi-select with dynamic item management.</p>
 
@@ -606,6 +680,26 @@ document.getElementById('demo-form').addEventListener('submit', (e) => {
 				<td>Check if search is enabled</td>
 			</tr>
 			<tr>
+				<td><code>showLoading([text])</code></td>
+				<td><code>void</code></td>
+				<td>Show loading state (disables, shows "Loading...")</td>
+			</tr>
+			<tr>
+				<td><code>hideLoading([placeholder])</code></td>
+				<td><code>void</code></td>
+				<td>Hide loading state (enables, restores placeholder)</td>
+			</tr>
+			<tr>
+				<td><code>loadOptions(asyncFn)</code></td>
+				<td><code>Promise&lt;{data, error}&gt;</code></td>
+				<td>Run async function with automatic loading state management</td>
+			</tr>
+			<tr>
+				<td><code>isLoading()</code></td>
+				<td><code>boolean</code></td>
+				<td>Check if in loading state</td>
+			</tr>
+			<tr>
 				<td><code>validate()</code></td>
 				<td><code>boolean</code></td>
 				<td>Validate the select</td>
@@ -859,7 +953,7 @@ function init(element, params, nui) {
 	element.addEventListener('nui-action-select-demo', (e) => {
 		const param = e.detail.param;
 		if (!apiSelect) return;
-		
+
 		switch(param) {
 			case 'opt2':
 				apiSelect.select('opt2');
@@ -877,7 +971,56 @@ function init(element, params, nui) {
 				break;
 		}
 	});
-	
+
+	// Async Data Loading Demo
+	const asyncSelect = element.querySelector('#async-demo-select');
+	const asyncValue = element.querySelector('#async-value');
+	const asyncDisabled = element.querySelector('#async-disabled');
+	const asyncCount = element.querySelector('#async-count');
+	const asyncDemoLoad = element.querySelector('#async-demo-load');
+
+	function updateAsyncDisplay() {
+		if (!asyncSelect || !asyncValue || !asyncDisabled || !asyncCount) return;
+		asyncValue.textContent = asyncSelect.getValue() || 'none';
+		asyncDisabled.textContent = asyncSelect.isDisabled() ? 'yes' : 'no';
+		asyncCount.textContent = asyncSelect.getItems().length;
+	}
+
+	if (asyncSelect) {
+		asyncSelect.addEventListener('nui-change', updateAsyncDisplay);
+		updateAsyncDisplay();
+	}
+
+	// Load Data button - uses loadOptions() for automatic loading state
+	if (asyncDemoLoad) {
+		asyncDemoLoad.addEventListener('click', async () => {
+			if (!asyncSelect) return;
+
+			// loadOptions handles showLoading/hideLoading automatically
+			const { data, error } = await asyncSelect.loadOptions(async () => {
+				// Simulate 1.5s API delay
+				await new Promise(resolve => setTimeout(resolve, 1500));
+				return [
+					{ id: 'model-a', name: 'Model Alpha' },
+					{ id: 'model-b', name: 'Model Beta' },
+					{ id: 'model-g', name: 'Model Gamma' },
+					{ id: 'model-d', name: 'Model Delta' }
+				];
+			});
+
+			if (error) {
+				alert('Failed to load: ' + error.message);
+			} else {
+				// Populate with data (loadOptions already enabled and cleared loading)
+				asyncSelect.setItems([
+					{ value: '', label: 'Select a model...' },
+					...data.map(m => ({ value: m.id, label: m.name }))
+				]);
+			}
+			updateAsyncDisplay();
+		});
+	}
+
 	// Multi-select API demo
 	const multiSelect = element.querySelector('#multi-api-demo');
 	const multiValue = element.querySelector('#multi-api-value');

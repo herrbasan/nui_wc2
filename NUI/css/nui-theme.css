@@ -2483,6 +2483,11 @@ nui-select.is-disabled .nui-select-control {
 	opacity: 0.6;
 }
 
+nui-select.is-loading .nui-select-value {
+	font-style: italic;
+	opacity: 0.7;
+}
+
 /* Value Display */
 .nui-select-value {
 	flex: 1;

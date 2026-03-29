@@ -3135,6 +3135,67 @@ registerComponent('nui-select', (element) => {
 		disabled ? disable() : enable();
 	};
 
+	// ##### ASYNC LOADING SUPPORT
+
+	let isLoading = false;
+	let savedPlaceholder = null;
+
+	// Show loading state - displays loading text and disables
+	const showLoading = (loadingText = 'Loading...') => {
+		if (isLoading) return;
+		isLoading = true;
+		savedPlaceholder = placeholder; // Always save the actual placeholder, not current display
+		disable();
+		if (valueDisplay) {
+			valueDisplay.textContent = loadingText;
+			valueDisplay.classList.add('is-loading');
+		}
+		element.classList.add('is-loading');
+		element.dispatchEvent(new CustomEvent('nui-loading', { bubbles: true }));
+	};
+
+	// Hide loading state - enables and restores placeholder
+	const hideLoading = (newPlaceholder) => {
+		if (!isLoading) return;
+		isLoading = false;
+		enable();
+		if (valueDisplay) {
+			valueDisplay.textContent = newPlaceholder || savedPlaceholder || placeholder;
+			valueDisplay.classList.remove('is-loading');
+		}
+		element.classList.remove('is-loading');
+		element.dispatchEvent(new CustomEvent('nui-loaded', { bubbles: true }));
+	};
+
+	// Load options from an async function - handles all loading states
+	// Returns { data, error } after the async function resolves or rejects
+	const loadOptions = async (asyncFn) => {
+		showLoading();
+		try {
+			const result = await asyncFn();
+			// Assume result is an array of items - set them
+			if (Array.isArray(result)) {
+				setItems(result);
+			} else if (result && typeof result === 'object' && 'items' in result) {
+				// Support { items: [...] } format
+				setItems(result.items);
+			}
+			hideLoading();
+			element.dispatchEvent(new CustomEvent('nui-options-loaded', {
+				bubbles: true,
+				detail: { data: result }
+			}));
+			return { data: result, error: null };
+		} catch (err) {
+			hideLoading();
+			element.dispatchEvent(new CustomEvent('nui-options-error', {
+				bubbles: true,
+				detail: { error: err }
+			}));
+			return { data: null, error: err };
+		}
+	};
+
 	// ##### KEYBOARD NAVIGATION
 
 	let typeAheadString = '';
@@ -3447,6 +3508,12 @@ registerComponent('nui-select', (element) => {
 	element.isMulti = () => isMulti;
 	element.isDisabled = () => select.disabled;
 	element.isSearchable = () => isSearchable;
+	element.isLoading = () => isLoading;
+
+	// Async loading helpers
+	element.showLoading = showLoading;
+	element.hideLoading = hideLoading;
+	element.loadOptions = loadOptions;
 
 	// Cleanup function
 	return () => {
