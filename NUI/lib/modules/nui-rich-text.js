@@ -1201,7 +1201,6 @@ class NuiRichText extends HTMLElement {
             const parsedHtml = this._parseMarkdown(text);
             document.execCommand('insertHTML', false, parsedHtml);
             this._saveHistory();
-            this._forceComponentUpgrade();
             return;
         }
 
@@ -1236,22 +1235,10 @@ class NuiRichText extends HTMLElement {
             
             document.execCommand('insertHTML', false, temp.innerHTML);
             this._saveHistory();
-            this._forceComponentUpgrade();
         } else if (text) {
             document.execCommand('insertText', false, text);
             this._saveHistory();
         }
-    }
-
-    _forceComponentUpgrade() {
-        setTimeout(() => {
-            this._editor.querySelectorAll('nui-code').forEach(codeEl => {
-                if (!codeEl.querySelector('.nui-code-copy')) {
-                    const clone = codeEl.cloneNode(true);
-                    codeEl.parentNode.replaceChild(clone, codeEl);
-                }
-            });
-        }, 10);
     }
 
     _parseMarkdown(md) {

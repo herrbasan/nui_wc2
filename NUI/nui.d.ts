@@ -194,9 +194,6 @@ export interface NuiUtilities {
 	cssAnimation(element: HTMLElement, className: string, callback?: (el: HTMLElement) => void): () => void;
 
 	storage: NuiStorageAPI;
-
-	/** Converts Markdown to HTML. Supports headers, lists, code blocks, tables, inline formatting. */
-	markdownToHtml(md: string): string;
 }
 
 // =============================================================================

@@ -587,12 +587,6 @@ function init(element, params, nui) {
 	if (mdScript && renderedDiv && api.util.markdownToHtml) {
 		const mdContent = mdScript.textContent.trim();
 		renderedDiv.innerHTML = api.util.markdownToHtml(mdContent);
-		// Upgrade dynamic nui-code elements for proper syntax rendering
-		setTimeout(() => {
-			renderedDiv.querySelectorAll('nui-code').forEach(el => {
-				if (customElements.get('nui-code')) customElements.upgrade(el);
-			});
-		}, 10);
 	}
 
 	// Generate test data

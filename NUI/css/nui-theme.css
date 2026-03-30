@@ -234,6 +234,15 @@ pre {
 	tab-size: 4; /* Control tab width rendering (default: 8) */
 }
 
+blockquote {
+	margin: var(--nui-space) 0;
+	padding: var(--nui-space-half) var(--nui-space);
+	border-left: 4px solid var(--color-highlight);
+	background: var(--color-shade2);
+	color: var(--color-text-dim);
+	border-radius: 0 var(--border-radius1) var(--border-radius1) 0;
+}
+
 h1:focus,
 div:focus,
 p:focus,
