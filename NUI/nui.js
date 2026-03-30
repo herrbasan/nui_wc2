@@ -232,6 +232,8 @@ if (typeof window !== 'undefined') {
 function createComponent(tagName, setupFn, cleanupFn) {
 	return class extends HTMLElement {
 		connectedCallback() {
+			if (this._nui_initialized) return;
+			this._nui_initialized = true;
 			const c = setupFn?.(this);
 			if (typeof c === 'function') this._c = c;
 		}
@@ -1692,7 +1694,9 @@ registerComponent('nui-tabs', (element) => {
 
 		if (animate) {
 			startHeight = element.offsetHeight;
-			element.style.cssText = `height: ${startHeight}px; overflow: hidden; transition: height 0.3s ease-out`;
+			element.style.height = `${startHeight}px`;
+			element.style.overflow = 'hidden';
+			element.style.transition = 'height 0.3s ease-out';
 		}
 
 		tabs.forEach(t => {
@@ -1722,12 +1726,19 @@ registerComponent('nui-tabs', (element) => {
 
 			element.style.height = `${newHeight}px`;
 
-			const onEnd = (e) => {
-				if (e.target !== element) return;
-				element.style.cssText = '';
-				element.removeEventListener('transitionend', onEnd);
+			const cleanup = () => {
+				element.style.height = '';
+				element.style.overflow = '';
+				element.removeEventListener('transitionend', cleanup);
+				element.removeEventListener('transitioncancel', cleanup);
 			};
-			element.addEventListener('transitionend', onEnd);
+
+			element.addEventListener('transitionend', cleanup);
+			element.addEventListener('transitioncancel', cleanup);
+
+			// Fallback: ensure styles are cleaned up even if transitionend never fires
+			// (e.g., when startHeight equals newHeight, no transition occurs)
+			element._tabsCleanupTimeout = setTimeout(cleanup, 400);
 		}
 
 		element.dispatchEvent(new CustomEvent('nui-tab-change', {
@@ -2249,7 +2260,13 @@ function setupCheckableBehavior(element, type) {
 	input.after(indicator);
 
 	element.addEventListener('click', (e) => {
-		if (e.target === input || e.target === label || input.disabled) return;
+		if (input.disabled) return;
+		if (e.target === input) return;
+		
+		// If clicked inside a label that controls this input, let the browser handle it natively
+		const clickLabel = e.target.closest && e.target.closest('label');
+		if (clickLabel && clickLabel.control === input) return;
+
 		if (isRadio && input.checked) return;
 
 		input.checked = isRadio ? true : !input.checked;
@@ -2265,6 +2282,15 @@ function setupCheckableBehavior(element, type) {
 				name: input.name || input.id || ''
 			}
 		}));
+	});
+
+	// Expose checked property on the element for external access
+	Object.defineProperty(element, 'checked', {
+		get() { return input.checked; },
+		set(val) {
+			input.checked = val;
+			input.dispatchEvent(new Event('change', { bubbles: true }));
+		}
 	});
 }
 
@@ -3111,6 +3137,67 @@ registerComponent('nui-select', (element) => {
 		disabled ? disable() : enable();
 	};
 
+	// ##### ASYNC LOADING SUPPORT
+
+	let isLoading = false;
+	let savedPlaceholder = null;
+
+	// Show loading state - displays loading text and disables
+	const showLoading = (loadingText = 'Loading...') => {
+		if (isLoading) return;
+		isLoading = true;
+		savedPlaceholder = placeholder; // Always save the actual placeholder, not current display
+		disable();
+		if (valueDisplay) {
+			valueDisplay.textContent = loadingText;
+			valueDisplay.classList.add('is-loading');
+		}
+		element.classList.add('is-loading');
+		element.dispatchEvent(new CustomEvent('nui-loading', { bubbles: true }));
+	};
+
+	// Hide loading state - enables and restores placeholder
+	const hideLoading = (newPlaceholder) => {
+		if (!isLoading) return;
+		isLoading = false;
+		enable();
+		if (valueDisplay) {
+			valueDisplay.textContent = newPlaceholder || savedPlaceholder || placeholder;
+			valueDisplay.classList.remove('is-loading');
+		}
+		element.classList.remove('is-loading');
+		element.dispatchEvent(new CustomEvent('nui-loaded', { bubbles: true }));
+	};
+
+	// Load options from an async function - handles all loading states
+	// Returns { data, error } after the async function resolves or rejects
+	const loadOptions = async (asyncFn) => {
+		showLoading();
+		try {
+			const result = await asyncFn();
+			// Assume result is an array of items - set them
+			if (Array.isArray(result)) {
+				setItems(result);
+			} else if (result && typeof result === 'object' && 'items' in result) {
+				// Support { items: [...] } format
+				setItems(result.items);
+			}
+			hideLoading();
+			element.dispatchEvent(new CustomEvent('nui-options-loaded', {
+				bubbles: true,
+				detail: { data: result }
+			}));
+			return { data: result, error: null };
+		} catch (err) {
+			hideLoading();
+			element.dispatchEvent(new CustomEvent('nui-options-error', {
+				bubbles: true,
+				detail: { error: err }
+			}));
+			return { data: null, error: err };
+		}
+	};
+
 	// ##### KEYBOARD NAVIGATION
 
 	let typeAheadString = '';
@@ -3423,6 +3510,12 @@ registerComponent('nui-select', (element) => {
 	element.isMulti = () => isMulti;
 	element.isDisabled = () => select.disabled;
 	element.isSearchable = () => isSearchable;
+	element.isLoading = () => isLoading;
+
+	// Async loading helpers
+	element.showLoading = showLoading;
+	element.hideLoading = hideLoading;
+	element.loadOptions = loadOptions;
 
 	// Cleanup function
 	return () => {

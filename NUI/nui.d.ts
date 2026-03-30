@@ -548,7 +548,9 @@ export interface NuiTextareaElement extends HTMLElement {
  * Checkbox component
  * Custom-styled checkbox with native accessibility
  */
-export interface NuiCheckboxElement extends HTMLElement {}
+export interface NuiCheckboxElement extends HTMLElement {
+	checked: boolean;
+}
 
 /**
  * Radio button component
