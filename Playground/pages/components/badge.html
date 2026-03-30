@@ -1,6 +1,9 @@
 <div class="page-badge">
 
-<script type="text/markdown" id="llm-guide" data-component="nui-badge">
+<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+	<summary><strong>LLM Guide - nui-badge</strong></summary>
+	<nui-markdown id="llm-guide" data-component="nui-badge" class="llm-guide">
+<script type="text/markdown">
 # LLM Guide: nui-badge
 
 > **Global Note:** Always follow the global rules in `Playground/README.md`. Use the correct Light DOM wrappers.
@@ -43,11 +46,8 @@ Use this for inline tags (like "New", "Pending", "Active").
 </nui-button>
 ```
 </script>
-
-	<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
-		<summary><strong>LLM Guide - nui-badge</strong></summary>
-		<div id="llm-guide-rendered" class="llm-guide"></div>
-	</details>
+	</nui-markdown>
+</details>
 
 	<header>
 		<h1>Badge</h1>
@@ -175,13 +175,6 @@ Use this for inline tags (like "New", "Pending", "Active").
 				targetBtn.removeAttribute('data-badge');
 			}
 		});
-
-		const mdScript = element.querySelector('#llm-guide');
-		const renderedDiv = element.querySelector('#llm-guide-rendered');
-
-		if (mdScript && renderedDiv && window.nui && nui.util.markdownToHtml) {
-			renderedDiv.innerHTML = nui.util.markdownToHtml(mdScript.textContent);
-		}
 	}
 	</script>
 </div>

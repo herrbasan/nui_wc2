@@ -904,6 +904,31 @@ function setupCodeBlock(element, pre, codeBlock, rawText) {
 	}).catch(() => { });
 }
 
+// ################################# nui-markdown COMPONENT
+
+registerComponent('nui-markdown', (element) => {
+	// Check for <script type="text/markdown"> pattern
+	const mdScript = element.querySelector('script[type="text/markdown"]');
+	let rawText = '';
+
+	if (mdScript) {
+		rawText = mdScript.textContent.trim();
+	} else {
+		// Fallback to direct text content if no script tag is used
+		rawText = element.textContent.trim();
+	}
+
+	if (!rawText) return;
+
+	if (util.markdownToHtml) {
+		element.innerHTML = util.markdownToHtml(rawText);
+	} else {
+		element.textContent = rawText;
+	}
+});
+
+// ################################# nui-link-list COMPONENT
+
 registerComponent('nui-link-list', (element) => {
 	const mode = element.getAttribute('mode') || 'tree';
 	let activeItem = null;
