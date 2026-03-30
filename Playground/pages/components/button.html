@@ -1,3 +1,52 @@
+<div class="page-button">
+
+<script type="text/markdown" id="llm-guide" data-component="nui-button">
+# LLM Guide: nui-button & nui-button-container
+
+> **Global Note:** Always follow the global rules in `Playground/README.md`. 
+
+## Critical Rules & Strict DOM Structure
+- `<nui-button>` is a Light DOM wrapper. It MUST contain a native `<button>` or `<a>` tag.
+- NEVER invent `<nui-button>Click</nui-button>` without the inner button tag.
+- Set the button `type` (e.g., `type="button"` or `type="submit"`) on the inner button.
+- Apply attributes like `disabled` or `aria-label` to the inner button, NOT the wrapper.
+- Use `<nui-button-container>` to group multiple buttons together. Do NOT use generic `<div>` wrappers with custom flexbox classes to group buttons.
+
+**Correct Usage:**
+```html
+<nui-button-container align="end" gap="1rem">
+	<nui-button variant="outline">
+		<button type="button">Cancel</button>
+	</nui-button>
+	<nui-button variant="primary">
+		<button type="submit" disabled>Save</button>
+	</nui-button>
+</nui-button-container>
+```
+
+**Wrong / Will Fail:**
+```html
+<div style="display: flex; gap: 10px;"> <!-- Wrong: Use <nui-button-container> -->
+	<nui-button type="button" disabled>Save</nui-button> <!-- Wrong: Missing inner <button>, attributes on wrapper -->
+</div>
+```
+
+## Icons in Buttons
+If using an icon, wrap the icon name in the `<nui-icon>` component, and place it *inside* the native button.
+```html
+<nui-button>
+	<button type="button">
+		<nui-icon name="settings">⚙</nui-icon> Settings
+	</button>
+</nui-button>
+```
+</script>
+
+	<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+		<summary><strong>LLM Guide - nui-button</strong></summary>
+		<div id="llm-guide-rendered" class="llm-guide"></div>
+	</details>
+
 <header>
 	<h1>Button Component</h1>
 	<p>Enhanced button elements with consistent styling and interaction patterns</p>
@@ -557,3 +606,16 @@ nui-button button:disabled {
 		<li>Test keyboard navigation and focus states.</li>
 	</ul>
 </section>
+
+<script type="nui/page">
+function init(element, params, nui) {
+	const mdScript = element.querySelector('#llm-guide');
+	const renderedDiv = element.querySelector('#llm-guide-rendered');
+	
+	if (mdScript && renderedDiv && nui.util.markdownToHtml) {
+		renderedDiv.innerHTML = nui.util.markdownToHtml(mdScript.textContent);
+	}
+}
+</script>
+
+</div>

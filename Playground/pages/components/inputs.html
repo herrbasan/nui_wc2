@@ -1,3 +1,64 @@
+<div class="page-inputs">
+
+<script type="text/markdown" id="llm-guide" data-component="nui-input">
+# LLM Guide: nui-input, nui-input-group, nui-textarea, nui-checkbox, nui-radio
+
+> **Global Note:** Always follow the global rules in `Playground/README.md`. Use the correct Light DOM wrappers.
+
+## Critical Rules & Strict DOM Structure
+NUI separates the *structure* of a form field (`<nui-input-group>`) from the *styling* of the input element (`<nui-input>`). 
+
+- `<nui-input-group>` wraps the `<label>`, the input component, and the description.
+- `<nui-input>`, `<nui-textarea>`, `<nui-checkbox>`, and `<nui-radio>` are wrappers that MUST contain a native `<input>` or `<textarea>`.
+- **Do NOT** put the `<label>` inside the `<nui-input>` component. The label lives side-by-side with the component inside `<nui-input-group>`.
+- Set `id`, `name`, `placeholder`, `required`, and `disabled` on the **inner** native `<input>` tag, NOT on the `nui-*` wrapper.
+
+**Correct (Text Input):**
+```html
+<nui-input-group>
+	<label for="email">Email Address</label>
+	<nui-input>
+		<input type="email" id="email" name="email" required>
+	</nui-input>
+	<span class="description">We'll never share your email.</span>
+</nui-input-group>
+```
+
+**Correct (Checkbox):**
+```html
+<nui-checkbox>
+	<input type="checkbox" id="terms" name="terms">
+	<label for="terms">I accept the terms</label> <!-- Checkboxes have internal labels -->
+</nui-checkbox>
+```
+
+**Wrong / Will Fail:**
+```html
+<nui-input type="text" placeholder="Name"></nui-input> <!-- Wrong: Missing inner <input>, attributes on wrapper -->
+
+<nui-input>
+	<label>Email</label> <!-- Wrong: Label belongs inside <nui-input-group>, not <nui-input> -->
+	<input type="email">
+</nui-input>
+```
+
+## Icons and Actions inside Inputs
+Use `<nui-icon>` or `<button>` directly inside the `<nui-input>` wrapper, alongside the native `<input>`.
+
+```html
+<nui-input>
+	<nui-icon name="search">🔍</nui-icon> <!-- Leading icon -->
+	<input type="text" placeholder="Search...">
+	<button type="button" aria-label="Clear"><nui-icon name="close">×</nui-icon></button> <!-- Trailing action -->
+</nui-input>
+```
+</script>
+
+	<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+		<summary><strong>LLM Guide - Inputs</strong></summary>
+		<div id="llm-guide-rendered" class="llm-guide"></div>
+	</details>
+
 <header>
 	<h1>Input Components</h1>
 	<p>Form input components with native accessibility, validation, and custom styling.</p>
@@ -397,5 +458,14 @@ function init(element) {
 			});
 		});
 	}
+	
+	const mdScript = element.querySelector('#llm-guide');
+	const renderedDiv = element.querySelector('#llm-guide-rendered');
+	
+	if (mdScript && renderedDiv && nui.util.markdownToHtml) {
+		renderedDiv.innerHTML = nui.util.markdownToHtml(mdScript.textContent);
+	}
 }
 </script>
+
+</div>

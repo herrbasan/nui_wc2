@@ -1,4 +1,22 @@
 <div class="page-app-header">
+
+<script type="text/markdown" id="llm-guide" data-component="nui-app-header">
+# LLM Guide: nui-app-header
+
+> **Layout Reference:** For the full structural rules of building an application shell, refer to the `nui-app` guide in `Playground/pages/components/app-layout.html`.
+
+## Key Rules
+- This is a structural component meant to live inside `<nui-app>`. 
+- Use the `slot` attribute (`slot="left"`, `slot="center"`, `slot="right"`) to place content inside the header.
+- Status badges are added directly to child elements (like buttons) via `data-badge="3"` or `data-badge=""`. Do not create separate badge wrapper DOM elements.
+- Toggle sidebars using `data-action="toggle-sidebar"` or `data-action="toggle-sidebar:right"`.
+</script>
+
+	<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+		<summary><strong>LLM Guide - nui-app-header</strong></summary>
+		<div id="llm-guide-rendered" class="llm-guide"></div>
+	</details>
+
     <header>
         <h1>App Header (<code>&lt;nui-app-header&gt;</code>)</h1>
         <p class="lead">A standardized application top bar with built-in layout management and semantic zones.</p>
@@ -70,4 +88,16 @@
         </ul>
         <p>You can see this in action by clicking the menu button or settings button in the main header of the Playground above.</p>
     </section>
+
+<script type="nui/page">
+function init(element, params, nui) {
+	const mdScript = element.querySelector('#llm-guide');
+	const renderedDiv = element.querySelector('#llm-guide-rendered');
+	
+	if (mdScript && renderedDiv && nui.util.markdownToHtml) {
+		renderedDiv.innerHTML = nui.util.markdownToHtml(mdScript.textContent);
+	}
+}
+</script>
+
 </div>

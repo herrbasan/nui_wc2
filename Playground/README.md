@@ -54,16 +54,26 @@ Then refer to specific component pages in `pages/components/` as needed.
 **App Mode** (desktop applications with sidebar):
 ```html
 <nui-app>
-  <nui-top-nav>...</nui-top-nav>
-  <nui-side-nav>...</nui-side-nav>
-  <nui-content><nui-main>...</nui-main></nui-content>
+  <nui-app-header>
+    <header>...</header>
+  </nui-app-header>
+  <nui-sidebar>
+    <nav>...</nav>
+  </nui-sidebar>
+  <nui-content>
+    <main>...</main>
+  </nui-content>
 </nui-app>
 ```
 
 **Page Mode** (traditional websites):
 ```html
-<nui-top-nav>...</nui-top-nav>
-<nui-content><main>...</main></nui-content>
+<nui-app-header>
+  <header>...</header>
+</nui-app-header>
+<nui-content>
+  <main>...</main>
+</nui-content>
 ```
 
 ### Two Component Patterns
@@ -111,10 +121,8 @@ Playground/
 | `pages/documentation/getting-started.html` | Setup, usage patterns, complete example | **First** |
 | `pages/documentation/architecture-patterns.html` | SPA structure options | **Second** |
 | `pages/documentation/api-structure.html` | API reference | **Third** |
-| `pages/components/*.html` | Individual component docs | As needed |
-
-## LLM-Optimized Aspects
-
+| `pages/components/app-layout.html` | App shell components (`nui-app`, `nui-sidebar`, `nui-app-header`) | When building page layout |
+| `pages/components/layout.html` | Content constraints (`nui-layout` columns) | When organizing internal content |
 - **Explicit patterns** - Components follow consistent HTML-first or data-driven patterns
 - **Clear section markers** - Source uses `// #################################` section headers
 - **Self-documenting API** - `Object.keys(nui.components)` shows available factories

@@ -1,3 +1,61 @@
+<div class="page-select">
+
+<script type="text/markdown" id="llm-guide" data-component="nui-select">
+# LLM Guide: nui-select (Custom Select Component)
+
+> **Global Note:** Always follow the global rules in `Playground/README.md`. Use the correct Light DOM wrappers.
+
+## Critical Rules
+- `<nui-select>` MUST wrap a native `<select>` element.
+- The first empty-value option (`<option value="">...</option>`) acts as the placeholder.
+- Multi-select is controlled entirely by the native `multiple` attribute on the inner `<select>`.
+- The `searchable` attribute goes on the `<nui-select>` wrapper, NOT the inner select.
+
+## Strict DOM Structure (Do NOT deviate)
+Do not invent tags, and do not omit the internal `<select>` element.
+
+**Correct (Single Select):**
+```html
+<nui-input-group>
+	<label>Choose Fruit</label>
+	<nui-select searchable> <!-- Searchable goes on wrapper -->
+		<select name="fruit"> <!-- Native select inside -->
+			<option value="">Select a fruit...</option> <!-- Placeholder -->
+			<option value="apple">Apple</option>
+		</select>
+	</nui-select>
+</nui-input-group>
+```
+
+**Correct (Multi-Select):**
+```html
+<nui-select searchable>
+	<select name="fruits" multiple> <!-- Native 'multiple' attribute -->
+		<option value="apple" selected>Apple</option> <!-- Native 'selected' -->
+		<option value="banana">Banana</option>
+	</select>
+</nui-select>
+```
+
+**Wrong / Will Fail:**
+```html
+<nui-select searchable multiple> <!-- Wrong: 'multiple' belongs on the inner <select> -->
+	<option value="apple">Apple</option> <!-- Wrong: Missing inner <select> -->
+</nui-select>
+```
+
+## Programmatic API
+- `selectEl.getValue()` (Returns string for single, array for multiple)
+- `selectEl.setValue('val')` or `selectEl.setValue(['v1', 'v2'])`
+- `selectEl.setItems([{value: 'a', label: 'A'}, {group: 'G', options: [...]}])`
+- `selectEl.clear()`
+</script>
+
+	<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+		<summary><strong>LLM Guide - nui-select</strong></summary>
+		<div id="llm-guide-rendered" class="llm-guide"></div>
+	</details>
+
 <header>
 	<h1>Select Component</h1>
 	<p class="lead">Enhanced select elements with search, multi-select, and accessible custom UI</p>
@@ -931,6 +989,13 @@ document.getElementById('demo-form').addEventListener('submit', (e) => {
 
 <script type="nui/page">
 function init(element, params, nui) {
+	const mdScript = element.querySelector('#llm-guide');
+	const renderedDiv = element.querySelector('#llm-guide-rendered');
+	
+	if (mdScript && renderedDiv && nui.util.markdownToHtml) {
+		renderedDiv.innerHTML = nui.util.markdownToHtml(mdScript.textContent);
+	}
+
 	// API Demo handlers
 	const apiSelect = element.querySelector('#api-demo-select');
 	const apiValue = element.querySelector('#api-value');

@@ -1,3 +1,80 @@
+<div class="page-link-list">
+
+<script type="text/markdown" id="llm-guide" data-component="nui-link-list">
+# LLM Guide: nui-link-list (Navigation Sidebar/Tree)
+
+> **Global Note:** Always follow the global rules in `Playground/README.md`. Use `nui.util.createElement` and do not invent tags.
+
+## Usage Modes (MUST READ)
+`nui-link-list` is primarily used inside `<nui-sidebar>` for application navigation. There are two ways to use it:
+
+### 1. Data-Driven (JavaScript - Preferred)
+Pass a JSON array of navigation groups to `nui.components.linkList.create()` or an existing element's `.loadData()`.
+- The data structure is an array of `group` objects.
+- Each `group` contains `header`, `icon`, and an `items` array.
+- Each `item` contains `label`, `icon`, and `href` (or `action` to trigger an event).
+
+**Correct (Data-Driven API):**
+```js
+const navData = [
+	{
+		header: 'Main Menu',
+		icon: 'home',
+		items: [
+			{ label: 'Dashboard', icon: 'dashboard', href: '#dashboard' },
+			{ label: 'Settings', icon: 'settings', action: 'open-settings' } // Triggers a 'nui-action' event
+		]
+	}
+];
+
+// Creates the DOM structure automatically
+const navElement = nui.components.linkList.create(navData);
+document.querySelector('nui-sidebar').appendChild(navElement);
+```
+
+### 2. Declarative (HTML - Manual)
+If you must write the HTML manually, you MUST strictly follow the exact DOM structure below. The component relies on these specific tags (`nav`, `ul`, `li`, `a`, `button`, `details`, `summary`).
+
+**Correct (Declarative DOM Structure):**
+```html
+<nui-link-list>
+	<nav aria-label="Main Navigation">
+		<!-- Simple Item -->
+		<ul>
+			<li><a href="#home"><nui-icon name="home">🏠</nui-icon> Home</a></li>
+			<li><button data-action="logout"><nui-icon name="exit">🚪</nui-icon> Logout</button></li>
+		</ul>
+
+		<!-- Group (Collapsible) -->
+		<details open>
+			<summary><nui-icon name="folder">📁</nui-icon> Documents</summary>
+			<ul>
+				<li><a href="#docs" aria-current="page">Overview</a></li>
+				<li><a href="#api">API Reference</a></li>
+			</ul>
+		</details>
+	</nav>
+</nui-link-list>
+```
+
+**Wrong / Will Fail:**
+```html
+<nui-link-list>
+	<div> <!-- Wrong: MUST be a <nav> -->
+		<div><a href="#home">Home</a></div> <!-- Wrong: MUST use <ul> and <li> -->
+	</div>
+</nui-link-list>
+```
+
+## Active States
+The component automatically sets `aria-current="page"` on links that match the current URL hash. Do not manually apply an `.active` class to links.
+</script>
+
+	<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+		<summary><strong>LLM Guide - nui-link-list</strong></summary>
+		<div id="llm-guide-rendered" class="llm-guide"></div>
+	</details>
+
 <header>
 	<h1>Link List Component</h1>
 	<p>The <code>&lt;nui-link-list&gt;</code> component provides hierarchical navigation with multiple modes: <strong>fold</strong> (accordion - one group open at a time) and <strong>tree</strong> (all groups can be open).</p>
@@ -710,3 +787,20 @@ function init(element, params) {
 	updateTreePathDisplay();
 }
 </script>
+
+// ...existing code...
+					eventLog.innerHTML = `<div>[${time}] Clicked: ${action || href}</div>` + eventLog.innerHTML;
+			});
+		});
+	}
+	
+	const mdScript = element.querySelector('#llm-guide');
+	const renderedDiv = element.querySelector('#llm-guide-rendered');
+	
+	if (mdScript && renderedDiv && nui.util.markdownToHtml) {
+		renderedDiv.innerHTML = nui.util.markdownToHtml(mdScript.textContent);
+	}
+}
+</script>
+
+</div>

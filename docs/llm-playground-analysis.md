@@ -110,4 +110,48 @@ Focus first on the most crucial pieces for real apps (nui-list is the star — i
 - Create the Patterns Catalog page.
 - Add decision trees and bad/good examples.
 
+## Progress Tracking: LLM Guides
+
+### ✅ Components with LLM Guides Added:
+1. `accordion.html` (`nui-accordion`)
+2. `app-header.html` (`nui-app-header`)
+3. `app-layout.html` (`nui-app`, `nui-sidebar`, `nui-content`)
+4. `badge.html` (`nui-badge`, `data-badge`)
+5. `banner.html` (`nui-banner`)
+6. `button.html` (`nui-button`, `nui-button-container`)
+7. `card.html` (`nui-card`)
+8. `dialog.html` (`nui-dialog`)
+9. `icon.html` (`nui-icon`)
+10. `inputs.html` (`nui-input`, `nui-input-group`, `nui-textarea`, `nui-checkbox`, `nui-radio`)
+11. `layout.html` (`nui-layout`)
+12. `link-list.html` (`nui-link-list`)
+13. `list.html` (`nui-list`)
+14. `select.html` (`nui-select`)
+15. `tabs.html` (`nui-tabs`)
+16. `table.html` (`nui-table`)
+
+### ⏳ Still Need LLM Guides (Next Session):
+
+**Form / Interactive:**
+- `slider.html` (`nui-slider`)
+- `tag-input.html` (`nui-tag-input`)
+- `tooltip.html` (`nui-tooltip`)
+
+**UI & Data:**
+- `overlay.html` (`nui-overlay`)
+- `progress.html` (`nui-progress`)
+- `skip-links.html` (`nui-skip-links`)
+
+**Addons & Advanced:**
+- `menu.html` (`nui-menu`)
+- `lightbox.html` (`nui-lightbox`)
+- `rich-text.html` (`nui-rich-text`)
+- `code.html` (`nui-code`)
+- `media-player.html` (`nui-media-player`)
+- `sortable.html` (`nui-sortable`)
+
+**Utility / Dev:**
+- `storage.html` (`nui.util.storage` API)
+- `code-editor.html` (`nui-code-editor` / experimental)
+
 This file is located at `docs/llm-playground-analysis.md`.

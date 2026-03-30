@@ -84,14 +84,27 @@ nui-app-footer {
 
 .collapsible-section {
 	margin: 1rem 0;
+	border-bottom: thin solid var(--border-shade3);
 }
 
 .collapsible-section summary {
 	cursor: pointer;
 	font-weight: bold;
 	padding: var(--nui-space-half, 0.5rem);
+	padding-left: var(--nui-space, 1rem);
+	padding-right: var(--nui-space, 1rem);
 	background: var(--color-shade2);
-	border-radius: var(--border-radius1, 0.25rem);
+	border-radius: var(--border-radius2, 0.25rem);
+}
+
+.collapsible-section summary::marker {
+	font-size: 1rem;
+	color: var(--colort-text-dim);
+}
+
+.collapsible-section summary strong {
+	font-weight: 400;
+	margin-left: 0.2rem;
 }
 
 .collapsible-section > div {

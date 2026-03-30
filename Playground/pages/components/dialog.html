@@ -1,3 +1,84 @@
+<div class="page-dialog">
+
+<script type="text/markdown" id="llm-guide" data-component="nui-dialog">
+# LLM Guide: nui-dialog (Modal Component)
+
+> **Global Note:** Always follow the global rules in `Playground/README.md`. Use `nui.util.createElement`.
+
+## Usage Modes (Read carefully)
+You almost NEVER need to write `<nui-dialog>` HTML manually. Use the JavaScript API for 95% of use cases.
+
+### 1. Simple System Dialogs (JS - Preferred)
+Use these for simple messages, confirmations, or basic forms. They return Promises.
+```js
+// Alert
+await nui.components.dialog.alert('Title', 'Message text');
+
+// Confirm
+const isConfirmed = await nui.components.dialog.confirm('Delete?', 'Cannot be undone.');
+
+// Prompt (Basic Forms)
+const result = await nui.components.dialog.prompt('Login', 'Enter details', {
+	fields: [
+		{ id: 'username', label: 'Name', value: '' },
+		{ id: 'email', label: 'Email', type: 'email' }
+	]
+});
+// result is { username: '...', email: '...' } or null
+```
+
+### 2. Complex Custom Dialogs (JS - `mode="page"`)
+For large, custom forms or interfaces, use `nui.components.dialog.page()`.
+```js
+const { dialog, main } = await nui.components.dialog.page('Dialog Title', 'Subtitle', {
+	contentScroll: true, // Let the main area scroll
+	buttons: [
+		{ label: 'Cancel', type: 'outline', value: 'cancel' },
+		{ label: 'Save', type: 'primary', value: 'save' }
+	]
+});
+
+// Build content into the returned `main` element
+main.innerHTML = `<nui-input><input type="text"></nui-input>`;
+
+// Listen for close to get the button value
+dialog.addEventListener('nui-dialog-close', (e) => {
+	if (e.detail.returnValue === 'save') { /* ... */ }
+});
+```
+
+### 3. Declarative HTML (Rarely used)
+If you MUST write the HTML manually (e.g. static content triggered by a button):
+- `<nui-dialog>` MUST wrap a native `<dialog>`.
+- Close it by passing the button value via `data-action="dialog-close:myValue@#dialog-id"`.
+
+**Correct (Declarative):**
+```html
+<button data-action="dialog-open@#my-dialog">Open</button>
+
+<nui-dialog id="my-dialog">
+	<dialog>
+		<div class="nui-dialog-alert">
+			<div class="nui-headline">Title</div>
+			<nui-button><button data-action="dialog-close:ok@#my-dialog">OK</button></nui-button>
+		</div>
+	</dialog>
+</nui-dialog>
+```
+
+**Wrong / Will Fail:**
+```html
+<nui-dialog id="my-dialog">
+	<div>Title</div> <!-- Missing native <dialog> wrapper -->
+</nui-dialog>
+```
+</script>
+
+	<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+		<summary><strong>LLM Guide - nui-dialog</strong></summary>
+		<div id="llm-guide-rendered" class="llm-guide"></div>
+	</details>
+
 <header>
 	<h1>Dialog Component</h1>
 	<p>Modal and non-modal dialogs for user interactions requiring a response</p>
@@ -621,11 +702,12 @@ dialog.close('return-value'); // Close with a return value
 </section>
 
 <script type="nui/page">
-function init(element, params) {
-	const resultEl = element.querySelector('#dialog-result');
-
-	function showResult(text) {
-		resultEl.textContent = 'Result: ' + JSON.stringify(text);
+function init(element, params, nui) {
+	const mdScript = element.querySelector('#llm-guide');
+	const renderedDiv = element.querySelector('#llm-guide-rendered');
+	
+	if (mdScript && renderedDiv && nui.util.markdownToHtml) {
+		renderedDiv.innerHTML = nui.util.markdownToHtml(mdScript.textContent);
 	}
 
 	// Watch the custom-confirm state and display it
@@ -647,11 +729,9 @@ function init(element, params) {
 		switch (name) {
 			case 'show-alert':
 				await nui.components.dialog.alert('Hello!', 'This is a standard system alert.', {placement: 'top'});
-				showResult('Alert closed');
 				break;
 			case 'show-confirm':
 				const confirmRes = await nui.components.dialog.confirm('Confirmation', 'Are you sure you want to proceed?', {placement: 'top'});
-				showResult(confirmRes);
 				break;
 			case 'show-prompt':
 				const promptRes = await nui.components.dialog.prompt('Enter Details', 'Please provide your information.', {
@@ -661,7 +741,6 @@ function init(element, params) {
 						{ id: 'email', label: 'Email', type: 'email' }
 					]
 				});
-				showResult(promptRes);
 				break;
 			case 'show-alert-top':
 				await nui.components.dialog.alert('Top Placement', 'This alert appears at the top.', { placement: 'top' });
@@ -674,14 +753,12 @@ function init(element, params) {
 					blocking: true,
 					placement: 'top'
 				});
-				showResult('Blocking alert acknowledged');
 				break;
 			case 'show-blocking-confirm':
 				const blockingRes = await nui.components.dialog.confirm('Terms of Service', 'Do you accept the terms of service? You must choose an option.', {
 					blocking: true,
 					placement: 'top'
 				});
-				showResult(blockingRes ? 'Terms accepted' : 'Terms declined');
 				break;
 			case 'show-programmatic-page':
 				(async () => {
@@ -741,7 +818,6 @@ function init(element, params) {
 						<section>
 							<h3>Description</h3>
 							<nui-rich-text><textarea placeholder="Enter a description..."></textarea></nui-rich-text>
-						</section>
 					`;
 
 					const resultEl = document.getElementById('page-dialog-result');

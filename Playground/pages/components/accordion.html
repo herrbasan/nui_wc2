@@ -1,3 +1,56 @@
+<div class="page-accordion">
+
+<script type="text/markdown" id="llm-guide" data-component="nui-accordion">
+# LLM Guide: nui-accordion
+
+> **Global Note:** Always follow the global rules in `Playground/README.md`. Use the correct Light DOM wrappers.
+
+## Critical Rules
+- `<nui-accordion>` is a structural wrapper. It MUST contain native HTML `<details>` elements.
+- Each `<details>` MUST contain a `<summary>` element.
+- The content inside the `<details>` (after the summary) should ideally be wrapped in a block element (like a `<div>` or `<p>`), though it is not strictly required.
+- Add the `exclusive` attribute to the `<nui-accordion>` to ensure only one section stays open at a time.
+- Use the native `open` attribute on a `<details>` element to have it open by default.
+
+## Strict DOM Structure (Do NOT deviate)
+Do not invent tags, and do not omit the internal `<details>` or `<summary>` elements.
+
+**Correct:**
+```html
+<nui-accordion exclusive>
+	<details open>
+		<summary>Section 1 (Open by default)</summary>
+		<div>Content goes here.</div>
+	</details>
+	<details>
+		<summary>Section 2</summary>
+		<div>Content goes here.</div>
+	</details>
+</nui-accordion>
+```
+
+**Wrong / Will Fail:**
+```html
+<nui-accordion>
+	<div> <!-- Wrong: Missing <details> wrapper -->
+		<h3>Section 1</h3> <!-- Wrong: Missing <summary> -->
+		<p>Content</p>
+	</div>
+</nui-accordion>
+```
+
+## Available Actions
+You can control the accordion declaratively via buttons using:
+- `data-action="accordion-toggle:0@#my-accordion"` (toggles the first item)
+- `data-action="accordion-expand-all@#my-accordion"`
+- `data-action="accordion-collapse-all@#my-accordion"`
+</script>
+
+	<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+		<summary><strong>LLM Guide - nui-accordion</strong></summary>
+		<div id="llm-guide-rendered" class="llm-guide"></div>
+	</details>
+
 <header>
 	<h1>Accordion Component</h1>
 	<p>Expandable content sections using <code>&lt;nui-accordion&gt;</code>. Built on native <code>&lt;details&gt;</code> elements.</p>
@@ -187,3 +240,16 @@ acc.collapseAll();   // Collapses all
 		</script>
 	</nui-code>
 </section>
+
+<script type="nui/page">
+function init(element, params, nui) {
+	const mdScript = element.querySelector('#llm-guide');
+	const renderedDiv = element.querySelector('#llm-guide-rendered');
+	
+	if (mdScript && renderedDiv && nui.util.markdownToHtml) {
+		renderedDiv.innerHTML = nui.util.markdownToHtml(mdScript.textContent);
+	}
+}
+</script>
+
+</div>

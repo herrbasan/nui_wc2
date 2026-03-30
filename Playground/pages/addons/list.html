@@ -1,20 +1,57 @@
 <div class="page-list">
 
 <script type="text/markdown" id="llm-guide" data-component="nui-list">
-# LLM Guide: nui-list (read this first)
+# LLM Guide: nui-list (Virtualized List & Data Grid)
 
-> **Global Note:** Always follow the global rules in `Playground/README.md`. Use `nui.util.createElement`, do not write custom CSS, and do not invent NUI tag names.
+> **Global Note:** Always follow the global rules in `Playground/README.md`. Use `nui.util.createElement` and do not invent tags.
 
-## Critical Rendering Rules (follow exactly)
+`nui-list` is the central "workhorse" data component. It is a high-performance virtual scroller that automatically builds its own search/filter/sort toolbar.
 
-- Parent **must have explicit height** (flex: 1, height: 500px, grid). Do not size by content.
-- All items same height (auto-detected from first item).
-- `render(item)` must return HTMLElement (use `nui.util.createElement()` or `nui.util.dom.fromHTML()`).
-- For dialog `mode="page"`: add `content-scroll="false"`.
-- Call `loadData()` **AFTER** the list is visible.
+## Critical Rendering Rules (MUST FOLLOW)
+1. **Explicit Parent Height:** The virtual scroller must know its bounds. The parent container MUST have a deterministic height (e.g. `height: 500px`, `flex: 1`, `height: 100%`).
+2. **Identical Item Heights:** All items must be the same height (auto-measured from the first item).
+3. **Visibility:** You MUST call `list.loadData()` **AFTER** the list is visible in the DOM (e.g., after a dialog opens or a tab is shown), otherwise it measures a height of 0 and renders nothing.
+4. **Dialog Integration:** If placed inside `<nui-dialog mode="page">`, you MUST add `content-scroll="false"` to the dialog configuration so the list can own the scroll physics.
 
-## Strict DOM Structure (Do NOT deviate)
-Do not invent wrapper tags. When using the declarative mode, the setup MUST look exactly like this:
+## The Super-Power: Built-in Toolbar
+DO NOT build your own search inputs, sort dropdowns, or filter menus outside the list. The list builds them automatically if you configure them in `loadData()`.
+
+```js
+list.loadData({
+	data: myData,
+	selection: 'multi', // 'single' (default), 'multi', or false
+	search: [{ prop: 'name' }, { prop: 'email' }], // Auto-generates a search input!
+	sort: [ // Auto-generates a sort dropdown!
+		{ label: 'Name (A-Z)', prop: 'name' }, 
+		{ label: 'Age (High-Low)', prop: 'age', numeric: true, dir: 'desc' }
+	],
+	filters: [ // Auto-generates filter dropdowns!
+		{ prop: 'status', label: 'Status', options: [{label:'Active', value:'1'}, {label:'Inactive', value:'0'}] }
+	],
+	render: (item) => nui.util.createElement('div', {class: 'item'}, item.name),
+	events: (e) => {
+		if (e.type === 'selection') console.log('Selected:', list.getSelection());
+		if (e.type === 'action') console.log('Button clicked in row:', e.detail.action, e.detail.item);
+	}
+});
+```
+
+## Lazy Loading (For Complex Rows & Images)
+To keep the initial render at 60fps, return a lightweight skeleton from `render(item)`, and attach an `.update(item)` function to the DOM element. The list will call `.update()` only when the item scrolls into the viewport.
+
+```js
+render: (item) => {
+	const el = nui.util.createElement('div', {class: 'item'}, 'Loading...');
+	el.update_delay = 100; // Optional: wait 100ms before calling update
+	el.update = (currentItem) => {
+		el.textContent = currentItem.name; // Do heavy DOM work / image loading here
+	};
+	return el;
+}
+```
+
+## Strict DOM Structure (Declarative Mode)
+If you aren't using the programmatic JS setup above, you must use `<template data-item>`. Do NOT just put `<div>` elements directly inside `<nui-list>`.
 
 **Correct (Declarative):**
 ```html
@@ -26,54 +63,6 @@ Do not invent wrapper tags. When using the declarative mode, the setup MUST look
     </nui-list>
 </div>
 ```
-
-**Wrong / Will Fail:**
-```html
-<nui-list>
-    <div class="item">Item 1</div> <!-- Missing template data-item / wrapper -->
-</nui-list>
-```
-
-## Two Modes
-
-**Programmatic** (recommended for complex cases): `loadData({data, render, search, sort, events})`
-
-**Declarative**: Use `<template data-item>` with `{{field}}` placeholders + `loadData(data)`
-
-## Basic Programmatic Example
-
-```js
-const list = document.querySelector('nui-list');
-list.loadData({
-	data: myDataArray,
-	render: (item) => nui.util.createElement('div', {class: 'list-item'}, item.name),
-	events: (e) => {
-		if (e.type === 'selection') console.log('Selected:', list.getSelection());
-	}
-});
-```
-
-## With Search/Sort/Filter
-
-```js
-list.loadData({
-	data,
-	render: (item) => { /* return element */ },
-	search: [{prop: 'name'}, {prop: 'category'}],
-	sort: [{label: 'Name', prop: 'name'}, {label: 'Value', prop: 'value', numeric: true}],
-	filters: [{prop: 'category', options: [...] }]
-});
-```
-
-## Key API
-
-- Selection: `list.getSelection()` or listen to 'selection' event
-- Add items: `list.appendData(newItems)`
-- Update: `list.updateData(newData)` or `list.update(true)`
-- Lazy loading: return element with `el.update = () => {...}` and optional `el.update_delay`
-- Scroll: `list.scrollToIndex(index)`
-
-See tables below for full options, methods and events.
 </script>
 
 	<details class="collapsible-section" style="margin-bottom: var(--nui-space);">

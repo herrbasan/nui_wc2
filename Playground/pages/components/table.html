@@ -512,3 +512,16 @@
 	</nui-table>
 	<p><em>Note: In production, you'd typically show an empty state message.</em></p>
 </section>
+
+<script type="nui/page">
+function init(element, params, nui) {
+	const mdScript = element.querySelector('#llm-guide');
+	const renderedDiv = element.querySelector('#llm-guide-rendered');
+	
+	if (mdScript && renderedDiv && window.nui && nui.util.markdownToHtml) {
+		renderedDiv.innerHTML = nui.util.markdownToHtml(mdScript.textContent);
+	}
+}
+</script>
+
+</div>

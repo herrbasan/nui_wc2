@@ -4455,7 +4455,7 @@ function executePageScript(wrapper, params) {
 			'element',
 			'params',
 			'nui',
-			scriptEl.textContent + '\nif (typeof init === "function") init(element, params);'
+			scriptEl.textContent + '\nif (typeof init === "function") init(element, params, nui);'
 		);
 		initFn(wrapper, params, nui);
 	} catch (error) {
