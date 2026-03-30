@@ -1,6 +1,9 @@
 <div class="page-icon">
 
-<script type="text/markdown" id="llm-guide" data-component="nui-icon">
+<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+		<summary><strong>LLM Guide - nui-icon</strong></summary>
+		<nui-markdown id="llm-guide" data-component="nui-icon" class="llm-guide">
+<script type="text/markdown">
 # LLM Guide: nui-icon
 
 > **Global Note:** Always follow the global rules in `Playground/README.md`. Use the correct Light DOM wrappers.
@@ -26,10 +29,7 @@
 <nui-icon name="home"></nui-icon> <!-- Wrong: Missing fallback text/emoji -->
 ```
 </script>
-
-	<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
-		<summary><strong>LLM Guide - nui-icon</strong></summary>
-		<div id="llm-guide-rendered" class="llm-guide"></div>
+		</nui-markdown>
 	</details>
 
 	<header>
@@ -271,11 +271,5 @@ async function init(element, params) {
 		}
 	});
 
-	const mdScript = element.querySelector('#llm-guide');
-	const renderedDiv = element.querySelector('#llm-guide-rendered');
-		
-	if (mdScript && renderedDiv && window.nui && nui.util.markdownToHtml) {
-		renderedDiv.innerHTML = nui.util.markdownToHtml(mdScript.textContent);
-	}
 }
 </script>

@@ -1,6 +1,9 @@
 <div class="page-layout">
 
-<script type="text/markdown" id="llm-guide" data-component="nui-layout">
+<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+		<summary><strong>LLM Guide - nui-layout</strong></summary>
+		<nui-markdown id="llm-guide" data-component="nui-layout" class="llm-guide">
+<script type="text/markdown">
 # LLM Guide: nui-layout (Content Container)
 
 > **Layout vs App-Layout:** `nui-layout` is for distributing *internal page content* (like cards or forms). For structural app chrome (sidebars, headers, app shells), see `nui-app` in `Playground/pages/components/app-layout.html`.
@@ -42,10 +45,7 @@
 </div>
 ```
 </script>
-
-	<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
-		<summary><strong>LLM Guide - nui-layout</strong></summary>
-		<div id="llm-guide-rendered" class="llm-guide"></div>
+		</nui-markdown>
 	</details>
 
 <header>
@@ -436,12 +436,6 @@
 
 <script type="nui/page">
 function init(element, params, nui) {
-	const mdScript = element.querySelector('#llm-guide');
-	const renderedDiv = element.querySelector('#llm-guide-rendered');
-	
-	if (mdScript && renderedDiv && nui.util.markdownToHtml) {
-		renderedDiv.innerHTML = nui.util.markdownToHtml(mdScript.textContent);
-	}
 }
 </script>
 

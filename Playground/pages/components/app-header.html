@@ -1,6 +1,9 @@
 <div class="page-app-header">
 
-<script type="text/markdown" id="llm-guide" data-component="nui-app-header">
+<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+		<summary><strong>LLM Guide - nui-app-header</strong></summary>
+		<nui-markdown id="llm-guide" data-component="nui-app-header" class="llm-guide">
+<script type="text/markdown">
 # LLM Guide: nui-app-header
 
 > **Layout Reference:** For the full structural rules of building an application shell, refer to the `nui-app` guide in `Playground/pages/components/app-layout.html`.
@@ -11,10 +14,7 @@
 - Status badges are added directly to child elements (like buttons) via `data-badge="3"` or `data-badge=""`. Do not create separate badge wrapper DOM elements.
 - Toggle sidebars using `data-action="toggle-sidebar"` or `data-action="toggle-sidebar:right"`.
 </script>
-
-	<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
-		<summary><strong>LLM Guide - nui-app-header</strong></summary>
-		<div id="llm-guide-rendered" class="llm-guide"></div>
+		</nui-markdown>
 	</details>
 
     <header>
@@ -91,12 +91,6 @@
 
 <script type="nui/page">
 function init(element, params, nui) {
-	const mdScript = element.querySelector('#llm-guide');
-	const renderedDiv = element.querySelector('#llm-guide-rendered');
-	
-	if (mdScript && renderedDiv && nui.util.markdownToHtml) {
-		renderedDiv.innerHTML = nui.util.markdownToHtml(mdScript.textContent);
-	}
 }
 </script>
 

@@ -1,6 +1,9 @@
 <div class="page-select">
 
-<script type="text/markdown" id="llm-guide" data-component="nui-select">
+<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+		<summary><strong>LLM Guide - nui-select</strong></summary>
+		<nui-markdown id="llm-guide" data-component="nui-select" class="llm-guide">
+<script type="text/markdown">
 # LLM Guide: nui-select (Custom Select Component)
 
 > **Global Note:** Always follow the global rules in `Playground/README.md`. Use the correct Light DOM wrappers.
@@ -50,10 +53,7 @@ Do not invent tags, and do not omit the internal `<select>` element.
 - `selectEl.setItems([{value: 'a', label: 'A'}, {group: 'G', options: [...]}])`
 - `selectEl.clear()`
 </script>
-
-	<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
-		<summary><strong>LLM Guide - nui-select</strong></summary>
-		<div id="llm-guide-rendered" class="llm-guide"></div>
+		</nui-markdown>
 	</details>
 
 <header>
@@ -989,14 +989,7 @@ document.getElementById('demo-form').addEventListener('submit', (e) => {
 
 <script type="nui/page">
 function init(element, params, nui) {
-	const mdScript = element.querySelector('#llm-guide');
-	const renderedDiv = element.querySelector('#llm-guide-rendered');
-	
-	if (mdScript && renderedDiv && nui.util.markdownToHtml) {
-		renderedDiv.innerHTML = nui.util.markdownToHtml(mdScript.textContent);
-	}
-
-	// API Demo handlers
+// API Demo handlers
 	const apiSelect = element.querySelector('#api-demo-select');
 	const apiValue = element.querySelector('#api-value');
 	

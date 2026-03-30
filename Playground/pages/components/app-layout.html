@@ -1,6 +1,9 @@
 <div class="page-app-layout">
 
-<script type="text/markdown" id="llm-guide" data-component="nui-app">
+<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+		<summary><strong>LLM Guide - nui-app</strong></summary>
+		<nui-markdown id="llm-guide" data-component="nui-app" class="llm-guide">
+<script type="text/markdown">
 # LLM Guide: App Layout Components (nui-app, nui-app-header, nui-sidebar, nui-content)
 
 > **Global Note:** Always follow the global rules in `Playground/README.md`. Use the correct Light DOM wrappers.
@@ -37,10 +40,7 @@ Do not invent tags like `<nui-top-nav>` or `<nui-side-nav>`. Do not omit the int
 </nui-app>
 ```
 </script>
-
-	<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
-		<summary><strong>LLM Guide - App Layout</strong></summary>
-		<div id="llm-guide-rendered" class="llm-guide"></div>
+		</nui-markdown>
 	</details>
 
 	<header>
@@ -386,11 +386,5 @@ nui-app-footer { grid-area: footer; }</code></pre>
 
 <script type="nui/page">
 function init(element, params, nui) {
-	const mdScript = element.querySelector('#llm-guide');
-	const renderedDiv = element.querySelector('#llm-guide-rendered');
-	
-	if (mdScript && renderedDiv && nui.util.markdownToHtml) {
-		renderedDiv.innerHTML = nui.util.markdownToHtml(mdScript.textContent);
-	}
 }
 </script>

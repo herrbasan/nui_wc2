@@ -1,6 +1,9 @@
 <div class="page-dialog">
 
-<script type="text/markdown" id="llm-guide" data-component="nui-dialog">
+<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+		<summary><strong>LLM Guide - nui-dialog</strong></summary>
+		<nui-markdown id="llm-guide" data-component="nui-dialog" class="llm-guide">
+<script type="text/markdown">
 # LLM Guide: nui-dialog (Modal Component)
 
 > **Global Note:** Always follow the global rules in `Playground/README.md`. Use `nui.util.createElement`.
@@ -73,10 +76,7 @@ If you MUST write the HTML manually (e.g. static content triggered by a button):
 </nui-dialog>
 ```
 </script>
-
-	<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
-		<summary><strong>LLM Guide - nui-dialog</strong></summary>
-		<div id="llm-guide-rendered" class="llm-guide"></div>
+		</nui-markdown>
 	</details>
 
 <header>
@@ -703,14 +703,7 @@ dialog.close('return-value'); // Close with a return value
 
 <script type="nui/page">
 function init(element, params, nui) {
-	const mdScript = element.querySelector('#llm-guide');
-	const renderedDiv = element.querySelector('#llm-guide-rendered');
-	
-	if (mdScript && renderedDiv && nui.util.markdownToHtml) {
-		renderedDiv.innerHTML = nui.util.markdownToHtml(mdScript.textContent);
-	}
-
-	// Watch the custom-confirm state and display it
+// Watch the custom-confirm state and display it
 	const stateEl = element.querySelector('#custom-confirm-state');
 	const customConfirm = element.querySelector('#custom-confirm');
 
