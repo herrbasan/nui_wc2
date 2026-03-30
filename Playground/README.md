@@ -2,9 +2,41 @@
 
 > **Start here if you're an AI assistant tasked with using the NUI library.**
 
-The Playground is the documentation and demo SPA for the NUI component library. It demonstrates all components with live examples and usage patterns.
+**CRITICAL ALIAS:** This `Playground` directory **IS** the official documentation and live testing environment for the NUI library. When asked to "read the documentation" or "find how a component works," look for its page in `Playground/pages/`.
 
-## Quick Start for LLMs
+## 1. Global Rules & Strict DOM Structure (READ THIS)
+NUI uses the **Light DOM** and acts as a wrapper for native semantic HTML. You must NEVER omit the internal semantic elements or invent custom element tags that don't exist.
+
+**Correct (Wrappers):**
+```html
+<nui-button><button type="button">Action</button></nui-button>
+<nui-input><input type="text" /></nui-input>
+```
+
+**Wrong / Will Fail (Do NOT do this):**
+```html
+<!-- Missing inner button -->
+<nui-button>Action</nui-button> 
+<!-- Inventing a non-existent tag -->
+<nui-action-btn>Action</nui-action-btn> 
+```
+
+**Global Constraints:**
+- **Styling:** Do NOT write `<style>` blocks or inline custom variables. Use the standard variables provided in `NUI/css/nui-theme.css`.
+- **Element Creation:** Always use `nui.util.createElement(tag, attrs, children)` instead of raw `document.createElement`.
+
+## 2. Component Pages & Local LLM Guides
+Our component files serve as living documentation. For complex components, we embed highly specific rules directly in their demo page inside a `<script type="text/markdown" id="llm-guide">` tag. 
+
+**If you are generating code for a complex component, you MUST open its file and read the `id="llm-guide"` block at the top.**
+
+- `nui-list` (Virtualized List) -> `Playground/pages/addons/list.html`
+- `nui-select` (Custom Select) -> `Playground/pages/components/select.html`
+- `nui-dialog` (Modals/Overlays) -> `Playground/pages/components/dialog.html`
+
+---
+
+## 3. Quick Start for LLMs
 
 **Read in this order:**
 

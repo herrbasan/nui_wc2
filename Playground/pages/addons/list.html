@@ -1,7 +1,9 @@
 <div class="page-list">
 
-<script type="text/markdown" id="llm-guide">
+<script type="text/markdown" id="llm-guide" data-component="nui-list">
 # LLM Guide: nui-list (read this first)
+
+> **Global Note:** Always follow the global rules in `Playground/README.md`. Use `nui.util.createElement`, do not write custom CSS, and do not invent NUI tag names.
 
 ## Critical Rendering Rules (follow exactly)
 
@@ -10,6 +12,27 @@
 - `render(item)` must return HTMLElement (use `nui.util.createElement()` or `nui.util.dom.fromHTML()`).
 - For dialog `mode="page"`: add `content-scroll="false"`.
 - Call `loadData()` **AFTER** the list is visible.
+
+## Strict DOM Structure (Do NOT deviate)
+Do not invent wrapper tags. When using the declarative mode, the setup MUST look exactly like this:
+
+**Correct (Declarative):**
+```html
+<div style="height: 500px;"> <!-- Parent MUST have height -->
+    <nui-list>
+        <template data-item>
+            <div class="my-item">{{name}}</div>
+        </template>
+    </nui-list>
+</div>
+```
+
+**Wrong / Will Fail:**
+```html
+<nui-list>
+    <div class="item">Item 1</div> <!-- Missing template data-item / wrapper -->
+</nui-list>
+```
 
 ## Two Modes
 

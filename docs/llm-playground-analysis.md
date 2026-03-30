@@ -52,14 +52,16 @@ Despite the good foundation, the following issues frequently appear when LLMs wo
 - Add more explicit "LLM-preferred pattern" comments in `NUI/nui.js` using the existing section markers.
 
 ### 3. Documentation Enhancements
-- **Parsable LLM Guides in Markdown**: Replace HTML-based LLM sections with structured Markdown. Use `<script type="text/markdown" id="llm-guide">` at the top of each component page source (first content LLMs see). Render using `nui.util.markdownToHtml(md)` into collapsible or overlay.
+- **Parsable LLM Guides in Markdown**: Replace HTML-based LLM sections with structured Markdown. Use `<script type="text/markdown" id="llm-guide" data-component="component-name">` at the top of each component page source (first content LLMs see). The `data-component` attribute is strictly required so that it can be parsed by automated scripts or MCP tools. Render this using `nui.util.markdownToHtml(md)` into a collapsible details block.
 - Standard structure for all guides:
   - `# LLM Guide: ComponentName`
+  - `> **Global Note:** See Playground/README.md for global constraints (no custom CSS, use provided utilities).` *(Keeps a reference to global rules without bloating context).*
+  - `## Strict DOM Structure` *(Crucial to stop LLMs from inventing tag names or omitting structural wrappers like `<nui-button>`). Explain exactly what the parent/child structure MUST look like.*
   - `## Critical Rules` (must-follow list)
   - `## Usage Modes` (declarative vs programmatic)
   - `## Examples` (with code blocks)
   - `## API / Common Operations`
-  - `## Common Pitfalls`
+  - `## Anti-Patterns` *(Explicitly list typical LLM mistakes, e.g., "Do not use a raw `<button>` here without `<nui-button>` wrapper".)*
 - Consolidate other LLM advice into `Playground/README.md` and per-page guides.
 - Include "Bad vs Good" examples in every component page.
 - Update `docs/playground-component-quickstart.md` to be more prescriptive.

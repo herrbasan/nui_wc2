@@ -1,5 +1,13 @@
 # NUI - High-Performance, Accessible UI Component Library
 
+> **🤖 Note for AI Assistants & LLMs:**
+> 1. **Documentation = Playground:** The `Playground/` directory IS the official documentation. Looking for how a component works? Read its file in `Playground/pages/components/` or `Playground/pages/addons/`.
+> 2. **Check the LLM Guide:** Complex components (like `nui-list` or `nui-dialog`) have a `<script type="text/markdown" id="llm-guide">` at the very top of their Playground file. **You MUST read this guide** before generating code for that component!
+> 3. **Strict Light DOM Wrappers:** NUI uses the *Light DOM*. It wraps semantic HTML. **Never** invent tags or omit the internal native element.
+>    *Correct:* `<nui-button><button>Click</button></nui-button>`
+>    *Wrong:* `<nui-button>Click</nui-button>` or `<ui-button>` 
+> 4. **Read `Playground/README.md`** for the complete LLM Orientation Guide.
+
 > ⚠️ **Early Development** — API may change. Feedback welcome!
 
 A lightweight UI component library built on web standards. No framework required.
