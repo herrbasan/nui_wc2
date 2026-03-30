@@ -1,4 +1,63 @@
 <div class="page-list">
+
+<script type="text/markdown" id="llm-guide">
+# LLM Guide: nui-list (read this first)
+
+## Critical Rendering Rules (follow exactly)
+
+- Parent **must have explicit height** (flex: 1, height: 500px, grid). Do not size by content.
+- All items same height (auto-detected from first item).
+- `render(item)` must return HTMLElement (use `nui.util.createElement()` or `nui.util.dom.fromHTML()`).
+- For dialog `mode="page"`: add `content-scroll="false"`.
+- Call `loadData()` **AFTER** the list is visible.
+
+## Two Modes
+
+**Programmatic** (recommended for complex cases): `loadData({data, render, search, sort, events})`
+
+**Declarative**: Use `<template data-item>` with `{{field}}` placeholders + `loadData(data)`
+
+## Basic Programmatic Example
+
+```js
+const list = document.querySelector('nui-list');
+list.loadData({
+	data: myDataArray,
+	render: (item) => nui.util.createElement('div', {class: 'list-item'}, item.name),
+	events: (e) => {
+		if (e.type === 'selection') console.log('Selected:', list.getSelection());
+	}
+});
+```
+
+## With Search/Sort/Filter
+
+```js
+list.loadData({
+	data,
+	render: (item) => { /* return element */ },
+	search: [{prop: 'name'}, {prop: 'category'}],
+	sort: [{label: 'Name', prop: 'name'}, {label: 'Value', prop: 'value', numeric: true}],
+	filters: [{prop: 'category', options: [...] }]
+});
+```
+
+## Key API
+
+- Selection: `list.getSelection()` or listen to 'selection' event
+- Add items: `list.appendData(newItems)`
+- Update: `list.updateData(newData)` or `list.update(true)`
+- Lazy loading: return element with `el.update = () => {...}` and optional `el.update_delay`
+- Scroll: `list.scrollToIndex(index)`
+
+See tables below for full options, methods and events.
+</script>
+
+	<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+		<summary><strong>LLM Guide - nui-list (read this first)</strong></summary>
+		<div id="llm-guide-rendered" class="llm-guide"></div>
+	</details>
+
 	<header>
 		<h1>List Component</h1>
 		<p class="lead">High-performance virtualized list with search, sort, and selection. Handles 50,000+ items smoothly through element reuse and virtual scrolling. Theoretical max: ~300K items (at 60px height; actual height is auto-detected from the first rendered item).</p>
@@ -502,12 +561,27 @@ list.loadData(myArray);
 			</table>
 		</section>
 	</section>
-</div>
+
+
 
 <script type="nui/page">
 function init(element, params, nui) {
 	const api = window.nui || nui;
 	if (!api || !api.util) return;
+
+	// Render LLM Guide from Markdown (parsable structure for agents)
+	const mdScript = element.querySelector('#llm-guide') || document.getElementById('llm-guide');
+	const renderedDiv = element.querySelector('#llm-guide-rendered');
+	if (mdScript && renderedDiv && api.util.markdownToHtml) {
+		const mdContent = mdScript.textContent.trim();
+		renderedDiv.innerHTML = api.util.markdownToHtml(mdContent);
+		// Upgrade dynamic nui-code elements for proper syntax rendering
+		setTimeout(() => {
+			renderedDiv.querySelectorAll('nui-code').forEach(el => {
+				if (customElements.get('nui-code')) customElements.upgrade(el);
+			});
+		}, 10);
+	}
 
 	// Generate test data
 	function generateData(count) {

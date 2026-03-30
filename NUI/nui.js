@@ -5169,6 +5169,73 @@ const util = {
 		
 		return results;
 	},
+
+	/**
+	 * Converts Markdown to HTML using a lightweight parser.
+	 * Supports headers, lists, links, code blocks (with nui-code), tables, bold/italic, etc.
+	 * Used for LLM guides and rich content rendering.
+	 */
+	markdownToHtml(md) {
+		if (typeof md !== 'string' || !md.trim()) return '';
+		
+		let html = md.trim().replace(/\r\n/g, '\n');
+		html = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+		// Code blocks with nui-code support
+		html = html.replace(/^[ \t]*```(\w+)?\n([\s\S]*?)\n[ \t]*```/gm, (match, lang, code) => {
+			return `<nui-code><pre><code${lang ? ` data-lang="${lang}"` : ''}>${code}</code></pre></nui-code>`;
+		});
+
+		// Simple tables
+		html = html.replace(/^[ \t]*\|(.+)\|\n[ \t]*\|([-:| ]+)\|\n((?:[ \t]*\|.+\|\n?)*)/gm, (match, header, sep, body) => {
+			const headCells = header.trim().replace(/^\||\|$/g, '').split('|').map(c => `<th>${c.trim()}</th>`).join('');
+			const bodyRows = body.trim().split('\n').filter(r => r.trim()).map(row => {
+				const cells = row.trim().replace(/^\||\|$/g, '').split('|').map(c => `<td>${c.trim()}</td>`).join('');
+				return `<tr>${cells}</tr>`;
+			}).join('');
+			return `<table class="nui-table"><thead><tr>${headCells}</tr></thead><tbody>${bodyRows}</tbody></table>`;
+		});
+
+		// Headers
+		html = html.replace(/^[ \t]*(#{1,6})\s+(.+)$/gm, (match, hashes, text) => `<h${hashes.length}>${text}</h${hashes.length}>`);
+
+		// Blockquotes
+		html = html.replace(/^[ \t]*(>\s+.+(?:\n[ \t]*>\s+.+)*)/gm, (match) => `<blockquote>${match.replace(/^[ \t]*>\s+/gm, '')}</blockquote>`);
+
+		// Unordered lists
+		html = html.replace(/^((?:[ \t]*(?:-|\*)\s+.+\n?)+)/gm, (match) => {
+			const items = match.trim().split('\n').map(item => `<li>${item.replace(/^[ \t]*(?:-|\*)\s+/, '')}</li>`).join('');
+			return `<ul>${items}</ul>`;
+		});
+		
+		// Ordered lists
+		html = html.replace(/^((?:[ \t]*\d+\.\s+.+\n?)+)/gm, (match) => {
+			const items = match.trim().split('\n').map(item => `<li>${item.replace(/^[ \t]*\d+\.\s+/, '')}</li>`).join('');
+			return `<ol>${items}</ol>`;
+		});
+
+		html = html.replace(/^[ \t]*(-*_){3,}[ \t]*$/gm, '<hr>');
+
+		// Block separation
+		const blocks = html.split(/\n{2,}/);
+		const htmlBlocks = blocks.map(block => {
+			block = block.trim();
+			if (!block) return '';
+			if (/^<(h\d|ul|ol|pre|blockquote|table|hr|nui-code)/i.test(block)) return block;
+			return `<p>${block.replace(/\n/g, '<br>')}</p>`;
+		});
+		html = htmlBlocks.join('\n');
+
+		// Inline elements
+		html = html.replace(/!\[([^\]]+)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">');
+		html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+		html = html.replace(/(\*\*|__)(.*?)\1/g, '<strong>$2</strong>');
+		html = html.replace(/(\*|_)(.*?)\1/g, '<em>$2</em>');
+		html = html.replace(/~~(.*?)~~/g, '<s>$1</s>');
+		html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+		return html;
+	},
 	
 	/**
 	 * Detect browser/device environment

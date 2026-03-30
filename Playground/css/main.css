@@ -106,6 +106,45 @@ nui-app-footer {
 	font-size: 0.875rem;
 }
 
+.llm-guide {
+	max-width: 100%;
+	line-height: 1.5;
+}
+
+.llm-guide h1 {
+	font-size: 1.25rem;
+	margin: 0 0 var(--nui-space, 1rem) 0;
+	color: var(--color-primary);
+}
+
+.llm-guide h2 {
+	font-size: 1.1rem;
+	margin: var(--nui-space, 1rem) 0 var(--nui-space-half, 0.5rem) 0;
+	border-bottom: 1px solid var(--border-shade1);
+	padding-bottom: var(--nui-space-half, 0.5rem);
+}
+
+.llm-guide ul, .llm-guide ol {
+	padding-left: 1.5rem;
+	margin: var(--nui-space-half, 0.5rem) 0;
+}
+
+.llm-guide li {
+	margin-bottom: 0.25rem;
+}
+
+.llm-guide code {
+	background: var(--color-shade2);
+	padding: 0.1rem 0.4rem;
+	border-radius: var(--border-radius1, 0.25rem);
+	font-size: 0.85rem;
+}
+
+.llm-guide pre code {
+	background: transparent;
+	padding: 0;
+}
+
 /* Icon page styles */
 .page-icon .icon-demo {
 	display: flex;
