@@ -1,3 +1,43 @@
+<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+		<summary><strong>LLM Guide - nui-skip-links</strong></summary>
+		<nui-markdown id="llm-guide" data-component="nui-skip-links" class="llm-guide">
+<script type="text/markdown">
+# LLM Guide: nui-skip-links
+
+> **Global Note:** Always follow the global rules in `Playground/README.md`. This is an a11y helper.
+
+## Strict DOM Structure
+- Place `<nui-skip-links>` early in the document (usually after opening body or in header).
+- Either leave empty for auto-generation of "Skip to main content", or provide `<a href="#id">Skip to ...</a>` children.
+- Targets should be focusable (component adds tabindex="-1" if missing).
+
+**Correct:**
+```html
+<nui-skip-links></nui-skip-links>
+<!-- or -->
+<nui-skip-links>
+	<a href="#main">Skip to main content</a>
+	<a href="#sidebar">Skip to navigation</a>
+</nui-skip-links>
+```
+
+## Critical Rules
+- Links are visually hidden until they receive keyboard focus (standard skip-link pattern).
+- Uses `a11y.announce` for screen readers on activation.
+- Auto-detects `<main>` in app context.
+- Do not style the links with custom CSS - uses theme classes.
+- Component handles focus management.
+
+## Anti-Patterns
+- Placing skip links at the bottom of page.
+- Making them always visible.
+- Using custom JS for show/hide instead of CSS :focus.
+- Forgetting to include in keyboard navigation flow.
+- Inventing non-standard skip link implementations.
+</script>
+		</nui-markdown>
+	</details>
+
 <header>
 	<h1>Skip Links</h1>
 	<p>Skip links provide keyboard users with a way to quickly jump to important page sections, improving navigation efficiency and accessibility. The <code>nui-skip-links</code> component makes it easy to add skip links to your application.</p>

@@ -1,13 +1,38 @@
 <div class="page-markdown">
 	<nui-markdown id="llm-guide" data-component="nui-markdown" class="llm-guide">
 <script type="text/markdown">
-# `nui-markdown` Components Guide
+# LLM Guide: nui-markdown
 
-The `nui-markdown` module is an addon that provides a lightweight Markdown to HTML converter. It exposes the `<nui-markdown>` custom element as well as the `nui.util.markdownToHtml(md)` utility function.
+> **Global Note:** Always follow the global rules in `Playground/README.md`. Addon module; import explicitly.
 
-## Core Properties
-* Addon must be imported: `import './NUI/lib/modules/nui-markdown.js';`
-* Auto-parses `<script type="text/markdown">` child element or raw text content.
+## Strict Usage
+- Import: `import './NUI/lib/modules/nui-markdown.js';` (or script src).
+- Use `<nui-markdown><script type="text/markdown">...</script></nui-markdown>` or `nui.util.markdownToHtml(md)`.
+- Supports headers, lists, links, code (integrates nui-code), tables, emphasis, blockquotes, hr.
+
+**Correct:**
+```html
+<nui-markdown>
+<script type="text/markdown">
+# Heading
+**bold** *italic* [link](url)
+</script>
+</nui-markdown>
+```
+
+## Critical Rules
+- Parser is lightweight and web-focused; not full CommonMark.
+- Code blocks become nui-code with language.
+- Tables rendered as nui-table.
+- For dynamic, use the util function and set innerHTML.
+- Do not rely on external Markdown libs.
+
+## Anti-Patterns
+- Forgetting the import for the addon.
+- Using raw text without the script tag type.
+- Expecting GitHub-flavored Markdown features not implemented.
+- Heavy dependencies for simple rendering.
+- Modifying the parser without understanding the replace logic.
 </script>
 	</nui-markdown>
 

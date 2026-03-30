@@ -1,3 +1,72 @@
+<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+		<summary><strong>LLM Guide - nui-tag-input</strong></summary>
+		<nui-markdown id="llm-guide" data-component="nui-tag-input" class="llm-guide">
+<script type="text/markdown">
+# LLM Guide: nui-tag-input
+
+> **Global Note:** Always follow the global rules in `Playground/README.md`. No custom CSS, use `nui.util.createElement`, Light DOM wrappers only.
+
+## Strict DOM Structure
+- `<nui-tag-input>` can contain zero or more `<input type="hidden" name="..." value="tagvalue">` for initial tags and form integration.
+- If `editable` attribute is present, it will include an internal `nui-input` for adding tags.
+- Do not put visible content directly; the component manages its own tag rendering.
+
+**Correct Pre-populated:**
+```html
+<nui-tag-input name="tags">
+	<input type="hidden" name="tags" value="javascript">
+	<input type="hidden" name="tags" value="webcomponents">
+</nui-tag-input>
+```
+
+**Editable:**
+```html
+<nui-tag-input name="tags" editable placeholder="Add tag..."></nui-tag-input>
+```
+
+## Critical Rules
+- Initial tags come from hidden inputs inside the element (parsed on upgrade).
+- Use the public API methods: `addTag(value, optionalLabel)`, `removeTag(value)`, `getValues()`, `clear()`.
+- The component automatically maintains hidden inputs for form submission.
+- Listen to custom events: `nui-tag-add`, `nui-tag-remove`, `nui-change`.
+- Tags are rendered with remove buttons using `nui-icon name="close"`.
+- Keyboard support: arrow keys for navigation, Enter to add, Backspace/Delete to remove.
+- For integration with `nui-select` multi-mode, it is used internally.
+
+## Usage Modes
+- **Declarative:** Provide hidden inputs + optional `editable` attr.
+- **Programmatic:** Create with `nui.util.createElement('nui-tag-input', {attrs: {name: 'foo', editable: true}})`, then call `addTag()` etc.
+- Often composed inside other components like multi-select.
+
+## API / Common Operations
+```js
+const tagInput = document.querySelector('nui-tag-input');
+
+tagInput.addTag('newtag'); 
+tagInput.removeTag('oldtag');
+console.log(tagInput.getValues()); // ['tag1', 'tag2']
+
+tagInput.addEventListener('nui-tag-remove', e => {
+	console.log('Removed:', e.detail);
+});
+
+tagInput.addEventListener('nui-change', e => {
+	console.log('Current values:', e.detail.values);
+});
+```
+
+## Anti-Patterns (Common LLM Mistakes)
+- Treating it like a standard `<input>` or `<select multiple>`.
+- Adding tags via innerHTML or manual DOM manipulation instead of `addTag()`.
+- Forgetting hidden inputs for form data.
+- Inventing props like `tags={array}` (this is not React).
+- Applying custom classes or styles to tags.
+- Using `document.createElement` instead of `nui.util.createElement`.
+- Expecting it to look like Material or other UI libs' chip inputs without the wrapper.
+</script>
+		</nui-markdown>
+	</details>
+
 <header>
 	<h1>Tag Input</h1>
 	<p>A reusable tag management component for lists of removable items. Used standalone or composed by multi-select components.</p>

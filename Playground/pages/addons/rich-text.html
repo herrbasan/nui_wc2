@@ -1,4 +1,42 @@
 <div class="page-rich-text">
+
+<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+		<summary><strong>LLM Guide - nui-rich-text</strong></summary>
+		<nui-markdown id="llm-guide" data-component="nui-rich-text" class="llm-guide">
+<script type="text/markdown">
+# LLM Guide: nui-rich-text (Experimental)
+
+> **Global Note:** Always follow the global rules in `Playground/README.md`. Experimental - API may change.
+
+## Strict DOM Structure
+- `<nui-rich-text>` can contain initial HTML content.
+- Toolbar uses NUI buttons internally.
+- Listen to custom events like `nui-image-request` for extensibility.
+
+**Correct:**
+```html
+<nui-rich-text>
+	<p>Initial content with <strong>formatting</strong>.</p>
+</nui-rich-text>
+```
+
+## Critical Rules
+- Uses contenteditable + execCommand under the hood (native).
+- Toolbar is auto-generated or customizable.
+- For images, handle `nui-image-request` event instead of default prompt.
+- Keep simple; not full-featured like ProseMirror.
+- Test keyboard and a11y thoroughly.
+
+## Anti-Patterns
+- Adding heavy JS frameworks for editing.
+- Overriding core toolbar without understanding events.
+- Ignoring experimental status.
+- Using non-NUI buttons in toolbar.
+- Expecting full HTML5 editor features.
+</script>
+		</nui-markdown>
+	</details>
+
     <header>
         <h1>Rich-Text Editor</h1>
         <p class="lead">A lightweight, dependency-free rich text editor utilizing native browser APIs.</p>

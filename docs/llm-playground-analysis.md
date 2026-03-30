@@ -129,29 +129,19 @@ Focus first on the most crucial pieces for real apps (nui-list is the star — i
 14. `select.html` (`nui-select`)
 15. `tabs.html` (`nui-tabs`)
 16. `table.html` (`nui-table`)
+17. `slider.html` (`nui-slider`)
+18. `tag-input.html` (`nui-tag-input`)
+19. `tooltip.html` (`nui-tooltip`)
+20. `overlay.html` (`nui-overlay`)
+21. `progress.html` (`nui-progress`)
+22. `skip-links.html` (`nui-skip-links`)
+23. `sortable.html` (`nui-sortable`)
+24. `code.html` (`nui-code`)
+25. `storage.html` (`nui.util.storage`)
+26. `menu.html` (`nui-menu`)
 
-### ⏳ Still Need LLM Guides (Next Session):
+### ✅ All major components now have LLM Guides (including lightbox, rich-text, media-player, code-editor).
 
-**Form / Interactive:**
-- `slider.html` (`nui-slider`)
-- `tag-input.html` (`nui-tag-input`)
-- `tooltip.html` (`nui-tooltip`)
-
-**UI & Data:**
-- `overlay.html` (`nui-overlay`)
-- `progress.html` (`nui-progress`)
-- `skip-links.html` (`nui-skip-links`)
-
-**Addons & Advanced:**
-- `menu.html` (`nui-menu`)
-- `lightbox.html` (`nui-lightbox`)
-- `rich-text.html` (`nui-rich-text`)
-- `code.html` (`nui-code`)
-- `media-player.html` (`nui-media-player`)
-- `sortable.html` (`nui-sortable`)
-
-**Utility / Dev:**
-- `storage.html` (`nui.util.storage` API)
-- `code-editor.html` (`nui-code-editor` / experimental)
+**Status:** LLM-specific guidance added across the entire component set to prevent pattern hallucination from other libraries.
 
 This file is located at `docs/llm-playground-analysis.md`.

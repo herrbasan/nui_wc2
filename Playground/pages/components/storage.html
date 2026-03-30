@@ -1,3 +1,41 @@
+<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+		<summary><strong>LLM Guide - nui.util.storage</strong></summary>
+		<nui-markdown id="llm-guide" data-component="nui-util-storage" class="llm-guide">
+<script type="text/markdown">
+# LLM Guide: nui.util.storage
+
+> **Global Note:** Always follow the global rules in `Playground/README.md`. This is a utility, not a custom element.
+
+## Strict API Usage
+- Always use `nui.util.storage.set/get/remove({ name, value?, target?, ttl? })`
+- Values are always strings (localStorage wraps with JSON for metadata).
+- Target defaults to 'cookie'; use 'localStorage' for larger/persistent data.
+- TTL supports numbers (ms), strings like '1h', '2d', 'forever', or Date.
+
+**Correct:**
+```js
+nui.util.storage.set({ name: 'theme', value: 'dark', ttl: '30d' });
+const val = nui.util.storage.get({ name: 'theme' });
+nui.util.storage.remove({ name: 'theme' });
+```
+
+## Critical Rules
+- Do not use raw `localStorage` or `document.cookie` directly - loses TTL/expiry logic.
+- TTL 'forever' = 10 years for cookies.
+- Expiry is checked on get() for localStorage.
+- Secure defaults: SameSite=Lax, Secure on HTTPS.
+- Synchronous only; no async.
+
+## Anti-Patterns
+- Direct localStorage.setItem without wrapper (no expiry).
+- Storing objects without stringifying yourself (API expects strings).
+- Using cookies for large data (prefer localStorage).
+- Ignoring the options object format.
+- Expecting full key-value DB features.
+</script>
+		</nui-markdown>
+	</details>
+
 <header>
 	<h1>Storage</h1>
 	<p>Minimal text storage helper for cookies and localStorage with TTL support</p>

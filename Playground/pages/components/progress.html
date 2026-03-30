@@ -1,4 +1,47 @@
 <div class="page-progress">
+
+<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+		<summary><strong>LLM Guide - nui-progress</strong></summary>
+		<nui-markdown id="llm-guide" data-component="nui-progress" class="llm-guide">
+<script type="text/markdown">
+# LLM Guide: nui-progress
+
+> **Global Note:** Always follow the global rules in `Playground/README.md`. No custom CSS or styles.
+
+## Strict DOM Structure
+- Self-contained: `<nui-progress value="30" max="100"></nui-progress>`
+- No required inner elements. Component generates all internal markup (bar, label, svg for circular).
+- Use attributes: `value`, `max` (default 100), `hide-text`, `type="circular"`, `indeterminate` or `busy`.
+
+**Correct Examples:**
+```html
+<nui-progress value="45"></nui-progress>
+<nui-progress value="75" hide-text></nui-progress>
+<nui-progress type="circular" value="60"></nui-progress>
+<nui-progress indeterminate></nui-progress>
+```
+
+## Critical Rules
+- Set `value` and `max` attributes to control progress (0-100 typical).
+- For busy/indeterminate state use `indeterminate` attribute or specific type.
+- Component sets ARIA role="progressbar" automatically.
+- Do not manually construct the inner SVG or divs - let the component do it.
+- Updates are reactive to attribute changes.
+
+## Usage Modes
+- **Declarative:** Use in HTML with attributes.
+- **Programmatic:** `nui.util.createElement('nui-progress', {attrs: {value: '50'}})` or set attributes on existing element.
+
+## Anti-Patterns
+- Adding your own inner HTML or styles for the bar.
+- Using CSS width directly instead of value attr.
+- Confusing with HTML5 `<progress>` (this enhances it but is custom element).
+- Expecting children or specific class names for styling.
+- Hardcoding percentages in CSS.
+</script>
+		</nui-markdown>
+	</details>
+
 	<header>
 		<h1>Progress</h1>
 		<p class="lead">Provides visual feedback on the progress of a task, or indicates busy states. Optionally shows a percentage label.</p>

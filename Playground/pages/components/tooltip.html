@@ -1,4 +1,51 @@
 ﻿<div class="page-tooltip">
+
+<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+		<summary><strong>LLM Guide - nui-tooltip</strong></summary>
+		<nui-markdown id="llm-guide" data-component="nui-tooltip" class="llm-guide">
+<script type="text/markdown">
+# LLM Guide: nui-tooltip
+
+> **Global Note:** Always follow the global rules in `Playground/README.md`. No custom CSS, use `nui.util.createElement`.
+
+## Strict DOM Structure
+- The `<nui-tooltip>` must appear **immediately after** the target element it annotates (or use `for="id"` attribute).
+- Content of tooltip is plain text or simple HTML inside the custom element.
+- Target element gets `aria-describedby` automatically.
+
+**Correct:**
+```html
+<nui-button><button>Hover me</button></nui-button>
+<nui-tooltip>Helpful explanation here.</nui-tooltip>
+
+<!-- or explicit target -->
+<button id="mybtn">Hover</button>
+<nui-tooltip for="mybtn">Tooltip text</nui-tooltip>
+```
+
+## Critical Rules
+- Placement is automatic by default (`position="auto"`), or specify `top|bottom|left|right`.
+- Uses native Popover API (`popover="manual"`).
+- Shows on hover and focus by default.
+- Do not wrap tooltip content in extra elements unless necessary.
+- Offset can be set with `offset="16"` attribute (in px).
+- Ensure target has proper semantics for a11y.
+
+## Usage Modes
+- **Declarative:** Place tooltip right after target in markup.
+- **Programmatic:** Create tooltip element, set `for` or append after target, then upgrade.
+
+## Anti-Patterns
+- Placing tooltip before the target element.
+- Using CSS for positioning instead of the component's logic.
+- Expecting React-like `title` prop or `data-tooltip`.
+- Adding custom event handlers for show/hide (component manages).
+- Using it without associated target.
+- Inventing new attributes like `content` or `trigger`.
+</script>
+		</nui-markdown>
+	</details>
+
     <header>
         <h1>Tooltip Component</h1>
         <p class="lead">Universal tooltip for annotating UI elements on hover or focus.</p>

@@ -1,3 +1,45 @@
+<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+		<summary><strong>LLM Guide - nui-table</strong></summary>
+		<nui-markdown id="llm-guide" data-component="nui-table" class="llm-guide">
+<script type="text/markdown">
+# LLM Guide: nui-table
+
+> **Global Note:** Always follow the global rules in `Playground/README.md`. Light DOM wrapper for native tables.
+
+## Strict DOM Structure
+- `<nui-table>` wraps a standard `<table>` with `<thead>`, `<tbody>`, `<th>`, `<td>`.
+- No custom markup inside; use semantic table elements.
+
+**Correct:**
+```html
+<nui-table>
+	<table>
+		<thead>
+			<tr><th>Header</th></tr>
+		</thead>
+		<tbody>
+			<tr><td>Data</td></tr>
+		</tbody>
+	</table>
+</nui-table>
+```
+
+## Critical Rules
+- Component adds responsive card-like layout on mobile automatically.
+- Use standard table semantics for best a11y and behavior.
+- Do not add custom CSS for responsiveness.
+- For dynamic tables, use nui.util.createElement or update inner table.
+
+## Anti-Patterns
+- Using divs instead of table elements.
+- Expecting data-binding like in other libs.
+- Inline styles or custom classes for rows/columns.
+- Ignoring responsive transformation.
+- Using without the nui-table wrapper.
+</script>
+		</nui-markdown>
+	</details>
+
 <header>
 	<h1>Table Component</h1>
 	<p>Enhanced table elements with responsive behavior and consistent styling.</p>

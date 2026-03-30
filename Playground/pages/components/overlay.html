@@ -1,4 +1,53 @@
 <div class="page-overlay">
+
+<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+		<summary><strong>LLM Guide - nui-overlay</strong></summary>
+		<nui-markdown id="llm-guide" data-component="nui-overlay" class="llm-guide">
+<script type="text/markdown">
+# LLM Guide: nui-overlay
+
+> **Global Note:** Always follow the global rules in `Playground/README.md`. Use data-action for interactions, no custom CSS.
+
+## Strict DOM Structure
+- `<nui-overlay id="my-overlay">` must contain a `<dialog>` element.
+- Content goes inside the `<dialog>`.
+- Use `data-action="overlay-open@#my-overlay"` on trigger buttons.
+
+**Correct:**
+```html
+<button data-action="overlay-open@#my-overlay">Open</button>
+
+<nui-overlay id="my-overlay">
+	<dialog>
+		<!-- your content -->
+		<button data-action="overlay-close@#my-overlay">Close</button>
+	</dialog>
+</nui-overlay>
+```
+
+## Critical Rules
+- Prefer `nui-overlay` for custom modals/lightboxes; use `nui-dialog` for standard alert/confirm.
+- Supports `blocking` attribute to prevent backdrop close.
+- Events: `nui-overlay-open`, `nui-overlay-close`, `nui-overlay-cancel`.
+- Uses native `<dialog>.showModal()` internally.
+- Do not manually call showModal on the inner dialog - use the component's `showModal()` method or data-action.
+- Backdrop click closes unless `blocking`.
+
+## Usage Modes
+- **Declarative:** HTML with data-action attributes (preferred for demos).
+- **Programmatic:** `const overlay = document.getElementById('my-overlay'); overlay.showModal(); overlay.close();`
+
+## Anti-Patterns
+- Using `<div>` with fixed positioning and z-index instead of this component.
+- Forgetting the inner `<dialog>`.
+- Using CSS for modal behavior.
+- Calling `dialog.showModal()` directly bypassing the wrapper.
+- Expecting props like `open` or `onClose` (use events and methods).
+- Adding custom backdrop elements.
+</script>
+		</nui-markdown>
+	</details>
+
 	<header>
 		<h1>Overlay</h1>
 		<p class="lead">A raw modal container for lightboxes, full-screen loaders, and custom modals.</p>
