@@ -87,30 +87,135 @@ if (result) {
 
 <section>
 	<h2>Programmatic Page Mode</h2>
-	<p>For complex full-page dialogs constructed via JavaScript, use the <code>page()</code> system factory. This abstracts away the boilerplate of standard modals, returning an interaction object that enables you to mount content dynamically into the <code>main</code> element, and gracefully awaits interactions on user-defined <code>buttons</code>.</p>
+	<p>For complex full-page dialogs constructed via JavaScript, use the <code>page()</code> system factory. This abstracts away the boilerplate of standard modals, returning an interaction object that gives you a reference to the <code>main</code> element for mounting content dynamically.</p>
+	<p>Listen for the <code>nui-dialog-close</code> event to know when a button was clicked and get its configured <code>value</code> via <code>e.detail.returnValue</code>.</p>
 	<nui-code>
 		<script type="example" data-lang="javascript">
-// Create the page and retrieve its state pointers
-const { dialog, main, result } = await nui.components.dialog.page('Dynamic Title', '<p>Initial layout...</p>', {
-	contentScroll: true, // Auto-scroll behavior
+// Create the page and retrieve a reference to the dialog and its main content container
+const { dialog, main } = await nui.components.dialog.page('Create User', '', {
+	contentScroll: true,
 	buttons: [
 		{ label: 'Cancel', type: 'outline', value: 'cancel' },
-		{ label: 'Submit', type: 'primary', value: 'submit' }
+		{ label: 'Create', type: 'primary', value: 'create' }
 	]
 });
 
-// Since `main` exposes a direct pointer to the inner DOM, you can safely append!
-const child = document.createElement('div');
-child.textContent = 'Appended dynamically!';
-main.appendChild(child);
+// The `main` element is the scrollable <main> inside the dialog.
+// Build your form using innerHTML:
 
-// Wait for a button to be clicked (returns the 'value' defined in the button config)
-const action = await result;
-if (action === 'submit') {
-	console.log('User submitted the programmatic page!');
-}
+main.innerHTML = `
+	<section>
+		<h3>Account Details</h3>
+		<nui-form>
+			<nui-input-group>
+				<label>Username</label>
+				<nui-input><input type="text" placeholder="jdoe"></nui-input>
+			</nui-input-group>
+			<nui-input-group>
+				<label>Email Address</label>
+				<nui-input><input type="email" placeholder="you@example.com" required></nui-input>
+				<span class="description">We'll never share your email with anyone.</span>
+			</nui-input-group>
+			<nui-input-group>
+				<label>Role</label>
+				<nui-select>
+					<select>
+						<option value="">Select a role...</option>
+						<option value="admin">Administrator</option>
+						<option value="editor">Editor</option>
+						<option value="viewer">Viewer</option>
+					</select>
+				</nui-select>
+			</nui-input-group>
+		</nui-form>
+	</section>
+
+	<section>
+		<h3>Preferences</h3>
+		<nui-form>
+			<nui-input-group>
+				<label>Theme</label>
+				<nui-select>
+					<select>
+						<option value="light">Light</option>
+						<option value="dark">Dark</option>
+						<option value="system">System</option>
+					</select>
+				</nui-select>
+			</nui-input-group>
+			<nui-field label="Notifications"><nui-toggle checked></nui-toggle></nui-field>
+			<nui-field label="Enable beta features"><nui-toggle></nui-toggle></nui-field>
+		</nui-form>
+	</section>
+
+	<section>
+		<h3>Description</h3>
+		<nui-rich-text><textarea placeholder="Enter a description..."></textarea></nui-rich-text>
+	</section>
+
+	<section id="dialog-output" hidden>
+		<h3>Dialog Result</h3>
+		<nui-card>
+			<div id="dialog-result-action"></div>
+			<div id="dialog-result-values"></div>
+		</nui-card>
+	</section>
+`;
+
+// Show the output section when the dialog opens
+dialog.addEventListener('nui-dialog-open', () => {
+	document.getElementById('dialog-output').hidden = false;
+});
+
+// Listen for the close event to get the button's value and form data
+dialog.addEventListener('nui-dialog-close', (e) => {
+	const action = e.detail.returnValue;
+	const actionEl = document.getElementById('dialog-result-action');
+	const valuesEl = document.getElementById('dialog-result-values');
+
+	actionEl.innerHTML = `<strong>Action:</strong> ${action}`;
+
+	if (action === 'create') {
+		// Collect form values
+		const username = main.querySelector('input[type="text"]')?.value;
+		const email = main.querySelector('input[type="email"]')?.value;
+		const role = main.querySelector('nui-select select')?.value;
+		const theme = main.querySelectorAll('nui-select select')[1]?.value;
+		const notifications = main.querySelector('nui-toggle')?.checked;
+		const beta = main.querySelectorAll('nui-toggle')[1]?.checked;
+		const description = main.querySelector('nui-rich-text textarea')?.value;
+
+		valuesEl.innerHTML = `
+			<details open>
+				<summary>Collected Values</summary>
+				<pre>${JSON.stringify({
+					username,
+					email,
+					role,
+					theme,
+					notifications,
+					betaFeatures: beta,
+					description
+				}, null, 2)}</pre>
+			</details>
+		`;
+	} else {
+		valuesEl.innerHTML = '<em>No form data collected (cancelled)</em>';
+	}
+});
 		</script>
 	</nui-code>
+	<h3>Try It</h3>
+	<nui-button-container gap="1rem">
+		<nui-button><button type="button" data-action="show-programmatic-page">Open Dynamic Page Dialog</button></nui-button>
+	</nui-button-container>
+	<div class="demo-result" id="page-dialog-result" hidden>
+		<strong>Action:</strong> <span id="page-dialog-action"></span>
+		<details>
+			<summary>Collected Values</summary>
+			<pre id="page-dialog-values"></pre>
+		</details>
+	</div>
 </section>
 
 <section>
@@ -563,6 +668,103 @@ function init(element, params) {
 					placement: 'top'
 				});
 				showResult(blockingRes ? 'Terms accepted' : 'Terms declined');
+				break;
+			case 'show-programmatic-page':
+				(async () => {
+					const { dialog, main } = await nui.components.dialog.page('Create User', '', {
+						contentScroll: true,
+						buttons: [
+							{ label: 'Cancel', type: 'outline', value: 'cancel' },
+							{ label: 'Create', type: 'primary', value: 'create' }
+						]
+					});
+
+					main.innerHTML = `
+						<section>
+							<h3>Account Details</h3>
+							<nui-form>
+								<nui-input-group>
+									<label>Username</label>
+									<nui-input><input type="text" placeholder="jdoe"></nui-input>
+								</nui-input-group>
+								<nui-input-group>
+									<label>Email Address</label>
+									<nui-input><input type="email" placeholder="you@example.com" required></nui-input>
+									<span class="description">We'll never share your email with anyone.</span>
+								</nui-input-group>
+								<nui-input-group>
+									<label>Role</label>
+									<nui-select>
+										<select>
+											<option value="">Select a role...</option>
+											<option value="admin">Administrator</option>
+											<option value="editor">Editor</option>
+											<option value="viewer">Viewer</option>
+										</select>
+									</nui-select>
+								</nui-input-group>
+							</nui-form>
+						</section>
+
+						<section>
+							<h3>Preferences</h3>
+							<nui-form>
+								<nui-input-group>
+									<label>Theme</label>
+									<nui-select>
+										<select>
+											<option value="light">Light</option>
+											<option value="dark">Dark</option>
+											<option value="system">System</option>
+										</select>
+									</nui-select>
+								</nui-input-group>
+								<nui-field label="Notifications"><nui-toggle checked></nui-toggle></nui-field>
+								<nui-field label="Enable beta features"><nui-toggle></nui-toggle></nui-field>
+							</nui-form>
+						</section>
+
+						<section>
+							<h3>Description</h3>
+							<nui-rich-text><textarea placeholder="Enter a description..."></textarea></nui-rich-text>
+						</section>
+					`;
+
+					const resultEl = document.getElementById('page-dialog-result');
+					const actionEl = document.getElementById('page-dialog-action');
+					const valuesEl = document.getElementById('page-dialog-values');
+
+					dialog.addEventListener('nui-dialog-open', () => {
+						resultEl.hidden = false;
+					});
+
+					dialog.addEventListener('nui-dialog-close', (e) => {
+						const action = e.detail.returnValue;
+						actionEl.textContent = action;
+
+						if (action === 'create') {
+							const username = main.querySelector('input[type="text"]')?.value;
+							const email = main.querySelector('input[type="email"]')?.value;
+							const role = main.querySelector('nui-select select')?.value;
+							const theme = main.querySelectorAll('nui-select select')[1]?.value;
+							const notifications = main.querySelector('nui-toggle')?.checked;
+							const beta = main.querySelectorAll('nui-toggle')[1]?.checked;
+							const description = main.querySelector('nui-rich-text textarea')?.value;
+
+							valuesEl.textContent = JSON.stringify({
+								username,
+								email,
+								role,
+								theme,
+								notifications,
+								betaFeatures: beta,
+								description
+							}, null, 2);
+						} else {
+							valuesEl.textContent = 'No form data (cancelled)';
+						}
+					});
+				})();
 				break;
 		}
 	});
