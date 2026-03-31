@@ -1,16 +1,56 @@
-<div class="page-component-card">
-    <header>
-        <h1>Card Component</h1>
-        <p class="lead">A flexible container format for structured content, media, and actions.</p>
-    </header>
+<div class="page-card">
 
-    <section>
-        <h2>Declarative Usage (Default)</h2>
-        <p>The standard card stacks its content vertically. It automatically provides consistent borders, rounded
-            corners, and subtle shadows using our built-in CSS variables.</p>
+<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+		<summary><strong>LLM Guide - nui-card</strong></summary>
+		<nui-markdown id="llm-guide" data-component="nui-card" class="llm-guide">
+<script type="text/markdown">
+# LLM Guide: nui-card
 
-        <nui-code>
-            <script type="example" data-lang="html">
+> **Global Note:** Always follow the global rules in `Playground/README.md`. Use the correct Light DOM wrappers.
+
+## Critical Rules
+- `<nui-card>` is a simple wrapper element that provides consistent surface styling, borders, and shadows based on your CSS variables.
+- It has NO internal layout constraints. You must structure the content inside it yourself (e.g. using flexbox or semantic tags like `<header>`, `<img>`, `<nui-button-container>`).
+- If the card is clickable (like a list item or dashboard widget), add `role="button"` and `tabindex="0"` to the `<nui-card>` element to make it accessible. It automatically applies hover and focus states when these attributes are present.
+
+**Correct (Static Card):**
+```html
+<nui-card>
+	<h2>Card Title</h2>
+	<p>Basic card content</p>
+</nui-card>
+```
+
+**Correct (Interactive / Clickable Card):**
+```html
+<nui-card role="button" tabindex="0" data-action="navigate:details">
+	<h2>Clickable Title</h2>
+	<p>This card acts like a button and has hover/focus states.</p>
+</nui-card>
+```
+
+**Wrong / Will Fail:**
+```html
+<nui-card clickable> <!-- Wrong: 'clickable' is not an attribute. Use role="button" tabindex="0" -->
+	Content
+</nui-card>
+```
+</script>
+		</nui-markdown>
+	</details>
+
+	<header>
+		<h1>Card Component</h1>
+		<p class="lead">A flexible container format for structured content, media, and actions.</p>
+	</header>
+
+	<section>
+		<h2>Declarative Usage (Default)</h2>
+		<p>The standard card stacks its content vertically. It automatically provides consistent borders, rounded
+			corners, and subtle shadows using our built-in CSS variables.</p>
+
+		<nui-code>
+			<script type="example" data-lang="html">
 <nui-card class="demo-card-standard">
     <h3 class="demo-mt0">Card Title</h3>
     <p class="demo-mb0">This is a basic vertical card. 
@@ -24,54 +64,54 @@
         </nui-button>
     </nui-button-container>
 </nui-card>
-            </script>
-        </nui-code>
+			</script>
+		</nui-code>
 
-        <div>
-            <nui-layout type="grid" columns="3" gap="1rem">
-                <nui-card class="demo-card-standard">
-                    <img src="images/Random_Picts/800p/002.webp" alt="Placeholder Image" />
-                    <h3 class="demo-mt0">Card Title</h3>
-                    <p class="demo-mb0">This is a basic vertical card handling image, text, and actions gracefully.</p>
-                    <nui-button-container class="demo-actions" align="end">
-                        <nui-button variant="primary">
-                            <button type="button">Action</button>
-                        </nui-button>
-                    </nui-button-container>
-                </nui-card>
+		<div>
+			<nui-layout type="grid" columns="3" gap="1rem">
+				<nui-card class="demo-card-standard">
+					<img src="images/Random_Picts/800p/002.webp" alt="Placeholder Image" />
+					<h3 class="demo-mt0">Card Title</h3>
+					<p class="demo-mb0">This is a basic vertical card handling image, text, and actions gracefully.</p>
+					<nui-button-container class="demo-actions" align="end">
+						<nui-button variant="primary">
+							<button type="button">Action</button>
+						</nui-button>
+					</nui-button-container>
+				</nui-card>
 
-                <nui-card class="demo-card-standard">
-                    <img src="images/Random_Picts/800p/003.webp" alt="Placeholder Image" />
-                    <h3 class="demo-mt0">Second Card</h3>
-                    <p class="demo-mb0">Another basic vertical card with some different content structure.</p>
-                    <nui-button-container class="demo-actions" align="end">
-                        <nui-button>
-                            <button type="button">Secondary</button>
-                        </nui-button>
-                    </nui-button-container>
-                </nui-card>
+				<nui-card class="demo-card-standard">
+					<img src="images/Random_Picts/800p/003.webp" alt="Placeholder Image" />
+					<h3 class="demo-mt0">Second Card</h3>
+					<p class="demo-mb0">Another basic vertical card with some different content structure.</p>
+					<nui-button-container class="demo-actions" align="end">
+						<nui-button>
+							<button type="button">Secondary</button>
+						</nui-button>
+					</nui-button-container>
+				</nui-card>
 
-                <nui-card class="demo-card-standard">
-                    <img src="images/Random_Picts/800p/004.webp" alt="Placeholder Image" />
-                    <h3 class="demo-mt0">Third Card</h3>
-                    <p class="demo-mb0">A third card to complete the flexible grid layout beautifully.</p>
-                    <nui-button-container class="demo-actions" align="end">
-                        <nui-button variant="primary">
-                            <button type="button">Create</button>
-                        </nui-button>
-                    </nui-button-container>
-                </nui-card>
-            </nui-layout>
-        </div>
-    </section>
+				<nui-card class="demo-card-standard">
+					<img src="images/Random_Picts/800p/004.webp" alt="Placeholder Image" />
+					<h3 class="demo-mt0">Third Card</h3>
+					<p class="demo-mb0">A third card to complete the flexible grid layout beautifully.</p>
+					<nui-button-container class="demo-actions" align="end">
+						<nui-button variant="primary">
+							<button type="button">Create</button>
+						</nui-button>
+					</nui-button-container>
+				</nui-card>
+			</nui-layout>
+		</div>
+	</section>
 
-    <section>
-        <h2>Horizontal Layout</h2>
-        <p>Use <code>layout="horizontal"</code> to position media and content side-by-side. Useful for lists or wide
-            displays.</p>
+	<section>
+		<h2>Horizontal Layout</h2>
+		<p>Use <code>layout="horizontal"</code> to position media and content side-by-side. Useful for lists or wide
+			displays.</p>
 
-        <nui-code>
-            <script type="example" data-lang="html">
+		<nui-code>
+			<script type="example" data-lang="html">
 <nui-card layout="horizontal" class="demo-card-horizontal-code">
 <img src="images/Random_Picts/800p/002.webp" alt="Thumbnail" />
 
@@ -79,36 +119,36 @@
 <p class="demo-mb0">Content flows horizontally across the card.</p>
 </nui-card>
 </script>
-        </nui-code>
+		</nui-code>
 
-        <div>
-            <nui-layout type="grid" columns="2" gap="1rem">
-                <nui-card layout="horizontal" class="demo-card-horizontal">
-                    <img src="images/Random_Picts/800p/003.webp" alt="Thumbnail" />
-                    <div>
-                        <h3 class="demo-mt0">Horizontal Strategy</h3>
-                        <p class="demo-mb0">Content is arranged flexibly when oriented left-to-right.</p>
-                    </div>
-                </nui-card>
+		<div>
+			<nui-layout type="grid" columns="2" gap="1rem">
+				<nui-card layout="horizontal" class="demo-card-horizontal">
+					<img src="images/Random_Picts/800p/003.webp" alt="Thumbnail" />
+					<div>
+						<h3 class="demo-mt0">Horizontal Strategy</h3>
+						<p class="demo-mb0">Content is arranged flexibly when oriented left-to-right.</p>
+					</div>
+				</nui-card>
 
-                <nui-card layout="horizontal" class="demo-card-horizontal">
-                    <img src="images/Random_Picts/800p/004.webp" alt="Thumbnail" />
-                    <div>
-                        <h3 class="demo-mt0">Side by Side</h3>
-                        <p class="demo-mb0">Perfect for responsive lists and dense layouts.</p>
-                    </div>
-                </nui-card>
-            </nui-layout>
-        </div>
-    </section>
+				<nui-card layout="horizontal" class="demo-card-horizontal">
+					<img src="images/Random_Picts/800p/004.webp" alt="Thumbnail" />
+					<div>
+						<h3 class="demo-mt0">Side by Side</h3>
+						<p class="demo-mb0">Perfect for responsive lists and dense layouts.</p>
+					</div>
+				</nui-card>
+			</nui-layout>
+		</div>
+	</section>
 
-    <section>
-        <h2>Image-only with Text Overlay</h2>
-        <p>By specifying <code>layout="image-only"</code>, the card becomes an image container with layered text on top.
-        </p>
+	<section>
+		<h2>Image-only with Text Overlay</h2>
+		<p>By specifying <code>layout="image-only"</code>, the card becomes an image container with layered text on top.
+		</p>
 
-        <nui-code>
-            <script type="example" data-lang="html">
+		<nui-code>
+			<script type="example" data-lang="html">
 <nui-card layout="image-only" class="demo-card-image-only">
 <img src="images/Random_Picts/800p/004.webp" alt="Background" />
 <div class="demo-overlay">
@@ -117,46 +157,46 @@
 </div>
 </nui-card>
 </script>
-        </nui-code>
+		</nui-code>
 
-        <div>
-            <nui-layout type="grid" columns="3" gap="1rem">
-                <nui-card layout="image-only" class="demo-card-image-only">
-                    <img src="images/Random_Picts/800p/005.webp" alt="Background" />
-                    <div class="demo-overlay">
-                        <h3 class="demo-overlay-title">Mountain Peak</h3>
-                        <p class="demo-overlay-desc">Exploring the high altitudes.</p>
-                    </div>
-                </nui-card>
+		<div>
+			<nui-layout type="grid" columns="3" gap="1rem">
+				<nui-card layout="image-only" class="demo-card-image-only">
+					<img src="images/Random_Picts/800p/005.webp" alt="Background" />
+					<div class="demo-overlay">
+						<h3 class="demo-overlay-title">Mountain Peak</h3>
+						<p class="demo-overlay-desc">Exploring the high altitudes.</p>
+					</div>
+				</nui-card>
 
-                <nui-card layout="image-only" class="demo-card-image-only">
-                    <img src="images/Random_Picts/800p/006.webp" alt="Background" />
-                    <div class="demo-overlay">
-                        <h3 class="demo-overlay-title">Ocean View</h3>
-                        <p class="demo-overlay-desc">Relaxing by the calm sea.</p>
-                    </div>
-                </nui-card>
+				<nui-card layout="image-only" class="demo-card-image-only">
+					<img src="images/Random_Picts/800p/006.webp" alt="Background" />
+					<div class="demo-overlay">
+						<h3 class="demo-overlay-title">Ocean View</h3>
+						<p class="demo-overlay-desc">Relaxing by the calm sea.</p>
+					</div>
+				</nui-card>
 
-                <nui-card layout="image-only" class="demo-card-image-only">
-                    <img src="images/Random_Picts/800p/007.webp" alt="Background" />
-                    <div class="demo-overlay">
-                        <h3 class="demo-overlay-title">City Lights</h3>
-                        <p class="demo-overlay-desc">The vibrant nightlife.</p>
-                    </div>
-                </nui-card>
-            </nui-layout>
-        </div>
-    </section>
+				<nui-card layout="image-only" class="demo-card-image-only">
+					<img src="images/Random_Picts/800p/007.webp" alt="Background" />
+					<div class="demo-overlay">
+						<h3 class="demo-overlay-title">City Lights</h3>
+						<p class="demo-overlay-desc">The vibrant nightlife.</p>
+					</div>
+				</nui-card>
+			</nui-layout>
+		</div>
+	</section>
 
-    <section>
-        <h2>Interactive / Clickable Area</h2>
-        <p>Add the <code>interactive</code> attribute to a card. If the card contains an
-            <code>&lt;a class="nui-card-link"&gt;</code>, the link's hit area will seamlessly cover the whole card,
-            meaning you avoid wrapping complex nested elements in a large anchor tag. If no link is present, you can add 
-            a <code>data-action</code> attribute directly to the card. Keyboard navigation (pressing Enter or Space) is handled automatically.</p>
+	<section>
+		<h2>Interactive / Clickable Area</h2>
+		<p>Add the <code>interactive</code> attribute to a card. If the card contains an
+			<code>&lt;a class="nui-card-link"&gt;</code>, the link's hit area will seamlessly cover the whole card,
+			meaning you avoid wrapping complex nested elements in a large anchor tag. If no link is present, you can add 
+			a <code>data-action</code> attribute directly to the card. Keyboard navigation (pressing Enter or Space) is handled automatically.</p>
 
-        <nui-code>
-            <script type="example" data-lang="html">
+		<nui-code>
+			<script type="example" data-lang="html">
 <!-- Banner Trigger Card -->
 <nui-card interactive data-action="banner-show@#card-demo-banner" class="demo-card-standard">
     <h3 class="demo-mt0">Show Banner</h3>
@@ -168,61 +208,61 @@
     <h3 class="demo-mt0">Open Dialog</h3>
     <p class="demo-mb0">Clicking triggers a dialog modal.</p>
 </nui-card>
-            </script>
-        </nui-code>
+			</script>
+		</nui-code>
 
-        <div>
-            <nui-layout type="grid" columns="3" gap="1rem">
-                <nui-card interactive data-action="banner-show@#card-demo-banner" class="demo-card-standard">
-                    <h3 class="demo-mt0">Show Banner</h3>
-                    <p class="demo-mb0">Hovering reveals a deeper shadow. Clicking triggers a banner notification using pure NUI actions.</p>
-                </nui-card>
+		<div>
+			<nui-layout type="grid" columns="3" gap="1rem">
+				<nui-card interactive data-action="banner-show@#card-demo-banner" class="demo-card-standard">
+					<h3 class="demo-mt0">Show Banner</h3>
+					<p class="demo-mb0">Hovering reveals a deeper shadow. Clicking triggers a banner notification using pure NUI actions.</p>
+				</nui-card>
 
-                <nui-card interactive data-action="dialog-open@#card-demo-dialog" class="demo-card-standard">
-                    <h3 class="demo-mt0">Open Dialog</h3>
-                    <p class="demo-mb0">This card triggers a native NUI action. Click it to reveal a modal dialog pop-up.</p>
-                </nui-card>
+				<nui-card interactive data-action="dialog-open@#card-demo-dialog" class="demo-card-standard">
+					<h3 class="demo-mt0">Open Dialog</h3>
+					<p class="demo-mb0">This card triggers a native NUI action. Click it to reveal a modal dialog pop-up.</p>
+				</nui-card>
 
-                <nui-card interactive data-action="demo:mock" class="demo-card-standard">
-                    <h3 class="demo-mt0">Custom Action</h3>
-                    <p class="demo-mb0">This card natively triggers a custom JS <code>\data-action\</code> event. Click it to see the result below.</p>
-                </nui-card>
-            </nui-layout>
-            <p class="demo-result" data-demo-output>Action result will appear here</p>
-        </div>
+				<nui-card interactive data-action="demo:mock" class="demo-card-standard">
+					<h3 class="demo-mt0">Custom Action</h3>
+					<p class="demo-mb0">This card natively triggers a custom JS <code>\data-action\</code> event. Click it to see the result below.</p>
+				</nui-card>
+			</nui-layout>
+			<p class="demo-result" data-demo-output>Action result will appear here</p>
+		</div>
 
-        <nui-dialog id="card-demo-dialog">
-            <dialog>
-                <div class="demo-content">
-                    <h3 class="demo-mt0">Interactive Card Action!</h3>
-                    <p>You clicked an interactive card that triggered this dialog using the pure HTML <code>data-action="dialog-open@#card-demo-dialog"</code> payload!</p>
-                    <nui-button-container align="end">
-                        <nui-button data-action="dialog-close@#card-demo-dialog">
-                            <button type="button">Close</button>
-                        </nui-button>
-                    </nui-button-container>
-                </div>
-            </dialog>
-        </nui-dialog>
+		<nui-dialog id="card-demo-dialog">
+			<dialog>
+				<div class="demo-content">
+					<h3 class="demo-mt0">Interactive Card Action!</h3>
+					<p>You clicked an interactive card that triggered this dialog using the pure HTML <code>data-action="dialog-open@#card-demo-dialog"</code> payload!</p>
+					<nui-button-container align="end">
+						<nui-button data-action="dialog-close@#card-demo-dialog">
+							<button type="button">Close</button>
+						</nui-button>
+					</nui-button-container>
+				</div>
+			</dialog>
+		</nui-dialog>
 
-        <nui-banner id="card-demo-banner" placement="bottom" auto-close="5000">
-            <div style="padding: 1rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
-                <span>You clicked the interactive card! This is a typical feedback banner.</span>
-                <nui-button size="small">
-                    <button type="button" data-action="banner-close@#card-demo-banner">Dismiss</button>
-                </nui-button>
-            </div>
-        </nui-banner>
-    </section>
+		<nui-banner id="card-demo-banner" placement="bottom" auto-close="5000">
+			<div style="padding: 1rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+				<span>You clicked the interactive card! This is a typical feedback banner.</span>
+				<nui-button size="small">
+					<button type="button" data-action="banner-close@#card-demo-banner">Dismiss</button>
+				</nui-button>
+			</div>
+		</nui-banner>
+	</section>
 
-    <section>
-        <h2>Flip Cards</h2>
-        <p>Add <code>layout="flip"</code> and configure internal <code>.nui-card-front</code> and
-            <code>.nui-card-back</code> elements. It flips automatically on pressing Space/Enter or via a
-            <code>data-action="card-flip"</code> button.</p>
+	<section>
+		<h2>Flip Cards</h2>
+		<p>Add <code>layout="flip"</code> and configure internal <code>.nui-card-front</code> and
+			<code>.nui-card-back</code> elements. It flips automatically on pressing Space/Enter or via a
+			<code>data-action="card-flip"</code> button.</p>
 
-        <nui-code>
-            <script type="example" data-lang="html">
+		<nui-code>
+			<script type="example" data-lang="html">
 <nui-card layout="flip" class="demo-card-flip">
 <div class="nui-card-inner">
 <!-- Front -->
@@ -242,67 +282,67 @@
 </div>
 </nui-card>
 </script>
-        </nui-code>
+		</nui-code>
 
-        <div>
-            <nui-layout type="grid" columns="3" gap="1rem">
-                <nui-card layout="flip" class="demo-card-flip">
-                    <div class="nui-card-inner">
-                        <div class="nui-card-front demo-flip-face">
-                            <h3 class="demo-mt0">Vocabulary Word</h3>
-                            <nui-button data-action="card-flip" variant="primary">
-                                <button type="button">Reveal</button>
-                            </nui-button>
-                        </div>
-                        <div class="nui-card-back demo-flip-face demo-flip-back">
-                            <h3 class="demo-mt0">NUI Architecture</h3>
-                            <p>Zero dependencies, pure web APIs. Semantic HTML.</p>
-                            <nui-button data-action="card-flip" variant="outline">
-                                <button type="button">Back</button>
-                            </nui-button>
-                        </div>
-                    </div>
-                </nui-card>
+		<div>
+			<nui-layout type="grid" columns="3" gap="1rem">
+				<nui-card layout="flip" class="demo-card-flip">
+					<div class="nui-card-inner">
+						<div class="nui-card-front demo-flip-face">
+							<h3 class="demo-mt0">Vocabulary Word</h3>
+							<nui-button data-action="card-flip" variant="primary">
+								<button type="button">Reveal</button>
+							</nui-button>
+						</div>
+						<div class="nui-card-back demo-flip-face demo-flip-back">
+							<h3 class="demo-mt0">NUI Architecture</h3>
+							<p>Zero dependencies, pure web APIs. Semantic HTML.</p>
+							<nui-button data-action="card-flip" variant="outline">
+								<button type="button">Back</button>
+							</nui-button>
+						</div>
+					</div>
+				</nui-card>
 
-                <nui-card layout="flip" class="demo-card-flip">
-                    <div class="nui-card-inner">
-                        <div class="nui-card-front demo-flip-face">
-                            <h3 class="demo-mt0">Question</h3>
-                            <p>What is CSS-in-JS?</p>
-                            <nui-button data-action="card-flip" variant="primary">
-                                <button type="button">Answer</button>
-                            </nui-button>
-                        </div>
-                        <div class="nui-card-back demo-flip-face demo-flip-back">
-                            <h3 class="demo-mt0">Answer</h3>
-                            <p>Something we avoid. We prefer CSS variables.</p>
-                            <nui-button data-action="card-flip" variant="outline">
-                                <button type="button">Back</button>
-                            </nui-button>
-                        </div>
-                    </div>
-                </nui-card>
+				<nui-card layout="flip" class="demo-card-flip">
+					<div class="nui-card-inner">
+						<div class="nui-card-front demo-flip-face">
+							<h3 class="demo-mt0">Question</h3>
+							<p>What is CSS-in-JS?</p>
+							<nui-button data-action="card-flip" variant="primary">
+								<button type="button">Answer</button>
+							</nui-button>
+						</div>
+						<div class="nui-card-back demo-flip-face demo-flip-back">
+							<h3 class="demo-mt0">Answer</h3>
+							<p>Something we avoid. We prefer CSS variables.</p>
+							<nui-button data-action="card-flip" variant="outline">
+								<button type="button">Back</button>
+							</nui-button>
+						</div>
+					</div>
+				</nui-card>
 
-                <nui-card layout="flip" class="demo-card-flip">
-                    <div class="nui-card-inner">
-                        <div class="nui-card-front demo-flip-face">
-                            <h3 class="demo-mt0">Guess This</h3>
-                            <nui-button data-action="card-flip" variant="primary">
-                                <button type="button">Show</button>
-                            </nui-button>
-                        </div>
-                        <div class="nui-card-back demo-flip-face demo-flip-back">
-                            <h3 class="demo-mt0">Surprise!</h3>
-                            <p>It's just another flip card.</p>
-                            <nui-button data-action="card-flip" variant="outline">
-                                <button type="button">Back</button>
-                            </nui-button>
-                        </div>
-                    </div>
-                </nui-card>
-            </nui-layout>
-        </div>
-    </section>
+				<nui-card layout="flip" class="demo-card-flip">
+					<div class="nui-card-inner">
+						<div class="nui-card-front demo-flip-face">
+							<h3 class="demo-mt0">Guess This</h3>
+							<nui-button data-action="card-flip" variant="primary">
+								<button type="button">Show</button>
+							</nui-button>
+						</div>
+						<div class="nui-card-back demo-flip-face demo-flip-back">
+							<h3 class="demo-mt0">Surprise!</h3>
+							<p>It's just another flip card.</p>
+							<nui-button data-action="card-flip" variant="outline">
+								<button type="button">Back</button>
+							</nui-button>
+						</div>
+					</div>
+				</nui-card>
+			</nui-layout>
+		</div>
+	</section>
 
 </div>
 

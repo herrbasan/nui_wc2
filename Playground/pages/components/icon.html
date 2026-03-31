@@ -1,4 +1,37 @@
 <div class="page-icon">
+
+<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+		<summary><strong>LLM Guide - nui-icon</strong></summary>
+		<nui-markdown id="llm-guide" data-component="nui-icon" class="llm-guide">
+<script type="text/markdown">
+# LLM Guide: nui-icon
+
+> **Global Note:** Always follow the global rules in `Playground/README.md`. Use the correct Light DOM wrappers.
+
+## Critical Rules
+- Do NOT use font icons or tags like `<i class="fa fa-home"></i>`. NUI uses SVG sprites.
+- The `<nui-icon>` component fetches an SVG based on its `name` attribute.
+- You MUST provide text inside the tag to act as an accessible fallback for browsers that fail to load SVGs, or for when the SVG sprite hasn't loaded yet. The CSS automatically hides the fallback text when the SVG loads.
+- If the icon is decorative and adjacent to text (like a button label), add `aria-hidden="true"`.
+
+**Correct (Inside a button):**
+```html
+<nui-button>
+	<button>
+		<nui-icon name="home" aria-hidden="true">🏠</nui-icon> Go Home
+	</button>
+</nui-button>
+```
+
+**Wrong / Will Fail:**
+```html
+<i class="icon-home"></i> <!-- Wrong: Do not use <i> tags -->
+<nui-icon name="home"></nui-icon> <!-- Wrong: Missing fallback text/emoji -->
+```
+</script>
+		</nui-markdown>
+	</details>
+
 	<header>
 		<h1>Icon Component</h1>
 		<p class="lead">SVG sprite-based icon system for consistent, scalable icons</p>
@@ -227,5 +260,16 @@ async function init(element, params) {
 			console.error('Failed to copy:', err);
 		}
 	});
+
+	// Handle click events for the LLM guide
+	element.addEventListener('click', (e) => {
+		const target = e.target;
+		if (target.tagName === 'H2' || target.tagName === 'H3' || target.tagName === 'H4' || target.tagName === 'H5' || target.tagName === 'H6') {
+			const action = target.textContent;
+			const time = new Date().toISOString();
+			eventLog.innerHTML = `<div>[${time}] Clicked: ${action}</div>` + eventLog.innerHTML;
+		}
+	});
+
 }
 </script>

@@ -1,3 +1,65 @@
+<div class="page-tabs">
+
+<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+		<summary><strong>LLM Guide - nui-tabs</strong></summary>
+		<nui-markdown id="llm-guide" data-component="nui-tabs" class="llm-guide">
+<script type="text/markdown">
+# LLM Guide: nui-tabs (Tab Panels)
+
+> **Global Note:** Always follow the global rules in `Playground/README.md`. Use the correct Light DOM wrappers.
+
+## Critical Rules & Strict DOM Structure
+NUI separates the *navigation* (`<nav>`) from the *panels* (`<section>`). 
+
+- `<nui-tabs>` acts as the outer wrapper.
+- Inside, the first element MUST be a `<nav>`. The nav MUST contain `<button>` elements (NOT anchor `<a>` tags) with `data-tab="tab-id"` attributes.
+- Following the `<nav>`, there MUST be `<section>` elements acting as panels. Each panel MUST have an `id` matching its corresponding button's `data-tab`.
+- The active tab button automatically receives `aria-selected="true"`. Do NOT manually assign `.active` classes.
+- The inactive panels automatically receive the `hidden` attribute. Do NOT manually set `display: none` or `.hidden` classes.
+
+**Correct Usage:**
+```html
+<nui-tabs>
+	<!-- Navigation MUST be first, containing buttons with data-tab -->
+	<nav aria-label="Settings Options">
+		<button type="button" data-tab="tab-profile" aria-selected="true">Profile</button>
+		<button type="button" data-tab="tab-security">Security</button>
+	</nav>
+	
+	<!-- Panels MUST follow, with IDs matching the data-tabs -->
+	<section id="tab-profile">
+		<h2>Profile Settings</h2>
+		<p>Update your details here.</p>
+	</section>
+	
+	<section id="tab-security" hidden> <!-- Manually hide inactive panels on first load -->
+		<h2>Security Settings</h2>
+		<p>Update your password here.</p>
+	</section>
+</nui-tabs>
+```
+
+**Wrong / Will Fail:**
+```html
+<nui-tabs>
+	<div> <!-- Wrong: MUST be a <nav> -->
+		<a href="#tab-profile">Profile</a> <!-- Wrong: MUST be <button data-tab="..."> -->
+	</div>
+	<div id="tab-profile">...</div> <!-- Wrong: MUST be a <section> -->
+</nui-tabs>
+```
+
+## Programmatic Control
+If you need to change a tab via JavaScript (e.g. after a form submission on another tab), use the component's `select(id)` method:
+
+```js
+const tabsElement = document.querySelector('nui-tabs');
+tabsElement.select('tab-security'); // Activates the tab with data-tab="tab-security"
+```
+</script>
+		</nui-markdown>
+	</details>
+
 <header>
 	<h1>Tabs Component</h1>
 	<p>Organize content into multiple sections with <code>&lt;nui-tabs&gt;</code>.</p>
@@ -251,6 +313,43 @@ tabs.selectTab('panel-b');   // Switch by associated panel ID or tab ID
 	</nui-code>
 </section>
 
+<section>
+	<h2>Component API</h2>
+	<p>The tabs component exposes properties and methods for programmatic control.</p>
+
+	<h3>Methods</h3>
+	<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+		<thead>
+			<tr>
+				<th style="width: 25%;">Method</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>selectTab(idOrIndex)</code></td>
+				<td>Activates a tab by panel ID (string) or zero-based index. Expands parent groups if necessary.</td>
+			</tr>
+		</tbody>
+	</table>
+
+	<h3>Events</h3>
+	<table class="nui-table" style="width: 100%; font-size: 0.9em;">
+		<thead>
+			<tr>
+				<th style="width: 25%;">Event Name</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>nui-tab-change</code></td>
+				<td>Fired when the active tab changes. <code>e.detail.tab</code> contains the activated button element, and <code>e.detail.panel</code> contains the associated panel element.</td>
+			</tr>
+		</tbody>
+	</table>
+</section>
+
 <script type="nui/page">
 function init(element) {
 	const tabs = element.querySelector('#event-tabs');
@@ -258,10 +357,14 @@ function init(element) {
 	
 	if (tabs && log) {
 		tabs.addEventListener('nui-tab-change', (e) => {
-			const tabText = e.detail.tab.textContent.trim();
-			const panelId = e.detail.panel.id;
+			const detail = e.detail;
+			const tabText = detail.tab.textContent.trim();
+			const panelId = detail.panel.id;
 			log.textContent = `Log: Switched to "${tabText}" (Panel ID: ${panelId})`;
 		});
 	}
+	
 }
 </script>
+
+</div>

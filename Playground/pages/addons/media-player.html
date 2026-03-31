@@ -1,4 +1,40 @@
 <div class="page-media-player">
+
+<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+		<summary><strong>LLM Guide - nui-media-player</strong></summary>
+		<nui-markdown id="llm-guide" data-component="nui-media-player" class="llm-guide">
+<script type="text/markdown">
+# LLM Guide: nui-media-player (Experimental)
+
+> **Global Note:** Always follow the global rules in `Playground/README.md`. Wraps native media elements.
+
+## Strict DOM Structure
+- `<nui-media-player>` wraps `<video>` or `<audio>`.
+- Use `pause-others` attr to auto-pause other players.
+- Poster and controls managed by component.
+
+**Correct:**
+```html
+<nui-media-player>
+	<video src="video.mp4" poster="poster.jpg"></video>
+</nui-media-player>
+```
+
+## Critical Rules
+- Builds custom UI on top of native media APIs.
+- Experimental - expect changes.
+- Use events from native media element.
+- Do not recreate media controls manually.
+
+## Anti-Patterns
+- Using raw video/audio without wrapper for consistent UI.
+- Adding third-party players.
+- Ignoring pause-others for multiple media.
+- Custom CSS for player (use theme).
+</script>
+		</nui-markdown>
+	</details>
+
     <header>
         <h1>Media Player</h1>
         <p class="lead">An experimental and customizable video and audio player component built on top of native media elements.</p>
@@ -20,9 +56,9 @@
         </nui-code>
 
         <div class="demo-area">
-            <nui-media-player pause-others style="max-width: 600px; margin: 0 auto; aspect-ratio: 16/9; display: block;">
+            <nui-media-player pause-others style="aspect-ratio: 16/9; display: block;">
                 <!-- Using a placeholder video URL or sample video if available. In dev we can use big buck bunny -->
-                <video src="http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" poster="http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg"></video>
+                <video src="https://raum.com/database/storage/files/roPWnICvrkerKH7g.mp4" poster="https://www.raum.com/database/storage/cache/medium_avif/tB7ndH1cieGl6ieK.avif"></video>
             </nui-media-player>
         </div>
     </section>
@@ -88,6 +124,63 @@ nui.components.mediaPlayer.create('#my-target', {
                 </nui-button>
             </div>
         </div>
+    </section>
+
+<section>
+        <h2>Component API</h2>
+        <p>The media player component provides a factory method for programmatic creation.</p>
+
+        <h3>Factory Methods</h3>
+        <table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+            <thead>
+                <tr>
+                    <th style="width: 25%;">Method</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>nui.components.mediaPlayer.create(target, options)</code></td>
+                    <td>Creates a media player and injects it into the target element. Returns the player instance.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>Options</h3>
+        <table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+            <thead>
+                <tr>
+                    <th style="width: 25%;">Option</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>url</code></td>
+                    <td>The media source URL.</td>
+                </tr>
+                <tr>
+                    <td><code>type</code></td>
+                    <td>Media type: <code>"video"</code> or <code>"audio"</code>.</td>
+                </tr>
+                <tr>
+                    <td><code>poster</code></td>
+                    <td>Poster image URL for video players.</td>
+                </tr>
+                <tr>
+                    <td><code>pauseOthers</code></td>
+                    <td>When true (default), automatically pauses other players when this one plays.</td>
+                </tr>
+                <tr>
+                    <td><code>attributes</code></td>
+                    <td>Object with attributes to set on the native <code>&lt;video&gt;</code> or <code>&lt;audio&gt;</code> element (e.g., <code>{ loop: true, crossorigin: 'anonymous' }</code>).</td>
+                </tr>
+                <tr>
+                    <td><code>playerAttributes</code></td>
+                    <td>Object with attributes to set on the <code>&lt;nui-media-player&gt;</code> wrapper element.</td>
+                </tr>
+            </tbody>
+        </table>
     </section>
 </div>
 

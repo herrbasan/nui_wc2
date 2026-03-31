@@ -822,37 +822,40 @@ registerComponent('nui-sidebar', (element) => {
 });
 
 registerComponent('nui-code', (element) => {
-	// Check for <script type="example"> pattern first
+	if (element._nui_code_ready) return;
+
 	const exampleScript = element.querySelector('script[type="example"]');
 	if (exampleScript) {
 		const lang = exampleScript.getAttribute('data-lang') || 'html';
-		const rawText = exampleScript.textContent.trim();
-		
-		// Create the structure
+		const rawText = exampleScript.textContent.trim().replace(/<\\\/script/gi, '</script');
 		const pre = document.createElement('pre');
 		const codeBlock = document.createElement('code');
+
 		codeBlock.setAttribute('data-lang', lang);
 		codeBlock.textContent = rawText;
 		pre.appendChild(codeBlock);
-		
-		// Replace the script with the pre/code structure
 		exampleScript.replaceWith(pre);
-		
-		// Continue with normal processing
+
 		setupCodeBlock(element, pre, codeBlock, rawText);
+		element._nui_code_ready = true;
 		return;
 	}
-	
-	// Original pattern: <pre><code>
+
 	const pre = element.el('pre');
 	const codeBlock = element.el('pre code');
 	if (!pre || !codeBlock) return;
 
-	const rawText = codeBlock.textContent;
-	setupCodeBlock(element, pre, codeBlock, rawText);
+	setupCodeBlock(element, pre, codeBlock, codeBlock.textContent);
+	element._nui_code_ready = true;
+}, (element) => {
+	const copyButton = element.el('.nui-code-copy');
+	if (copyButton) copyButton.remove();
+	delete element._nui_code_ready;
 });
 
 function setupCodeBlock(element, pre, codeBlock, rawText) {
+	const existingCopyButton = element.el('.nui-code-copy');
+	if (existingCopyButton) existingCopyButton.remove();
 
 	const copyButton = dom.create('button', {
 		class: 'nui-code-copy',
@@ -877,6 +880,8 @@ function setupCodeBlock(element, pre, codeBlock, rawText) {
 	element.insertBefore(copyButton, pre);
 
 	import('./lib/modules/nui-syntax-highlight.js').then(module => {
+		if (!element.isConnected) return;
+
 		let lang = codeBlock.getAttribute('data-lang');
 
 		if (!lang) {
@@ -902,7 +907,13 @@ function setupCodeBlock(element, pre, codeBlock, rawText) {
 			codeBlock.innerHTML = module.highlight(rawText, lang);
 		}
 	}).catch(() => { });
+
+	return () => {
+		copyButton.remove();
+	};
 }
+
+// ################################# nui-link-list COMPONENT
 
 registerComponent('nui-link-list', (element) => {
 	const mode = element.getAttribute('mode') || 'tree';
@@ -4497,7 +4508,7 @@ function executePageScript(wrapper, params) {
 			'element',
 			'params',
 			'nui',
-			scriptEl.textContent + '\nif (typeof init === "function") init(element, params);'
+			scriptEl.textContent + '\nif (typeof init === "function") init(element, params, nui);'
 		);
 		initFn(wrapper, params, nui);
 	} catch (error) {

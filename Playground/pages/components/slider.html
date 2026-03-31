@@ -1,3 +1,58 @@
+<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+		<summary><strong>LLM Guide - nui-slider</strong></summary>
+		<nui-markdown id="llm-guide" data-component="nui-slider" class="llm-guide">
+<script type="text/markdown">
+# LLM Guide: nui-slider
+
+> **Global Note:** Always follow the global rules in `Playground/README.md`. No custom CSS, use `nui.util.createElement`, Light DOM wrappers only.
+
+## Strict DOM Structure
+- `<nui-slider>` **MUST** contain a native `<input type="range">` as direct child.
+- The component automatically injects visual elements (track, fill, thumb) as siblings to the input.
+- Attributes like `min`, `max`, `step`, `value`, `disabled` belong **only** on the inner input.
+
+**Correct:**
+```html
+<nui-slider>
+	<input type="range" min="0" max="100" value="50" step="5">
+</nui-slider>
+```
+
+## Critical Rules
+- Never create your own visual elements (track/fill/thumb) - component handles it.
+- Do not add `<style>` or inline styles - rely on theme CSS variables.
+- Events: listen to native `input` (live) and `change` (on release) on the inner `<input>` (bubbles to nui-slider).
+- For JS control: element exposes `getValue()` and `setValue(val)`.
+- Use `nui.util.enableDrag` only if building similar custom controls.
+- For dynamic creation always use `nui.util.createElement('nui-slider', {}, [input])`.
+
+## Usage Modes
+- **Declarative (preferred):** HTML wrapper + native range input.
+- **Programmatic:** Create input, wrap with component, or use `registerComponent` pattern indirectly.
+
+## Anti-Patterns (Common LLM Mistakes)
+- Using bare `<input type="range">` without wrapper (no custom visuals).
+- Applying Tailwind/React-style props or classes directly on nui-slider.
+- Inventing attributes like `variant` or `label` on the wrapper.
+- Creating separate divs for thumb/track instead of letting component manage.
+- Forgetting to include the native input inside.
+- Using `document.createElement` instead of `nui.util.createElement`.
+
+## Common Operations
+```js
+const slider = document.querySelector('nui-slider');
+const input = slider.querySelector('input[type="range"]');
+
+input.addEventListener('input', e => console.log('live:', e.target.value));
+input.addEventListener('change', e => console.log('final:', e.target.value));
+
+slider.setValue(75); // or slider.querySelector('input').value = 75;
+console.log(slider.getValue());
+```
+</script>
+		</nui-markdown>
+	</details>
+
 <header>
 	<h1>Slider</h1>
 </header>
@@ -98,6 +153,52 @@ const cleanup = nui.util.enableDrag(element, (data) => {
 // Call cleanup() to remove listeners
 		</script>
 	</nui-code>
+</section>
+
+<section>
+	<h2>Component API</h2>
+	<p>The slider component exposes methods for programmatic control and uses native input events.</p>
+
+	<h3>Methods</h3>
+	<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+		<thead>
+			<tr>
+				<th style="width: 25%;">Method</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>getValue()</code></td>
+				<td>Returns the current value of the slider (same as accessing the inner input's value property).</td>
+			</tr>
+			<tr>
+				<td><code>setValue(val)</code></td>
+				<td>Sets the slider value programmatically.</td>
+			</tr>
+		</tbody>
+	</table>
+
+	<h3>Events</h3>
+	<p>Events are fired by the inner native <code>&lt;input&gt;</code> element and bubble up to the <code>&lt;nui-slider&gt;</code> wrapper.</p>
+	<table class="nui-table" style="width: 100%; font-size: 0.9em;">
+		<thead>
+			<tr>
+				<th style="width: 25%;">Event</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>input</code></td>
+				<td>Fired continuously while dragging (like native range input).</td>
+			</tr>
+			<tr>
+				<td><code>change</code></td>
+				<td>Fired when the user releases the slider (like native range input).</td>
+			</tr>
+		</tbody>
+	</table>
 </section>
 
 <script type="nui/page">

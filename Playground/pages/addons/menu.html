@@ -1,3 +1,48 @@
+<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+		<summary><strong>LLM Guide - nui-menu</strong></summary>
+		<nui-markdown id="llm-guide" data-component="nui-menu" class="llm-guide">
+<script type="text/markdown">
+# LLM Guide: nui-menu
+
+> **Global Note:** Always follow the global rules in `Playground/README.md`. Addon - register if using. Uses roving tabindex and ARIA menubar.
+
+## Strict DOM Structure
+- `<nui-menu>` contains `<nav>` with top-level `<button>`s, each followed by `<ul>` of menu items.
+- Menu items are `<li><button data-action="...">` or separators.
+- Supports nested submenus.
+
+**Correct Declarative:**
+```html
+<nui-menu>
+	<nav>
+		<button>File</button>
+		<ul>
+			<li><button data-action="new">New</button></li>
+			<li class="separator"></li>
+			<li><button data-action="exit">Exit</button></li>
+		</ul>
+	</nav>
+</nui-menu>
+```
+
+## Critical Rules
+- Use `data-action` for menu item clicks (bubbles).
+- Keyboard: full ARIA menubar support (arrows, ESC, etc.).
+- Programmatic: use same data structure as nui-link-list with `nui.components.menu.create(data)`.
+- Dropdowns are reused (not recreated).
+- Do not use custom event listeners on menu; use data-action or nui events.
+
+## Anti-Patterns
+- Using <div> or non-semantic markup for menu.
+- Implementing own dropdown logic or popovers.
+- Ignoring keyboard navigation requirements.
+- Adding custom CSS for menu states.
+- Expecting simple click handlers without data-action.
+- Confusing with nui-list or other list components.
+</script>
+		</nui-markdown>
+	</details>
+
 <header>
 	<h1>Menu Component</h1>
 	<p>Menu bar with dropdown menus and nested submenus. This is the first <strong>addon component</strong>, demonstrating how to extend the NUI library with optional modules.</p>
@@ -191,6 +236,27 @@ const nestedData = {
 };
 		</script>
 	</nui-code>
+</section>
+
+<section>
+	<h2>Component API</h2>
+	<p>The menu component exposes methods for programmatic control.</p>
+
+	<h3>Methods</h3>
+	<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+		<thead>
+			<tr>
+				<th style="width: 25%;">Method</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>loadData(data)</code></td>
+				<td>Loads menu configuration from a data object. The structure uses the same format as <code>nui-link-list</code> with <code>items</code> array containing menu entries.</td>
+			</tr>
+		</tbody>
+	</table>
 </section>
 
 <script type="nui/page">

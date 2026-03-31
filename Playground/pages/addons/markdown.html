@@ -1,0 +1,176 @@
+<div class="page-markdown">
+
+	<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+		<summary><strong>LLM Guide - nui-markdown</strong></summary>
+		<nui-markdown id="llm-guide" data-component="nui-markdown" class="llm-guide">
+<script type="text/markdown">
+# LLM Guide: nui-markdown
+
+> **Global Note:** Always follow the global rules in `Playground/README.md`. Addon module; import explicitly.
+
+## Strict Usage
+- Import: `import './NUI/lib/modules/nui-markdown.js';` (or script src).
+- For syntax highlighting in code blocks (via nui-code): also import `NUI/lib/modules/nui-syntax-highlight.js`.
+- Use `<nui-markdown><script type="text/markdown">...</script></nui-markdown>` or `nui.util.markdownToHtml(md)`.
+- Supports headers, lists, links, code (integrates nui-code), tables, emphasis, blockquotes, hr.
+
+**Correct:**
+```html
+<nui-markdown>
+<script type="text/markdown">
+# Heading
+**bold** *italic* [link](url)
+</script>
+</nui-markdown>
+```
+
+## Critical Rules
+- Parser is lightweight and web-focused; not full CommonMark.
+- Code blocks become nui-code with language (requires `NUI/lib/modules/nui-syntax-highlight.js` for syntax highlighting).
+- Tables rendered as nui-table.
+- For dynamic, use the util function and set innerHTML.
+- Do not rely on external Markdown libs.
+
+## Anti-Patterns
+- Forgetting the import for the addon (or nui-syntax-highlight.js for code syntax).
+- Using raw text without the script tag type.
+- Expecting GitHub-flavored Markdown features not implemented.
+- Heavy dependencies for simple rendering.
+- Modifying the parser without understanding the replace logic.
+</script>
+		</nui-markdown>
+	</details>
+
+	<header>
+		<h1>Markdown (<nui-badge class="primary">Addon</nui-badge>)</h1>
+		<p class="lead">A lightweight component and utility for rendering Markdown into HTML.</p>
+	</header>
+
+	<section>
+		<h2>Basic Usage</h2>
+		<p>Import the module and wrap your markdown in a <code>&lt;script type="text/markdown"&gt;</code> element inside the <code>nui-markdown</code> component.</p>
+		
+		<nui-code>
+			<script type="example" data-lang="html">
+<!-- Import the addon (syntax highlighting requires the syntax module too) -->
+<!-- <script type="module" src="NUI/lib/modules/nui-markdown.js"></script> -->
+<!-- <script type="module" src="NUI/lib/modules/nui-syntax-highlight.js"></script> -->
+
+<nui-markdown>
+<script type="text/markdown">
+# Markdown Feature Test
+
+Paragraph with **bold**, *italic*, ~~strikethrough~~, `inline code`, and a [link](https://example.com).
+
+> Blockquotes can span
+> multiple lines.
+
+- Unordered item
+- Another item
+
+1. Ordered item
+2. Second step
+
+---
+
+| Feature | Status |
+|---------|--------|
+| Tables  | Yes    |
+| Lists   | Yes    |
+
+```html
+<nui-button>
+	<button type="button">Hello Markdown</button>
+</nui-button>
+```
+</script>
+</nui-markdown>
+			</script>
+		</nui-code>
+
+		<div class="demo-area">
+			<nui-card class="markdown-render-card">
+				<nui-markdown>
+<script type="text/markdown">
+# Markdown Feature Test
+
+Paragraph with **bold**, *italic*, ~~strikethrough~~, `inline code`, and a [link](https://example.com).
+
+> Blockquotes can span
+> multiple lines.
+
+- Unordered item
+- Another item
+
+1. Ordered item
+2. Second step
+
+---
+
+| Feature | Status |
+|---------|--------|
+| Tables  | Yes    |
+| Lists   | Yes    |
+
+```html
+<nui-button>
+	<button type="button">Hello Markdown</button>
+</nui-button>
+```
+</script>
+				</nui-markdown>
+			</nui-card>
+		</div>
+	</section>
+
+	<section>
+		<h2>Supported Syntax</h2>
+		<p>The parser supports headers, links, emphasis, lists, separators, simple tables, blockquotes, and code blocks using <code>nui-code</code> (which requires the <code>nui-syntax-highlight</code> module for colored syntax in fenced code blocks).</p>
+		<div class="demo-area">
+			<nui-card class="markdown-render-card">
+				<nui-markdown>
+<script type="text/markdown">
+## Common Markdown Features
+
+### Inline Formatting
+Use **bold**, *italic*, ~~strikethrough~~, and `inline code` inside regular paragraphs.
+
+Visit [NUI Playground](https://example.com) for external link testing.
+
+### Lists
+- Bullet item A
+- Bullet item B
+- Bullet item C
+
+1. First step
+2. Second step
+3. Third step
+
+### Quote
+> This is a blockquote.
+> It keeps adjacent quoted lines together.
+
+### Table
+| Feature | Example | Supported |
+|---------|---------|-----------|
+| Headers | `# Title` | Yes |
+| Quotes  | `> Quote` | Yes |
+| Code    | Fenced blocks | Yes |
+
+### Code Block
+```js
+const example = 'Code blocks use nui-code automatically';
+console.log(example);
+```
+</script>
+				</nui-markdown>
+			</nui-card>
+		</div>
+	</section>
+</div>
+
+<script type="nui/page">
+function init(element, params, nui) {
+	// The component auto-initializes the markdown on connection.
+}
+</script>

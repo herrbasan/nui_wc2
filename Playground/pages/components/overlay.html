@@ -1,4 +1,53 @@
 <div class="page-overlay">
+
+<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+		<summary><strong>LLM Guide - nui-overlay</strong></summary>
+		<nui-markdown id="llm-guide" data-component="nui-overlay" class="llm-guide">
+<script type="text/markdown">
+# LLM Guide: nui-overlay
+
+> **Global Note:** Always follow the global rules in `Playground/README.md`. Use data-action for interactions, no custom CSS.
+
+## Strict DOM Structure
+- `<nui-overlay id="my-overlay">` must contain a `<dialog>` element.
+- Content goes inside the `<dialog>`.
+- Use `data-action="overlay-open@#my-overlay"` on trigger buttons.
+
+**Correct:**
+```html
+<button data-action="overlay-open@#my-overlay">Open</button>
+
+<nui-overlay id="my-overlay">
+	<dialog>
+		<!-- your content -->
+		<button data-action="overlay-close@#my-overlay">Close</button>
+	</dialog>
+</nui-overlay>
+```
+
+## Critical Rules
+- Prefer `nui-overlay` for custom modals/lightboxes; use `nui-dialog` for standard alert/confirm.
+- Supports `blocking` attribute to prevent backdrop close.
+- Events: `nui-overlay-open`, `nui-overlay-close`, `nui-overlay-cancel`.
+- Uses native `<dialog>.showModal()` internally.
+- Do not manually call showModal on the inner dialog - use the component's `showModal()` method or data-action.
+- Backdrop click closes unless `blocking`.
+
+## Usage Modes
+- **Declarative:** HTML with data-action attributes (preferred for demos).
+- **Programmatic:** `const overlay = document.getElementById('my-overlay'); overlay.showModal(); overlay.close();`
+
+## Anti-Patterns
+- Using `<div>` with fixed positioning and z-index instead of this component.
+- Forgetting the inner `<dialog>`.
+- Using CSS for modal behavior.
+- Calling `dialog.showModal()` directly bypassing the wrapper.
+- Expecting props like `open` or `onClose` (use events and methods).
+- Adding custom backdrop elements.
+</script>
+		</nui-markdown>
+	</details>
+
 	<header>
 		<h1>Overlay</h1>
 		<p class="lead">A raw modal container for lightboxes, full-screen loaders, and custom modals.</p>
@@ -89,6 +138,55 @@ overlay.addEventListener('nui-overlay-close', (e) => {
 			</script>
 		</nui-code>
 	</section>
+
+<section>
+	<h2>Component API</h2>
+	<p>The overlay component exposes methods for programmatic control and events for monitoring state changes.</p>
+
+	<h3>Methods</h3>
+	<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+		<thead>
+			<tr>
+				<th style="width: 25%;">Method</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>showModal()</code></td>
+				<td>Opens the overlay as a modal dialog with backdrop.</td>
+			</tr>
+			<tr>
+				<td><code>close(returnValue?)</code></td>
+				<td>Closes the overlay. Optionally provide a return value to pass to event handlers.</td>
+			</tr>
+		</tbody>
+	</table>
+
+	<h3>Events</h3>
+	<table class="nui-table" style="width: 100%; font-size: 0.9em;">
+		<thead>
+			<tr>
+				<th style="width: 25%;">Event Name</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>nui-overlay-open</code></td>
+				<td>Fired when the overlay becomes visible.</td>
+			</tr>
+			<tr>
+				<td><code>nui-overlay-close</code></td>
+				<td>Fired when the overlay closes. <code>e.detail.returnValue</code> contains any value passed to <code>close()</code>.</td>
+			</tr>
+			<tr>
+				<td><code>nui-overlay-cancel</code></td>
+				<td>Fired when the overlay is cancelled (e.g., by pressing Escape or clicking backdrop).</td>
+			</tr>
+		</tbody>
+	</table>
+</section>
 </div>
 
 <script type="nui/page">

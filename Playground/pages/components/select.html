@@ -1,3 +1,61 @@
+<div class="page-select">
+
+<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+		<summary><strong>LLM Guide - nui-select</strong></summary>
+		<nui-markdown id="llm-guide" data-component="nui-select" class="llm-guide">
+<script type="text/markdown">
+# LLM Guide: nui-select (Custom Select Component)
+
+> **Global Note:** Always follow the global rules in `Playground/README.md`. Use the correct Light DOM wrappers.
+
+## Critical Rules
+- `<nui-select>` MUST wrap a native `<select>` element.
+- The first empty-value option (`<option value="">...</option>`) acts as the placeholder.
+- Multi-select is controlled entirely by the native `multiple` attribute on the inner `<select>`.
+- The `searchable` attribute goes on the `<nui-select>` wrapper, NOT the inner select.
+
+## Strict DOM Structure (Do NOT deviate)
+Do not invent tags, and do not omit the internal `<select>` element.
+
+**Correct (Single Select):**
+```html
+<nui-input-group>
+	<label>Choose Fruit</label>
+	<nui-select searchable> <!-- Searchable goes on wrapper -->
+		<select name="fruit"> <!-- Native select inside -->
+			<option value="">Select a fruit...</option> <!-- Placeholder -->
+			<option value="apple">Apple</option>
+		</select>
+	</nui-select>
+</nui-input-group>
+```
+
+**Correct (Multi-Select):**
+```html
+<nui-select searchable>
+	<select name="fruits" multiple> <!-- Native 'multiple' attribute -->
+		<option value="apple" selected>Apple</option> <!-- Native 'selected' -->
+		<option value="banana">Banana</option>
+	</select>
+</nui-select>
+```
+
+**Wrong / Will Fail:**
+```html
+<nui-select searchable multiple> <!-- Wrong: 'multiple' belongs on the inner <select> -->
+	<option value="apple">Apple</option> <!-- Wrong: Missing inner <select> -->
+</nui-select>
+```
+
+## Programmatic API
+- `selectEl.getValue()` (Returns string for single, array for multiple)
+- `selectEl.setValue('val')` or `selectEl.setValue(['v1', 'v2'])`
+- `selectEl.setItems([{value: 'a', label: 'A'}, {group: 'G', options: [...]}])`
+- `selectEl.clear()`
+</script>
+		</nui-markdown>
+	</details>
+
 <header>
 	<h1>Select Component</h1>
 	<p class="lead">Enhanced select elements with search, multi-select, and accessible custom UI</p>
@@ -575,7 +633,7 @@ document.getElementById('demo-form').addEventListener('submit', (e) => {
 	<h2>API Reference</h2>
 
 	<h3>Methods</h3>
-	<table class="api-table">
+	<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
 		<thead>
 			<tr>
 				<th>Method</th>
@@ -713,7 +771,7 @@ document.getElementById('demo-form').addEventListener('submit', (e) => {
 	</table>
 
 	<>Available Events</>
-	<table class="api-table">
+	<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
 		<thead>
 			<tr>
 				<th>Event</th>
@@ -781,7 +839,7 @@ document.getElementById('demo-form').addEventListener('submit', (e) => {
 	<p>The select component provides comprehensive keyboard accessibility following WAI-ARIA best practices.</p>
 
 	<h3>When Closed (Control Button Focused)</h3>
-	<table class="api-table">
+	<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
 		<thead>
 			<tr>
 				<th>Key</th>
@@ -821,7 +879,7 @@ document.getElementById('demo-form').addEventListener('submit', (e) => {
 	</table>
 
 	<h3>Search Input (Searchable Selects)</h3>
-<table class="api-table">
+<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
 	<thead>
 		<tr>
 			<th>Key</th>
@@ -845,7 +903,7 @@ document.getElementById('demo-form').addEventListener('submit', (e) => {
 </table>
 
 <h3>When Open (Options List Focused)</h3>
-	<table class="api-table">
+	<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
 		<thead>
 			<tr>
 				<th>Key</th>
@@ -896,7 +954,7 @@ document.getElementById('demo-form').addEventListener('submit', (e) => {
 
 <section>
 	<h2>Attributes</h2>
-	<table class="api-table">
+	<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
 		<thead>
 			<tr>
 				<th>Attribute</th>
@@ -931,7 +989,7 @@ document.getElementById('demo-form').addEventListener('submit', (e) => {
 
 <script type="nui/page">
 function init(element, params, nui) {
-	// API Demo handlers
+// API Demo handlers
 	const apiSelect = element.querySelector('#api-demo-select');
 	const apiValue = element.querySelector('#api-value');
 	
@@ -1108,31 +1166,3 @@ function init(element, params, nui) {
 }
 </script>
 
-<style>
-.api-table {
-	width: 100%;
-	border-collapse: collapse;
-	margin: var(--nui-space-double) 0;
-	font-size: 0.875rem;
-}
-
-.api-table th,
-.api-table td {
-	text-align: left;
-	padding: var(--nui-space) var(--nui-space);
-	border-bottom: 1px solid var(--nui-border-color);
-}
-
-.api-table th {
-	font-weight: 600;
-	background: var(--nui-surface-color);
-}
-
-.api-table code {
-	font-family: var(--nui-font-mono);
-	font-size: 0.8rem;
-	background: var(--nui-surface-color);
-	padding: 0.125rem 0.375rem;
-	border-radius: 3px;
-}
-</style>

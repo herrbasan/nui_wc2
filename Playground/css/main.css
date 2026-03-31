@@ -84,14 +84,27 @@ nui-app-footer {
 
 .collapsible-section {
 	margin: 1rem 0;
+	border-bottom: thin solid var(--border-shade3);
 }
 
 .collapsible-section summary {
 	cursor: pointer;
 	font-weight: bold;
 	padding: var(--nui-space-half, 0.5rem);
+	padding-left: var(--nui-space, 1rem);
+	padding-right: var(--nui-space, 1rem);
 	background: var(--color-shade2);
-	border-radius: var(--border-radius1, 0.25rem);
+	border-radius: var(--border-radius2, 0.25rem);
+}
+
+.collapsible-section summary::marker {
+	font-size: 1rem;
+	color: var(--colort-text-dim);
+}
+
+.collapsible-section summary strong {
+	font-weight: 400;
+	margin-left: 0.2rem;
 }
 
 .collapsible-section > div {
@@ -105,6 +118,29 @@ nui-app-footer {
 	overflow-x: auto;
 	font-size: 0.875rem;
 }
+
+.llm-guide {
+	max-width: 100%;
+	line-height: 1.5;
+	padding-bottom: 1.5rem;
+	display: block;
+	border-bottom: thin solid var(--border-shade3);
+}
+
+.page-markdown .markdown-render-card {
+	background: light-dark(var(--color-shade2), var(--color-shade1));
+	border-color: var(--border-shade3);
+	box-shadow: 0 0 0 1px light-dark(rgb(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04)), 0 0.5rem 1.25rem light-dark(rgb(0, 0, 0, 0.08), rgba(0, 0, 0, 0.28));
+	padding: var(--nui-space-double);
+	margin-top: var(--nui-space);
+}
+
+.page-markdown .markdown-render-card nui-markdown {
+	display: block;
+	width: 100%;
+}
+
+
 
 /* Icon page styles */
 .page-icon .icon-demo {

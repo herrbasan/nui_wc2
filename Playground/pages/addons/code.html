@@ -1,3 +1,40 @@
+<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+		<summary><strong>LLM Guide - nui-code</strong></summary>
+		<nui-markdown id="llm-guide" data-component="nui-code" class="llm-guide">
+<script type="text/markdown">
+# LLM Guide: nui-code
+
+> **Global Note:** Always follow the global rules in `Playground/README.md`. This is an optional addon; load via nui.registerFeature if needed.
+
+## Strict DOM Structure
+- `<nui-code>` wraps `<pre><code>` (or uses `<script type="example" data-lang="...">` for demos).
+- Do not put raw text directly; use proper pre/code for highlighting and copy button.
+- Copy button is auto-added by the component.
+
+**Correct:**
+```html
+<nui-code>
+	<pre><code data-lang="js">console.log('Hello');</code></pre>
+</nui-code>
+```
+
+## Critical Rules
+- For Playground demos, prefer `<script type="example" data-lang="html">` inside nui-code (auto-converted).
+- Component adds copy-to-clipboard button with nui-icon.
+- Highlighting is minimal (HTML/CSS/JS/TS/JSON); no heavy Prism/Highlight.js.
+- Use in documentation pages; lazy-loaded.
+- Do not override copy behavior or remove the button manually.
+
+## Anti-Patterns
+- Using raw <pre><code> without nui-code wrapper (no copy button, no consistent styling).
+- Adding custom syntax highlighters or external libs.
+- Expecting full language support beyond web languages.
+- Placing code blocks inside other components without proper structure.
+- Using <style> for code formatting.
+</script>
+		</nui-markdown>
+	</details>
+
 <header>
 	<h1>Code Component</h1>
 		<p class="lead">Lightweight syntax highlighting for documentation and code examples</p>

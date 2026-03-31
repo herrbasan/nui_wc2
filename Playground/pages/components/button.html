@@ -1,3 +1,52 @@
+<div class="page-button">
+
+<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+		<summary><strong>LLM Guide - nui-button</strong></summary>
+		<nui-markdown id="llm-guide" data-component="nui-button" class="llm-guide">
+<script type="text/markdown">
+# LLM Guide: nui-button & nui-button-container
+
+> **Global Note:** Always follow the global rules in `Playground/README.md`. 
+
+## Critical Rules & Strict DOM Structure
+- `<nui-button>` is a Light DOM wrapper. It MUST contain a native `<button>` or `<a>` tag.
+- NEVER invent `<nui-button>Click</nui-button>` without the inner button tag.
+- Set the button `type` (e.g., `type="button"` or `type="submit"`) on the inner button.
+- Apply attributes like `disabled` or `aria-label` to the inner button, NOT the wrapper.
+- Use `<nui-button-container>` to group multiple buttons together. Do NOT use generic `<div>` wrappers with custom flexbox classes to group buttons.
+
+**Correct Usage:**
+```html
+<nui-button-container align="end" gap="1rem">
+	<nui-button variant="outline">
+		<button type="button">Cancel</button>
+	</nui-button>
+	<nui-button variant="primary">
+		<button type="submit" disabled>Save</button>
+	</nui-button>
+</nui-button-container>
+```
+
+**Wrong / Will Fail:**
+```html
+<div style="display: flex; gap: 10px;"> <!-- Wrong: Use <nui-button-container> -->
+	<nui-button type="button" disabled>Save</nui-button> <!-- Wrong: Missing inner <button>, attributes on wrapper -->
+</div>
+```
+
+## Icons in Buttons
+If using an icon, wrap the icon name in the `<nui-icon>` component, and place it *inside* the native button.
+```html
+<nui-button>
+	<button type="button">
+		<nui-icon name="settings">⚙</nui-icon> Settings
+	</button>
+</nui-button>
+```
+</script>
+		</nui-markdown>
+	</details>
+
 <header>
 	<h1>Button Component</h1>
 	<p>Enhanced button elements with consistent styling and interaction patterns</p>
@@ -557,3 +606,47 @@ nui-button button:disabled {
 		<li>Test keyboard navigation and focus states.</li>
 	</ul>
 </section>
+
+<section>
+	<h2>Component API</h2>
+	<p>The button component exposes methods for programmatic control.</p>
+
+	<h3>Methods</h3>
+	<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+		<thead>
+			<tr>
+				<th style="width: 25%;">Method</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>setLoading(boolean)</code></td>
+				<td>Shows or hides a loading state on the button. When loading, the button is disabled and shows a busy indicator. Call with <code>true</code> to show loading, <code>false</code> to hide.</td>
+			</tr>
+		</tbody>
+	</table>
+
+	<h3>Events</h3>
+	<table class="nui-table" style="width: 100%; font-size: 0.9em;">
+		<thead>
+			<tr>
+				<th style="width: 25%;">Event Name</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>nui-file-selected</code></td>
+				<td>Fired when a file is selected via a file input inside the button. <code>e.detail.files</code> contains an array of selected File objects.</td>
+			</tr>
+		</tbody>
+	</table>
+</section>
+
+<script type="nui/page">
+function init(element, params, nui) {
+}
+</script>
+
+</div>

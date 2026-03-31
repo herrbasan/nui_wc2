@@ -1,4 +1,39 @@
 <div class="page-code-editor">
+
+<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+		<summary><strong>LLM Guide - nui-code-editor</strong></summary>
+		<nui-markdown id="llm-guide" data-component="nui-code-editor" class="llm-guide">
+<script type="text/markdown">
+# LLM Guide: nui-code-editor (Experimental)
+
+> **Global Note:** Always follow the global rules in `Playground/README.md`. Experimental contenteditable-based editor.
+
+## Strict DOM Structure
+- Self-contained `<nui-code-editor data-lang="js" data-line-numbers="true">` with initial code content.
+- Uses contenteditable with custom highlighting.
+
+**Correct:**
+```html
+<nui-code-editor data-lang="js">
+function example() { console.log('NUI'); }
+</nui-code-editor>
+```
+
+## Critical Rules
+- Lightweight, no heavy deps or observers.
+- Supports lang and line numbers via data attrs.
+- Preserve native behaviors where possible.
+- Experimental - may evolve.
+
+## Anti-Patterns
+- Using Monaco/VSCode editor libs (heavy).
+- Manual contenteditable management.
+- Ignoring experimental warnings.
+- Adding external syntax highlighters.
+</script>
+		</nui-markdown>
+	</details>
+
     <header>
         <h1>Code Editor</h1>
         <p class="lead">A lightweight, zero-dependency, native syntax-highlighting code editor component.</p>
@@ -340,6 +375,43 @@ export { NuiCodeEditor };
                 <div data-output style="padding: 1rem; background: var(--color-shade2); border-radius: var(--border-radius1); font-family: monospace; white-space: pre;"></div>
             </div>
         </div>
+    </section>
+
+<section>
+        <h2>Component API</h2>
+        <p>The code editor component exposes properties and events for programmatic control.</p>
+
+        <h3>Properties</h3>
+        <table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+            <thead>
+                <tr>
+                    <th style="width: 25%;">Property</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>value</code></td>
+                    <td>Gets or sets the current code content as a string.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>Events</h3>
+        <table class="nui-table" style="width: 100%; font-size: 0.9em;">
+            <thead>
+                <tr>
+                    <th style="width: 25%;">Event Name</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>nui-change</code></td>
+                    <td>Fired when the content changes. <code>e.detail.value</code> contains the updated code string, and <code>e.detail.lang</code> contains the current language.</td>
+                </tr>
+            </tbody>
+        </table>
     </section>
 </div>
 

@@ -1,4 +1,47 @@
 <div class="page-sortable">
+
+<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+		<summary><strong>LLM Guide - nui-sortable</strong></summary>
+		<nui-markdown id="llm-guide" data-component="nui-sortable" class="llm-guide">
+<script type="text/markdown">
+# LLM Guide: nui-sortable & nui-sortable-item
+
+> **Global Note:** Always follow the global rules in `Playground/README.md`. Uses FLIP animation and enableDrag internally.
+
+## Strict DOM Structure
+- `<nui-sortable>` contains multiple `<nui-sortable-item>` children.
+- Each item should have a drag handle (with `nui-icon name="drag_indicator"`) and optional delete button using `data-action="sortable-item-delete"`.
+- Items should have `data-id` for stable reordering.
+
+**Correct:**
+```html
+<nui-sortable>
+	<nui-sortable-item data-id="item1">
+		<span class="drag-handle"><nui-icon name="drag_indicator"></nui-icon></span>
+		Item Content
+		<button data-action="sortable-item-delete"><nui-icon name="close"></nui-icon></button>
+	</nui-sortable-item>
+</nui-sortable>
+```
+
+## Critical Rules
+- Listen to `nui-sortable-change` event for order updates (provides new order array).
+- Use `element.getOrder()` for current order.
+- Do not implement your own drag logic - component handles touch/mouse/keyboard.
+- FLIP animation is used for smooth reordering visuals.
+- Delete uses specific data-action.
+
+## Anti-Patterns
+- Using HTML5 draggable or other drag libs.
+- Omitting drag-handle or using wrong icon.
+- Manually reordering DOM without dispatching events.
+- Expecting React onDragEnd style callbacks.
+- Adding custom CSS for drag states.
+- Forgetting data-id on items.
+</script>
+		</nui-markdown>
+	</details>
+
 	<header>
 		<h1>Priority List (Sortable)</h1>
 		<p class="lead">Drag and drop items to reorder them using a highly performant FLIP animation technique.</p>
@@ -144,6 +187,55 @@
 			</nui-sortable>
 		</div>
 	</section>
+
+<section>
+	<h2>Component API</h2>
+	<p>The sortable component exposes methods for programmatic control and events for monitoring changes.</p>
+
+	<h3>Methods</h3>
+	<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+		<thead>
+			<tr>
+				<th style="width: 25%;">Method</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>getItems()</code></td>
+				<td>Returns an array of objects with <code>{ id, element }</code> for each sortable item.</td>
+			</tr>
+			<tr>
+				<td><code>addItem(html)</code></td>
+				<td>Appends a new item via HTML string. The string should contain a <code>&lt;nui-sortable-item&gt;</code> element.</td>
+			</tr>
+			<tr>
+				<td><code>setItems(array)</code></td>
+				<td>Replaces all items with an array of HTML strings.</td>
+			</tr>
+			<tr>
+				<td><code>clear()</code></td>
+				<td>Removes all items from the sortable list.</td>
+			</tr>
+		</tbody>
+	</table>
+
+	<h3>Events</h3>
+	<table class="nui-table" style="width: 100%; font-size: 0.9em;">
+		<thead>
+			<tr>
+				<th style="width: 25%;">Event Name</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>nui-sortable-change</code></td>
+				<td>Fired when the order of items changes. <code>e.detail.order</code> contains an array of <code>data-id</code> strings in the new order.</td>
+			</tr>
+		</tbody>
+	</table>
+</section>
 
 </div>
 

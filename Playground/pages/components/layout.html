@@ -1,3 +1,53 @@
+<div class="page-layout">
+
+<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+		<summary><strong>LLM Guide - nui-layout</strong></summary>
+		<nui-markdown id="llm-guide" data-component="nui-layout" class="llm-guide">
+<script type="text/markdown">
+# LLM Guide: nui-layout (Content Container)
+
+> **Layout vs App-Layout:** `nui-layout` is for distributing *internal page content* (like cards or forms). For structural app chrome (sidebars, headers, app shells), see `nui-app` in `Playground/pages/components/app-layout.html`.
+
+## Critical Rules
+- `nui-layout` takes the opposite approach of most frameworks: **the constraint is the feature**.
+- Do not add complex media queries or grid logic; the component automatically handles responsiveness.
+- Natural column counts are **1, 2, and 3**. Do not use arbitrary column counts.
+
+## Available Layout Types
+1. **Grid Layout (Default):** Use `columns="2"` or `columns="3"`. The component handles collapsing to 1 column on mobile.
+2. **Masonry Layout:** Use `type="masonry"`. Stacks items vertically in columns, minimizing gaps (Pinterest-style).
+3. **Flow Layout:** Use `type="flow"`. Useful for grouping small elements like tags, chips, or inline actions. Avoid `nui-column-flow` as it is deprecated.
+4. **Sidebar Layout:** Use `type="sidebar"`. Creates a reading-optimized main content column with a narrow side column (golden ratio). 
+5. **Center Layout:** Use `type="center"`. Centers a narrow block of content on the page, max-width 65ch (ideal for reading text).
+
+## Strict DOM Structure (Do NOT deviate)
+**Correct (Grid):**
+```html
+<nui-layout columns="2"> <!-- Provide target desktop columns -->
+	<nui-card>Content 1</nui-card>
+	<nui-card>Content 2</nui-card>
+</nui-layout>
+```
+
+**Correct (Center text):**
+```html
+<nui-layout type="center">
+	<h1>Article Title</h1>
+	<p>Reading-optimized width text.</p>
+</nui-layout>
+```
+
+**Wrong / Will Fail:**
+```html
+<!-- Wrong: Do not inject custom flexbox styles instead of using nui-layout -->
+<div style="display: grid; grid-template-columns: 1fr 1fr;"> 
+	<nui-card>Content</nui-card>
+</div>
+```
+</script>
+		</nui-markdown>
+	</details>
+
 <header>
 	<h1>Layout Component</h1>
 	<p>A constrained, robust layout utility for common content patterns.</p>
@@ -383,3 +433,10 @@
 		</table>
 	</nui-table>
 </section>
+
+<script type="nui/page">
+function init(element, params, nui) {
+}
+</script>
+
+</div>

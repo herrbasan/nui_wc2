@@ -1201,7 +1201,6 @@ class NuiRichText extends HTMLElement {
             const parsedHtml = this._parseMarkdown(text);
             document.execCommand('insertHTML', false, parsedHtml);
             this._saveHistory();
-            this._forceComponentUpgrade();
             return;
         }
 
@@ -1236,74 +1235,21 @@ class NuiRichText extends HTMLElement {
             
             document.execCommand('insertHTML', false, temp.innerHTML);
             this._saveHistory();
-            this._forceComponentUpgrade();
         } else if (text) {
             document.execCommand('insertText', false, text);
             this._saveHistory();
         }
     }
 
-    _forceComponentUpgrade() {
-        setTimeout(() => {
-            this._editor.querySelectorAll('nui-code').forEach(codeEl => {
-                if (!codeEl.querySelector('.nui-code-copy')) {
-                    const clone = codeEl.cloneNode(true);
-                    codeEl.parentNode.replaceChild(clone, codeEl);
-                }
-            });
-        }, 10);
-    }
-
     _parseMarkdown(md) {
-        md = md.trim().replace(/\r\n/g, '\n');
-        md = md.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
-        md = md.replace(/^[ \t]*```(\w+)?\n([\s\S]*?)\n[ \t]*```/gm, (match, lang, code) => {
-            return `<nui-code><pre><code${lang ? ` data-lang="${lang}"` : ''}>${code}</code></pre></nui-code>`;
-        });
-
-        md = md.replace(/^[ \t]*\|(.+)\|\n[ \t]*\|([-:| ]+)\|\n((?:[ \t]*\|.+\|\n?)*)/gm, (match, header, sep, body) => {
-            const headCells = header.trim().replace(/^\||\|$/g, '').split('|').map(c => `<th>${c.trim()}</th>`).join('');
-            const bodyRows = body.trim().split('\n').filter(r => r).map(row => {
-                const cells = row.trim().replace(/^\||\|$/g, '').split('|').map(c => `<td>${c.trim()}</td>`).join('');
-                return `<tr>${cells}</tr>`;
-            }).join('');
-            return `<table class="nui-table"><thead><tr>${headCells}</tr></thead><tbody>${bodyRows}</tbody></table>`;
-        });
-
-        md = md.replace(/^[ \t]*(#{1,6})\s+(.+)$/gm, (match, hashes, text) => `<h${hashes.length}>${text}</h${hashes.length}>`);
-        md = md.replace(/^[ \t]*(>\s+.+(?:\n[ \t]*>\s+.+)*)/gm, (match) => `<blockquote>${match.replace(/^[ \t]*>\s+/gm, '')}</blockquote>`);
-
-        md = md.replace(/^((?:[ \t]*(?:-|\*)\s+.+\n?)+)/gm, (match) => {
-            const items = match.trim().split('\n').map(item => `<li>${item.replace(/^[ \t]*(?:-|\*)\s+/, '')}</li>`).join('');
-            return `<ul>${items}</ul>`;
-        });
-        
-        md = md.replace(/^((?:[ \t]*\d+\.\s+.+\n?)+)/gm, (match) => {
-            const items = match.trim().split('\n').map(item => `<li>${item.replace(/^[ \t]*\d+\.\s+/, '')}</li>`).join('');
-            return `<ol>${items}</ol>`;
-        });
-
-        md = md.replace(/^[ \t]*(-*_){3,}[ \t]*$/gm, '<hr>');
-
-        const blocks = md.split(/\n{2,}/);
-        const htmlBlocks = blocks.map(block => {
-            block = block.trim();
-            if (!block) return '';
-            if (/^<(h\d|ul|ol|pre|blockquote|table|hr|nui-code)/i.test(block)) return block;
-            return `<p>${block.replace(/\n/g, '<br>')}</p>`;
-        });
-        md = htmlBlocks.join('\n');
-
-        md = md.replace(/!\[([^\]]+)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">');
-        md = md.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
-        md = md.replace(/(\*\*|__)(.*?)\1/g, '<strong>$2</strong>');
-        md = md.replace(/(\*|_)(.*?)\1/g, '<em>$2</em>');
-        md = md.replace(/~~(.*?)~~/g, '<s>$1</s>');
-        md = md.replace(/`([^`]+)`/g, '<code>$1</code>');
-
-        return md;
-    }
+		// Delegate to core utility (deduplicated)
+		const util = window.nui?.util || (typeof nui !== 'undefined' ? nui.util : null);
+		if (util && util.markdownToHtml) {
+			return util.markdownToHtml(md);
+		}
+		// Fallback for standalone use
+		return md;
+	}
 
     _emitChange(saveHistory = true) {
         if (saveHistory) this._saveHistory();

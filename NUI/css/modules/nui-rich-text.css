@@ -100,14 +100,6 @@ nui-rich-text {
     padding: 0;
 }
 
-.nui-rich-text-editor blockquote {
-    margin: 1em 0;
-    padding: 0.5em 1em;
-    border-left: 4px solid var(--color-highlight);
-    background: var(--color-shade2);
-    color: var(--color-text-dim);
-}
-
 .nui-rich-text-editor a {
     color: var(--color-highlight);
     text-decoration: underline;

@@ -1,4 +1,40 @@
 <div class="page-lightbox">
+
+<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+		<summary><strong>LLM Guide - nui-lightbox</strong></summary>
+		<nui-markdown id="llm-guide" data-component="nui-lightbox" class="llm-guide">
+<script type="text/markdown">
+# LLM Guide: nui-lightbox
+
+> **Global Note:** Always follow the global rules in `Playground/README.md`. Avoid inline styles in production.
+
+## Strict DOM Structure
+- `<nui-lightbox>` wraps multiple `<img>` elements.
+- Use `data-lightbox-src` on imgs for full-res version in lightbox.
+- Optional `loop` attribute for carousel.
+
+**Correct:**
+```html
+<nui-lightbox>
+	<img src="thumb.jpg" data-lightbox-src="full.jpg" alt="Desc" />
+</nui-lightbox>
+```
+
+## Critical Rules
+- Component handles click to open, navigation, close.
+- Prefers high-res via data attr.
+- Do not use custom modal for images; use this for galleries.
+- Events for open/close if needed.
+
+## Anti-Patterns
+- Using nui-overlay for simple image lightboxes.
+- Hardcoding styles on images (use theme vars).
+- Missing alt texts or data-lightbox-src.
+- Expecting JS config instead of declarative.
+</script>
+		</nui-markdown>
+	</details>
+
     <header>
         <h1>Lightbox</h1>
         <p class="lead">Dedicated lightbox for image and media galleries.</p>
@@ -45,6 +81,43 @@ nui.components.lightbox.show([
                 <button type="button" data-action="lightbox-demo:programmatic">Open Programmatic Lightbox</button>
             </nui-button>
         </div>
+    </section>
+
+<section>
+        <h2>Component API</h2>
+        <p>The lightbox component provides a factory method for programmatic control.</p>
+
+        <h3>Factory Methods</h3>
+        <table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+            <thead>
+                <tr>
+                    <th style="width: 25%;">Method</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>nui.components.lightbox.show(images, startIndex?)</code></td>
+                    <td>Opens the lightbox programmatically. <code>images</code> is an array of objects with <code>src</code> and optional <code>title</code>. <code>startIndex</code> specifies which image to show first (default: 0).</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>Element Methods</h3>
+        <table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+            <thead>
+                <tr>
+                    <th style="width: 25%;">Method</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>open(images, startIndex?)</code></td>
+                    <td>Opens the lightbox on a <code>&lt;nui-lightbox&gt;</code> element. <code>images</code> is an optional array to override the declarative images. <code>startIndex</code> specifies which image to show first.</td>
+                </tr>
+            </tbody>
+        </table>
     </section>
 </div>
 

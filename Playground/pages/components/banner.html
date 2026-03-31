@@ -1,3 +1,67 @@
+<div class="page-banner">
+
+<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+		<summary><strong>LLM Guide - nui-banner</strong></summary>
+		<nui-markdown id="llm-guide" data-component="nui-banner" class="llm-guide">
+<script type="text/markdown">
+# LLM Guide: nui-banner (Notifications & Alerts)
+
+> **Global Note:** Always follow the global rules in `Playground/README.md`. 
+
+## Usage Modes (Read carefully)
+Do not confuse `<nui-banner>` (in-page alerts) with `nui.components.banner.show()` (temporary "toast" notifications).
+
+### 1. Temporary "Toast" Notifications (JS - Preferred)
+For short-lived feedback (e.g., "Saved successfully!", "Item deleted"), use the JavaScript factory. This creates a notification that appears globally (usually at the bottom right) and disappears automatically.
+
+```js
+// Success toast
+nui.components.banner.show({
+	content: 'Settings saved successfully',
+	type: 'success', // 'default', 'info', 'success', 'warning', 'danger'
+	autoClose: 3000 // Closes automatically after 3 seconds
+});
+
+// Actionable toast
+const myBanner = nui.components.banner.show({
+	content: 'Changes pending...',
+	type: 'warning',
+	closeBtn: true,
+	actions: [{ label: 'Apply Now', value: 'apply' }]
+});
+```
+
+### 2. In-Page Inline Alerts (HTML)
+For persistent messages that live inside the page layout (e.g., "Your trial expires in 3 days"), use the declarative `<nui-banner>` component in HTML. 
+
+- Use the `type` attribute (`info`, `success`, `warning`, `danger`).
+- Wrap the main text in `<span class="nui-banner-content">`.
+- Optional: Add `<nui-button-container slot="actions">` if the alert requires an action.
+
+**Correct (Inline Alert):**
+```html
+<nui-banner type="warning">
+	<nui-icon name="warning">⚠</nui-icon>
+	<span class="nui-banner-content">
+		<strong>Warning!</strong> Your subscription is ending soon.
+	</span>
+	<nui-button-container slot="actions">
+		<nui-button variant="primary"><button type="button">Renew</button></nui-button>
+	</nui-button-container>
+</nui-banner>
+```
+
+**Wrong / Will Fail:**
+```html
+<nui-banner>
+	<!-- Wrong: Missing the span wrapper with .nui-banner-content -->
+	Your subscription is ending soon.
+</nui-banner>
+```
+</script>
+		</nui-markdown>
+	</details>
+
 <header>
 	<h1>Banner Component</h1>
 	<p>Edge-anchored notification banners for passive, informational messages</p>
@@ -336,7 +400,7 @@ nui.components.banner.show({
 </section>
 
 <script type="nui/page">
-function init(element, params) {
+function init(element, params, nui) {
 	let replacementCounter = 0;
 
 	// Handle all banner actions via delegation
@@ -452,5 +516,8 @@ function init(element, params) {
 				break;
 		}
 	});
+
+
 }
 </script>
+</div>

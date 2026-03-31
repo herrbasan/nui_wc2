@@ -1,4 +1,75 @@
 <div class="page-list">
+
+<script type="text/markdown" id="llm-guide" data-component="nui-list">
+# LLM Guide: nui-list (Virtualized List & Data Grid)
+
+> **Global Note:** Always follow the global rules in `Playground/README.md`. Use `nui.util.createElement` and do not invent tags.
+
+`nui-list` is the central "workhorse" data component. It is a high-performance virtual scroller that automatically builds its own search/filter/sort toolbar.
+
+## Critical Rendering Rules (MUST FOLLOW)
+1. **Explicit Parent Height:** The virtual scroller must know its bounds. The parent container MUST have a deterministic height (e.g. `height: 500px`, `flex: 1`, `height: 100%`).
+2. **Identical Item Heights:** All items must be the same height (auto-measured from the first item).
+3. **Visibility:** You MUST call `list.loadData()` **AFTER** the list is visible in the DOM (e.g., after a dialog opens or a tab is shown), otherwise it measures a height of 0 and renders nothing.
+4. **Dialog Integration:** If placed inside `<nui-dialog mode="page">`, you MUST add `content-scroll="false"` to the dialog configuration so the list can own the scroll physics.
+
+## The Super-Power: Built-in Toolbar
+DO NOT build your own search inputs, sort dropdowns, or filter menus outside the list. The list builds them automatically if you configure them in `loadData()`.
+
+```js
+list.loadData({
+	data: myData,
+	selection: 'multi', // 'single' (default), 'multi', or false
+	search: [{ prop: 'name' }, { prop: 'email' }], // Auto-generates a search input!
+	sort: [ // Auto-generates a sort dropdown!
+		{ label: 'Name (A-Z)', prop: 'name' }, 
+		{ label: 'Age (High-Low)', prop: 'age', numeric: true, dir: 'desc' }
+	],
+	filters: [ // Auto-generates filter dropdowns!
+		{ prop: 'status', label: 'Status', options: [{label:'Active', value:'1'}, {label:'Inactive', value:'0'}] }
+	],
+	render: (item) => nui.util.createElement('div', {class: 'item'}, item.name),
+	events: (e) => {
+		if (e.type === 'selection') console.log('Selected:', list.getSelection());
+		if (e.type === 'action') console.log('Button clicked in row:', e.detail.action, e.detail.item);
+	}
+});
+```
+
+## Lazy Loading (For Complex Rows & Images)
+To keep the initial render at 60fps, return a lightweight skeleton from `render(item)`, and attach an `.update(item)` function to the DOM element. The list will call `.update()` only when the item scrolls into the viewport.
+
+```js
+render: (item) => {
+	const el = nui.util.createElement('div', {class: 'item'}, 'Loading...');
+	el.update_delay = 100; // Optional: wait 100ms before calling update
+	el.update = (currentItem) => {
+		el.textContent = currentItem.name; // Do heavy DOM work / image loading here
+	};
+	return el;
+}
+```
+
+## Strict DOM Structure (Declarative Mode)
+If you aren't using the programmatic JS setup above, you must use `<template data-item>`. Do NOT just put `<div>` elements directly inside `<nui-list>`.
+
+**Correct (Declarative):**
+```html
+<div style="height: 500px;"> <!-- Parent MUST have height -->
+    <nui-list>
+        <template data-item>
+            <div class="my-item">{{name}}</div>
+        </template>
+    </nui-list>
+</div>
+```
+</script>
+
+	<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+		<summary><strong>LLM Guide - nui-list (read this first)</strong></summary>
+		<div id="llm-guide-rendered" class="llm-guide"></div>
+	</details>
+
 	<header>
 		<h1>List Component</h1>
 		<p class="lead">High-performance virtualized list with search, sort, and selection. Handles 50,000+ items smoothly through element reuse and virtual scrolling. Theoretical max: ~300K items (at 60px height; actual height is auto-detected from the first rendered item).</p>
@@ -294,7 +365,7 @@ list.loadData(myArray);
 		<section>
 			<h3>Configuration Options</h3>
 
-			<table class="api-table">
+			<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
 				<thead>
 					<tr>
 						<th>Option</th>
@@ -372,7 +443,7 @@ list.loadData(myArray);
 		<section>
 			<h3>Component Methods</h3>
 
-			<table class="api-table">
+			<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
 				<thead>
 					<tr>
 						<th>Method</th>
@@ -454,7 +525,7 @@ list.loadData(myArray);
 			<h3>Events</h3>
 			<p>The <code>events</code> callback receives an event object with <code>type</code>, <code>value</code>, and other properties:</p>
 
-			<table class="api-table">
+			<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
 				<thead>
 					<tr>
 						<th>Event Type</th>
@@ -502,12 +573,21 @@ list.loadData(myArray);
 			</table>
 		</section>
 	</section>
-</div>
+
+
 
 <script type="nui/page">
 function init(element, params, nui) {
 	const api = window.nui || nui;
 	if (!api || !api.util) return;
+
+	// Render LLM Guide from Markdown (parsable structure for agents)
+	const mdScript = element.querySelector('#llm-guide') || document.getElementById('llm-guide');
+	const renderedDiv = element.querySelector('#llm-guide-rendered');
+	if (mdScript && renderedDiv && api.util.markdownToHtml) {
+		const mdContent = mdScript.textContent.trim();
+		renderedDiv.innerHTML = api.util.markdownToHtml(mdContent);
+	}
 
 	// Generate test data
 	function generateData(count) {
