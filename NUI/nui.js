@@ -1648,6 +1648,18 @@ registerComponent('nui-overlay', (element) => {
 // ################################# nui-tabs COMPONENT
 
 registerComponent('nui-tabs', (element) => {
+	const fillMode = element.hasAttribute('fill');
+
+	// In fill mode, set flex layout explicitly via JS to ensure it works
+	// regardless of CSS cascade order
+	if (fillMode) {
+		element.style.display = 'flex';
+		element.style.flexDirection = 'column';
+		element.style.flex = '1'; // Fill parent container
+		element.style.minHeight = '0'; // Allow shrinking
+		element.style.height = '100%'; // Explicit height for flex item
+	}
+
 	let tabList = element.el('[role="tablist"]');
 	if (!tabList) {
 		tabList = [...element.children].find(c => c.el('button, a'));
@@ -1665,6 +1677,18 @@ registerComponent('nui-tabs', (element) => {
 	if (!panels.length) {
 		panels = [...element.children].filter(c => c !== tabList);
 		panels.forEach(p => p.setAttribute('role', 'tabpanel'));
+	}
+
+	// In fill mode, set panels to flex and fill available space
+	if (fillMode) {
+		panels.forEach(p => {
+			p.style.display = 'flex';
+			p.style.flexDirection = 'column';
+			p.style.flex = '1';
+			p.style.minHeight = '0';
+			p.style.overflow = 'auto';
+			p.style.height = '100%'; // Explicit height for flex item
+		});
 	}
 
 	tabs.forEach((tab, i) => {
@@ -1687,7 +1711,9 @@ registerComponent('nui-tabs', (element) => {
 
 		if (!targetPanel) return;
 
-		const animate = shouldAnimate && !element.hasAttribute('no-animation') &&
+		// In fill mode, skip height animation - flex layout determines height
+		const fillMode = element.hasAttribute('fill');
+		const animate = shouldAnimate && !fillMode && !element.hasAttribute('no-animation') &&
 			!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 		let startHeight = 0;
@@ -1704,15 +1730,31 @@ registerComponent('nui-tabs', (element) => {
 			t.setAttribute('tabindex', '-1');
 		});
 		panels.forEach(p => {
-			p.hidden = true;
-			p.style.display = 'none';
+			// In fill mode, use style.display instead of hidden attribute
+			// because [hidden] CSS rule applies display:none !important which overrides inline styles
+			if (fillMode) {
+				p.style.display = 'none';
+			} else {
+				p.hidden = true;
+				p.style.display = 'none';
+			}
 		});
 
 		targetTab.setAttribute('aria-selected', 'true');
 		targetTab.removeAttribute('tabindex');
 
-		targetPanel.hidden = false;
-		targetPanel.style.display = '';
+		// In fill mode, use display:flex; in normal mode use hidden=false
+		if (fillMode) {
+			targetPanel.style.display = 'flex';
+			targetPanel.style.flexDirection = 'column';
+			targetPanel.style.flex = '1';
+			targetPanel.style.minHeight = '0';
+			targetPanel.style.overflow = 'auto';
+			targetPanel.style.height = '100%';
+		} else {
+			targetPanel.hidden = false;
+			targetPanel.style.display = '';
+		}
 
 		if (animate) {
 			void element.offsetHeight;
