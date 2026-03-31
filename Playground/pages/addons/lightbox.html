@@ -82,6 +82,43 @@ nui.components.lightbox.show([
             </nui-button>
         </div>
     </section>
+
+<section>
+        <h2>Component API</h2>
+        <p>The lightbox component provides a factory method for programmatic control.</p>
+
+        <h3>Factory Methods</h3>
+        <table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+            <thead>
+                <tr>
+                    <th style="width: 25%;">Method</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>nui.components.lightbox.show(images, startIndex?)</code></td>
+                    <td>Opens the lightbox programmatically. <code>images</code> is an array of objects with <code>src</code> and optional <code>title</code>. <code>startIndex</code> specifies which image to show first (default: 0).</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>Element Methods</h3>
+        <table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+            <thead>
+                <tr>
+                    <th style="width: 25%;">Method</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>open(images, startIndex?)</code></td>
+                    <td>Opens the lightbox on a <code>&lt;nui-lightbox&gt;</code> element. <code>images</code> is an optional array to override the declarative images. <code>startIndex</code> specifies which image to show first.</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
 </div>
 
 <script type="nui/page">

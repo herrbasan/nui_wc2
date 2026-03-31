@@ -313,6 +313,43 @@ tabs.selectTab('panel-b');   // Switch by associated panel ID or tab ID
 	</nui-code>
 </section>
 
+<section>
+	<h2>Component API</h2>
+	<p>The tabs component exposes properties and methods for programmatic control.</p>
+
+	<h3>Methods</h3>
+	<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+		<thead>
+			<tr>
+				<th style="width: 25%;">Method</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>selectTab(idOrIndex)</code></td>
+				<td>Activates a tab by panel ID (string) or zero-based index. Expands parent groups if necessary.</td>
+			</tr>
+		</tbody>
+	</table>
+
+	<h3>Events</h3>
+	<table class="nui-table" style="width: 100%; font-size: 0.9em;">
+		<thead>
+			<tr>
+				<th style="width: 25%;">Event Name</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>nui-tab-change</code></td>
+				<td>Fired when the active tab changes. <code>e.detail.tab</code> contains the activated button element, and <code>e.detail.panel</code> contains the associated panel element.</td>
+			</tr>
+		</tbody>
+	</table>
+</section>
+
 <script type="nui/page">
 function init(element) {
 	const tabs = element.querySelector('#event-tabs');

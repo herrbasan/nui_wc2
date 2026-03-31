@@ -238,6 +238,27 @@ const nestedData = {
 	</nui-code>
 </section>
 
+<section>
+	<h2>Component API</h2>
+	<p>The menu component exposes methods for programmatic control.</p>
+
+	<h3>Methods</h3>
+	<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+		<thead>
+			<tr>
+				<th style="width: 25%;">Method</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>loadData(data)</code></td>
+				<td>Loads menu configuration from a data object. The structure uses the same format as <code>nui-link-list</code> with <code>items</code> array containing menu entries.</td>
+			</tr>
+		</tbody>
+	</table>
+</section>
+
 <script type="nui/page">
 function init(element, params) {
 	// Load the menu addon module

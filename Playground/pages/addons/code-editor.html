@@ -376,6 +376,43 @@ export { NuiCodeEditor };
             </div>
         </div>
     </section>
+
+<section>
+        <h2>Component API</h2>
+        <p>The code editor component exposes properties and events for programmatic control.</p>
+
+        <h3>Properties</h3>
+        <table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+            <thead>
+                <tr>
+                    <th style="width: 25%;">Property</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>value</code></td>
+                    <td>Gets or sets the current code content as a string.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>Events</h3>
+        <table class="nui-table" style="width: 100%; font-size: 0.9em;">
+            <thead>
+                <tr>
+                    <th style="width: 25%;">Event Name</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>nui-change</code></td>
+                    <td>Fired when the content changes. <code>e.detail.value</code> contains the updated code string, and <code>e.detail.lang</code> contains the current language.</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
 </div>
 
 <script type="nui/page">

@@ -243,6 +243,71 @@ tagInput.addEventListener('nui-change', (e) => {
 	</div>
 </section>
 
+<section>
+	<h2>Component API</h2>
+	<p>The tag input component exposes methods for programmatic control and events for monitoring changes.</p>
+
+	<h3>Methods</h3>
+	<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+		<thead>
+			<tr>
+				<th style="width: 25%;">Method</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>addTag(value, label?)</code></td>
+				<td>Adds a new tag. Returns true if successful, false if tag already exists. Optionally provide a label for display.</td>
+			</tr>
+			<tr>
+				<td><code>removeTag(value)</code></td>
+				<td>Removes a tag by its value. Returns true if removed, false if not found.</td>
+			</tr>
+			<tr>
+				<td><code>getValues()</code></td>
+				<td>Returns an array of tag values (strings).</td>
+			</tr>
+			<tr>
+				<td><code>listTags()</code></td>
+				<td>Returns an array of tag objects with <code>value</code> and <code>label</code> properties.</td>
+			</tr>
+			<tr>
+				<td><code>hasTag(value)</code></td>
+				<td>Returns true if a tag with the given value exists.</td>
+			</tr>
+			<tr>
+				<td><code>clear()</code></td>
+				<td>Removes all tags.</td>
+			</tr>
+		</tbody>
+	</table>
+
+	<h3>Events</h3>
+	<table class="nui-table" style="width: 100%; font-size: 0.9em;">
+		<thead>
+			<tr>
+				<th style="width: 25%;">Event Name</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>nui-tag-add</code></td>
+				<td>Fired when a tag is added. <code>e.detail.value</code> contains the value and <code>e.detail.label</code> contains the label.</td>
+			</tr>
+			<tr>
+				<td><code>nui-tag-remove</code></td>
+				<td>Fired when a tag is removed. <code>e.detail.value</code> contains the removed value.</td>
+			</tr>
+			<tr>
+				<td><code>nui-change</code></td>
+				<td>Fired when tags change. <code>e.detail.values</code> contains an array of all current values.</td>
+			</tr>
+		</tbody>
+	</table>
+</section>
+
 <script type="nui/page">
 function init(element, params, nui) {
 	// Helper to get output element

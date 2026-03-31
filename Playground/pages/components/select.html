@@ -633,7 +633,7 @@ document.getElementById('demo-form').addEventListener('submit', (e) => {
 	<h2>API Reference</h2>
 
 	<h3>Methods</h3>
-	<table class="api-table">
+	<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
 		<thead>
 			<tr>
 				<th>Method</th>
@@ -771,7 +771,7 @@ document.getElementById('demo-form').addEventListener('submit', (e) => {
 	</table>
 
 	<>Available Events</>
-	<table class="api-table">
+	<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
 		<thead>
 			<tr>
 				<th>Event</th>
@@ -839,7 +839,7 @@ document.getElementById('demo-form').addEventListener('submit', (e) => {
 	<p>The select component provides comprehensive keyboard accessibility following WAI-ARIA best practices.</p>
 
 	<h3>When Closed (Control Button Focused)</h3>
-	<table class="api-table">
+	<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
 		<thead>
 			<tr>
 				<th>Key</th>
@@ -879,7 +879,7 @@ document.getElementById('demo-form').addEventListener('submit', (e) => {
 	</table>
 
 	<h3>Search Input (Searchable Selects)</h3>
-<table class="api-table">
+<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
 	<thead>
 		<tr>
 			<th>Key</th>
@@ -903,7 +903,7 @@ document.getElementById('demo-form').addEventListener('submit', (e) => {
 </table>
 
 <h3>When Open (Options List Focused)</h3>
-	<table class="api-table">
+	<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
 		<thead>
 			<tr>
 				<th>Key</th>
@@ -954,7 +954,7 @@ document.getElementById('demo-form').addEventListener('submit', (e) => {
 
 <section>
 	<h2>Attributes</h2>
-	<table class="api-table">
+	<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
 		<thead>
 			<tr>
 				<th>Attribute</th>
@@ -1166,31 +1166,3 @@ function init(element, params, nui) {
 }
 </script>
 
-<style>
-.api-table {
-	width: 100%;
-	border-collapse: collapse;
-	margin: var(--nui-space-double) 0;
-	font-size: 0.875rem;
-}
-
-.api-table th,
-.api-table td {
-	text-align: left;
-	padding: var(--nui-space) var(--nui-space);
-	border-bottom: 1px solid var(--nui-border-color);
-}
-
-.api-table th {
-	font-weight: 600;
-	background: var(--nui-surface-color);
-}
-
-.api-table code {
-	font-family: var(--nui-font-mono);
-	font-size: 0.8rem;
-	background: var(--nui-surface-color);
-	padding: 0.125rem 0.375rem;
-	border-radius: 3px;
-}
-</style>

@@ -155,6 +155,52 @@ const cleanup = nui.util.enableDrag(element, (data) => {
 	</nui-code>
 </section>
 
+<section>
+	<h2>Component API</h2>
+	<p>The slider component exposes methods for programmatic control and uses native input events.</p>
+
+	<h3>Methods</h3>
+	<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+		<thead>
+			<tr>
+				<th style="width: 25%;">Method</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>getValue()</code></td>
+				<td>Returns the current value of the slider (same as accessing the inner input's value property).</td>
+			</tr>
+			<tr>
+				<td><code>setValue(val)</code></td>
+				<td>Sets the slider value programmatically.</td>
+			</tr>
+		</tbody>
+	</table>
+
+	<h3>Events</h3>
+	<p>Events are fired by the inner native <code>&lt;input&gt;</code> element and bubble up to the <code>&lt;nui-slider&gt;</code> wrapper.</p>
+	<table class="nui-table" style="width: 100%; font-size: 0.9em;">
+		<thead>
+			<tr>
+				<th style="width: 25%;">Event</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>input</code></td>
+				<td>Fired continuously while dragging (like native range input).</td>
+			</tr>
+			<tr>
+				<td><code>change</code></td>
+				<td>Fired when the user releases the slider (like native range input).</td>
+			</tr>
+		</tbody>
+	</table>
+</section>
+
 <script type="nui/page">
 	function init(element, params) {
 		function bindValueMirror(sliderSelector, outputSelector) {

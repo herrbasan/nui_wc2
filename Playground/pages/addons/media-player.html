@@ -125,6 +125,63 @@ nui.components.mediaPlayer.create('#my-target', {
             </div>
         </div>
     </section>
+
+<section>
+        <h2>Component API</h2>
+        <p>The media player component provides a factory method for programmatic creation.</p>
+
+        <h3>Factory Methods</h3>
+        <table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+            <thead>
+                <tr>
+                    <th style="width: 25%;">Method</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>nui.components.mediaPlayer.create(target, options)</code></td>
+                    <td>Creates a media player and injects it into the target element. Returns the player instance.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>Options</h3>
+        <table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+            <thead>
+                <tr>
+                    <th style="width: 25%;">Option</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>url</code></td>
+                    <td>The media source URL.</td>
+                </tr>
+                <tr>
+                    <td><code>type</code></td>
+                    <td>Media type: <code>"video"</code> or <code>"audio"</code>.</td>
+                </tr>
+                <tr>
+                    <td><code>poster</code></td>
+                    <td>Poster image URL for video players.</td>
+                </tr>
+                <tr>
+                    <td><code>pauseOthers</code></td>
+                    <td>When true (default), automatically pauses other players when this one plays.</td>
+                </tr>
+                <tr>
+                    <td><code>attributes</code></td>
+                    <td>Object with attributes to set on the native <code>&lt;video&gt;</code> or <code>&lt;audio&gt;</code> element (e.g., <code>{ loop: true, crossorigin: 'anonymous' }</code>).</td>
+                </tr>
+                <tr>
+                    <td><code>playerAttributes</code></td>
+                    <td>Object with attributes to set on the <code>&lt;nui-media-player&gt;</code> wrapper element.</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
 </div>
 
 <script type="nui/page">

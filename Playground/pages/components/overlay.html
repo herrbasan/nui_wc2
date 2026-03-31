@@ -138,6 +138,55 @@ overlay.addEventListener('nui-overlay-close', (e) => {
 			</script>
 		</nui-code>
 	</section>
+
+<section>
+	<h2>Component API</h2>
+	<p>The overlay component exposes methods for programmatic control and events for monitoring state changes.</p>
+
+	<h3>Methods</h3>
+	<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+		<thead>
+			<tr>
+				<th style="width: 25%;">Method</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>showModal()</code></td>
+				<td>Opens the overlay as a modal dialog with backdrop.</td>
+			</tr>
+			<tr>
+				<td><code>close(returnValue?)</code></td>
+				<td>Closes the overlay. Optionally provide a return value to pass to event handlers.</td>
+			</tr>
+		</tbody>
+	</table>
+
+	<h3>Events</h3>
+	<table class="nui-table" style="width: 100%; font-size: 0.9em;">
+		<thead>
+			<tr>
+				<th style="width: 25%;">Event Name</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>nui-overlay-open</code></td>
+				<td>Fired when the overlay becomes visible.</td>
+			</tr>
+			<tr>
+				<td><code>nui-overlay-close</code></td>
+				<td>Fired when the overlay closes. <code>e.detail.returnValue</code> contains any value passed to <code>close()</code>.</td>
+			</tr>
+			<tr>
+				<td><code>nui-overlay-cancel</code></td>
+				<td>Fired when the overlay is cancelled (e.g., by pressing Escape or clicking backdrop).</td>
+			</tr>
+		</tbody>
+	</table>
+</section>
 </div>
 
 <script type="nui/page">

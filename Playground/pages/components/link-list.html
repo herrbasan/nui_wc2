@@ -591,6 +591,59 @@ const demoNavigationData = [
 	</ul>
 </section>
 
+<section>
+	<h2>Component API</h2>
+	<p>The link list component exposes methods for programmatic control and events for monitoring state changes.</p>
+
+	<h3>Methods</h3>
+	<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+		<thead>
+			<tr>
+				<th style="width: 25%;">Method</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>loadData(data)</code></td>
+				<td>Loads navigation structure from a data object. Uses the same structure as <code>nui-link-list</code> with groups, items, icons, and actions.</td>
+			</tr>
+			<tr>
+				<td><code>setActive(selector)</code></td>
+				<td>Sets the active item using a CSS selector or element reference. Auto-expands parent groups if necessary.</td>
+			</tr>
+			<tr>
+				<td><code>getActive()</code></td>
+				<td>Returns the currently active <code>&lt;li&gt;</code> element, or null if none.</td>
+			</tr>
+			<tr>
+				<td><code>getActiveData()</code></td>
+				<td>Returns the data object for the active item, containing properties like <code>href</code>, <code>text</code>, and <code>action</code>.</td>
+			</tr>
+			<tr>
+				<td><code>clearActive(closeAll?)</code></td>
+				<td>Clears the active state. If <code>closeAll</code> is true, also closes all collapsible groups.</td>
+			</tr>
+		</tbody>
+	</table>
+
+	<h3>Events</h3>
+	<table class="nui-table" style="width: 100%; font-size: 0.9em;">
+		<thead>
+			<tr>
+				<th style="width: 25%;">Event Name</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>nui-active-change</code></td>
+				<td>Fired when the active item changes. <code>e.detail.element</code> contains the activated <code>&lt;li&gt;</code> element.</td>
+			</tr>
+		</tbody>
+	</table>
+</section>
+
 <script type="nui/page">
 function init(element, params) {
 	// Navigation data structure
