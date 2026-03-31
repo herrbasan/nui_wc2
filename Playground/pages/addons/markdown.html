@@ -1,5 +1,8 @@
 <div class="page-markdown">
-	<nui-markdown id="llm-guide" data-component="nui-markdown" class="llm-guide">
+
+	<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+		<summary><strong>LLM Guide - nui-markdown</strong></summary>
+		<nui-markdown id="llm-guide" data-component="nui-markdown" class="llm-guide">
 <script type="text/markdown">
 # LLM Guide: nui-markdown
 
@@ -7,6 +10,7 @@
 
 ## Strict Usage
 - Import: `import './NUI/lib/modules/nui-markdown.js';` (or script src).
+- For syntax highlighting in code blocks (via nui-code): also import `NUI/lib/modules/nui-syntax-highlight.js`.
 - Use `<nui-markdown><script type="text/markdown">...</script></nui-markdown>` or `nui.util.markdownToHtml(md)`.
 - Supports headers, lists, links, code (integrates nui-code), tables, emphasis, blockquotes, hr.
 
@@ -22,19 +26,20 @@
 
 ## Critical Rules
 - Parser is lightweight and web-focused; not full CommonMark.
-- Code blocks become nui-code with language.
+- Code blocks become nui-code with language (requires `NUI/lib/modules/nui-syntax-highlight.js` for syntax highlighting).
 - Tables rendered as nui-table.
 - For dynamic, use the util function and set innerHTML.
 - Do not rely on external Markdown libs.
 
 ## Anti-Patterns
-- Forgetting the import for the addon.
+- Forgetting the import for the addon (or nui-syntax-highlight.js for code syntax).
 - Using raw text without the script tag type.
 - Expecting GitHub-flavored Markdown features not implemented.
 - Heavy dependencies for simple rendering.
 - Modifying the parser without understanding the replace logic.
 </script>
-	</nui-markdown>
+		</nui-markdown>
+	</details>
 
 	<header>
 		<h1>Markdown (<nui-badge class="primary">Addon</nui-badge>)</h1>
@@ -47,8 +52,9 @@
 		
 		<nui-code>
 			<script type="example" data-lang="html">
-<!-- Import the addon -->
+<!-- Import the addon (syntax highlighting requires the syntax module too) -->
 <!-- <script type="module" src="NUI/lib/modules/nui-markdown.js"></script> -->
+<!-- <script type="module" src="NUI/lib/modules/nui-syntax-highlight.js"></script> -->
 
 <nui-markdown>
 <script type="text/markdown">
@@ -119,7 +125,7 @@ Paragraph with **bold**, *italic*, ~~strikethrough~~, `inline code`, and a [link
 
 	<section>
 		<h2>Supported Syntax</h2>
-		<p>The parser supports headers, links, emphasis, lists, separators, simple tables, blockquotes, and code blocks using <code>nui-code</code>.</p>
+		<p>The parser supports headers, links, emphasis, lists, separators, simple tables, blockquotes, and code blocks using <code>nui-code</code> (which requires the <code>nui-syntax-highlight</code> module for colored syntax in fenced code blocks).</p>
 		<div class="demo-area">
 			<nui-card class="markdown-render-card">
 				<nui-markdown>
