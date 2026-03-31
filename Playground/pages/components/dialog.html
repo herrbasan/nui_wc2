@@ -701,6 +701,59 @@ dialog.close('return-value'); // Close with a return value
 	</nui-code>
 </section>
 
+	<section>
+		<h2>Component API</h2>
+		<p>The dialog system provides factory methods on <code>nui.components.dialog</code> and events on <code>&lt;nui-dialog&gt;</code> elements.</p>
+
+		<h3>Factory Methods (Preferred)</h3>
+		<table class="nui-table" style="width: 100%; font-size: 0.9em;">
+			<thead>
+				<tr>
+					<th style="width: 30%;">Method</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><code>alert(title, message, options?)</code></td>
+					<td>Simple alert dialog. Returns Promise with button value.</td>
+				</tr>
+				<tr>
+					<td><code>confirm(title, message, options?)</code></td>
+					<td>Confirmation dialog. Returns boolean Promise.</td>
+				</tr>
+				<tr>
+					<td><code>prompt(title, message, options?)</code></td>
+					<td>Form prompt with fields. Returns object or null.</td>
+				</tr>
+				<tr>
+					<td><code>page(title, content, options?)</code></td>
+					<td>Complex page-style dialog. Returns {dialog, main, result}.</td>
+				</tr>
+			</tbody>
+		</table>
+
+		<h3>Events</h3>
+		<table class="nui-table" style="width: 100%; font-size: 0.9em;">
+			<thead>
+				<tr>
+					<th style="width: 25%;">Event</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><code>nui-dialog-open</code></td>
+					<td>Fired when dialog becomes visible.</td>
+				</tr>
+				<tr>
+					<td><code>nui-dialog-close</code></td>
+					<td>Fired on close. <code>e.detail.returnValue</code> contains the result.</td>
+				</tr>
+			</tbody>
+		</table>
+	</section>
+
 <script type="nui/page">
 function init(element, params, nui) {
 // Watch the custom-confirm state and display it
