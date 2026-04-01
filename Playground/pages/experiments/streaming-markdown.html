@@ -13,10 +13,11 @@
 				<label for="tempo-select" style="font-size: var(--font-size-small);">Tempo:</label>
 				<nui-select id="tempo-select" style="min-width: 120px;">
 					<select>
-						<option value="200">Slow</option>
-						<option value="100" selected>Normal</option>
-						<option value="50">Fast</option>
-						<option value="20">Very Fast</option>
+						<option value="instant" selected>Instant</option>
+						<option value="100">Slow</option>
+						<option value="50">Normal</option>
+						<option value="20">Fast</option>
+						<option value="5">Very Fast</option>
 					</select>
 				</nui-select>
 			</div>
@@ -89,217 +90,44 @@ function init(element) {
 	var chunkCount = 0;
 
 	var sampleMarkdown = [
-		'# Building a Modern Web Application',
+		'# Quick Start',
 		'',
-		'A comprehensive guide to creating scalable, maintainable web apps using vanilla JavaScript and modern APIs.',
-		'',
-		'## Table of Contents',
-		'',
-		'1. [Project Structure](#project-structure)',
-		'2. [State Management](#state-management)',
-		'3. [Event Handling](#event-handling)',
-		'4. [Data Fetching](#data-fetching)',
+		'Get up and running quickly with this simple guide.',
 		'',
 		'---',
 		'',
-		'## Project Structure',
+		'## Configuration',
 		'',
-		'A well-organized project follows consistent conventions. Here\'s a recommended structure:',
+		'| Option | Default | Description |',
+		'|--------|---------|-------------|',
+		'| theme | light | Color scheme |',
+		'| locale | en | Language setting |',
+		'| debug | false | Enable debug mode |',
 		'',
-		'```',
-		'project/',
-		'|__ src/',
-		'|   |__ components/    # Reusable UI components',
-		'|   |__ utils/         # Helper functions',
-		'|   |__ services/     # API and data services',
-		'|   |__ styles/       # CSS and theming',
-		'|   |__ main.js       # Application entry point',
-		'|__ public/',
-		'|   |__ index.html   # Main HTML file',
-		'|   |__ assets/      # Static assets',
-		'|__ package.json',
-		'```',
+		'***',
 		'',
-		'## State Management',
-		'',
-		'Managing state effectively is crucial. Here\'s a simple state container pattern:',
+		'## JavaScript',
 		'',
 		'```javascript',
-		'class Store {',
-		'    constructor(initialState) {',
-		'        this._state = initialState;',
-		'        this._listeners = new Set();',
-		'    }',
-		'',
-		'    get state() {',
-		'        return { ...this._state };',
-		'    }',
-		'',
-		'    setState(updates) {',
-		'        const prevState = this._state;',
-		'        this._state = { ...this._state, ...updates };',
-		'        this._notify(prevState, this._state);',
-		'    }',
-		'',
-		'    subscribe(listener) {',
-		'        this._listeners.add(listener);',
-		'        return () => this._listeners.delete(listener);',
-		'    }',
-		'',
-		'    _notify(prevState, nextState) {',
-		'        this._listeners.forEach(listener => {',
-		'            listener(nextState, prevState);',
-		'        });',
-		'    }',
-		'}',
-		'',
-		'const appStore = new Store({ user: null, theme: "light" });',
+		'const config = { theme: "dark" };',
+		'console.log("Ready!");',
 		'```',
 		'',
-		'## Event Handling',
-		'',
-		'Use event delegation for better performance and memory management:',
-		'',
-		'```javascript',
-		'document.addEventListener("click", (e) => {',
-		'    const target = e.target.closest("[data-action]");',
-		'    if (!target) return;',
-		'',
-		'    const action = target.dataset.action;',
-		'    const handler = actionHandlers[action];',
-		'',
-		'    if (typeof handler === "function") {',
-		'        e.preventDefault();',
-		'        handler({ element: target, event: e });',
-		'    }',
-		'});',
-		'',
-		'const actionHandlers = {',
-		'    "nav:open": ({ element }) => openNavigation(),',
-		'    "nav:close": ({ element }) => closeNavigation(),',
-		'    "theme:toggle": ({ element }) => toggleTheme(),',
-		'    "user:logout": ({ element }) => logoutUser(),',
-		'};',
-		'```',
-		'',
-		'## Data Fetching',
-		'',
-		'A clean fetch wrapper with error handling:',
-		'',
-		'```javascript',
-		'async function fetchJSON(url, options = {}) {',
-		'    const controller = new AbortController();',
-		'    const timeout = setTimeout(() => controller.abort(), 10000);',
-		'',
-		'    try {',
-		'        const response = await fetch(url, {',
-		'            ...options,',
-		'            signal: controller.signal,',
-		'            headers: {',
-		'                "Content-Type": "application/json",',
-		'                ...options.headers',
-		'            }',
-		'        });',
-		'',
-		'        if (!response.ok) {',
-		'            throw new Error(`HTTP ${response.status}: ${response.statusText}`);',
-		'        }',
-		'',
-		'        const data = await response.json();',
-		'        return { success: true, data };',
-		'    } catch (error) {',
-		'        if (error.name === "AbortError") {',
-		'            return { success: false, error: "Request timed out" };',
-		'        }',
-		'        return { success: false, error: error.message };',
-		'    } finally {',
-		'        clearTimeout(timeout);',
-		'    }',
-		'}',
-		'```',
-		'',
-		'## Styling with CSS Custom Properties',
-		'',
-		'CSS variables make theming and maintenance easier:',
+		'## CSS',
 		'',
 		'```css',
-		':root {',
-		'    --color-primary: #3b82f6;',
-		'    --color-primary-hover: #2563eb;',
-		'    --color-background: #ffffff;',
-		'    --color-surface: #f3f4f6;',
-		'    --color-text: #1f2937;',
-		'    --color-text-muted: #6b7280;',
-		'    --color-border: #e5e7eb;',
-		'    --color-error: #ef4444;',
-		'    --color-success: #10b981;',
-		'',
-		'    --spacing-xs: 0.25rem;',
-		'    --spacing-sm: 0.5rem;',
-		'    --spacing-md: 1rem;',
-		'    --spacing-lg: 1.5rem;',
-		'    --spacing-xl: 2rem;',
-		'',
-		'    --radius-sm: 0.25rem;',
-		'    --radius-md: 0.5rem;',
-		'    --radius-lg: 1rem;',
-		'',
-		'    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);',
-		'    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);',
-		'    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.15);',
-		'}',
-		'',
-		'[data-theme="dark"] {',
-		'    --color-primary: #60a5fa;',
-		'    --color-background: #111827;',
-		'    --color-surface: #1f2937;',
-		'    --color-text: #f9fafb;',
-		'    --color-text-muted: #9ca3af;',
-		'    --color-border: #374151;',
-		'}',
+		'.btn { padding: 0.5rem 1rem; }',
 		'```',
 		'',
-		'## JSON Configuration Example',
+		'## HTML',
 		'',
-		'Application settings stored as JSON:',
-		'',
-		'```json',
-		'{',
-		'    "name": "MyWebApp",',
-		'    "version": "1.0.0",',
-		'    "settings": {',
-		'        "theme": "auto",',
-		'        "language": "en",',
-		'        "notifications": true,',
-		'        "autoSave": true,',
-		'        "autoSaveInterval": 30000',
-		'    },',
-		'    "api": {',
-		'        "baseUrl": "https://api.example.com/v1",',
-		'        "timeout": 10000,',
-		'        "retryAttempts": 3',
-		'    },',
-		'    "features": {',
-		'        "darkMode": true,',
-		'        "analytics": false,',
-		'        "debugMode": false',
-		'    }',
-		'}',
+		'```html',
+		'<button class="btn">Click me</button>',
 		'```',
 		'',
-		'## Best Practices',
+		'___',
 		'',
-		'- **Use semantic HTML** - Improves accessibility and SEO',
-		'- **Mobile-first approach** - Design for mobile, then enhance for desktop',
-		'- **Progressive enhancement** - Core functionality works without JavaScript',
-		'- **Performance** - Lazy load images, bundle code, minimize reflows',
-		'- **Security** - Sanitize user input, use HTTPS, validate on server',
-		'',
-		'> "The best code is no code at all. Every line you write is a line that needs debugging."',
-		'',
-		'---',
-		'',
-		'**Happy coding!**',
+		'**Done!**',
 		''
 	].join('\n');
 
@@ -311,7 +139,7 @@ function init(element) {
 	}
 
 	function getTempo() {
-		return parseInt(tempoSelect.querySelector('select').value, 10) || 100;
+		return tempoSelect.querySelector('select').value;
 	}
 
 	function streamNext() {
@@ -342,13 +170,27 @@ function init(element) {
 		isPaused = false;
 		chunkCount = 0;
 
+		var tempo = getTempo();
+
 		btnStart.querySelector('button').disabled = true;
 		btnPause.querySelector('button').disabled = false;
 		btnPause.querySelector('button').textContent = 'Pause';
 
-		streamInterval = setInterval(function() {
-			if (!isPaused) streamNext();
-		}, getTempo());
+		if (tempo === 'instant') {
+			streamText = sampleMarkdown;
+			streamIndex = sampleMarkdown.length;
+			raw.textContent = streamText;
+			renderMarkdown(streamText);
+			chunkCount = 1;
+			statChunks.textContent = chunkCount;
+			statChars.textContent = streamText.length;
+			btnStart.querySelector('button').disabled = false;
+			btnPause.querySelector('button').disabled = true;
+		} else {
+			streamInterval = setInterval(function() {
+				if (!isPaused) streamNext();
+			}, parseInt(tempo, 10) || 100);
+		}
 	}
 
 	btnStart.querySelector('button').addEventListener('click', startStreaming);

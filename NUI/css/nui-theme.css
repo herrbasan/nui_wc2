@@ -301,6 +301,12 @@ h6 {
 	font-size: var(--font-size-small);
 }
 
+hr {
+	border: none;
+	border-top: solid var(--border-thickness) var(--color-shade4);
+	margin: var(--nui-space) 0;
+}
+
 iframe {
 	border: solid var(--border-thickness) var(--border-shade2);
 }

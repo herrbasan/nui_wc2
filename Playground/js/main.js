@@ -341,6 +341,7 @@ const navigationData = [
 		items: [
 			{ label: 'Dashboard', href: '#feature=dashboard' },
 			{ label: 'HTML Standards', href: '#page=experiments/html-standards' },
+			{ label: 'Streaming Markdown', href: '#page=experiments/streaming-markdown' },
 		]
 	}
 ];

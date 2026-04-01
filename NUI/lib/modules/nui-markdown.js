@@ -46,7 +46,11 @@ export function markdownToHtml(md) {
 		return `<ol>${items}</ol>`;
 	});
 
-	html = html.replace(/^[ \t]*(-*_){3,}[ \t]*$/gm, '<hr>');
+	// Horizontal rules with style classes
+	html = html.replace(/^[ \t]*(={3,})[ \t]*$/gm, '<hr class="equals">');
+	html = html.replace(/^[ \t]*(-{3,})[ \t]*$/gm, '<hr class="dash">');
+	html = html.replace(/^[ \t]*(\*{3,})[ \t]*$/gm, '<hr class="stars">');
+	html = html.replace(/^[ \t]*(_{3,})[ \t]*$/gm, '<hr>');
 
 	// Block separation
 	const blocks = html.split(/\n{2,}/);
