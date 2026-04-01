@@ -1,0 +1,381 @@
+<div class="page-streaming">
+	<header>
+		<h1>Streaming Markdown Demo</h1>
+		<p class="lead">Simulates LLM-style streaming with markdown rendering.</p>
+	</header>
+
+	<section>
+		<div style="display: flex; gap: var(--nui-space); margin-bottom: var(--nui-space); align-items: center; flex-wrap: wrap;">
+			<nui-button id="btn-start"><button type="button">Start</button></nui-button>
+			<nui-button id="btn-pause"><button type="button" disabled>Pause</button></nui-button>
+			<nui-button id="btn-reset"><button type="button">Reset</button></nui-button>
+			<div style="display: flex; gap: var(--nui-space-half); align-items: center;">
+				<label for="tempo-select" style="font-size: var(--font-size-small);">Tempo:</label>
+				<nui-select id="tempo-select" style="min-width: 120px;">
+					<select>
+						<option value="200">Slow</option>
+						<option value="100" selected>Normal</option>
+						<option value="50">Fast</option>
+						<option value="20">Very Fast</option>
+					</select>
+				</nui-select>
+			</div>
+		</div>
+
+		<div class="streaming-grid">
+			<div>
+				<h3>Rendered</h3>
+				<nui-card><div id="output" style="padding: var(--nui-space); min-height: 400px;"></div></nui-card>
+			</div>
+			<div>
+				<h3>Raw</h3>
+				<nui-card><pre id="raw" style="margin: 0; padding: var(--nui-space); font-family: monospace; font-size: 0.85rem; white-space: pre-wrap; word-break: break-all; overflow-y: auto; background: var(--color-shade2); height: 100%; box-sizing: border-box;"></pre></nui-card>
+			</div>
+		</div>
+
+		<div style="margin-top: var(--nui-space);">
+			<p>Stats: Chunks: <span id="stat-chunks">0</span> | Chars: <span id="stat-chars">0</span></p>
+		</div>
+	</section>
+</div>
+
+<style>
+.streaming-grid {
+	display: grid;
+	grid-template-columns: 50% 50%;
+	gap: var(--nui-space);
+}
+
+.streaming-grid > div {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.streaming-grid h3 {
+	margin-bottom: var(--nui-space-half);
+}
+
+.streaming-grid nui-card {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+}
+
+.streaming-grid nui-card > * {
+	flex: 1;
+}
+
+#output {
+	min-height: 400px;
+}
+</style>
+
+<script type="nui/page">
+function init(element) {
+	var btnStart = element.querySelector('#btn-start');
+	var btnPause = element.querySelector('#btn-pause');
+	var btnReset = element.querySelector('#btn-reset');
+	var tempoSelect = element.querySelector('#tempo-select');
+	var output = element.querySelector('#output');
+	var raw = element.querySelector('#raw');
+	var statChunks = element.querySelector('#stat-chunks');
+	var statChars = element.querySelector('#stat-chars');
+
+	var streamText = '';
+	var streamIndex = 0;
+	var isPaused = false;
+	var streamInterval = null;
+	var chunkCount = 0;
+
+	var sampleMarkdown = [
+		'# Building a Modern Web Application',
+		'',
+		'A comprehensive guide to creating scalable, maintainable web apps using vanilla JavaScript and modern APIs.',
+		'',
+		'## Table of Contents',
+		'',
+		'1. [Project Structure](#project-structure)',
+		'2. [State Management](#state-management)',
+		'3. [Event Handling](#event-handling)',
+		'4. [Data Fetching](#data-fetching)',
+		'',
+		'---',
+		'',
+		'## Project Structure',
+		'',
+		'A well-organized project follows consistent conventions. Here\'s a recommended structure:',
+		'',
+		'```',
+		'project/',
+		'|__ src/',
+		'|   |__ components/    # Reusable UI components',
+		'|   |__ utils/         # Helper functions',
+		'|   |__ services/     # API and data services',
+		'|   |__ styles/       # CSS and theming',
+		'|   |__ main.js       # Application entry point',
+		'|__ public/',
+		'|   |__ index.html   # Main HTML file',
+		'|   |__ assets/      # Static assets',
+		'|__ package.json',
+		'```',
+		'',
+		'## State Management',
+		'',
+		'Managing state effectively is crucial. Here\'s a simple state container pattern:',
+		'',
+		'```javascript',
+		'class Store {',
+		'    constructor(initialState) {',
+		'        this._state = initialState;',
+		'        this._listeners = new Set();',
+		'    }',
+		'',
+		'    get state() {',
+		'        return { ...this._state };',
+		'    }',
+		'',
+		'    setState(updates) {',
+		'        const prevState = this._state;',
+		'        this._state = { ...this._state, ...updates };',
+		'        this._notify(prevState, this._state);',
+		'    }',
+		'',
+		'    subscribe(listener) {',
+		'        this._listeners.add(listener);',
+		'        return () => this._listeners.delete(listener);',
+		'    }',
+		'',
+		'    _notify(prevState, nextState) {',
+		'        this._listeners.forEach(listener => {',
+		'            listener(nextState, prevState);',
+		'        });',
+		'    }',
+		'}',
+		'',
+		'const appStore = new Store({ user: null, theme: "light" });',
+		'```',
+		'',
+		'## Event Handling',
+		'',
+		'Use event delegation for better performance and memory management:',
+		'',
+		'```javascript',
+		'document.addEventListener("click", (e) => {',
+		'    const target = e.target.closest("[data-action]");',
+		'    if (!target) return;',
+		'',
+		'    const action = target.dataset.action;',
+		'    const handler = actionHandlers[action];',
+		'',
+		'    if (typeof handler === "function") {',
+		'        e.preventDefault();',
+		'        handler({ element: target, event: e });',
+		'    }',
+		'});',
+		'',
+		'const actionHandlers = {',
+		'    "nav:open": ({ element }) => openNavigation(),',
+		'    "nav:close": ({ element }) => closeNavigation(),',
+		'    "theme:toggle": ({ element }) => toggleTheme(),',
+		'    "user:logout": ({ element }) => logoutUser(),',
+		'};',
+		'```',
+		'',
+		'## Data Fetching',
+		'',
+		'A clean fetch wrapper with error handling:',
+		'',
+		'```javascript',
+		'async function fetchJSON(url, options = {}) {',
+		'    const controller = new AbortController();',
+		'    const timeout = setTimeout(() => controller.abort(), 10000);',
+		'',
+		'    try {',
+		'        const response = await fetch(url, {',
+		'            ...options,',
+		'            signal: controller.signal,',
+		'            headers: {',
+		'                "Content-Type": "application/json",',
+		'                ...options.headers',
+		'            }',
+		'        });',
+		'',
+		'        if (!response.ok) {',
+		'            throw new Error(`HTTP ${response.status}: ${response.statusText}`);',
+		'        }',
+		'',
+		'        const data = await response.json();',
+		'        return { success: true, data };',
+		'    } catch (error) {',
+		'        if (error.name === "AbortError") {',
+		'            return { success: false, error: "Request timed out" };',
+		'        }',
+		'        return { success: false, error: error.message };',
+		'    } finally {',
+		'        clearTimeout(timeout);',
+		'    }',
+		'}',
+		'```',
+		'',
+		'## Styling with CSS Custom Properties',
+		'',
+		'CSS variables make theming and maintenance easier:',
+		'',
+		'```css',
+		':root {',
+		'    --color-primary: #3b82f6;',
+		'    --color-primary-hover: #2563eb;',
+		'    --color-background: #ffffff;',
+		'    --color-surface: #f3f4f6;',
+		'    --color-text: #1f2937;',
+		'    --color-text-muted: #6b7280;',
+		'    --color-border: #e5e7eb;',
+		'    --color-error: #ef4444;',
+		'    --color-success: #10b981;',
+		'',
+		'    --spacing-xs: 0.25rem;',
+		'    --spacing-sm: 0.5rem;',
+		'    --spacing-md: 1rem;',
+		'    --spacing-lg: 1.5rem;',
+		'    --spacing-xl: 2rem;',
+		'',
+		'    --radius-sm: 0.25rem;',
+		'    --radius-md: 0.5rem;',
+		'    --radius-lg: 1rem;',
+		'',
+		'    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);',
+		'    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);',
+		'    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.15);',
+		'}',
+		'',
+		'[data-theme="dark"] {',
+		'    --color-primary: #60a5fa;',
+		'    --color-background: #111827;',
+		'    --color-surface: #1f2937;',
+		'    --color-text: #f9fafb;',
+		'    --color-text-muted: #9ca3af;',
+		'    --color-border: #374151;',
+		'}',
+		'```',
+		'',
+		'## JSON Configuration Example',
+		'',
+		'Application settings stored as JSON:',
+		'',
+		'```json',
+		'{',
+		'    "name": "MyWebApp",',
+		'    "version": "1.0.0",',
+		'    "settings": {',
+		'        "theme": "auto",',
+		'        "language": "en",',
+		'        "notifications": true,',
+		'        "autoSave": true,',
+		'        "autoSaveInterval": 30000',
+		'    },',
+		'    "api": {',
+		'        "baseUrl": "https://api.example.com/v1",',
+		'        "timeout": 10000,',
+		'        "retryAttempts": 3',
+		'    },',
+		'    "features": {',
+		'        "darkMode": true,',
+		'        "analytics": false,',
+		'        "debugMode": false',
+		'    }',
+		'}',
+		'```',
+		'',
+		'## Best Practices',
+		'',
+		'- **Use semantic HTML** - Improves accessibility and SEO',
+		'- **Mobile-first approach** - Design for mobile, then enhance for desktop',
+		'- **Progressive enhancement** - Core functionality works without JavaScript',
+		'- **Performance** - Lazy load images, bundle code, minimize reflows',
+		'- **Security** - Sanitize user input, use HTTPS, validate on server',
+		'',
+		'> "The best code is no code at all. Every line you write is a line that needs debugging."',
+		'',
+		'---',
+		'',
+		'**Happy coding!**',
+		''
+	].join('\n');
+
+	function renderMarkdown(text) {
+		output.innerHTML = nui.util.markdownToHtml(text);
+		chunkCount++;
+		statChunks.textContent = chunkCount;
+		statChars.textContent = text.length;
+	}
+
+	function getTempo() {
+		return parseInt(tempoSelect.querySelector('select').value, 10) || 100;
+	}
+
+	function streamNext() {
+		if (streamIndex >= sampleMarkdown.length) {
+			clearInterval(streamInterval);
+			streamInterval = null;
+			btnStart.querySelector('button').disabled = false;
+			btnPause.querySelector('button').disabled = true;
+			return;
+		}
+
+		var chunkSize = Math.floor(Math.random() * 5) + 1;
+		var chunk = sampleMarkdown.substring(streamIndex, streamIndex + chunkSize);
+		streamText += chunk;
+		streamIndex += chunkSize;
+
+		raw.textContent = streamText;
+		raw.scrollTop = raw.scrollHeight;
+
+		renderMarkdown(streamText);
+	}
+
+	function startStreaming() {
+		if (streamInterval) clearInterval(streamInterval);
+
+		streamIndex = 0;
+		streamText = '';
+		isPaused = false;
+		chunkCount = 0;
+
+		btnStart.querySelector('button').disabled = true;
+		btnPause.querySelector('button').disabled = false;
+		btnPause.querySelector('button').textContent = 'Pause';
+
+		streamInterval = setInterval(function() {
+			if (!isPaused) streamNext();
+		}, getTempo());
+	}
+
+	btnStart.querySelector('button').addEventListener('click', startStreaming);
+
+	btnPause.querySelector('button').addEventListener('click', function() {
+		isPaused = !isPaused;
+		btnPause.querySelector('button').textContent = isPaused ? 'Resume' : 'Pause';
+	});
+
+	btnReset.querySelector('button').addEventListener('click', function() {
+		if (streamInterval) {
+			clearInterval(streamInterval);
+			streamInterval = null;
+		}
+		streamIndex = 0;
+		streamText = '';
+		isPaused = false;
+		chunkCount = 0;
+
+		btnStart.querySelector('button').disabled = false;
+		btnPause.querySelector('button').disabled = true;
+		btnPause.querySelector('button').textContent = 'Pause';
+
+		raw.textContent = '';
+		output.innerHTML = '';
+		statChunks.textContent = '0';
+		statChars.textContent = '0';
+	});
+}
+</script>

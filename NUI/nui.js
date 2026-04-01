@@ -4503,46 +4503,30 @@ function executePageScript(wrapper, params) {
 
 	scriptEl.remove();
 
-	try {
-		const initFn = new Function(
-			'element',
-			'params',
-			'nui',
-			scriptEl.textContent + '\nif (typeof init === "function") init(element, params, nui);'
-		);
-		initFn(wrapper, params, nui);
-	} catch (error) {
-		console.error('[NUI] Page script error:', error);
-	}
+	const initFn = new Function(
+		'element',
+		'params',
+		'nui',
+		scriptEl.textContent + '\nif (typeof init === "function") init(element, params, nui);'
+	);
+	initFn(wrapper, params, nui);
 }
 
 async function loadFragment(url, wrapper, params) {
-	try {
-		const response = await fetch(url);
-		if (!response.ok) {
-			throw new Error(`Failed to load ${url} (${response.status})`);
-		}
-
-		let html = await response.text();
-		
-		// Strip Live Server injection (development only)
-		html = html.replace(/<!-- Code injected by live-server -->[\s\S]*?<\/script>/gi, '');
-		
-		wrapper.innerHTML = html;
-
-		customElements.upgrade(wrapper);
-		executePageScript(wrapper, params);
-
-	} catch (error) {
-		console.error('[NUI] Fragment load error:', error);
-		wrapper.innerHTML = `
-			<div class="error-page" style="padding: var(--nui-space-double); text-align: center;">
-				<h1>Page Not Found</h1>
-				<p>Could not load: <code>${url}</code></p>
-				<p style="color: var(--color-text-dim);">${error.message}</p>
-			</div>
-		`;
+	const response = await fetch(url);
+	if (!response.ok) {
+		throw new Error(`Failed to load ${url} (${response.status})`);
 	}
+
+	let html = await response.text();
+
+	// Strip Live Server injection (development only)
+	html = html.replace(/<!-- Code injected by live-server -->[\s\S]*?<\/script>/gi, '');
+
+	wrapper.innerHTML = html;
+
+	customElements.upgrade(wrapper);
+	executePageScript(wrapper, params);
 }
 
 function pageContent(type, id, params, options = {}) {
