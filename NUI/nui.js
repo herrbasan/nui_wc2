@@ -4447,11 +4447,13 @@ function parseUrl() {
 
 	const [type, id] = entries[0];
 	const searchParams = Object.fromEntries(new URLSearchParams(location.search));
+	const hashQuery = Object.fromEntries(entries.slice(1));
+	const mergedParams = { ...searchParams, ...hashQuery };
 
 	return {
 		type,
 		id: sanitizeRouteId(id),
-		params: searchParams
+		params: mergedParams
 	};
 }
 
