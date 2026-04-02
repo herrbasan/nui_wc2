@@ -2,3 +2,4 @@ reference/
 .vscode/
 _Archive/
 node_modules/
+.kilo/
