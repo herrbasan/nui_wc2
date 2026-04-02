@@ -735,6 +735,11 @@ registerComponent('nui-app', (element) => {
 	element.toggleSideNav = (position = 'left') => toggleSideNav(element, position);
 	element.invalidateBreakpointCache = () => { cachedBreakpoint = { left: null, right: null }; updateResponsiveState(element); };
 
+	let mouseDownTarget = null;
+	element.addEventListener('mousedown', (e) => {
+		mouseDownTarget = e.target;
+	});
+
 	element.addEventListener('click', (e) => {
 		['left', 'right'].forEach(pos => {
 			const prefix = pos === 'right' ? 'sidenav-right' : 'sidenav';
@@ -742,19 +747,15 @@ registerComponent('nui-app', (element) => {
 				!element.classList.contains(`${prefix}-forced`)) {
 				
 				const sideNav = getSideNav(element, pos);
-				// To allow both sidebars to be closed when clicking outside, adjust the condition
-				// Need to ensure clicking on ONE sidebar doesn't close the OTHER sidebar if it was open.
 				
 				const clickIsInThisNav = sideNav && sideNav.contains(e.target);
 				const clickIsInOtherNav = getSideNav(element, pos === 'left' ? 'right' : 'left')?.contains(e.target);
 				const clickIsInTopNav = element.el('nui-app-header')?.contains(e.target);
 
 				if (!clickIsInThisNav && !clickIsInTopNav) {
-					// We close it unless maybe the backdrop itself caught the click.
-					// Actually, if we click anywhere outside THIS sidebar (and top nav), close it.
-					// Wait, if both are open and we click the right one, left should close. 
-					// That's exactly what this will do.
-					toggleSideNav(element, pos);
+					if (!sideNav || !sideNav.contains(mouseDownTarget)) {
+						toggleSideNav(element, pos);
+					}
 				}
 			}
 		});
@@ -1478,6 +1479,55 @@ registerComponent('nui-button-container', (element) => {
 	}
 });
 
+function setupDialogBehavior(element, dialog, eventPrefix) {
+	const close = (ret) => {
+		dialog.classList.add('closing');
+		dialog.addEventListener('transitionend', () => {
+			dialog.classList.remove('closing');
+			dialog.close(ret);
+			element.dispatchEvent(new CustomEvent(`${eventPrefix}-close`, { bubbles: true, detail: { returnValue: ret } }));
+		}, { once: true });
+	};
+
+	element.showModal = () => {
+		dialog.showModal();
+		element.dispatchEvent(new CustomEvent(`${eventPrefix}-open`, { bubbles: true }));
+	};
+
+	element.close = (ret) => {
+		if (!dialog.open || dialog.classList.contains('closing')) return;
+		close(ret);
+	};
+
+	element.isOpen = () => dialog.open;
+
+	dialog.addEventListener('close', () => {
+		if (!dialog.classList.contains('closing')) {
+			element.dispatchEvent(new CustomEvent(`${eventPrefix}-close`, { bubbles: true, detail: { returnValue: dialog.returnValue } }));
+		}
+	});
+
+	dialog.addEventListener('cancel', (e) => {
+		e.preventDefault();
+		if (!element.hasAttribute('blocking')) element.close('cancel');
+		element.dispatchEvent(new CustomEvent(`${eventPrefix}-cancel`, { bubbles: true }));
+	});
+
+	let backdropMouseDown = false;
+	dialog.addEventListener('mousedown', (e) => {
+		backdropMouseDown = e.target === dialog;
+	});
+	dialog.addEventListener('touchstart', (e) => {
+		backdropMouseDown = e.target === dialog;
+	});
+
+	dialog.addEventListener('click', (e) => {
+		if (element.hasAttribute('blocking') || e.target !== dialog || !backdropMouseDown) return;
+		backdropMouseDown = false;
+		element.close('backdrop');
+	});
+}
+
 // ################################# nui-dialog COMPONENT
 
 registerComponent('nui-dialog', (element) => {
@@ -1567,48 +1617,12 @@ registerComponent('nui-dialog', (element) => {
 		element.appendChild(dialog);
 	}
 
-	const close = (ret) => {
-		dialog.classList.add('closing');
-		dialog.addEventListener('transitionend', () => {
-			dialog.classList.remove('closing');
-			dialog.close(ret);
-			element.dispatchEvent(new CustomEvent('nui-dialog-close', { bubbles: true, detail: { returnValue: ret } }));
-		}, { once: true });
-	};
-
-	element.showModal = () => {
-		dialog.showModal();
-		element.dispatchEvent(new CustomEvent('nui-dialog-open', { bubbles: true }));
-	};
+	setupDialogBehavior(element, dialog, 'nui-dialog');
 
 	element.show = () => {
 		dialog.show();
 		element.dispatchEvent(new CustomEvent('nui-dialog-open', { bubbles: true }));
 	};
-
-	element.close = (ret) => {
-		if (!dialog.open || dialog.classList.contains('closing')) return;
-		close(ret);
-	};
-
-	element.isOpen = () => dialog.open;
-
-	dialog.addEventListener('close', () => {
-		if (!dialog.classList.contains('closing')) {
-			element.dispatchEvent(new CustomEvent('nui-dialog-close', { bubbles: true, detail: { returnValue: dialog.returnValue } }));
-		}
-	});
-
-	dialog.addEventListener('cancel', (e) => {
-		e.preventDefault();
-		if (!element.hasAttribute('blocking')) element.close('cancel');
-		element.dispatchEvent(new CustomEvent('nui-dialog-cancel', { bubbles: true }));
-	});
-
-	dialog.addEventListener('click', (e) => {
-		if (element.hasAttribute('blocking') || e.target !== dialog) return;
-		element.close('backdrop');
-	});
 });
 
 // ################################# nui-overlay COMPONENT
@@ -1617,43 +1631,7 @@ registerComponent('nui-overlay', (element) => {
 	const dialog = element.el('dialog');
 	if (!dialog) return;
 
-	const close = (ret) => {
-		dialog.classList.add('closing');
-		dialog.addEventListener('transitionend', () => {
-			dialog.classList.remove('closing');
-			dialog.close(ret);
-			element.dispatchEvent(new CustomEvent('nui-overlay-close', { bubbles: true, detail: { returnValue: ret } }));
-		}, { once: true });
-	};
-
-	element.showModal = () => {
-		dialog.showModal();
-		element.dispatchEvent(new CustomEvent('nui-overlay-open', { bubbles: true }));
-	};
-
-	element.close = (ret) => {
-		if (!dialog.open || dialog.classList.contains('closing')) return;
-		close(ret);
-	};
-
-	element.isOpen = () => dialog.open;
-
-	dialog.addEventListener('close', () => {
-		if (!dialog.classList.contains('closing')) {
-			element.dispatchEvent(new CustomEvent('nui-overlay-close', { bubbles: true, detail: { returnValue: dialog.returnValue } }));
-		}
-	});
-
-	dialog.addEventListener('cancel', (e) => {
-		e.preventDefault();
-		if (!element.hasAttribute('blocking')) element.close('cancel');
-		element.dispatchEvent(new CustomEvent('nui-overlay-cancel', { bubbles: true }));
-	});
-
-	dialog.addEventListener('click', (e) => {
-		if (element.hasAttribute('blocking') || e.target !== dialog) return;
-		element.close('backdrop');
-	});
+	setupDialogBehavior(element, dialog, 'nui-overlay');
 });
 
 // ################################# nui-tabs COMPONENT
