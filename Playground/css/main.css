@@ -140,6 +140,37 @@ nui-app-footer {
 	width: 100%;
 }
 
+.page-markdown .streaming-grid {
+	display: grid;
+	grid-template-columns: 50% 50%;
+	gap: var(--nui-space);
+	margin-top: var(--nui-space);
+}
+
+.page-markdown .streaming-grid > div {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.page-markdown .streaming-grid h3 {
+	margin-bottom: var(--nui-space-half);
+}
+
+.page-markdown .streaming-grid nui-card {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+}
+
+.page-markdown .streaming-grid nui-card > * {
+	flex: 1;
+}
+
+.page-markdown #output {
+	min-height: 400px;
+}
+
 
 
 /* Icon page styles */

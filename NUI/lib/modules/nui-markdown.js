@@ -46,7 +46,11 @@ export function markdownToHtml(md) {
 		return `<ol>${items}</ol>`;
 	});
 
-	html = html.replace(/^[ \t]*(-*_){3,}[ \t]*$/gm, '<hr>');
+	// Horizontal rules with style classes
+	html = html.replace(/^[ \t]*(={3,})[ \t]*$/gm, '<hr class="equals">');
+	html = html.replace(/^[ \t]*(-{3,})[ \t]*$/gm, '<hr class="dash">');
+	html = html.replace(/^[ \t]*(\*{3,})[ \t]*$/gm, '<hr class="stars">');
+	html = html.replace(/^[ \t]*(_{3,})[ \t]*$/gm, '<hr>');
 
 	// Block separation
 	const blocks = html.split(/\n{2,}/);
@@ -78,7 +82,16 @@ export function markdownToHtml(md) {
 nui.util.markdownToHtml = markdownToHtml;
 
 class NuiMarkdown extends HTMLElement {
+	constructor() {
+		super();
+		this._streamText = '';
+		this._activeBuffer = '';
+		this._isStreaming = false;
+	}
+
 	connectedCallback() {
+		if (this._isStreaming) return;
+
 		// Check for <script type="text/markdown"> pattern
 		const mdScript = this.querySelector('script[type="text/markdown"]');
 		let rawText = '';
@@ -93,6 +106,91 @@ class NuiMarkdown extends HTMLElement {
 		if (!rawText) return;
 
 		this.innerHTML = markdownToHtml(rawText);
+	}
+
+	_isInsideCodeBlock(text) {
+		const matches = text.match(/```/g);
+		return matches && matches.length % 2 !== 0;
+	}
+
+	beginStream() {
+		this._isStreaming = true;
+		this._streamText = '';
+		this._activeBuffer = '';
+		
+		this.innerHTML = '';
+		this._stableContainer = document.createElement('div');
+		this._stableContainer.className = 'nui-md-stable';
+		
+		this._tempContainer = document.createElement('div');
+		this._tempContainer.className = 'nui-md-temp';
+		
+		this.appendChild(this._stableContainer);
+		this.appendChild(this._tempContainer);
+	}
+
+	appendChunk(chunk) {
+		if (!this._isStreaming) this.beginStream();
+
+		this._streamText += chunk;
+		this._activeBuffer += chunk;
+
+		this._processBuffer(false);
+	}
+
+	endStream() {
+		if (this._isStreaming) {
+			this._processBuffer(true);
+			this._isStreaming = false;
+		}
+	}
+
+	_processBuffer(forceDrain) {
+		while (true) {
+			if (!forceDrain && this._isInsideCodeBlock(this._streamText)) {
+				break;
+			}
+			
+			// Find a valid \n\n boundary that doesn't occur inside a code block
+			let boundary = -1;
+			let searchIndex = 0;
+			
+			while (true) {
+				const nextIndex = this._activeBuffer.indexOf('\n\n', searchIndex);
+				if (nextIndex === -1) break;
+				
+				const blockSoFar = this._activeBuffer.substring(0, nextIndex);
+				if (!this._isInsideCodeBlock(blockSoFar)) {
+					boundary = nextIndex;
+					break;
+				}
+				searchIndex = nextIndex + 1;
+			}
+
+			if (boundary !== -1) {
+				const block = this._activeBuffer.substring(0, boundary + 2);
+				this._activeBuffer = this._activeBuffer.substring(boundary + 2);
+				
+				const tempDiv = document.createElement('div');
+				tempDiv.innerHTML = markdownToHtml(block);
+				while (tempDiv.firstChild) {
+					this._stableContainer.appendChild(tempDiv.firstChild);
+				}
+			} else {
+				break;
+			}
+		}
+
+		if (forceDrain && this._activeBuffer) {
+			const drainDiv = document.createElement('div');
+			drainDiv.innerHTML = markdownToHtml(this._activeBuffer);
+			while (drainDiv.firstChild) {
+				this._stableContainer.appendChild(drainDiv.firstChild);
+			}
+			this._activeBuffer = '';
+		}
+		
+		this._tempContainer.innerHTML = markdownToHtml(this._activeBuffer);
 	}
 }
 

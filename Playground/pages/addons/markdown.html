@@ -13,8 +13,9 @@
 - For syntax highlighting in code blocks (via nui-code): also import `NUI/lib/modules/nui-syntax-highlight.js`.
 - Use `<nui-markdown><script type="text/markdown">...</script></nui-markdown>` or `nui.util.markdownToHtml(md)`.
 - Supports headers, lists, links, code (integrates nui-code), tables, emphasis, blockquotes, hr.
+- **For Streaming LLMs**: Use `<nui-markdown>` directly with DOM APIs: `beginStream()`, `appendChunk(chunk)`, and `endStream()` for block-level incremental rendering that prevents UI thrashing.
 
-**Correct:**
+**Correct Static:**
 ```html
 <nui-markdown>
 <script type="text/markdown">
@@ -22,6 +23,14 @@
 **bold** *italic* [link](url)
 </script>
 </nui-markdown>
+```
+
+**Correct Streaming:**
+```js
+const md = document.createElement('nui-markdown');
+md.beginStream();
+stream.on('data', (chunk) => md.appendChunk(chunk));
+stream.on('end', () => md.endStream());
 ```
 
 ## Critical Rules
@@ -167,10 +176,312 @@ console.log(example);
 			</nui-card>
 		</div>
 	</section>
+
+	<section>
+		<h2>Streaming & Incremental Rendering</h2>
+		<p>For AI & LLM applications, `nui-markdown` includes built-in block-level incremental rendering. Instead of re-parsing and replacing the entire DOM (which causes severe UI flickering and thrashing, especially for syntax-highlighting code blocks), you can stream chunks to the component. The DOM is kept completely stable for sealed blocks, creating a butter-smooth streaming experience.</p>
+		
+		<nui-code>
+			<script type="example" data-lang="js">
+const mdRenderer = document.querySelector('nui-markdown');
+
+// Initialize the split stable/temporary containers
+mdRenderer.beginStream();
+
+// Every time a chunk arrives from the LLM, append it
+mdRenderer.appendChunk("Here is a chunk...");
+
+// When the request is complete, drain the buffer to stable DOM
+mdRenderer.endStream();
+			</script>
+		</nui-code>
+		
+		<div style="margin-top: var(--nui-space-double);">
+			<div style="display: flex; gap: var(--nui-space); margin-bottom: var(--nui-space); align-items: center; flex-wrap: wrap;">
+				<nui-button id="btn-start"><button type="button">Start Stream</button></nui-button>
+				<nui-button id="btn-pause"><button type="button" disabled>Pause</button></nui-button>
+				<nui-button id="btn-reset"><button type="button">Reset</button></nui-button>
+				<div style="display: flex; gap: var(--nui-space-half); align-items: center;">
+					<label for="tempo-select" style="font-size: var(--font-size-small);">Tempo:</label>
+					<nui-select id="tempo-select" style="min-width: 120px;">
+						<select>
+							<option value="instant" selected>Instant</option>
+							<option value="100">Slow</option>
+							<option value="50">Normal</option>
+							<option value="20">Fast</option>
+							<option value="5">Very Fast</option>
+						</select>
+					</nui-select>
+				</div>
+				<div style="margin-left: auto; font-size: var(--font-size-small); color: var(--color-base-dim);">
+					Chunks: <span id="stat-chunks">0</span> | Chars: <span id="stat-chars">0</span>
+				</div>
+			</div>
+
+			<div class="streaming-grid">
+				<div>
+					<h3>Rendered Output</h3>
+					<nui-card>
+						<div id="output" style="padding: var(--nui-space); min-height: 400px; display: flex; flex-direction: column;">
+							<nui-markdown id="md-output" style="flex: 1;"></nui-markdown>
+						</div>
+					</nui-card>
+				</div>
+				<div>
+					<h3>Raw Stream Buffer</h3>
+					<nui-card><pre id="raw" style="margin: 0; padding: var(--nui-space); font-family: monospace; font-size: 0.85rem; white-space: pre-wrap; word-break: break-all; overflow-y: auto; background: var(--color-shade2); height: 100%; box-sizing: border-box;"></pre></nui-card>
+				</div>
+			</div>
+		</div>
+	</section>
 </div>
 
 <script type="nui/page">
 function init(element, params, nui) {
 	// The component auto-initializes the markdown on connection.
+	
+	// --- Streaming Demo Logic ---
+	var btnStart = element.querySelector('#btn-start');
+	var btnPause = element.querySelector('#btn-pause');
+	var btnReset = element.querySelector('#btn-reset');
+	var tempoSelect = element.querySelector('#tempo-select');
+	var mdOutput = element.querySelector('#md-output');
+	var raw = element.querySelector('#raw');
+	var statChunks = element.querySelector('#stat-chunks');
+	var statChars = element.querySelector('#stat-chars');
+
+	var streamText = '';
+	var streamIndex = 0;
+	var isPaused = false;
+	var streamInterval = null;
+	var chunkCount = 0;
+
+	var sampleMarkdown = [
+		'# Streaming Markdown Test',
+		'',
+		'This is a slightly longer document designed to stress-test the **incremental streaming renderer**. It includes various Markdown features to ensure boundaries are calculated correctly and rendering performs well.',
+		'',
+		'## 1. Typography & Inline Elements',
+		'',
+		'Here is some *italic text*, some **bold text**, and even some ***bold italic text***.',
+		'We also support ~~strikethrough~~ for deleted content, and `inline code snippets` for technical references.',
+		'Links are quite important too: [Visit NUI Components](#page=components/button).',
+		'',
+		'---',
+		'',
+		'## 2. Blockquotes',
+		'',
+		'> This is a standard blockquote.',
+		'> It spans multiple lines to show how it renders.',
+		'>',
+		'> And it can have multiple paragraphs without breaking.',
+		'',
+		'***',
+		'',
+		'## 3. Lists',
+		'',
+		'### Unordered List',
+		'- Apple (Fresh)',
+		'- Orange (Citrus)',
+		'- Banana (Yellow)',
+		'',
+		'### Ordered List',
+		'1. First, prepare the environment.',
+		'2. Second, run the compiler.',
+		'3. Finally, deploy the application.',
+		'',
+		'===',
+		'',
+		'## 4. Tables',
+		'',
+		'| Component | Status | Performance |',
+		'|------------|--------|-------------|',
+		'| Button | Stable | Very Fast |',
+		'| Markdown | Beta | O(1) Updates |',
+		'| Router | V2 | Excellent |',
+		'',
+		'---',
+		'',
+		'## 5. Rich Media',
+		'',
+		'Images are also supported dynamically during stream:',
+		'![Example Icon](assets/icons/favicon.svg)',
+		'',
+		'## 6. Extended Code Blocks',
+		'',
+		'Let us look at a more complex JavaScript example. Notice how the streaming pauses syntax highlighting logic until the generic code block boundary is fully sealed.',
+		'',
+		'```javascript',
+		'// NuiDataProcessor: A complex web component example',
+		'class DataProcessor extends HTMLElement {',
+		'    constructor() {',
+		'        super();',
+		'        this._records = new Map();',
+		'        this._isProcessing = false;',
+		'    }',
+		'',
+		'    async fetchAndTransform(endpoint) {',
+		'        try {',
+		'            this._isProcessing = true;',
+		'            this.dispatchEvent(new CustomEvent("process-start"));',
+		'',
+		'            const response = await fetch(endpoint);',
+		'            if (!response.ok) throw new Error("Network response was not ok");',
+		'',
+		'            const data = await response.json();',
+		'            ',
+		'            // Heavy transformation loop over dataset',
+		'            for (const item of data) {',
+		'                this._records.set(item.id, {',
+		'                    ...item,',
+		'                    transformedAt: Date.now(),',
+		'                    normalizedVal: item.value * 1.5',
+		'                });',
+		'            }',
+		'',
+		'            this.dispatchEvent(new CustomEvent("process-complete", { ',
+		'                detail: { count: this._records.size }',
+		'            }));',
+		'        } catch (err) {',
+		'            console.error("Transformation failed:", err);',
+		'        } finally {',
+		'            this._isProcessing = false;',
+		'            this.removeAttribute("loading");',
+		'        }',
+		'    }',
+		'}',
+		'',
+		'// Register the component with the browser',
+		'customElements.define("nui-data-processor", DataProcessor);',
+		'```',
+		'',
+		'And here is some CSS to style that custom element:',
+		'',
+		'```css',
+		':root {',
+		'    --processor-bg: var(--color-shade2);',
+		'    --processor-text: var(--color-base);',
+		'}',
+		'',
+		'nui-data-processor {',
+		'    display: block;',
+		'    padding: var(--nui-space-double);',
+		'    background: var(--processor-bg);',
+		'    color: var(--processor-text);',
+		'    border-radius: var(--border-radius-large);',
+		'    transition: all 0.3s ease;',
+		'}',
+		'',
+		'nui-data-processor[loading] {',
+		'    opacity: 0.7;',
+		'    pointer-events: none;',
+		'}',
+		'```',
+		'',
+		'___',
+		'',
+		'**End of transmission.**',
+		''
+	].join('\n');
+
+	function getTempo() {
+		return tempoSelect.querySelector('select').value;
+	}
+
+	function streamNext() {
+		if (streamIndex >= sampleMarkdown.length) {
+			mdOutput.endStream();
+			clearInterval(streamInterval);
+			streamInterval = null;
+			btnStart.querySelector('button').disabled = false;
+			btnPause.querySelector('button').disabled = true;
+			return;
+		}
+
+		var chunkSize = Math.floor(Math.random() * 5) + 1;
+		var chunk = sampleMarkdown.substring(streamIndex, streamIndex + chunkSize);
+		streamText += chunk;
+		streamIndex += chunkSize;
+
+		raw.textContent = streamText;
+		raw.scrollTop = raw.scrollHeight;
+
+		mdOutput.appendChunk(chunk);
+
+		chunkCount++;
+		statChunks.textContent = chunkCount;
+		statChars.textContent = streamText.length;
+	}
+
+	function startStreaming() {
+		if (streamInterval) clearInterval(streamInterval);
+
+		streamIndex = 0;
+		streamText = '';
+		isPaused = false;
+		chunkCount = 0;
+		
+		mdOutput.beginStream();
+
+		var tempo = getTempo();
+
+		btnStart.querySelector('button').disabled = true;
+		btnPause.querySelector('button').disabled = false;
+		btnPause.querySelector('button').textContent = 'Pause';
+
+		if (tempo === 'instant') {
+			streamText = sampleMarkdown;
+			streamIndex = sampleMarkdown.length;
+			raw.textContent = streamText;
+			mdOutput.appendChunk(streamText);
+			mdOutput.endStream();
+			chunkCount = 1;
+			statChunks.textContent = chunkCount;
+			statChars.textContent = streamText.length;
+			btnStart.querySelector('button').disabled = false;
+			btnPause.querySelector('button').disabled = true;
+		} else {
+			streamInterval = setInterval(function() {
+				if (!isPaused) streamNext();
+			}, parseInt(tempo, 10) || 100);
+		}
+	}
+
+	btnStart.querySelector('button').addEventListener('click', startStreaming);
+
+	btnPause.querySelector('button').addEventListener('click', function() {
+		isPaused = !isPaused;
+		btnPause.querySelector('button').textContent = isPaused ? 'Resume' : 'Pause';
+	});
+
+	btnReset.querySelector('button').addEventListener('click', function() {
+		if (streamInterval) {
+			clearInterval(streamInterval);
+			streamInterval = null;
+		}
+		streamIndex = 0;
+		streamText = '';
+		isPaused = false;
+		chunkCount = 0;
+
+		btnStart.querySelector('button').disabled = false;
+		btnPause.querySelector('button').disabled = true;
+		btnPause.querySelector('button').textContent = 'Pause';
+
+		raw.textContent = '';
+		mdOutput.innerHTML = '';
+		statChunks.textContent = '0';
+		statChars.textContent = '0';
+		
+		if (mdOutput._isStreaming) mdOutput.endStream();
+	});
+
+	// Cleanup on view change
+	element.hide = () => {
+		if (streamInterval) {
+			clearInterval(streamInterval);
+			streamInterval = null;
+		}
+	};
 }
 </script>
