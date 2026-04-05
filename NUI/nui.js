@@ -606,6 +606,135 @@ registerComponent('nui-loading', (element) => {
 	}
 });
 
+// ################################# nui-dropzone COMPONENT
+
+function setupDropzone(element) {
+	let activeZone = null;
+	let isOver = false;
+
+	const content = element.querySelector('.nui-dropzone-content');
+	if (!content) return;
+
+	const zones = content.querySelectorAll('[data-drop]');
+	const count = zones.length;
+	const cols = Math.ceil(Math.sqrt(count));
+	const remainder = count % cols;
+	content.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+
+	for (let i = 0; i < count; i++) {
+		if (!zones[i].style.minHeight) zones[i].style.minHeight = '6rem';
+		if (remainder && i >= count - remainder) {
+			zones[i].style.gridColumn = `span ${cols / remainder}`;
+		}
+	}
+
+	function activate() {
+		if (element.hasAttribute('active')) return;
+		element.setAttribute('active', '');
+		isOver = true;
+		element.dispatchEvent(new CustomEvent('nui-dropzone-open', { bubbles: true }));
+	}
+
+	function deactivate() {
+		element.removeAttribute('active');
+		isOver = false;
+		if (activeZone) {
+			activeZone.classList.remove('active');
+			activeZone = null;
+		}
+		element.dispatchEvent(new CustomEvent('nui-dropzone-close', { bubbles: true }));
+	}
+
+	function onWindowDragOver(e) {
+		e.preventDefault();
+	}
+
+	function onWindowDragEnter(e) {
+		e.preventDefault();
+		activate();
+	}
+
+	function onWindowDragLeave(e) {
+		if (e.relatedTarget === null) {
+			deactivate();
+		}
+	}
+
+	function onWindowDrop(e) {
+		if (!isOver) return;
+		e.preventDefault();
+		const droppedZone = activeZone
+			? activeZone.getAttribute('data-drop')
+			: (e.target.closest ? e.target.closest('[data-drop]')?.dataset.drop : null);
+		deactivate();
+		element.dispatchEvent(new CustomEvent('nui-dropzone-drop', {
+			bubbles: true,
+			detail: {
+				zone: droppedZone || null,
+				dataTransfer: e.dataTransfer,
+				originalEvent: e
+			}
+		}));
+	}
+
+	function onZoneDragEnter(e) {
+		e.preventDefault();
+		e.stopPropagation();
+		if (activeZone && activeZone !== e.currentTarget) {
+			activeZone.classList.remove('active');
+		}
+		activeZone = e.currentTarget;
+		activeZone.classList.add('active');
+	}
+
+	function onZoneDragLeave(e) {
+		if (e.currentTarget === activeZone && !e.currentTarget.contains(e.relatedTarget)) {
+			e.currentTarget.classList.remove('active');
+			activeZone = null;
+		}
+	}
+
+	element.addEventListener('dragover', (e) => e.preventDefault());
+	window.addEventListener('dragover', onWindowDragOver);
+	window.addEventListener('dragenter', onWindowDragEnter);
+	window.addEventListener('dragleave', onWindowDragLeave);
+	window.addEventListener('drop', onWindowDrop);
+
+	for (const zone of zones) {
+		zone.addEventListener('dragenter', onZoneDragEnter);
+		zone.addEventListener('dragleave', onZoneDragLeave);
+	}
+
+	return () => {
+		window.removeEventListener('dragover', onWindowDragOver);
+		window.removeEventListener('dragenter', onWindowDragEnter);
+		window.removeEventListener('dragleave', onWindowDragLeave);
+		window.removeEventListener('drop', onWindowDrop);
+		for (const zone of zones) {
+			zone.removeEventListener('dragenter', onZoneDragEnter);
+			zone.removeEventListener('dragleave', onZoneDragLeave);
+		}
+	};
+}
+
+registerComponent('nui-dropzone', (element) => {
+	const backdrop = document.createElement('div');
+	backdrop.className = 'nui-dropzone-backdrop';
+
+	const content = document.createElement('div');
+	content.className = 'nui-dropzone-content';
+
+	const zones = [...element.querySelectorAll(':scope > [data-drop]')];
+	for (const zone of zones) {
+		content.appendChild(zone);
+	}
+
+	element.appendChild(backdrop);
+	element.appendChild(content);
+
+	return setupDropzone(element);
+});
+
 registerComponent('nui-app', (element) => {
 	let cachedBreakpoint = { left: null, right: null };
 
@@ -5203,9 +5332,27 @@ const util = {
 	}
 };
 
+const dropzoneFactory = {
+	create(zones, callback, target) {
+		const el = document.createElement('nui-dropzone');
+		for (const zone of zones) {
+			const div = document.createElement('div');
+			div.setAttribute('data-drop', zone.name);
+			div.innerHTML = zone.label;
+			el.appendChild(div);
+		}
+		if (callback) {
+			el.addEventListener('nui-dropzone-drop', (e) => callback(e.detail, e));
+		}
+		if (target) target.appendChild(el);
+		return el;
+	}
+};
+
 const componentsApi = {
 	dialog: dialogSystem,
 	banner: bannerFactory,
+	dropzone: dropzoneFactory,
 	linkList: {
 		create: createLinkList
 	},

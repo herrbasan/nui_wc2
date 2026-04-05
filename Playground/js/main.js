@@ -287,7 +287,8 @@ const navigationData = [
 					{ label: 'Inputs', href: '#page=components/inputs' },
 					{ label: 'Tag Input', href: '#page=components/tag-input' },
 					{ label: 'Select', href: '#page=components/select' },
-					{ label: 'Slider', href: '#page=components/slider' }
+					{ label: 'Slider', href: '#page=components/slider' },
+					{ label: 'Dropzone', href: '#page=components/dropzone' }
 				]
 			},
 			{
@@ -302,7 +303,7 @@ const navigationData = [
 					{ label: 'Dialog', href: '#page=components/dialog' },
 					{ label: 'Overlay', href: '#page=components/overlay' },
 					{ label: 'Banner', href: '#page=components/banner' },
-					{ label: 'Progress', href: '#page=components/progress' },
+				{ label: 'Progress', href: '#page=components/progress' },
 					{ label: 'Tooltip', href: '#page=components/tooltip' }
 				]
 			},

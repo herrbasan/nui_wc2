@@ -282,6 +282,10 @@ export interface NuiComponents {
 	linkList: {
 		create(data: unknown[], options?: NuiLinkListCreateOptions): NuiLinkListElement;
 	};
+
+	dropzone: {
+		create(zones: NuiDropzoneZone[], callback?: (detail: NuiDropzoneDetail, event: DragEvent) => void, target?: HTMLElement): NuiDropzoneElement;
+	};
 }
 
 // =============================================================================
@@ -503,6 +507,27 @@ export interface NuiBannerElement extends HTMLElement {
 	
 	/** Check if banner is open */
 	isOpen(): boolean;
+}
+
+// =============================================================================
+// Dropzone Component
+// =============================================================================
+
+export interface NuiDropzoneZone {
+	name: string;
+	label: string;
+}
+
+export interface NuiDropzoneDetail {
+	zone: string | null;
+	dataTransfer: DataTransfer;
+	originalEvent: DragEvent;
+}
+
+export interface NuiDropzoneElement extends HTMLElement {
+	addEventListener(type: 'nui-dropzone-open', listener: (ev: CustomEvent) => void, options?: boolean | AddEventListenerOptions): void;
+	addEventListener(type: 'nui-dropzone-drop', listener: (ev: CustomEvent<NuiDropzoneDetail>) => void, options?: boolean | AddEventListenerOptions): void;
+	addEventListener(type: 'nui-dropzone-close', listener: (ev: CustomEvent) => void, options?: boolean | AddEventListenerOptions): void;
 }
 
 // =============================================================================
@@ -813,6 +838,7 @@ declare global {
 		'nui-overlay': NuiOverlayElement;
 		'nui-dialog': NuiDialogElement;
 		'nui-banner': NuiBannerElement;
+		'nui-dropzone': NuiDropzoneElement;
 		'nui-tooltip': NuiTooltipElement;
 		'nui-progress': NuiProgressElement;
 		'nui-input-group': NuiInputGroupElement;

@@ -64,20 +64,28 @@ The semantic `<button>` inside works on its own. The `<nui-button>` wrapper adds
 | `nui-icon` | Icon system with SVG sprite support |
 | `nui-icon-button` | Layout helper for icon-only buttons |
 | `nui-loading` | Loading overlay / indicator |
+| `nui-progress` | Progress indicator (determinate and circular) |
+| `nui-badge` | Inline badge for status, labels, counts |
+| `nui-card` | Flexible content container |
 | `nui-tabs` | Tab panels with keyboard navigation |
 | `nui-accordion` | Collapsible sections |
 | `nui-overlay` | Generic modal backdrop / lightbox |
 | `nui-dialog` | Modal dialogs (wraps native `<dialog>`) |
 | `nui-banner` | Notifications and alerts |
 | `nui-table` | Table enhancements (responsive labels/card layout helpers) |
+| `nui-sortable` | Drag-and-drop reordering with FLIP animation |
 | `nui-slider` | Custom range input with drag support |
+| `nui-dropzone` | Drag-and-drop overlay with named drop zones |
 | `nui-input-group` | Form field grouping helper |
 | `nui-input` | Text input enhancements |
 | `nui-textarea` | Textarea enhancements |
 | `nui-checkbox` | Checkbox enhancements |
 | `nui-radio` | Radio button enhancements |
+| `nui-select` | Enhanced select with search and multi-select |
+| `nui-tag-input` | Tag management with keyboard navigation |
 | `nui-link-list` | Navigation trees with ARIA tree pattern |
-| `nui-code` | Code blocks with copy button + web-language syntax highlighting (HTML/CSS/JS/TS/JSON) |
+| `nui-code` | Code blocks with copy button + syntax highlighting |
+| `nui-tooltip` | Popover tooltip for hover/focus annotations |
 
 ## Optional Modules
 
@@ -85,9 +93,17 @@ These are opt-in addons in `NUI/lib/modules/`.
 
 | Module | Type | What it does | CSS |
 |--------|------|--------------|-----|
-| `nui-menu` | Component | Adds the `<nui-menu>` addon component (supports `.loadData(...)` and declarative HTML) | `NUI/css/modules/nui-menu.css` |
+| `nui-menu` | Component | Application-style menubar with dropdowns and keyboard navigation | `NUI/css/modules/nui-menu.css` |
+| `nui-list` | Component | Virtualized list for large datasets | `NUI/css/modules/nui-list.css` |
+| `nui-lightbox` | Component | Image and media gallery lightbox | `NUI/css/modules/nui-lightbox.css` |
+| `nui-rich-text` | Component | Native WYSIWYG editor with custom toolbars | `NUI/css/modules/nui-rich-text.css` |
+| `nui-code-editor` | Component | Lightweight code editor with syntax highlighting | `NUI/css/modules/nui-code-editor.css` |
+| `nui-app-window` | Component | Desktop-style app window with title bar, status bar, dark mode | `NUI/css/modules/nui-app-window.css` |
+| `nui-media-player` | Component | Audio/video player with streaming support | `NUI/css/modules/nui-media-player.css` |
+| `nui-context-menu` | Component | Right-click context menu | `NUI/css/modules/nui-context-menu.css` |
+| `nui-markdown` | Component | Markdown renderer | — |
 | `nui-syntax-highlight` | Utility | Exports `highlight(code, lang)`; `nui-code` imports it on-demand automatically | `NUI/css/modules/nui-syntax-highlight.css` |
-| `nui-monitor` | Utility | Deprecated (was for removed Knower/Doer experiments) | — |
+| `nui-monitor` | Utility | Deprecated | — |
 
 Minimal loading example:
 
@@ -96,7 +112,7 @@ Minimal loading example:
 
 <!-- Only if you use the related addons -->
 <link rel="stylesheet" href="NUI/css/modules/nui-menu.css">
-<link rel="stylesheet" href="NUI/css/modules/nui-syntax-highlight.css">
+<link rel="stylesheet" href="NUI/css/modules/nui-app-window.css">
 
 <script type="module" src="NUI/nui.js"></script>
 

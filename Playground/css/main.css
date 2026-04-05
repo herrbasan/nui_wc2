@@ -798,3 +798,20 @@ text-align: center;
 .page-component-card .demo-flip-back {
 background: var(--color-shade2);
 }
+
+/* Dropzone demo */
+.page-dropzone .dropzone-demo {
+	position: relative;
+	min-height: 12rem;
+}
+
+.page-dropzone .dropzone-demo-tall {
+	position: relative;
+	min-height: 16rem;
+}
+
+.page-dropzone .dropzone-output {
+	color: var(--color-text-dim);
+	text-align: center;
+	padding: var(--nui-space);
+}

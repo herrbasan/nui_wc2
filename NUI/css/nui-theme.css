@@ -1776,6 +1776,59 @@ nui-overlay dialog.closing::backdrop {
 }
 
 /* =============================================================================
+   DROPZONE COMPONENT
+   ============================================================================= */
+
+nui-dropzone {
+	position: absolute;
+	inset: 0;
+	z-index: 100;
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity 0.2s ease;
+}
+
+nui-dropzone[active] {
+	pointer-events: all;
+	opacity: 1;
+}
+
+nui-dropzone > .nui-dropzone-backdrop {
+	position: absolute;
+	inset: 0;
+	background-color: light-dark(rgba(240, 240, 240, 0.92), rgba(20, 20, 20, 0.92));
+}
+
+nui-dropzone > .nui-dropzone-content {
+	position: absolute;
+	inset: var(--nui-space);
+	display: grid;
+	grid-template-rows: auto;
+	gap: var(--nui-space);
+	z-index: 1;
+}
+
+nui-dropzone > .nui-dropzone-content > [data-drop] {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	background-color: light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.06));
+	border: dashed 2px light-dark(var(--color-shade4), var(--color-shade4));
+	border-radius: var(--border-radius2);
+	color: var(--color-text-dim);
+	font-size: var(--font-size-large);
+	transition: all 0.2s ease;
+}
+
+nui-dropzone > .nui-dropzone-content > [data-drop]:hover,
+nui-dropzone > .nui-dropzone-content > [data-drop].active {
+	background-color: light-dark(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.12));
+	border-color: var(--color-highlight);
+	border-style: solid;
+	color: var(--color-highlight);
+}
+
+/* =============================================================================
    DIALOG COMPONENT
    ============================================================================= */
 

@@ -1,0 +1,296 @@
+<div class="page-dropzone">
+
+<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+	<summary><strong>LLM Guide - nui-dropzone</strong></summary>
+	<nui-markdown id="llm-guide" data-component="nui-dropzone" class="llm-guide">
+<script type="text/markdown">
+# LLM Guide: nui-dropzone
+
+> **Global Note:** Always follow the global rules in `Playground/README.md`. Use data-action for interactions, no custom CSS.
+
+## Two Usage Patterns
+
+### Declarative (HTML)
+```html
+<div style="position: relative; min-height: 12rem;">
+	<nui-dropzone>
+		<div data-drop="images">Images</div>
+		<div data-drop="documents">Documents</div>
+	</nui-dropzone>
+</div>
+```
+
+### Programmatic (JS)
+```javascript
+nui.components.dropzone.create(
+    [
+        { name: 'images', label: 'Images' },
+        { name: 'documents', label: 'Documents' }
+    ],
+    (detail, event) => { console.log(detail.zone, detail.dataTransfer.files); },
+    document.querySelector('#target')
+);
+```
+
+## How It Works
+- Listens for `dragenter`/`dragleave`/`drop` on `window` — activates when files enter the browser, deactivates when they leave (`relatedTarget === null`).
+- The overlay starts hidden (`opacity: 0; pointer-events: none`). Window-level `dragenter` sets the `active` attribute, which CSS toggles to visible + interactive.
+- Each zone child with `[data-drop]` highlights on drag hover via the `.active` class.
+
+## Grid Auto-Layout
+Zone count determines column layout: 1=1col, 2=2col, 3=2+1, 4=2×2, 5=3+2, 6=3×2, etc.
+Uses `Math.ceil(Math.sqrt(count))` for column count. If the last row is incomplete, its items span wider to fill the row evenly.
+
+## Critical Rules
+- The parent container must have `position: relative` and a defined height.
+- The overlay activates automatically when files are dragged over the browser window.
+- Events: `nui-dropzone-open`, `nui-dropzone-drop`, `nui-dropzone-close`.
+- Drop detail contains `{ zone, dataTransfer, originalEvent }`.
+
+## Anti-Patterns
+- Adding `active` attribute manually.
+- Placing in a container without `position: relative`.
+- Forgetting the `[data-drop]` attribute on child elements (declarative mode).
+</script>
+	</nui-markdown>
+</details>
+
+	<header>
+		<h1>Dropzone</h1>
+		<p class="lead">A container-scoped overlay that appears when files are dragged over it, with auto-laid-out named drop zones.</p>
+	</header>
+
+	<section>
+		<h2>Declarative — Two Zones</h2>
+		<p>Two zones auto-layout as two columns.</p>
+
+		<nui-code>
+			<script type="example" data-lang="html">
+<div style="position: relative; min-height: 12rem;">
+	<nui-dropzone id="demo-2">
+		<div data-drop="images">Images</div>
+		<div data-drop="documents">Documents</div>
+	</nui-dropzone>
+</div>
+			</script>
+		</nui-code>
+
+		<div class="demo-area dropzone-demo">
+			<nui-dropzone id="demo-2">
+				<div data-drop="images">Images</div>
+				<div data-drop="documents">Documents</div>
+			</nui-dropzone>
+			<div data-demo-output class="dropzone-output">Drag files here to test...</div>
+		</div>
+	</section>
+
+	<section>
+		<h2>Declarative — Three Zones</h2>
+		<p>Three zones auto-layout as 2 columns (2 top + 1 bottom).</p>
+
+		<nui-code>
+			<script type="example" data-lang="html">
+<div style="position: relative; min-height: 16rem;">
+	<nui-dropzone id="demo-3">
+		<div data-drop="images">Images</div>
+		<div data-drop="documents">Documents</div>
+		<div data-drop="other">Other Files</div>
+	</nui-dropzone>
+</div>
+			</script>
+		</nui-code>
+
+		<div class="demo-area dropzone-demo-tall">
+			<nui-dropzone id="demo-3">
+				<div data-drop="images">Images</div>
+				<div data-drop="documents">Documents</div>
+				<div data-drop="other">Other Files</div>
+			</nui-dropzone>
+			<div data-demo-output-3 class="dropzone-output">Drag files here to test...</div>
+		</div>
+	</section>
+
+	<section>
+		<h2>Programmatic — Four Zones (2×2)</h2>
+		<p>Create a dropzone dynamically using <code>nui.components.dropzone.create()</code>. Pass an array of zone definitions, a drop callback, and a target container.</p>
+
+		<nui-code>
+			<script type="example" data-lang="javascript">
+nui.components.dropzone.create(
+    [
+        { name: 'images', label: 'Images' },
+        { name: 'documents', label: 'Documents' },
+        { name: 'audio', label: 'Audio' },
+        { name: 'video', label: 'Video' }
+    ],
+    (detail, event) => {
+        const { zone, dataTransfer } = detail;
+        console.log(`Dropped in ${zone}:`, dataTransfer.files);
+    },
+    document.querySelector('#target-container')
+);
+			</script>
+		</nui-code>
+
+		<div class="demo-area dropzone-demo-tall" id="programmatic-target">
+			<div data-demo-output-4 class="dropzone-output">Drag files here to test...</div>
+		</div>
+	</section>
+
+	<section>
+		<h2>Events</h2>
+		<nui-code>
+			<script type="example" data-lang="javascript">
+const dropzone = document.querySelector('#demo-2');
+
+dropzone.addEventListener('nui-dropzone-open', () => {
+    console.log('Dropzone overlay opened');
+});
+
+dropzone.addEventListener('nui-dropzone-drop', (e) => {
+    const { zone, dataTransfer } = e.detail;
+    console.log(`Dropped ${dataTransfer.files.length} file(s) in zone: ${zone}`);
+});
+
+dropzone.addEventListener('nui-dropzone-close', () => {
+    console.log('Dropzone overlay closed');
+});
+			</script>
+		</nui-code>
+	</section>
+
+	<section>
+		<h2>Component API</h2>
+
+		<h3>Programmatic — <code>nui.components.dropzone.create(zones, callback, target)</code></h3>
+		<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+			<thead>
+				<tr>
+					<th style="width: 20%;">Parameter</th>
+					<th style="width: 20%;">Type</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><code>zones</code></td>
+					<td><code>Array</code></td>
+					<td>Array of <code>{ name, label }</code> objects. <code>name</code> becomes the <code>data-drop</code> value, <code>label</code> is the display text (supports HTML).</td>
+				</tr>
+				<tr>
+					<td><code>callback</code></td>
+					<td><code>Function</code></td>
+					<td>Called on drop with <code>(detail, event)</code>. <code>detail</code> contains <code>{ zone, dataTransfer, originalEvent }</code>.</td>
+				</tr>
+				<tr>
+					<td><code>target</code></td>
+					<td><code>HTMLElement</code></td>
+					<td>Container to append the dropzone to. Must have <code>position: relative</code> and a defined height.</td>
+				</tr>
+			</tbody>
+		</table>
+
+		<h3>Attributes</h3>
+		<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+			<thead>
+				<tr>
+					<th style="width: 25%;">Attribute</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><code>active</code></td>
+					<td>Present when the overlay is visible (managed automatically by drag events).</td>
+				</tr>
+			</tbody>
+		</table>
+
+		<h3>Events</h3>
+		<table class="nui-table" style="width: 100%; font-size: 0.9em;">
+			<thead>
+				<tr>
+					<th style="width: 25%;">Event Name</th>
+					<th style="width: 30%;">Detail</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><code>nui-dropzone-open</code></td>
+					<td>—</td>
+					<td>Fired when the overlay becomes visible (files dragged over container).</td>
+				</tr>
+				<tr>
+					<td><code>nui-dropzone-drop</code></td>
+					<td><code>{ zone, dataTransfer, originalEvent }</code></td>
+					<td>Fired when files are dropped. <code>zone</code> is the <code>data-drop</code> value.</td>
+				</tr>
+				<tr>
+					<td><code>nui-dropzone-close</code></td>
+					<td>—</td>
+					<td>Fired when the overlay hides after a drop or drag-leave.</td>
+				</tr>
+			</tbody>
+		</table>
+	</section>
+</div>
+
+<script type="nui/page">
+function init(element, params, nui) {
+	function wireDropzone(id, outputSelector) {
+		const dropzone = element.querySelector('#' + id);
+		const output = element.querySelector(outputSelector);
+		if (!dropzone || !output) return;
+
+		dropzone.addEventListener('nui-dropzone-open', () => {
+			output.textContent = 'Dropzone active — drag over a zone...';
+		});
+
+		dropzone.addEventListener('nui-dropzone-drop', (e) => {
+			const { zone, dataTransfer } = e.detail;
+			const names = [];
+			for (let i = 0; i < dataTransfer.files.length; i++) names.push(dataTransfer.files[i].name);
+			output.innerHTML = '<strong>Zone:</strong> ' + zone + ' &nbsp;|&nbsp; <strong>Files:</strong> ' + (names.join(', ') || 'none');
+		});
+
+		dropzone.addEventListener('nui-dropzone-close', () => {
+			if (!output.querySelector('strong')) {
+				output.textContent = 'Drag files here to test...';
+			}
+		});
+	}
+
+	wireDropzone('demo-2', '[data-demo-output]');
+	wireDropzone('demo-3', '[data-demo-output-3]');
+
+	const progTarget = element.querySelector('#programmatic-target');
+	const progOutput = element.querySelector('[data-demo-output-4]');
+	if (progTarget && progOutput) {
+		const dz = nui.components.dropzone.create(
+			[
+				{ name: 'images', label: 'Images' },
+				{ name: 'documents', label: 'Documents' },
+				{ name: 'audio', label: 'Audio' },
+				{ name: 'video', label: 'Video' }
+			],
+			(detail) => {
+				const names = [];
+				for (let i = 0; i < detail.dataTransfer.files.length; i++) names.push(detail.dataTransfer.files[i].name);
+				progOutput.innerHTML = '<strong>Zone:</strong> ' + detail.zone + ' &nbsp;|&nbsp; <strong>Files:</strong> ' + (names.join(', ') || 'none');
+			},
+			progTarget
+		);
+
+		dz.addEventListener('nui-dropzone-open', () => {
+			progOutput.textContent = 'Dropzone active — drag over a zone...';
+		});
+
+		dz.addEventListener('nui-dropzone-close', () => {
+			if (!progOutput.querySelector('strong')) {
+				progOutput.textContent = 'Drag files here to test...';
+			}
+		});
+	}
+}
+</script>

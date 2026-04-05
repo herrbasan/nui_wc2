@@ -9,75 +9,68 @@
 > **Global Note:** Always follow the global rules in `Playground/README.md`. This is a programmatic module, not a custom element.
 
 ## Overview
-`appWindow()` creates Electron-style window chrome (title bar, content area, optional status bar) by appending a `.nui-app` div to a target container. Designed for frameless Electron windows but works in any environment.
+`appWindow()` creates window chrome (title bar, content area, optional status bar) by appending a `.nui-app` div to a target container. Designed for Electron frameless windows.
 
 ## Import
 ```js
-import { appWindow } from '../NUI/lib/modules/nui_app.js';
+import { appWindow } from '../NUI/lib/modules/nui-app-window.js';
 ```
 
 ## API
 ```js
-const app = appWindow({
+const win = appWindow({
     title: 'My App',           // string, defaults to document.title
     icon: 'settings',          // NUI icon name (optional)
     inner: '<div>...</div>',   // string or HTMLElement
     statusbar: true,           // boolean, default false
     target: containerEl,       // HTMLElement, default document.body
-    functions: {               // custom title bar context menu items
-        about: { title: 'About', fnc: () => {} }
-    },
-    onClose: () => {}          // callback when close button clicked
+    onClose: () => {}          // called when win.close() is invoked
 });
 
-app.close();
-app.setStatusBar('Ready');
-app.center();           // Electron only
-app.setFullScreen(true); // Electron only
-app.toggleDevTools();   // Electron only
+win.close();    // calls onClose callback
+win.focus();    // adds 'focused' class to body
+win.blur();     // removes 'focused' class from body
+win.element;    // root .nui-app div
+win.content;    // .nui-app-main content area
 ```
 
 ## Critical Rules
 - **Not a custom element** — do not use as `<nui-app-window>`.
 - `target` defaults to `document.body` and will **clear its innerHTML** — always pass an explicit container.
-- Only one instance is tracked globally; calling `appWindow()` again closes the previous one.
-- CSS is in `NUI/css/modules/nui_app.css` — must be loaded separately.
-- Theme toggle uses `document.documentElement.style.colorScheme`, not a `dark` class.
-
-## In the Demo (Playground only)
-The demo wraps the app window in a `nui-overlay` + `dialog` to simulate an Electron window inside the browser. In a real Electron app, pass `target: document.body` directly.
+- `close()` only calls the `onClose` callback — it does not remove the element from the DOM. The caller is responsible for cleanup (e.g. closing an overlay, removing the container).
+- `focus()` / `blur()` toggle the `focused` class on `document.body`. Call these from Electron's `hook_event('focus'/'blur')`.
+- CSS is in `NUI/css/modules/nui-app-window.css` — must be loaded separately.
+- This module is window chrome only — no menus, theme toggling, or Electron-specific APIs.
 
 ## Anti-Patterns
-- Setting inline styles on `nui-overlay dialog` — the overlay CSS handles all positioning.
 - Passing `target: document.body` in a browser demo (clears the whole page).
 - Treating this as a layout component — it is window chrome only.
+- Expecting `close()` to remove the element from the DOM.
 </script>
 	</nui-markdown>
 </details>
 
 <header>
 	<h1>App Window</h1>
-	<p>A window chrome module for Electron applications providing a standard title bar, content area, and optional status bar.</p>
+	<p>A window chrome module providing a title bar, content area, and optional status bar. Designed for Electron frameless windows.</p>
 </header>
 
 <section>
 	<h2>Overview</h2>
-	<p>The <code>nui.appWindow()</code> module wraps your application content in a consistent Electron-style frame.</p>
+	<p>The <code>appWindow()</code> module wraps content in window chrome — a title bar with close button, a content slot, and an optional status bar. It is purely presentation.</p>
 	<p><strong>Key features:</strong></p>
 	<ul>
 		<li>Title bar with app icon, title, and close button</li>
 		<li>Content area that fills the remaining space</li>
 		<li>Optional status bar at the bottom</li>
-		<li>Right-click context menu on title bar</li>
-		<li>Electron integration (when <code>window.electron_helper</code> is present)</li>
-		<li>Dark mode support via <code>color-scheme</code></li>
-		<li>Focus/blur state tracking</li>
+		<li><code>focus()</code> / <code>blur()</code> methods for Electron window state</li>
+		<li>Dark mode support via <code>color-scheme</code> (CSS <code>light-dark()</code>)</li>
 	</ul>
 </section>
 
 <section>
-	<h2>Usage</h2>
-	<p>Click the button below to open the app window inside an overlay backdrop.</p>
+	<h2>Demo</h2>
+	<p>Launches the app window inside an overlay to simulate an Electron frameless window.</p>
 
 	<div class="demo-area" style="padding: var(--nui-space);">
 		<nui-button id="launch-app">
@@ -85,7 +78,7 @@ The demo wraps the app window in a `nui-overlay` + `dialog` to simulate an Elect
 		</nui-button>
 	</div>
 
-	<nui-overlay id="app-window-overlay">
+	<nui-overlay id="app-window-overlay" blocking>
 		<dialog>
 			<div id="app-window-container" style="position: relative; width: 80vw; height: 80vh;"></div>
 		</dialog>
@@ -93,14 +86,14 @@ The demo wraps the app window in a `nui-overlay` + `dialog` to simulate an Elect
 
 	<nui-code>
 		<script type="example" data-lang="js">
-import { appWindow } from '../NUI/lib/modules/nui_app.js';
+import { appWindow } from '../NUI/lib/modules/nui-app-window.js';
 
 const overlay = document.getElementById('app-window-overlay');
 const container = document.getElementById('app-window-container');
 
 overlay.showModal();
 
-const app = await appWindow({
+const win = appWindow({
     title: 'Demo Application',
     icon: 'settings',
     inner: '<div style="padding: 2rem;"><h1>Hello World</h1></div>',
@@ -108,10 +101,9 @@ const app = await appWindow({
     target: container,
     onClose: () => {
         overlay.close();
+        container.innerHTML = '';
     }
 });
-
-app.setStatusBar('Ready');
 		</script>
 	</nui-code>
 </section>
@@ -132,7 +124,7 @@ app.setStatusBar('Ready');
 			<tr>
 				<td><code>title</code></td>
 				<td><code>string</code></td>
-				<td>Window title (defaults to document.title)</td>
+				<td>Window title (defaults to <code>document.title</code>)</td>
 			</tr>
 			<tr>
 				<td><code>icon</code></td>
@@ -147,22 +139,17 @@ app.setStatusBar('Ready');
 			<tr>
 				<td><code>statusbar</code></td>
 				<td><code>boolean</code></td>
-				<td>Show status bar (default: false)</td>
+				<td>Show status bar at the bottom (default: <code>false</code>)</td>
 			</tr>
 			<tr>
 				<td><code>target</code></td>
 				<td><code>HTMLElement</code></td>
-				<td>Container to append the app window to (default: document.body)</td>
-			</tr>
-			<tr>
-				<td><code>functions</code></td>
-				<td><code>object</code></td>
-				<td>Custom menu items for title bar context menu</td>
+				<td>Container to append the window to (default: <code>document.body</code>)</td>
 			</tr>
 			<tr>
 				<td><code>onClose</code></td>
 				<td><code>function</code></td>
-				<td>Callback when close button is clicked</td>
+				<td>Callback invoked when <code>win.close()</code> is called</td>
 			</tr>
 		</tbody>
 	</table>
@@ -178,71 +165,68 @@ app.setStatusBar('Ready');
 		<tbody>
 			<tr>
 				<td><code>close()</code></td>
-				<td>Close and remove the app window</td>
+				<td>Calls the <code>onClose</code> callback. Does not remove the element from the DOM.</td>
 			</tr>
 			<tr>
-				<td><code>setStatusBar(content)</code></td>
-				<td>Set the status bar text/HTML</td>
+				<td><code>focus()</code></td>
+				<td>Adds <code>focused</code> class to <code>&lt;body&gt;</code></td>
 			</tr>
 			<tr>
-				<td><code>center()</code></td>
-				<td>Center the window (Electron only)</td>
-			</tr>
-			<tr>
-				<td><code>setFullScreen(value)</code></td>
-				<td>Set fullscreen state (Electron only)</td>
-			</tr>
-			<tr>
-				<td><code>toggleDevTools()</code></td>
-				<td>Toggle developer tools (Electron only)</td>
+				<td><code>blur()</code></td>
+				<td>Removes <code>focused</code> class from <code>&lt;body&gt;</code></td>
 			</tr>
 		</tbody>
 	</table>
 
-	<h3>Title Bar Context Menu</h3>
-	<p>Right-click on the title bar to access:</p>
-	<ul>
-		<li><strong>Toggle Theme</strong> - Switch between light and dark mode</li>
-		<li><strong>Custom functions</strong> - Any functions you provide in options</li>
-		<li><strong>Toggle DevTools</strong> - Open/close DevTools (Electron only)</li>
-		<li><strong>Toggle Fullscreen</strong> - Enter/exit fullscreen (Electron only)</li>
-		<li><strong>Center Window</strong> - Center on screen (Electron only)</li>
-		<li><strong>Close</strong> - Close the window (Electron only)</li>
-	</ul>
+	<h3>Instance Properties</h3>
+	<table class="nui-table" style="width: 100%; font-size: 0.9em;">
+		<thead>
+			<tr>
+				<th style="width: 25%;">Property</th>
+				<th style="width: 20%;">Type</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>element</code></td>
+				<td><code>HTMLElement</code></td>
+				<td>The root <code>.nui-app</code> div</td>
+			</tr>
+			<tr>
+				<td><code>content</code></td>
+				<td><code>HTMLElement</code></td>
+				<td>The <code>.nui-app-main</code> content area</td>
+			</tr>
+		</tbody>
+	</table>
 </section>
 
 <section>
-	<h2>Dark Mode</h2>
-	<p>The app window uses <code>light-dark()</code> CSS function, automatically responding to the <code>color-scheme</code> property.</p>
+	<h2>Electron Integration</h2>
+	<p>Wire <code>focus()</code> / <code>blur()</code> to Electron window events in your preload or renderer:</p>
 	<nui-code>
 		<script type="example" data-lang="js">
-// Toggle dark mode
-document.documentElement.style.colorScheme = 'dark';
+const win = appWindow({
+    title: 'My App',
+    inner: '<div id="app"></div>',
+    statusbar: true,
+    target: document.body,
+    onClose: () => window.electron_helper.window.close()
+});
 
-// Or via the context menu (right-click title bar)
-		</script>
+window.electron_helper.window.hook_event('focus', () => win.focus());
+window.electron_helper.window.hook_event('blur', () => win.blur());
+	</script>
 	</nui-code>
 </section>
 
 <section>
-	<h2>Custom Functions</h2>
-	<p>Pass custom menu items to the title bar context menu:</p>
+	<h2>Dark Mode</h2>
+	<p>The window chrome uses <code>light-dark()</code> CSS function, automatically responding to the <code>color-scheme</code> property.</p>
 	<nui-code>
 		<script type="example" data-lang="js">
-const app = await appWindow({
-    title: 'My App',
-    inner: '<div>Content</div>',
-    functions: {
-        about: {
-            title: 'About',
-            fnc: () => showAboutDialog()
-        },
-        settings: {
-            title: 'Settings',
-            fnc: () => openSettings()
-        }
-    }
-});
+document.documentElement.style.colorScheme = 'dark';
 		</script>
 	</nui-code>
 </section>
@@ -254,33 +238,27 @@ function init(element, params, nui) {
 	const container = element.querySelector('#app-window-container');
 
 	launchBtn.addEventListener('click', async () => {
-		const { appWindow } = await import('../NUI/lib/modules/nui_app.js');
+		const { appWindow } = await import('../NUI/lib/modules/nui-app-window.js');
 
 		overlay.showModal();
 
-		const app = await appWindow({
+		appWindow({
 			title: 'Demo Application',
 			icon: 'settings',
 			inner: `
 				<div style="padding: var(--nui-space-double);">
 					<h1 style="margin-top: 0;">Welcome to NUI App Window</h1>
-					<p>This is a demonstration of the app window chrome module.</p>
-					<p>Try these interactions:</p>
-					<ul>
-						<li>Right-click the title bar for the context menu</li>
-						<li>Toggle dark mode via the context menu</li>
-						<li>Click the close button to dismiss</li>
-					</ul>
+					<p>This is the app window chrome rendered inside an overlay.</p>
+					<p>Click the close button in the title bar to dismiss.</p>
 				</div>
 			`,
 			statusbar: true,
 			target: container,
 			onClose: () => {
 				overlay.close();
+				container.innerHTML = '';
 			}
 		});
-
-		app.setStatusBar('Application ready');
 	});
 
 	element.show = () => {};
@@ -288,6 +266,7 @@ function init(element, params, nui) {
 		if (overlay?.open) {
 			overlay.close();
 		}
+		container.innerHTML = '';
 	};
 }
 </script>
