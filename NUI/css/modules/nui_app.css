@@ -3,22 +3,21 @@
  * 
  * Window chrome for Electron applications with title bar,
  * content area, and optional status bar.
+ * 
+ * Uses light-dark() for automatic theme switching via color-scheme.
  */
 
 .nui-app {
 	--nui-app-titlebar-height: 3rem;
 	--nui-app-statusbar-height: 2rem;
-	--nui-app-titlebar-bg: var(--color-shade6);
-	--nui-app-titlebar-color: var(--color-base);
-	--nui-app-content-bg: var(--color-shade1);
-	--nui-app-statusbar-bg: var(--color-shade3);
-	--nui-app-statusbar-color: var(--color-text);
-	--nui-app-border: var(--border-thickness) solid var(--border-shade2);
+	--nui-app-radius: var(--border-radius3);
 
 	position: absolute;
 	inset: 0;
-	background-color: var(--nui-app-content-bg);
-	transition: all 0.2s;
+	background-color: light-dark(var(--color-shade1), var(--color-shade2));
+	border-radius: var(--nui-app-radius);
+	box-shadow: 0 var(--shadow-radius1) var(--shadow-radius1) var(--shadow-color);
+	overflow: hidden;
 }
 
 .nui-app > .nui-app-content {
@@ -46,126 +45,90 @@
 	bottom: 0;
 }
 
-.nui-app .nui-status-bar {
-	position: absolute;
-	bottom: 0;
-	left: 0;
-	right: 0;
-	height: var(--nui-app-statusbar-height);
-	background-color: var(--nui-app-statusbar-bg);
-	border-top: var(--nui-app-border);
-	display: flex;
-	align-items: center;
-	padding-left: var(--nui-space);
-	color: var(--nui-app-statusbar-color);
-	font-size: var(--font-size-small);
-}
-
-.nui-app .nui-status-bar::after {
-	content: '';
-	display: block;
-	height: 0.5rem;
-	background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.1) 100%);
-	position: absolute;
-	width: 100%;
-	left: 0;
-	top: -0.5rem;
-	margin-top: -1px;
-	pointer-events: none;
-}
-
 .nui-app .nui-title-bar {
 	position: absolute;
 	top: 0;
 	left: 0;
 	right: 0;
 	height: var(--nui-app-titlebar-height);
-	background-color: var(--nui-app-titlebar-bg);
-	border-bottom: var(--nui-app-border);
-	display: grid;
-	grid-template-columns: 1fr auto;
+	background-color: light-dark(var(--color-shade6), var(--color-shade3));
+	border-bottom: var(--border-thickness) solid var(--border-shade3);
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
 	user-select: none;
 	-webkit-user-select: none;
 	-webkit-app-region: drag;
 	z-index: 1;
 }
 
-.nui-app .nui-title-bar::after {
-	content: '';
-	display: block;
-	height: 0.5rem;
-	background: linear-gradient(180deg, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0) 100%);
-	position: absolute;
-	width: 100%;
-	left: 0;
-	bottom: -0.5rem;
-	margin-top: 1px;
-	pointer-events: none;
-}
-
 .nui-app .nui-title-bar .title {
-	color: var(--nui-app-titlebar-color);
+	color: light-dark(var(--color-white), var(--color-shade8));
 	height: 100%;
 	display: flex;
 	align-items: center;
-	font-size: var(--font-size-small);
-	line-height: 1;
-	text-transform: uppercase;
-	padding-left: var(--nui-space);
 	gap: var(--nui-space-half);
+	padding-left: var(--nui-space);
+	font-size: var(--font-size-small);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
 }
 
-.nui-app .nui-title-bar .title .label {
-	margin-top: 0.1rem;
-}
-
-.nui-app .nui-title-bar .title .nui-icon-container {
-	width: auto;
-	height: 100%;
+.nui-app .nui-title-bar .title .title-icon {
 	display: flex;
 	align-items: center;
-	justify-content: center;
+	opacity: 0.8;
 }
 
-.nui-app .nui-title-bar .title .nui-icon-container svg {
-	width: 1.2rem;
-	height: 1.2rem;
+.nui-app .nui-title-bar .title .title-icon .nui-icon {
+	fill: light-dark(var(--color-white), var(--color-shade8));
+	color: light-dark(var(--color-white), var(--color-shade8));
 }
 
 .nui-app .nui-title-bar .controls {
 	display: flex;
-	justify-content: flex-end;
+	align-items: center;
+	height: 100%;
+	-webkit-app-region: no-drag;
 }
 
-.nui-app .nui-title-bar .nui-icon-container {
+.nui-app .nui-title-bar .controls .close {
 	width: var(--nui-app-titlebar-height);
 	height: 100%;
-	cursor: pointer;
-	-webkit-app-region: no-drag;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	transition: background-color 0.15s ease;
+	cursor: pointer;
+	color: light-dark(var(--color-white), var(--color-shade8));
+	opacity: 0.7;
+	transition: opacity 0.15s, background-color 0.15s;
 }
 
-.nui-app .nui-title-bar .nui-icon-container:hover {
-	background-color: rgba(0, 0, 0, 0.1);
+.nui-app .nui-title-bar .controls .close:hover {
+	opacity: 1;
+	background-color: var(--palette-alert-hi);
+	color: var(--color-white);
 }
 
-.nui-app .nui-title-bar .nui-icon-container.close:hover {
-	background-color: var(--palette-alert);
-	color: white;
-}
-
-.nui-app .nui-title-bar .nui-icon-container.close:hover svg {
-	fill: white;
-}
-
-.nui-app .nui-title-bar svg {
-	fill: var(--nui-app-titlebar-color);
-	color: var(--nui-app-titlebar-color);
+.nui-app .nui-title-bar .controls .close svg {
 	width: 1rem;
 	height: 1rem;
+	fill: currentColor;
+}
+
+.nui-app .nui-status-bar {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	height: var(--nui-app-statusbar-height);
+	background-color: light-dark(var(--color-shade3), var(--color-shade2));
+	border-top: var(--border-thickness) solid var(--border-shade3);
+	display: flex;
+	align-items: center;
+	padding: 0 var(--nui-space);
+	color: light-dark(var(--color-shade7), var(--color-shade6));
+	font-size: var(--font-size-xsmall);
 }
 
 .nui-title-bar,
@@ -179,24 +142,45 @@
 	opacity: 1;
 }
 
-/* Dark mode */
-body.dark .nui-app {
-	--nui-app-titlebar-bg: var(--color-shade5);
-	--nui-app-titlebar-color: var(--color-shade1);
-	--nui-app-content-bg: var(--color-shade2);
-	--nui-app-statusbar-bg: var(--color-shade4);
-	--nui-app-statusbar-color: var(--color-shade8);
+/* Drop zone */
+.nui-dropzone {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: rgba(180, 180, 180, 0.95);
+	z-index: 100;
+	pointer-events: none;
+	transition: opacity 0.2s;
+	opacity: 0;
 }
 
-body.dark .nui-app .nui-title-bar .nui-icon-container.close:hover {
-	background-color: var(--palette-alert-hi);
+.nui-dropzone.filedrag {
+	pointer-events: all;
+	opacity: 1;
 }
 
-body.dark .nui-app .nui-status-bar::after {
-	background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.2) 100%);
+.nui-dropzone .nui-dropzone-content {
+	position: absolute;
+	top: 1em;
+	left: 1em;
+	right: 1em;
+	bottom: 1em;
+	display: grid;
+	grid-template-rows: auto;
+	gap: 1em;
 }
 
-/* Dark mode - title bar menu uses context menu styles */
-body.dark .nui-app .nui-menu-dropdown {
-	--nui-app-titlebar-bg: var(--color-shade5);
+.nui-dropzone .nui-dropzone-content .item {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	background-color: rgba(255, 255, 255, 0.2);
+	transition: all 0.2s;
+}
+
+.nui-dropzone .nui-dropzone-content .item.active {
+	background-color: rgba(255, 255, 255, 1);
+	opacity: 1;
 }

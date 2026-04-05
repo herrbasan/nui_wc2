@@ -7,11 +7,11 @@
  * Usage:
  * const appWindow = await nui.appWindow({
  *     title: 'My Application',
- *     icon: '<nui-icon name="settings"></nui-icon>',
+ *     icon: 'settings',
  *     inner: document.body.innerHTML,
  *     statusbar: true,
  *     functions: {
- *         'About': { title: 'About', action: 'about' }
+ *         'About': { title: 'About', fnc: () => showAbout() }
  *     },
  *     onClose: () => {}
  * });
@@ -25,31 +25,27 @@
  */
 
 import { contextMenu } from './nui-context-menu.js';
-import './nui-context-menu.js';
 
 let appWindowInstance = null;
 
-async function appWindow(prop = {}) {
+function appWindow(prop = {}) {
 	if (appWindowInstance) {
 		appWindowInstance.close();
 	}
 
 	const title = prop.title || document.title || 'Window';
 	const inner = prop.inner || '';
-	const contentElement = typeof inner === 'string' 
-		? (inner.trim().startsWith('<') ? inner : document.createTextNode(inner))
-		: (inner.innerHTML !== undefined ? inner.innerHTML : inner);
 
 	const appEl = document.createElement('div');
 	appEl.className = 'nui-app';
 	appEl.innerHTML = `
 		<div class="nui-title-bar">
 			<div class="title">
-				<div class="nui-icon-container title-icon">${prop.icon || ''}</div>
+				<div class="title-icon">${prop.icon ? `<nui-icon name="${prop.icon}"></nui-icon>` : ''}</div>
 				<div class="label">${title}</div>
 			</div>
 			<div class="controls">
-				<div class="nui-icon-container close" title="Close">
+				<div class="close" title="Close">
 					<svg viewBox="0 0 24 24" width="16" height="16">
 						<path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
 					</svg>
@@ -67,10 +63,10 @@ async function appWindow(prop = {}) {
 	const statusBar = appEl.querySelector('.nui-status-bar');
 	const closeBtn = appEl.querySelector('.nui-title-bar .close');
 
-	if (typeof contentElement === 'string') {
-		mainContent.innerHTML = contentElement;
-	} else {
-		mainContent.appendChild(document.createTextNode(String(contentElement)));
+	if (typeof inner === 'string') {
+		mainContent.innerHTML = inner;
+	} else if (inner instanceof HTMLElement) {
+		mainContent.appendChild(inner);
 	}
 
 	if (!prop.statusbar) {
@@ -128,11 +124,7 @@ async function appWindow(prop = {}) {
 	};
 
 	closeBtn.addEventListener('click', () => {
-		if (prop.onClose) {
-			prop.onClose();
-		} else if (window.electron_helper?.app?.exit) {
-			window.electron_helper.app.exit();
-		}
+		app.close();
 	});
 
 	renderTitleMenu(app, prop);
@@ -146,8 +138,11 @@ async function appWindow(prop = {}) {
 		});
 	}
 
-	document.body.innerHTML = '';
-	document.body.appendChild(appEl);
+	const target = prop.target || document.body;
+	if (target === document.body) {
+		document.body.innerHTML = '';
+	}
+	target.appendChild(appEl);
 	appWindowInstance = app;
 
 	return app;
@@ -208,7 +203,8 @@ function renderTitleMenu(app, prop) {
 			onAction: (action, item) => {
 				switch (action) {
 					case 'toggle-theme':
-						document.body.classList.toggle('dark');
+						const current = document.documentElement.style.colorScheme || 'light';
+						document.documentElement.style.colorScheme = current === 'dark' ? 'light' : 'dark';
 						break;
 					case 'toggle-devtools':
 						if (window.electron_helper?.window) {
