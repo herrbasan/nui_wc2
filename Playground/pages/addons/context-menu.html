@@ -1,0 +1,381 @@
+<header>
+	<h1>Context Menu</h1>
+	<p>A lightweight, keyboard-accessible context menu popup triggered via right-click or programmatically. Shares visual styling with <code>nui-menu</code>.</p>
+</header>
+
+<section>
+	<h2>Overview</h2>
+	<p>The <code>nui-context-menu</code> module provides a floating popup menu similar to native browser context menus or application menus. It's programmatic-only (not a declarative custom element).</p>
+	<p><strong>Key features:</strong></p>
+	<ul>
+		<li>Programmatic API - create and show menus via JavaScript</li>
+		<li>Submenu support with hover delay (200ms)</li>
+		<li>Full keyboard navigation (arrows, Enter, Escape)</li>
+		<li>Auto-flip positioning to stay within viewport</li>
+		<li>Single global instance - opening closes any existing menu</li>
+		<li>Shared styling with nui-menu dropdowns</li>
+	</ul>
+</section>
+
+<section>
+	<h2>Basic Usage</h2>
+	<p>Right-click anywhere in the demo area below to open the context menu.</p>
+	
+	<div class="demo-area" id="basic-demo" style="min-height: 200px; display: flex; align-items: center; justify-content: center;">
+		<p style="color: var(--color-text-muted);">Right-click here to open context menu</p>
+	</div>
+
+	<nui-code>
+		<script type="example" data-lang="js">
+import { contextMenu } from '../NUI/lib/modules/nui-context-menu.js';
+import '../NUI/css/modules/nui-dropdown.css';
+import '../NUI/css/modules/nui-context-menu.css';
+
+const menu = contextMenu([
+	{ label: 'Cut', action: 'cut', shortcut: 'Ctrl+X' },
+	{ label: 'Copy', action: 'copy', shortcut: 'Ctrl+C' },
+	{ label: 'Paste', action: 'paste', shortcut: 'Ctrl+V' },
+	{ type: 'separator' },
+	{ label: 'Select All', action: 'select-all', shortcut: 'Ctrl+A' }
+], {
+	onAction: (action, item) => {
+		console.log('Action:', action, item);
+	}
+});
+
+// Show on right-click
+document.addEventListener('contextmenu', (e) => {
+	e.preventDefault();
+	menu.show(e.clientX, e.clientY);
+});
+
+// Show at specific coordinates
+menu.show(100, 100);
+
+// Show aligned to an element
+const button = document.querySelector('button');
+menu.showAt(button);
+		</script>
+	</nui-code>
+</section>
+
+<section>
+	<h2>With Submenus</h2>
+	<p>Context menus can have nested submenus. Hover over items with an arrow to see submenus.</p>
+	
+	<div class="demo-area" id="submenu-demo" style="min-height: 200px; display: flex; align-items: center; justify-content: center;">
+		<p style="color: var(--color-text-muted);">Right-click here to open nested context menu</p>
+	</div>
+
+	<nui-code>
+		<script type="example" data-lang="js">
+const menuWithSubmenus = contextMenu([
+	{
+		label: 'Format',
+		items: [
+			{ label: 'Bold', action: 'format-bold', shortcut: 'Ctrl+B' },
+			{ label: 'Italic', action: 'format-italic', shortcut: 'Ctrl+I' },
+			{ label: 'Underline', action: 'format-underline', shortcut: 'Ctrl+U' },
+			{ type: 'separator' },
+			{
+				label: 'Text Size',
+				items: [
+					{ label: 'Small', action: 'size-small' },
+					{ label: 'Medium', action: 'size-medium' },
+					{ label: 'Large', action: 'size-large' },
+					{ label: 'Huge', action: 'size-huge' }
+				]
+			}
+		]
+	},
+	{ label: 'Refresh', action: 'refresh' },
+	{ type: 'separator' },
+	{ label: 'Settings', action: 'settings' }
+], {
+	onAction: (action, item) => console.log('Action:', action)
+});
+		</script>
+	</nui-code>
+</section>
+
+<section>
+	<h2>Disabled Items</h2>
+	<p>Items can be disabled to prevent interaction.</p>
+	
+	<div class="demo-area" id="disabled-demo" style="min-height: 200px; display: flex; align-items: center; justify-content: center;">
+		<p style="color: var(--color-text-muted);">Right-click here to open menu with disabled items</p>
+	</div>
+
+	<nui-code>
+		<script type="example" data-lang="js">
+const menuWithDisabled = contextMenu([
+	{ label: 'Undo', action: 'undo' },
+	{ label: 'Redo', action: 'redo', disabled: true },
+	{ type: 'separator' },
+	{ label: 'Cut', action: 'cut' },
+	{ label: 'Copy', action: 'copy' },
+	{ label: 'Paste', action: 'paste', disabled: true }
+], {
+	onAction: (action) => console.log('Action:', action)
+});
+		</script>
+	</nui-code>
+</section>
+
+<section>
+	<h2>Keyboard Navigation</h2>
+	<div class="demo-callout">
+		<h3>Keyboard Shortcuts:</h3>
+		<ul>
+			<li><strong>Arrow Up/Down:</strong> Navigate between items</li>
+			<li><strong>Enter:</strong> Activate focused item (opens submenu if present)</li>
+			<li><strong>Escape:</strong> Close menu</li>
+			<li><strong>Arrow Right:</strong> Open submenu (when focused on item with submenu)</li>
+			<li><strong>Arrow Left:</strong> Close submenu (when in submenu) or close menu (when at root)</li>
+		</ul>
+	</div>
+</section>
+
+<section>
+	<h2>API Reference</h2>
+
+	<h3>Factory Function</h3>
+	<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+		<thead>
+			<tr>
+				<th style="width: 30%;">Signature</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>contextMenu(items, options)</code></td>
+				<td>Creates a new context menu instance with the given items array and options.</td>
+			</tr>
+		</tbody>
+	</table>
+
+	<h3>Options</h3>
+	<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+		<thead>
+			<tr>
+				<th style="width: 25%;">Property</th>
+				<th>Type</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>onAction</code></td>
+				<td><code>(action: string, item: object) =&gt; void</code></td>
+				<td>Callback when an item with an action is clicked/activated.</td>
+			</tr>
+			<tr>
+				<td><code>onSubmenuOpen</code></td>
+				<td><code>(label: string) =&gt; void</code></td>
+				<td>Callback when a submenu opens.</td>
+			</tr>
+		</tbody>
+	</table>
+
+	<h3>Menu Item Properties</h3>
+	<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+		<thead>
+			<tr>
+				<th style="width: 25%;">Property</th>
+				<th>Type</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>label</code></td>
+				<td><code>string</code></td>
+				<td>Display text for the menu item.</td>
+			</tr>
+			<tr>
+				<td><code>action</code></td>
+				<td><code>string</code></td>
+				<td>Identifier passed to onAction callback when item is activated.</td>
+			</tr>
+			<tr>
+				<td><code>items</code></td>
+				<td><code>array</code></td>
+				<td>Submenu items array (creates nested submenu).</td>
+			</tr>
+			<tr>
+				<td><code>type</code></td>
+				<td><code>'separator'</code></td>
+				<td>Renders a horizontal divider.</td>
+			</tr>
+			<tr>
+				<td><code>disabled</code></td>
+				<td><code>boolean</code></td>
+				<td>Prevents interaction when true.</td>
+			</tr>
+		</tbody>
+	</table>
+
+	<h3>Instance Methods</h3>
+	<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+		<thead>
+			<tr>
+				<th style="width: 25%;">Method</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>show(x, y, triggerEl?)</code></td>
+				<td>Display menu at viewport coordinates. Optional trigger element enables scroll detection.</td>
+			</tr>
+			<tr>
+				<td><code>showAt(element)</code></td>
+				<td>Display menu aligned to an element's position.</td>
+			</tr>
+			<tr>
+				<td><code>hide()</code></td>
+				<td>Close the menu if open.</td>
+			</tr>
+			<tr>
+				<td><code>destroy()</code></td>
+				<td>Close and clean up the menu instance.</td>
+			</tr>
+		</tbody>
+	</table>
+
+	<h3>Static Methods</h3>
+	<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+		<thead>
+			<tr>
+				<th style="width: 25%;">Method</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>contextMenu.closeAll()</code></td>
+				<td>Close any open context menu.</td>
+			</tr>
+		</tbody>
+	</table>
+</section>
+
+<section>
+	<h2>Output Log</h2>
+	<div class="demo-area" id="output-log" style="min-height: 100px; font-family: monospace; font-size: 0.85em;">
+		<p style="color: var(--color-text-muted);">Actions will be logged here...</p>
+	</div>
+</section>
+
+<script type="nui/page">
+function init(element, params, nui) {
+	const outputLog = element.querySelector('#output-log');
+	
+	function log(message) {
+		const p = document.createElement('p');
+		p.style.margin = '0';
+		p.style.padding = 'var(--nui-space-quarter) 0';
+		p.style.borderBottom = '1px solid var(--border-shade1)';
+		p.textContent = new Date().toLocaleTimeString() + ': ' + message;
+		const firstP = outputLog.querySelector('p');
+		if (firstP && firstP.style.color) {
+			outputLog.innerHTML = '';
+		}
+		outputLog.appendChild(p);
+	}
+
+	// Basic menu
+	const basicMenuItems = [
+		{ label: 'Cut', action: 'cut', shortcut: 'Ctrl+X' },
+		{ label: 'Copy', action: 'copy', shortcut: 'Ctrl+C' },
+		{ label: 'Paste', action: 'paste', shortcut: 'Ctrl+V' },
+		{ type: 'separator' },
+		{ label: 'Select All', action: 'select-all', shortcut: 'Ctrl+A' }
+	];
+
+	// Menu with submenus
+	const submenuItems = [
+		{
+			label: 'Format',
+			items: [
+				{ label: 'Bold', action: 'format-bold', shortcut: 'Ctrl+B' },
+				{ label: 'Italic', action: 'format-italic', shortcut: 'Ctrl+I' },
+				{ label: 'Underline', action: 'format-underline', shortcut: 'Ctrl+U' },
+				{ type: 'separator' },
+				{
+					label: 'Text Size',
+					items: [
+						{ label: 'Small', action: 'size-small' },
+						{ label: 'Medium', action: 'size-medium' },
+						{ label: 'Large', action: 'size-large' },
+						{ label: 'Huge', action: 'size-huge' }
+					]
+				}
+			]
+		},
+		{ label: 'Refresh', action: 'refresh' },
+		{ type: 'separator' },
+		{ label: 'Settings', action: 'settings' }
+	];
+
+	// Menu with disabled items
+	const disabledItems = [
+		{ label: 'Undo', action: 'undo' },
+		{ label: 'Redo', action: 'redo', disabled: true },
+		{ type: 'separator' },
+		{ label: 'Cut', action: 'cut' },
+		{ label: 'Copy', action: 'copy' },
+		{ label: 'Paste', action: 'paste', disabled: true }
+	];
+
+	import('../NUI/lib/modules/nui-context-menu.js').then(({ contextMenu }) => {
+		// Create three separate menus
+		const basicMenu = contextMenu(basicMenuItems, {
+			onAction: (action, item) => {
+				log(`Basic menu: ${action} (${item.label})`);
+			}
+		});
+
+		const submenuMenu = contextMenu(submenuItems, {
+			onAction: (action, item) => {
+				log(`Submenu menu: ${action} (${item.label})`);
+			},
+			onSubmenuOpen: (label) => {
+				log(`Submenu opened: ${label}`);
+			}
+		});
+
+		const disabledMenu = contextMenu(disabledItems, {
+			onAction: (action, item) => {
+				log(`Disabled menu: ${action} (${item.label})`);
+			}
+		});
+
+		// Attach to demo areas
+		const basicDemo = element.querySelector('#basic-demo');
+		const submenuDemo = element.querySelector('#submenu-demo');
+		const disabledDemo = element.querySelector('#disabled-demo');
+
+		basicDemo.addEventListener('contextmenu', (e) => {
+			e.preventDefault();
+			basicMenu.show(e.clientX, e.clientY, e.currentTarget);
+		});
+
+		submenuDemo.addEventListener('contextmenu', (e) => {
+			e.preventDefault();
+			submenuMenu.show(e.clientX, e.clientY, e.currentTarget);
+		});
+
+		disabledDemo.addEventListener('contextmenu', (e) => {
+			e.preventDefault();
+			disabledMenu.show(e.clientX, e.clientY, e.currentTarget);
+		});
+
+		log('Context menus initialized. Right-click the demo areas above.');
+	}).catch(err => {
+		log('Error loading context-menu module: ' + err.message);
+		console.error(err);
+	});
+}
+</script>

@@ -332,6 +332,7 @@ const navigationData = [
 			{ label: 'Markdown', href: '#page=addons/markdown' },
 			{ label: 'Media Player', href: '#page=addons/media-player' },
 			{ label: 'Menu', href: '#page=addons/menu' },
+			{ label: 'Context Menu', href: '#page=addons/context-menu' },
 			{ label: 'Rich-Text', href: '#page=addons/rich-text' }
 		]
 	},

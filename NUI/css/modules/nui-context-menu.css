@@ -1,0 +1,14 @@
+/**
+ * NUI Context Menu - Styles
+ * 
+ * Context menu uses shared dropdown styles from nui-dropdown.css.
+ * This file provides context-menu-specific overrides.
+ * 
+ * Import order:
+ * 1. nui-dropdown.css (shared dropdown styles)
+ * 2. nui-context-menu.css (this file)
+ */
+
+.nui-menu-dropdown.nui-context-menu {
+	position: fixed;
+}
