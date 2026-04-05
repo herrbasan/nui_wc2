@@ -1,0 +1,212 @@
+<header>
+	<h1>App Window</h1>
+	<p>A window chrome module for Electron applications providing a standard title bar, content area, and optional status bar.</p>
+</header>
+
+<section>
+	<h2>Overview</h2>
+	<p>The <code>nui.appWindow()</code> module wraps your application content in a consistent Electron-style frame.</p>
+	<p><strong>Key features:</strong></p>
+	<ul>
+		<li>Title bar with app icon, title, and close button</li>
+		<li>Content area that fills the remaining space</li>
+		<li>Optional status bar at the bottom</li>
+		<li>Right-click context menu on title bar</li>
+		<li>Electron integration (when <code>window.electron_helper</code> is present)</li>
+		<li>Dark mode support</li>
+		<li>Focus/blur state tracking</li>
+	</ul>
+</section>
+
+<section>
+	<h2>Usage</h2>
+	<p>Click the button below to initialize the app window. This will replace the page content with the chrome.</p>
+
+	<div class="demo-area" style="padding: var(--nui-space);">
+		<nui-button id="launch-app">
+			<button type="button">Launch App Window</button>
+		</nui-button>
+	</div>
+
+	<nui-code>
+		<script type="example" data-lang="js">
+import { appWindow } from '../NUI/lib/modules/nui_app.js';
+import '../NUI/css/modules/nui_app.css';
+
+const app = await appWindow({
+    title: 'My Application',
+    icon: '<svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>',
+    inner: '<div style="padding: 2rem;"><h1>Hello World</h1><p>Your app content goes here.</p></div>',
+    statusbar: true
+});
+
+// Set status bar content
+app.setStatusBar('Ready');
+
+// Electron-only methods (require window.electron_helper)
+app.center();
+app.setFullScreen(true);
+app.toggleDevTools();
+app.close();
+		</script>
+	</nui-code>
+</section>
+
+<section>
+	<h2>API Reference</h2>
+
+	<h3>Options</h3>
+	<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+		<thead>
+			<tr>
+				<th style="width: 25%;">Property</th>
+				<th style="width: 20%;">Type</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>title</code></td>
+				<td><code>string</code></td>
+				<td>Window title (defaults to document.title)</td>
+			</tr>
+			<tr>
+				<td><code>icon</code></td>
+				<td><code>string</code></td>
+				<td>SVG icon HTML for the title bar</td>
+			</tr>
+			<tr>
+				<td><code>inner</code></td>
+				<td><code>string|HTMLElement</code></td>
+				<td>Content to display in the main area</td>
+			</tr>
+			<tr>
+				<td><code>statusbar</code></td>
+				<td><code>boolean</code></td>
+				<td>Show status bar (default: false)</td>
+			</tr>
+			<tr>
+				<td><code>functions</code></td>
+				<td><code>object</code></td>
+				<td>Custom menu items for title bar context menu</td>
+			</tr>
+			<tr>
+				<td><code>onClose</code></td>
+				<td><code>function</code></td>
+				<td>Callback when close button is clicked</td>
+			</tr>
+		</tbody>
+	</table>
+
+	<h3>Instance Methods</h3>
+	<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+		<thead>
+			<tr>
+				<th style="width: 25%;">Method</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>close()</code></td>
+				<td>Close and remove the app window</td>
+			</tr>
+			<tr>
+				<td><code>setStatusBar(content)</code></td>
+				<td>Set the status bar text/HTML</td>
+			</tr>
+			<tr>
+				<td><code>center()</code></td>
+				<td>Center the window (Electron only)</td>
+			</tr>
+			<tr>
+				<td><code>setFullScreen(value)</code></td>
+				<td>Set fullscreen state (Electron only)</td>
+			</tr>
+			<tr>
+				<td><code>toggleDevTools()</code></td>
+				<td>Toggle developer tools (Electron only)</td>
+			</tr>
+		</tbody>
+	</table>
+
+	<h3>Title Bar Context Menu</h3>
+	<p>Right-click on the title bar to access:</p>
+	<ul>
+		<li><strong>Toggle Theme</strong> - Switch between light and dark mode</li>
+		<li><strong>Custom functions</strong> - Any functions you provide in options</li>
+		<li><strong>Toggle DevTools</strong> - Open/close DevTools (Electron only)</li>
+		<li><strong>Toggle Fullscreen</strong> - Enter/exit fullscreen (Electron only)</li>
+		<li><strong>Center Window</strong> - Center on screen (Electron only)</li>
+		<li><strong>Close</strong> - Close the window (Electron only)</li>
+	</ul>
+</section>
+
+<section>
+	<h2>Dark Mode</h2>
+	<p>The app window responds to <code>body.dark</code> class for dark mode styling.</p>
+	<nui-code>
+		<script type="example" data-lang="js">
+// Toggle dark mode
+document.body.classList.toggle('dark');
+
+// Or via the context menu (right-click title bar)
+		</script>
+	</nui-code>
+</section>
+
+<section>
+	<h2>Custom Functions</h2>
+	<p>Pass custom menu items to the title bar context menu:</p>
+	<nui-code>
+		<script type="example" data-lang="js">
+const app = await appWindow({
+    title: 'My App',
+    inner: '<div>Content</div>',
+    functions: {
+        about: {
+            title: 'About',
+            fnc: () => showAboutDialog()
+        },
+        settings: {
+            title: 'Settings',
+            fnc: () => openSettings()
+        }
+    }
+});
+		</script>
+	</nui-code>
+</section>
+
+<script type="nui/page">
+function init(element, params, nui) {
+	const launchBtn = element.querySelector('#launch-app button');
+	
+	launchBtn.addEventListener('click', async () => {
+		const { appWindow } = await import('../NUI/lib/modules/nui_app.js');
+		
+		const app = await appWindow({
+			title: 'Demo Application',
+			icon: '<svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>',
+			inner: `
+				<div style="padding: var(--nui-space-double);">
+					<h1 style="margin-top: 0;">Welcome to NUI App Window</h1>
+					<p>This is a demonstration of the app window chrome module.</p>
+					<p>Try these interactions:</p>
+					<ul>
+						<li>Right-click the title bar for the context menu</li>
+						<li>Toggle dark mode via the context menu</li>
+						<li>Click the close button (shows alert in this demo)</li>
+					</ul>
+				</div>
+			`,
+			statusbar: true,
+			onClose: () => {
+				alert('Window closed! Returning to demo...');
+			}
+		});
+
+		app.setStatusBar('Application ready');
+	});
+}
+</script>

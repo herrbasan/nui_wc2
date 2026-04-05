@@ -333,6 +333,7 @@ const navigationData = [
 			{ label: 'Media Player', href: '#page=addons/media-player' },
 			{ label: 'Menu', href: '#page=addons/menu' },
 			{ label: 'Context Menu', href: '#page=addons/context-menu' },
+			{ label: 'App Window', href: '#page=addons/app-window' },
 			{ label: 'Rich-Text', href: '#page=addons/rich-text' }
 		]
 	},

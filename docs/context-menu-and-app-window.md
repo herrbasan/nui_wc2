@@ -104,7 +104,7 @@ nui.contextMenu.closeAll();      // Close any open context menus
 
 ## nui-app (App Window Chrome)
 
-### Status: 📋 DOCUMENTED ONLY - NOT YET IMPLEMENTED
+### Status: ✅ IMPLEMENTED
 
 ### Concept & Vision
 
@@ -138,8 +138,8 @@ A window chrome module for Electron applications providing a standard title bar,
 **Type**: Module (imperative API), not a custom element
 
 **Files**:
-- `NUI/modules/nui_app.js` - 📋 TODO
-- `NUI/css/nui_app.css` - 📋 TODO
+- `NUI/lib/modules/nui_app.js` - ✅ IMPLEMENTED
+- `NUI/css/modules/nui_app.css` - ✅ IMPLEMENTED
 
 **API**:
 ```javascript
@@ -201,26 +201,28 @@ Right-click on title bar opens a context menu (using nui-context-menu) with:
 - [x] Fixed submenu stack (nested submenus now work correctly - level 3+ stays open)
 - [x] Added scroll detection - menu closes when trigger element scrolls
 - [x] Added auto-close submenu when navigating to different item without submenu
-
-### Outstanding
-- [ ] Implement `NUI/modules/nui_app.js` (app window chrome)
-- [ ] Create `NUI/css/nui_app.css`
-- [ ] Test context-menu in browser
+- [x] Implemented `NUI/lib/modules/nui_app.js` (app window chrome)
+- [x] Created `NUI/css/modules/nui_app.css`
+- [x] Created demo page at `Playground/pages/addons/app-window.html`
+- [x] Updated docs to mark app-window as implemented
 
 ### Files Created/Modified
 ```
 NUI/
 ├── lib/modules/
-│   └── nui-context-menu.js     [NEW]
+│   ├── nui-context-menu.js     [NEW]
+│   └── nui_app.js             [NEW]
 ├── css/modules/
 │   ├── nui-dropdown.css        [NEW - shared styles]
-│   ├── nui-context-menu.css    [NEW]
-│   └── nui-menu.css            [MODIFIED - now imports nui-dropdown.css]
+│   ├── nui-context-menu.css   [NEW]
+│   ├── nui_app.css            [NEW]
+│   └── nui-menu.css           [MODIFIED - now imports nui-dropdown.css]
 Playground/
-├── index.html                  [MODIFIED - added context-menu CSS import]
-├── js/main.js                  [MODIFIED - added context-menu nav entry]
+├── index.html                  [MODIFIED - added context-menu and app CSS imports]
+├── js/main.js                  [MODIFIED - added context-menu and app nav entries]
 └── pages/addons/
-    └── context-menu.html       [NEW - demo page]
+    ├── context-menu.html      [NEW - demo page]
+    └── app-window.html        [NEW - demo page]
 docs/
-└── context-menu-and-app-window.md  [NEW]
+└── context-menu-and-app-window.md  [UPDATED - app-window now implemented]
 ```
