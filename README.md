@@ -10,22 +10,34 @@
 
 > ⚠️ **Early Development** — API may change. Feedback welcome!
 
-A lightweight UI component library built on web standards. No framework required.
-
-**Fast** — Direct DOM manipulation, no virtual DOM overhead  
-**Accessible** — ARIA roles and keyboard navigation built in  
-**Simple** — Semantic HTML foundation, minimal boilerplate
-
 **[📖 Documentation & Playground →](https://herrbasan.github.io/nui_wc2/)**
 
-## What is NUI?
+---
 
-NUI is a collection of UI components that work directly with the browser's native APIs. It's designed for developers who want a simple, fast foundation without the overhead of a full framework.
+## The Philosophy: Upgrade, Don't Replace
 
-- **Zero dependencies** — just HTML, CSS, and JavaScript
-- **No build step required** — drop it in and go
-- **Progressive enhancement** — semantic HTML that works, then enhanced with JavaScript
-- **Accessible by default** — proper ARIA support and keyboard navigation built in
+NUI is built on a simple premise: **the web platform is already excellent.** We don't replace it—we enhance it.
+
+```html
+<nui-button>
+    <button type="button">Click Me</button>
+</nui-button>
+```
+
+The semantic `<button>` works on its own. The `<nui-button>` wrapper adds styling, behavior, and accessibility enhancements. If JavaScript fails, you still have a working button.
+
+This approach serves a deeper philosophy:
+
+| Principle | How NUI Embodies It |
+|-----------|---------------------|
+| **Reliability > Performance** | Native elements first; they work even without JS |
+| **Design Failures Away** | Semantic HTML prevents entire classes of accessibility bugs |
+| **Zero Dependencies** | Platform APIs only. No abstraction debt. |
+| **Fail Fast** | Invalid configs throw immediately; silent failures eliminated |
+
+**The result:** Smaller bundles, better accessibility, and code that makes sense. You get enhanced components while the DOM remains semantic, inspectable, and standards-compliant.
+
+---
 
 ## Quick Start
 
@@ -38,13 +50,38 @@ NUI is a collection of UI components that work directly with the browser's nativ
 </nui-button>
 ```
 
-The semantic `<button>` inside works on its own. The `<nui-button>` wrapper adds enhanced behavior and styling.
+**For a complete SPA setup,** see the [Getting Started guide](Playground/pages/documentation/getting-started.html) in the Playground.
+
+---
+
+## What Makes NUI Different
+
+**Not a Framework — A Philosophy Made Tangible**
+
+Most component libraries ask you to learn their abstraction. NUI asks you to embrace the platform:
+
+- **Native elements are the foundation** — We wrap `<button>`, `<input>`, `<table>`, not reimplement them
+- **The DOM is the source of truth** — No virtual DOM, no state synchronization, no magic
+- **Accessibility is automatic** — Screen readers understand semantic HTML; we enhance what already works
+- **Performance is inherent** — Direct DOM manipulation, no diffing overhead, lazy enhancement
+
+**This is particularly powerful for LLM-generated code:**
+
+- No inheritance hierarchies to misunderstand
+- Platform APIs that are documented everywhere
+- Patterns that compose consistently
+- Failure modes that are immediate and obvious
+
+---
 
 ## Features
 
 - **Dual-Mode Layout** — App mode (dashboard-style grid) or Page mode (natural document flow)
 - **CSS Variable Theming** — Customize the entire design system with CSS custom properties
 - **Keyboard Navigation** — Full arrow key and Tab support where appropriate
+- **Progressive Enhancement** — Works without JavaScript, enhanced with it
+
+---
 
 ## Components
 
@@ -58,11 +95,9 @@ The semantic `<button>` inside works on its own. The `<nui-button>` wrapper adds
 | `nui-app-footer` | App footer container |
 | `nui-skip-links` | Skip links navigation (auto-targets `<main>`) |
 | `nui-layout` | Responsive layout helper (grid / flow) |
-| `nui-column-flow` | Deprecated (use `nui-layout type="flow"`) |
 | `nui-button` | Button enhancements |
 | `nui-button-container` | Button group layout (alignment / spacing) |
 | `nui-icon` | Icon system with SVG sprite support |
-| `nui-icon-button` | Layout helper for icon-only buttons |
 | `nui-loading` | Loading overlay / indicator |
 | `nui-progress` | Progress indicator (determinate and circular) |
 | `nui-badge` | Inline badge for status, labels, counts |
@@ -103,7 +138,6 @@ These are opt-in addons in `NUI/lib/modules/`.
 | `nui-context-menu` | Component | Right-click context menu | `NUI/css/modules/nui-context-menu.css` |
 | `nui-markdown` | Component | Markdown renderer | — |
 | `nui-syntax-highlight` | Utility | Exports `highlight(code, lang)`; `nui-code` imports it on-demand automatically | `NUI/css/modules/nui-syntax-highlight.css` |
-| `nui-monitor` | Utility | Deprecated | — |
 
 Minimal loading example:
 
@@ -112,7 +146,6 @@ Minimal loading example:
 
 <!-- Only if you use the related addons -->
 <link rel="stylesheet" href="NUI/css/modules/nui-menu.css">
-<link rel="stylesheet" href="NUI/css/modules/nui-app-window.css">
 
 <script type="module" src="NUI/nui.js"></script>
 
@@ -120,15 +153,28 @@ Minimal loading example:
 <script type="module" src="NUI/lib/modules/nui-menu.js"></script>
 ```
 
-## Philosophy
+---
 
-NUI embraces the web platform. Instead of abstracting away the DOM, it works with it directly. Components use semantic HTML inside custom element containers, making them accessible and debuggable with standard browser tools.
+## When to Use NUI
 
-This approach won't be for everyone—and that's okay. If you need a full reactive framework, there are great options out there. NUI is for projects where simplicity and performance are the priority.
+NUI fits projects where:
+
+- **Simplicity matters** — You want direct control over the DOM
+- **Performance is critical** — No virtual DOM overhead
+- **Accessibility is non-negotiable** — Built-in, not bolted-on
+- **Long-term maintenance** — Code that remains understandable
+
+If you need a full reactive framework with state management and component lifecycles, there are excellent options (React, Vue, Svelte). NUI is for when you want to work closer to the platform.
+
+---
 
 ## Learn More
 
-**[See the Playground for live examples and documentation →](https://herrbasan.github.io/nui_wc2/)**
+**[📖 See the Playground for live examples and documentation →](https://herrbasan.github.io/nui_wc2/)**
+
+For LLM-specific guidance, see [`Playground/README.md`](Playground/README.md).
+
+---
 
 ## License
 
