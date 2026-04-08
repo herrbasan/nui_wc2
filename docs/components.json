@@ -33,8 +33,9 @@
 		{ "name": "nui-tooltip", "category": "display", "description": "Popover-based tooltip for hover and focus annotations on arbitrary UI elements.", "page": "components/tooltip", "innerElement": null, "events": [], "imports": null },
 		{ "name": "nui-icon", "category": "navigation", "description": "SVG sprite-based icon renderer for consistent, scalable interface icons.", "page": "components/icon", "innerElement": null, "events": [], "imports": null },
 		{ "name": "nui-link-list", "category": "navigation", "description": "Hierarchical navigation list with fold and tree modes plus programmatic data loading.", "page": "components/link-list", "innerElement": null, "events": ["nui-link-click"], "imports": null },
-		{ "name": "nui-code", "category": "navigation", "description": "Syntax-highlighted code wrapper used throughout the Playground for examples and snippets.", "page": "addons/code", "innerElement": null, "events": [], "imports": { "js": "NUI/lib/modules/nui-syntax-highlight.js" } },
-		{ "name": "nui.util.storage", "category": "utility", "description": "Minimal cookie and localStorage helper with TTL support and simple string-based API.", "page": "components/storage", "innerElement": null, "events": [], "imports": null },
+		{ "name": "nui-markdown", "category": "content", "description": "Markdown renderer with streaming support and syntax highlighting.", "page": "components/markdown", "innerElement": null, "events": [], "imports": null },
+		{ "name": "nui-code", "category": "content", "description": "Syntax-highlighted code wrapper used throughout the Playground for examples and snippets.", "page": "components/code", "innerElement": null, "events": [], "imports": { "js": "NUI/lib/modules/nui-syntax-highlight.js" } },
+		{ "name": "nui.util.storage", "category": "utility", "description": "Minimal cookie and localStorage helper with TTL support and simple string-based API.", "page": "documentation/utilities", "innerElement": null, "events": [], "imports": null },
 		{ "name": "nui-menu", "category": "addon", "description": "Application-style menubar with dropdowns, nested submenus, and full keyboard navigation.", "page": "addons/menu", "innerElement": null, "events": [], "imports": { "js": "NUI/lib/modules/nui-menu.js", "css": "NUI/css/modules/nui-menu.css" } },
 		{ "name": "nui-list", "category": "addon", "description": "Virtualized list for large datasets. Requires constrained parent height or flex:1 boundaries.", "page": "addons/list", "innerElement": null, "events": [], "imports": { "js": "NUI/lib/modules/nui-list.js", "css": "NUI/css/modules/nui-list.css" } },
 		{ "name": "nui-lightbox", "category": "addon", "description": "Image and media gallery lightbox that supports grouped declarative usage and programmatic opening.", "page": "addons/lightbox", "innerElement": null, "events": [], "imports": null },
@@ -51,5 +52,106 @@
 		{ "name": "declarative-actions", "description": "The data-action pattern used across the Playground demos.", "page": "documentation/declarative-actions" },
 		{ "name": "accessibility", "description": "Accessibility defaults and usage expectations for the component set.", "page": "documentation/accessibility" },
 		{ "name": "utilities", "description": "Helper functions and utilities for common tasks.", "page": "documentation/utilities" }
-	]
+	],
+	"reference": {
+		"setup": {
+			"minimal": {
+				"description": "Minimal standalone setup",
+				"code": "<link rel=\"stylesheet\" href=\"NUI/css/nui-theme.css\">\n<script type=\"module\" src=\"NUI/nui.js\"></script>",
+				"lang": "html"
+			},
+			"foucPrevention": {
+				"description": "FOUC Prevention (App Mode)",
+				"code": "body { margin: 0; overflow: hidden; }\nnui-app:not(.nui-ready) { display: none; }\nnui-loading:not(.active) { display: none; }",
+				"lang": "css"
+			},
+			"addons": [
+				{ "name": "nui-menu", "js": "NUI/lib/modules/nui-menu.js", "css": "NUI/css/modules/nui-menu.css" },
+				{ "name": "nui-list", "js": "NUI/lib/modules/nui-list.js", "css": "NUI/css/modules/nui-list.css" },
+				{ "name": "nui-syntax-highlight", "js": "NUI/lib/modules/nui-syntax-highlight.js", "css": null }
+			]
+		},
+		"api": {
+			"root": [
+				{ "name": "init", "signature": "nui.init(options)", "description": "Auto-called; initializes library and registers custom elements", "params": ["options?"], "returns": null, "example": "nui.init({ iconSpritePath: '/icons.svg' })" },
+				{ "name": "configure", "signature": "nui.configure({ iconSpritePath, baseFontSize, animationDuration })", "description": "Update configuration after init", "params": ["config"], "returns": null },
+				{ "name": "version", "signature": "nui.version", "description": "Library version string", "type": "property" },
+				{ "name": "registerFeature", "signature": "nui.registerFeature(name, (container, params) => { ... })", "description": "Register a named feature for content routing", "params": ["name", "handler"], "returns": null },
+				{ "name": "registerType", "signature": "nui.registerType(type, (element, content) => { ... })", "description": "Register a content type handler", "params": ["type", "handler"], "returns": null },
+				{ "name": "createRouter", "signature": "nui.createRouter(container, { defaultPage, onNavigate })", "description": "Create a router instance for SPA navigation", "params": ["container", "options"], "returns": "Router" },
+				{ "name": "enableContentLoading", "signature": "nui.enableContentLoading({ container, navigation, basePath, defaultPage })", "description": "Enable hash-based content loading", "params": ["options"], "returns": null }
+			],
+			"components": [
+				{
+					"namespace": "dialog",
+					"type": "ephemeral",
+					"description": "Modal and non-modal dialog wrapper, plus system dialog flows",
+					"methods": [
+						{ "name": "alert", "signature": "await nui.components.dialog.alert(title, message, options?)", "description": "Show alert dialog", "async": true },
+						{ "name": "confirm", "signature": "await nui.components.dialog.confirm(title, message, options?)", "description": "Show confirmation dialog, returns boolean", "async": true, "returns": "boolean" },
+						{ "name": "prompt", "signature": "await nui.components.dialog.prompt(title, message, { fields: [{ id, label, type?, value? }] }, options?)", "description": "Show prompt dialog, returns object or null", "async": true, "returns": "object | null" },
+						{ "name": "page", "signature": "await nui.components.dialog.page(title, subtitle?, { contentScroll, buttons: [{ label, type, value }] })", "description": "Show custom page dialog", "async": true, "returns": "{ dialog, main }" }
+					],
+					"options": { "placement": ["top", "center", "bottom"], "target": "Element", "modal": "boolean", "blocking": "boolean", "classes": "string[]" }
+				},
+				{
+					"namespace": "banner",
+					"type": "ephemeral",
+					"description": "Edge-anchored notification surface",
+					"methods": [
+						{ "name": "show", "signature": "nui.components.banner.show({ content, placement: 'top'|'bottom', priority: 'info'|'alert', autoClose: ms })", "returns": "controller" },
+						{ "name": "hide", "signature": "nui.components.banner.hide(controller)" },
+						{ "name": "hideAll", "signature": "nui.components.banner.hideAll()" }
+					]
+				},
+				{
+					"namespace": "linkList",
+					"type": "persistent",
+					"description": "Hierarchical navigation list with fold and tree modes",
+					"methods": [
+						{ "name": "create", "signature": "nui.components.linkList.create(data, { mode: 'fold'|'tree' })", "description": "Create navigation list from data", "returns": "Element", "dataFormat": "[{ label, icon?, href?, items?: [...] }, { separator: true }]" },
+						{ "name": "setActive", "signature": "nui.components.linkList.setActive(selector)" },
+						{ "name": "getActive", "signature": "nui.components.linkList.getActive()" },
+						{ "name": "clearActive", "signature": "nui.components.linkList.clearActive()" }
+					]
+				}
+			],
+			"utilities": [
+				{ "name": "createElement", "signature": "nui.util.createElement(tag, { class, attrs, data, events, content, target })", "category": "dom" },
+				{ "name": "createSvgElement", "signature": "nui.util.createSvgElement(tag, attrs, children)", "category": "dom" },
+				{ "name": "enableDrag", "signature": "nui.util.enableDrag(element, { onDragStart, onDrag, onDragEnd })", "description": "Returns cleanup function", "returns": "function" },
+				{ "name": "storage", "type": "namespace", "category": "storage", "methods": [
+					{ "name": "get", "signature": "nui.util.storage.get({ name })" },
+					{ "name": "set", "signature": "nui.util.storage.set({ name, value, ttl })", "note": "ttl: '30d', '7d', '1h'" },
+					{ "name": "remove", "signature": "nui.util.storage.remove({ name })" }
+				]},
+				{ "name": "sortByKey", "signature": "nui.util.sortByKey(array, propertyPath, numeric?)", "description": "Sort array by nested property path", "category": "array" },
+				{ "name": "filter", "signature": "nui.util.filter({ data, search, prop[] })", "category": "array" },
+				{ "name": "detectEnv", "signature": "nui.util.detectEnv()", "returns": "{ isTouch, isMac, isIOS, isSafari, isFF }", "category": "env" },
+				{ "name": "markdownToHtml", "signature": "nui.util.markdownToHtml(md)", "description": "Lightweight markdown to HTML string", "category": "text" }
+			]
+		},
+		"patterns": {
+			"dataAction": {
+				"syntax": "data-action=\"name[:param][@targetSelector]\"",
+				"description": "Declarative action binding",
+				"events": { "generic": "nui-action", "specific": "nui-action-${name}" },
+				"detail": "{ name, param, target, originalEvent }",
+				"bubbles": true
+			},
+			"router": {
+				"hashFormat": ["#page=path/to/page", "#feature=featureName"],
+				"caching": "Pages cached: init() runs ONCE, show()/hide() on navigation",
+				"scopeRule": "Scope DOM to element (page wrapper), never document"
+			}
+		},
+		"events": [
+			{ "component": "nui-dialog", "events": [{ "name": "nui-dialog-open", "detail": "{ returnValue }" }, { "name": "nui-dialog-close", "detail": "{ returnValue }" }, { "name": "nui-dialog-cancel", "detail": "{ returnValue }" }] },
+			{ "component": "nui-tabs", "events": [{ "name": "nui-tabs-change", "detail": "{ tab, panel }" }] },
+			{ "component": "nui-select", "events": [{ "name": "nui-select-change", "detail": "{ value }" }] },
+			{ "component": "nui-sortable", "events": [{ "name": "nui-sort-reorder", "detail": "{ from, to }" }] },
+			{ "component": "nui-accordion", "events": [{ "name": "toggle", "note": "native event" }] },
+			{ "component": "nui-link-list", "events": [{ "name": "nui-link-click", "detail": "{ href, label }" }] }
+		]
+	}
 }

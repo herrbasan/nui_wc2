@@ -7,34 +7,36 @@ const http = require('http');
 // Paths relative to script location
 const PLAYGROUND_PATH = 'Playground';
 const NUI_PATH = 'NUI';
+const DOCS_PATH = 'docs';
 
-// Available components (maps component names to demo pages)
-const AVAILABLE_COMPONENTS = [
-	'accordion',
-	'app-header',
-	'app-layout',
-	'badge',
-	'banner',
-	'button',
-	'card',
-	'dialog',
-	'dropzone',
-	'icon',
-	'inputs',
-	'layout',
-	'link-list',
-	'overlay',
-	'progress',
-	'select',
-	'skip-links',
-	'slider',
-	'sortable',
-	'storage',
-	'table',
-	'tabs',
-	'tag-input',
-	'tooltip'
-];
+// Load component registry
+function loadRegistry() {
+	const registryPath = path.join(DOCS_PATH, 'components.json');
+	if (!fs.existsSync(registryPath)) {
+		console.error('Error: components.json not found at', registryPath);
+		process.exit(1);
+	}
+	return JSON.parse(fs.readFileSync(registryPath, 'utf8'));
+}
+
+const registry = loadRegistry();
+
+// Available components (derived from registry)
+const AVAILABLE_COMPONENTS = registry.components
+	.filter(c => c.page.startsWith('components/'))
+	.map(c => c.page.replace('components/', ''))
+	.filter((v, i, a) => a.indexOf(v) === i); // Unique values
+
+// Addon components (require additional imports)
+const ADDON_COMPONENTS = registry.components
+	.filter(c => c.category === 'addon' || c.imports)
+	.reduce((acc, c) => {
+		acc[c.name] = c.imports;
+		return acc;
+	}, {});
+
+// Reference data for templates
+const REFERENCE = registry.reference;
 
 /**
  * Recursively copy a directory
@@ -250,12 +252,37 @@ nui-app:not(.nui-ready) {
 }
 
 /**
- * Generate README
+ * Generate README with setup instructions from registry
  */
 function generateReadme(projectName, selectedComponents) {
 	const componentSection = selectedComponents.length > 0
 		? `\n## Included Components\n\n${selectedComponents.map(c => `- \`${c}\``).join('\n')}\n`
 		: '';
+
+	// Check if any selected components need addon imports
+	const needsAddons = selectedComponents.some(c => {
+		const compName = `nui-${c}`;
+		return ADDON_COMPONENTS[compName] || ADDON_COMPONENTS[`nui-${c.replace('-', '')}`];
+	});
+
+	const addonSection = needsAddons ? `
+## Addon Components
+
+Some components require additional imports:
+
+${selectedComponents.map(c => {
+	const compName = `nui-${c}`;
+	const imports = ADDON_COMPONENTS[compName];
+	if (!imports) return null;
+	const jsImport = imports.js ? `\`<script type="module" src="${imports.js}"></script>\`` : '';
+	const cssImport = imports.css ? `\`<link rel="stylesheet" href="${imports.css}">\`` : '';
+	return `### ${compName}\n${jsImport ? `- JS: ${jsImport}\n` : ''}${cssImport ? `- CSS: ${cssImport}\n` : ''}`;
+}).filter(Boolean).join('\n')}
+` : '';
+
+	const setup = REFERENCE?.setup?.minimal || {
+		code: '<link rel="stylesheet" href="NUI/css/nui-theme.css">\n<script type="module" src="NUI/nui.js"></script>'
+	};
 	
 	return `# ${projectName}
 
@@ -272,6 +299,12 @@ Generated with NUI Create App.${componentSection}
    \`\`\`
 3. Open http://localhost:3000 (or your server URL)
 
+## Minimal Setup
+
+\`\`\`${setup.lang || 'html'}
+${setup.code}
+\`\`\`
+${addonSection}
 ## Project Structure
 
 - \`${projectName}/\`

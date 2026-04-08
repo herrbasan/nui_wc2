@@ -83,6 +83,39 @@ nui.registerAction('save', (target, element, event, param) => {
 - Updated `README.md` - Added concise "Why NUI?" intro explaining AX concept, followed by Core Principles table
 - Updated `AGENTS.md` and `Playground/pages/documentation/introduction.html` - Simplified AX description
 
+#### 6. Component Registry — Single Source of Truth (`docs/components.json`)
+
+> **This is now the canonical reference for all NUI tooling.** Both MCP tools and the boilerplate generator consume this file. When components change, update the JSON — everything else follows.
+
+Extended `components.json` with comprehensive metadata:
+
+**`components` array:** All components with name, category, description, page path, innerElement, events, and imports
+
+**`guides` array:** Documentation pages and their descriptions
+
+**New `reference` section:**
+- `setup` - Minimal setup code, FOUC prevention CSS, addon import table
+- `api` - Root API (`nui.*`), Components API (`nui.components.*`), Utilities (`nui.util.*`)
+- `patterns` - data-action syntax and events, router contract rules
+- `events` - Component events reference table
+
+**Updated boilerplate script (`nui-create-app.js`):**
+- Loads all component data from `components.json` at runtime
+- Dynamically derives available components from registry
+- Generates addon import sections in README based on selected components
+- Future-proof: adding/removing components in JSON automatically updates the generator
+
+**Documentation updates:**
+- Added prominent references to `components.json` in:
+  - `AGENTS.md` (Core Components section)
+  - `README.md` (Components section)
+  - `Playground/pages/documentation/getting-started.html` (Project Structure section)
+
+**Files modified:**
+- `docs/components.json` - Added comprehensive reference section
+- `nui-create-app.js` - Now consumes registry data instead of hardcoded arrays
+- `AGENTS.md`, `README.md`, `getting-started.html` - Added registry references
+
 ---
 
 ## Deferred / Pinned

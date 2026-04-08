@@ -85,6 +85,8 @@ function setupButtonBehavior(element) {
 
 ## Core Components
 
+> **📋 Component Registry:** `docs/components.json` is the **source of truth** for all components, their events, imports, and documentation pages. Both the MCP tools and the boilerplate generator (`nui-create-app.js`) consume this file. When adding or modifying components, update the registry.
+
 **Layout:** `nui-app`, `nui-app-header`, `nui-sidebar`, `nui-content`, `nui-main`, `nui-app-footer`, `nui-layout`, `nui-skip-links`, `nui-column-flow`
 
 **UI:** `nui-button`, `nui-button-container`, `nui-icon`, `nui-tabs`, `nui-accordion`, `nui-overlay`, `nui-dialog`, `nui-banner`, `nui-table`, `nui-slider`, `nui-input`, `nui-textarea`, `nui-checkbox`, `nui-radio`, `nui-tag-input`, `nui-select`, `nui-link-list`, `nui-code`, `nui-loading`, `nui-progress`, `nui-dropzone`

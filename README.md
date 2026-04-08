@@ -121,6 +121,8 @@ Most component libraries ask you to learn their abstraction. NUI asks you to emb
 
 ## Components
 
+> **📋 Component Registry:** See `docs/components.json` for the machine-readable source of truth — all components, their events, imports, and documentation pages in one place. The boilerplate generator and MCP tools both consume this file.
+
 | Component | Description |
 |-----------|-------------|
 | `nui-app` | App shell with sidebar/topbar layout behavior |
