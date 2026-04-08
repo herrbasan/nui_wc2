@@ -78,6 +78,27 @@ NUI is the proof-of-concept: human + LLMs co-developed a philosophy about how hu
 
 **Implication for documentation/marketing:** Frame NUI as the *result* of a collaboration methodology, not just a component library. The "how we built this" is as important as "what we built."
 
+## Completed This Session
+
+### Sidebar API Refactor (2026-04-08)
+Unified sidebar behavior system with hierarchical breakpoints:
+
+**New `behavior` attribute:**
+- `behavior="primary"` - Auto-opens first when contentMin + primaryWidth fits
+- `behavior="secondary"` - Auto-opens second when contentMin + primaryWidth + secondaryWidth fits
+- `behavior="manual"` - Never auto-opens, toggle only
+- Default: left becomes primary if none specified
+
+**Key insight:** Sidebars now have proper hierarchy - primary opens first, secondary waits for more space. Prevents content from being squished.
+
+**Implementation details:**
+- CSS classes renamed: `sidenav-*` → `sidebar-*`
+- Method renamed: `toggleSideNav()` → `toggleSidebar()` (backward compat kept)
+- Legacy `favored` attribute still works as alias for `behavior="primary"`
+- `content-min-width` on `<nui-app>` sets minimum content area
+
+---
+
 ## Session Context
 Created: 2026-04-08
 Last Updated: 2026-04-08
