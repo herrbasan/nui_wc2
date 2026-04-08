@@ -756,7 +756,27 @@ registerComponent('nui-app', (element) => {
 	// Backward compat
 	const getSideNav = getSidebar;
 
-	function getBreakpoint(element, position) {
+	function getSidebarWidth(sidebar) {
+		if (!sidebar) return 0;
+		// Get width from CSS custom property or computed style
+		const width = getComputedStyle(sidebar).width;
+		return parseFloat(width) || 240; // Default 240px (15rem)
+	}
+
+	function getContentMinWidth(element) {
+		const attr = element.getAttribute('content-min-width');
+		if (!attr) return 0; // No minimum
+		const m = attr.match(/^(\d+(?:\.\d+)?)(px|rem|em)?$/);
+		if (!m) return 0;
+		const v = parseFloat(m[1]);
+		if (m[2] === 'rem' || m[2] === 'em') {
+			const remBase = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+			return v * remBase;
+		}
+		return v;
+	}
+
+	function getHierarchicalBreakpoint(element, position) {
 		if (cachedBreakpoint[position] !== null) return cachedBreakpoint[position];
 		const sidebar = getSidebar(element, position);
 		if (!sidebar) return null;
@@ -767,9 +787,9 @@ registerComponent('nui-app', (element) => {
 			return cachedBreakpoint[position] = Infinity;
 		}
 
-		// New simplified attribute names
+		// Check for individual breakpoint override
 		const breakpointAttr = element.getAttribute('sidebar-breakpoint');
-		if (breakpointAttr) {
+		if (breakpointAttr && breakpointAttr !== 'auto') {
 			if (breakpointAttr === 'none' || breakpointAttr === 'false' || breakpointAttr === 'never') {
 				return cachedBreakpoint[position] = Infinity;
 			}
@@ -789,26 +809,42 @@ registerComponent('nui-app', (element) => {
 		if (!fb && position === 'left') {
 			fb = element.getAttribute('nui-vars-sidebar_force-breakpoint');
 		}
-
-		if (fb === 'none' || fb === 'false' || fb === 'never') {
-			return cachedBreakpoint[position] = Infinity;
+		if (fb && fb !== 'auto') {
+			if (fb === 'none' || fb === 'false' || fb === 'never') {
+				return cachedBreakpoint[position] = Infinity;
+			}
+			const m = fb.match(/^(\d+(?:\.\d+)?)(px|rem|em)?$/);
+			if (m) {
+				const v = parseFloat(m[1]);
+				if (m[2] === 'rem' || m[2] === 'em') {
+					const remBase = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+					return cachedBreakpoint[position] = v * remBase;
+				}
+				return cachedBreakpoint[position] = v;
+			}
 		}
 
-		if (!fb && position !== 'left') {
-			return cachedBreakpoint[position] = Infinity;
+		// Hierarchical calculation
+		const contentMin = getContentMinWidth(element);
+		const thisWidth = getSidebarWidth(sidebar);
+		const isFavored = sidebar.hasAttribute('favored');
+
+		if (isFavored || position === 'left') {
+			// Favored/primary sidebar: content_min + this_width
+			return cachedBreakpoint[position] = contentMin + thisWidth;
+		} else {
+			// Secondary sidebar: find favored sidebar width first
+			const favoredSidebar = element.querySelector('nui-sidebar[favored]') || 
+				getSidebar(element, 'left');
+			const favoredWidth = favoredSidebar && favoredSidebar !== sidebar 
+				? getSidebarWidth(favoredSidebar) 
+				: 0;
+			// content_min + favored_width + this_width
+			return cachedBreakpoint[position] = contentMin + favoredWidth + thisWidth;
 		}
-
-		const m = fb?.match(/^(\d+(?:\.\d+)?)(px|rem|em)?$/);
-
-		if (!m) return cachedBreakpoint[position] = 768;
-
-		const v = parseFloat(m[1]);
-		if (m[2] === 'rem' || m[2] === 'em') {
-			const remBase = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-			return cachedBreakpoint[position] = v * remBase;
-		}
-		return cachedBreakpoint[position] = v;
 	}
+	// Backward compat alias
+	const getBreakpoint = getHierarchicalBreakpoint;
 
 	function dispatchSidebarEvent(position, state) {
 		element.dispatchEvent(new CustomEvent('nui-sidebar-change', {
