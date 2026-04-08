@@ -224,6 +224,46 @@ body {
 	-webkit-text-size-adjust: 100%;
 }
 
+p {
+	margin-block: 0;
+	margin: 0;
+	margin-block-end: var(--nui-space);
+}
+
+a {
+	color: var(--color-text-dim);
+	text-decoration: none;
+	text-decoration-thickness: thin;
+	text-decoration-color: var(--border-shade4);
+	text-underline-offset: 0.15rem;
+	transition: color 0.2s;
+}
+
+a::before {
+	--arrow-size: 0.15rem;
+	content: '';
+	display: inline-block;
+	width: var(--arrow-size);
+	height: var(--arrow-size);
+	border-right: var(--arrow-size) solid var(--color-text-dim);
+	border-bottom: var(--arrow-size) solid var(--color-text-dim);
+	transform: rotate(-45deg);
+	margin-right: calc(var(--arrow-size) + 0.2rem);
+	margin-bottom: var(--arrow-size);
+	opacity: 0.5;
+	transition: border-color 0.05s, opacity 0.05s;
+}
+
+a:hover, a:focus {
+	color: var(--color-highlight);
+	text-decoration: underline;
+}
+
+a:hover::before, a:focus::before {
+	border-color: var(--color-highlight);
+	opacity: 1;
+}
+
 pre {
 	font-family: monospace;
 	background: light-dark(var(--color-shade1), var(--color-shade2));
@@ -401,6 +441,10 @@ nui-link-list ul>ul::before {
 	position: absolute;
 	left: 0;
 	color: var(--color-shade4);
+}
+
+nui-link-list ul li a::before {
+	display: none;
 }
 
 nui-link-list ul li span {

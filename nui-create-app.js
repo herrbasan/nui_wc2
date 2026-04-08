@@ -69,8 +69,6 @@ function extractAppShell(projectName) {
 		.replace(/<link rel="stylesheet" href="\.\/NUI\/css\/modules\/[^"]+"\s*\/?>\s*/g, '')
 		// Remove the notification button (with badge)
 		.replace(/\s*<nui-button[^>]*data-badge[^>]*>[\s\S]*?<\/nui-button>\s*/g, '')
-		// Fix right sidebar breakpoint so it can be toggled (none -> 75rem)
-		.replace(/nui-vars-sidebar-right_force-breakpoint="none"/, 'nui-vars-sidebar-right_force-breakpoint="75rem"')
 		// Change Playground-specific CSS to app.css
 		.replace(/css\/main\.css/, 'css/app.css')
 		// Update title

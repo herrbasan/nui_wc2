@@ -443,6 +443,10 @@ nui-link-list ul>ul::before {
 	color: var(--color-shade4);
 }
 
+nui-link-list ul li a::before {
+	display: none;
+}
+
 nui-link-list ul li span {
 	flex: 1;
 	cursor: inherit;
