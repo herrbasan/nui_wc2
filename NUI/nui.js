@@ -781,10 +781,17 @@ registerComponent('nui-app', (element) => {
 		const sidebar = getSidebar(element, position);
 		if (!sidebar) return null;
 
-		// Check for behavior="manual" - never auto-open
-		const behavior = sidebar.getAttribute('behavior');
+		// Unified behavior attribute: primary | secondary | manual
+		let behavior = sidebar.getAttribute('behavior') || 'auto';
+		
+		// Legacy support: behavior="manual" still works
 		if (behavior === 'manual') {
 			return cachedBreakpoint[position] = Infinity;
+		}
+
+		// Legacy support: favored attribute maps to primary
+		if (sidebar.hasAttribute('favored')) {
+			behavior = 'primary';
 		}
 
 		// Check for individual breakpoint override
@@ -827,26 +834,47 @@ registerComponent('nui-app', (element) => {
 		// Hierarchical calculation
 		const contentMin = getContentMinWidth(element);
 		const thisWidth = getSidebarWidth(sidebar);
-		const isFavored = sidebar.hasAttribute('favored');
 
-		// Check if any sidebar is explicitly favored
-		const anyFavored = element.querySelector('nui-sidebar[favored]');
+		// Check if any sidebar has explicit behavior="primary"
+		const allSidebars = element.querySelectorAll('nui-sidebar');
+		const hasPrimary = Array.from(allSidebars).some(sb => {
+			const b = sb.getAttribute('behavior');
+			return b === 'primary' || sb.hasAttribute('favored');
+		});
 
-		if (isFavored) {
-			// This sidebar is explicitly favored - opens first
-			return cachedBreakpoint[position] = contentMin + thisWidth;
-		} else if (anyFavored) {
-			// Another sidebar is favored, we are secondary
-			const favoredWidth = getSidebarWidth(anyFavored);
-			return cachedBreakpoint[position] = contentMin + favoredWidth + thisWidth;
-		} else if (position === 'left') {
-			// No favored specified, left is default primary
+		// Determine effective behavior
+		let effectiveBehavior = behavior;
+		if (behavior === 'auto') {
+			// Auto-detect based on position and existence of primary
+			if (position === 'left' && !hasPrimary) {
+				effectiveBehavior = 'primary';
+			} else {
+				effectiveBehavior = 'secondary';
+			}
+		}
+
+		if (effectiveBehavior === 'primary') {
+			// Primary: contentMin + myWidth
 			return cachedBreakpoint[position] = contentMin + thisWidth;
 		} else {
-			// No favored specified, right is secondary
-			const leftSidebar = getSidebar(element, 'left');
-			const leftWidth = leftSidebar ? getSidebarWidth(leftSidebar) : 0;
-			return cachedBreakpoint[position] = contentMin + leftWidth + thisWidth;
+			// Secondary (or fallback): find primary width
+			let primaryWidth = 0;
+			if (hasPrimary) {
+				// Find the primary sidebar
+				const primarySidebar = Array.from(allSidebars).find(sb => {
+					const b = sb.getAttribute('behavior');
+					return b === 'primary' || sb.hasAttribute('favored');
+				});
+				if (primarySidebar && primarySidebar !== sidebar) {
+					primaryWidth = getSidebarWidth(primarySidebar);
+				}
+			}
+			// If no primary found, treat this as primary
+			if (primaryWidth === 0) {
+				return cachedBreakpoint[position] = contentMin + thisWidth;
+			}
+			// Secondary: contentMin + primaryWidth + myWidth
+			return cachedBreakpoint[position] = contentMin + primaryWidth + thisWidth;
 		}
 	}
 	// Backward compat alias

@@ -73,9 +73,10 @@ function extractAppShell(projectName) {
 		.replace(/\s*<nui-button[^>]*data-action="toggle-sidebar:right"[^>]*>[\s\S]*?<\/nui-button>\s*/, '')
 		.replace(/\s*<nui-sidebar[^>]*position="right"[^>]*>[\s\S]*?<\/nui-sidebar>\s*/, '')
 		// Simplify to new sidebar API
-		.replace(/nui-vars-sidebar_width="[^"]*"/, 'sidebar-width="15rem"')
+		.replace(/nui-vars-sidebar_width="[^"]*"/, 'content-min-width="50rem"')
 		.replace(/\s*nui-vars-sidebar_force-breakpoint="[^"]*"/, '')
 		.replace(/\s*nui-vars-sidebar-right_force-breakpoint="[^"]*"/, '')
+		.replace(/behavior="[^"]*"/, 'behavior="primary"')
 		// Change Playground-specific CSS to app.css
 		.replace(/css\/main\.css/, 'css/app.css')
 		// Update title
