@@ -154,16 +154,13 @@ nui.enableContentLoading({
 });
 
 document.addEventListener('nui-action', (e) => {
-    const { name } = e.detail;
+    const { name, param } = e.detail;
     switch (name) {
         case 'toggle-sidebar':
-            document.querySelector('nui-app')?.toggleSideNav?.();
+            document.querySelector('nui-app')?.toggleSideNav?.(param);
             break;
         case 'toggle-theme':
             toggleTheme();
-            break;
-        case 'toggle-sidebar:right':
-            document.querySelector('nui-app')?.toggleSideNav?.('right');
             break;
         case 'scroll-to-top':
             document.querySelector('nui-content')?.scrollTo({ top: 0, behavior: 'smooth' });

@@ -119,6 +119,7 @@ Extended `components.json` with comprehensive metadata:
 **Bug fixes:**
 - Fixed right sidebar toggle in generated apps: changed `toggleRightSidebar()` to `toggleSideNav('right')`
 - Fixed right sidebar breakpoint: changed `nui-vars-sidebar-right_force-breakpoint="none"` to `"75rem"` so it can actually be toggled
+- Fixed action handler: the `name` in event detail doesn't include the param (split by ':'), so consolidated toggle-sidebar cases and pass `param` to toggleSideNav
 
 ---
 
