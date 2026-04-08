@@ -6,7 +6,6 @@ import '../../NUI/lib/modules/nui-list.js';
 import '../../NUI/lib/modules/nui-lightbox.js';
 import '../../NUI/lib/modules/nui-code-editor.js';
 import '../../NUI/lib/modules/nui-media-player.js';
-import '../../NUI/lib/modules/nui-markdown.js';
 //import { createMonitor } from '../../NUI/lib/modules/nui-monitor.js';
 
 console.log('nui imported');
@@ -292,32 +291,33 @@ const navigationData = [
 				]
 			},
 			{
-				label: 'Content & Display',
+				label: 'Content & Code',
 				items: [
 					{ label: 'Badge', href: '#page=components/badge' },
 					{ label: 'Card', href: '#page=components/card' },
+					{ label: 'Code', href: '#page=components/code' },
+					{ label: 'Icon', href: '#page=components/icon' },
+					{ label: 'Markdown', href: '#page=components/markdown' },
+					{ label: 'Table', href: '#page=components/table' }
+				]
+			},
+			{
+				label: 'Structure & Navigation',
+				items: [
+					{ label: 'Link List', href: '#page=components/link-list' },
 					{ label: 'Tabs', href: '#page=components/tabs' },
 					{ label: 'Accordion', href: '#page=components/accordion' },
-					{ label: 'Table', href: '#page=components/table' },
-					{ label: 'Sortable', href: '#page=components/sortable' },
+					{ label: 'Sortable', href: '#page=components/sortable' }
+				]
+			},
+			{
+				label: 'Overlays & Feedback',
+				items: [
 					{ label: 'Dialog', href: '#page=components/dialog' },
 					{ label: 'Overlay', href: '#page=components/overlay' },
 					{ label: 'Banner', href: '#page=components/banner' },
-				{ label: 'Progress', href: '#page=components/progress' },
+					{ label: 'Progress', href: '#page=components/progress' },
 					{ label: 'Tooltip', href: '#page=components/tooltip' }
-				]
-			},
-			{
-				label: 'Navigation',
-				items: [
-					{ label: 'Link List', href: '#page=components/link-list' }
-				]
-			},
-			{
-				label: 'Elements & Utilities',
-				items: [
-					{ label: 'Icon', href: '#page=components/icon' },
-					{ label: 'Storage', href: '#page=components/storage' }
 				]
 			}
 		]
@@ -326,11 +326,9 @@ const navigationData = [
 		label: 'Addons',
 		icon: 'extension',
 		items: [
-			{ label: 'Code', href: '#page=addons/code' },
 			{ label: 'Code Editor', href: '#page=addons/code-editor' },
 			{ label: 'Lightbox', href: '#page=addons/lightbox' },
 			{ label: 'List', href: '#page=addons/list' },
-			{ label: 'Markdown', href: '#page=addons/markdown' },
 			{ label: 'Media Player', href: '#page=addons/media-player' },
 			{ label: 'Menu', href: '#page=addons/menu' },
 			{ label: 'Context Menu', href: '#page=addons/context-menu' },

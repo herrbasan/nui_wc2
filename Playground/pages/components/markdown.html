@@ -6,11 +6,11 @@
 <script type="text/markdown">
 # LLM Guide: nui-markdown
 
-> **Global Note:** Always follow the global rules in `Playground/README.md`. Addon module; import explicitly.
+> **Global Note:** Always follow the global rules in `Playground/README.md`. Now built into core NUI.
 
 ## Strict Usage
-- Import: `import './NUI/lib/modules/nui-markdown.js';` (or script src).
-- For syntax highlighting in code blocks (via nui-code): also import `NUI/lib/modules/nui-syntax-highlight.js`.
+- **No import needed** — included in `NUI/nui.js`.
+- For syntax highlighting in code blocks: also import `NUI/lib/modules/nui-syntax-highlight.js`.
 - Use `<nui-markdown><script type="text/markdown">...</script></nui-markdown>` or `nui.util.markdownToHtml(md)`.
 - Supports headers, lists, links, code (integrates nui-code), tables, emphasis, blockquotes, hr.
 - **For Streaming LLMs**: Use `<nui-markdown>` directly with DOM APIs: `beginStream()`, `appendChunk(chunk)`, and `endStream()` for block-level incremental rendering that prevents UI thrashing.
@@ -35,13 +35,12 @@ stream.on('end', () => md.endStream());
 
 ## Critical Rules
 - Parser is lightweight and web-focused; not full CommonMark.
-- Code blocks become nui-code with language (requires `NUI/lib/modules/nui-syntax-highlight.js` for syntax highlighting).
+- Code blocks become nui-code with language (requires `NUI/lib/modules/nui-syntax-highlight.js` for colored syntax).
 - Tables rendered as nui-table.
 - For dynamic, use the util function and set innerHTML.
 - Do not rely on external Markdown libs.
 
 ## Anti-Patterns
-- Forgetting the import for the addon (or nui-syntax-highlight.js for code syntax).
 - Using raw text without the script tag type.
 - Expecting GitHub-flavored Markdown features not implemented.
 - Heavy dependencies for simple rendering.
@@ -62,7 +61,7 @@ stream.on('end', () => md.endStream());
 		<nui-code>
 			<script type="example" data-lang="html">
 <!-- Import the addon (syntax highlighting requires the syntax module too) -->
-<!-- <script type="module" src="NUI/lib/modules/nui-markdown.js"></script> -->
+<!-- nui-markdown is now built into NUI core -->
 <!-- <script type="module" src="NUI/lib/modules/nui-syntax-highlight.js"></script> -->
 
 <nui-markdown>

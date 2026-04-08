@@ -289,7 +289,7 @@ document.querySelector('nav').appendChild(nav);</code></pre>
 		</nui-code>
 
 		<div class="demo-callout">
-			<strong>Rule:</strong> Default to declarative HTML. Only use data-driven APIs when content is dynamic or complex.
+			<strong>Choosing Between Approaches:</strong> Declarative HTML works beautifully when content is known at authoring time — it's readable, debuggable in the browser's element inspector, and requires no JavaScript to render. Data-driven APIs become valuable when content is generated at runtime (from API responses, user input, or configuration) or when the structure is too complex to comfortably write as HTML. The question to ask: <em>"Is this content static or dynamic?"</em> Static content favors HTML; dynamic content favors APIs.
 		</div>
 	</section>
 

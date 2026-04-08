@@ -56,7 +56,7 @@ Based on my analysis, here's the specification for extending `components.json` t
     },
     {
       "name": "nui-markdown",
-      "js": "NUI/lib/modules/nui-markdown.js",
+      "js": "NUI/nui.js (core)",
       "css": null
     },
     {

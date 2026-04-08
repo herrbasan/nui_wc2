@@ -131,7 +131,33 @@ document.addEventListener('nui-action', (e) => {
 		</script>
 	</nui-code>
 
-	<h3>4. Component-Level Delegation</h3>
+	<h3>4. Programmatic Action Registration</h3>
+	<p>For dynamic elements or when you want centralized action handling, register an action handler programmatically with <code>nui.registerAction()</code>:</p>
+	<nui-code>
+		<script type="example" data-lang="js">
+// Register a global action handler
+nui.registerAction('save', (target, element, event, param) => {
+	// target: the resolved target element (or trigger if no @selector)
+	// element: the trigger element
+	// event: the original click event
+	// param: the optional parameter string
+	
+	console.log('Saving:', param);
+	target.classList.add('saving');
+	
+	// Return true to stop propagation, false/undefined to continue
+	return true;
+});
+		</script>
+	</nui-code>
+	<p>This is useful when:</p>
+	<ul>
+		<li>You have dynamically created elements and want to avoid attaching listeners repeatedly</li>
+		<li>You want reusable action logic across multiple components</li>
+		<li>You prefer centralized registration over scattered event listeners</li>
+	</ul>
+
+	<h3>5. Component-Level Delegation</h3>
 	<p>The real power of this pattern is <strong>event delegation</strong>. Instead of attaching listeners to every button in a component, you attach <strong>one</strong> listener to the container to handle all actions within it.</p>
 	
 	<div id="task-card" class="demo-area">
@@ -185,7 +211,7 @@ card.addEventListener('nui-action', (e) => {
 		<li><strong>The DOM is the Router:</strong> The browser's native event bubbling is the most efficient routing system available. We don't need to rebuild it in JavaScript.</li>
 		<li><strong>Natural Scoping:</strong> The <code>@target</code> syntax uses the DOM itself for scoping. The target element becomes the "Event Bus" for its component, which is a natural fit for how the browser works.</li>
 	</ul>
-	<p><strong>Recommendation:</strong> Use this pattern for simple wiring and list delegation. If you need complex data payloads or intricate logic, write a standard JavaScript event handler. Do not try to force complex application logic into HTML attributes.</p>
+	<p>This pattern excels at simple wiring and list delegation where the action is clear from context. When you need complex data payloads or intricate logic, standard JavaScript event handlers remain the better choice. HTML attributes excel at configuration (what should happen) but struggle with orchestration (how it should happen). Keeping this boundary clear — declarative attributes for intent, JavaScript handlers for implementation — produces code that is easier to reason about and debug.</p>
 
 	<h3>The Pattern "Under the Hood"</h3>
 	<p>To prove this isn't "magic", here is the simplified logic that powers the system. It's just a global event listener that parses the attribute and dispatches a clean event:</p>

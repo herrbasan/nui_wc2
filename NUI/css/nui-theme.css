@@ -1244,6 +1244,17 @@ nui-app[data-layout="app"] nui-app-footer footer {
 	border: none;
 }
 
+@media (max-width: 768px) {
+	nui-app[data-layout="app"] nui-app-footer {
+		display: none;
+	}
+	/* Reset footer offsets when hidden */
+	nui-app[data-layout="app"]:has(nui-app-footer) nui-sidebar,
+	nui-app[data-layout="app"]:has(nui-app-footer) nui-content {
+		bottom: 0;
+	}
+}
+
 /* Base side nav (left by default) */
 nui-app[data-layout="app"] nui-sidebar:not([position="right"]) {
 	transform: translateX(-100%);

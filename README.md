@@ -41,6 +41,25 @@ This approach serves a deeper philosophy:
 
 ## Quick Start
 
+### Option 1: Use the Generator (Recommended)
+
+```bash
+node nui-create-app.js my-app --with-dialog --with-select
+```
+
+Generates a complete SPA with working component examples extracted from the Playground.
+
+```bash
+# See all options
+node nui-create-app.js --list
+node nui-create-app.js --help
+
+# Or launch the web UI
+node nui-create-app.js --ui
+```
+
+### Option 2: Manual Setup
+
 ```html
 <link rel="stylesheet" href="NUI/css/nui-theme.css">
 <script type="module" src="NUI/nui.js"></script>
