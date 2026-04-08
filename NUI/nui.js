@@ -829,18 +829,24 @@ registerComponent('nui-app', (element) => {
 		const thisWidth = getSidebarWidth(sidebar);
 		const isFavored = sidebar.hasAttribute('favored');
 
-		if (isFavored || position === 'left') {
-			// Favored/primary sidebar: content_min + this_width
+		// Check if any sidebar is explicitly favored
+		const anyFavored = element.querySelector('nui-sidebar[favored]');
+
+		if (isFavored) {
+			// This sidebar is explicitly favored - opens first
+			return cachedBreakpoint[position] = contentMin + thisWidth;
+		} else if (anyFavored) {
+			// Another sidebar is favored, we are secondary
+			const favoredWidth = getSidebarWidth(anyFavored);
+			return cachedBreakpoint[position] = contentMin + favoredWidth + thisWidth;
+		} else if (position === 'left') {
+			// No favored specified, left is default primary
 			return cachedBreakpoint[position] = contentMin + thisWidth;
 		} else {
-			// Secondary sidebar: find favored sidebar width first
-			const favoredSidebar = element.querySelector('nui-sidebar[favored]') || 
-				getSidebar(element, 'left');
-			const favoredWidth = favoredSidebar && favoredSidebar !== sidebar 
-				? getSidebarWidth(favoredSidebar) 
-				: 0;
-			// content_min + favored_width + this_width
-			return cachedBreakpoint[position] = contentMin + favoredWidth + thisWidth;
+			// No favored specified, right is secondary
+			const leftSidebar = getSidebar(element, 'left');
+			const leftWidth = leftSidebar ? getSidebarWidth(leftSidebar) : 0;
+			return cachedBreakpoint[position] = contentMin + leftWidth + thisWidth;
 		}
 	}
 	// Backward compat alias
