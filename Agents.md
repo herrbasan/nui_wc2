@@ -13,10 +13,10 @@ Core principles:
 1. **Performance First** - Minimal overhead, efficient rendering, zero bloat
 2. **Zero Dependencies** - Pure web platform APIs, no framework abstractions
 3. **Accessibility by Default** - ARIA compliance, keyboard navigation, screen reader support
-4. **Optimized for LLMs** - Code structure and patterns designed for AI understanding and maintenance
+4. **Optimized for LLMs (AX)** - Code structure, naming conventions, and documentation designed for AI understanding
 5. **Documentation by Example** - The Playground serves as both documentation and live examples
-6. **Component Composition** - Reuse existing foundational elements (buttons, icons, inputs) when building larger modules rather than reinventing them
-7. **Fail Loud** - Avoid try/catch and defaults that silently hide errors. Let errors surface immediately so they can be properly diagnosed and fixed. Silent failures andswallowed errors make debugging difficult.
+6. **Component Composition** - Reuse existing foundational elements when building larger modules
+7. **Fail Loud** - Avoid try/catch and defaults that silently hide errors. Let errors surface immediately
 
 ## Project Structure
 

@@ -80,6 +80,8 @@ nui.registerAction('save', (target, element, event, param) => {
 - Updated `Playground/pages/addons/markdown.html` - LLM guide reflects core status
 - Updated `docs/nui_mcp_tools.md` - Marked nui-markdown as core
 - Updated `README.md` - Added generator quick start
+- Updated `README.md` - Added concise "Why NUI?" intro explaining AX concept, followed by Core Principles table
+- Updated `AGENTS.md` and `Playground/pages/documentation/introduction.html` - Simplified AX description
 
 ---
 

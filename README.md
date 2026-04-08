@@ -16,6 +16,28 @@
 
 ---
 
+## Why NUI?
+
+NUI started with a question: what if we optimized a UI library for LLMs the same way we optimize for humans?
+
+We call it **AX** — AI Experience. It's a new idea, largely unproven, but the early results are promising. When code is predictable, patterns are obvious, and the DOM is inspectable, LLMs write better code and catch more issues.
+
+This is why NUI is vanilla JS. No framework abstractions. No virtual DOM. No meta-structure. Just the web platform, enhanced.
+
+## Core Principles
+
+| Principle | What it means |
+|-----------|---------------|
+| **Performance First** | Minimal overhead, efficient rendering, zero bloat |
+| **Zero Dependencies** | Pure web platform APIs, no framework abstractions |
+| **Accessibility by Default** | ARIA compliance, keyboard navigation, screen reader support |
+| **Optimized for LLMs (AX)** | Code structure, naming conventions, and documentation designed for AI understanding |
+| **Documentation by Example** | The Playground serves as both documentation and live examples |
+| **Component Composition** | Reuse existing elements rather than reinventing them |
+| **Fail Loud** | Errors surface immediately; no silent failures swallowed by try/catch defaults |
+
+---
+
 ## The Philosophy: Upgrade, Don't Replace
 
 NUI is built on a simple premise: **the web platform is already excellent.** We don't replace it—we enhance it.
@@ -85,13 +107,6 @@ Most component libraries ask you to learn their abstraction. NUI asks you to emb
 - **The DOM is the source of truth** — No virtual DOM, no state synchronization, no magic
 - **Accessibility is automatic** — Screen readers understand semantic HTML; we enhance what already works
 - **Performance is inherent** — Direct DOM manipulation, no diffing overhead, lazy enhancement
-
-**This is particularly powerful for LLM-generated code:**
-
-- No inheritance hierarchies to misunderstand
-- Platform APIs that are documented everywhere
-- Patterns that compose consistently
-- Failure modes that are immediate and obvious
 
 ---
 
