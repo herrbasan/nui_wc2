@@ -162,12 +162,13 @@ document.addEventListener('click', (e) => {
     const [action, param] = actionPart.split(':');
 
     switch (action) {
-        case 'toggle-sidebar':
+        case 'toggle-sidebar': {
             const app = document.querySelector('nui-app');
             if (app?.toggleSideNav) {
                 app.toggleSideNav(param || 'left');
             }
             break;
+        }
         case 'toggle-theme':
             toggleTheme();
             break;
