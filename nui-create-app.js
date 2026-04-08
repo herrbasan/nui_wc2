@@ -69,6 +69,13 @@ function extractAppShell(projectName) {
 		.replace(/<link rel="stylesheet" href="\.\/NUI\/css\/modules\/[^"]+"\s*\/?>\s*/g, '')
 		// Remove the notification button (with badge)
 		.replace(/\s*<nui-button[^>]*data-badge[^>]*>[\s\S]*?<\/nui-button>\s*/g, '')
+		// Remove right sidebar and its toggle (demo feature, not default)
+		.replace(/\s*<nui-button[^>]*data-action="toggle-sidebar:right"[^>]*>[\s\S]*?<\/nui-button>\s*/, '')
+		.replace(/\s*<nui-sidebar[^>]*position="right"[^>]*>[\s\S]*?<\/nui-sidebar>\s*/, '')
+		// Simplify to new sidebar API
+		.replace(/nui-vars-sidebar_width="[^"]*"/, 'sidebar-width="15rem"')
+		.replace(/\s*nui-vars-sidebar_force-breakpoint="[^"]*"/, '')
+		.replace(/\s*nui-vars-sidebar-right_force-breakpoint="[^"]*"/, '')
 		// Change Playground-specific CSS to app.css
 		.replace(/css\/main\.css/, 'css/app.css')
 		// Update title
@@ -162,8 +169,8 @@ document.addEventListener('click', (e) => {
     switch (action) {
         case 'toggle-sidebar': {
             const app = document.querySelector('nui-app');
-            if (app?.toggleSideNav) {
-                app.toggleSideNav(param || 'left');
+            if (app?.toggleSidebar) {
+                app.toggleSidebar(param || 'left');
             }
             break;
         }

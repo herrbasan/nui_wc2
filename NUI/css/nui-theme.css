@@ -1254,12 +1254,12 @@ nui-app[data-layout="app"]:has(nui-app-footer) nui-content {
 }
 
 /* Content offset when side nav forced */
-nui-app[data-layout="app"].has-side-nav.sidenav-forced nui-content {
+nui-app[data-layout="app"].has-sidebar.sidebar-forced nui-content {
 	left: var(--sidebar-width);
 }
 
 /* Content offset when right side nav forced */
-nui-app[data-layout="app"].has-side-nav-right.sidenav-right-forced nui-content {
+nui-app[data-layout="app"].has-sidebar-right.sidebar-right-forced nui-content {
 	right: var(--sidebar-width);
 }
 
@@ -1303,14 +1303,14 @@ nui-app[data-layout="app"] nui-app-footer footer {
 nui-app[data-layout="app"] nui-sidebar:not([position="right"]) {
 	transform: translateX(-100%);
 }
-nui-app[data-layout="app"].sidenav-closed nui-sidebar:not([position="right"]) {
+nui-app[data-layout="app"].sidebar-closed nui-sidebar:not([position="right"]) {
 	transform: translateX(-100%);
 }
-nui-app[data-layout="app"].sidenav-open nui-sidebar:not([position="right"]) {
+nui-app[data-layout="app"].sidebar-open nui-sidebar:not([position="right"]) {
 	transform: translateX(0);
 	z-index: 100;
 }
-nui-app[data-layout="app"].sidenav-forced nui-sidebar:not([position="right"]) {
+nui-app[data-layout="app"].sidebar-forced nui-sidebar:not([position="right"]) {
 	transform: translateX(0);
 }
 
@@ -1322,20 +1322,20 @@ nui-app[data-layout="app"] nui-sidebar[position="right"] {
 	border-left: var(--border-thickness) solid var(--border-shade1);
 	transform: translateX(100%);
 }
-nui-app[data-layout="app"].sidenav-right-closed nui-sidebar[position="right"] {
+nui-app[data-layout="app"].sidebar-right-closed nui-sidebar[position="right"] {
 	transform: translateX(100%);
 }
-nui-app[data-layout="app"].sidenav-right-open nui-sidebar[position="right"] {
+nui-app[data-layout="app"].sidebar-right-open nui-sidebar[position="right"] {
 	transform: translateX(0);
 	z-index: 100;
 }
-nui-app[data-layout="app"].sidenav-right-forced nui-sidebar[position="right"] {
+nui-app[data-layout="app"].sidebar-right-forced nui-sidebar[position="right"] {
 	transform: translateX(0);
 }
 
 /* Backdrops */
-nui-app[data-layout="app"].sidenav-open::before,
-nui-app[data-layout="app"].sidenav-right-open::after {
+nui-app[data-layout="app"].sidebar-open::before,
+nui-app[data-layout="app"].sidebar-right-open::after {
 	content: '';
 	position: fixed;
 	top: var(--app-header-height);
@@ -1346,19 +1346,19 @@ nui-app[data-layout="app"].sidenav-right-open::after {
 	z-index: 99;
 }
 
-nui-app[data-layout="app"]:not(:has(nui-app-header)).sidenav-open::before,
-nui-app[data-layout="app"]:not(:has(nui-app-header)).sidenav-right-open::after {
+nui-app[data-layout="app"]:not(:has(nui-app-header)).sidebar-open::before,
+nui-app[data-layout="app"]:not(:has(nui-app-header)).sidebar-right-open::after {
 	top: 0;
 }
 
 /* Dim menu toggle button when sidebar is forced open */
-nui-app.sidenav-forced [data-action="toggle-sidebar"],
-nui-app.sidenav-forced [data-action="toggle-sidebar:left"] {
+nui-app.sidebar-forced [data-action="toggle-sidebar"],
+nui-app.sidebar-forced [data-action="toggle-sidebar:left"] {
 	opacity: 0.3;
 	pointer-events: none;
 	cursor: default;
 }
-nui-app.sidenav-right-forced [data-action="toggle-sidebar:right"] {
+nui-app.sidebar-right-forced [data-action="toggle-sidebar:right"] {
 	opacity: 0.3;
 	pointer-events: none;
 	cursor: default;
