@@ -224,6 +224,11 @@ body {
 	-webkit-text-size-adjust: 100%;
 }
 
+p {
+	margin-block: 0;
+	margin-bottom: var(--nui-space);
+}
+
 pre {
 	font-family: monospace;
 	background: light-dark(var(--color-shade1), var(--color-shade2));

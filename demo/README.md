@@ -1,10 +1,6 @@
 # demo
 
 Generated with NUI Create App.
-## Included Components
-
-- `button`
-
 
 ## Quick Start
 

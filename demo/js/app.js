@@ -12,16 +12,6 @@ const navigationData = [
         ]
     },
     {
-        "label": "Components",
-        "icon": "widgets",
-        "items": [
-            {
-                "label": "Button",
-                "href": "#page=components/button"
-            }
-        ]
-    },
-    {
         "label": "Settings",
         "icon": "settings",
         "items": [
