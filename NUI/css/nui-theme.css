@@ -1059,7 +1059,7 @@ nui-app[data-layout="app"] nui-app-header {
 	border-bottom: solid var(--border-thickness) var(--border-shade2);
 	padding: 0 var(--nui-space);
 	box-shadow: 0 0 var(--shadow-radius1) 0 var(--shadow-color);
-	z-index: 10;
+	z-index: 200;
 	box-sizing: border-box;
 }
 
@@ -1278,7 +1278,7 @@ nui-app[data-layout="app"] nui-app-footer {
 	border-top: solid var(--border-thickness) var(--border-shade2);
 	display: flex;
 	align-items: center;
-	z-index: 10;
+	z-index: 200;
 	box-sizing: border-box;
 }
 
@@ -3843,6 +3843,13 @@ nui-table {
 	display: block;
 	width: 100%;
 	overflow-x: auto;
+	margin-block-end: var(--nui-space);
+}
+nui-table table td,
+nui-table table th {
+	padding: var(--nui-space-half);
+	padding-left: calc(var(--nui-space) * 0.75);
+	padding-right: calc(var(--nui-space) * 0.75);
 }
 
 /* Responsive Table Enhancement */
@@ -3886,6 +3893,8 @@ nui-table {
 		border-bottom: var(--border-thickness) solid var(--border-shade4);
 		border-radius: 0;
 		padding: var(--nui-space-half);
+		padding-left: calc(var(--nui-space) * 0.75);
+		padding-right: calc(var(--nui-space) * 0.75);
 		color: var(--color-text);
 		width: 100%;
 		max-width: 100%;
