@@ -153,11 +153,20 @@ nui.enableContentLoading({
     defaultPage: 'home'
 });
 
-document.addEventListener('nui-action', (e) => {
-    const { name, param } = e.detail;
-    switch (name) {
+document.addEventListener('click', (e) => {
+    const actionEl = e.target.closest('[data-action]');
+    if (!actionEl) return;
+    
+    const actionSpec = actionEl.dataset.action;
+    const [actionPart] = actionSpec.split('@');
+    const [action, param] = actionPart.split(':');
+
+    switch (action) {
         case 'toggle-sidebar':
-            document.querySelector('nui-app')?.toggleSideNav?.(param);
+            const app = document.querySelector('nui-app');
+            if (app?.toggleSideNav) {
+                app.toggleSideNav(param || 'left');
+            }
             break;
         case 'toggle-theme':
             toggleTheme();
