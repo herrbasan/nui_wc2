@@ -161,7 +161,7 @@ document.addEventListener('nui-action', (e) => {
             toggleTheme();
             break;
         case 'toggle-sidebar:right':
-            document.querySelector('nui-app')?.toggleRightSidebar?.();
+            document.querySelector('nui-app')?.toggleSideNav?.('right');
             break;
         case 'scroll-to-top':
             document.querySelector('nui-content')?.scrollTo({ top: 0, behavior: 'smooth' });

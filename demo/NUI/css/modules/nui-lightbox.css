@@ -1,0 +1,194 @@
+/* nui-lightbox.css */
+nui-lightbox {
+    display: contents; /* Ensure the wrapper doesn't break declarative layout flows */
+}
+
+nui-lightbox dialog {
+    padding: 0;
+    margin: auto;
+    border: none;
+    max-width: 100dvw;
+    max-height: 100dvh;
+    width: 100dvw;
+    height: 100dvh;
+    background: transparent;
+    color: var(--color-base);
+    overflow: hidden;
+
+    /* Animations */
+    transition: opacity 0.2s ease-out, transform 0.2s ease-out, display 0.2s allow-discrete, overlay 0.2s allow-discrete;
+    opacity: 0;
+    transform: scale(0.5);
+}
+
+nui-lightbox dialog[open] {
+    display: block;
+    opacity: 1;
+    transform: scale(1);
+}
+
+nui-lightbox dialog.closing {
+    opacity: 0;
+    transform: scale(0.5);
+}
+
+@starting-style {
+    nui-lightbox dialog[open] {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+}
+
+nui-lightbox dialog:not([open]) {
+    display: none !important;
+}
+
+nui-lightbox dialog::backdrop {
+    background: rgba(0, 0, 0, 0.95);
+    transition: opacity 0.2s ease-out, display 0.2s allow-discrete, overlay 0.2s allow-discrete;
+    opacity: 0;
+}
+
+nui-lightbox dialog[open]::backdrop {
+    opacity: 1;
+}
+
+nui-lightbox dialog.closing::backdrop {
+    opacity: 0;
+}
+
+@starting-style {
+    nui-lightbox dialog[open]::backdrop {
+        opacity: 0;
+    }
+}
+
+nui-lightbox .nui-lightbox-toolbar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--nui-space);
+    background: linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, transparent 100%);
+    color: white;
+    z-index: 10;
+}
+
+nui-lightbox .nui-lightbox-close {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: var(--nui-space-half);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+nui-lightbox .nui-lightbox-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+nui-lightbox .nui-lightbox-body {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    overflow: hidden;
+    z-index: 1;
+}
+
+nui-lightbox .nui-lightbox-nav {
+    background: rgba(0, 0, 0, 0.3);
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: var(--nui-space);
+    border-radius: 50%;
+    margin: 0 var(--nui-space);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, opacity 0.2s;
+    z-index: 2;
+    flex-shrink: 0;
+}
+
+nui-lightbox .nui-lightbox-nav:hover {
+    background: rgba(0, 0, 0, 0.7);
+}
+
+nui-lightbox .nui-lightbox-nav:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+nui-lightbox .nui-lightbox-view {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    touch-action: pan-y;
+}
+
+nui-lightbox .nui-lightbox-track {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    will-change: transform;
+}
+
+nui-lightbox .nui-lightbox-slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--nui-space);
+    box-sizing: border-box;
+}
+
+nui-lightbox .nui-lightbox-slide[data-pos="-1"] { transform: translateX(-100%); }
+nui-lightbox .nui-lightbox-slide[data-pos="0"]  { transform: translateX(0); }
+nui-lightbox .nui-lightbox-slide[data-pos="1"]  { transform: translateX(100%); }
+
+nui-lightbox .nui-lightbox-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+nui-lightbox .nui-lightbox-caption {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: var(--nui-space);
+    padding-bottom: calc(var(--nui-space) + env(safe-area-inset-bottom, 0px));
+    text-align: center;
+    color: white;
+    background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%);
+    z-index: 10;
+    pointer-events: none;
+}
+
+/* Animations */
+@keyframes nui-fade-in {
+    from { opacity: 0; transform: scale(0.98); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    nui-lightbox .nui-lightbox-nav {
+        /* hide arrows on mobile, rely on swipe */
+        display: none !important;
+    }
+}

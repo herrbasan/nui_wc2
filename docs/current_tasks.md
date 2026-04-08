@@ -116,6 +116,9 @@ Extended `components.json` with comprehensive metadata:
 - `nui-create-app.js` - Now consumes registry data instead of hardcoded arrays
 - `AGENTS.md`, `README.md`, `getting-started.html` - Added registry references
 
+**Bug fix:**
+- Fixed right sidebar toggle in generated apps: changed `toggleRightSidebar()` to `toggleSideNav('right')`
+
 ---
 
 ## Deferred / Pinned

@@ -1,0 +1,652 @@
+<div class="page-button">
+
+<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+		<summary><strong>LLM Guide - nui-button</strong></summary>
+		<nui-markdown id="llm-guide" data-component="nui-button" class="llm-guide">
+<script type="text/markdown">
+# LLM Guide: nui-button & nui-button-container
+
+> **Global Note:** Always follow the global rules in `Playground/README.md`. 
+
+## Critical Rules & Strict DOM Structure
+- `<nui-button>` is a Light DOM wrapper. It MUST contain a native `<button>` or `<a>` tag.
+- NEVER invent `<nui-button>Click</nui-button>` without the inner button tag.
+- Set the button `type` (e.g., `type="button"` or `type="submit"`) on the inner button.
+- Apply attributes like `disabled` or `aria-label` to the inner button, NOT the wrapper.
+- Use `<nui-button-container>` to group multiple buttons together. Do NOT use generic `<div>` wrappers with custom flexbox classes to group buttons.
+
+**Correct Usage:**
+```html
+<nui-button-container align="end" gap="1rem">
+	<nui-button variant="outline">
+		<button type="button">Cancel</button>
+	</nui-button>
+	<nui-button variant="primary">
+		<button type="submit" disabled>Save</button>
+	</nui-button>
+</nui-button-container>
+```
+
+**Wrong / Will Fail:**
+```html
+<div style="display: flex; gap: 10px;"> <!-- Wrong: Use <nui-button-container> -->
+	<nui-button type="button" disabled>Save</nui-button> <!-- Wrong: Missing inner <button>, attributes on wrapper -->
+</div>
+```
+
+## Icons in Buttons
+If using an icon, wrap the icon name in the `<nui-icon>` component, and place it *inside* the native button.
+```html
+<nui-button>
+	<button type="button">
+		<nui-icon name="settings">⚙</nui-icon> Settings
+	</button>
+</nui-button>
+```
+</script>
+		</nui-markdown>
+	</details>
+
+<header>
+	<h1>Button Component</h1>
+	<p>Enhanced button elements with consistent styling and interaction patterns</p>
+</header>
+
+<section>
+	<h2>Overview</h2>
+	<p>The <code>&lt;nui-button&gt;</code> component wraps standard HTML <code>&lt;button&gt;</code> elements with
+		enhanced styling and optional features. It maintains semantic HTML while providing consistent visual design and
+		interaction patterns across the application.</p>
+</section>
+
+<section>
+	<h2>Basic Usage</h2>
+	<p>Wrap a standard button element:</p>
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-button>
+	<button type="button">Click Me</button>
+</nui-button>
+		</script>
+	</nui-code>
+	<nui-button-container>
+		<nui-button>
+			<button type="button">Default Button</button>
+		</nui-button>
+	</nui-button-container>
+</section>
+
+<section>
+	<h2>Button Variants</h2>
+	<p>Use the <code>type</code> or <code>variant</code> attribute on the <code>&lt;nui-button&gt;</code> element to
+		apply different visual styles:</p>
+	<nui-code>
+		<script type="example" data-lang="html">
+<!-- Default (No Type) -->
+<nui-button>
+	<button type="button">Default</button>
+</nui-button>
+
+<!-- Primary (Explicit) -->
+<nui-button variant="primary">
+	<button type="button">Primary</button>
+</nui-button>
+
+<!-- Outline -->
+<nui-button variant="outline">
+	<button type="button">Outline</button>
+</nui-button>
+
+<!-- Submit / Success -->
+<nui-button variant="submit">
+	<button type="submit">Submit</button>
+</nui-button>
+
+<!-- Danger / Delete -->
+<nui-button variant="danger">
+	<button type="button">Delete</button>
+</nui-button>
+
+<!-- Warning -->
+<nui-button variant="warning">
+	<button type="button">Warning</button>
+</nui-button>
+		</script>
+	</nui-code>
+	<nui-button-container>
+		<nui-button>
+			<button type="button">Default</button>
+		</nui-button>
+		<nui-button variant="primary">
+			<button type="button">Primary</button>
+		</nui-button>
+		<nui-button variant="outline">
+			<button type="button">Outline</button>
+		</nui-button>
+		<nui-button variant="submit">
+			<button type="submit">Submit</button>
+		</nui-button>
+		<nui-button variant="danger">
+			<button type="button">Delete</button>
+		</nui-button>
+		<nui-button variant="warning">
+			<button type="button">Warning</button>
+		</nui-button>
+	</nui-button-container>
+</section>
+
+<section>
+	<h2>Buttons with Icons</h2>
+	<p>Combine buttons with the <code>&lt;nui-icon&gt;</code> component:</p>
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-button>
+	<button type="button">
+		<nui-icon name="save"></nui-icon>
+		Save
+	</button>
+</nui-button>
+
+<nui-button>
+	<button type="button">
+		Delete
+		<nui-icon name="delete"></nui-icon>
+	</button>
+</nui-button>
+
+<!-- Icon-only button -->
+<nui-button>
+	<button type="button" aria-label="Settings">
+		<nui-icon name="settings"></nui-icon>
+	</button>
+</nui-button>
+		</script>
+	</nui-code>
+	<nui-button-container>
+		<nui-button>
+			<button type="button">
+				<nui-icon name="save"></nui-icon>
+				Save
+			</button>
+		</nui-button>
+		<nui-button>
+			<button type="button">
+				Delete
+				<nui-icon name="delete"></nui-icon>
+			</button>
+		</nui-button>
+		<nui-button>
+			<button type="button" aria-label="Settings">
+				<nui-icon name="settings"></nui-icon>
+			</button>
+		</nui-button>
+	</nui-button-container>
+</section>
+
+<section>
+	<h2>Disabled State</h2>
+	<p>Use the standard <code>disabled</code> attribute:</p>
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-button>
+	<button type="button" disabled>Disabled Button</button>
+</nui-button>
+		</script>
+	</nui-code>
+	<nui-button-container>
+		<nui-button>
+			<button type="button" disabled>Disabled Button</button>
+		</nui-button>
+		<nui-button>
+			<button type="button" disabled>
+				<nui-icon name="warning"></nui-icon>
+				Can't Click
+			</button>
+		</nui-button>
+	</nui-button-container>
+</section>
+
+<section>
+	<h2>Button Container</h2>
+	<p>The <code>&lt;nui-button-container&gt;</code> component manages the layout and alignment of a group of buttons.
+	</p>
+	<h3>Attributes</h3>
+	<ul>
+		<li><code>align</code>: Controls horizontal alignment. Options: <code>start</code> (default),
+			<code>center</code>, <code>end</code>, <code>between</code>.
+		</li>
+		<li><code>gap</code>: Controls spacing between buttons. Keywords: <code>none</code>, <code>small</code>,
+			<code>medium</code>, <code>large</code>. Also accepts custom values like <code>2rem</code> or CSS variables
+			(e.g., <code>var(--nui-space)</code>). Default is <code>small</code> (<code>var(--nui-space-half)</code>).
+		</li>
+		<li><code>direction</code>: Layout direction. Options: <code>row</code> (default), <code>column</code>.</li>
+	</ul>
+
+	<h3>Fill Mode</h3>
+	<p>Use the <code>fill</code> class to make buttons expand equally to fill the available space. Useful for action
+		bars, mobile layouts, or when you want uniform button widths.</p>
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-button-container class="fill">
+	<nui-button><button type="button">Action 1</button></nui-button>
+	<nui-button><button type="button">Action 2</button></nui-button>
+	<nui-button><button type="button">Action 3</button></nui-button>
+</nui-button-container>
+		</script>
+	</nui-code>
+	<nui-button-container class="fill">
+		<nui-button><button type="button">Action 1</button></nui-button>
+		<nui-button><button type="button">Action 2</button></nui-button>
+		<nui-button><button type="button">Action 3</button></nui-button>
+	</nui-button-container>
+	<p><strong>Fill with different variants:</strong></p>
+	<nui-button-container class="fill">
+		<nui-button variant="outline"><button type="button">Cancel</button></nui-button>
+		<nui-button variant="submit"><button type="button">Confirm</button></nui-button>
+	</nui-button-container>
+	<h3>Examples</h3>
+	<p><strong>Right Aligned:</strong></p>
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-button-container align="end">
+	<nui-button><button type="button">Cancel</button></nui-button>
+	<nui-button><button type="button">Confirm</button></nui-button>
+</nui-button-container>
+		</script>
+	</nui-code>
+	<p><strong>Centered with Large Gap:</strong></p>
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-button-container align="center" gap="large">
+	<nui-button><button type="button">Option A</button></nui-button>
+	<nui-button><button type="button">Option B</button></nui-button>
+</nui-button-container>
+		</script>
+	</nui-code>
+	<p><strong>Column Layout:</strong></p>
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-button-container direction="column" align="stretch">
+	<nui-button><button type="button" style="width: 100%">Top</button></nui-button>
+	<nui-button><button type="button" style="width: 100%">Bottom</button></nui-button>
+</nui-button-container>
+		</script>
+	</nui-code>
+
+	<h3>Segmented Control (Single Select Group)</h3>
+	<p>Use <code>mode="segmented"</code> (or <code>variant="segmented"</code>) to transform a button container into a single-select segmented control. Clicking a button makes it active, and dispatches a <code>nui-change</code> event on the container.</p>
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-button-container mode="segmented" id="demo-segmented">
+	<nui-button state="active" value="day"><button type="button">Day</button></nui-button>
+	<nui-button value="week"><button type="button">Week</button></nui-button>
+	<nui-button value="month"><button type="button">Month</button></nui-button>
+</nui-button-container>
+		</script>
+	</nui-code>
+	<div class="demo-area">
+		<nui-button-container mode="segmented" id="demo-segmented">
+			<nui-button state="active" value="day"><button type="button">Day</button></nui-button>
+			<nui-button value="week"><button type="button">Week</button></nui-button>
+			<nui-button value="month"><button type="button">Month</button></nui-button>
+		</nui-button-container>
+		<p id="demo-segmented-result" style="margin-top: 1rem; color: var(--color-shade6); font-size: 0.85rem;">Selected: day</p>
+	</div>
+</section>
+
+<section>
+	<h2>Busy State</h2>
+	<p>You can dynamically show a loading or busy state by calling <code>setLoading(true)</code> on the <code>&lt;nui-button&gt;</code> element. This will visually change the button and prevent interactions until <code>setLoading(false)</code> is called.</p>
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-button id="busy-btn">
+	<button type="button">Start Process</button>
+</nui-button>
+		</script>
+	</nui-code>
+
+	<p>Use the JavaScript API to trigger the state:</p>
+	<nui-code>
+		<script type="example" data-lang="javascript">
+const button = document.getElementById('busy-btn');
+
+button.addEventListener('click', async () => {
+    // 1. Set the button to a loading state
+    button.setLoading(true);
+    
+    try {
+        // 2. Perform your async task (e.g. fetch API)
+        await performSomeAsyncOperation();
+    } finally {
+        // 3. Always turn the loader off when finished
+        button.setLoading(false);
+    }
+});
+		</script>
+	</nui-code>
+
+	<div class="demo-area">
+		<nui-button-container>
+			<nui-button class="demo-busy-btn">
+				<button type="button">Default</button>
+			</nui-button>
+			
+			<nui-button class="demo-busy-btn" variant="danger">
+				<button type="button">Danger</button>
+			</nui-button>
+
+			<nui-button class="demo-busy-btn" variant="outline">
+				<button type="button">Outline</button>
+			</nui-button>
+
+			<nui-button class="demo-busy-btn" variant="icon">
+				<button type="button" aria-label="Settings">
+					<nui-icon name="settings"></nui-icon>
+				</button>
+			</nui-button>
+		</nui-button-container>
+	</div>
+</section>
+
+<section>
+	<h2>File Upload</h2>
+	<p>Wrap an <code>&lt;input type="file"&gt;</code> inside a <code>&lt;nui-button&gt;</code> to create a nice-looking file upload trigger. The file dialog opens when the button is clicked, and a <code>nui-file-selected</code> event is dispatched when files are selected.</p>
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-button>
+	<input type="file" style="display: none;" accept="image/*">
+	<button type="button">
+		<nui-icon name="upload"></nui-icon>
+		Upload File
+	</button>
+</nui-button>
+		</script>
+	</nui-code>
+	<div class="demo-area">
+		<nui-button-container>
+			<nui-button id="demo-upload-btn">
+				<input type="file" style="display: none;">
+				<button type="button">
+					<nui-icon name="upload"></nui-icon>
+					Upload File
+				</button>
+			</nui-button>
+		</nui-button-container>
+		<p id="demo-upload-result" style="margin-top: 1rem; color: var(--color-shade6); font-size: 0.85rem;"></p>
+	</div>
+</section>
+
+<section>
+	<h2>Interactive Examples</h2>
+	<h3>Toggle Theme</h3>
+	<p>Toggle between light and dark mode using a <code>data-action</code> attribute (handled in your app's JavaScript):
+	</p>
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-button data-action="toggle-theme">
+	<button type="button">Toggle Theme</button>
+</nui-button>
+		</script>
+	</nui-code>
+	<nui-button-container>
+		<nui-button data-action="toggle-theme">
+			<button type="button">Toggle Theme</button>
+		</nui-button>
+	</nui-button-container>
+
+	<h3>Toggle Class</h3>
+	<p>Toggle a CSS class on a target element using <code>data-action</code>:</p>
+	<style>
+		.demo-box {
+			padding: 1rem;
+			background: var(--nui-surface-2);
+			border-radius: 4px;
+			transition: all 0.3s ease;
+			text-align: center;
+			font-weight: bold;
+		}
+
+		.demo-box.highlight {
+			background: var(--nui-accent);
+			color: var(--nui-text-on-accent);
+			transform: scale(1.05);
+			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+		}
+	</style>
+	<nui-code>
+		<script type="example" data-lang="html">
+<!-- Target element -->
+<div id="demo-box" class="demo-box">Target Box</div>
+
+<!-- Button toggles 'highlight' class on #demo-box -->
+<nui-button data-action="toggle-highlight@#demo-box">
+	<button type="button">Toggle Highlight</button>
+</nui-button>
+		</script>
+	</nui-code>
+	<div class="demo-area">
+		<div id="demo-box" class="demo-box">Target Box</div>
+		<nui-button-container>
+			<nui-button data-action="toggle-highlight@#demo-box">
+				<button type="button">Toggle Highlight</button>
+			</nui-button>
+		</nui-button-container>
+	</div>
+
+	<>Declarative Usage (Default)</>
+	<p>Use the <code>data-action</code> attribute to wire up interactions without manual query selectors. The
+		<code>nui-action</code> event provides the action name and automatically resolved target element.</p>
+
+	<nui-code>
+		<script type="example" data-lang="html">
+<!-- 1. Define the target element -->
+<form id="login-form">...</form>
+
+<!-- 2. Define the action and target (action@target) -->
+<nui-button data-action="submit-form@#login-form">
+	<button type="button">Login</button>
+</nui-button>
+		</script>
+	</nui-code>
+
+	<nui-code>
+		<script type="example" data-lang="javascript">
+// 3. Handle the generic event
+document.addEventListener('nui-action', (e) => {
+	const { name, target } = e.detail;
+	
+	if (name === 'submit-form') {
+		// 'target' is the #login-form element - no querySelector needed!
+		console.log('Submitting form:', target);
+	}
+});
+		</script>
+	</nui-code>
+
+	<div class="demo-area">
+		<div id="demo-target">Target Element (#demo-target)</div>
+
+		<nui-button-container>
+			<nui-button data-action="highlight-target@#demo-target">
+				<button type="button">Highlight Target</button>
+			</nui-button>
+		</nui-button-container>
+	</div>
+
+	<script type="nui/page">
+		function init(element) {
+			const busyBtns = element.querySelectorAll('.demo-busy-btn');
+			busyBtns.forEach(btn => {
+				btn.addEventListener('click', () => {
+					btn.setLoading(true);
+					setTimeout(() => {
+						btn.setLoading(false);
+					}, 2000);
+				});
+			});
+
+			const uploadBtn = element.querySelector('#demo-upload-btn');
+			const uploadResult = element.querySelector('#demo-upload-result');
+			if (uploadBtn) {
+				uploadBtn.addEventListener('nui-file-selected', (e) => {
+					const files = e.detail.files;
+					if (files.length > 0) {
+						uploadResult.textContent = `Selected: ${files[0].name} (${files[0].size} bytes)`;
+					} else {
+						uploadResult.textContent = 'Selection canceled';
+					}
+				});
+			}
+
+			const segmented = element.querySelector('#demo-segmented');
+			const segmentedResult = element.querySelector('#demo-segmented-result');
+			if (segmented) {
+				segmented.addEventListener('nui-change', (e) => {
+					segmentedResult.textContent = `Selected: ${e.detail.value}`;
+				});
+			}
+
+			element.addEventListener('nui-action', (e) => {
+				const { name, target } = e.detail;
+				
+				if (name === 'highlight-target') {
+					if (target) {
+						target.style.backgroundColor = 'var(--color-highlight)';
+						target.style.color = 'white';
+						setTimeout(() => {
+							target.style.backgroundColor = 'var(--color-shade2)';
+							target.style.color = 'inherit';
+						}, 500);
+					}
+				} else if (name === 'toggle-highlight') {
+					if (target) {
+						target.classList.toggle('highlight');
+					}
+				}
+			});
+		}
+	</script>
+</section>
+
+<section>
+	<h2>Styling</h2>
+	<p>Button appearance is controlled via CSS. Customize using CSS custom properties or by targeting the button
+		element:</p>
+	<nui-code>
+		<script type="example" data-lang="css">
+/* Custom button styling */
+nui-button button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	padding: 0.75rem 1.5rem;
+	border-radius: 4px;
+	background: var(--nui-accent);
+	color: var(--nui-text-on-accent);
+	border: none;
+	cursor: pointer;
+	font-weight: 600;
+}
+
+nui-button button:hover {
+	background: var(--nui-accent-hover);
+}
+
+nui-button button:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+		</script>
+	</nui-code>
+</section>
+
+<section>
+	<h2>Accessibility</h2>
+	<p>The button component maintains full accessibility by using semantic HTML:</p>
+	<ul>
+		<li><strong>Semantic Element:</strong> Uses standard <code>&lt;button&gt;</code> element with proper
+			<code>type</code> attribute.
+		</li>
+		<li><strong>Keyboard Navigation:</strong> Native focus and activation with Tab and Enter/Space keys.</li>
+		<li><strong>Screen Reader Support:</strong> Button role and label automatically recognized.</li>
+		<li><strong>Icon-Only Buttons:</strong> Use <code>aria-label</code> for buttons with only icons.</li>
+		<li><strong>Disabled State:</strong> <code>disabled</code> attribute properly communicated to assistive
+			technology.</li>
+	</ul>
+	<nui-code>
+		<script type="example" data-lang="html">
+<!-- Good: Icon-only button with aria-label -->
+<nui-button>
+	<button type="button" aria-label="Close dialog">
+		<nui-icon name="close"></nui-icon>
+	</button>
+</nui-button>
+
+<!-- Good: Button with visible text -->
+<nui-button>
+	<button type="button">
+		<nui-icon name="save"></nui-icon>
+		Save Changes
+	</button>
+</nui-button>
+		</script>
+	</nui-code>
+</section>
+
+<section>
+	<h2>Best Practices</h2>
+	<ul>
+		<li>Always specify <code>type</code> attribute (default is "submit" which may cause unwanted form submission).
+		</li>
+		<li>Use descriptive button text that clearly indicates the action.</li>
+		<li>Provide <code>aria-label</code> for icon-only buttons.</li>
+		<li>Use <code>disabled</code> attribute for unavailable actions, not CSS pointer-events.</li>
+		<li>Consider button placement and visual hierarchy in the UI.</li>
+		<li>Test keyboard navigation and focus states.</li>
+	</ul>
+</section>
+
+<section>
+	<h2>Component API</h2>
+	<p>The button component exposes methods for programmatic control.</p>
+
+	<h3>Methods</h3>
+	<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+		<thead>
+			<tr>
+				<th style="width: 25%;">Method</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>setLoading(boolean)</code></td>
+				<td>Shows or hides a loading state on the button. When loading, the button is disabled and shows a busy indicator. Call with <code>true</code> to show loading, <code>false</code> to hide.</td>
+			</tr>
+		</tbody>
+	</table>
+
+	<h3>Events</h3>
+	<table class="nui-table" style="width: 100%; font-size: 0.9em;">
+		<thead>
+			<tr>
+				<th style="width: 25%;">Event Name</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>nui-file-selected</code></td>
+				<td>Fired when a file is selected via a file input inside the button. <code>e.detail.files</code> contains an array of selected File objects.</td>
+			</tr>
+		</tbody>
+	</table>
+</section>
+
+<script type="nui/page">
+function init(element, params, nui) {
+}
+</script>
+
+</div>

@@ -1,0 +1,60 @@
+/**
+ * NUI Menu - Addon Component Styles
+ * Menu bar with dropdown menus and nested submenus
+ * 
+ * Dropdown styles are shared with nui-context-menu and imported from nui-dropdown.css
+ */
+
+@import './nui-dropdown.css';
+
+/* Menu Bar Container */
+nui-menu {
+	display: block;
+	position: relative;
+	overflow: visible;
+}
+
+.nui-menu-bar {
+	display: flex;
+	align-items: center;
+	height: var(--nui-space-double);
+	background: var(--color-shade1);
+	border-bottom: var(--border-thickness) solid var(--border-shade2);
+	gap: 0;
+}
+
+/* Menu Bar Items */
+.nui-menu-item {
+	display: flex;
+	align-items: center;
+	height: 100%;
+	padding: 0 var(--nui-space);
+	background: transparent;
+	border: none;
+	color: var(--color-text);
+	font-family: var(--system-ui);
+	font-size: 0.875rem;
+	cursor: pointer;
+	transition: background-color 0.15s ease;
+	white-space: nowrap;
+}
+
+.nui-menu-item:hover {
+	background: var(--color-shade3);
+}
+
+.nui-menu-item.active {
+	background: var(--color-highlight);
+	color: var(--color-white);
+}
+
+.nui-menu-item:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.nui-menu-item:focus-visible {
+	outline: 2px solid var(--color-highlight);
+	outline-offset: -2px;
+	z-index: 1;
+}
