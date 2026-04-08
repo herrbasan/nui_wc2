@@ -10,6 +10,8 @@
 
 > ⚠️ **Early Development** — API may change. Feedback welcome!
 
+> **Breaking Change (2026-04-08):** `nui-code` and `nui-markdown` are now core components (included in `NUI/nui.js`). If you previously imported them from `NUI/lib/modules/`, simply remove those import statements.
+
 **[📖 Documentation & Playground →](https://herrbasan.github.io/nui_wc2/)**
 
 ---
