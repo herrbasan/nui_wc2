@@ -11,6 +11,8 @@
 > ⚠️ **Early Development** — API may change. Feedback welcome!
 
 > **Breaking Change (2026-04-08):** `nui-code` and `nui-markdown` are now core components (included in `NUI/nui.js`). If you previously imported them from `NUI/lib/modules/`, simply remove those import statements.
+>
+> **Breaking Change (2026-04-08):** Sidebar API refactored. CSS classes changed from `sidenav-*` to `sidebar-*`. Method renamed from `toggleSideNav()` to `toggleSidebar()` (backward compat maintained). New `behavior` attribute replaces `favored`: `behavior="primary|secondary|manual"`. If you have custom toggle logic in your app, update to use `app.toggleSidebar(position)` instead of custom click handlers.
 
 **[📖 Documentation & Playground →](https://herrbasan.github.io/nui_wc2/)**
 
