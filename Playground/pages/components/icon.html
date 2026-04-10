@@ -1,6 +1,6 @@
 <div class="page-icon">
 
-<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+<details class="collapsible-section collapsible-section--spaced">
 		<summary><strong>LLM Guide - nui-icon</strong></summary>
 		<nui-markdown id="llm-guide" data-component="nui-icon" class="llm-guide">
 <script type="text/markdown">
@@ -67,9 +67,9 @@
 		</nui-code>
 		
 		<div class="icon-demo">
-			<nui-icon name="settings" style="font-size: 2rem;"></nui-icon>
-			<nui-icon name="person" style="font-size: 2rem;"></nui-icon>
-			<nui-icon name="search" style="font-size: 2rem;"></nui-icon>
+			<nui-icon name="settings" class="demo-icon-md"></nui-icon>
+			<nui-icon name="person" class="demo-icon-md"></nui-icon>
+			<nui-icon name="search" class="demo-icon-md"></nui-icon>
 		</div>
 	</section>
 	
@@ -86,10 +86,10 @@
 		</nui-code>
 		
 		<div class="icon-demo">
-			<nui-icon name="notifications" style="font-size: 1rem;"></nui-icon>
-			<nui-icon name="notifications" style="font-size: 1.5rem;"></nui-icon>
-			<nui-icon name="notifications" style="font-size: 2rem;"></nui-icon>
-			<nui-icon name="notifications" style="font-size: 3rem;"></nui-icon>
+			<nui-icon name="notifications" class="demo-icon-xs"></nui-icon>
+			<nui-icon name="notifications" class="demo-icon-sm"></nui-icon>
+			<nui-icon name="notifications" class="demo-icon-md"></nui-icon>
+			<nui-icon name="notifications" class="demo-icon-lg"></nui-icon>
 		</div>
 	</section>
 	
@@ -106,10 +106,10 @@
 		</nui-code>
 		
 		<div class="icon-demo">
-			<nui-icon name="security" style="font-size: 2rem; color: red;"></nui-icon>
-			<nui-icon name="analytics" style="font-size: 2rem; color: orange;"></nui-icon>
-			<nui-icon name="done" style="font-size: 2rem; color: green;"></nui-icon>
-			<nui-icon name="info" style="font-size: 2rem; color: blue;"></nui-icon>
+			<nui-icon name="security" class="demo-icon-md demo-icon-red"></nui-icon>
+			<nui-icon name="analytics" class="demo-icon-md demo-icon-orange"></nui-icon>
+			<nui-icon name="done" class="demo-icon-md demo-icon-green"></nui-icon>
+			<nui-icon name="info" class="demo-icon-md demo-icon-blue"></nui-icon>
 		</div>
 	</section>
 	
@@ -127,7 +127,7 @@
 			</script>
 		</nui-code>
 		
-		<div class="icon-demo" style="display: block;">
+		<div class="icon-demo demo-flex-center">
 			<p><nui-icon name="mail"></nui-icon> Email Settings</p>
 			<p><nui-icon name="person"></nui-icon> User Profile</p>
 			<p><nui-icon name="notifications"></nui-icon> Notification Preferences</p>
@@ -204,7 +204,7 @@ async function init(element, params) {
 		const icons = await nui.components.icon.getAvailable();
 		
 		if (!icons || icons.length === 0) {
-			iconList.innerHTML = '<p style="color: var(--color-error);">Failed to load icons from sprite.</p>';
+			iconList.innerHTML = '<p class="demo-text-error">Failed to load icons from sprite.</p>';
 			return;
 		}
 		
@@ -230,7 +230,7 @@ async function init(element, params) {
 		console.log(`[icon page] Loaded ${icons.length} icons`);
 	} catch (err) {
 		console.error('[icon page] Error loading icons:', err);
-		iconList.innerHTML = `<p style="color: var(--color-error);">Error loading icons: ${err.message}</p>`;
+		iconList.innerHTML = `<p class="demo-text-error">Error loading icons: ${err.message}</p>`;
 	}
 	
 	// Handle copy actions via click on list items

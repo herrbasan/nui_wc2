@@ -1,6 +1,6 @@
 <div class="page-accordion">
 
-<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+<details class="collapsible-section collapsible-section--spaced">
 		<summary><strong>LLM Guide - nui-accordion</strong></summary>
 		<nui-markdown id="llm-guide" data-component="nui-accordion" class="llm-guide">
 <script type="text/markdown">
@@ -201,7 +201,7 @@ You can control the accordion declaratively via buttons using:
 	<p>You can control the accordion declaratively using mapped data-actions or programmatically via its element methods.</p>
 	
 	<div class="demo-container">
-		<nui-button-container gap="1rem" style="margin-bottom: 1rem;">
+		<nui-button-container gap="1rem" class="demo-mb-1">
 			<nui-button><button data-action="accordion-toggle:1@#prog-accordion">Toggle Item 2</button></nui-button>
 			<nui-button><button data-action="accordion-expand-all@#prog-accordion">Expand All</button></nui-button>
 			<nui-button><button data-action="accordion-collapse-all@#prog-accordion">Collapse All</button></nui-button>

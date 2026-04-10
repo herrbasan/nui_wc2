@@ -14,6 +14,17 @@
 - Mode option: `mode="required"` for sequential completion vs free navigation
 - Should be a proper NUI component (not just for the generator)
 
+### File icon component
+- Display file type icons based on extension (e.g., PDF, DOCX, JPG)
+- Could be used in file upload components, document lists, etc.
+- Simple API: `<nui-file-icon type="pdf" />`
+- Icon should be based on a document icon with the extension overlaid, to keep it visually consistent
+
+### file list component
+- Component to display a list of files with icons, names, and actions (download, remove)
+- should be customizable for different contexts (e.g., upload list vs document library)
+- Should be a companion for things like the dropzone component, which could use it to show added files
+- Could laverage the sortable list component for drag-and-drop reordering of files (optional)
 ---
 
 ## AI Notes (Suggested Revisits)

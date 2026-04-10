@@ -1,6 +1,6 @@
 <div class="page-media-player">
 
-<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+<details class="collapsible-section collapsible-section--spaced">
 		<summary><strong>LLM Guide - nui-media-player</strong></summary>
 		<nui-markdown id="llm-guide" data-component="nui-media-player" class="llm-guide">
 <script type="text/markdown">
@@ -56,7 +56,7 @@
         </nui-code>
 
         <div class="demo-area">
-            <nui-media-player pause-others style="aspect-ratio: 16/9; display: block;">
+            <nui-media-player pause-others class="demo-media-wide">
                 <!-- Using a placeholder video URL or sample video if available. In dev we can use big buck bunny -->
                 <video src="https://raum.com/database/storage/files/roPWnICvrkerKH7g.mp4" poster="https://www.raum.com/database/storage/cache/medium_avif/tB7ndH1cieGl6ieK.avif"></video>
             </nui-media-player>
@@ -78,11 +78,11 @@
             </script>
         </nui-code>
 
-        <div class="demo-area" style="display: flex; flex-direction: column; gap: var(--nui-space);">
-            <nui-media-player pause-others style="max-width: 600px; width: 100%; margin: 0 auto; display: block; --media-box-back: var(--color-shade2);">
+        <div class="demo-area demo-flex-wrap">
+            <nui-media-player pause-others class="demo-media-player">
                 <audio src="https://herrbasan.com/files/Misc/herrbasan_Play_11.mp3"></audio>
             </nui-media-player>
-            <nui-media-player pause-others style="max-width: 600px; width: 100%; margin: 0 auto; display: block; --media-box-back: var(--color-shade2);">
+            <nui-media-player pause-others class="demo-media-player">
                 <audio src="https://herrbasan.com/files/Misc/herrbasan_Brattle.mp3"></audio>
             </nui-media-player>
         </div>
@@ -111,11 +111,11 @@ nui.components.mediaPlayer.create('#my-target', {
             </script>
         </nui-code>
         
-        <div class="demo-area" style="text-align: center;">
-            <div id="prog-player-target" style="max-width: 600px; margin: 0 auto 1rem auto; display: block; background: var(--color-shade2); border-radius: var(--border-radius1); display: flex; align-items: center; justify-content: center; min-height: 4rem;">
+        <div class="demo-area demo-text-center">
+            <div id="prog-player-target" class="demo-target-container">
                 <span style="color: var(--color-text-muted);">Target Container</span>
             </div>
-            <div style="display: flex; gap: var(--nui-space); justify-content: center;">
+            <div class="demo-flex-wrap" style="justify-content: center;">
                 <nui-button data-action="demo-media:createVideo">
                     <button type="button">Create Video</button>
                 </nui-button>
@@ -131,10 +131,10 @@ nui.components.mediaPlayer.create('#my-target', {
         <p>The media player component provides a factory method for programmatic creation.</p>
 
         <h3>Factory Methods</h3>
-        <table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+        <table class="nui-table nui-table--api">
             <thead>
                 <tr>
-                    <th style="width: 25%;">Method</th>
+                    <th>Method</th>
                     <th>Description</th>
                 </tr>
             </thead>
@@ -147,10 +147,10 @@ nui.components.mediaPlayer.create('#my-target', {
         </table>
 
         <h3>Options</h3>
-        <table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+        <table class="nui-table nui-table--api">
             <thead>
                 <tr>
-                    <th style="width: 25%;">Option</th>
+                    <th>Option</th>
                     <th>Description</th>
                 </tr>
             </thead>

@@ -1,6 +1,6 @@
 <div class="page-app-window">
 
-<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+<details class="collapsible-section collapsible-section--spaced">
 	<summary><strong>LLM Guide - nui.appWindow()</strong></summary>
 	<nui-markdown class="llm-guide">
 <script type="text/markdown">
@@ -72,7 +72,7 @@ win.content;    // .nui-app-main content area
 	<h2>Demo</h2>
 	<p>Launches the app window inside an overlay to simulate an Electron frameless window.</p>
 
-	<div class="demo-area" style="padding: var(--nui-space);">
+	<div class="demo-area">
 		<nui-button id="launch-app">
 			<button type="button">Launch App Window</button>
 		</nui-button>
@@ -80,7 +80,7 @@ win.content;    // .nui-app-main content area
 
 	<nui-overlay id="app-window-overlay" blocking>
 		<dialog>
-			<div id="app-window-container" style="position: relative; width: 80vw; height: 80vh;"></div>
+			<div id="app-window-container" style="position: relative; width: 80vw; height: 80vh;"></div>	<!-- Kept: element-specific sizing -->
 		</dialog>
 	</nui-overlay>
 
@@ -112,11 +112,11 @@ const win = appWindow({
 	<h2>API Reference</h2>
 
 	<h3>Options</h3>
-	<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+	<table class="nui-table nui-table--api">
 		<thead>
 			<tr>
-				<th style="width: 25%;">Property</th>
-				<th style="width: 20%;">Type</th>
+				<th>Property</th>
+				<th>Type</th>
 				<th>Description</th>
 			</tr>
 		</thead>
@@ -155,10 +155,10 @@ const win = appWindow({
 	</table>
 
 	<h3>Instance Methods</h3>
-	<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+	<table class="nui-table nui-table--api">
 		<thead>
 			<tr>
-				<th style="width: 25%;">Method</th>
+				<th>Method</th>
 				<th>Description</th>
 			</tr>
 		</thead>
@@ -179,11 +179,11 @@ const win = appWindow({
 	</table>
 
 	<h3>Instance Properties</h3>
-	<table class="nui-table" style="width: 100%; font-size: 0.9em;">
+	<table class="nui-table nui-table--api">
 		<thead>
 			<tr>
-				<th style="width: 25%;">Property</th>
-				<th style="width: 20%;">Type</th>
+				<th>Property</th>
+				<th>Type</th>
 				<th>Description</th>
 			</tr>
 		</thead>

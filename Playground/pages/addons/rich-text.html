@@ -1,6 +1,6 @@
 <div class="page-rich-text">
 
-<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+<details class="collapsible-section collapsible-section--spaced">
 		<summary><strong>LLM Guide - nui-rich-text</strong></summary>
 		<nui-markdown id="llm-guide" data-component="nui-rich-text" class="llm-guide">
 <script type="text/markdown">
@@ -104,8 +104,8 @@
 
                 <p>Try editing this text!</p>
             </nui-rich-text>
-            <p style="font-weight: 600; font-size: 0.85rem;">Input / Output:</p>
-            <nui-button-container style="margin-top: 1rem; align-items: center;">
+            <p class="demo-rich-text-label">Input / Output:</p>
+            <nui-button-container class="demo-mt-1 demo-flex-center">
                 
                 <nui-button>
                     <button type="button" data-action="set-html@#editor1">Insert HTML</button>
@@ -113,7 +113,7 @@
                 <nui-button>
                     <button type="button" data-action="set-markdown@#editor1">Insert Markdown</button>
                 </nui-button>
-                <div style="flex: 1;"></div>
+                <div class="demo-flex-spacer"></div>
                 <nui-button variant="primary">
                     <button type="button" data-action="get-html@#editor1">Get HTML</button>
                 </nui-button>
@@ -121,7 +121,7 @@
                     <button type="button" data-action="get-markdown@#editor1">Get Markdown</button>
                 </nui-button>
             </nui-button-container>
-            <pre class="demo-chrome" id="output-area" style="margin-top: 1rem; min-height: 50px; white-space: pre-wrap; word-break: break-all; font-family: monospace; padding: 1rem; background: var(--color-shade2); font-size: 0.85rem;">Click an export button to see the output here.</pre>
+            <pre class="demo-chrome demo-output-area" id="output-area">Click an export button to see the output here.</pre>
         </div>
     </section>
 
@@ -130,10 +130,10 @@
         <p>The rich text editor exposes properties, methods, and events for programmatic control and integration.</p>
 
         <h3>Properties & Methods</h3>
-        <table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+        <table class="nui-table nui-table--api">
             <thead>
                 <tr>
-                    <th style="width: 25%;">Signature</th>
+                    <th>Signature</th>
                     <th>Description</th>
                 </tr>
             </thead>
@@ -174,10 +174,10 @@
         </table>
 
         <h3>Events</h3>
-        <table class="nui-table" style="width: 100%; font-size: 0.9em;">
+        <table class="nui-table nui-table--api">
             <thead>
                 <tr>
-                    <th style="width: 25%;">Event Name</th>
+                    <th>Event Name</th>
                     <th>Description</th>
                 </tr>
             </thead>
@@ -263,11 +263,11 @@
                 </div>
             </main>
             <footer>
-                <div class="nui-flex nui-gap" style="align-items: center; justify-content: flex-end; width: 100%;">
-                    <nui-button variant="ghost" style="margin-right: auto;">
+                <div class="nui-flex nui-gap demo-rich-text-footer demo-flex-end">
+                    <nui-button variant="ghost" class="demo-mr-auto">
                         <button type="button" data-action="dialog-close@#dynamic-image-picker-dialog">Cancel</button>
                     </nui-button>
-                    <span id="image-picker-status" style="line-height: var(--nui-form-row-height); font-size: var(--font-size-small); color: var(--color-text-dim); display: none;">1 Selected</span>
+                    <span id="image-picker-status" class="demo-rich-text-status">1 Selected</span>
                     <nui-button variant="primary">
                         <button type="button" id="image-picker-confirm" disabled>Insert Image</button>
                     </nui-button>

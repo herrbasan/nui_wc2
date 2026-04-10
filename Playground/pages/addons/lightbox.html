@@ -1,6 +1,6 @@
 <div class="page-lightbox">
 
-<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+<details class="collapsible-section collapsible-section--spaced">
 		<summary><strong>LLM Guide - nui-lightbox</strong></summary>
 		<nui-markdown id="llm-guide" data-component="nui-lightbox" class="llm-guide">
 <script type="text/markdown">
@@ -47,18 +47,18 @@
         <nui-code>
             <script type="example" data-lang="html">
 <nui-lightbox id="demo-lightbox" loop>
-    <img src="images/Random_Picts/320p/001.webp" data-lightbox-src="images/Random_Picts/1080p/010.webp" alt="Landscape 1" style="width: 240px; aspect-ratio: 16/9; cursor: pointer; object-fit: cover; border-radius: var(--border-radius-1); margin-right: 1rem;" />
-    <img src="images/Random_Picts/320p/002.webp" data-lightbox-src="images/Random_Picts/1080p/020.webp" alt="Landscape 2" style="width: 240px; aspect-ratio: 16/9; cursor: pointer; object-fit: cover; border-radius: var(--border-radius-1); margin-right: 1rem;" />
-    <img src="images/Random_Picts/320p/003.webp" data-lightbox-src="images/Random_Picts/1080p/030.webp" alt="Landscape 3" style="width: 240px; aspect-ratio: 16/9; cursor: pointer; object-fit: cover; border-radius: var(--border-radius-1);" />
+    <img src="images/Random_Picts/320p/001.webp" data-lightbox-src="images/Random_Picts/1080p/010.webp" alt="Landscape 1" class="demo-lightbox-thumb" />
+    <img src="images/Random_Picts/320p/002.webp" data-lightbox-src="images/Random_Picts/1080p/020.webp" alt="Landscape 2" class="demo-lightbox-thumb" />
+    <img src="images/Random_Picts/320p/003.webp" data-lightbox-src="images/Random_Picts/1080p/030.webp" alt="Landscape 3" class="demo-lightbox-thumb" />
 </nui-lightbox>
             </script>
         </nui-code>
 
-        <div class="demo-area" style="display: flex; flex-wrap: wrap; gap: var(--nui-space);">
+        <div class="demo-area demo-flex-wrap">
             <nui-lightbox id="demo-lightbox" loop>
-                <img src="images/Random_Picts/320p/010.webp" data-lightbox-src="images/Random_Picts/1080p/010.webp" alt="Landscape 1" style="width: 240px; aspect-ratio: 16/9; cursor: pointer; object-fit: cover; border-radius: var(--border-radius-1); margin-right: 1rem;" />
-                <img src="images/Random_Picts/320p/020.webp" data-lightbox-src="images/Random_Picts/1080p/020.webp" alt="Landscape 2" style="width: 240px; aspect-ratio: 16/9; cursor: pointer; object-fit: cover; border-radius: var(--border-radius-1); margin-right: 1rem;" />
-                <img src="images/Random_Picts/320p/030.webp" data-lightbox-src="images/Random_Picts/1080p/030.webp" alt="Landscape 3" style="width: 240px; aspect-ratio: 16/9; cursor: pointer; object-fit: cover; border-radius: var(--border-radius-1);" />
+                <img src="images/Random_Picts/320p/010.webp" data-lightbox-src="images/Random_Picts/1080p/010.webp" alt="Landscape 1" class="demo-lightbox-thumb" />
+                <img src="images/Random_Picts/320p/020.webp" data-lightbox-src="images/Random_Picts/1080p/020.webp" alt="Landscape 2" class="demo-lightbox-thumb" />
+                <img src="images/Random_Picts/320p/030.webp" data-lightbox-src="images/Random_Picts/1080p/030.webp" alt="Landscape 3" class="demo-lightbox-thumb" />
             </nui-lightbox>
         </div>
     </section>
@@ -88,10 +88,10 @@ nui.components.lightbox.show([
         <p>The lightbox component provides a factory method for programmatic control.</p>
 
         <h3>Factory Methods</h3>
-        <table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+        <table class="nui-table nui-table--api">
             <thead>
                 <tr>
-                    <th style="width: 25%;">Method</th>
+                    <th>Method</th>
                     <th>Description</th>
                 </tr>
             </thead>
@@ -104,10 +104,10 @@ nui.components.lightbox.show([
         </table>
 
         <h3>Element Methods</h3>
-        <table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+        <table class="nui-table nui-table--api">
             <thead>
                 <tr>
-                    <th style="width: 25%;">Method</th>
+                    <th>Method</th>
                     <th>Description</th>
                 </tr>
             </thead>

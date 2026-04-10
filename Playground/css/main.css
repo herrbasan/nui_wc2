@@ -876,3 +876,248 @@ background: var(--color-shade2);
 	text-align: center;
 	padding: var(--nui-space);
 }
+
+/* ============================================================================
+   COMMON UTILITY CLASSES - Extracted from inline styles
+   ============================================================================ */
+
+/* Collapsible sections */
+.collapsible-section--spaced {
+	margin-bottom: var(--nui-space);
+}
+
+/* API Documentation Tables */
+.nui-table--api {
+	width: 100%;
+	font-size: 0.9em;
+	margin-bottom: var(--nui-space-double);
+}
+
+.nui-table--api:last-child {
+	margin-bottom: 0;
+}
+
+.nui-table--api th:first-child,
+.nui-table--api td:first-child {
+	width: 25%;
+}
+
+/* Demo Layout Utilities */
+.demo-flex-center {
+	display: flex;
+	gap: 1rem;
+	align-items: center;
+	justify-content: center;
+	padding: 2rem;
+}
+
+.demo-flex-end {
+	display: flex;
+	justify-content: flex-end;
+}
+
+.demo-flex-column {
+	display: flex;
+	flex-direction: column;
+	gap: var(--nui-space);
+}
+
+.demo-flex-wrap {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--nui-space);
+}
+
+.demo-text-center {
+	text-align: center;
+}
+
+.demo-text-small {
+	font-size: 0.9em;
+}
+
+.demo-text-muted {
+	color: var(--color-shade5);
+}
+
+.demo-text-dim {
+	color: var(--color-text-dim);
+}
+
+/* Spacing utilities */
+.demo-mt-1 {
+	margin-top: 1rem;
+}
+
+.demo-mt-0 {
+	margin-top: 0;
+}
+
+.demo-mb-1 {
+	margin-bottom: 1rem;
+}
+
+.demo-mb-auto {
+	margin-bottom: var(--nui-space-double);
+}
+
+.demo-mr-auto {
+	margin-right: auto;
+}
+
+.demo-mx-auto {
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.demo-gap-1 {
+	gap: 1rem;
+}
+
+.demo-gap-2 {
+	gap: 2rem;
+}
+
+/* Padding utilities */
+.demo-p-4 {
+	padding: 4rem 2rem;
+}
+
+/* Pre/code output areas */
+.demo-output-area {
+	margin-top: 1rem;
+	min-height: 50px;
+	white-space: pre-wrap;
+	word-break: break-all;
+	font-family: monospace;
+	padding: 1rem;
+	background: var(--color-shade2);
+	font-size: 0.85rem;
+}
+
+/* Target container for dynamic content */
+.demo-target-container {
+	max-width: 600px;
+	margin: 0 auto 1rem auto;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 4rem;
+	background: var(--color-shade2);
+	border-radius: var(--border-radius1);
+}
+
+.demo-target-container > span {
+	color: var(--color-text-muted);
+}
+
+/* Media player specific */
+.demo-media-player {
+	max-width: 600px;
+	width: 100%;
+	margin: 0 auto;
+	display: block;
+	--media-box-back: var(--color-shade2);
+}
+
+.demo-media-wide {
+	aspect-ratio: 16/9;
+	display: block;
+}
+
+/* Lightbox gallery images */
+.demo-lightbox-thumb {
+	width: 240px;
+	aspect-ratio: 16/9;
+	cursor: pointer;
+	object-fit: cover;
+	border-radius: var(--border-radius1);
+}
+
+.demo-lightbox-thumb + .demo-lightbox-thumb {
+	margin-right: 1rem;
+}
+
+/* Rich text editor specific */
+.demo-rich-text-label {
+	font-weight: 600;
+	font-size: 0.85rem;
+}
+
+.demo-rich-text-footer {
+	align-items: center;
+	justify-content: flex-end;
+	width: 100%;
+}
+
+.demo-rich-text-status {
+	line-height: var(--nui-form-row-height);
+	font-size: var(--font-size-small);
+	color: var(--color-text-dim);
+	display: none;
+}
+
+.demo-rich-text-status.is-visible {
+	display: inline;
+}
+
+.demo-flex-spacer {
+	flex: 1;
+}
+
+/* Icon sizing utilities */
+.demo-icon-xs { font-size: 1rem; }
+.demo-icon-sm { font-size: 1.5rem; }
+.demo-icon-md { font-size: 2rem; }
+.demo-icon-lg { font-size: 3rem; }
+
+/* Icon colors (for demo purposes) */
+.demo-icon-red { color: red; }
+.demo-icon-orange { color: orange; }
+.demo-icon-green { color: green; }
+.demo-icon-blue { color: blue; }
+
+/* Error text */
+.demo-text-error {
+	color: var(--color-error);
+}
+
+/* Demo spacer utility */
+.demo-spacer {
+	flex: 1;
+}
+
+/* Min-height utilities */
+.demo-min-h-200 {
+	min-height: 200px;
+}
+
+/* Output log specific */
+.demo-output-log {
+	min-height: 100px;
+	font-family: monospace;
+	font-size: 0.85em;
+}
+
+/* Grid layouts */
+.demo-grid-2 {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--nui-space);
+}
+
+/* App layout page */
+.page-app-layout .diagram-sidebar-right {
+	grid-area: sidebar-right;
+	border-style: dashed;
+	opacity: 0.8;
+}
+
+.page-app-layout .demo-border {
+	border: solid var(--border-thickness) var(--border-shade2);
+}
+
+/* Hidden utility */
+.nui-hidden {
+	display: none;
+}

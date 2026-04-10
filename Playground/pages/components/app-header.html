@@ -1,6 +1,6 @@
 <div class="page-app-header">
 
-<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+<details class="collapsible-section collapsible-section--spaced">
 		<summary><strong>LLM Guide - nui-app-header</strong></summary>
 		<nui-markdown id="llm-guide" data-component="nui-app-header" class="llm-guide">
 <script type="text/markdown">
@@ -61,17 +61,17 @@
         <p>Any element inside the header can accept a <code>data-badge</code> attribute to display an overlaid indicator or notification count. This removes the need for extra markup wrapping.</p>
         <p>An empty string <code>data-badge=""</code> creates a minimal dot indicator, while text or numbers create pill-shaped badges.</p>
 
-        <div class="demo-chrome" style="background: var(--color-shade2); padding: 2rem;">
+        <div class="demo-chrome demo-flex-center">
             <!-- Simulating the header look in a generic container for demo purposes -->
-            <nui-app-header style="position: relative; top: 0; box-shadow: none; border: solid var(--border-thickness) var(--border-shade2);">
+            <nui-app-header class="demo-relative demo-shadow-none demo-border">
                 <div slot="left">
                     <h3>Mock Header</h3>
                 </div>
                 <div slot="right">
-                    <button style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--color-text); padding: 0.5rem;" data-badge="5" aria-label="Messages">
+                    <button class="demo-btn-icon" data-badge="5" aria-label="Messages">
                         <nui-icon name="mail">✉</nui-icon>
                     </button>
-                    <button style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--color-text); padding: 0.5rem;" data-badge="" aria-label="Alerts">
+                    <button class="demo-btn-icon" data-badge="" aria-label="Alerts">
                         <nui-icon name="warning">⚠</nui-icon>
                     </button>
                 </div>

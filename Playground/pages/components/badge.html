@@ -1,6 +1,6 @@
 <div class="page-badge">
 
-<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+<details class="collapsible-section collapsible-section--spaced">
 	<summary><strong>LLM Guide - nui-badge</strong></summary>
 	<nui-markdown id="llm-guide" data-component="nui-badge" class="llm-guide">
 <script type="text/markdown">
@@ -70,7 +70,7 @@ Use this for inline tags (like "New", "Pending", "Active").
 		</nui-code>
 		
 		<div class="demo-area">
-			<div style="display: flex; gap: var(--nui-space); align-items: center;">
+			<div class="demo-flex-center">
 				<nui-badge>Default</nui-badge>
 				<nui-badge variant="primary">Primary</nui-badge>
 				<nui-badge variant="success">Success</nui-badge>
@@ -109,7 +109,7 @@ Use this for inline tags (like "New", "Pending", "Active").
 		</nui-code>
 
 		<div class="demo-area">
-			<div style="display: flex; gap: 3rem; align-items: center;">
+			<div class="demo-flex-center" style="gap: 3rem;">
 				<nui-button data-badge="3">
 					<button>
 						<nui-icon name="notifications"></nui-icon>
@@ -118,20 +118,20 @@ Use this for inline tags (like "New", "Pending", "Active").
 				</nui-button>
 				
 				<nui-button variant="ghost" data-badge="!" aria-label="Warnings">
-					<button style="padding: 0.5rem;" aria-label="Warnings">
+					<button aria-label="Warnings">
 						<nui-icon name="warning"></nui-icon>
 					</button>
 				</nui-button>
 
 				<nui-button variant="ghost" data-badge="" title="Unread activity" aria-label="Mail">
-					<button style="padding: 0.5rem;" aria-label="Mail">
+					<button aria-label="Mail">
 						<nui-icon name="mail"></nui-icon>
 					</button>
 				</nui-button>
 			</div>
 		</div>
 		
-		<div class="demo-callout" style="margin-top: 1rem;">
+		<div class="demo-callout demo-mt-1">
 			<nui-icon name="info"></nui-icon>
 			<p>An empty string (<code>data-badge=""</code>) renders as a small indicator dot, ideal for subtle unread notifications.</p>
 		</div>
@@ -142,14 +142,14 @@ Use this for inline tags (like "New", "Pending", "Active").
 		<p>Dynamically updating the <code>data-badge</code> attribute updates the badge instantly.</p>
 
 		<div class="demo-area">
-			<div style="display: flex; gap: var(--nui-space); align-items: center;">
+			<div class="demo-flex-center">
 				<nui-button variant="ghost" id="demo-notification-btn" data-badge="">
-					<button style="padding: 0.5rem;" aria-label="Notifications">
+					<button aria-label="Notifications">
 						<nui-icon name="notifications"></nui-icon>
 					</button>
 				</nui-button>
 
-				<div style="flex: 1"></div>
+				<div class="demo-flex-spacer"></div>
 
 				<nui-button data-action="badge:increment">
 					<button>Add Notification</button>

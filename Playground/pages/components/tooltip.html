@@ -1,6 +1,6 @@
 <div class="page-tooltip">
 
-<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+<details class="collapsible-section collapsible-section--spaced">
 		<summary><strong>LLM Guide - nui-tooltip</strong></summary>
 		<nui-markdown id="llm-guide" data-component="nui-tooltip" class="llm-guide">
 <script type="text/markdown">
@@ -62,7 +62,7 @@
         </nui-code>
 
         <div class="demo-area">
-            <div style="display: flex; gap: 1rem; align-items: center; justify-content: center; padding: 2rem;">
+            <div class="demo-flex-center">
                 <nui-button><button type="button">Hover me</button></nui-button>
                 <nui-tooltip>This is an auto-placed tooltip, resolving space dynamically.</nui-tooltip>
             </div>
@@ -78,7 +78,7 @@
                 <nui-tooltip>
                     <span class="title">Tooltip Title</span>
                     <p>Tooltips display informative text when users hover over, focus on, or tap an element.</p>
-                    <div style="display: flex; justify-content: flex-end;">
+                    <div class="demo-flex-end">
                         <nui-button variant="solid"><button type="button" data-action="demo:clicked">Button</button></nui-button>
                     </div>
                 </nui-tooltip>
@@ -86,12 +86,12 @@
         </nui-code>
 
         <div class="demo-area" data-demo-output2>
-            <div style="display: flex; gap: 1rem; align-items: center; justify-content: center; padding: 2rem;">
+            <div class="demo-flex-center">
                 <nui-button><button type="button">Rich Content Hover</button></nui-button>
                 <nui-tooltip>
                     <span class="title">Tooltip Title</span>
                     <p>Tooltips display informative text when users hover over, focus on, or tap an element.</p>
-                    <div style="display: flex; justify-content: flex-end;">
+                    <div class="demo-flex-end">
                         <nui-button variant="solid"><button type="button" data-action="demo:clicked">Button</button></nui-button>
                     </div>
                 </nui-tooltip>
@@ -111,9 +111,9 @@
         </nui-code>
 
         <div class="demo-area">
-            <div style="display: flex; gap: 1rem; align-items: center; justify-content: center; padding: 2rem;">
+            <div class="demo-flex-center">
                 <nui-button id="demo-target-btn"><button type="button">Target Button</button></nui-button>
-                <span style="font-size: 0.9em; color: var(--color-shade5);">Some unrelated text...</span>
+                <span class="demo-text-small demo-text-muted">Some unrelated text...</span>
                 <nui-tooltip for="demo-target-btn" position="bottom">Linked via 'for' attribute</nui-tooltip>
             </div>
         </div>
@@ -143,7 +143,7 @@
         </nui-code>
 
         <div class="demo-area">
-            <div style="display: flex; justify-content: center; align-items: center; gap: 2rem; padding: 4rem 2rem;">
+            <div class="demo-flex-center demo-gap-2 demo-p-4">
                 <div>
                     <nui-button><button type="button">Top</button></nui-button>
                     <nui-tooltip position="top">Appears on top</nui-tooltip>

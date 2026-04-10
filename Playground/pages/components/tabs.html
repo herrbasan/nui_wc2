@@ -1,6 +1,6 @@
 <div class="page-tabs">
 
-<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+<details class="collapsible-section collapsible-section--spaced">
 		<summary><strong>LLM Guide - nui-tabs</strong></summary>
 		<nui-markdown id="llm-guide" data-component="nui-tabs" class="llm-guide">
 <script type="text/markdown">
@@ -282,7 +282,7 @@ tabsElement.select('tab-security'); // Activates the tab with data-tab="tab-secu
 	<p>You can control the tabs declaratively using mapped data-actions or programmatically via element methods.</p>
 	
 	<div class="demo-container">
-		<nui-button-container gap="1rem" style="margin-bottom: 1rem;">
+		<nui-button-container gap="1rem" class="demo-mb-1">
 			<nui-button><button data-action="tabs-select:0@#prog-tabs">Switch to Tab 1</button></nui-button>
 			<nui-button><button data-action="tabs-select:panel-b@#prog-tabs">Switch to Tab 2</button></nui-button>
 		</nui-button-container>
@@ -318,10 +318,10 @@ tabs.selectTab('panel-b');   // Switch by associated panel ID or tab ID
 	<p>The tabs component exposes properties and methods for programmatic control.</p>
 
 	<h3>Methods</h3>
-	<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+	<table class="nui-table nui-table--api">
 		<thead>
 			<tr>
-				<th style="width: 25%;">Method</th>
+				<th>Method</th>
 				<th>Description</th>
 			</tr>
 		</thead>
@@ -334,10 +334,10 @@ tabs.selectTab('panel-b');   // Switch by associated panel ID or tab ID
 	</table>
 
 	<h3>Events</h3>
-	<table class="nui-table" style="width: 100%; font-size: 0.9em;">
+	<table class="nui-table nui-table--api">
 		<thead>
 			<tr>
-				<th style="width: 25%;">Event Name</th>
+				<th>Event Name</th>
 				<th>Description</th>
 			</tr>
 		</thead>

@@ -21,7 +21,7 @@
 	<h2>Basic Usage</h2>
 	<p>Right-click anywhere in the demo area below to open the context menu.</p>
 	
-	<div class="demo-area" id="basic-demo" style="min-height: 200px; display: flex; align-items: center; justify-content: center;">
+	<div class="demo-area demo-flex-center" id="basic-demo" style="min-height: 200px;">	<!-- Kept: element-specific min-height -->
 		<p style="color: var(--color-text-muted);">Right-click here to open context menu</p>
 	</div>
 
@@ -63,7 +63,7 @@ menu.showAt(button);
 	<h2>With Submenus</h2>
 	<p>Context menus can have nested submenus. Hover over items with an arrow to see submenus.</p>
 	
-	<div class="demo-area" id="submenu-demo" style="min-height: 200px; display: flex; align-items: center; justify-content: center;">
+	<div class="demo-area demo-flex-center" id="submenu-demo" style="min-height: 200px;">	<!-- Kept: element-specific min-height -->
 		<p style="color: var(--color-text-muted);">Right-click here to open nested context menu</p>
 	</div>
 
@@ -102,7 +102,7 @@ const menuWithSubmenus = contextMenu([
 	<h2>Disabled Items</h2>
 	<p>Items can be disabled to prevent interaction.</p>
 	
-	<div class="demo-area" id="disabled-demo" style="min-height: 200px; display: flex; align-items: center; justify-content: center;">
+	<div class="demo-area demo-flex-center" id="disabled-demo" style="min-height: 200px;">	<!-- Kept: element-specific min-height -->
 		<p style="color: var(--color-text-muted);">Right-click here to open menu with disabled items</p>
 	</div>
 
@@ -140,10 +140,10 @@ const menuWithDisabled = contextMenu([
 	<h2>API Reference</h2>
 
 	<h3>Factory Function</h3>
-	<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+	<table class="nui-table nui-table--api">
 		<thead>
 			<tr>
-				<th style="width: 30%;">Signature</th>
+				<th>Signature</th>
 				<th>Description</th>
 			</tr>
 		</thead>
@@ -156,10 +156,10 @@ const menuWithDisabled = contextMenu([
 	</table>
 
 	<h3>Options</h3>
-	<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+	<table class="nui-table nui-table--api">
 		<thead>
 			<tr>
-				<th style="width: 25%;">Property</th>
+				<th>Property</th>
 				<th>Type</th>
 				<th>Description</th>
 			</tr>
@@ -179,10 +179,10 @@ const menuWithDisabled = contextMenu([
 	</table>
 
 	<h3>Menu Item Properties</h3>
-	<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+	<table class="nui-table nui-table--api">
 		<thead>
 			<tr>
-				<th style="width: 25%;">Property</th>
+				<th>Property</th>
 				<th>Type</th>
 				<th>Description</th>
 			</tr>
@@ -217,10 +217,10 @@ const menuWithDisabled = contextMenu([
 	</table>
 
 	<h3>Instance Methods</h3>
-	<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+	<table class="nui-table nui-table--api">
 		<thead>
 			<tr>
-				<th style="width: 25%;">Method</th>
+				<th>Method</th>
 				<th>Description</th>
 			</tr>
 		</thead>
@@ -245,10 +245,10 @@ const menuWithDisabled = contextMenu([
 	</table>
 
 	<h3>Static Methods</h3>
-	<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+	<table class="nui-table nui-table--api">
 		<thead>
 			<tr>
-				<th style="width: 25%;">Method</th>
+				<th>Method</th>
 				<th>Description</th>
 			</tr>
 		</thead>
@@ -263,7 +263,7 @@ const menuWithDisabled = contextMenu([
 
 <section>
 	<h2>Output Log</h2>
-	<div class="demo-area" id="output-log" style="min-height: 100px; font-family: monospace; font-size: 0.85em;">
+	<div class="demo-area demo-output-log" id="output-log">
 		<p style="color: var(--color-text-muted);">Actions will be logged here...</p>
 	</div>
 </section>

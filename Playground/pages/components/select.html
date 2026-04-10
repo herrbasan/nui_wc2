@@ -1,6 +1,6 @@
 <div class="page-select">
 
-<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+<details class="collapsible-section collapsible-section--spaced">
 		<summary><strong>LLM Guide - nui-select</strong></summary>
 		<nui-markdown id="llm-guide" data-component="nui-select" class="llm-guide">
 <script type="text/markdown">
@@ -73,7 +73,7 @@ Do not invent tags, and do not omit the internal `<select>` element.
 	<p>A simple dropdown for selecting a single option. The first empty-value option serves as placeholder text. You can toggle its state declaratively using <code>data-action="select-open"</code> or <code>select-close</code>.</p>
 
 	<div class="demo-area">
-		<nui-button-container gap="1rem" style="margin-bottom: 1rem;">
+		<nui-button-container gap="1rem" class="demo-mt-1">
 			<nui-button><button data-action="select-open@#basic-select">Open Declaratively</button></nui-button>
 		</nui-button-container>
 		<nui-input-group>
@@ -261,7 +261,7 @@ Do not invent tags, and do not omit the internal `<select>` element.
 			</nui-select>
 		</nui-input-group>
 
-		<div class="demo-actions" style="margin-top: var(--nui-space-double);">
+		<div class="demo-actions demo-mt-1">
 			<nui-button><button data-action="select-demo:opt2">Select Option 2</button></nui-button>
 			<nui-button><button data-action="select-demo:clear">Clear</button></nui-button>
 			<nui-button><button data-action="select-demo:add">Add New Item</button></nui-button>
@@ -322,7 +322,7 @@ select.syncOptions();  // Use after modifying native <select> options
 		</script>
 	</nui-code>
 
-	<div class="demo-callout" style="margin-top: var(--nui-space-double);">
+	<div class="demo-callout demo-mt-1">
 		<p><strong>Tip:</strong> Use <code>syncOptions()</code> when you've manually modified the native 
 		<code>&lt;select&gt;</code> element via DOM manipulation. Use <code>setItems()</code> to programmatically 
 		replace all items. <code>refresh()</code> is kept as an alias for backward compatibility.</p>
@@ -343,11 +343,11 @@ select.syncOptions();  // Use after modifying native <select> options
 			</nui-select>
 		</nui-input-group>
 
-		<div class="demo-actions" style="margin-top: var(--nui-space-double);">
+		<div class="demo-actions demo-mt-1">
 			<nui-button id="async-demo-load"><button>Load Data</button></nui-button>
 		</div>
 
-		<div class="demo-result" id="async-result" style="margin-top: var(--nui-space);">
+		<div class="demo-result demo-mt-1" id="async-result">
 			<strong>Current Value:</strong> <span id="async-value">none</span><br>
 			<strong>Is Disabled:</strong> <span id="async-disabled">no</span><br>
 			<strong>Option Count:</strong> <span id="async-count">1</span>
@@ -391,7 +391,7 @@ console.log('Is disabled:', select.isDisabled());
 		</script>
 	</nui-code>
 
-	<div class="demo-callout" style="margin-top: var(--nui-space-double);">
+	<div class="demo-callout demo-mt-1">
 		<p><strong>Key Points:</strong></p>
 		<ul>
 			<li>Use <code>loadOptions()</code> for the simplest async pattern—it handles all loading states</li>
@@ -419,7 +419,7 @@ console.log('Is disabled:', select.isDisabled());
 			</nui-select>
 		</nui-input-group>
 
-		<div class="demo-actions" style="margin-top: var(--nui-space-double);">
+		<div class="demo-actions demo-mt-1">
 			<nui-button><button data-action="multi-demo:select-all">Select All</button></nui-button>
 			<nui-button><button data-action="multi-demo:unselect-red">Unselect Red</button></nui-button>
 			<nui-button><button data-action="multi-demo:clear">Clear All</button></nui-button>
@@ -449,7 +449,7 @@ console.log('Is disabled:', select.isDisabled());
 			</nui-select>
 		</nui-input-group>
 
-		<div id="event-log" class="demo-result" style="margin-top: var(--nui-space);">
+		<div id="event-log" class="demo-result demo-mt-1">
 			<strong>Event Log:</strong>
 			<div style="font-family: monospace; font-size: 0.875rem; margin-top: 0.5rem;">
 				<span style="color: var(--color-text-dim);">Interact with the select to see events...</span>
@@ -504,7 +504,7 @@ select.addEventListener('nui-items-replace', (e) => {
 	<p>Disable the entire select or individual options.</p>
 
 	<div class="demo-area">
-		<div style="display: flex; flex-direction: column; gap: var(--nui-space-double);">
+		<div class="demo-flex-center">
 			<nui-input-group>
 				<label>Disabled Select</label>
 				<nui-select>
@@ -633,7 +633,7 @@ document.getElementById('demo-form').addEventListener('submit', (e) => {
 	<h2>API Reference</h2>
 
 	<h3>Methods</h3>
-	<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+	<table class="nui-table nui-table--api">
 		<thead>
 			<tr>
 				<th>Method</th>
@@ -771,7 +771,7 @@ document.getElementById('demo-form').addEventListener('submit', (e) => {
 	</table>
 
 	<>Available Events</>
-	<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+	<table class="nui-table nui-table--api">
 		<thead>
 			<tr>
 				<th>Event</th>
@@ -839,7 +839,7 @@ document.getElementById('demo-form').addEventListener('submit', (e) => {
 	<p>The select component provides comprehensive keyboard accessibility following WAI-ARIA best practices.</p>
 
 	<h3>When Closed (Control Button Focused)</h3>
-	<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+	<table class="nui-table nui-table--api">
 		<thead>
 			<tr>
 				<th>Key</th>
@@ -879,7 +879,7 @@ document.getElementById('demo-form').addEventListener('submit', (e) => {
 	</table>
 
 	<h3>Search Input (Searchable Selects)</h3>
-<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+<table class="nui-table nui-table--api">
 	<thead>
 		<tr>
 			<th>Key</th>
@@ -903,7 +903,7 @@ document.getElementById('demo-form').addEventListener('submit', (e) => {
 </table>
 
 <h3>When Open (Options List Focused)</h3>
-	<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+	<table class="nui-table nui-table--api">
 		<thead>
 			<tr>
 				<th>Key</th>
@@ -946,7 +946,7 @@ document.getElementById('demo-form').addEventListener('submit', (e) => {
 		</tbody>
 	</table>
 
-	<div class="demo-callout" style="margin-top: var(--nui-space-double);">
+	<div class="demo-callout demo-mt-1">
 		<strong>Accessibility:</strong> The select component uses roving tabindex for option navigation, 
 		provides visual focus indicators, and maintains ARIA compliance for screen reader compatibility.
 	</div>
@@ -954,7 +954,7 @@ document.getElementById('demo-form').addEventListener('submit', (e) => {
 
 <section>
 	<h2>Attributes</h2>
-	<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+	<table class="nui-table nui-table--api">
 		<thead>
 			<tr>
 				<th>Attribute</th>

@@ -1,6 +1,6 @@
 <div class="page-button">
 
-<details class="collapsible-section" style="margin-bottom: var(--nui-space);">
+<details class="collapsible-section collapsible-section--spaced">
 		<summary><strong>LLM Guide - nui-button</strong></summary>
 		<nui-markdown id="llm-guide" data-component="nui-button" class="llm-guide">
 <script type="text/markdown">
@@ -290,7 +290,7 @@ If using an icon, wrap the icon name in the `<nui-icon>` component, and place it
 			<nui-button value="week"><button type="button">Week</button></nui-button>
 			<nui-button value="month"><button type="button">Month</button></nui-button>
 		</nui-button-container>
-		<p id="demo-segmented-result" style="margin-top: 1rem; color: var(--color-shade6); font-size: 0.85rem;">Selected: day</p>
+		<p id="demo-segmented-result" class="demo-text-small demo-text-muted demo-mt-1">Selected: day</p>
 	</div>
 </section>
 
@@ -354,7 +354,7 @@ button.addEventListener('click', async () => {
 	<nui-code>
 		<script type="example" data-lang="html">
 <nui-button>
-	<input type="file" style="display: none;" accept="image/*">
+	<input type="file" class="nui-hidden" accept="image/*">
 	<button type="button">
 		<nui-icon name="upload"></nui-icon>
 		Upload File
@@ -365,14 +365,14 @@ button.addEventListener('click', async () => {
 	<div class="demo-area">
 		<nui-button-container>
 			<nui-button id="demo-upload-btn">
-				<input type="file" style="display: none;">
+				<input type="file" class="nui-hidden">
 				<button type="button">
 					<nui-icon name="upload"></nui-icon>
 					Upload File
 				</button>
 			</nui-button>
 		</nui-button-container>
-		<p id="demo-upload-result" style="margin-top: 1rem; color: var(--color-shade6); font-size: 0.85rem;"></p>
+		<p id="demo-upload-result" class="demo-text-small demo-text-muted demo-mt-1"></p>
 	</div>
 </section>
 
@@ -612,10 +612,10 @@ nui-button button:disabled {
 	<p>The button component exposes methods for programmatic control.</p>
 
 	<h3>Methods</h3>
-	<table class="nui-table" style="width: 100%; font-size: 0.9em; margin-bottom: var(--nui-space-double);">
+	<table class="nui-table nui-table--api">
 		<thead>
 			<tr>
-				<th style="width: 25%;">Method</th>
+				<th>Method</th>
 				<th>Description</th>
 			</tr>
 		</thead>
@@ -628,10 +628,10 @@ nui-button button:disabled {
 	</table>
 
 	<h3>Events</h3>
-	<table class="nui-table" style="width: 100%; font-size: 0.9em;">
+	<table class="nui-table nui-table--api">
 		<thead>
 			<tr>
-				<th style="width: 25%;">Event Name</th>
+				<th>Event Name</th>
 				<th>Description</th>
 			</tr>
 		</thead>
