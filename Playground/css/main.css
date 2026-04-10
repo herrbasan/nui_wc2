@@ -1130,14 +1130,17 @@ background: var(--color-shade2);
 	max-width: 400px;
 }
 
-.page-cheatsheet .cheatsheet-icons {
+/* Icon grid - used in cheatsheet and icon demo pages */
+.cheatsheet-icons,
+.page-icon #icon-grid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
 	gap: var(--nui-space);
 	margin-top: var(--nui-space);
 }
 
-.page-cheatsheet .cheatsheet-icon {
+.cheatsheet-icon,
+.page-icon #icon-grid > div {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -1149,32 +1152,43 @@ background: var(--color-shade2);
 	transition: all 0.2s;
 }
 
-.page-cheatsheet .cheatsheet-icon:hover {
+.cheatsheet-icon:hover,
+.page-icon #icon-grid > div:hover {
 	background: var(--color-shade2);
 	border-color: var(--color-highlight);
 }
 
-.page-cheatsheet .cheatsheet-icon nui-icon {
+.cheatsheet-icon nui-icon,
+.page-icon #icon-grid > div nui-icon {
 	font-size: 1.5rem;
 	color: var(--text-color);
 }
 
-.page-cheatsheet .cheatsheet-icon span {
+.cheatsheet-icon span,
+.page-icon #icon-grid > div span {
 	font-size: var(--font-size-xsmall);
 	margin-top: var(--nui-space-half);
 	text-align: center;
 	word-break: break-all;
 }
 
-.page-cheatsheet .cheatsheet-icon.copied {
+.cheatsheet-icon.copied,
+.page-icon #icon-grid > div.copied {
 	background: var(--palette-activate);
 	color: white;
 }
 
-.page-cheatsheet .cheatsheet-empty {
+.cheatsheet-empty,
+.page-icon #icon-empty {
 	text-align: center;
 	padding: var(--nui-space-double);
 	color: var(--text-color-dim);
+}
+
+/* Search input styling for cheatsheet and icon pages */
+.cheatsheet-search {
+	margin: var(--nui-space-double) 0;
+	max-width: 400px;
 }
 
 .page-cheatsheet .cheatsheet-vars {
