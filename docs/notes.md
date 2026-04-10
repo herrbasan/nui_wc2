@@ -33,6 +33,10 @@
 ### Badge Component enhancements
 - Add a compact "connection status" badge variant (e.g., green/yellow/red) for indicating online/offline/away status with an animated circle for transitional states indicating "connecting" or "retrying". The colors represent the current connection status, while the animation provides visual feedback during state changes, enhancing user awareness of connectivity issues in real-time applications.
 
+### Bugs
+- input fields error messages overlapp the content below. We either need to make space for it of find a better way to display it.
+- banner styling needs some love. There is several issues with placement of elements and overflow issues (scrollbars showing up when they shouldn't).
+
 ---
 
 ## AI Notes (Suggested Revisits)

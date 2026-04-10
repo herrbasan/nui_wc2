@@ -721,11 +721,6 @@ font-size: 0.85rem;
 }
 
 /* Dialog page styles */
-.page-dialog nui-dialog dialog > div {
-	padding: 2rem;
-	width: 400px;
-	max-width: 100%;
-}
 
 .page-dialog #custom-confirm-state {
 	padding: 0.5rem 1rem;

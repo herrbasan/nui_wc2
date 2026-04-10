@@ -248,7 +248,7 @@ main.innerHTML = `
 
 	<section>
 		<h3>Description</h3>
-		<nui-rich-text><textarea placeholder="Enter a description..."></textarea></nui-rich-text>
+		<nui-rich-text placeholder="Enter a description..."></nui-rich-text>
 	</section>
 
 	<section id="dialog-output" hidden>
@@ -281,7 +281,7 @@ dialog.addEventListener('nui-dialog-close', (e) => {
 		const theme = main.querySelectorAll('nui-select select')[1]?.value;
 		const notifications = main.querySelector('nui-toggle')?.checked;
 		const beta = main.querySelectorAll('nui-toggle')[1]?.checked;
-		const description = main.querySelector('nui-rich-text textarea')?.value;
+		const description = main.querySelector('nui-rich-text')?.value;
 
 		valuesEl.innerHTML = `
 			<details open>
@@ -769,7 +769,16 @@ dialog.close('return-value'); // Close with a return value
 
 <script type="nui/page">
 function init(element, params, nui) {
-// Watch the custom-confirm state and display it
+	// Import rich-text addon if not already registered (needed for programmatic page demo)
+	if (!customElements.get('nui-rich-text')) {
+		const link = document.createElement('link');
+		link.rel = 'stylesheet';
+		link.href = '../NUI/css/modules/nui-rich-text.css';
+		document.head.appendChild(link);
+		import('../../NUI/lib/modules/nui-rich-text.js');
+	}
+
+	// Watch the custom-confirm state and display it
 	const stateEl = element.querySelector('#custom-confirm-state');
 	const customConfirm = element.querySelector('#custom-confirm');
 
@@ -876,7 +885,8 @@ function init(element, params, nui) {
 
 						<section>
 							<h3>Description</h3>
-							<nui-rich-text><textarea placeholder="Enter a description..."></textarea></nui-rich-text>
+							<nui-rich-text placeholder="Enter a description..."></nui-rich-text>
+						</section>
 					`;
 
 					const resultEl = document.getElementById('page-dialog-result');
@@ -898,7 +908,7 @@ function init(element, params, nui) {
 							const theme = main.querySelectorAll('nui-select select')[1]?.value;
 							const notifications = main.querySelector('nui-toggle')?.checked;
 							const beta = main.querySelectorAll('nui-toggle')[1]?.checked;
-							const description = main.querySelector('nui-rich-text textarea')?.value;
+							const description = main.querySelector('nui-rich-text')?.value;
 
 							valuesEl.textContent = JSON.stringify({
 								username,
