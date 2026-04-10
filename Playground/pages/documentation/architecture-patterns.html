@@ -6,6 +6,30 @@
 <script type="text/markdown">
 # LLM Guide: NUI Application Architecture
 
+## The Layout Engine: nui-page
+
+Before diving into routing patterns, understand NUI's layout foundation:
+
+```html
+<nui-page>
+    <!-- All children constrained for readability (default) -->
+    <section>...</section>
+    
+    <!-- Break out for full-width sections -->
+    <nui-layout breakout>...</nui-layout>
+    
+    <section>...</section>
+</nui-page>
+```
+
+**Key points:**
+- `nui-page` wraps all page content (created by router or static)
+- Children are constrained to `--space-page-maxwidth` (~56rem) for readability
+- Add `breakout` attribute to any child to span full container width
+- Use `.maxwidth-container` inside breakout elements to re-constrain content
+
+The `breakout` attribute works on any element, not just `nui-layout`.
+
 ## The Router's Core Purpose
 
 NUI's router (`nui.createRouter()` / `nui.enableContentLoading()`) is fundamentally a **state-to-DOM coordinator**. It translates URL hash changes into DOM visibility operations. This is different from framework routers that dictate component hierarchies and data fetching.
@@ -92,6 +116,80 @@ The `init()` function runs once. `element.show()` and `element.hide()` are calle
 - Most real-world applications
 - Apps with both content pages and interactive tools
 - Migration scenarios (gradually moving from static to dynamic)
+
+## The Layout Engine: nui-page and Breakout
+
+The `nui-page` component is the foundation of NUI's content layout system. It provides automatic text readability constraints while allowing flexible full-width sections.
+
+### How It Works
+
+When content is loaded (via router or static), `nui-page` automatically:
+1. **Constrains width** - All direct children get `max-width: var(--space-page-maxwidth)` for readability
+2. **Adds padding** - Consistent horizontal padding via CSS variables
+3. **Enables breakout** - Any child with `breakout` attribute spans full width
+
+```html
+<nui-page>
+    <section>
+        <!-- Constrained to ~56rem for readability -->
+        <h1>Article Title</h1>
+        <p>Body text is easy to read...</p>
+    </section>
+    
+    <div breakout>
+        <!-- Full container width -->
+        <nui-layout columns="3">...</nui-layout>
+    </div>
+    
+    <section>
+        <!-- Back to constrained width -->
+    </section>
+</nui-page>
+```
+
+### The `breakout` Attribute
+
+The `breakout` attribute is **not** specific to `nui-layout` — it's a layout engine feature that works on any direct child of `nui-page`:
+
+```html
+<!-- Hero image spans full width -->
+<img breakout src="hero.jpg" alt="Hero">
+
+<!-- Callout section breaks out -->
+<section breakout class="feature-callout">
+    <div class="maxwidth-container">
+        <!-- Content still readable -->
+    </div>
+</section>
+
+<!-- Entire page unconstrained -->
+<nui-page>
+    <div breakout>
+        <section>Full width content</section>
+        <section>Also full width</section>
+    </div>
+</nui-page>
+```
+
+### `.maxwidth-container` Utility
+
+When an element breaks out, its content loses the default max-width constraint. Use `.maxwidth-container` to re-apply it to specific children:
+
+```html
+<nui-layout breakout class="hero-banner">
+    <!-- Full-bleed background -->
+    <div class="maxwidth-container">
+        <!-- Text stays readable -->
+        <h2>Headline</h2>
+        <p>Description...</p>
+    </div>
+</nui-layout>
+```
+
+This pattern enables:
+- **Full-bleed backgrounds** with readable text
+- **Edge-to-edge images** without horizontal scroll
+- **Flexible layouts** mixing constrained and full-width sections
 
 ## URL Structure Philosophy
 
