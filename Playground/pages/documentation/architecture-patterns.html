@@ -32,7 +32,7 @@ The `breakout` attribute works on any element, not just `nui-layout`.
 
 ## The Router's Core Purpose
 
-NUI's router (`nui.createRouter()` / `nui.enableContentLoading()`) is fundamentally a **state-to-DOM coordinator**. It translates URL hash changes into DOM visibility operations. This is different from framework routers that dictate component hierarchies and data fetching.
+NUI's router (`nui.createRouter()` / `nui.setupRouter()`) is fundamentally a **state-to-DOM coordinator**. It translates URL hash changes into DOM visibility operations. This is different from framework routers that dictate component hierarchies and data fetching.
 
 The router's job is minimal by design:
 1. Parse URL hash (`#type=identifier?params`)

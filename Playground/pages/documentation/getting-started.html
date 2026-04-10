@@ -33,7 +33,7 @@ Use when you need a few components on a static page. No routing, no SPA behavior
 ```
 
 **SPA with Routing:**
-For multi-page applications. The router (`nui.enableContentLoading()`) intercepts hash changes and loads content fragments.
+For multi-page applications. The router (`nui.setupRouter()`) intercepts hash changes and loads content fragments.
 
 Key architectural decisions:
 - `container: 'nui-main'` - Where fragments load
@@ -79,7 +79,7 @@ The router is a **state coordinator**, not a framework. It:
 
 **Fragment Loading:**
 ```javascript
-nui.enableContentLoading({
+nui.setupRouter({
 	container: 'nui-main',      // Element selector
 	basePath: 'pages',          // Relative to root
 	defaultPage: 'home'         // When hash is empty

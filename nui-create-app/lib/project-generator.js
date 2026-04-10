@@ -133,7 +133,7 @@ if (linkList) {
     linkList.loadData(navigationData);
 }
 
-nui.enableContentLoading({
+nui.setupRouter({
     container: 'nui-main',
     navigation: 'nui-sidebar',
     basePath: 'pages',

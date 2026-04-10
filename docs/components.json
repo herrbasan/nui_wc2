@@ -79,7 +79,8 @@
 				{ "name": "registerFeature", "signature": "nui.registerFeature(name, (container, params) => { ... })", "description": "Register a named feature for content routing", "params": ["name", "handler"], "returns": null },
 				{ "name": "registerType", "signature": "nui.registerType(type, (element, content) => { ... })", "description": "Register a content type handler", "params": ["type", "handler"], "returns": null },
 				{ "name": "createRouter", "signature": "nui.createRouter(container, { defaultPage, onNavigate })", "description": "Create a router instance for SPA navigation", "params": ["container", "options"], "returns": "Router" },
-				{ "name": "enableContentLoading", "signature": "nui.enableContentLoading({ container, navigation, basePath, defaultPage })", "description": "Enable hash-based content loading", "params": ["options"], "returns": null }
+				{ "name": "setupRouter", "signature": "nui.setupRouter({ container, navigation, basePath, defaultPage })", "description": "Setup SPA router with hash-based navigation (replaces enableContentLoading)", "params": ["options"], "returns": null },
+				{ "name": "enableContentLoading", "signature": "nui.enableContentLoading({ container, navigation, basePath, defaultPage })", "description": "Deprecated alias for setupRouter", "params": ["options"], "returns": null, "deprecated": true }
 			],
 			"components": [
 				{

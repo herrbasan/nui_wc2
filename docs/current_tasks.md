@@ -221,7 +221,7 @@ Extend declarative actions with optional state tracking while keeping current si
 ### Suggested Documentation Improvements
 
 1. ✅ **Design Philosophy Section** - Completed: All LLM Guides now include Design Philosophy sections
-2. **Router naming** - `enableContentLoading` could be clearer
+2. ✅ **Router naming** - `enableContentLoading` renamed to `setupRouter` (old name works as deprecated alias)
 3. **Visual cheatsheet** - All icons, CSS variables, common patterns
 
 See `docs/notes.md` for full list of future ideas.

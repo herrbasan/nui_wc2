@@ -5094,7 +5094,7 @@ function createRouter(container, options = {}) {
 	};
 }
 
-function enableContentLoading(options = {}) {
+function setupRouter(options = {}) {
 	const containerSelector = options.container || 'nui-content nui-main';
 	const navigationSelector = options.navigation || 'nui-sidebar';
 	const basePath = options.basePath || '/pages';
@@ -5553,8 +5553,14 @@ export const nui = {
 		return createRouter(container, options);
 	},
 
+	setupRouter(options = {}) {
+		return setupRouter(options);
+	},
+
+	// Backward compatibility alias (deprecated)
 	enableContentLoading(options = {}) {
-		return enableContentLoading(options);
+		console.warn('[NUI] enableContentLoading() is deprecated. Use setupRouter() instead.');
+		return setupRouter(options);
 	}
 };
 

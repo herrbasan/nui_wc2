@@ -354,7 +354,7 @@ if (sideNav && sideNav.loadData) {
 }
 
 // Setup content loading (simplified single call)
-nui.enableContentLoading({
+nui.setupRouter({
 	container: 'nui-content nui-main',
 	navigation: 'nui-sidebar',
 	basePath: 'pages',

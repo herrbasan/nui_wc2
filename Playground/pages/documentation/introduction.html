@@ -45,7 +45,7 @@ const dialog = await nui.components.dialog.confirm('Delete?', 'This cannot be un
 ```
 
 **5. Router as State Coordinator**
-NUI includes a lightweight hash-based router (`nui.enableContentLoading()`) that translates URL changes into DOM visibility. It's not a framework router - it doesn't dictate your architecture. Three patterns are supported:
+NUI includes a lightweight hash-based router (`nui.setupRouter()`) that translates URL changes into DOM visibility. It's not a framework router - it doesn't dictate your architecture. Three patterns are supported:
 - **Centralized:** JavaScript generates all UI, router just shows/hides
 - **Fragment-based:** HTML fragments fetched on demand (Playground pattern)
 - **Hybrid:** Mix both approaches

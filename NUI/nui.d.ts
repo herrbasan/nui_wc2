@@ -145,7 +145,10 @@ export interface NuiAPI {
 	/** Create a router for URL-based navigation */
 	createRouter(container: HTMLElement, options?: RouterOptions): Router;
 
-	/** Enable content loading with simplified setup (recommended) */
+	/** Setup SPA router with simplified configuration (recommended) */
+	setupRouter(options?: ContentLoadingOptions): ContentLoadingResult | null;
+
+	/** @deprecated Use setupRouter() instead */
 	enableContentLoading(options?: ContentLoadingOptions): ContentLoadingResult | null;
 }
 
