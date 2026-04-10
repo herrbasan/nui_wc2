@@ -68,12 +68,16 @@
                     <h3>Mock Header</h3>
                 </div>
                 <div slot="right">
-                    <button class="demo-btn-icon" data-badge="5" aria-label="Messages">
-                        <nui-icon name="mail">✉</nui-icon>
-                    </button>
-                    <button class="demo-btn-icon" data-badge="" aria-label="Alerts">
-                        <nui-icon name="warning">⚠</nui-icon>
-                    </button>
+                    <nui-button class="icon-only" data-badge="5">
+                        <button type="button" aria-label="Messages">
+                            <nui-icon name="mail">✉</nui-icon>
+                        </button>
+                    </nui-button>
+                    <nui-button class="icon-only" data-badge="">
+                        <button type="button" aria-label="Alerts">
+                            <nui-icon name="warning">⚠</nui-icon>
+                        </button>
+                    </nui-button>
                 </div>
             </nui-app-header>
         </div>
