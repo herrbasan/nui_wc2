@@ -7,24 +7,32 @@
 - The declarative action system could be extended to track state transitions
 - Keep the current simplicity as the default, but allow opt-in state management
 
-### Wizard Component
+### Wizard Component (addon)
 - Multi-step form/dialog pattern with next/prev navigation
 - Display like "1 of 3" step indicator
 - Busy state per step (for async validation/saving)
 - Mode option: `mode="required"` for sequential completion vs free navigation
 - Should be a proper NUI component (not just for the generator)
 
-### File icon component
+### File icon component (addon)
 - Display file type icons based on extension (e.g., PDF, DOCX, JPG)
 - Could be used in file upload components, document lists, etc.
 - Simple API: `<nui-file-icon type="pdf" />`
 - Icon should be based on a document icon with the extension overlaid, to keep it visually consistent
 
-### file list component
+### File list component (addon)
 - Component to display a list of files with icons, names, and actions (download, remove)
 - should be customizable for different contexts (e.g., upload list vs document library)
 - Should be a companion for things like the dropzone component, which could use it to show added files
 - Could laverage the sortable list component for drag-and-drop reordering of files (optional)
+
+### Nui-Select Enhancements
+- Selects should have an optional "clear" button to deselect the current choices
+- Consider adding a "select all" option for multi-selects (also optional)
+
+### Badge Component enhancements
+- Add a compact "connection status" badge variant (e.g., green/yellow/red) for indicating online/offline/away status with an animated circle for transitional states indicating "connecting" or "retrying". The colors represent the current connection status, while the animation provides visual feedback during state changes, enhancing user awareness of connectivity issues in real-time applications.
+
 ---
 
 ## AI Notes (Suggested Revisits)
