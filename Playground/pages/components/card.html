@@ -6,35 +6,113 @@
 <script type="text/markdown">
 # LLM Guide: nui-card
 
-> **Global Note:** Always follow the global rules in `Playground/README.md`. Use the correct Light DOM wrappers.
+## Design Philosophy
 
-## Critical Rules
-- `<nui-card>` is a simple wrapper element that provides consistent surface styling, borders, and shadows based on your CSS variables.
-- It has NO internal layout constraints. You must structure the content inside it yourself (e.g. using flexbox or semantic tags like `<header>`, `<img>`, `<nui-button-container>`).
-- If the card is clickable (like a list item or dashboard widget), add `role="button"` and `tabindex="0"` to the `<nui-card>` element to make it accessible. It automatically applies hover and focus states when these attributes are present.
+Cards provide consistent surface styling while remaining flexible containers. Rather than enforcing internal layout constraints, the component focuses on presentation—borders, shadows, and hover states—leaving content structure to the developer. This separation of concerns allows cards to adapt to diverse use cases while maintaining visual consistency.
 
-**Correct (Static Card):**
+## How It Works
+
+The card is a structural wrapper that applies theme variables for:
+
+- **Surface styling** - Background, borders, border-radius
+- **Shadow depth** - Elevation through box-shadow
+- **Interactive states** - Hover and focus visual feedback
+
+Content inside the card uses standard HTML or NUI layout components. This approach lets cards contain any combination of images, text, forms, or actions without fighting against internal layout constraints.
+
+## Usage Patterns
+
+### Standard Card
+
+Vertical stacking of content:
+
 ```html
 <nui-card>
-	<h2>Card Title</h2>
-	<p>Basic card content</p>
+    <img src="image.jpg" alt="Description" />
+    <h3>Card Title</h3>
+    <p>Card description text</p>
+    <nui-button-container align="end">
+        <nui-button><button>Action</button></nui-button>
+    </nui-button-container>
 </nui-card>
 ```
 
-**Correct (Interactive / Clickable Card):**
+### Horizontal Layout
+
+Side-by-side content arrangement:
+
 ```html
-<nui-card role="button" tabindex="0" data-action="navigate:details">
-	<h2>Clickable Title</h2>
-	<p>This card acts like a button and has hover/focus states.</p>
+<nui-card layout="horizontal">
+    <img src="thumb.jpg" alt="Thumbnail" />
+    <div>
+        <h3>Title</h3>
+        <p>Description</p>
+    </div>
 </nui-card>
 ```
 
-**Wrong / Will Fail:**
+### Image Overlay
+
+Text layered over a background image:
+
 ```html
-<nui-card clickable> <!-- Wrong: 'clickable' is not an attribute. Use role="button" tabindex="0" -->
-	Content
+<nui-card layout="image-only">
+    <img src="background.jpg" alt="Background" />
+    <div class="overlay">
+        <h3>Overlay Title</h3>
+        <p>Description on image</p>
+    </div>
 </nui-card>
 ```
+
+### Interactive Cards
+
+Cards that respond to clicks:
+
+```html
+<!-- With data-action for NUI action system -->
+<nui-card interactive data-action="dialog-open@#my-dialog">
+    <h3>Clickable Card</h3>
+    <p>Opens a dialog when clicked</p>
+</nui-card>
+
+<!-- With link for navigation -->
+<nui-card interactive>
+    <a class="nui-card-link" href="/detail">Full card link</a>
+    <h3>Linked Card</h3>
+</nui-card>
+```
+
+The `interactive` attribute adds hover effects and handles keyboard navigation automatically.
+
+### Flip Cards
+
+Two-sided cards that flip on interaction:
+
+```html
+<nui-card layout="flip">
+    <div class="nui-card-inner">
+        <div class="nui-card-front">
+            <h3>Front</h3>
+            <button data-action="card-flip">Flip</button>
+        </div>
+        <div class="nui-card-back">
+            <h3>Back</h3>
+            <button data-action="card-flip">Flip Back</button>
+        </div>
+    </div>
+</nui-card>
+```
+
+## When to Use
+
+- Grouping related content and actions
+- Presenting items in a grid or list
+- Creating clickable dashboard widgets
+- Displaying media with overlaid text
+- Quiz cards, product cards, profile cards
+
+Cards work within `nui-layout` for grid arrangements or stand alone for specific content grouping.
 </script>
 		</nui-markdown>
 	</details>

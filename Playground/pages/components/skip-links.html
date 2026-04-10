@@ -4,36 +4,67 @@
 <script type="text/markdown">
 # LLM Guide: nui-skip-links
 
-> **Global Note:** Always follow the global rules in `Playground/README.md`. This is an a11y helper.
+## Design Philosophy
 
-## Strict DOM Structure
-- Place `<nui-skip-links>` early in the document (usually after opening body or in header).
-- Either leave empty for auto-generation of "Skip to main content", or provide `<a href="#id">Skip to ...</a>` children.
-- Targets should be focusable (component adds tabindex="-1" if missing).
+Skip links embody the principle that accessibility features should benefit all users while being essential for some. Keyboard users rely on skip links to bypass repetitive navigation and reach main content quickly. This component implements the WCAG 2.1 Level A requirement for bypass blocks.
 
-**Correct:**
+## How It Works
+
+The component provides two usage modes:
+
+1. **Automatic mode** - Detects `<main>` elements and generates appropriate skip links
+2. **Declarative mode** - Accepts custom anchor elements for specific navigation needs
+
+Skip links are visually hidden until focused, appearing as the first focusable element when users press Tab. The component automatically manages `tabindex="-1"` on target elements to ensure proper focus handling.
+
+## Usage Patterns
+
+### Automatic Generation
+
+When placed without children, the component scans for common landmarks:
+
 ```html
-<nui-skip-links></nui-skip-links>
-<!-- or -->
+<nui-app>
+    <nui-skip-links></nui-skip-links>
+    <nui-app-header>...</nui-app-header>
+    <nui-content>
+        <main>...</main>
+    </nui-content>
+</nui-app>
+```
+
+### Custom Skip Links
+
+Define specific navigation paths with anchor elements:
+
+```html
 <nui-skip-links>
-	<a href="#main">Skip to main content</a>
-	<a href="#sidebar">Skip to navigation</a>
+    <a href="#search">Skip to search</a>
+    <a href="#main-content">Skip to main content</a>
+    <a href="#footer">Skip to footer</a>
 </nui-skip-links>
 ```
 
-## Critical Rules
-- Links are visually hidden until they receive keyboard focus (standard skip-link pattern).
-- Uses `a11y.announce` for screen readers on activation.
-- Auto-detects `<main>` in app context.
-- Do not style the links with custom CSS - uses theme classes.
-- Component handles focus management.
+## Integration Points
 
-## Anti-Patterns
-- Placing skip links at the bottom of page.
-- Making them always visible.
-- Using custom JS for show/hide instead of CSS :focus.
-- Forgetting to include in keyboard navigation flow.
-- Inventing non-standard skip link implementations.
+- Adds `role="navigation"` and `aria-label="Skip links"` automatically
+- Uses `a11y.announce()` for screen reader feedback on activation
+- Handles focus management without scrolling animations
+
+## When to Use
+
+- All applications with navigation before main content
+- Pages with complex sidebar navigation
+- Multi-step forms where users may want to skip instructions
+- Any page requiring WCAG 2.1 Level A compliance
+
+## Testing
+
+To verify skip links work correctly:
+1. Load the page
+2. Press Tab - the first skip link should appear at the top-left
+3. Press Enter - focus should move to the target section
+4. Continue tabbing - navigation should proceed from the target element
 </script>
 		</nui-markdown>
 	</details>
@@ -46,7 +77,7 @@
 <section>
 	<h2>Features</h2>
 	<ul>
-		<li><strong>Automatic Detection</strong> - Auto-generates a “Skip to main content” link when a <code>&lt;main&gt;</code> exists</li>
+		<li><strong>Automatic Detection</strong> - Auto-generates a "Skip to main content" link when a <code>&lt;main&gt;</code> exists</li>
 		<li><strong>Declarative HTML</strong> - Define custom skip links with simple anchor tags</li>
 		<li><strong>Keyboard Friendly</strong> - Links are hidden until focused via Tab key</li>
 		<li><strong>Smart Focus Management</strong> - Automatically adds tabindex="-1" to targets for proper focus handling</li>

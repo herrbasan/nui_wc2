@@ -6,31 +6,67 @@
 <script type="text/markdown">
 # LLM Guide: nui-lightbox
 
-> **Global Note:** Always follow the global rules in `Playground/README.md`. Avoid inline styles in production.
+## Design Philosophy
 
-## Strict DOM Structure
-- `<nui-lightbox>` wraps multiple `<img>` elements.
-- Use `data-lightbox-src` on imgs for full-res version in lightbox.
-- Optional `loop` attribute for carousel.
+The lightbox component provides focused image viewing without leaving the page. It emphasizes performance through lazy-loading of full-resolution images and accessibility through keyboard navigation and ARIA attributes.
 
-**Correct:**
+## How It Works
+
+The component offers two usage modes:
+
+1. **Declarative** - Wrap images in `<nui-lightbox>` for automatic grouping
+2. **Programmatic** - Call `nui.components.lightbox.show()` with image arrays
+
+Key features:
+- **Thumbnail/full-res separation** - Display thumbnails while loading full images on demand
+- **Keyboard navigation** - Arrow keys, Escape to close
+- **Carousel support** - Optional `loop` attribute for continuous navigation
+- **Touch friendly** - Swipe gestures on mobile
+
+## Usage Patterns
+
+### Image Gallery
+
+Group images by wrapping them in a lightbox container:
+
 ```html
-<nui-lightbox>
-	<img src="thumb.jpg" data-lightbox-src="full.jpg" alt="Desc" />
+<nui-lightbox loop>
+    <img src="thumb1.jpg" data-lightbox-src="full1.jpg" alt="Description 1" />
+    <img src="thumb2.jpg" data-lightbox-src="full2.jpg" alt="Description 2" />
+    <img src="thumb3.jpg" data-lightbox-src="full3.jpg" alt="Description 3" />
 </nui-lightbox>
 ```
 
-## Critical Rules
-- Component handles click to open, navigation, close.
-- Prefers high-res via data attr.
-- Do not use custom modal for images; use this for galleries.
-- Events for open/close if needed.
+The `data-lightbox-src` attribute specifies the full-resolution image to display.
 
-## Anti-Patterns
-- Using nui-overlay for simple image lightboxes.
-- Hardcoding styles on images (use theme vars).
-- Missing alt texts or data-lightbox-src.
-- Expecting JS config instead of declarative.
+### Programmatic Lightbox
+
+Open a lightbox from JavaScript without declarative markup:
+
+```javascript
+nui.components.lightbox.show([
+    { src: 'image1.jpg', title: 'First Image' },
+    { src: 'image2.jpg', title: 'Second Image' }
+], 0); // Start at index 0
+```
+
+### Element Method
+
+For programmatic control on a specific lightbox instance:
+
+```javascript
+const lightbox = document.querySelector('nui-lightbox');
+lightbox.open([], 2); // Open at image index 2
+```
+
+## When to Use
+
+- Photo galleries and portfolios
+- Product image viewers
+- Documentation screenshots
+- Anywhere users need to examine images in detail
+
+The lightbox handles focus management automatically, ensuring keyboard users can navigate and close the viewer easily.
 </script>
 		</nui-markdown>
 	</details>

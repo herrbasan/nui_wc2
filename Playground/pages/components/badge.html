@@ -6,45 +6,89 @@
 <script type="text/markdown">
 # LLM Guide: nui-badge
 
-> **Global Note:** Always follow the global rules in `Playground/README.md`. Use the correct Light DOM wrappers.
+## Design Philosophy
 
-## Critical Rules
-There are two distinct ways to use badges in NUI. Do not mix them up.
+Badges provide contextual status information through two complementary patterns: standalone labels for inline status indication, and overlay indicators for notification counts and alerts. The component prioritizes visual clarity while maintaining semantic meaning.
 
-### 1. Standalone Status Labels (`<nui-badge>`)
-Use this for inline tags (like "New", "Pending", "Active").
-- `variant` options: `primary`, `success`, `danger`, `warning`, `info`.
+## How It Works
 
-**Correct:**
+The badge system offers two distinct patterns:
+
+### Standalone Badges
+
+Use `<nui-badge>` for inline status labels like "New", "Pending", or "Active". These are semantic elements that communicate state:
+
 ```html
 <nui-badge variant="success">Active</nui-badge>
+<nui-badge variant="warning">Pending</nui-badge>
 ```
 
-### 2. Notification / Icon Badges (`data-badge`)
-**CRITICAL:** When adding a notification dot or unread count to a button or icon, **DO NOT** create a separate `<span class="badge">` element. Just add the `data-badge` attribute directly to the container element! The CSS handles the layout via pseudo-elements.
+Available variants: `primary`, `success`, `danger`, `warning`, `info`
 
-- Set `data-badge="3"` for a numbered pill.
-- Set `data-badge=""` for a small, subtle notification dot.
-- Set `data-badge="!"` for an alert icon.
+### Status Indicators
 
-**Correct (Notification on Button):**
+The `data-badge` attribute enables notification dots and counts on any element without additional DOM overhead. CSS pseudo-elements handle the visual presentation:
+
 ```html
+<!-- Notification count -->
 <nui-button data-badge="3">
-	<button aria-label="Messages">
-		<nui-icon name="mail">✉</nui-icon>
-	</button>
+    <button aria-label="Messages">
+        <nui-icon name="mail"></nui-icon>
+    </button>
+</nui-button>
+
+<!-- Alert indicator -->
+<nui-button data-badge="!">
+    <button aria-label="Warnings">
+        <nui-icon name="warning"></nui-icon>
+    </button>
+</nui-button>
+
+<!-- Simple dot -->
+<nui-button data-badge="">
+    <button aria-label="New activity">
+        <nui-icon name="notifications"></nui-icon>
+    </button>
 </nui-button>
 ```
 
-**Wrong / Will Fail:**
+## Usage Patterns
+
+### Status Labels
+
+For categorization and workflow states:
+
 ```html
-<nui-button>
-	<button aria-label="Messages">
-		<nui-icon name="mail">✉</nui-icon>
-		<span class="badge">3</span> <!-- Wrong: Use data-badge on the wrapper! -->
-	</button>
-</nui-button>
+<nui-badge variant="primary">Beta</nui-badge>
+<nui-badge variant="success">Complete</nui-badge>
+<nui-badge variant="danger">Failed</nui-badge>
 ```
+
+### Notification Badges
+
+For alerting users to new activity:
+
+```html
+<!-- Dynamic updates work by changing the attribute -->
+<nui-button id="inbox-btn" data-badge="5">
+    <button>Messages</button>
+</nui-button>
+
+<script>
+// Update badge count
+document.getElementById('inbox-btn').setAttribute('data-badge', '12');
+
+// Clear badge
+document.getElementById('inbox-btn').removeAttribute('data-badge');
+</script>
+```
+
+## When to Use
+
+- **Standalone badges**: Category labels, workflow states, version tags
+- **data-badge**: Notification counts, unread indicators, status alerts
+
+The `data-badge` approach keeps DOM structure minimal while providing flexible visual indicators.
 </script>
 	</nui-markdown>
 </details>

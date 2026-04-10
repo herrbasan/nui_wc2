@@ -6,44 +6,77 @@
 <script type="text/markdown">
 # LLM Guide: nui-layout (Content Container)
 
-> **Layout vs App-Layout:** `nui-layout` is for distributing *internal page content* (like cards or forms). For structural app chrome (sidebars, headers, app shells), see `nui-app` in `Playground/pages/components/app-layout.html`.
+## Design Philosophy
 
-## Critical Rules
-- `nui-layout` takes the opposite approach of most frameworks: **the constraint is the feature**.
-- Do not add complex media queries or grid logic; the component automatically handles responsiveness.
-- Natural column counts are **1, 2, and 3**. Do not use arbitrary column counts.
+Most layout systems offer unlimited flexibility—any column count, any breakpoint, any ratio. This often leads to inconsistent implementations and repeated responsive logic. `nui-layout` takes the opposite approach: **the constraint is the feature**.
 
-## Available Layout Types
-1. **Grid Layout (Default):** Use `columns="2"` or `columns="3"`. The component handles collapsing to 1 column on mobile.
-2. **Masonry Layout:** Use `type="masonry"`. Stacks items vertically in columns, minimizing gaps (Pinterest-style).
-3. **Flow Layout:** Use `type="flow"`. Useful for grouping small elements like tags, chips, or inline actions. Avoid `nui-column-flow` as it is deprecated.
-4. **Sidebar Layout:** Use `type="sidebar"`. Creates a reading-optimized main content column with a narrow side column (golden ratio). 
-5. **Center Layout:** Use `type="center"`. Centers a narrow block of content on the page, max-width 65ch (ideal for reading text).
+By encoding best practices directly into the component, it eliminates the need for developers to write the same responsive patterns repeatedly. The component enforces a natural column progression based on viewport math.
 
-## Strict DOM Structure (Do NOT deviate)
-**Correct (Grid):**
+## How It Works
+
+The viewport math emerges from a simple principle: content must be consumable on the smallest viewport (320px mobile). This yields natural column counts:
+
+| Viewport | Width | Columns | Reasoning |
+|----------|-------|---------|-----------|
+| Mobile | ~320px | 1 | Base unit |
+| Tablet | ~640px | 2 | 2× mobile width |
+| Desktop | ~960px+ | 3+ | 3× mobile width |
+
+This means **1, 2, and 3 are the natural column counts**. The component encodes this pattern and handles responsive collapsing automatically.
+
+## Layout Types
+
+### Grid Layout (Default)
+
+Equal-height columns using CSS Grid. Specify the target column count for desktop; the component handles tablet and mobile automatically.
+
 ```html
-<nui-layout columns="2"> <!-- Provide target desktop columns -->
-	<nui-card>Content 1</nui-card>
-	<nui-card>Content 2</nui-card>
+<nui-layout columns="2">
+    <nui-card>Card 1</nui-card>
+    <nui-card>Card 2</nui-card>
 </nui-layout>
 ```
 
-**Correct (Center text):**
+### Flow Layout
+
+Content flows vertically then wraps, creating a masonry-like effect:
+
 ```html
-<nui-layout type="center">
-	<h1>Article Title</h1>
-	<p>Reading-optimized width text.</p>
+<nui-layout type="flow" columns="3">
+    <nui-card>Item 1</nui-card>
+    <nui-card>Item 2</nui-card>
 </nui-layout>
 ```
 
-**Wrong / Will Fail:**
+Add `sort="height"` to reorder items so tallest items appear first for better balance.
+
+### Banner Mode
+
+Break out of max-width constraints for full-bleed sections:
+
 ```html
-<!-- Wrong: Do not inject custom flexbox styles instead of using nui-layout -->
-<div style="display: grid; grid-template-columns: 1fr 1fr;"> 
-	<nui-card>Content</nui-card>
-</div>
+<nui-layout banner>
+    <div>Full-width content</div>
+</nui-layout>
 ```
+
+## Responsive Contract
+
+The component automatically clamps column counts at different breakpoints:
+
+| Viewport | columns="2" | columns="3" | columns="4" |
+|----------|-------------|-------------|-------------|
+| Desktop (≥768px) | 2 | 3 | 4 |
+| Tablet (480-767px) | 2 | 2 | 2 |
+| Mobile (<480px) | 1 | 1 | 1 |
+
+## When to Use
+
+- **Grid**: Cards, form fields, dashboard widgets, galleries
+- **Flow**: Masonry layouts, tag clouds, image galleries
+- **Banner**: Hero sections, featured callouts, visual separators
+
+This component handles content layouts. For structural app chrome (sidebars, headers), use `nui-app` instead.
 </script>
 		</nui-markdown>
 	</details>

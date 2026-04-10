@@ -6,73 +6,92 @@
 <script type="text/markdown">
 # LLM Guide: nui-markdown
 
-> **Global Note:** Always follow the global rules in `Playground/README.md`. Now built into core NUI.
+## Design Philosophy
 
-## Strict Usage
-- **No import needed** — included in `NUI/nui.js`.
-- For syntax highlighting in code blocks: also import `NUI/lib/modules/nui-syntax-highlight.js`.
-- Use `<nui-markdown><script type="text/markdown">...</script></nui-markdown>` or `nui.util.markdownToHtml(md)`.
-- Supports headers, lists, links, code (integrates nui-code), tables, emphasis, blockquotes, hr.
-- **For Streaming LLMs**: Use `<nui-markdown>` directly with DOM APIs: `beginStream()`, `appendChunk(chunk)`, and `endStream()` for block-level incremental rendering that prevents UI thrashing.
+This component transforms Markdown into semantic HTML using the platform's built-in capabilities. Rather than pulling in heavy external libraries, it provides a lightweight, web-focused parser that covers the most common documentation needs while maintaining excellent performance.
 
-**Correct Usage:**
+## How It Works
+
+The component accepts Markdown content via a `<script type="text/markdown">` block and renders it as HTML. This approach:
+
+- Preserves formatting in source code
+- Escapes HTML automatically for security
+- Integrates with other NUI components (code blocks become `nui-code`, tables become `nui-table`)
+
+### Streaming Support
+
+For AI and LLM applications, the component provides block-level incremental rendering via three methods:
+
+```javascript
+const md = document.querySelector('nui-markdown');
+
+md.beginStream();           // Initialize streaming containers
+md.appendChunk(chunk);      // Append text incrementally
+md.endStream();             // Finalize and seal the DOM
+```
+
+This pattern prevents UI thrashing when displaying streaming content, keeping sealed blocks stable while only the active block updates.
+
+## Usage Patterns
+
+### Static Content
+
 ```html
 <nui-markdown>
 <script type="text/markdown">
 # Heading
-**bold** *italic* [link](url)
 
-```html
-<!-- Escape closing script tags inside code examples -->
-<script>console.log('Hello');<\/script>
-```
+**Bold** and *italic* text.
+
+```javascript
+console.log('Hello');
+<\/script>
 </script>
 </nui-markdown>
 ```
 
-## CRITICAL: Escaping Script Tags
+### Dynamic Rendering
 
-**Any `</script>` inside `<script type="text/markdown">` MUST be escaped as `<\/script>`.**
-
-This is not optional - the HTML parser will treat a literal `</script>` anywhere as closing the script element, even inside:
-- Markdown code blocks
-- Inline code spans
-- Comments
-- Strings
-
-### Example: Escaped (Correct)
-```html
-<script type="text/markdown">
-## Example Code
-```html
-<script>
-  console.log('This is safe');
-<\/script>  <!-- Note the backslash before / -->
-```
-</script>
-</nui-markdown>
+```javascript
+const md = document.querySelector('nui-markdown');
+md.innerHTML = nui.util.markdownToHtml('# Hello\n\nParagraph');
 ```
 
-### Example: Not Escaped (Broken)
-```html
-<script type="text/markdown">
-## Example Code
-```html
-<script>
-  console.log('This breaks the page');
-</script>  <!-- This closes the OUTER script tag! -->
-```
-</script>
-</nui-markdown>
+### Streaming from LLM
+
+```javascript
+const md = document.querySelector('nui-markdown');
+md.beginStream();
+
+// As chunks arrive:
+md.appendChunk(chunk);
+
+// When complete:
+md.endStream();
 ```
 
-## Critical Rules
-- Parser is lightweight and web-focused; not full CommonMark.
-- Code blocks become nui-code with language (requires `NUI/lib/modules/nui-syntax-highlight.js` for colored syntax).
-- Tables rendered as nui-table.
-- For dynamic, use the util function and set innerHTML.
-- Do not rely on external Markdown libs.
-- **ALWAYS escape `</script>` as `<\/script>`** in markdown content.
+## Script Tag Escaping
+
+Inside `<script type="text/markdown">` blocks, any `</script>` sequence must be escaped as `<\/script>`. This prevents the HTML parser from closing the script element prematurely.
+
+## When to Use
+
+- Documentation pages
+- Blog posts and articles
+- AI chat interfaces with streaming content
+- Anywhere you need lightweight Markdown rendering without heavy dependencies
+
+## Supported Syntax
+
+- Headers (H1-H6)
+- Bold, italic, strikethrough
+- Lists (ordered and unordered)
+- Links
+- Code blocks (fenced and inline)
+- Tables
+- Blockquotes
+- Horizontal rules
+- Images
 </script>
 		</nui-markdown>
 	</details>

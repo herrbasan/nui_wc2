@@ -6,42 +6,64 @@
 <script type="text/markdown">
 # LLM Guide: nui-tooltip
 
-> **Global Note:** Always follow the global rules in `Playground/README.md`. No custom CSS, use `nui.util.createElement`.
+## Design Philosophy
 
-## Strict DOM Structure
-- The `<nui-tooltip>` must appear **immediately after** the target element it annotates (or use `for="id"` attribute).
-- Content of tooltip is plain text or simple HTML inside the custom element.
-- Target element gets `aria-describedby` automatically.
+The tooltip component provides contextual help and explanations without cluttering the interface. It follows the principle of progressive disclosure—showing information only when the user shows interest (hover or focus).
 
-**Correct:**
+## How It Works
+
+The component uses the native Popover API for top-layer rendering, eliminating z-index conflicts and complex positioning logic. It automatically handles:
+
+- **Smart positioning** - Detects viewport edges and adjusts placement
+- **Focus management** - Works with keyboard navigation
+- **ARIA attributes** - Links tooltip content to target element via `aria-describedby`
+
+## Usage Patterns
+
+### Adjacent Placement (Default)
+
+Place the tooltip immediately after its target element. The component automatically associates them:
+
 ```html
-<nui-button><button>Hover me</button></nui-button>
-<nui-tooltip>Helpful explanation here.</nui-tooltip>
+<nui-button><button type="button">Hover me</button></nui-button>
+<nui-tooltip>Helpful explanation here</nui-tooltip>
+```
 
-<!-- or explicit target -->
+### Explicit Targeting
+
+Use the `for` attribute when the tooltip cannot be placed adjacent to the target:
+
+```html
 <button id="mybtn">Hover</button>
 <nui-tooltip for="mybtn">Tooltip text</nui-tooltip>
 ```
 
-## Critical Rules
-- Placement is automatic by default (`position="auto"`), or specify `top|bottom|left|right`.
-- Uses native Popover API (`popover="manual"`).
-- Shows on hover and focus by default.
-- Do not wrap tooltip content in extra elements unless necessary.
-- Offset can be set with `offset="16"` attribute (in px).
-- Ensure target has proper semantics for a11y.
+### Rich Content
 
-## Usage Modes
-- **Declarative:** Place tooltip right after target in markup.
-- **Programmatic:** Create tooltip element, set `for` or append after target, then upgrade.
+Tooltips support formatted content including headings, paragraphs, and interactive elements:
 
-## Anti-Patterns
-- Placing tooltip before the target element.
-- Using CSS for positioning instead of the component's logic.
-- Expecting React-like `title` prop or `data-tooltip`.
-- Adding custom event handlers for show/hide (component manages).
-- Using it without associated target.
-- Inventing new attributes like `content` or `trigger`.
+```html
+<nui-tooltip>
+    <span class="title">Feature Name</span>
+    <p>Detailed description here</p>
+</nui-tooltip>
+```
+
+## Configuration Options
+
+- `position="top|bottom|left|right"` - Manual placement (defaults to auto)
+- `offset="16"` - Adjust distance from target in pixels
+
+## When to Use
+
+- Explaining icon buttons without text labels
+- Providing additional context for form fields
+- Showing keyboard shortcuts
+- Offering clarifications for technical terms
+
+## Integration Notes
+
+The component handles all event listeners internally. For rich content tooltips, the hover area extends to the tooltip itself, preventing premature closing when the user moves their mouse toward the content.
 </script>
 		</nui-markdown>
 	</details>
@@ -172,3 +194,4 @@ function init(element, params, nui) {
 }
 </script>
 
+</div>

@@ -4,33 +4,84 @@
 <script type="text/markdown">
 # LLM Guide: nui-code
 
-> **Global Note:** Always follow the global rules in `Playground/README.md`. This is an optional addon; load via nui.registerFeature if needed.
+## Design Philosophy
 
-## Strict DOM Structure
-- `<nui-code>` wraps `<pre><code>` (or uses `<script type="example" data-lang="...">` for demos).
-- Do not put raw text directly; use proper pre/code for highlighting and copy button.
-- Copy button is auto-added by the component.
+This component provides lightweight syntax highlighting focused on web development languages. Rather than bundling a heavy general-purpose highlighter, it covers the essential web languages (HTML, CSS, JavaScript, TypeScript, JSON) with a minimal footprint (~6.8KB gzipped).
 
-**Correct:**
+## How It Works
+
+The component wraps `<pre><code>` blocks and applies syntax highlighting via regex-based tokenization. It uses a placeholder token system to prevent nested span corruption during replacement.
+
+For Playground documentation pages, you can also use `<script type="example">` blocks inside `<nui-code>`, which are automatically converted to displayable code blocks.
+
+### Language Detection
+
+The component attempts automatic detection based on content patterns:
+
+- HTML: Starts with `<`
+- JSON: Contains `"key": value` patterns
+- TypeScript: Contains `interface`, `type`, or `enum`
+- CSS: Contains selectors followed by `{`
+- JavaScript: Default for remaining content
+
+Explicit specification via `data-lang` takes precedence.
+
+## Usage Patterns
+
+### Basic Code Block
+
 ```html
 <nui-code>
-	<pre><code data-lang="js">console.log('Hello');</code></pre>
+	<pre><code data-lang="js">
+function greet(name) {
+	return `Hello, ${name}!`;
+}
+	</code></pre>
 </nui-code>
 ```
 
-## Critical Rules
-- For Playground demos, prefer `<script type="example" data-lang="html">` inside nui-code (auto-converted).
-- Component adds copy-to-clipboard button with nui-icon.
-- Highlighting is minimal (HTML/CSS/JS/TS/JSON); no heavy Prism/Highlight.js.
-- Use in documentation pages; lazy-loaded.
-- Do not override copy behavior or remove the button manually.
+### Example Blocks (Playground)
 
-## Anti-Patterns
-- Using raw <pre><code> without nui-code wrapper (no copy button, no consistent styling).
-- Adding custom syntax highlighters or external libs.
-- Expecting full language support beyond web languages.
-- Placing code blocks inside other components without proper structure.
-- Using <style> for code formatting.
+For documentation that displays HTML examples:
+
+```html
+<nui-code>
+	<script type="example" data-lang="html">
+<nui-button>
+	<button>Click me</button>
+</nui-button>
+	</script>
+</nui-code>
+```
+
+### Dynamic Highlighting
+
+```javascript
+const codeBlock = document.querySelector('nui-code');
+// Re-highlight after content changes
+codeBlock.refresh();
+```
+
+## Theming
+
+Colors adapt automatically to light/dark mode via the `light-dark()` CSS function:
+
+```css
+.hl-keyword {
+	color: light-dark(#d73a49, #ff7b72);
+}
+```
+
+## When to Use
+
+- Documentation sites
+- Code examples in tutorials
+- Displaying configuration files
+- Anywhere you need lightweight, focused syntax highlighting
+
+## Module Loading
+
+The component lazy-loads its highlighting module only when `<nui-code>` elements are present, minimizing initial bundle impact.
 </script>
 		</nui-markdown>
 	</details>
