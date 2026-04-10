@@ -842,13 +842,44 @@ function createList(element, options) {
 	
 	function setSelection(idx) {
 		clearSelection();
-		if (!idx || idx > list.filtered.length - 1) idx = 0;
+		
+		// Normalize to array (null/undefined becomes empty array)
+		if (!idx) idx = [];
 		if (!Array.isArray(idx)) idx = [idx];
 		
+		// Validate and set selection
 		for (let i = 0; i < idx.length; i++) {
-			list.filtered[idx[i]].selected = true;
+			const index = idx[i];
+			if (index >= 0 && index < list.filtered.length) {
+				list.filtered[index].selected = true;
+			}
 		}
-		scrollToIndex(idx[0]);
+		
+		// Update footer info
+		const selection = getSelection(true);
+		if (list.footerInfo) {
+			if (selection.length === 0) {
+				list.footerInfo.textContent = list.clone.length;
+			} else {
+				list.footerInfo.textContent = `${selection.length} of ${list.filtered.length}`;
+			}
+		}
+		
+		// Fire selection event
+		list.eventCallback({
+			target: list,
+			type: 'selection',
+			value: selection.length,
+			items: selection
+		});
+		
+		// Refresh visual state (adds/removes 'selected' class on items)
+		update(true);
+		
+		// Scroll to first selected item (if any)
+		if (idx.length > 0 && idx[0] >= 0 && idx[0] < list.filtered.length) {
+			scrollToIndex(idx[0]);
+		}
 	}
 	
 	function scrollToIndex(index) {

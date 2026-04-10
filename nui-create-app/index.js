@@ -7,7 +7,7 @@ const { loadRegistry } = require('./lib/file-utils');
 // Load component registry
 const registry = loadRegistry();
 
-// Available components (derived from registry)
+// Available component pages (derived from registry) - for CLI
 const AVAILABLE_COMPONENTS = registry.components
 	.filter(c => c.page.startsWith('components/'))
 	.map(c => c.page.replace('components/', ''))
@@ -53,7 +53,7 @@ if (args.includes('--list')) {
 
 // Launch web UI
 if (args.includes('--ui')) {
-	launchWebUI(AVAILABLE_COMPONENTS);
+	launchWebUI();
 	return;
 }
 

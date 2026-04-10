@@ -7,21 +7,12 @@ const { createProject } = require('./project-generator');
 /**
  * Launch web UI for interactive project creation
  */
-function launchWebUI(availableComponents) {
+function launchWebUI() {
 	const port = 3456;
 	
-	// Generate component data - MUST include 'id' or 'idx' for tracking
-	const componentsData = availableComponents.map((c, idx) => ({
-		id: idx,           // Required for list tracking
-		idx: idx,          // For convenience
-		name: c,           // Component name (e.g., 'button')
-		label: c.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')  // Display label (e.g., 'Button')
-	}));
-	
-	// Load HTML template and inject data
+	// Load HTML template
 	const templatePath = path.join(__dirname, '..', 'templates', 'web-ui.html');
-	let html = fs.readFileSync(templatePath, 'utf8');
-	html = html.replace('{{COMPONENTS_DATA}}', JSON.stringify(componentsData));
+	const html = fs.readFileSync(templatePath, 'utf8');
 	
 	const server = http.createServer((req, res) => {
 		if (req.url === '/') {
@@ -31,10 +22,6 @@ function launchWebUI(availableComponents) {
 			serveFile(path.join(NUI_PATH, 'css', 'nui-theme.css'), 'text/css', res);
 		} else if (req.url === '/nui.js') {
 			serveFile(path.join(NUI_PATH, 'nui.js'), 'application/javascript', res);
-		} else if (req.url === '/nui-list.css') {
-			serveFile(path.join(NUI_PATH, 'css', 'modules', 'nui-list.css'), 'text/css', res);
-		} else if (req.url === '/nui-list.js') {
-			serveFile(path.join(NUI_PATH, 'lib', 'modules', 'nui-list.js'), 'application/javascript', res);
 		} else if (req.url.startsWith('/assets/')) {
 			const assetPath = req.url.replace('/assets/', '').split('#')[0];
 			serveFile(path.join(NUI_PATH, 'assets', assetPath), 'image/svg+xml', res);
@@ -42,7 +29,7 @@ function launchWebUI(availableComponents) {
 			let body = '';
 			req.on('data', chunk => body += chunk);
 			req.on('end', () => {
-				const { name, components, rightSidebar } = JSON.parse(body);
+				const { name, layout } = JSON.parse(body);
 				
 				if (!name || !/^[a-zA-Z0-9_-]+$/.test(name)) {
 					res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -57,7 +44,14 @@ function launchWebUI(availableComponents) {
 					return;
 				}
 				
-				createProject(name, components, { rightSidebar });
+				// Pass layout options to project generator
+				// Default: header + left sidebar (always), optional right sidebar and footer
+				createProject(name, [], { 
+					header: true,  // Always included
+					leftSidebar: layout?.leftSidebar ?? true,
+					rightSidebar: layout?.rightSidebar ?? false,
+					footer: layout?.footer ?? false
+				});
 				
 				res.writeHead(200, { 'Content-Type': 'application/json' });
 				res.end(JSON.stringify({ success: true, projectPath: name }));
