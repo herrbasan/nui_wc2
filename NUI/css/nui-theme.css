@@ -1215,11 +1215,20 @@ nui-page {
 /* All children get padding */
 nui-page>* {
 	padding: var(--nui-space) var(--nui-space-double);
+	box-sizing: border-box;
 }
 
 /* Children without 'breakout' attribute are constrained for readability */
 nui-page>*:not([breakout]) {
 	max-width: var(--space-page-maxwidth);
+}
+
+/* Breakout elements: fill container width without causing overflow */
+nui-page>[breakout] {
+	max-width: 100%;
+	/* Reset horizontal padding - let the element handle its own spacing */
+	padding-left: 0;
+	padding-right: 0;
 }
 
 /* Backward compatibility - legacy class-based approach (deprecated) */
@@ -1233,11 +1242,19 @@ nui-main>.content-feature {
 nui-main>.content-page>*,
 nui-main>.content-feature>* {
 	padding: var(--nui-space) var(--nui-space-double);
+	box-sizing: border-box;
 }
 
 nui-main>.content-page>*:not([breakout]),
 nui-main>.content-feature>*:not([breakout]) {
 	max-width: var(--space-page-maxwidth);
+}
+
+nui-main>.content-page>[breakout],
+nui-main>.content-feature>[breakout] {
+	max-width: 100%;
+	padding-left: 0;
+	padding-right: 0;
 }
 
 
@@ -4154,18 +4171,12 @@ input[type="reset"]:hover {
 
 
 
-/* Full-width breakout - elements with 'breakout' attribute span full width */
-nui-page>[breakout] {
-	display: block;
-	max-width: 100%;
-	width: 100%;
-}
+/* Full-width breakout - handled above in nui-page section
+   Breakout elements use max-width: 100% to fill container without overflow */
 
 /* Backward compatibility - nui-layout[banner] still works */
 nui-layout[banner] {
-	display: block;
 	max-width: 100%;
-	width: 100%;
 	padding: 0;
 }
 
@@ -4173,6 +4184,7 @@ nui-layout[banner] .maxwidth-container,
 nui-page>[breakout] .maxwidth-container {
 	padding: var(--nui-space) var(--nui-space-double);
 	max-width: var(--space-page-maxwidth);
+	box-sizing: border-box;
 }
 
 /* nui Scrollbar */
