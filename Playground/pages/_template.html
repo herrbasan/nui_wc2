@@ -7,8 +7,8 @@ Replace [component] with the component name (e.g., button, tabs, dialog).
 ================================================================================
 -->
 
-<!-- 1. PAGE WRAPPER - Always required -->
-<div class="page-[component]">
+<!-- 1. PAGE WRAPPER - Use nui-page as the root for proper layout handling -->
+<nui-page class="page-[component]">
 
 	<!-- 2. OPTIONAL: LLM Guide (for complex components) -->
 	<!-- Remove this section for simple components -->
@@ -177,7 +177,7 @@ Explain the core design principles behind this component.
 		</ul>
 	</section>
 
-</div>
+</nui-page>
 
 <!-- 10. PAGE SCRIPT - Always required (even if empty) -->
 <script type="nui/page">

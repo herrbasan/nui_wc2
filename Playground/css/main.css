@@ -11,6 +11,10 @@ nui-app-footer {
 	display: flex;
 }
 
+nui-main section {
+	margin-bottom: var(--nui-space-triple, 3rem);
+}
+
 #scrollToTop {
 	margin-left: auto;
 }

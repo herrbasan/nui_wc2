@@ -1541,6 +1541,7 @@ registerComponent('nui-skip-links', (element) => {
 
 registerLayoutComponent('nui-icon-button');
 registerLayoutComponent('nui-badge');
+registerLayoutComponent('nui-page');
 
 // ################################# nui-card COMPONENT
 
@@ -4743,17 +4744,42 @@ async function loadFragment(url, wrapper, params) {
 	// Strip Live Server injection (development only)
 	html = html.replace(/<!-- Code injected by live-server -->[\s\S]*?<\/script>/gi, '');
 
-	wrapper.innerHTML = html;
+	// Check if fragment uses nui-page as its root element
+	const trimmedHtml = html.trim();
+	const isNuiPageRoot = trimmedHtml.startsWith('<nui-page') || trimmedHtml.startsWith('<nui-page ');
+
+	if (isNuiPageRoot && wrapper.tagName.toLowerCase() === 'nui-page') {
+		// Fragment already has nui-page root, transfer classes and replace wrapper
+		const tempDiv = document.createElement('div');
+		tempDiv.innerHTML = html;
+		const fragmentPage = tempDiv.querySelector('nui-page');
+		
+		if (fragmentPage) {
+			// Transfer classes from wrapper to fragment's nui-page
+			wrapper.classList.forEach(cls => fragmentPage.classList.add(cls));
+			// Replace wrapper's content with fragment's children
+			wrapper.innerHTML = fragmentPage.innerHTML;
+			// Copy attributes
+			Array.from(fragmentPage.attributes).forEach(attr => {
+				if (attr.name !== 'class') {
+					wrapper.setAttribute(attr.name, attr.value);
+				}
+			});
+		} else {
+			wrapper.innerHTML = html;
+		}
+	} else {
+		wrapper.innerHTML = html;
+	}
 
 	customElements.upgrade(wrapper);
 	executePageScript(wrapper, params);
 }
 
 function pageContent(type, id, params, options = {}) {
-	const wrapper = dom.create('div', {
-		class: [`content-${type}`, `content-${type}-${id.replace(/\//g, '-').replace(/[^a-z0-9-]/gi, '')}`],
-		content: '<div class="loading">Loading...</div>'
-	});
+	const wrapper = document.createElement(type === 'page' ? 'nui-page' : 'div');
+	wrapper.className = `content-${type} content-${type}-${id.replace(/\//g, '-').replace(/[^a-z0-9-]/gi, '')}`;
+	wrapper.innerHTML = '<div class="loading">Loading...</div>';
 
 	if (type === 'page') {
 		const basePath = options.basePath || '/pages';

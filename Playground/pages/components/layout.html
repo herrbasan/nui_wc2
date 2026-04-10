@@ -1,4 +1,6 @@
-<div class="page-layout">
+
+<nui-page class="page-layout">
+
 
 <details class="collapsible-section collapsible-section--spaced">
 		<summary><strong>LLM Guide - nui-layout</strong></summary>
@@ -50,15 +52,19 @@ Content flows vertically then wraps, creating a masonry-like effect:
 
 Add `sort="height"` to reorder items so tallest items appear first for better balance.
 
-### Banner Mode
+### Breakout Mode
 
-Break out of max-width constraints for full-bleed sections:
+Break out of max-width constraints for full-bleed sections using the `breakout` attribute on any child of `nui-page`:
 
 ```html
-<nui-layout banner>
-    <div>Full-width content</div>
-</nui-layout>
+<nui-page>
+    <nui-layout breakout>
+        <div class="maxwidth-container">Full-width content</div>
+    </nui-layout>
+</nui-page>
 ```
+
+Use `breakout` on any element that should span the full width of the container while siblings remain constrained for readability.
 
 ## Responsive Contract
 
@@ -74,9 +80,21 @@ The component automatically clamps column counts at different breakpoints:
 
 - **Grid**: Cards, form fields, dashboard widgets, galleries
 - **Flow**: Masonry layouts, tag clouds, image galleries
-- **Banner**: Hero sections, featured callouts, visual separators
+- **Breakout**: Hero sections, featured callouts, visual separators (use `breakout` attribute)
 
 This component handles content layouts. For structural app chrome (sidebars, headers), use `nui-app` instead.
+
+## nui-page Container
+
+The `nui-page` component is the recommended container for page content. It automatically constrains children to a readable max-width. Use the `breakout` attribute on any child to make it span full width:
+
+```html
+<nui-page>
+    <section><!-- Constrained --></section>
+    <nui-layout breakout><!-- Full width --></nui-layout>
+    <section><!-- Constrained --></section>
+</nui-page>
+```
 </script>
 		</nui-markdown>
 	</details>
@@ -386,13 +404,13 @@ This component handles content layouts. For structural app chrome (sidebars, hea
 </section>
 
 <section>
-	<h2>Full-Width Banner Mode</h2>
+	<h2>Full-Width Breakout</h2>
 	<p>Content pages typically constrain their width (via <code>--space-page-maxwidth</code>) for readability. Sometimes you need an element to break out of this constraint — hero sections, featured callouts, or visual separators.</p>
 	
-	<p>Add the <code>banner</code> attribute to make a layout span the full container width while keeping its children properly constrained. The banner must be a direct child of the content area (outside of sections):</p>
+	<p>Add the <code>breakout</code> attribute to any direct child of <code>nui-page</code> to make it span the full container width while keeping its children properly constrained:</p>
 </section>
 
-<nui-layout banner class="layout-banner">
+<nui-layout breakout class="layout-banner">
 	<div class="maxwidth-container">
 		<div>
 			<h3>Full-Width Banner</h3>
@@ -404,15 +422,22 @@ This component handles content layouts. For structural app chrome (sidebars, hea
 <section>
 	<nui-code>
 		<script type="example" data-lang="html">
-<nui-layout banner>
-	<nui-card>
-		<!-- Content is still max-width constrained -->
-	</nui-card>
-</nui-layout>
+<nui-page>
+	<section>
+		<!-- Normal constrained content -->
+	</section>
+	
+	<nui-layout breakout>
+		<!-- Full-width hero section -->
+		<div class="maxwidth-container">
+			<!-- Content is still max-width constrained -->
+		</div>
+	</nui-layout>
+</nui-page>
 		</script>
 	</nui-code>
 
-	<p><strong>How it works:</strong> The <code>banner</code> attribute removes the max-width on the container itself (<code>max-width: 100%</code>), but the children retain proper padding and max-width constraints. This gives you full-bleed backgrounds while keeping content readable.</p>
+	<p><strong>How it works:</strong> The <code>breakout</code> attribute removes the max-width constraint on that element only. Children still get padding and can use <code>.maxwidth-container</code> to constrain their content. This gives you full-bleed backgrounds while keeping text readable.</p>
 </section>
 
 <section>
@@ -459,8 +484,8 @@ This component handles content layouts. For structural app chrome (sidebars, hea
 					<td>—</td>
 				</tr>
 				<tr>
-					<td><code>banner</code></td>
-					<td>Boolean attribute. Breaks out of max-width constraint for full-bleed layouts.</td>
+					<td><code>breakout</code></td>
+					<td>Boolean attribute. When applied to any child of <code>nui-page</code>, breaks out of max-width constraint for full-bleed layouts.</td>
 					<td>boolean</td>
 					<td>—</td>
 				</tr>
@@ -474,4 +499,6 @@ function init(element, params, nui) {
 }
 </script>
 
-</div>
+
+
+</nui-page>

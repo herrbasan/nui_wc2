@@ -132,6 +132,7 @@
 	text-box: trim-both !important;
 }
 
+nui-page:focus,
 .content-page:focus {
 	outline: none;
 }
@@ -1203,8 +1204,25 @@ nui-app[data-layout="app"]:has(nui-app-footer) nui-sidebar {
 
 
 /* =============================================================================
-   CONTENT AREA
+   CONTENT AREA - nui-page
    ============================================================================= */
+nui-page {
+	display: block;
+	width: 100%;
+	position: relative;
+}
+
+/* All children get padding */
+nui-page>* {
+	padding: var(--nui-space) var(--nui-space-double);
+}
+
+/* Children without 'breakout' attribute are constrained for readability */
+nui-page>*:not([breakout]) {
+	max-width: var(--space-page-maxwidth);
+}
+
+/* Backward compatibility - legacy class-based approach (deprecated) */
 nui-main>.content-page,
 nui-main>.content-feature {
 	display: block;
@@ -1215,6 +1233,10 @@ nui-main>.content-feature {
 nui-main>.content-page>*,
 nui-main>.content-feature>* {
 	padding: var(--nui-space) var(--nui-space-double);
+}
+
+nui-main>.content-page>*:not([breakout]),
+nui-main>.content-feature>*:not([breakout]) {
 	max-width: var(--space-page-maxwidth);
 }
 
@@ -4132,9 +4154,14 @@ input[type="reset"]:hover {
 
 
 
-/* Full-width banner - override content-page max-width constraint */
-nui-main>.content-page>nui-layout[banner],
-nui-main>.content-feature>nui-layout[banner],
+/* Full-width breakout - elements with 'breakout' attribute span full width */
+nui-page>[breakout] {
+	display: block;
+	max-width: 100%;
+	width: 100%;
+}
+
+/* Backward compatibility - nui-layout[banner] still works */
 nui-layout[banner] {
 	display: block;
 	max-width: 100%;
@@ -4142,7 +4169,8 @@ nui-layout[banner] {
 	padding: 0;
 }
 
-nui-layout[banner] .maxwidth-container {
+nui-layout[banner] .maxwidth-container,
+nui-page>[breakout] .maxwidth-container {
 	padding: var(--nui-space) var(--nui-space-double);
 	max-width: var(--space-page-maxwidth);
 }
