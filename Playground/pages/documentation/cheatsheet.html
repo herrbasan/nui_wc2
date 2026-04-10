@@ -179,33 +179,28 @@
 </section>
 
 <script type="nui/page">
-function init(element) {
+async function init(element) {
 	const iconGrid = element.querySelector('#icon-grid');
 	const iconSearch = element.querySelector('#icon-search');
 	const iconEmpty = element.querySelector('#icon-empty');
 	
-	const icons = [
-		'add', 'add_circle', 'add_column_left', 'add_column_right', 'add_row_above', 'add_row_below',
-		'analytics', 'arrow', 'article', 'aspect_ratio', 'assessment', 'attach_money', 'brightness',
-		'calendar', 'chat', 'check_circle', 'check_circle_filled', 'close', 'cognition', 'content_copy',
-		'credit_card', 'database', 'delete', 'done', 'download', 'drag_handle', 'drag_indicator',
-		'edit', 'edit_note', 'empty_dashboard', 'extension', 'eye_tracking', 'file_json', 'filter_list',
-		'folder', 'format_bold', 'format_clear', 'format_image_break_left', 'format_image_front',
-		'format_image_left', 'format_image_right', 'format_italic', 'format_list_bulleted',
-		'format_list_numbered', 'format_quote', 'format_size', 'format_underlined', 'fullscreen',
-		'grid_on', 'headphones', 'id_card', 'image', 'info', 'install_desktop', 'invert_colors',
-		'key', 'keyboard', 'label', 'layers', 'lightbulb_2', 'link', 'link_off', 'location_on',
-		'lock', 'logout', 'mail', 'media_folder', 'menu', 'monitor', 'more', 'mouse', 'my_location',
-		'notifications', 'open_in_full', 'palette', 'pause', 'person', 'photo_camera', 'play',
-		'playlist_remove', 'print', 'public', 'rainy', 'redo', 'rss_feed', 'save', 'search',
-		'security', 'send', 'settings', 'sign_language', 'smart_display', 'sort', 'speaker',
-		'stadia_controller', 'star_rate', 'sticky_note', 'strikethrough_s', 'sync', 'table_rows',
-		'table_view', 'undo', 'upload', 'variable_remove', 'view_column', 'visibility', 'volume',
-		'warning', 'work', 'wysiwyg'
-	];
+	// Load icons dynamically from sprite (same approach as icon demo page)
+	let icons = [];
+	try {
+		icons = await nui.components.icon.getAvailable();
+	} catch (err) {
+		console.warn('[cheatsheet] Failed to load icons dynamically, using fallback');
+		// Fallback list if dynamic loading fails
+		icons = ['add', 'add_circle', 'analytics', 'arrow', 'article', 'assessment', 'brightness', 'calendar',
+			'chat', 'check_circle', 'close', 'delete', 'done', 'download', 'edit', 'folder',
+			'image', 'info', 'keyboard', 'label', 'link', 'lock', 'mail', 'menu', 'monitor',
+			'notifications', 'pause', 'person', 'play', 'print', 'redo', 'save', 'search',
+			'security', 'send', 'settings', 'sort', 'sync', 'table_view', 'undo', 'upload',
+			'visibility', 'warning'];
+	}
 	
 	function renderIcons(filter = '') {
-		const filtered = icons.filter(name => name.includes(filter.toLowerCase()));
+		const filtered = icons.filter(name => name.toLowerCase().includes(filter.toLowerCase()));
 		
 		if (filtered.length === 0) {
 			iconGrid.innerHTML = '';
