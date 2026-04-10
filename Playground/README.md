@@ -30,6 +30,13 @@ Our component files serve as living documentation. For complex components, we em
 
 **If you are generating code for a complex component, you MUST open its file and read the `id="llm-guide"` block at the top.**
 
+> **CRITICAL RULE - Escaping Script Tags:**
+> Inside `<script type="text/markdown">` blocks, any `</script>` tag in code examples MUST be escaped as `<\/script>`. This includes:
+> - `</script>` → `<\/script>`
+> - `</script >` (with spaces) → `<\/script >`
+> 
+> **Why:** The HTML parser treats `</script>` literally anywhere as closing the script element, even inside markdown code blocks or strings. This breaks the page structure completely.
+
 - `nui-list` (Virtualized List) -> `Playground/pages/addons/list.html`
 - `nui-select` (Custom Select) -> `Playground/pages/components/select.html`
 - `nui-dialog` (Modals/Overlays) -> `Playground/pages/components/dialog.html`

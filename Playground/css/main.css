@@ -75,6 +75,67 @@ nui-app-footer {
 	height: 600px;
 }
 
+/* Container for template-based list examples */
+.page-list .list-container-sm {
+	position: relative;
+	height: 300px;
+}
+
+.page-list .list-container-md {
+	position: relative;
+	height: 400px;
+}
+
+/* Inline style replacements */
+.page-list .collapsible-section--spaced {
+	margin-bottom: var(--nui-space);
+}
+
+.page-list .nui-table--api {
+	width: 100%;
+	font-size: 0.9em;
+	margin-bottom: var(--nui-space-double);
+}
+
+.page-list .nui-table--api:last-child {
+	margin-bottom: 0;
+}
+
+/* List item layout */
+.page-list .list-item-image-cell {
+	position: relative;
+}
+
+.page-list .list-item-image-cell img {
+	opacity: 0;
+	transition: opacity 0.3s;
+}
+
+.page-list .list-item-image-cell img.loaded {
+	opacity: 1;
+}
+
+.page-list .list-item-content {
+	min-width: 0;
+}
+
+.page-list .list-item-title {
+	font-weight: 500;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.page-list .list-item-meta {
+	font-size: 0.85em;
+	opacity: 0.7;
+}
+
+.page-list .list-item-price {
+	text-align: right;
+	font-weight: 600;
+}
+
 .demo-actions {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));

@@ -937,7 +937,8 @@ registerComponent('nui-app', (element) => {
 			}
 		});
 
-		if (hasAny && !element.classList.contains('nui-ready')) {
+		// Add nui-ready after first responsive state update (whether or not there are sidebars)
+		if (!element.classList.contains('nui-ready')) {
 			requestAnimationFrame(() => element.classList.add('nui-ready'));
 		}
 	}
@@ -5623,9 +5624,10 @@ class NuiMarkdown extends HTMLElement {
 	connectedCallback() {
 		if (this._isStreaming) return;
 
-		const mdScript = this.querySelector('script[type="text/markdown"]');
 		let rawText = '';
 
+		// Read from <script type="text/markdown"> element
+		const mdScript = this.querySelector('script[type="text/markdown"]');
 		if (mdScript) {
 			rawText = mdScript.textContent.trim();
 		} else {

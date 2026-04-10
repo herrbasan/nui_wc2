@@ -15,22 +15,55 @@
 - Supports headers, lists, links, code (integrates nui-code), tables, emphasis, blockquotes, hr.
 - **For Streaming LLMs**: Use `<nui-markdown>` directly with DOM APIs: `beginStream()`, `appendChunk(chunk)`, and `endStream()` for block-level incremental rendering that prevents UI thrashing.
 
-**Correct Static:**
+**Correct Usage:**
 ```html
 <nui-markdown>
 <script type="text/markdown">
 # Heading
 **bold** *italic* [link](url)
+
+```html
+<!-- Escape closing script tags inside code examples -->
+<script>console.log('Hello');<\/script>
+```
 </script>
 </nui-markdown>
 ```
 
-**Correct Streaming:**
-```js
-const md = document.createElement('nui-markdown');
-md.beginStream();
-stream.on('data', (chunk) => md.appendChunk(chunk));
-stream.on('end', () => md.endStream());
+## CRITICAL: Escaping Script Tags
+
+**Any `</script>` inside `<script type="text/markdown">` MUST be escaped as `<\/script>`.**
+
+This is not optional - the HTML parser will treat a literal `</script>` anywhere as closing the script element, even inside:
+- Markdown code blocks
+- Inline code spans
+- Comments
+- Strings
+
+### Example: Escaped (Correct)
+```html
+<script type="text/markdown">
+## Example Code
+```html
+<script>
+  console.log('This is safe');
+<\/script>  <!-- Note the backslash before / -->
+```
+</script>
+</nui-markdown>
+```
+
+### Example: Not Escaped (Broken)
+```html
+<script type="text/markdown">
+## Example Code
+```html
+<script>
+  console.log('This breaks the page');
+</script>  <!-- This closes the OUTER script tag! -->
+```
+</script>
+</nui-markdown>
 ```
 
 ## Critical Rules
@@ -39,12 +72,7 @@ stream.on('end', () => md.endStream());
 - Tables rendered as nui-table.
 - For dynamic, use the util function and set innerHTML.
 - Do not rely on external Markdown libs.
-
-## Anti-Patterns
-- Using raw text without the script tag type.
-- Expecting GitHub-flavored Markdown features not implemented.
-- Heavy dependencies for simple rendering.
-- Modifying the parser without understanding the replace logic.
+- **ALWAYS escape `</script>` as `<\/script>`** in markdown content.
 </script>
 		</nui-markdown>
 	</details>
@@ -56,7 +84,7 @@ stream.on('end', () => md.endStream());
 
 	<section>
 		<h2>Basic Usage</h2>
-		<p>Import the module and wrap your markdown in a <code>&lt;script type="text/markdown"&gt;</code> element inside the <code>nui-markdown</code> component.</p>
+		<p>Wrap your markdown in a <code>&lt;script type="text/markdown"&gt;</code> element inside the <code>nui-markdown</code> component. Remember to escape any <code>&lt;/script&gt;</code> tags in your content as <code>&lt;\/script&gt;</code>.</p>
 		
 		<nui-code>
 			<script type="example" data-lang="html">
@@ -232,6 +260,43 @@ mdRenderer.endStream();
 				</div>
 			</div>
 		</div>
+	</section>
+
+	<section>
+		<h2>Escaping Script Tags</h2>
+		<p>When your markdown contains code examples with <code>&lt;/script&gt;</code> tags, you must escape them as <code>&lt;\/script&gt;</code>. HTML parsers treat <code>&lt;/script&gt;</code> anywhere inside a script element as closing it, even inside code examples.</p>
+		
+		<div class="demo-callout">
+			<strong>Always escape <code>&lt;/script&gt;</code> as <code>&lt;\/script&gt;</code></strong> in your markdown content to prevent the HTML parser from closing the script element early.
+		</div>
+
+		<nui-code>
+			<script type="example" data-lang="html">
+<!-- Correct: Escaped closing script tag -->
+<nui-markdown>
+<script type="text/markdown">
+# Example
+```html
+<script>console.log('Safe!');<\/script>
+```
+</script>
+</nui-markdown>
+
+<!-- Wrong: Unescaped closing script tag breaks the page -->
+<nui-markdown>
+<script type="text/markdown">
+# Example  
+```html
+<script>console.log('Broken');</script>
+```
+<!-- ^ This </script> closes the outer script tag! -->
+</script>
+</nui-markdown>
+			</script>
+		</nui-code>
+
+		<h3>Why This Happens</h3>
+		<p>The HTML parser scans for <code>&lt;/script&gt;</code> to find the end of a script element. It doesn't understand that the tag is inside a code example - it just sees the string and closes the element. Escaping with <code>&lt;\/script&gt;</code> prevents this while still displaying correctly in the rendered output.</p>
 	</section>
 </div>
 
@@ -484,3 +549,5 @@ function init(element, params, nui) {
 	};
 }
 </script>
+
+</div>

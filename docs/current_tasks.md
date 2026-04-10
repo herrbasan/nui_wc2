@@ -116,6 +116,21 @@ Extended `components.json` with comprehensive metadata:
 - `nui-create-app.js` - Now consumes registry data instead of hardcoded arrays
 - `AGENTS.md`, `README.md`, `getting-started.html` - Added registry references
 
+**Post-refinement fixes:**
+- ✅ **Sidebar API alignment** - Updated `extractAppShell()` to use the new `behavior="primary"` API
+- ✅ **Added `--with-right-sidebar` option** - Users can now generate apps with dual-sidebar layout demo
+- ✅ **Fixed NUI bug: `nui-ready` class** - `nui-app` now always adds `nui-ready` class after initialization
+
+**Codebase Restructure:**
+- ✅ **Split `nui-create-app.js` into `nui-create-app/` folder**
+  - `index.js` - CLI entry point
+  - `lib/file-utils.js` - FS operations
+  - `lib/project-generator.js` - Project creation
+  - `lib/web-ui.js` - Web server
+  - `templates/web-ui.html` - HTML template (separate file!)
+  - After: Always added after first responsive state update
+  - This fixes apps without sidebars (like the web UI) that were hidden by `nui-app:not(.nui-ready) { display: none; }`
+
 **Bug fixes:**
 - Fixed right sidebar toggle in generated apps: changed `toggleRightSidebar()` to `toggleSideNav('right')`
 - Fixed right sidebar breakpoint: changed `nui-vars-sidebar-right_force-breakpoint="none"` to `"75rem"` so it can actually be toggled

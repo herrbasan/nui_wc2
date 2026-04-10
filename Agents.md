@@ -45,6 +45,29 @@ Playground/
 
 When adding new components, create a demo page following the guidelines in **Creating Demo Pages** section below. Also see [`Playground/README.md`](Playground/README.md) for the LLM orientation guide.
 
+### LLM Guide Documentation (Critical)
+
+For complex components, include an LLM Guide inside `<script type="text/markdown" id="llm-guide">`.
+
+**⚠️ CRITICAL RULE - Escaping Script Tags:**
+
+Inside `<script type="text/markdown">` blocks, **ANY** `</script>` sequence MUST be escaped as `<\/script>`:
+
+```html
+<script type="text/markdown">
+# LLM Guide
+
+Example code:
+```html
+<script>
+  console.log('Hello');
+<\/script>  <!-- ← Note the backslash before / -->
+```
+</script>
+```
+
+**Why this matters:** The HTML parser treats `</script>` literally anywhere as closing the script element - even inside markdown code blocks, strings, or comments. This completely breaks the page structure. The only solution is to escape it as `<\/script>`.
+
 ## Coding Ethics (Priority Order)
 
 1. **Reliability** - Code must work correctly; simplicity over cleverness
@@ -144,6 +167,7 @@ Follow [W3C ARIA Authoring Practices Guide](https://www.w3.org/WAI/ARIA/apg/patt
 - **Spacing:** Use `--nui-space`, `--nui-space-half`, `--nui-space-double`, etc. (No "md/lg/xl" suffixes).
 - **Colors:** Use `--color-base` and `--color-shade1` through `--color-shade9` for surfaces. Do not use words like "surface" or "background".
 - **Borders:** Use `--border-thickness`, `--border-shade1`, `--border-radius1`, etc.
+- **Avoid inline styles** unless they are needed for dynamic updates driven by JavaScript. Prefer CSS classes for all static styling. Inline styles may be prohibited by CSP policies and are harder to maintain.
 
 ## Workflow: Adding Components
 

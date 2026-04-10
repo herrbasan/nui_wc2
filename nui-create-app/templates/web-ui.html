@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="color-scheme" content="light dark">
+    <title>NUI Create App</title>
+    <link rel="stylesheet" href="./nui-theme.css">
+    <link rel="stylesheet" href="./nui-list.css">
+    <style>
+        body { margin: 0; padding: 0; overflow: hidden; }
+        nui-app:not(.nui-ready) { display: none; }
+        
+        .wizard-container {
+            max-width: 48rem;
+            margin: 0 auto;
+            padding: var(--nui-space-double);
+        }
+        
+        .wizard-header {
+            margin-bottom: var(--nui-space-double);
+        }
+        
+        .wizard-header h1 {
+            margin: 0 0 var(--nui-space-half) 0;
+        }
+        
+        .wizard-header p {
+            margin: 0;
+            color: var(--color-text-muted);
+        }
+        
+        .form-section {
+            margin-bottom: var(--nui-space-double);
+        }
+        
+        .form-section h3 {
+            margin: 0 0 var(--nui-space) 0;
+            font-size: var(--font-size-small);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--color-text-muted);
+        }
+        
+        .project-name-input {
+            max-width: 24rem;
+        }
+        
+        /* nui-list container - CRITICAL: must have explicit dimensions */
+        .component-list {
+            height: 24rem;
+            border: var(--border-thickness) solid var(--border-shade1);
+            border-radius: var(--border-radius1);
+            position: relative;
+        }
+        
+        .component-list nui-list {
+            position: absolute;
+            inset: 0;
+        }
+        
+        .component-item {
+            padding: var(--nui-space);
+            cursor: pointer;
+            min-height: 2.5rem; /* Ensure items have measurable height */
+            display: flex;
+            align-items: center;
+        }
+        
+        .component-item:hover {
+            background: var(--color-shade1);
+        }
+        
+        .component-item.selected {
+            background: var(--color-accent-shade9);
+        }
+        
+        .status-banner {
+            margin-top: var(--nui-space);
+            padding: var(--nui-space);
+            border-radius: var(--border-radius1);
+            display: none;
+        }
+        
+        .status-banner.show {
+            display: block;
+        }
+        
+        .status-banner.success {
+            background: var(--color-success-shade9);
+            color: var(--color-success);
+        }
+        
+        .status-banner.error {
+            background: var(--color-alert-shade9);
+            color: var(--color-alert);
+        }
+        
+        .status-banner code {
+            display: block;
+            margin-top: var(--nui-space-half);
+            padding: var(--nui-space);
+            background: var(--color-shade1);
+            border-radius: var(--border-radius0);
+            font-family: var(--font-mono);
+            font-size: var(--font-size-small);
+        }
+    </style>
+    <script type="module">
+        import { nui } from './nui.js';
+        import './nui-list.js';
+        
+        const componentsData = {{COMPONENTS_DATA}};
+        
+        const list = document.getElementById('componentList');
+        
+        function updateSelectionCount() {
+            const selected = list.getSelection(true);
+            const count = selected.length;
+            const label = count === 0 ? 'No components selected' : 
+                         count === 1 ? '1 component selected' : 
+                         `${count} components selected`;
+            document.getElementById('selectionCount').textContent = label;
+        }
+        
+        async function createProject() {
+            const nameInput = document.getElementById('projectName');
+            const name = nameInput.value.trim();
+            const status = document.getElementById('status');
+            const rightSidebar = document.getElementById('rightSidebar').checked;
+            const selected = list.getSelection(true);
+            const components = selected.map(item => item.name);
+            
+            if (!name) {
+                status.className = 'status-banner show error';
+                status.innerHTML = '<nui-icon name="error">✕</nui-icon> Please enter a project name';
+                return;
+            }
+            
+            if (!/^[a-zA-Z0-9_-]+$/.test(name)) {
+                status.className = 'status-banner show error';
+                status.innerHTML = '<nui-icon name="error">✕</nui-icon> Project name can only contain letters, numbers, hyphens and underscores';
+                return;
+            }
+            
+            status.className = 'status-banner show';
+            status.innerHTML = '<nui-icon name="pending" class="spin">⟳</nui-icon> Creating project...';
+            
+            const res = await fetch('/api/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, components, rightSidebar })
+            });
+            
+            const data = await res.json();
+            
+            if (data.success) {
+                status.className = 'status-banner show success';
+                status.innerHTML = 
+                    '<nui-icon name="check">✓</nui-icon> <strong>Project created!</strong>' +
+                    '<code>cd ' + data.projectPath + ' && npx serve .</code>';
+                nameInput.value = '';
+                list.setSelection([]);
+                updateSelectionCount();
+            } else {
+                status.className = 'status-banner show error';
+                status.innerHTML = '<nui-icon name="error">✕</nui-icon> ' + data.error;
+            }
+        }
+        
+        if (list && list.loadData) {
+            list.loadData({
+                data: componentsData,
+                render: (item) => {
+                    const el = document.createElement('div');
+                    el.className = 'component-item';
+                    el.textContent = item.label;
+                    return el;
+                },
+                search: [{ prop: 'name' }, { prop: 'label' }],
+                sort: [{ label: 'Name', prop: 'name' }],
+                footer: {
+                    buttons_left: [
+                        { 
+                            label: 'Select All', 
+                            type: 'outline', 
+                            fnc: () => {
+                                const allIndices = componentsData.map((_, i) => i);
+                                list.setSelection(allIndices);
+                            }
+                        },
+                        { 
+                            label: 'Clear', 
+                            type: 'outline', 
+                            fnc: () => list.setSelection([])
+                        }
+                    ],
+                    buttons_right: [
+                        { label: 'Create Project', type: 'primary', fnc: createProject }
+                    ]
+                },
+                events: (e) => {
+                    if (e.type === 'selection') {
+                        updateSelectionCount();
+                    }
+                }
+            });
+        }
+        
+        updateSelectionCount();
+    </script>
+</head>
+<body>
+    <nui-app>
+        <nui-skip-links></nui-skip-links>
+        
+        <nui-app-header>
+            <div slot="left">
+                <nui-icon name="construction">🏗️</nui-icon>
+                <h1>NUI Create App</h1>
+            </div>
+        </nui-app-header>
+        
+        <nui-content>
+            <div class="wizard-container">
+                <header class="wizard-header">
+                    <h1>Create New Project</h1>
+                    <p>Configure your new NUI application</p>
+                </header>
+                
+                <section class="form-section">
+                    <h3>Project Name</h3>
+                    <nui-input class="project-name-input">
+                        <input type="text" id="projectName" placeholder="my-nui-app" 
+                            pattern="[a-zA-Z0-9_-]+" 
+                            title="Letters, numbers, hyphens and underscores only">
+                    </nui-input>
+                </section>
+                
+                <section class="form-section">
+                    <nui-layout style="--nui-layout-cols: 1fr auto; align-items: center;">
+                        <h3>Select Components</h3>
+                        <span id="selectionCount" style="color: var(--color-text-muted); font-size: var(--font-size-small);"></span>
+                    </nui-layout>
+                    <div class="component-list">
+                        <nui-list id="componentList"></nui-list>
+                    </div>
+                </section>
+                
+                <section class="form-section">
+                    <h3>Options</h3>
+                    <nui-card>
+                        <nui-checkbox>
+                            <input type="checkbox" id="rightSidebar">
+                            <label for="rightSidebar">Include right sidebar (dual-sidebar layout demo)</label>
+                        </nui-checkbox>
+                    </nui-card>
+                </section>
+                
+                <div id="status" class="status-banner"></div>
+            </div>
+        </nui-content>
+    </nui-app>
+</body>
+</html>

@@ -67,17 +67,10 @@ nui-list {
 	border-bottom: none;
 }
 
-
 .nui-list-sort {
 	display: flex;
 	align-items: center;
 	gap: var(--list-space-sm);
-}
-
-.nui-list-sort label {
-	white-space: nowrap;
-	color: var(--list-text-tertiary);
-	font-size: var(--list-font-size-sm);
 }
 
 .nui-list-sort nui-select {
@@ -85,22 +78,46 @@ nui-list {
 	max-width: 17rem;
 }
 
+.nui-list-filters {
+	display: flex;
+	align-items: center;
+	gap: var(--list-space-sm);
+}
+
+.nui-list-filters .nui-list-filter-select {
+	flex: 1;
+	max-width: 15rem;
+}
+
+.nui-list-search {
+	display: flex;
+	align-items: center;
+}
+
+.nui-list-search nui-input {
+	width: 100%;
+}
+
 .nui-list-sort-direction {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	width: 2.5rem;
-	height: 2.5rem;
+	width: var(--nui-form-row-height, 2.5rem);
+	height: var(--nui-form-row-height, 2.5rem);
 	padding: 0;
-	border: 1px solid var(--list-border);
-	border-radius: var(--list-radius-sm);
-	background-color: var(--color-shade3);
+	background: light-dark(var(--color-white), var(--color-shade3));
+	border: solid var(--border-thickness, 1px) var(--color-shade4);
+	border-radius: var(--border-radius2, 0.25rem);
+	filter: drop-shadow(0 0.05rem 0.2rem light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.4)));
+	color: var(--color-text);
 	cursor: pointer;
-	transition: background-color 0.2s;
+	transition: background-color 0.15s, border-color 0.15s;
+	box-sizing: border-box;
 }
 
 .nui-list-sort-direction:hover {
-	background-color: var(--list-surface-hover);
+	background-color: light-dark(var(--color-shade2), var(--color-shade4));
+	border-color: light-dark(var(--color-shade5), var(--color-shade5));
 }
 
 .nui-list-sort-direction nui-icon {

@@ -1,0 +1,580 @@
+<div class="page-list">
+
+<!-- Import nui-list module -->
+<link rel="stylesheet" href="NUI/css/modules/nui-list.css">
+<script type="module" src="NUI/lib/modules/nui-list.js"></script>
+
+<script type="text/markdown" id="llm-guide">
+# LLM Guide: nui-list
+
+## Component Architecture
+
+`nui-list` is a virtualized scroller with integrated data operations (search, sort, filter). It renders only visible items (~20-30) regardless of dataset size.
+
+### Internal Structure
+
+The component constructs this DOM structure:
+
+```
+nui-list (position: absolute, inset: 0)
+├── .nui-list-header      // Optional: search, sort dropdowns, filters
+├── .nui-list-body
+│   ├── .nui-list-fixed   // Overlay for large datasets (fixed mode)
+│   └── .nui-list-viewport (overflow-y: auto)
+│       └── .nui-list-container (sized to data.length * itemHeight)
+└── .nui-list-footer      // Optional: action buttons, selection count
+```
+
+### Layout Model
+
+The list uses absolute positioning to fill its container. This requires:
+
+1. **Positioned ancestor**: Container with `position: relative` (or non-static)
+2. **Definite height**: Container height must be computable (not `auto`)
+
+Without these, measurements fail:
+- No positioned ancestor → positions relative to viewport
+- No explicit height → `offsetHeight === 0` → calculates 0 visible items
+
+### Virtual Scrolling Algorithm
+
+```javascript
+const viewportHeight = list.viewport.offsetHeight;   // Must be > 0
+const itemHeight = measuredFromFirstItem;            // All items same height
+const visibleCount = Math.ceil(viewportHeight / itemHeight);
+const startIndex = Math.floor(scrollTop / itemHeight);
+// Render indices startIndex to startIndex + visibleCount
+```
+
+### Data Flow
+
+1. `loadData(options)` receives configuration
+2. Data is cloned into internal array with `oidx` (original index)
+3. Filters/sort are applied → `filtered` array
+4. Container height set to `filtered.length * itemHeight`
+5. Scroll observer triggers render of visible window
+6. `render(item)` function called for each visible data item
+7. DOM elements created, positioned absolutely at `index * itemHeight`
+
+### API Reference
+
+**loadData(options)**
+```javascript
+list.loadData({
+    data: Array,                    // Required: array of data objects
+    render: Function,               // Required: (item) => HTMLElement
+    search: [{ prop: 'name' }],     // Optional: properties to search
+    sort: [{ label: 'Name', prop: 'name', numeric: false }], // Optional
+    filters: [{ prop: 'status', label: 'Status', options: [...] }], // Optional
+    footer: { buttons_left: [], buttons_right: [] }, // Optional
+    selection: 'multi'|'single',    // Optional: default 'single'
+    logmode: Boolean,               // Optional: auto-scroll to bottom
+    events: (event) => {}           // Optional: callback for all events
+});
+```
+
+**Methods**
+- `update(force)` - Re-render visible items
+- `updateData(data, skipFilter)` - Replace data array
+- `appendData()` - Add new items (for log mode)
+- `getSelection(full)` - Get selected indices or full objects
+- `setSelection(indexArray)` - Set selection by original indices
+- `scrollToIndex(index)` - Scroll to filtered list index
+- `cleanUp()` - Remove listeners and observers
+
+**Events (passed to events callback)**
+- `{ type: 'selection', value: count }` - Selection changed
+- `{ type: 'sort', index, direction }` - Sort changed
+- `{ type: 'filter', prop, value }` - Filter changed
+- `{ type: 'search_input', value }` - Search text changed
+- `{ type: 'visibility', value: boolean }` - List entered/left viewport
+
+### Usage Patterns
+
+**Basic with template (declarative)**
+```html
+<div class="list-container-md">
+    <nui-list id="list">
+        <template data-item>
+            <div class="item">{{name}}</div>
+        </template>
+    </nui-list>
+</div>
+<script>
+const list = document.getElementById('list');
+list.loadData(myDataArray); // Uses template for rendering
+<\/script>
+```
+
+**Custom render function (programmatic)**
+```javascript
+list.loadData({
+    data: items,
+    render: (item) => {
+        const el = document.createElement('div');
+        el.className = 'item';
+        el.textContent = item.name;
+        return el;
+    }
+});
+```
+
+**Lazy loading (defer heavy content)**
+```javascript
+render: (item) => {
+    const el = document.createElement('div');
+    el.innerHTML = '<div class="placeholder"></div>';
+    
+    el.update = () => {
+        // Called when element enters viewport
+        el.querySelector('.placeholder').innerHTML = 
+            `<img src="${item.imageUrl}">`;
+    };
+    
+    return el;
+}
+```
+
+**Full-featured with all options**
+```javascript
+list.loadData({
+    data: products,
+    render: renderProduct,
+    search: [{ prop: 'name' }, { prop: 'sku' }],
+    sort: [
+        { label: 'Name', prop: 'name' },
+        { label: 'Price', prop: 'price', numeric: true }
+    ],
+    filters: [
+        { prop: 'category', label: 'Category', options: categoryOptions },
+        { prop: 'status', label: 'Status', options: statusOptions }
+    ],
+    footer: {
+        buttons_left: [
+            { label: 'Delete', type: 'danger', fnc: handleDelete }
+        ],
+        buttons_right: [
+            { label: 'Export', type: 'primary', fnc: handleExport }
+        ]
+    },
+    selection: 'multi',
+    events: handleEvent
+});
+```
+
+### Critical Requirements
+
+1. **Container**: `position: relative` + explicit height
+2. **Items**: Uniform height (measured from first item)
+3. **Timing**: Call `loadData()` after container is visible
+4. **Dialog**: Use `content-scroll="false"` on `nui-dialog`
+</script>
+
+	<details class="collapsible-section collapsible-section--spaced">
+		<summary><strong>LLM Guide - nui-list</strong></summary>
+		<div id="llm-guide-rendered" class="llm-guide"></div>
+	</details>
+
+	<header>
+		<h1>List Component</h1>
+		<p class="lead">High-performance virtualized list with integrated search, sort, filter, and selection. Handles thousands of items by rendering only what's visible.</p>
+	</header>
+
+	<section>
+		<h2>Full-Featured Demo</h2>
+		<p>A complete example with 5,000 items, images, search, multi-column sort, category filter, and footer actions.</p>
+		
+		<div class="demo-list demo-list--xl">
+			<nui-list id="fullDemoList"></nui-list>
+		</div>
+	</section>
+
+	<section>
+		<h2>Anatomy of a List</h2>
+		<p>To build a list like the demo above, you need three things: data, a render function, and container layout.</p>
+
+		<h3>1. The Container</h3>
+		<p>The list positions itself absolutely to fill its container. The container needs <code>position: relative</code> and an explicit height.</p>
+		<nui-code>
+			<script type="example" data-lang="html">
+<div class="list-container">
+    <nui-list id="myList"></nui-list>
+</div>
+
+<style>
+.list-container {
+    position: relative;  /* Required: creates positioning context */
+    height: 500px;       /* Required: definite height for measurement */
+}
+</style>
+			</script>
+		</nui-code>
+
+		<h3>2. The Data</h3>
+		<p>Any array of objects. The list adds internal properties (<code>oidx</code> for original index) but your data structure is preserved.</p>
+		<nui-code>
+			<script type="example" data-lang="javascript">
+const products = [
+    { id: 1, name: 'Wireless Headphones', category: 'Electronics', price: 129 },
+    { id: 2, name: 'Cotton T-Shirt', category: 'Clothing', price: 29 },
+    // ... 5000 more items
+];
+			</script>
+		</nui-code>
+
+		<h3>3. The Render Function</h3>
+		<p>A function that receives a data item and returns an HTMLElement. This is called only for visible items.</p>
+		<nui-code>
+			<script type="example" data-lang="javascript">
+function renderProduct(item) {
+    const el = document.createElement('div');
+    el.className = 'product-item';
+    el.innerHTML = `
+        <img src="${item.image}" alt="" loading="lazy">
+        <div class="info">
+            <div class="name">${item.name}</div>
+            <div class="category">${item.category}</div>
+        </div>
+        <div class="price">$${item.price}</div>
+    `;
+    return el;
+}
+			</script>
+		</nui-code>
+
+		<h3>4. Configuration</h3>
+		<p>Pass everything to <code>loadData()</code>. The list builds the header (search, sort, filters) and footer automatically based on what you provide.</p>
+		<nui-code>
+			<script type="example" data-lang="javascript">
+const list = document.getElementById('myList');
+
+list.loadData({
+    data: products,
+    render: renderProduct,
+    
+    // Search configuration - adds search input to header
+    search: [
+        { prop: 'name' },
+        { prop: 'category' }
+    ],
+    
+    // Sort configuration - adds sort dropdown to header
+    sort: [
+        { label: 'Name', prop: 'name' },
+        { label: 'Price (Low-High)', prop: 'price', numeric: true },
+        { label: 'Price (High-Low)', prop: 'price', numeric: true, dir: 'desc' }
+    ],
+    
+    // Filter configuration - adds filter dropdowns to header
+    // Note: An "All" option is automatically prepended to each filter
+    filters: [
+        {
+            prop: 'category',
+            label: 'Category',
+            options: [
+                { value: 'Electronics', label: 'Electronics' },
+                { value: 'Clothing', label: 'Clothing' }
+            ]
+        }
+    ],
+    
+    // Footer buttons
+    footer: {
+        buttons_left: [
+            { label: 'Delete Selected', type: 'danger', fnc: () => {
+                const selected = list.getSelection();
+                console.log('Deleting:', selected);
+            }}
+        ],
+        buttons_right: [
+            { label: 'Export', type: 'primary', fnc: () => {
+                console.log('Exporting...');
+            }}
+        ]
+    },
+    
+    // Event handler
+    events: (e) => {
+        if (e.type === 'selection') {
+            console.log(`${e.value} items selected`);
+        }
+    }
+});
+			</script>
+		</nui-code>
+	</section>
+
+	<section>
+		<h2>Variants and Modes</h2>
+		
+		<h3>Minimal List (No Header, No Footer)</h3>
+		<p>Just data and a render function. No search, sort, or filters.</p>
+		<div class="demo-list demo-list--sm">
+			<nui-list id="minimalList"></nui-list>
+		</div>
+
+		<h3>Log Mode</h3>
+		<p>Auto-scrolls to show new entries. Useful for logs, chat, or streaming data.</p>
+		<div class="demo-list demo-list--md">
+			<nui-list id="logModeList"></nui-list>
+		</div>
+
+		<h3>Declarative Mode (Template-based)</h3>
+		<p>Use a template instead of a render function for simple cases.</p>
+		<nui-code>
+			<script type="example" data-lang="html">
+<div class="list-container-sm">
+    <nui-list id="templateList">
+        <template data-item>
+            <div class="simple-item">
+                <span>{{name}}</span>
+                <span>${{price}}</span>
+            </div>
+        </template>
+    </nui-list>
+</div>
+
+<script>
+document.getElementById('templateList').loadData(products);
+</script>
+			</script>
+		</nui-code>
+	</section>
+
+	<section>
+		<details class="collapsible-section">
+			<summary><strong>API Reference</strong></summary>
+			
+			<h3>loadData(options)</h3>
+			<p>Initializes the list with data and configuration.</p>
+			<table class="nui-table nui-table--api">
+				<thead>
+					<tr><th>Option</th><th>Type</th><th>Description</th></tr>
+				</thead>
+				<tbody>
+					<tr><td><code>data</code></td><td><code>array</code></td><td>Required. Array of data objects.</td></tr>
+					<tr><td><code>render</code></td><td><code>function(item)</code></td><td>Required. Returns HTMLElement for each item.</td></tr>
+					<tr><td><code>search</code></td><td><code>array</code></td><td>Properties to search: <code>[{ prop: 'name' }]</code></td></tr>
+					<tr><td><code>sort</code></td><td><code>array</code></td><td>Sort options: <code>[{ label: 'Name', prop: 'name', numeric: true }]</code></td></tr>
+					<tr><td><code>filters</code></td><td><code>array</code></td><td>Filter dropdowns with options array.</td></tr>
+					<tr><td><code>footer</code></td><td><code>object</code></td><td><code>{ buttons_left: [], buttons_right: [] }</code></td></tr>
+					<tr><td><code>selection</code></td><td><code>'multi'|'single'</code></td><td>Enable selection (default: 'single').</td></tr>
+					<tr><td><code>logmode</code></td><td><code>boolean</code></td><td>Auto-scroll to bottom for logs.</td></tr>
+					<tr><td><code>events</code></td><td><code>function(e)</code></td><td>Callback for all list events.</td></tr>
+				</tbody>
+			</table>
+
+			<h3>Methods</h3>
+			<table class="nui-table nui-table--api">
+				<thead>
+					<tr><th>Method</th><th>Returns</th><th>Description</th></tr>
+				</thead>
+				<tbody>
+					<tr><td><code>loadData(options)</code></td><td><code>void</code></td><td>Initialize with data and options.</td></tr>
+					<tr><td><code>update(force?)</code></td><td><code>void</code></td><td>Re-render visible items.</td></tr>
+					<tr><td><code>updateData(data, skipFilter?)</code></td><td><code>void</code></td><td>Replace data array.</td></tr>
+					<tr><td><code>appendData()</code></td><td><code>void</code></td><td>Add new items (for log mode).</td></tr>
+					<tr><td><code>getSelection(full?)</code></td><td><code>array</code></td><td>Get selected indices or full objects.</td></tr>
+					<tr><td><code>setSelection(indices)</code></td><td><code>void</code></td><td>Set selection by original indices.</td></tr>
+					<tr><td><code>scrollToIndex(index)</code></td><td><code>void</code></td><td>Scroll to filtered list index.</td></tr>
+					<tr><td><code>cleanUp()</code></td><td><code>void</code></td><td>Remove listeners before DOM removal.</td></tr>
+				</tbody>
+			</table>
+
+			<h3>Events</h3>
+			<table class="nui-table nui-table--api">
+				<thead>
+					<tr><th>Type</th><th>Properties</th><th>Description</th></tr>
+				</thead>
+				<tbody>
+					<tr><td><code>'selection'</code></td><td><code>value</code> (count)</td><td>Selection changed.</td></tr>
+					<tr><td><code>'sort'</code></td><td><code>index, direction</code></td><td>Sort column or direction changed.</td></tr>
+					<tr><td><code>'filter'</code></td><td><code>prop, value</code></td><td>Filter value changed.</td></tr>
+					<tr><td><code>'search_input'</code></td><td><code>value</code></td><td>Search text changed (debounced).</td></tr>
+				</tbody>
+			</table>
+		</details>
+	</section>
+
+<script type="nui/page">
+function init(element, params, nui) {
+	const api = window.nui || nui;
+	if (!api || !api.util) return;
+
+	// Render LLM Guide from Markdown
+	const mdTemplate = element.querySelector('#llm-guide');
+	const renderedDiv = element.querySelector('#llm-guide-rendered');
+	if (mdTemplate && renderedDiv && api.util.markdownToHtml) {
+		const mdContent = mdTemplate.textContent.trim();
+		renderedDiv.innerHTML = api.util.markdownToHtml(mdContent);
+	}
+
+	const { fromHTML } = api.util.dom;
+
+	// Generate 5000 demo products with images
+	const categories = ['Electronics', 'Clothing', 'Home', 'Sports', 'Books'];
+	const products = [];
+	const imageNames = [];
+	for (let i = 1; i <= 118; i++) {
+		imageNames.push(String(i).padStart(3, '0') + '.webp');
+	}
+	
+	for (let i = 0; i < 5000; i++) {
+		const category = categories[Math.floor(Math.random() * categories.length)];
+		products.push({
+			oidx: i,
+			name: `${category} Product ${i + 1}`,
+			category: category,
+			price: Math.floor(Math.random() * 200) + 10,
+			rating: (Math.random() * 3 + 2).toFixed(1),
+			image: imageNames[i % imageNames.length],
+			inStock: Math.random() > 0.2
+		});
+	}
+
+	// Full-featured demo
+	const fullDemoList = element.querySelector('#fullDemoList');
+	fullDemoList.loadData({
+		data: products,
+		render: (item) => {
+			const el = fromHTML(`
+				<div class="nui-list-image-item">
+					<div>${item.oidx + 1}</div>
+					<div class="image-cell list-item-image-cell">
+						<img src="" alt="${item.name}">
+					</div>
+					<div class="list-item-content">
+						<div class="list-item-title">${item.name}</div>
+						<div class="list-item-meta">${item.category} • ⭐ </div>
+					</div>
+					<div class="list-item-price">$${item.price}</div>
+				</div>
+			`);
+			
+			const img = el.querySelector('img');
+			el.update = () => {
+				img.src = `images/Random_Picts/160p/${item.image}`;
+				img.onload = () => img.classList.add('loaded');
+			};
+			
+			return el;
+		},
+		search: [
+			{ prop: 'name' },
+			{ prop: 'category' }
+		],
+		sort: [
+			{ label: 'Name (A-Z)', prop: 'name' },
+			{ label: 'Price (Low-High)', prop: 'price', numeric: true },
+			{ label: 'Price (High-Low)', prop: 'price', numeric: true, dir: 'desc' },
+			{ label: 'Rating', prop: 'rating', numeric: true, dir: 'desc' }
+		],
+		filters: [
+			{
+				prop: 'category',
+				label: 'Category',
+				options: categories.map(c => ({ value: c, label: c }))
+			}
+		],
+		footer: {
+			buttons_left: [
+				{
+					label: 'Delete Selected',
+					type: 'danger',
+					fnc: () => {
+						const selected = fullDemoList.getSelection();
+						console.log('Would delete:', selected);
+					}
+				}
+			],
+			buttons_right: [
+				{
+					label: 'Export CSV',
+					type: 'primary',
+					fnc: () => console.log('Exporting...')
+				}
+			]
+		},
+		selection: 'multi',
+		events: (e) => {
+			if (e.type === 'selection') {
+				console.log('Selection:', e.value, 'items');
+			}
+		}
+	});
+
+	// Minimal list (no header/footer)
+	const minimalData = products.slice(0, 100).map((p, i) => ({
+		id: i,
+		name: p.name,
+		price: p.price
+	}));
+	
+	const minimalList = element.querySelector('#minimalList');
+	minimalList.loadData({
+		data: minimalData,
+		render: (item) => {
+			return fromHTML(`
+				<div class="nui-list-log-item">
+					<div>${item.id}</div>
+					<div>${item.name}</div>
+					<div>$${item.price}</div>
+				</div>
+			`);
+		}
+	});
+
+	// Log mode
+	const logData = [];
+	const logModeList = element.querySelector('#logModeList');
+	
+	logModeList.loadData({
+		data: logData,
+		render: (item) => {
+			return fromHTML(`
+				<div class="nui-list-log-item">
+					<div>${item.id}</div>
+					<div>${item.message}</div>
+					<div>${new Date(item.time).toLocaleTimeString()}</div>
+				</div>
+			`);
+		},
+		logmode: true
+	});
+
+	// Add log entries
+	let logCounter = 0;
+	const messages = [
+		'User authenticated',
+		'Database query executed',
+		'Cache invalidated',
+		'API request completed',
+		'File uploaded',
+		'Session refreshed'
+	];
+	
+	const logInterval = setInterval(() => {
+		logData.push({
+			id: logCounter++,
+			message: messages[Math.floor(Math.random() * messages.length)],
+			time: Date.now()
+		});
+		logModeList.appendData();
+		
+		if (logCounter >= 50) {
+			clearInterval(logInterval);
+		}
+	}, 800);
+
+	element.show = () => {
+		console.log('List demo visible');
+	};
+
+	element.hide = () => {
+		clearInterval(logInterval);
+		console.log('List demo hidden');
+	};
+}
+</script>
+
+</div>

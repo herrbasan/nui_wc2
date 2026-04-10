@@ -1,61 +1,245 @@
 <div class="page-list">
 
-<script type="text/markdown" id="llm-guide" data-component="nui-list">
+<script type="text/markdown" id="llm-guide">
 # LLM Guide: nui-list (Virtualized List & Data Grid)
 
 > **Global Note:** Always follow the global rules in `Playground/README.md`. Use `nui.util.createElement` and do not invent tags.
 
 `nui-list` is the central "workhorse" data component. It is a high-performance virtual scroller that automatically builds its own search/filter/sort toolbar.
 
-## Critical Rendering Rules (MUST FOLLOW)
-1. **Explicit Parent Height:** The virtual scroller must know its bounds. The parent container MUST have a deterministic height (e.g. `height: 500px`, `flex: 1`, `height: 100%`).
-2. **Identical Item Heights:** All items must be the same height (auto-measured from the first item).
-3. **Visibility:** You MUST call `list.loadData()` **AFTER** the list is visible in the DOM (e.g., after a dialog opens or a tab is shown), otherwise it measures a height of 0 and renders nothing.
-4. **Dialog Integration:** If placed inside `<nui-dialog mode="page">`, you MUST add `content-scroll="false"` to the dialog configuration so the list can own the scroll physics.
+## Understanding the Layout Model
+
+Understanding how the component internally handles layout explains why certain container setups work and others produce unexpected results.
+
+### The Component Uses Absolute Positioning
+
+The list element positions itself absolutely with `inset: 0` to fill its container completely. This design choice means:
+
+- The element breaks out of normal document flow
+- It sizes itself to the nearest positioned ancestor's content box
+- Without a positioned ancestor, it positions relative to the viewport
+
+### Virtual Scrolling Requires Measurable Bounds
+
+The list uses JavaScript to calculate which items should be rendered:
+
+```javascript
+// Conceptual internal logic:
+const viewportHeight = list.viewport.offsetHeight;  // Must yield > 0
+const itemHeight = firstItem.offsetHeight;          // Measured from rendered DOM
+const visibleCount = Math.ceil(viewportHeight / itemHeight);
+const startIndex = Math.floor(scrollTop / itemHeight);
+// Render only items from startIndex to startIndex + visibleCount
+```
+
+If `viewportHeight` is 0 (container has no height), `visibleCount` becomes 0, and nothing renders.
+
+### Common Setup Scenarios
+
+**Container without positioning context:**
+```html
+<div style="height: 400px;">
+    <nui-list>...</nui-list>
+</div>
+```
+Result: The list finds no positioned ancestor, positions relative to viewport, causing overflow or incorrect placement.
+
+**Container without explicit height:**
+```html
+<div style="position: relative;">  <!-- Height is 'auto' -->
+    <nui-list>...</nui-list>       <!-- offsetHeight === 0 -->
+</div>
+```
+Result: The container collapses to 0 height (or content height if any). The list measures 0 and renders nothing.
+
+**Working setup:**
+```html
+<div style="position: relative; height: 400px;">
+    <nui-list>...</nui-list>
+</div>
+```
+Result: The positioned ancestor establishes bounds; the list fills the 400px container and calculates visibility correctly.
+
+### Container Height Mechanics
+
+Any height mechanism works as long as the computed result is a definite length:
+
+- **Fixed:** `height: 400px` — explicit pixel value
+- **Percentage:** `height: 100%` — relative to parent's definite height
+- **Flex:** `flex: 1` — resolves to remaining space in flex container
+- **Grid:** `grid-template-rows` with definite track sizes
+
+What does *not* work is `height: auto` (intrinsic height based on content), because the list itself is the content and creates a circular dependency.
+
+### Visibility and Measurement Timing
+
+The list queries DOM metrics during `loadData()`. If the container is `display: none`, all measurements return 0. The list initializes but renders nothing.
+
+```javascript
+// Measurement happens before layout is visible
+hiddenContainer.style.display = 'none';
+list.loadData({...});  // Measures 0, renders nothing
+
+// Defer until layout is calculated
+visibleContainer.style.display = 'block';
+requestAnimationFrame(() => {
+    list.loadData({...});  // Measures correctly
+});
+```
+
+### Item Height Uniformity
+
+Virtual scrolling assumes constant item height. The component measures the first rendered item and uses that value for all position calculations:
+
+```javascript
+const itemTop = index * itemHeight;  // Linear calculation
+```
+
+Variable item heights would cause visual misalignment because the calculated position would not match the actual rendered position.
+
+### Dialog Integration
+
+When placed in `<nui-dialog mode="page">`, the dialog's default scroll behavior conflicts with the list's internal scrolling. The dialog should delegate scrolling to the list:
+
+```html
+<nui-dialog mode="page" content-scroll="false">
+    <dialog>
+        <div style="position: relative; height: 60vh;">
+            <nui-list>...</nui-list>
+        </div>
+    </dialog>
+</nui-dialog>
+```
+
+## Critical Requirements (Summary)
+
+Based on the layout model described above:
+
+1. **Container needs `position: relative`** — Creates the positioning context for the absolutely-positioned list
+2. **Container needs explicit height** — Gives the virtual scroller measurable bounds (auto/intrinsic height yields 0)
+3. **All items same height** — Virtual scrolling calculates positions linearly from first item's height
+4. **Call `loadData()` after visible** — DOM measurements return 0 if container is `display: none`
+5. **Dialog mode: `content-scroll="false"`** — Prevents conflicting scroll behaviors
+
+## Layout Deep Dive (For Understanding)
+
+### Absolute Positioning Strategy
+
+The list element positions itself absolutely with `inset: 0` to completely fill its container. This design choice means:
+
+- The element breaks out of normal document flow
+- It sizes itself to the nearest positioned ancestor's content box
+- Without a positioned ancestor, it positions relative to the viewport
+
+### Virtual Scroller Measurement
+
+The list uses JavaScript to calculate which items should be rendered:
+
+```javascript
+// Conceptual internal logic:
+const viewportHeight = list.viewport.offsetHeight;  // Must yield > 0
+const itemHeight = firstItem.offsetHeight;          // Measured from rendered DOM
+const visibleCount = Math.ceil(viewportHeight / itemHeight);
+const startIndex = Math.floor(scrollTop / itemHeight);
+// Render only items from startIndex to startIndex + visibleCount
+```
+
+If `viewportHeight` is 0 (container has no height), `visibleCount` becomes 0, and nothing renders.
+
+### What Happens Without Proper Setup
+
+**Container without positioning context:**
+```html
+<div style="height: 400px;">
+    <nui-list>...</nui-list>
+</div>
+```
+Result: The list finds no positioned ancestor, positions relative to viewport, causing overflow or incorrect placement.
+
+**Container without explicit height:**
+```html
+<div style="position: relative;">  <!-- Height is 'auto' -->
+    <nui-list>...</nui-list>       <!-- offsetHeight === 0 -->
+</div>
+```
+Result: The container collapses to 0 height. The list measures 0 and renders nothing.
+
+### Container Height Mechanics
+
+Any height mechanism works as long as the computed result is a definite length:
+
+- **Fixed:** `height: 400px` — explicit pixel value
+- **Percentage:** `height: 100%` — relative to parent's definite height  
+- **Flex:** `flex: 1` — resolves to remaining space in flex container
+- **Grid:** `grid-template-rows` with definite track sizes
+
+What does *not* work is `height: auto` (intrinsic height based on content), because the list itself is the content and creates a circular dependency.
+
+### Visibility Timing
+
+The list queries DOM metrics during `loadData()`. If the container is `display: none`, all measurements return 0. The list initializes but renders nothing.
+
+```javascript
+// Measurement happens before layout is visible
+hiddenContainer.style.display = 'none';
+list.loadData({...});  // Measures 0, renders nothing
+
+// Defer until layout is calculated
+visibleContainer.style.display = 'block';
+requestAnimationFrame(() => {
+    list.loadData({...});  // Measures correctly
+});
+```
+
+### Item Height Uniformity
+
+Virtual scrolling assumes constant item height. The component measures the first rendered item and uses that value for all position calculations:
+
+```javascript
+const itemTop = index * itemHeight;  // Linear calculation
+```
+
+Variable item heights would cause visual misalignment because the calculated position would not match the actual rendered position.
 
 ## The Super-Power: Built-in Toolbar
-DO NOT build your own search inputs, sort dropdowns, or filter menus outside the list. The list builds them automatically if you configure them in `loadData()`.
+
+The list constructs its own search, sort, and filter UI based on configuration. External inputs are unnecessary:
 
 ```js
 list.loadData({
-	data: myData,
-	selection: 'multi', // 'single' (default), 'multi', or false
-	search: [{ prop: 'name' }, { prop: 'email' }], // Auto-generates a search input!
-	sort: [ // Auto-generates a sort dropdown!
-		{ label: 'Name (A-Z)', prop: 'name' }, 
-		{ label: 'Age (High-Low)', prop: 'age', numeric: true, dir: 'desc' }
-	],
-	filters: [ // Auto-generates filter dropdowns!
-		{ prop: 'status', label: 'Status', options: [{label:'Active', value:'1'}, {label:'Inactive', value:'0'}] }
-	],
-	render: (item) => nui.util.createElement('div', {class: 'item'}, item.name),
-	events: (e) => {
-		if (e.type === 'selection') console.log('Selected:', list.getSelection());
-		if (e.type === 'action') console.log('Button clicked in row:', e.detail.action, e.detail.item);
-	}
+    data: myData,
+    selection: 'multi', // 'single', 'multi', or false
+    search: [{ prop: 'name' }, { prop: 'email' }],      // Adds search input
+    sort: [{ label: 'Name', prop: 'name' }],            // Adds sort dropdown
+    filters: [{ prop: 'status', label: 'Status', options: [...] }], // Adds filter
+    render: (item) => nui.util.createElement('div', {class: 'item'}, item.name),
+    events: (e) => { /* handle selection, sort, filter events */ }
 });
 ```
 
 ## Lazy Loading (For Complex Rows & Images)
-To keep the initial render at 60fps, return a lightweight skeleton from `render(item)`, and attach an `.update(item)` function to the DOM element. The list will call `.update()` only when the item scrolls into the viewport.
+
+To maintain 60fps initial render, return a lightweight placeholder and defer heavy work:
 
 ```js
 render: (item) => {
-	const el = nui.util.createElement('div', {class: 'item'}, 'Loading...');
-	el.update_delay = 100; // Optional: wait 100ms before calling update
-	el.update = (currentItem) => {
-		el.textContent = currentItem.name; // Do heavy DOM work / image loading here
-	};
-	return el;
+    const el = nui.util.createElement('div', {class: 'item'}, 'Loading...');
+    el.update_delay = 100; // Optional delay before update
+    el.update = (currentItem) => {
+        el.textContent = currentItem.name; // Heavy DOM work here
+    };
+    return el;
 }
 ```
 
-## Strict DOM Structure (Declarative Mode)
-If you aren't using the programmatic JS setup above, you must use `<template data-item>`. Do NOT just put `<div>` elements directly inside `<nui-list>`.
+The list calls `update()` when the element enters the viewport.
 
-**Correct (Declarative):**
+## Declarative Mode
+
+Without a custom render function, use template placeholders:
+
 ```html
-<div style="height: 500px;"> <!-- Parent MUST have height -->
+<div style="position: relative; height: 500px;">
     <nui-list>
         <template data-item>
             <div class="my-item">{{name}}</div>
@@ -105,20 +289,29 @@ If you aren't using the programmatic JS setup above, you must use `<template dat
 	</section>
 
 	<section>
-		<h2>Layout Constraints (Important)</h2>
-		<div class="demo-callout">
-			<strong>Virtual Scroller Boundaries:</strong> Because <code>&lt;nui-list&gt;</code> is a virtual scroller, it needs to know what is currently visible on the screen. <strong>It MUST be placed inside a container with a determinable height.</strong>
-		</div>
-		<p>If you place the list in a container that dictates its height by its children (e.g., standard document flow, or <code>&lt;main overflow-y="auto"&gt;</code>), the list will think its viewport is infinite, breaking virtual memory and potentially returning 0 visual space.</p>
-		
-		<p>Rules:</p>
+		<h2>Layout Requirements</h2>
+		<p>The list positions itself absolutely to fill its container. The container needs:</p>
 		<ul>
-			<li>Provide an <strong>explicit height constraint</strong> on the list's parent. The container must not rely on intrinsic sizing (growing based on its contents). Instead, it must have a determinable, bounded dimension (e.g., via <code>flex-grow</code>, <code>height: 100%</code>, or Grid layouts) so the virtual scroller can accurately measure its viewport.</li>
-			<li><strong>All items must be the same height.</strong> The virtual scroller auto-detects height from the first rendered item and uses that for all calculations. If items vary in height, visibility detection will be incorrect and items may be skipped or duplicated during scroll. Use the <strong>Lazy Loading</strong> pattern with <code>update_delay</code> to defer rendering of complex content until after the item is positioned.</li>
-			<li>If using flexbox, make sure the parental container has fixed bounds and the list wrapper has <code>flex: 1; overflow: hidden;</code>.</li>
-			<li>If inserting into a <strong><code>&lt;nui-dialog mode="page"&gt;</code></strong>, you must add <strong><code>content-scroll="false"</code></strong> to the dialog to disable native HTML scroll physics and permit the list to own the bounds!</li>
-			<li><strong>Visibility Contexts (e.g. Dialogs):</strong> The virtual scroller measures layout height. If housed in a container that uses <code>display: none</code> (like a hidden <code>&lt;dialog&gt;</code> or tab), it cannot calculate how many rows to render and will paint a blank view. Be sure to call <code>list.loadData(...)</code> <strong>AFTER</strong> the display state becomes visible (e.g., after calling <code>dialog.showModal()</code>) so the list measures its bounds correctly!</li>
+			<li><code>position: relative</code> (or any position value) to establish a positioning context</li>
+			<li>An explicit height (fixed, percentage, or flex/grid-derived) so the virtual scroller can calculate visible items</li>
 		</ul>
+		<nui-code>
+			<script type="example" data-lang="html">
+<!-- Container needs position and explicit height -->
+<div style="position: relative; height: 400px;">
+    <nui-list id="myList"></nui-list>
+</div>
+
+<!-- Also works with flex -->
+<div style="display: flex; flex-direction: column; height: 100vh;">
+    <header style="height: 60px;">Header</header>
+    <div style="position: relative; flex: 1; overflow: hidden;">
+        <nui-list id="myList"></nui-list>
+    </div>
+</div>
+			</script>
+		</nui-code>
+		<p><strong>Visibility:</strong> Call <code>loadData()</code> after the container is visible (not <code>display: none</code>). In dialogs, use <code>content-scroll="false"</code> on <code>&lt;nui-dialog&gt;</code>.</p>
 	</section>
 
 	<section>
@@ -581,11 +774,11 @@ function init(element, params, nui) {
 	const api = window.nui || nui;
 	if (!api || !api.util) return;
 
-	// Render LLM Guide from Markdown (parsable structure for agents)
-	const mdScript = element.querySelector('#llm-guide') || document.getElementById('llm-guide');
+	// Render LLM Guide from Markdown
+	const mdTemplate = element.querySelector('#llm-guide');
 	const renderedDiv = element.querySelector('#llm-guide-rendered');
-	if (mdScript && renderedDiv && api.util.markdownToHtml) {
-		const mdContent = mdScript.textContent.trim();
+	if (mdTemplate && renderedDiv && api.util.markdownToHtml) {
+		const mdContent = mdTemplate.textContent.trim();
 		renderedDiv.innerHTML = api.util.markdownToHtml(mdContent);
 	}
 
@@ -908,3 +1101,4 @@ function init(element, params, nui) {
 	};
 }
 </script>
+</div>

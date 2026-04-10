@@ -19,7 +19,7 @@
 		<!-- Loading indicator (bar mode - top of page) -->
 		<nui-loading mode="bar"></nui-loading>
 		
-		<nui-app nui-vars-sidebar_width="15rem" nui-vars-sidebar_force-breakpoint="75rem" nui-vars-sidebar-right_force-breakpoint="75rem">
+		<nui-app content-min-width="55rem">
 			<!-- Skip links for keyboard accessibility (auto-generated for nui-app structure) -->
 			<nui-skip-links></nui-skip-links>
 
@@ -40,61 +40,14 @@
                         <button type="button" aria-label="Toggle light/dark theme">
                             <nui-icon name="brightness">⛭</nui-icon>
                         </button>
-                    </nui-button><nui-button data-action="toggle-sidebar:right">
-                        <button type="button" aria-label="Toggle right sidebar">
-                            <nui-icon name="settings">⚙</nui-icon>
-                        </button>
-                    </nui-button>
-                </div>
+                    </nui-button></div>
             </nui-app-header>
 
-            <nui-sidebar>
+            <nui-sidebar behavior="primary">
                 <nui-link-list mode="fold">
                     <!-- Navigation loaded from JSON via JavaScript -->
                 </nui-link-list>
-            </nui-sidebar>
-
-            <nui-sidebar position="right">
-                <div style="padding: var(--nui-space); display: flex; flex-direction: column; gap: var(--nui-space);">
-                    <h3 style="margin-top: 0;">Demo Configuration</h3>
-                    <p style="font-size: var(--font-size-small); color: var(--color-text-muted);">This right sidebar is a demonstration of the dual-sidebar layout feature. The controls below are non-functional placeholders.</p>
-                    
-                    <div style="margin-top: var(--nui-space);">
-                        <label style="font-weight: bold; font-size: var(--font-size-small); display: block; margin-bottom: var(--nui-space-half);">API Environment</label>
-                        <nui-select>
-                            <select>
-                                <option>Production</option>
-                                <option>Staging</option>
-                                <option>Development (Local)</option>
-                            </select>
-                        </nui-select>
-                    </div>
-
-                    <div style="margin-top: var(--nui-space);">
-                        <label style="font-weight: bold; font-size: var(--font-size-small); display: block; margin-bottom: var(--nui-space-half);">Debugging Options</label>
-                        <nui-checkbox style="margin-bottom: var(--nui-space-half);">
-                            <input type="checkbox" id="demo-mock-data" checked>
-                            <label for="demo-mock-data">Use Mock Data</label>
-                        </nui-checkbox>
-                        <nui-checkbox style="margin-bottom: var(--nui-space-half);">
-                            <input type="checkbox" id="demo-verbose">
-                            <label for="demo-verbose">Verbose Logging</label>
-                        </nui-checkbox>
-                        <nui-checkbox>
-                            <input type="checkbox" id="demo-paint">
-                            <label for="demo-paint">Show Paint Rects</label>
-                        </nui-checkbox>
-                    </div>
-
-                    <div style="margin-top: auto; padding-top: var(--nui-space-double);">
-                        <nui-button variant="primary" style="width: 100%;">
-                            <button type="button">Apply Settings</button>
-                        </nui-button>
-                    </div>
-                </div>
-            </nui-sidebar>
-
-            <nui-content>
+            </nui-sidebar><nui-content>
                 <nui-main>
                     <!-- Content pages loaded here -->
                 </nui-main>

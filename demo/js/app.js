@@ -46,8 +46,8 @@ document.addEventListener('click', (e) => {
     switch (action) {
         case 'toggle-sidebar': {
             const app = document.querySelector('nui-app');
-            if (app?.toggleSideNav) {
-                app.toggleSideNav(param || 'left');
+            if (app?.toggleSidebar) {
+                app.toggleSidebar(param || 'left');
             }
             break;
         }

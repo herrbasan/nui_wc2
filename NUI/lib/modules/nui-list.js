@@ -195,10 +195,11 @@ function createList(element, options) {
 			).join('');
 
 			headerHTML += `
-				<label>Sort by:</label>
 				<nui-select>
 					<select aria-label="Sort by">
-						${sortOptionsHtml}
+						<optgroup label="Sort by">
+							${sortOptionsHtml}
+						</optgroup>
 					</select>
 				</nui-select>
 				<button class="nui-list-sort-direction ${list.currentOrder}" aria-label="Toggle sort direction">
@@ -210,21 +211,30 @@ function createList(element, options) {
 		if (options.filters) {
 			if (!list.currentFilters) list.currentFilters = {};
 			options.filters.forEach(f => {
-				const filterDefault = list.currentFilters[f.prop] || f.default || '';
+				// Prepend "All" option to allow resetting the filter
+				// Use special sentinel value since nui-select skips empty values as placeholders
+				const ALL_VALUE = '__all__';
+				const allOption = { value: ALL_VALUE, label: 'All' };
+				const hasAllOption = f.options.some(opt => opt.value === ALL_VALUE);
+				const optionsWithAll = hasAllOption ? f.options : [allOption, ...f.options];
+				
+				// Set default filter value - use "All" if no explicit default
+				const userDefault = list.currentFilters[f.prop] || f.default;
+				const filterDefault = userDefault || ALL_VALUE;
 				list.currentFilters[f.prop] = filterDefault;
 				
-				const filterOptionsHtml = f.options.map(opt =>
+				const filterOptionsHtml = optionsWithAll.map(opt =>
 					`<option value="${opt.value}"${opt.value === filterDefault ? ' selected' : ''}>${opt.label}</option>`
 				).join('');
 				
-				if (f.label) {
-					headerHTML += `<label>${f.label}</label>`;
-				}
+				const groupLabel = f.label || 'Filter';
 				
 				headerHTML += `
 					<nui-select class="nui-list-filter-select" data-prop="${f.prop}">
-						<select aria-label="${f.label || 'Filter'}">
-							${filterOptionsHtml}
+						<select aria-label="${groupLabel}">
+							<optgroup label="${groupLabel}">
+								${filterOptionsHtml}
+							</optgroup>
 						</select>
 					</nui-select>
 				`;
@@ -460,7 +470,8 @@ function createList(element, options) {
 		if (options.filters && list.currentFilters) {
 			for (const f of options.filters) {
 				const filterVal = list.currentFilters[f.prop];
-				if (filterVal !== '') {
+				// Skip filtering if value is empty or the special "All" sentinel
+				if (filterVal !== '' && filterVal !== '__all__') {
 					tempFiltered = tempFiltered.filter(item => {
 						let val = item.data;
 						const parts = f.prop.split('.');
