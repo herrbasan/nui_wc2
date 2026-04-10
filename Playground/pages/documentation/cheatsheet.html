@@ -1,0 +1,234 @@
+<div class="page-cheatsheet">
+
+<header>
+	<h1>NUI Visual Cheatsheet</h1>
+	<p class="lead">Quick reference for icons, CSS variables, and common patterns.</p>
+</header>
+
+<section>
+	<h2>Icons</h2>
+	<p>Click to copy the icon name. Use with <code>&lt;nui-icon name="icon-name"&gt;&lt;/nui-icon&gt;</code></p>
+	
+	<div class="cheatsheet-search">
+		<nui-input><input type="text" id="icon-search" placeholder="Search icons..."></nui-input>
+	</div>
+	
+	<div class="cheatsheet-icons" id="icon-grid">
+		<!-- Icons populated by JS -->
+	</div>
+	
+	<div class="cheatsheet-empty" id="icon-empty" hidden>No icons found.</div>
+</section>
+
+<section>
+	<h2>CSS Variables</h2>
+	
+	<h3>Colors</h3>
+	<div class="cheatsheet-vars">
+		<div class="var-item">
+			<div class="var-preview" style="background: var(--color-base);"></div>
+			<code>--color-base</code>
+			<span class="var-value">Background color</span>
+		</div>
+		<div class="var-item">
+			<div class="var-preview" style="background: var(--color-highlight);"></div>
+			<code>--color-highlight</code>
+			<span class="var-value">Primary accent</span>
+		</div>
+		<div class="var-item">
+			<div class="var-preview" style="background: var(--color-shade1);"></div>
+			<code>--color-shade1</code>
+			<span class="var-value">Lightest shade</span>
+		</div>
+		<div class="var-item">
+			<div class="var-preview" style="background: var(--color-shade2);"></div>
+			<code>--color-shade2</code>
+			<span class="var-value">Card backgrounds</span>
+		</div>
+		<div class="var-item">
+			<div class="var-preview" style="background: var(--color-shade3);"></div>
+			<code>--color-shade3</code>
+			<span class="var-value">Hover states</span>
+		</div>
+		<div class="var-item">
+			<div class="var-preview" style="background: var(--color-shade4);"></div>
+			<code>--color-shade4</code>
+			<span class="var-value">Borders, dividers</span>
+		</div>
+		<div class="var-item">
+			<div class="var-preview" style="background: var(--text-color); color: var(--color-base);">Aa</div>
+			<code>--text-color</code>
+			<span class="var-value">Primary text</span>
+		</div>
+		<div class="var-item">
+			<div class="var-preview" style="background: var(--text-color-dim); color: var(--color-base);">Aa</div>
+			<code>--text-color-dim</code>
+			<span class="var-value">Secondary text</span>
+		</div>
+	</div>
+	
+	<h3>Spacing</h3>
+	<div class="cheatsheet-spacing">
+		<div class="spacing-item">
+			<div class="spacing-visual" style="width: var(--nui-space-eighth);"></div>
+			<code>--nui-space-eighth</code>
+			<span class="spacing-value">0.125rem</span>
+		</div>
+		<div class="spacing-item">
+			<div class="spacing-visual" style="width: var(--nui-space-quarter);"></div>
+			<code>--nui-space-quarter</code>
+			<span class="spacing-value">0.25rem</span>
+		</div>
+		<div class="spacing-item">
+			<div class="spacing-visual" style="width: var(--nui-space-half);"></div>
+			<code>--nui-space-half</code>
+			<span class="spacing-value">0.5rem</span>
+		</div>
+		<div class="spacing-item">
+			<div class="spacing-visual" style="width: var(--nui-space);"></div>
+			<code>--nui-space</code>
+			<span class="spacing-value">1rem</span>
+		</div>
+		<div class="spacing-item">
+			<div class="spacing-visual" style="width: var(--nui-space-double);"></div>
+			<code>--nui-space-double</code>
+			<span class="spacing-value">2rem</span>
+		</div>
+	</div>
+	
+	<h3>Borders & Radius</h3>
+	<div class="cheatsheet-vars">
+		<div class="var-item">
+			<div class="var-preview" style="border: var(--border-thickness) solid var(--color-highlight);"></div>
+			<code>--border-thickness</code>
+			<span class="var-value">thin</span>
+		</div>
+		<div class="var-item">
+			<div class="var-preview" style="border-radius: var(--border-radius1); background: var(--color-shade2);"></div>
+			<code>--border-radius1</code>
+			<span class="var-value">Small (buttons)</span>
+		</div>
+		<div class="var-item">
+			<div class="var-preview" style="border-radius: var(--border-radius2); background: var(--color-shade2);"></div>
+			<code>--border-radius2</code>
+			<span class="var-value">Medium (cards)</span>
+		</div>
+		<div class="var-item">
+			<div class="var-preview" style="border-radius: var(--border-radius3); background: var(--color-shade2);"></div>
+			<code>--border-radius3</code>
+			<span class="var-value">Large (dialogs)</span>
+		</div>
+	</div>
+</section>
+
+<section>
+	<h2>Common Patterns</h2>
+	
+	<h3>Button Variants</h3>
+	<div class="demo-chrome">
+		<nui-button><button type="button">Default</button></nui-button>
+		<nui-button variant="primary"><button type="button">Primary</button></nui-button>
+		<nui-button variant="outline"><button type="button">Outline</button></nui-button>
+		<nui-button variant="ghost"><button type="button">Ghost</button></nui-button>
+	</div>
+	
+	<h3>Dialog Placements</h3>
+	<div class="demo-chrome">
+		<nui-button-container gap="1rem">
+			<nui-button><button type="button" data-action="dialog-open@#cheatsheet-top">Top</button></nui-button>
+			<nui-button><button type="button" data-action="dialog-open@#cheatsheet-center">Center</button></nui-button>
+			<nui-button><button type="button" data-action="dialog-open@#cheatsheet-bottom">Bottom</button></nui-button>
+		</nui-button-container>
+	</div>
+	
+	<nui-dialog id="cheatsheet-top" placement="top">
+		<dialog>
+			<div class="nui-dialog-alert">
+				<div class="nui-headline">Top Placement</div>
+				<div class="nui-copy">Dialog positioned at top third.</div>
+				<nui-button-container align="end">
+					<nui-button><button type="button" data-action="dialog-close@#cheatsheet-top">Close</button></nui-button>
+				</nui-button-container>
+			</div>
+		</dialog>
+	</nui-dialog>
+	
+	<nui-dialog id="cheatsheet-center" placement="center">
+		<dialog>
+			<div class="nui-dialog-alert">
+				<div class="nui-headline">Center Placement</div>
+				<div class="nui-copy">Dialog centered vertically.</div>
+				<nui-button-container align="end">
+					<nui-button><button type="button" data-action="dialog-close@#cheatsheet-center">Close</button></nui-button>
+				</nui-button-container>
+			</div>
+		</dialog>
+	</nui-dialog>
+	
+	<nui-dialog id="cheatsheet-bottom" placement="bottom">
+		<dialog>
+			<div class="nui-dialog-alert">
+				<div class="nui-headline">Bottom Placement</div>
+				<div class="nui-copy">Dialog positioned at bottom third.</div>
+				<nui-button-container align="end">
+					<nui-button><button type="button" data-action="dialog-close@#cheatsheet-bottom">Close</button></nui-button>
+				</nui-button-container>
+			</div>
+		</dialog>
+	</nui-dialog>
+</section>
+
+<script type="nui/page">
+function init(element) {
+	const iconGrid = element.querySelector('#icon-grid');
+	const iconSearch = element.querySelector('#icon-search');
+	const iconEmpty = element.querySelector('#icon-empty');
+	
+	const icons = [
+		'add', 'add_circle', 'analytics', 'arrow', 'article', 'assessment', 'brightness', 'calendar',
+		'chat', 'check_circle', 'close', 'delete', 'done', 'download', 'edit', 'file_json',
+		'filter_list', 'folder', 'format_bold', 'format_italic', 'format_list_bulleted', 'format_list_numbered',
+		'fullscreen', 'image', 'info', 'keyboard', 'label', 'layers', 'link', 'link_off', 'lock',
+		'mail', 'menu', 'monitor', 'more', 'notifications', 'pause', 'person', 'play', 'print',
+		'redo', 'save', 'search', 'security', 'send', 'settings', 'sort', 'sync', 'table_view',
+		'undo', 'upload', 'visibility', 'warning'
+	];
+	
+	function renderIcons(filter = '') {
+		const filtered = icons.filter(name => name.includes(filter.toLowerCase()));
+		
+		if (filtered.length === 0) {
+			iconGrid.innerHTML = '';
+			iconEmpty.hidden = false;
+			return;
+		}
+		
+		iconEmpty.hidden = true;
+		iconGrid.innerHTML = filtered.map(name => `
+			<div class="cheatsheet-icon" data-icon="${name}" title="Click to copy: ${name}">
+				<nui-icon name="${name}"></nui-icon>
+				<span>${name}</span>
+			</div>
+		`).join('');
+		
+		// Add click handlers
+		iconGrid.querySelectorAll('.cheatsheet-icon').forEach(el => {
+			el.addEventListener('click', () => {
+				const name = el.dataset.icon;
+				navigator.clipboard.writeText(name).then(() => {
+					el.classList.add('copied');
+					setTimeout(() => el.classList.remove('copied'), 1000);
+				});
+			});
+		});
+	}
+	
+	renderIcons();
+	
+	iconSearch.addEventListener('input', (e) => {
+		renderIcons(e.target.value);
+	});
+}
+</script>
+
+</div>

@@ -264,6 +264,7 @@ const navigationData = [
 			{ label: 'API Structure', href: '#page=documentation/api-structure' },
 			{ label: 'Utilities', href: '#page=documentation/utilities' },
 			{ label: 'Accessibility', href: '#page=documentation/accessibility' },
+			{ label: 'Visual Cheatsheet', href: '#page=documentation/cheatsheet' },
 		]
 	},
 	{
