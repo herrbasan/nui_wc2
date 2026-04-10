@@ -1054,7 +1054,7 @@ nui-app[data-layout="app"] {
 	overflow: hidden;
 }
 
-nui-app[data-layout="app"] nui-app-header {
+nui-app[data-layout="app"] nui-app-header:not(.demo-relative):not([demo]) {
 	position: absolute;
 	top: 0;
 	left: 0;
@@ -1077,6 +1077,17 @@ nui-app-header > header {
 	height: 100%;
 	line-height: 1;
 	gap: var(--nui-space);
+}
+
+/* Demo/standalone headers (not in app shell positioning) */
+nui-app-header.demo-relative,
+nui-app-header[demo] {
+	position: relative;
+	height: var(--app-header-height);
+	background: light-dark(var(--color-shade5), var(--color-shade2));
+	border-bottom: solid var(--border-thickness) var(--border-shade2);
+	padding: 0 var(--nui-space);
+	box-sizing: border-box;
 }
 
 /* De-nest wrapper container if present (nui-app-header often wraps a <header>) */
