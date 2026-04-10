@@ -22,103 +22,17 @@
 
 <section>
 	<h2>CSS Variables</h2>
+	<p>All CSS custom properties defined in <code>nui-theme.css</code>. Values are computed at runtime.</p>
 	
-	<h3>Colors</h3>
-	<div class="cheatsheet-vars">
-		<div class="var-item">
-			<div class="var-preview" style="background: var(--color-base);"></div>
-			<code>--color-base</code>
-			<span class="var-value">Background color</span>
-		</div>
-		<div class="var-item">
-			<div class="var-preview" style="background: var(--color-highlight);"></div>
-			<code>--color-highlight</code>
-			<span class="var-value">Primary accent</span>
-		</div>
-		<div class="var-item">
-			<div class="var-preview" style="background: var(--color-shade1);"></div>
-			<code>--color-shade1</code>
-			<span class="var-value">Lightest shade</span>
-		</div>
-		<div class="var-item">
-			<div class="var-preview" style="background: var(--color-shade2);"></div>
-			<code>--color-shade2</code>
-			<span class="var-value">Card backgrounds</span>
-		</div>
-		<div class="var-item">
-			<div class="var-preview" style="background: var(--color-shade3);"></div>
-			<code>--color-shade3</code>
-			<span class="var-value">Hover states</span>
-		</div>
-		<div class="var-item">
-			<div class="var-preview" style="background: var(--color-shade4);"></div>
-			<code>--color-shade4</code>
-			<span class="var-value">Borders, dividers</span>
-		</div>
-		<div class="var-item">
-			<div class="var-preview" style="background: var(--text-color); color: var(--color-base);">Aa</div>
-			<code>--text-color</code>
-			<span class="var-value">Primary text</span>
-		</div>
-		<div class="var-item">
-			<div class="var-preview" style="background: var(--text-color-dim); color: var(--color-base);">Aa</div>
-			<code>--text-color-dim</code>
-			<span class="var-value">Secondary text</span>
-		</div>
+	<div class="cheatsheet-search">
+		<nui-input><input type="text" id="css-var-search" placeholder="Search CSS variables..."></nui-input>
 	</div>
 	
-	<h3>Spacing</h3>
-	<div class="cheatsheet-spacing">
-		<div class="spacing-item">
-			<div class="spacing-visual" style="width: var(--nui-space-eighth);"></div>
-			<code>--nui-space-eighth</code>
-			<span class="spacing-value">0.125rem</span>
-		</div>
-		<div class="spacing-item">
-			<div class="spacing-visual" style="width: var(--nui-space-quarter);"></div>
-			<code>--nui-space-quarter</code>
-			<span class="spacing-value">0.25rem</span>
-		</div>
-		<div class="spacing-item">
-			<div class="spacing-visual" style="width: var(--nui-space-half);"></div>
-			<code>--nui-space-half</code>
-			<span class="spacing-value">0.5rem</span>
-		</div>
-		<div class="spacing-item">
-			<div class="spacing-visual" style="width: var(--nui-space);"></div>
-			<code>--nui-space</code>
-			<span class="spacing-value">1rem</span>
-		</div>
-		<div class="spacing-item">
-			<div class="spacing-visual" style="width: var(--nui-space-double);"></div>
-			<code>--nui-space-double</code>
-			<span class="spacing-value">2rem</span>
-		</div>
+	<div class="cheatsheet-vars" id="css-var-grid">
+		<!-- CSS variables populated by JS -->
 	</div>
 	
-	<h3>Borders & Radius</h3>
-	<div class="cheatsheet-vars">
-		<div class="var-item">
-			<div class="var-preview" style="border: var(--border-thickness) solid var(--color-highlight);"></div>
-			<code>--border-thickness</code>
-			<span class="var-value">thin</span>
-		</div>
-		<div class="var-item">
-			<div class="var-preview" style="border-radius: var(--border-radius1); background: var(--color-shade2);"></div>
-			<code>--border-radius1</code>
-			<span class="var-value">Small (buttons)</span>
-		</div>
-		<div class="var-item">
-			<div class="var-preview" style="border-radius: var(--border-radius2); background: var(--color-shade2);"></div>
-			<code>--border-radius2</code>
-			<span class="var-value">Medium (cards)</span>
-		</div>
-		<div class="var-item">
-			<div class="var-preview" style="border-radius: var(--border-radius3); background: var(--color-shade2);"></div>
-			<code>--border-radius3</code>
-			<span class="var-value">Large (dialogs)</span>
-		</div>
-	</div>
+	<div class="cheatsheet-empty" id="css-var-empty" hidden>No CSS variables found.</div>
 </section>
 
 <section>
@@ -180,23 +94,17 @@
 
 <script type="nui/page">
 async function init(element) {
+	// ===== Icons Section =====
 	const iconGrid = element.querySelector('#icon-grid');
 	const iconSearch = element.querySelector('#icon-search');
 	const iconEmpty = element.querySelector('#icon-empty');
 	
-	// Load icons dynamically from sprite (same approach as icon demo page)
 	let icons = [];
 	try {
 		icons = await nui.components.icon.getAvailable();
 	} catch (err) {
-		console.warn('[cheatsheet] Failed to load icons dynamically, using fallback');
-		// Fallback list if dynamic loading fails
-		icons = ['add', 'add_circle', 'analytics', 'arrow', 'article', 'assessment', 'brightness', 'calendar',
-			'chat', 'check_circle', 'close', 'delete', 'done', 'download', 'edit', 'folder',
-			'image', 'info', 'keyboard', 'label', 'link', 'lock', 'mail', 'menu', 'monitor',
-			'notifications', 'pause', 'person', 'play', 'print', 'redo', 'save', 'search',
-			'security', 'send', 'settings', 'sort', 'sync', 'table_view', 'undo', 'upload',
-			'visibility', 'warning'];
+		console.warn('[cheatsheet] Failed to load icons dynamically');
+		icons = [];
 	}
 	
 	function renderIcons(filter = '') {
@@ -216,7 +124,6 @@ async function init(element) {
 			</div>
 		`).join('');
 		
-		// Add click handlers
 		iconGrid.querySelectorAll('.cheatsheet-icon').forEach(el => {
 			el.addEventListener('click', () => {
 				const name = el.dataset.icon;
@@ -229,10 +136,96 @@ async function init(element) {
 	}
 	
 	renderIcons();
+	iconSearch.addEventListener('input', (e) => renderIcons(e.target.value));
 	
-	iconSearch.addEventListener('input', (e) => {
-		renderIcons(e.target.value);
-	});
+	// ===== CSS Variables Section =====
+	const cssVarGrid = element.querySelector('#css-var-grid');
+	const cssVarSearch = element.querySelector('#css-var-search');
+	const cssVarEmpty = element.querySelector('#css-var-empty');
+	
+	// Get computed CSS variables from :root
+	function getCssVariables() {
+		const vars = [];
+		const rootStyles = getComputedStyle(document.documentElement);
+		
+		// Iterate through all custom properties
+		for (let i = 0; i < rootStyles.length; i++) {
+			const prop = rootStyles[i];
+			if (prop.startsWith('--')) {
+				const value = rootStyles.getPropertyValue(prop).trim();
+				vars.push({ name: prop, value });
+			}
+		}
+		
+		return vars.sort((a, b) => a.name.localeCompare(b.name));
+	}
+	
+	const cssVars = getCssVariables();
+	
+	function isColorVar(name, value) {
+		// Check if variable name or value suggests it's a color
+		const colorPatterns = ['color', 'shade', 'highlight', 'accent', 'text-', 'bg-', 'border-', 'shadow', 'palette'];
+		const isColorName = colorPatterns.some(p => name.includes(p));
+		const isColorValue = value.match(/^(rgb|rgba|hsl|hsla|#[0-9a-f]{3,8}|light-dark)/i);
+		return isColorName || isColorValue;
+	}
+	
+	function isSizeVar(name, value) {
+		// Check if value is a size (rem, px, em, %)
+		return value.match(/^[\d.]+(rem|px|em|%|vh|vw|ch|ex)$/);
+	}
+	
+	function renderCssVars(filter = '') {
+		let filtered = cssVars.filter(v => v.name.toLowerCase().includes(filter.toLowerCase()));
+		
+		if (filtered.length === 0) {
+			cssVarGrid.innerHTML = '';
+			cssVarEmpty.hidden = false;
+			return;
+		}
+		
+		cssVarEmpty.hidden = true;
+		
+		cssVarGrid.innerHTML = filtered.map(v => {
+			const isColor = isColorVar(v.name, v.value);
+			const isSize = isSizeVar(v.name, v.value);
+			
+			let preview = '';
+			if (isColor) {
+				preview = `<div class="var-preview" style="background: var(${v.name});"></div>`;
+			} else if (isSize && v.name.includes('space')) {
+				preview = `<div class="spacing-visual" style="width: var(${v.name}); height: 24px;"></div>`;
+			} else if (v.name.includes('radius')) {
+				preview = `<div class="var-preview" style="border-radius: var(${v.name}); background: var(--color-shade2);"></div>`;
+			} else if (v.name.includes('border') && !v.name.includes('radius') && !v.name.includes('color')) {
+				preview = `<div class="var-preview" style="border: var(${v.name}) solid var(--color-highlight);"></div>`;
+			} else {
+				preview = `<div class="var-preview" style="background: var(--color-shade2); display: flex; align-items: center; justify-content: center; font-size: 10px;">CSS</div>`;
+			}
+			
+			return `
+				<div class="var-item" data-var="${v.name}" title="Click to copy: ${v.name}">
+					${preview}
+					<code>${v.name}</code>
+					<span class="var-value" title="${v.value}">${v.value.length > 40 ? v.value.substring(0, 40) + '...' : v.value}</span>
+				</div>
+			`;
+		}).join('');
+		
+		// Add click handlers
+		cssVarGrid.querySelectorAll('.var-item').forEach(el => {
+			el.addEventListener('click', () => {
+				const name = el.dataset.var;
+				navigator.clipboard.writeText(`var(${name})`).then(() => {
+					el.classList.add('copied');
+					setTimeout(() => el.classList.remove('copied'), 1000);
+				});
+			});
+		});
+	}
+	
+	renderCssVars();
+	cssVarSearch.addEventListener('input', (e) => renderCssVars(e.target.value));
 }
 </script>
 
