@@ -6,11 +6,30 @@
 <script type="text/markdown">
 # LLM Guide: nui-dropzone
 
-> **Global Note:** Always follow the global rules in `Playground/README.md`. Use data-action for interactions, no custom CSS.
+## Design Philosophy
+The dropzone component provides a container-scoped file drop overlay that appears automatically when files are dragged into the browser window. Rather than requiring users to target a small drop area, it creates an intuitive full-container overlay with named zones for categorizing dropped files.
 
-## Two Usage Patterns
+## How It Works
+The component listens for `dragenter`, `dragleave`, and `drop` events at the window level. When files enter the browser, the overlay becomes visible via the `active` attribute, which CSS uses to toggle opacity and pointer-events. The overlay hides when the drag leaves the window (`relatedTarget === null`) or when files are dropped.
 
-### Declarative (HTML)
+Each zone child with `[data-drop]` receives an `.active` class on drag hover, providing visual feedback for the target area.
+
+## Grid Auto-Layout
+The component automatically calculates an optimal grid layout based on zone count:
+- 1 zone → single column
+- 2 zones → 2 columns
+- 3 zones → 2 columns (2 top, 1 bottom)
+- 4 zones → 2×2 grid
+- 5 zones → 3+2 layout
+- 6 zones → 3×2 grid
+
+The layout uses `Math.ceil(Math.sqrt(count))` for column count, with incomplete rows spanning wider to fill space evenly.
+
+## Usage Patterns
+
+### Declarative HTML
+Wrap zones in `<nui-dropzone>` with `data-drop` attributes for named drop targets:
+
 ```html
 <div style="position: relative; min-height: 12rem;">
 	<nui-dropzone>
@@ -20,37 +39,30 @@
 </div>
 ```
 
-### Programmatic (JS)
+### Programmatic Creation
+Create dropzones dynamically using the component API:
+
 ```javascript
 nui.components.dropzone.create(
     [
         { name: 'images', label: 'Images' },
         { name: 'documents', label: 'Documents' }
     ],
-    (detail, event) => { console.log(detail.zone, detail.dataTransfer.files); },
+    (detail, event) => { 
+        console.log(detail.zone, detail.dataTransfer.files); 
+    },
     document.querySelector('#target')
 );
 ```
 
-## How It Works
-- Listens for `dragenter`/`dragleave`/`drop` on `window` — activates when files enter the browser, deactivates when they leave (`relatedTarget === null`).
-- The overlay starts hidden (`opacity: 0; pointer-events: none`). Window-level `dragenter` sets the `active` attribute, which CSS toggles to visible + interactive.
-- Each zone child with `[data-drop]` highlights on drag hover via the `.active` class.
+## Events
+The component dispatches these events:
+- `nui-dropzone-open` — Overlay became visible
+- `nui-dropzone-drop` — Files were dropped. Detail includes `{ zone, dataTransfer, originalEvent }`
+- `nui-dropzone-close` — Overlay hidden after drop or drag-leave
 
-## Grid Auto-Layout
-Zone count determines column layout: 1=1col, 2=2col, 3=2+1, 4=2×2, 5=3+2, 6=3×2, etc.
-Uses `Math.ceil(Math.sqrt(count))` for column count. If the last row is incomplete, its items span wider to fill the row evenly.
-
-## Critical Rules
-- The parent container must have `position: relative` and a defined height.
-- The overlay activates automatically when files are dragged over the browser window.
-- Events: `nui-dropzone-open`, `nui-dropzone-drop`, `nui-dropzone-close`.
-- Drop detail contains `{ zone, dataTransfer, originalEvent }`.
-
-## Anti-Patterns
-- Adding `active` attribute manually.
-- Placing in a container without `position: relative`.
-- Forgetting the `[data-drop]` attribute on child elements (declarative mode).
+## When to Use
+Use the dropzone when you want users to categorize files during upload (like separating images from documents), or when you need a prominent, hard-to-miss drop target that covers a specific container area rather than the entire page.
 </script>
 	</nui-markdown>
 </details>
