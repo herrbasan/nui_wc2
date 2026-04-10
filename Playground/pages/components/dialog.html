@@ -4,77 +4,94 @@
 		<summary><strong>LLM Guide - nui-dialog</strong></summary>
 		<nui-markdown id="llm-guide" data-component="nui-dialog" class="llm-guide">
 <script type="text/markdown">
-# LLM Guide: nui-dialog (Modal Component)
+# LLM Guide: nui-dialog
 
-> **Global Note:** Always follow the global rules in `Playground/README.md`. Use `nui.util.createElement`.
+## Design Philosophy
 
-## Usage Modes (Read carefully)
-You almost NEVER need to write `<nui-dialog>` HTML manually. Use the JavaScript API for 95% of use cases.
+NUI's dialog system is built on the native HTML `<dialog>` element, which provides focus trapping, Escape key handling, and accessibility features that would be error-prone to recreate. The `nui-dialog` wrapper adds NUI styling, animations, and positioning options.
 
-### 1. Simple System Dialogs (JS - Preferred)
-Use these for simple messages, confirmations, or basic forms. They return Promises.
-```js
-// Alert
-await nui.components.dialog.alert('Title', 'Message text');
+## Two Usage Patterns
 
-// Confirm
-const isConfirmed = await nui.components.dialog.confirm('Delete?', 'Cannot be undone.');
+### Pattern 1: Programmatic System Dialogs
 
-// Prompt (Basic Forms)
-const result = await nui.components.dialog.prompt('Login', 'Enter details', {
+For common modal interactions (alerts, confirms, prompts), use the JavaScript API:
+
+```javascript
+// Alert - information only
+await nui.components.dialog.alert('Success', 'Changes saved');
+
+// Confirm - yes/no decision
+const confirmed = await nui.components.dialog.confirm(
+	'Delete Item?', 
+	'This cannot be undone.'
+);
+
+// Prompt - simple form
+const values = await nui.components.dialog.prompt('Edit User', '', {
 	fields: [
-		{ id: 'username', label: 'Name', value: '' },
+		{ id: 'name', label: 'Name', value: 'John' },
 		{ id: 'email', label: 'Email', type: 'email' }
 	]
 });
-// result is { username: '...', email: '...' } or null
 ```
 
-### 2. Complex Custom Dialogs (JS - `mode="page"`)
-For large, custom forms or interfaces, use `nui.components.dialog.page()`.
-```js
-const { dialog, main } = await nui.components.dialog.page('Dialog Title', 'Subtitle', {
-	contentScroll: true, // Let the main area scroll
-	buttons: [
-		{ label: 'Cancel', type: 'outline', value: 'cancel' },
-		{ label: 'Save', type: 'primary', value: 'save' }
-	]
-});
+These return Promises that resolve when the user interacts with the dialog. The dialog element is created, shown, and cleaned up automatically.
 
-// Build content into the returned `main` element
-main.innerHTML = `<nui-input><input type="text"></nui-input>`;
+### Pattern 2: Declarative Custom Dialogs
 
-// Listen for close to get the button value
-dialog.addEventListener('nui-dialog-close', (e) => {
-	if (e.detail.returnValue === 'save') { /* ... */ }
-});
-```
+For complex, reusable dialog content, declare the HTML:
 
-### 3. Declarative HTML (Rarely used)
-If you MUST write the HTML manually (e.g. static content triggered by a button):
-- `<nui-dialog>` MUST wrap a native `<dialog>`.
-- Close it by passing the button value via `data-action="dialog-close:myValue@#dialog-id"`.
-
-**Correct (Declarative):**
 ```html
-<button data-action="dialog-open@#my-dialog">Open</button>
-
-<nui-dialog id="my-dialog">
+<nui-dialog id="settings-dialog">
 	<dialog>
-		<div class="nui-dialog-alert">
-			<div class="nui-headline">Title</div>
-			<nui-button><button data-action="dialog-close:ok@#my-dialog">OK</button></nui-button>
-		</div>
+		<form method="dialog">
+			<h2>Settings</h2>
+			<!-- Custom content -->
+			<button value="save">Save</button>
+			<button value="cancel">Cancel</button>
+		</form>
 	</dialog>
 </nui-dialog>
 ```
 
-**Wrong / Will Fail:**
-```html
-<nui-dialog id="my-dialog">
-	<div>Title</div> <!-- Missing native <dialog> wrapper -->
-</nui-dialog>
+The native `<dialog>` element handles:
+- Focus trapping while open
+- Escape key to close
+- Returning focus to the trigger on close
+- `method="dialog"` for form submission without page reload
+
+## Dialog Structure
+
+A dialog has three regions:
+- **Header** - Title and optional subtitle
+- **Main** - Scrollable content area
+- **Footer** - Action buttons
+
+For system dialogs, these are generated automatically. For custom dialogs, you define the structure inside the native `<dialog>` element.
+
+## Positioning
+
+Dialogs can be positioned:
+- **center** (default) - Vertically and horizontally centered
+- **top** - Aligned to top with margin
+- **bottom** - Aligned to bottom (sheet-style on mobile)
+
+Position is an attribute on `<nui-dialog>`, not the inner `<dialog>` element.
+
+## Return Values
+
+Dialogs communicate results through the `nui-dialog-close` event:
+
+```javascript
+dialog.addEventListener('nui-dialog-close', (e) => {
+	// e.detail.returnValue contains the button value
+	if (e.detail.returnValue === 'save') {
+		// Handle save
+	}
+});
 ```
+
+For forms with `method="dialog"`, the submit button's `value` attribute becomes the return value.
 </script>
 		</nui-markdown>
 	</details>

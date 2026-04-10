@@ -6,43 +6,51 @@
 <script type="text/markdown">
 # LLM Guide: nui-button & nui-button-container
 
-> **Global Note:** Always follow the global rules in `Playground/README.md`. 
+## Design Philosophy
 
-## Critical Rules & Strict DOM Structure
-- `<nui-button>` is a Light DOM wrapper. It MUST contain a native `<button>` or `<a>` tag.
-- NEVER invent `<nui-button>Click</nui-button>` without the inner button tag.
-- Set the button `type` (e.g., `type="button"` or `type="submit"`) on the inner button.
-- Apply attributes like `disabled` or `aria-label` to the inner button, NOT the wrapper.
-- Use `<nui-button-container>` to group multiple buttons together. Do NOT use generic `<div>` wrappers with custom flexbox classes to group buttons.
+The button component embodies NUI's core principle: **enhance, don't replace**. Rather than creating a synthetic button from divs with click handlers, `nui-button` wraps the native `<button>` element and adds visual styling while preserving all native behaviors.
 
-**Correct Usage:**
-```html
-<nui-button-container align="end" gap="1rem">
-	<nui-button variant="outline">
-		<button type="button">Cancel</button>
-	</nui-button>
-	<nui-button variant="primary">
-		<button type="submit" disabled>Save</button>
-	</nui-button>
-</nui-button-container>
-```
+This matters because native buttons have capabilities no div can replicate:
+- Keyboard focus and activation (Space/Enter)
+- Form submission and reset behavior
+- Disabled state that truly prevents interaction
+- Automatic accessibility announcements
 
-**Wrong / Will Fail:**
-```html
-<div style="display: flex; gap: 10px;"> <!-- Wrong: Use <nui-button-container> -->
-	<nui-button type="button" disabled>Save</nui-button> <!-- Wrong: Missing inner <button>, attributes on wrapper -->
-</div>
-```
+## The Wrapper Pattern
 
-## Icons in Buttons
-If using an icon, wrap the icon name in the `<nui-icon>` component, and place it *inside* the native button.
-```html
-<nui-button>
-	<button type="button">
-		<nui-icon name="settings">⚙</nui-icon> Settings
-	</button>
-</nui-button>
-```
+`nui-button` is a Light DOM custom element that expects a native `<button>` or `<a>` as its child. The wrapper provides:
+- Consistent visual styling (variants: primary, outline, ghost)
+- Theme integration via CSS custom properties
+- Optional icon spacing and alignment
+
+The inner element provides:
+- All native button behaviors
+- Accessibility attributes (aria-label, disabled)
+- Form integration (type="submit", type="reset")
+
+This separation keeps concerns clear: the wrapper handles appearance, the inner element handles semantics and behavior.
+
+## Button Variants
+
+Variants change visual emphasis, not behavior:
+- **Default** - Standard action
+- **Primary** - Main call-to-action in a context
+- **Outline** - Secondary actions, de-emphasized
+- **Ghost** - Subtle actions, icon buttons
+
+Choose variants based on visual hierarchy, not functional importance. A destructive delete action might be outline or ghost depending on how prominently it should appear.
+
+## Button Containers
+
+`nui-button-container` groups related buttons with consistent spacing and alignment. It uses CSS custom properties for gaps and alignment, ensuring consistency across the application.
+
+Use containers instead of ad-hoc flexbox wrappers to maintain design system consistency.
+
+## Icon Integration
+
+Icons inside buttons use `nui-icon` with a text fallback. The fallback displays if the icon sprite fails to load, ensuring the button remains functional.
+
+Place icons before text for standard buttons, or use icon-only buttons when space is constrained. Icon-only buttons should have explicit `aria-label` attributes on the inner button.
 </script>
 		</nui-markdown>
 	</details>

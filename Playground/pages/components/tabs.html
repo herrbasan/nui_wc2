@@ -4,58 +4,79 @@
 		<summary><strong>LLM Guide - nui-tabs</strong></summary>
 		<nui-markdown id="llm-guide" data-component="nui-tabs" class="llm-guide">
 <script type="text/markdown">
-# LLM Guide: nui-tabs (Tab Panels)
+# LLM Guide: nui-tabs
 
-> **Global Note:** Always follow the global rules in `Playground/README.md`. Use the correct Light DOM wrappers.
+## Design Philosophy
 
-## Critical Rules & Strict DOM Structure
-NUI separates the *navigation* (`<nav>`) from the *panels* (`<section>`). 
+Tabs organize content into mutually exclusive views while keeping all content in the DOM. Unlike navigation that loads new pages, tabs switch between content that's already present.
 
-- `<nui-tabs>` acts as the outer wrapper.
-- Inside, the first element MUST be a `<nav>`. The nav MUST contain `<button>` elements (NOT anchor `<a>` tags) with `data-tab="tab-id"` attributes.
-- Following the `<nav>`, there MUST be `<section>` elements acting as panels. Each panel MUST have an `id` matching its corresponding button's `data-tab`.
-- The active tab button automatically receives `aria-selected="true"`. Do NOT manually assign `.active` classes.
-- The inactive panels automatically receive the `hidden` attribute. Do NOT manually set `display: none` or `.hidden` classes.
+The NUI tabs component follows the ARIA Tab Pattern closely, using semantic HTML as the foundation:
+- `<nav>` for the tab list (role="tablist")
+- `<button>` elements for tabs (role="tab")
+- `<section>` elements for panels (role="tabpanel")
 
-**Correct Usage:**
+This structure works as plain HTML (all panels visible) and upgrades to interactive tabs when JavaScript loads.
+
+## Structure
+
 ```html
 <nui-tabs>
-	<!-- Navigation MUST be first, containing buttons with data-tab -->
-	<nav aria-label="Settings Options">
-		<button type="button" data-tab="tab-profile" aria-selected="true">Profile</button>
-		<button type="button" data-tab="tab-security">Security</button>
+	<nav>
+		<button data-tab="profile">Profile</button>
+		<button data-tab="settings">Settings</button>
 	</nav>
-	
-	<!-- Panels MUST follow, with IDs matching the data-tabs -->
-	<section id="tab-profile">
-		<h2>Profile Settings</h2>
-		<p>Update your details here.</p>
-	</section>
-	
-	<section id="tab-security" hidden> <!-- Manually hide inactive panels on first load -->
-		<h2>Security Settings</h2>
-		<p>Update your password here.</p>
-	</section>
+	<section id="profile">...</section>
+	<section id="settings" hidden>...</section>
 </nui-tabs>
 ```
 
-**Wrong / Will Fail:**
-```html
-<nui-tabs>
-	<div> <!-- Wrong: MUST be a <nav> -->
-		<a href="#tab-profile">Profile</a> <!-- Wrong: MUST be <button data-tab="..."> -->
-	</div>
-	<div id="tab-profile">...</div> <!-- Wrong: MUST be a <section> -->
-</nui-tabs>
-```
+The `data-tab` attribute on buttons links to panel IDs. When a tab is activated:
+1. The button gets `aria-selected="true"`
+2. Its corresponding panel loses the `hidden` attribute
+3. All other panels get `hidden`
+
+## Progressive Enhancement
+
+Without JavaScript, all panels are visible. The `hidden` attribute on inactive panels ensures content is accessible even before upgrade.
+
+After upgrade:
+- Only the first panel is shown by default
+- Keyboard navigation works (arrows, Home, End)
+- ARIA attributes are managed automatically
+
+## Height Animation
+
+Tab panels automatically animate height when switching between tabs of different content heights. This provides visual continuity without layout shifts.
+
+The animation respects `prefers-reduced-motion` automatically.
 
 ## Programmatic Control
-If you need to change a tab via JavaScript (e.g. after a form submission on another tab), use the component's `select(id)` method:
 
-```js
-const tabsElement = document.querySelector('nui-tabs');
-tabsElement.select('tab-security'); // Activates the tab with data-tab="tab-security"
+Select tabs programmatically:
+
+```javascript
+tabs.select('settings');
 ```
+
+Listen for changes:
+
+```javascript
+tabs.addEventListener('nui-tab-change', (e) => {
+	console.log('Active tab:', e.detail.tab);
+});
+```
+
+## Use Cases
+
+Tabs work well for:
+- Settings organized by category
+- Content that doesn't need URL-addressable states
+- Space-constrained layouts where showing all content at once would be overwhelming
+
+Avoid tabs for:
+- Content that users might want to link to directly (use pages)
+- Sequential workflows (use step indicators)
+- Large amounts of content per panel (consider pages or accordions)
 </script>
 		</nui-markdown>
 	</details>

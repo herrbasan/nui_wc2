@@ -4,57 +4,81 @@
 		<summary><strong>LLM Guide - nui-input</strong></summary>
 		<nui-markdown id="llm-guide" data-component="nui-input" class="llm-guide">
 <script type="text/markdown">
-# LLM Guide: nui-input, nui-input-group, nui-textarea, nui-checkbox, nui-radio
+# LLM Guide: Form Input Components
 
-> **Global Note:** Always follow the global rules in `Playground/README.md`. Use the correct Light DOM wrappers.
+## Design Philosophy
 
-## Critical Rules & Strict DOM Structure
-NUI separates the *structure* of a form field (`<nui-input-group>`) from the *styling* of the input element (`<nui-input>`). 
+Form inputs in NUI follow the same pattern as other components: wrap native HTML elements to add styling while preserving all native behaviors. This is especially important for form elements because:
 
-- `<nui-input-group>` wraps the `<label>`, the input component, and the description.
-- `<nui-input>`, `<nui-textarea>`, `<nui-checkbox>`, and `<nui-radio>` are wrappers that MUST contain a native `<input>` or `<textarea>`.
-- **Do NOT** put the `<label>` inside the `<nui-input>` component. The label lives side-by-side with the component inside `<nui-input-group>`.
-- Set `id`, `name`, `placeholder`, `required`, and `disabled` on the **inner** native `<input>` tag, NOT on the `nui-*` wrapper.
+- Native inputs handle validation, keyboard navigation, and accessibility
+- Form submission relies on native input names and values
+- Screen readers expect standard form markup
 
-**Correct (Text Input):**
+## The Wrapper Pattern
+
+Each input component wraps its native equivalent:
+- `<nui-input>` wraps `<input>`
+- `<nui-textarea>` wraps `<textarea>`
+- `<nui-checkbox>` wraps `<input type="checkbox">`
+- `<nui-radio>` wraps `<input type="radio">`
+
+The wrapper provides visual styling and theme integration. All functional attributes (name, value, required, etc.) go on the native element inside.
+
+## Input Groups
+
+`<nui-input-group>` combines a label, input component, and description into a cohesive unit:
+
 ```html
 <nui-input-group>
-	<label for="email">Email Address</label>
+	<label for="email">Email</label>
 	<nui-input>
-		<input type="email" id="email" name="email" required>
+		<input type="email" id="email" name="email">
 	</nui-input>
 	<span class="description">We'll never share your email.</span>
 </nui-input-group>
 ```
 
-**Correct (Checkbox):**
+The group ensures consistent spacing and association between label and input. The `for` attribute on the label links to the `id` on the native input for accessibility.
+
+## Checkboxes and Radio Buttons
+
+Unlike text inputs, checkboxes and radios include their label inside the wrapper:
+
 ```html
 <nui-checkbox>
 	<input type="checkbox" id="terms" name="terms">
-	<label for="terms">I accept the terms</label> <!-- Checkboxes have internal labels -->
+	<label for="terms">I accept the terms</label>
 </nui-checkbox>
 ```
 
-**Wrong / Will Fail:**
-```html
-<nui-input type="text" placeholder="Name"></nui-input> <!-- Wrong: Missing inner <input>, attributes on wrapper -->
+This structure keeps the input and label tightly coupled, ensuring the clickable area includes both the box and the text.
 
-<nui-input>
-	<label>Email</label> <!-- Wrong: Label belongs inside <nui-input-group>, not <nui-input> -->
-	<input type="email">
-</nui-input>
-```
+## Icons and Actions
 
-## Icons and Actions inside Inputs
-Use `<nui-icon>` or `<button>` directly inside the `<nui-input>` wrapper, alongside the native `<input>`.
+Input components can contain icons and buttons alongside the native input:
 
 ```html
 <nui-input>
-	<nui-icon name="search">🔍</nui-icon> <!-- Leading icon -->
-	<input type="text" placeholder="Search...">
-	<button type="button" aria-label="Clear"><nui-icon name="close">×</nui-icon></button> <!-- Trailing action -->
+	<nui-icon name="search"></nui-icon>
+	<input type="text" placeholder="Search">
+	<button type="button" aria-label="Clear">×</button>
 </nui-input>
 ```
+
+These are positioned using CSS, keeping the HTML structure flat and readable.
+
+## Progressive Enhancement
+
+Without JavaScript, the native inputs work perfectly:
+- Form submission proceeds normally
+- Validation attributes function
+- Labels remain associated
+
+With JavaScript, NUI adds:
+- Consistent visual styling
+- Theme integration
+- Enhanced focus states
+- Icon positioning
 </script>
 		</nui-markdown>
 	</details>

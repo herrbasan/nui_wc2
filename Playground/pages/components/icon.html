@@ -6,27 +6,72 @@
 <script type="text/markdown">
 # LLM Guide: nui-icon
 
-> **Global Note:** Always follow the global rules in `Playground/README.md`. Use the correct Light DOM wrappers.
+## Design Philosophy
 
-## Critical Rules
-- Do NOT use font icons or tags like `<i class="fa fa-home"></i>`. NUI uses SVG sprites.
-- The `<nui-icon>` component fetches an SVG based on its `name` attribute.
-- You MUST provide text inside the tag to act as an accessible fallback for browsers that fail to load SVGs, or for when the SVG sprite hasn't loaded yet. The CSS automatically hides the fallback text when the SVG loads.
-- If the icon is decorative and adjacent to text (like a button label), add `aria-hidden="true"`.
+Icons in NUI use SVG sprites rather than icon fonts. This choice provides several advantages:
+- Vector graphics scale cleanly at any size
+- Single HTTP request for all icons (sprite sheet)
+- CSS color inheritance works naturally
+- No Flash of Unstyled Content (FOUC) from font loading
 
-**Correct (Inside a button):**
+## SVG Sprite System
+
+All icons are stored in a single SVG file (`material-icons-sprite.svg`). The `<nui-icon>` component references icons by name:
+
+```html
+<nui-icon name="settings">⚙</nui-icon>
+```
+
+The text content (⚙) serves as a fallback if the sprite fails to load. CSS hides this fallback once the SVG loads successfully.
+
+## Sizing
+
+Icons inherit `font-size` from their parent, making them consistent with surrounding text:
+
+```html
+<p>Settings <nui-icon name="settings">⚙</nui-icon></p>
+<!-- Icon matches text size -->
+```
+
+For explicit sizing, use CSS:
+
+```html
+<nui-icon name="settings" style="font-size: 24px;">⚙</nui-icon>
+```
+
+## Accessibility
+
+Icons are decorative by default. When used alongside text, hide them from screen readers:
+
 ```html
 <nui-button>
 	<button>
-		<nui-icon name="home" aria-hidden="true">🏠</nui-icon> Go Home
+		<nui-icon name="save" aria-hidden="true">💾</nui-icon>
+		Save Changes
 	</button>
 </nui-button>
 ```
 
-**Wrong / Will Fail:**
+For icon-only buttons, ensure the button itself has an `aria-label`:
+
 ```html
-<i class="icon-home"></i> <!-- Wrong: Do not use <i> tags -->
-<nui-icon name="home"></nui-icon> <!-- Wrong: Missing fallback text/emoji -->
+<nui-button>
+	<button aria-label="Close">
+		<nui-icon name="close">✕</nui-icon>
+	</button>
+</nui-button>
+```
+
+## Theming
+
+Icons inherit color from CSS, making them easy to theme:
+
+```css
+/* Icon matches text color */
+nui-icon { color: var(--color-text); }
+
+/* Icon in primary button matches button text */
+.primary nui-icon { color: inherit; }
 ```
 </script>
 		</nui-markdown>
