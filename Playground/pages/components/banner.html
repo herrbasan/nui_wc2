@@ -70,7 +70,7 @@ Use **dialogs** for:
 
 <header>
 	<h1>Banner Component</h1>
-	<p>Edge-anchored notification banners for passive, informational messages</p>
+	<p class="lead">Edge-anchored notification banners for passive, informational messages</p>
 </header>
 
 <section>
@@ -181,34 +181,13 @@ banner.onClose((action) => {
 });
 		</script>
 	</nui-code>
+	<h3>Try It</h3>
+	<p>See the programmatic demos above to experiment with the factory return value.</p>
 </section>
 
 <section>
 	<h2>Priority Levels &amp; Accessibility</h2>
 	<p>Banners support two priority levels that affect ARIA attributes:</p>
-	<nui-table>
-		<table>
-			<thead>
-				<tr>
-					<th>Priority</th>
-					<th>ARIA Role</th>
-					<th>Behavior</th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr>
-					<td><code>info</code> (default)</td>
-					<td><code>role="status"</code></td>
-					<td>Politely announced when screen reader is idle</td>
-				</tr>
-				<tr>
-					<td><code>alert</code></td>
-					<td><code>role="alert"</code></td>
-					<td>Immediately announced, interrupts current speech</td>
-				</tr>
-			</tbody>
-		</table>
-	</nui-table>
 	<nui-code>
 		<script type="example" data-lang="javascript">
 // Info: Non-urgent status updates
@@ -224,6 +203,27 @@ nui.components.banner.show({
 });
 		</script>
 	</nui-code>
+	<table class="nui-table nui-table--api">
+		<thead>
+			<tr>
+				<th>Priority</th>
+				<th>ARIA Role</th>
+				<th>Behavior</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>info</code> (default)</td>
+				<td><code>role="status"</code></td>
+				<td>Politely announced when screen reader is idle</td>
+			</tr>
+			<tr>
+				<td><code>alert</code></td>
+				<td><code>role="alert"</code></td>
+				<td>Immediately announced, interrupts current speech</td>
+			</tr>
+		</tbody>
+	</table>
 	<h3>Try It</h3>
 	<nui-button-container gap="1rem">
 		<nui-button><button type="button" data-action="show-info-banner">Info Priority</button></nui-button>
@@ -279,8 +279,6 @@ nui.components.banner.show({
 });
 		</script>
 	</nui-code>
-});</code></pre>
-	</nui-code>
 	<h3>Try It</h3>
 	<nui-button-container gap="1rem">
 		<nui-button><button type="button" data-action="show-cookie-consent">Show Cookie Consent</button></nui-button>
@@ -331,43 +329,43 @@ banner.addEventListener('nui-banner-close', (e) => {
 });
 		</script>
 	</nui-code>
+	<h3>Try It</h3>
+	<p>See the programmatic demos above to trigger banner events.</p>
 </section>
 
 <section>
 	<h2>Attributes Reference</h2>
-	<nui-table>
-		<table>
-			<thead>
-				<tr>
-					<th>Attribute</th>
-					<th>Values</th>
-					<th>Description</th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr>
-					<td><code>placement</code></td>
-					<td><code>top</code>, <code>bottom</code></td>
-					<td>Edge placement (default: bottom)</td>
-				</tr>
-				<tr>
-					<td><code>auto-close</code></td>
-					<td>milliseconds</td>
-					<td>Auto-close timeout (0 = disabled)</td>
-				</tr>
-				<tr>
-					<td><code>priority</code></td>
-					<td><code>info</code>, <code>alert</code></td>
-					<td>Accessibility priority (default: info)</td>
-				</tr>
-				<tr>
-					<td><code>open</code></td>
-					<td>(boolean)</td>
-					<td>Present when banner is visible</td>
-				</tr>
-			</tbody>
-		</table>
-	</nui-table>
+	<table class="nui-table nui-table--api">
+		<thead>
+			<tr>
+				<th>Attribute</th>
+				<th>Values</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>placement</code></td>
+				<td><code>top</code>, <code>bottom</code></td>
+				<td>Edge placement (default: bottom)</td>
+			</tr>
+			<tr>
+				<td><code>auto-close</code></td>
+				<td>milliseconds</td>
+				<td>Auto-close timeout (0 = disabled)</td>
+			</tr>
+			<tr>
+				<td><code>priority</code></td>
+				<td><code>info</code>, <code>alert</code></td>
+				<td>Accessibility priority (default: info)</td>
+			</tr>
+			<tr>
+				<td><code>open</code></td>
+				<td>(boolean)</td>
+				<td>Present when banner is visible</td>
+			</tr>
+		</tbody>
+	</table>
 </section>
 
 <section>
@@ -385,6 +383,7 @@ nui.components.banner.show({
 });
 		</script>
 	</nui-code>
+	<h3>Try It</h3>
 	<p><strong>Content scaling:</strong> Content has a max-height of 50vh and scrolls if it exceeds this. Set <code>showCloseButton: false</code> when your content includes its own close controls.</p>
 </section>
 

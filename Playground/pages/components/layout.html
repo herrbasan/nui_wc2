@@ -83,7 +83,7 @@ This component handles content layouts. For structural app chrome (sidebars, hea
 
 <header>
 	<h1>Layout Component</h1>
-	<p>A constrained, robust layout utility for common content patterns.</p>
+	<p class="lead">A constrained, robust layout utility for common content patterns.</p>
 </header>
 
 <section>
@@ -143,6 +143,17 @@ This component handles content layouts. For structural app chrome (sidebars, hea
 	<h2>Grid Layout (Default)</h2>
 	<p>The default behavior creates equal-width columns using CSS Grid. Specify the target number of columns for desktop; the component handles tablet (max 2) and mobile (always 1) automatically.</p>
 
+	<h3>Try It</h3>
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-layout columns="2">
+	<nui-card>Card 1</nui-card>
+	<nui-card>Card 2</nui-card>
+	...
+</nui-layout>
+		</script>
+	</nui-code>
+
 	<h3>2 Columns</h3>
 	<nui-layout columns="2">
 		<nui-card>
@@ -174,19 +185,21 @@ This component handles content layouts. For structural app chrome (sidebars, hea
 			</div>
 		</nui-card>
 	</nui-layout>
+</section>
 
+<section>
+	<h3>Try It</h3>
 	<nui-code>
 		<script type="example" data-lang="html">
-<nui-layout columns="2">
+<nui-layout columns="3">
 	<nui-card>Card 1</nui-card>
 	<nui-card>Card 2</nui-card>
+	<nui-card>Card 3</nui-card>
 	...
 </nui-layout>
 		</script>
 	</nui-code>
-</section>
 
-<section>
 	<h3>3 Columns</h3>
 	<p>On larger screens (desktop), this will show 3 columns. On tablets, it automatically clamps to 2. On mobile, it
 		stacks to 1.</p>
@@ -240,17 +253,6 @@ This component handles content layouts. For structural app chrome (sidebars, hea
 			</div>
 		</nui-card>
 	</nui-layout>
-
-	<nui-code>
-		<script type="example" data-lang="html">
-<nui-layout columns="3">
-	<nui-card>Card 1</nui-card>
-	<nui-card>Card 2</nui-card>
-	<nui-card>Card 3</nui-card>
-	...
-</nui-layout>
-		</script>
-	</nui-code>
 </section>
 
 <section>

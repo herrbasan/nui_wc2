@@ -239,8 +239,8 @@ a {
 	transition: color 0.2s;
 }
 
-a::before {
-	--arrow-size: 0.15rem;
+p > a::before {
+	--arrow-size: 0.2rem;
 	content: '';
 	display: inline-block;
 	width: var(--arrow-size);
@@ -248,7 +248,7 @@ a::before {
 	border-right: var(--arrow-size) solid var(--color-text-dim);
 	border-bottom: var(--arrow-size) solid var(--color-text-dim);
 	transform: rotate(-45deg);
-	margin-right: calc(var(--arrow-size) + 0.2rem);
+	margin-right: calc(var(--arrow-size) + 0.1rem);
 	margin-bottom: var(--arrow-size);
 	opacity: 0.5;
 	transition: border-color 0.05s, opacity 0.05s;
@@ -596,8 +596,12 @@ nui-link-list[mode="fold"] ul li {
 }
 
 nui-link-list[mode="fold"] ul li.group-header button.group-toggle::after {
-	content: '▸';
-	font-size: var(--font-size-large);
+	content: '';
+	width: 0;
+	height: 0;
+	border-top: 5px solid transparent;
+	border-bottom: 5px solid transparent;
+	border-left: 7px solid currentColor;
 	opacity: 0.2;
 	transition: all 0.2s;
 	position: absolute;
@@ -606,7 +610,7 @@ nui-link-list[mode="fold"] ul li.group-header button.group-toggle::after {
 
 nui-link-list[mode="fold"] ul li.group-header button.group-toggle[aria-expanded="true"]::after {
 	transform: rotate(90deg);
-	color: var(--color-highlight);
+	border-left-color: var(--color-highlight);
 	opacity: 1;
 }
 

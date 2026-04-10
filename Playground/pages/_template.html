@@ -1,0 +1,197 @@
+<!-- 
+================================================================================
+NUI PLAYGROUND PAGE TEMPLATE
+================================================================================
+Copy this file when creating new component demo pages.
+Replace [component] with the component name (e.g., button, tabs, dialog).
+================================================================================
+-->
+
+<!-- 1. PAGE WRAPPER - Always required -->
+<div class="page-[component]">
+
+	<!-- 2. OPTIONAL: LLM Guide (for complex components) -->
+	<!-- Remove this section for simple components -->
+	<details class="collapsible-section collapsible-section--spaced">
+		<summary><strong>LLM Guide - nui-[component]</strong></summary>
+		<nui-markdown id="llm-guide" data-component="nui-[component]" class="llm-guide">
+			<script type="text/markdown">
+# LLM Guide: nui-[component]
+
+## Design Philosophy
+
+Explain the core design principles behind this component.
+
+## Usage Patterns
+
+```html
+<nui-[component]>
+	<!-- Example markup -->
+</nui-[component]>
+```
+
+## When to Use
+
+- Use case 1
+- Use case 2
+
+## When NOT to Use
+
+- Avoid for X (use Y instead)
+</script>
+		</nui-markdown>
+	</details>
+
+	<!-- 3. HEADER - Always required -->
+	<header>
+		<h1>[Component] Component</h1>
+		<p class="lead">One-sentence description of what this component does.</p>
+	</header>
+
+	<!-- 4. OVERVIEW SECTION - Optional but recommended -->
+	<!-- For complex components: explain what it is, key features -->
+	<section>
+		<h2>Overview</h2>
+		<p>The <code>&lt;nui-[component]&gt;</code> component ...</p>
+		<ul>
+			<li><strong>Key feature 1:</strong> Description</li>
+			<li><strong>Key feature 2:</strong> Description</li>
+		</ul>
+	</section>
+
+	<!-- 5. BASIC USAGE SECTION - Always required -->
+	<section>
+		<h2>Declarative Usage (Default)</h2>
+		<p>Brief explanation of the basic usage pattern.</p>
+
+		<!-- Code example FIRST -->
+		<nui-code>
+			<script type="example" data-lang="html">
+<nui-[component]>
+	<!-- Basic example markup -->
+</nui-[component]>
+			</script>
+		</nui-code>
+
+		<!-- Live demo SECOND (in .demo-container or .demo-area) -->
+		<div class="demo-container">
+			<nui-[component]>
+				<!-- Basic live demo -->
+			</nui-[component]>
+		</div>
+	</section>
+
+	<!-- 6. FEATURE SECTIONS - Repeat for each major feature -->
+	<section>
+		<h2>Feature Name</h2>
+		<p>Description of this feature.</p>
+
+		<nui-code>
+			<script type="example" data-lang="html">
+<nui-[component] attribute="value">
+	<!-- Feature example -->
+</nui-[component]>
+			</script>
+		</nui-code>
+
+		<h3>Try It</h3>
+		<div class="demo-area">
+			<!-- Interactive demo -->
+		</div>
+	</section>
+
+	<!-- 7. COMPONENT API SECTION - Always required (except for simple layout components) -->
+	<section>
+		<h2>Component API</h2>
+		<p>The [component] component exposes properties, methods, and events for programmatic control.</p>
+
+		<!-- Attributes -->
+		<h3>Attributes</h3>
+		<table class="nui-table nui-table--api">
+			<thead>
+				<tr>
+					<th>Attribute</th>
+					<th>Type</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><code>attribute-name</code></td>
+					<td>string</td>
+					<td>Description of what this attribute does.</td>
+				</tr>
+			</tbody>
+		</table>
+
+		<!-- Methods -->
+		<h3>Methods</h3>
+		<table class="nui-table nui-table--api">
+			<thead>
+				<tr>
+					<th>Method</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><code>methodName()</code></td>
+					<td>Description of what this method does.</td>
+				</tr>
+			</tbody>
+		</table>
+
+		<!-- Events -->
+		<h3>Events</h3>
+		<table class="nui-table nui-table--api">
+			<thead>
+				<tr>
+					<th>Event Name</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><code>nui-event-name</code></td>
+					<td>Fired when ... <code>e.detail</code> contains ...</td>
+				</tr>
+			</tbody>
+		</table>
+	</section>
+
+	<!-- 8. ACCESSIBILITY SECTION - Optional but recommended -->
+	<section>
+		<h2>Accessibility</h2>
+		<ul>
+			<li><strong>ARIA roles:</strong> Description</li>
+			<li><strong>Keyboard navigation:</strong> Description</li>
+		</ul>
+	</section>
+
+	<!-- 9. BEST PRACTICES SECTION - Optional -->
+	<section>
+		<h2>Best Practices</h2>
+		<ul>
+			<li>Best practice 1</li>
+			<li>Best practice 2</li>
+		</ul>
+	</section>
+
+</div>
+
+<!-- 10. PAGE SCRIPT - Always required (even if empty) -->
+<script type="nui/page">
+function init(element, params, nui) {
+	// One-time setup: cache elements, attach listeners
+	// Use element.querySelector(...) NOT document.querySelector(...)
+	
+	// Optional lifecycle hooks for the router
+	element.show = (params) => {
+		// Start timers/polling when page becomes visible
+	};
+
+	element.hide = () => {
+		// Stop timers, detach observers when page is hidden
+	};
+}
+</script>

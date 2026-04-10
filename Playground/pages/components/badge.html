@@ -185,6 +185,24 @@ The `data-badge` approach keeps DOM structure minimal while providing flexible v
 		<h2>Interactive Example</h2>
 		<p>Dynamically updating the <code>data-badge</code> attribute updates the badge instantly.</p>
 
+		<nui-code>
+			<script type="example" data-lang="html">
+<nui-button variant="ghost" id="notification-btn" data-badge="">
+	<button aria-label="Notifications">
+		<nui-icon name="notifications"></nui-icon>
+	</button>
+</nui-button>
+
+<nui-button data-action="badge:increment">
+	<button>Add Notification</button>
+</nui-button>
+<nui-button data-action="badge:clear" variant="secondary">
+	<button>Clear</button>
+</nui-button>
+			</script>
+		</nui-code>
+
+		<h3>Try It</h3>
 		<div class="demo-area">
 			<div class="demo-flex-center">
 				<nui-button variant="ghost" id="demo-notification-btn" data-badge="">

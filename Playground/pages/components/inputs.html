@@ -85,7 +85,7 @@ With JavaScript, NUI adds:
 
 <header>
 	<h1>Input Components</h1>
-	<p>Form input components with native accessibility, validation, and custom styling.</p>
+	<p class="lead">Form input components with native accessibility, validation, and custom styling.</p>
 </header>
 
 <section>
@@ -132,6 +132,18 @@ With JavaScript, NUI adds:
 	<h2>Clearable Input</h2>
 	<p>Add the <code>clearable</code> attribute to show a clear button when the input has a value.</p>
 
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-input-group>
+	<label>Search</label>
+	<nui-input clearable>
+		<input type="search" placeholder="Search..." value="Example search">
+	</nui-input>
+</nui-input-group>
+		</script>
+	</nui-code>
+
+	<h3>Try It</h3>
 	<div class="demo-container">
 		<nui-input-group>
 			<label>Search</label>
@@ -146,6 +158,15 @@ With JavaScript, NUI adds:
 	<h2>Standalone Input</h2>
 	<p>Inputs work without a group wrapper.</p>
 
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-input>
+	<input type="text" placeholder="Standalone input...">
+</nui-input>
+		</script>
+	</nui-code>
+
+	<h3>Try It</h3>
 	<div class="demo-container">
 		<nui-input>
 			<input type="text" placeholder="Standalone input...">
@@ -157,6 +178,39 @@ With JavaScript, NUI adds:
 	<h2>Input Types</h2>
 	<p>Standard HTML input types are supported.</p>
 
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-input-group>
+	<label>Number</label>
+	<nui-input>
+		<input type="number" placeholder="0" min="0" max="100">
+	</nui-input>
+</nui-input-group>
+
+<nui-input-group>
+	<label>Date</label>
+	<nui-input>
+		<input type="date">
+	</nui-input>
+</nui-input-group>
+
+<nui-input-group>
+	<label>URL</label>
+	<nui-input>
+		<input type="url" placeholder="https://example.com">
+	</nui-input>
+</nui-input-group>
+
+<nui-input-group>
+	<label>Search (with icon)</label>
+	<nui-input type="search" clearable>
+		<input type="search" placeholder="Search...">
+	</nui-input>
+</nui-input-group>
+		</script>
+	</nui-code>
+
+	<h3>Try It</h3>
 	<div class="demo-container">
 		<nui-input-group>
 			<label>Number</label>
@@ -192,6 +246,25 @@ With JavaScript, NUI adds:
 	<h2>Disabled & Read-only</h2>
 	<p>Standard HTML attributes for disabled and read-only states.</p>
 
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-input-group>
+	<label>Disabled</label>
+	<nui-input>
+		<input type="text" value="Cannot edit this" disabled>
+	</nui-input>
+</nui-input-group>
+
+<nui-input-group>
+	<label>Read-only</label>
+	<nui-input>
+		<input type="text" value="Read-only value" readonly>
+	</nui-input>
+</nui-input-group>
+		</script>
+	</nui-code>
+
+	<h3>Try It</h3>
 	<div class="demo-container">
 		<nui-input-group>
 			<label>Disabled</label>
@@ -213,6 +286,18 @@ With JavaScript, NUI adds:
 	<h2>Textarea</h2>
 	<p>Multiline text input with <code>&lt;nui-textarea&gt;</code>. Supports auto-resize and character counting.</p>
 
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-input-group>
+	<label>Comments</label>
+	<nui-textarea>
+		<textarea placeholder="Enter your comments..."></textarea>
+	</nui-textarea>
+</nui-input-group>
+		</script>
+	</nui-code>
+
+	<h3>Try It</h3>
 	<div class="demo-container">
 		<nui-input-group>
 			<label>Comments</label>
@@ -227,6 +312,18 @@ With JavaScript, NUI adds:
 	<h2>Auto-resize</h2>
 	<p>Add <code>auto-resize</code> to make the textarea grow with content.</p>
 
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-input-group>
+	<label>Bio</label>
+	<nui-textarea auto-resize min-rows="2" max-rows="8">
+		<textarea placeholder="Tell us about yourself..."></textarea>
+	</nui-textarea>
+</nui-input-group>
+		</script>
+	</nui-code>
+
+	<h3>Try It</h3>
 	<div class="demo-container">
 		<nui-input-group>
 			<label>Bio</label>
@@ -241,6 +338,18 @@ With JavaScript, NUI adds:
 	<h2>Character Count</h2>
 	<p>Add <code>show-count</code> to display character count. Works with <code>maxlength</code>.</p>
 
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-input-group>
+	<label>Tweet</label>
+	<nui-textarea show-count>
+		<textarea placeholder="What's happening?" maxlength="280"></textarea>
+	</nui-textarea>
+</nui-input-group>
+		</script>
+	</nui-code>
+
+	<h3>Try It</h3>
 	<div class="demo-container">
 		<nui-input-group>
 			<label>Tweet</label>
@@ -255,6 +364,26 @@ With JavaScript, NUI adds:
 	<h2>Checkbox</h2>
 	<p>Custom-styled checkboxes with <code>&lt;nui-checkbox&gt;</code>. Native accessibility preserved.</p>
 
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-checkbox>
+	<input type="checkbox" name="agree" value="yes">
+	<label>I agree to the terms and conditions</label>
+</nui-checkbox>
+
+<nui-checkbox>
+	<input type="checkbox" name="newsletter" value="yes" checked>
+	<label>Subscribe to newsletter</label>
+</nui-checkbox>
+
+<nui-checkbox>
+	<input type="checkbox" name="disabled" value="yes" disabled>
+	<label>Disabled checkbox</label>
+</nui-checkbox>
+		</script>
+	</nui-code>
+
+	<h3>Try It</h3>
 	<div class="demo-container">
 		<nui-checkbox>
 			<input type="checkbox" name="agree" value="yes">
@@ -277,6 +406,27 @@ With JavaScript, NUI adds:
 	<h2>Checkbox Group</h2>
 	<p>Use <code>&lt;nui-input-group&gt;</code> to create a labeled group of checkboxes.</p>
 
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-input-group>
+	<label>To Do List</label>
+	<nui-checkbox>
+		<input type="checkbox" name="todo" value="eggs">
+		<label>Buy eggs</label>
+	</nui-checkbox>
+	<nui-checkbox>
+		<input type="checkbox" name="todo" value="cat">
+		<label>Feed the cat</label>
+	</nui-checkbox>
+	<nui-checkbox>
+		<input type="checkbox" name="todo" value="cancer">
+		<label>Cure cancer</label>
+	</nui-checkbox>
+</nui-input-group>
+		</script>
+	</nui-code>
+
+	<h3>Try It</h3>
 	<div class="demo-container">
 		<nui-input-group>
 			<label>To Do List</label>
@@ -300,6 +450,26 @@ With JavaScript, NUI adds:
 	<h2>Switch (Toggle)</h2>
 	<p>A style mode for checkboxes. Add <code>variant="switch"</code> to <code>&lt;nui-checkbox&gt;</code>.</p>
 
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-checkbox variant="switch">
+	<input type="checkbox" name="notifications" value="yes" checked>
+	<label>Enable Notifications</label>
+</nui-checkbox>
+
+<nui-checkbox variant="switch">
+	<input type="checkbox" name="dark_mode" value="yes">
+	<label>Dark Mode</label>
+</nui-checkbox>
+
+<nui-checkbox variant="switch">
+	<input type="checkbox" name="disabled_switch" value="yes" disabled>
+	<label>Disabled Switch</label>
+</nui-checkbox>
+		</script>
+	</nui-code>
+
+	<h3>Try It</h3>
 	<div class="demo-container">
 		<nui-checkbox variant="switch">
 			<input type="checkbox" name="notifications" value="yes" checked>
@@ -322,6 +492,27 @@ With JavaScript, NUI adds:
 	<h2>Radio Buttons</h2>
 	<p>Custom-styled radio buttons with <code>&lt;nui-radio&gt;</code>.</p>
 
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-input-group>
+	<label>Select Something</label>
+	<nui-radio>
+		<input type="radio" name="choice" value="1">
+		<label>Either this</label>
+	</nui-radio>
+	<nui-radio>
+		<input type="radio" name="choice" value="2">
+		<label>Or this</label>
+	</nui-radio>
+	<nui-radio>
+		<input type="radio" name="choice" value="3">
+		<label>Or this if you like</label>
+	</nui-radio>
+</nui-input-group>
+		</script>
+	</nui-code>
+
+	<h3>Try It</h3>
 	<div class="demo-container">
 		<nui-input-group>
 			<label>Select Something</label>
@@ -345,6 +536,27 @@ With JavaScript, NUI adds:
 	<h2>Disabled Radio</h2>
 	<p>Radio buttons can be disabled individually.</p>
 
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-input-group>
+	<label>Choose a plan</label>
+	<nui-radio>
+		<input type="radio" name="plan" value="free" checked>
+		<label>Free</label>
+	</nui-radio>
+	<nui-radio>
+		<input type="radio" name="plan" value="pro">
+		<label>Pro</label>
+	</nui-radio>
+	<nui-radio>
+		<input type="radio" name="plan" value="enterprise" disabled>
+		<label>Enterprise (coming soon)</label>
+	</nui-radio>
+</nui-input-group>
+		</script>
+	</nui-code>
+
+	<h3>Try It</h3>
 	<div class="demo-container">
 		<nui-input-group>
 			<label>Choose a plan</label>
@@ -368,6 +580,34 @@ With JavaScript, NUI adds:
 	<h2>Validation</h2>
 	<p>Inputs use native constraint validation. Validation runs on blur and shows error messages automatically.</p>
 
+	<nui-code>
+		<script type="example" data-lang="html">
+<form>
+	<nui-input-group>
+		<label>Required Field</label>
+		<nui-input>
+			<input type="text" required placeholder="This field is required">
+		</nui-input>
+	</nui-input-group>
+
+	<nui-input-group>
+		<label>Email (must be valid)</label>
+		<nui-input>
+			<input type="email" required placeholder="Enter valid email">
+		</nui-input>
+	</nui-input-group>
+
+	<nui-input-group>
+		<label>Min Length (3+ characters)</label>
+		<nui-input>
+			<input type="text" minlength="3" placeholder="At least 3 characters">
+		</nui-input>
+	</nui-input-group>
+</form>
+		</script>
+	</nui-code>
+
+	<h3>Try It</h3>
 	<div class="demo-container">
 		<form id="demo-form" onsubmit="return false;">
 			<nui-input-group>
@@ -416,6 +656,7 @@ With JavaScript, NUI adds:
 		</script>
 	</nui-code>
 
+	<h3>Try It</h3>
 	<div class="demo-area">
 		<nui-form-row>
 			<nui-select>

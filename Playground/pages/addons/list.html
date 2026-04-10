@@ -1,10 +1,13 @@
 <div class="page-list">
 
 <!-- Import nui-list module -->
-<link rel="stylesheet" href="NUI/css/modules/nui-list.css">
-<script type="module" src="NUI/lib/modules/nui-list.js"></script>
+<link rel="stylesheet" href="../../../NUI/css/modules/nui-list.css">
+<script type="module" src="../../../NUI/lib/modules/nui-list.js"></script>
 
-<script type="text/markdown" id="llm-guide">
+	<details class="collapsible-section collapsible-section--spaced">
+		<summary><strong>LLM Guide - nui-list</strong></summary>
+		<nui-markdown id="llm-guide" data-component="nui-list" class="llm-guide">
+			<script type="text/markdown">
 # LLM Guide: nui-list
 
 ## Component Architecture
@@ -168,11 +171,8 @@ list.loadData({
 2. **Items**: Uniform height (measured from first item)
 3. **Timing**: Call `loadData()` after container is visible
 4. **Dialog**: Use `content-scroll="false"` on `nui-dialog`
-</script>
-
-	<details class="collapsible-section collapsible-section--spaced">
-		<summary><strong>LLM Guide - nui-list</strong></summary>
-		<div id="llm-guide-rendered" class="llm-guide"></div>
+			</script>
+		</nui-markdown>
 	</details>
 
 	<header>
@@ -309,12 +309,39 @@ list.loadData({
 		
 		<h3>Minimal List (No Header, No Footer)</h3>
 		<p>Just data and a render function. No search, sort, or filters.</p>
+		<nui-code>
+			<script type="example" data-lang="javascript">
+list.loadData({
+    data: items,
+    render: (item) => {
+        const el = document.createElement('div');
+        el.textContent = item.name;
+        return el;
+    }
+});
+			</script>
+		</nui-code>
+		<h3>Try It</h3>
 		<div class="demo-list demo-list--sm">
 			<nui-list id="minimalList"></nui-list>
 		</div>
 
 		<h3>Log Mode</h3>
 		<p>Auto-scrolls to show new entries. Useful for logs, chat, or streaming data.</p>
+		<nui-code>
+			<script type="example" data-lang="javascript">
+list.loadData({
+    data: logEntries,
+    render: (item) => {
+        const el = document.createElement('div');
+        el.innerHTML = `<span>${item.time}</span> <span>${item.message}</span>`;
+        return el;
+    },
+    logmode: true
+});
+			</script>
+		</nui-code>
+		<h3>Try It</h3>
 		<div class="demo-list demo-list--md">
 			<nui-list id="logModeList"></nui-list>
 		</div>
@@ -336,7 +363,7 @@ list.loadData({
 
 <script>
 document.getElementById('templateList').loadData(products);
-</script>
+<\/script>
 			</script>
 		</nui-code>
 	</section>
@@ -400,14 +427,6 @@ document.getElementById('templateList').loadData(products);
 function init(element, params, nui) {
 	const api = window.nui || nui;
 	if (!api || !api.util) return;
-
-	// Render LLM Guide from Markdown
-	const mdTemplate = element.querySelector('#llm-guide');
-	const renderedDiv = element.querySelector('#llm-guide-rendered');
-	if (mdTemplate && renderedDiv && api.util.markdownToHtml) {
-		const mdContent = mdTemplate.textContent.trim();
-		renderedDiv.innerHTML = api.util.markdownToHtml(mdContent);
-	}
 
 	const { fromHTML } = api.util.dom;
 

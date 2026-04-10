@@ -433,7 +433,7 @@ document.getElementById('ok-btn').onclick = () => {
 		</dialog>
 	</nui-dialog>
 
-	<>Available Events</>
+		<h3>Available Events</h3>
 	<p>Dialogs dispatch custom events when they open or close. Listen for these to react to state changes:</p>
 	<nui-code>
 		<script type="example" data-lang="javascript">
@@ -480,8 +480,7 @@ if (dialog.isOpen()) { ... }
 <section>
 	<h2>Placement Modes</h2>
 	<p>Use the <code>placement</code> attribute to position dialogs vertically:</p>
-	<nui-table>
-		<table>
+		<table class="nui-table nui-table--api">
 			<thead>
 				<tr>
 					<th>Placement</th>
@@ -503,7 +502,6 @@ if (dialog.isOpen()) { ... }
 				</tr>
 			</tbody>
 		</table>
-	</nui-table>
 	<nui-code>
 		<script type="example" data-lang="html">
 <nui-dialog id="top-dialog" placement="top">...</nui-dialog>
@@ -608,7 +606,7 @@ if (dialog.isOpen()) { ... }
 </section>
 
 <section>
-	<>Available Events</>
+	<h2>Available Events</h2>
 	<p>Dialogs dispatch custom events for close and cancel actions:</p>
 	<nui-code>
 		<script type="example" data-lang="javascript">
@@ -629,8 +627,7 @@ dialog.addEventListener('nui-dialog-cancel', () => {
 
 <section>
 	<h2>Attributes Reference</h2>
-	<nui-table>
-		<table>
+		<table class="nui-table nui-table--api">
 			<thead>
 				<tr>
 					<th>Attribute</th>
@@ -656,7 +653,6 @@ dialog.addEventListener('nui-dialog-cancel', () => {
 				</tr>
 			</tbody>
 		</table>
-	</nui-table>
 </section>
 
 <section>

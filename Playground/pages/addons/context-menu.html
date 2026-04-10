@@ -98,7 +98,7 @@ This is the same pattern used by `nui.components.dialog` - ephemeral UI that doe
 
 <header>
 	<h1>Context Menu</h1>
-	<p>A lightweight, keyboard-accessible context menu popup triggered via right-click or programmatically. Shares visual styling with <code>nui-menu</code>.</p>
+	<p class="lead">A lightweight, keyboard-accessible context menu popup triggered via right-click or programmatically. Shares visual styling with <code>nui-menu</code>.</p>
 </header>
 
 <section>
@@ -118,10 +118,6 @@ This is the same pattern used by `nui.components.dialog` - ephemeral UI that doe
 <section>
 	<h2>Basic Usage</h2>
 	<p>Right-click anywhere in the demo area below to open the context menu.</p>
-	
-	<div class="demo-area demo-flex-center" id="basic-demo" style="min-height: 200px;">	<!-- Kept: element-specific min-height -->
-		<p style="color: var(--color-text-muted);">Right-click here to open context menu</p>
-	</div>
 
 	<nui-code>
 		<script type="example" data-lang="js">
@@ -155,15 +151,16 @@ const button = document.querySelector('button');
 menu.showAt(button);
 		</script>
 	</nui-code>
+
+	<h3>Try It</h3>
+	<div class="demo-area demo-flex-center" id="basic-demo" style="min-height: 200px;">	<!-- Kept: element-specific min-height -->
+		<p style="color: var(--color-text-muted);">Right-click here to open context menu</p>
+	</div>
 </section>
 
 <section>
 	<h2>With Submenus</h2>
 	<p>Context menus can have nested submenus. Hover over items with an arrow to see submenus.</p>
-	
-	<div class="demo-area demo-flex-center" id="submenu-demo" style="min-height: 200px;">	<!-- Kept: element-specific min-height -->
-		<p style="color: var(--color-text-muted);">Right-click here to open nested context menu</p>
-	</div>
 
 	<nui-code>
 		<script type="example" data-lang="js">
@@ -194,15 +191,16 @@ const menuWithSubmenus = contextMenu([
 });
 		</script>
 	</nui-code>
+
+	<h3>Try It</h3>
+	<div class="demo-area demo-flex-center" id="submenu-demo" style="min-height: 200px;">	<!-- Kept: element-specific min-height -->
+		<p style="color: var(--color-text-muted);">Right-click here to open nested context menu</p>
+	</div>
 </section>
 
 <section>
 	<h2>Disabled Items</h2>
 	<p>Items can be disabled to prevent interaction.</p>
-	
-	<div class="demo-area demo-flex-center" id="disabled-demo" style="min-height: 200px;">	<!-- Kept: element-specific min-height -->
-		<p style="color: var(--color-text-muted);">Right-click here to open menu with disabled items</p>
-	</div>
 
 	<nui-code>
 		<script type="example" data-lang="js">
@@ -218,6 +216,11 @@ const menuWithDisabled = contextMenu([
 });
 		</script>
 	</nui-code>
+
+	<h3>Try It</h3>
+	<div class="demo-area demo-flex-center" id="disabled-demo" style="min-height: 200px;">	<!-- Kept: element-specific min-height -->
+		<p style="color: var(--color-text-muted);">Right-click here to open menu with disabled items</p>
+	</div>
 </section>
 
 <section>

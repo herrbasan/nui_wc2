@@ -79,10 +79,11 @@ For full IDE capabilities (intellisense, debugging, multi-file), consider Monaco
     <header>
         <h1>Code Editor</h1>
         <p class="lead">A lightweight, zero-dependency, native syntax-highlighting code editor component.</p>
-        <div class="demo-callout">
-            <strong>Experimental Note:</strong> This component uses a lightweight <code>contenteditable</code> approach inspired by CodeJar. It removes reliance on heavy ResizeObservers and virtualized DOM chunking in favor of native Web APIs for real-time syntax highlighting.
-        </div>
     </header>
+
+    <div class="demo-callout">
+        <strong>Experimental Note:</strong> This component uses a lightweight <code>contenteditable</code> approach inspired by CodeJar. It removes reliance on heavy ResizeObservers and virtualized DOM chunking in favor of native Web APIs for real-time syntax highlighting.
+    </div>
 
     <section>
         <h2>Basic Usage</h2>
@@ -99,6 +100,7 @@ helloWorld();
             </script>
         </nui-code>
 
+        <h3>Try It</h3>
         <div class="demo-area">
             <nui-code-editor data-lang="js" data-line-numbers="true" style="height: 600px;">
 import { nui } from '../../nui.js';
@@ -404,6 +406,7 @@ export { NuiCodeEditor };
     <section>
         <h2>Events & Output</h2>
         <p>Listen for <code>nui-change</code> events on the element to get the updated value.</p>
+        <h3>Try It</h3>
         <div class="demo-area">
             <nui-code-editor id="demo-editor" data-lang="css" data-line-numbers="false" style="height: 450px;">
 .demo-class {

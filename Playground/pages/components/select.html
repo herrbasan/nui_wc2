@@ -95,6 +95,7 @@ On mobile devices, `nui-select` uses a bottom sheet interface instead of a dropd
 	<h2>Declarative Usage (Default)</h2>
 	<p>A simple dropdown for selecting a single option. The first empty-value option serves as placeholder text. You can toggle its state declaratively using <code>data-action="select-open"</code> or <code>select-close</code>.</p>
 
+	<h3>Try It</h3>
 	<div class="demo-area">
 		<nui-button-container gap="1rem" class="demo-mt-1">
 			<nui-button><button data-action="select-open@#basic-select">Open Declaratively</button></nui-button>
@@ -137,6 +138,7 @@ On mobile devices, `nui-select` uses a bottom sheet interface instead of a dropd
 	<h2>Searchable Select</h2>
 	<p>Add the <code>searchable</code> attribute to enable filtering options by typing.</p>
 
+	<h3>Try It</h3>
 	<div class="demo-area">
 		<nui-input-group>
 			<label>Country</label>
@@ -177,6 +179,7 @@ On mobile devices, `nui-select` uses a bottom sheet interface instead of a dropd
 	<p>Use <code>&lt;select multiple&gt;</code> for multi-selection. Selected items appear as removable tags.
 		Pre-select options with the <code>selected</code> attribute.</p>
 
+	<h3>Try It</h3>
 	<div class="demo-area">
 		<nui-input-group>
 			<label>Programming Languages</label>
@@ -229,6 +232,7 @@ On mobile devices, `nui-select` uses a bottom sheet interface instead of a dropd
 	<h2>Option Groups</h2>
 	<p>Organize options into groups using <code>&lt;optgroup&gt;</code> elements.</p>
 
+	<h3>Try It</h3>
 	<div class="demo-area">
 		<nui-input-group>
 			<label>Car Brand & Model</label>
@@ -271,6 +275,7 @@ On mobile devices, `nui-select` uses a bottom sheet interface instead of a dropd
 	<h2>Programmatic Usage (Advanced / Async)</h2>
 	<p>Control the select component programmatically using JavaScript methods.</p>
 
+	<h3>Try It</h3>
 	<div class="demo-chrome">
 		<nui-input-group>
 			<label>API Demo Select</label>
@@ -356,6 +361,7 @@ select.syncOptions();  // Use after modifying native <select> options
 	<h2>Async Data Loading Pattern</h2>
 	<p>Common pattern: disable the select while loading data, then populate options and enable when ready. The select can be updated at any point—add options, change selection, query state—all synchronously once the component is defined.</p>
 
+	<h3>Try It</h3>
 	<div class="demo-chrome">
 		<nui-input-group>
 			<label>Select with Async Data</label>
@@ -430,6 +436,7 @@ console.log('Is disabled:', select.isDisabled());
 	<h2>Multi-Select API Demo</h2>
 	<p>Programmatic control for multi-select with dynamic item management.</p>
 
+	<h3>Try It</h3>
 	<div class="demo-chrome">
 		<nui-input-group>
 			<label>Dynamic Multi-Select</label>
@@ -459,6 +466,7 @@ console.log('Is disabled:', select.isDisabled());
 	<h2>Available Events</h2>
 	<p>Listen to events to respond to user interactions and programmatic changes.</p>
 
+	<h3>Try It</h3>
 	<div class="demo-chrome">
 		<nui-input-group>
 			<label>Event Demo</label>
@@ -526,6 +534,7 @@ select.addEventListener('nui-items-replace', (e) => {
 	<h2>Disabled States</h2>
 	<p>Disable the entire select or individual options.</p>
 
+	<h3>Try It</h3>
 	<div class="demo-area">
 		<div class="demo-flex-center">
 			<nui-input-group>
@@ -575,6 +584,7 @@ select.addEventListener('nui-items-replace', (e) => {
 	<h2>Validation (Required)</h2>
 	<p>Use the <code>required</code> attribute on the native select for form validation.</p>
 
+	<h3>Try It</h3>
 	<div class="demo-area">
 		<form id="demo-form">
 			<nui-input-group>
@@ -623,6 +633,7 @@ document.getElementById('demo-form').addEventListener('submit', (e) => {
 	<p>The <code>mobile-sheet</code> behavior automatically triggers on narrow viewports (&le; 640px). 
 		You can also explicitly add the attribute to force it on larger screens.</p>
 
+	<h3>Try It</h3>
 	<div class="demo-area">
 		<nui-input-group>
 			<label>Mobile Optimized (Forced)</label>
@@ -793,7 +804,7 @@ document.getElementById('demo-form').addEventListener('submit', (e) => {
 		</tbody>
 	</table>
 
-	<>Available Events</>
+	<h3>Available Events</h3>
 	<table class="nui-table nui-table--api">
 		<thead>
 			<tr>

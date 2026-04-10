@@ -84,6 +84,22 @@ When a section is opened, others automatically close. This mimics tab behavior w
 	<h2>Declarative Usage (Default)</h2>
 	<p>Wraps standard HTML <code>&lt;details&gt;</code> elements. Provides consistent styling and optional behavior enhancements.</p>
 	
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-accordion>
+	<details>
+		<summary>Section 1</summary>
+		<div>...</div>
+	</details>
+	<details>
+		<summary>Section 2</summary>
+		<div>...</div>
+	</details>
+</nui-accordion>
+		</script>
+	</nui-code>
+
+	<h3>Try It</h3>
 	<div class="demo-container">
 		<nui-accordion>
 			<details>
@@ -115,27 +131,22 @@ When a section is opened, others automatically close. This mimics tab behavior w
 			</details>
 		</nui-accordion>
 	</div>
-
-	<nui-code>
-		<script type="example" data-lang="html">
-<nui-accordion>
-	<details>
-		<summary>Section 1</summary>
-		<div>...</div>
-	</details>
-	<details>
-		<summary>Section 2</summary>
-		<div>...</div>
-	</details>
-</nui-accordion>
-		</script>
-	</nui-code>
 </section>
 
 <section class="page-accordion">
 	<h2>Exclusive Mode</h2>
 	<p>Add the <code>exclusive</code> attribute to allow only one section to be open at a time.</p>
 	
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-accordion exclusive>
+	<details open>...</details>
+	<details>...</details>
+</nui-accordion>
+		</script>
+	</nui-code>
+
+	<h3>Try It</h3>
 	<div class="demo-container">
 		<nui-accordion exclusive>
 			<details open>
@@ -166,15 +177,6 @@ When a section is opened, others automatically close. This mimics tab behavior w
 			</details>
 		</nui-accordion>
 	</div>
-
-	<nui-code>
-		<script type="example" data-lang="html">
-<nui-accordion exclusive>
-	<details open>...</details>
-	<details>...</details>
-</nui-accordion>
-		</script>
-	</nui-code>
 </section>
 
 <section class="page-accordion">
@@ -183,6 +185,7 @@ When a section is opened, others automatically close. This mimics tab behavior w
 	
 	<h3>Clean Variant</h3>
 	<p>Use the <code>nui-accordion-clean</code> class for a minimalist look without borders and backgrounds.</p>
+	<h3>Try It</h3>
 	<div class="demo-container">
 		<nui-accordion class="nui-accordion-clean">
 			<details>
@@ -202,6 +205,7 @@ When a section is opened, others automatically close. This mimics tab behavior w
 	
 	<h3>No Animation</h3>
 	<p>Add the <code>no-animation</code> attribute to disable animations and use native browser behavior.</p>
+	<h3>Try It</h3>
 	<div class="demo-container">
 		<nui-accordion no-animation>
 			<details>

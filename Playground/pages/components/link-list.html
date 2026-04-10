@@ -86,7 +86,7 @@ This reduces tab stops while keeping full keyboard accessibility.
 
 <header>
 	<h1>Link List Component</h1>
-	<p>The <code>&lt;nui-link-list&gt;</code> component provides hierarchical navigation with multiple modes: <strong>fold</strong> (accordion - one group open at a time) and <strong>tree</strong> (all groups can be open).</p>
+	<p class="lead">The <code>&lt;nui-link-list&gt;</code> component provides hierarchical navigation with multiple modes: <strong>fold</strong> (accordion - one group open at a time) and <strong>tree</strong> (all groups can be open).</p>
 </header>
 
 <section>
@@ -98,8 +98,30 @@ This reduces tab stops while keeping full keyboard accessibility.
 </section>
 
 <section>
-	<h2>Live Demo: Fold Mode (Accordion)</h2>
+	<h2>Fold Mode (Accordion)</h2>
 	<p>In fold mode, only one group can be open at a time. Opening a group automatically closes others:</p>
+	
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-link-list mode="fold">
+	<ul>
+		<li class="group-header">
+			<span>
+				<nui-icon name="folder"></nui-icon>
+				<span>Group Name</span>
+			</span>
+		</li>
+		<li>
+			<a href="#item">
+				<span>Item Name</span>
+			</a>
+		</li>
+	</ul>
+</nui-link-list>
+		</script>
+	</nui-code>
+
+	<h3>Try It</h3>
 	<div class="link_list_fold_container">
 		<nui-link-list id="demo-fold" mode="fold">
 			<!-- Loaded via JavaScript -->
@@ -128,7 +150,7 @@ This reduces tab stops while keeping full keyboard accessibility.
 </section>
 
 <section>
-	<h2>Live Demo: Tree Mode (Masonry Layout)</h2>
+	<h2>Tree Mode (Masonry Layout)</h2>
 	<p>In tree mode, all groups can be open simultaneously. The masonry layout arranges groups in columns for efficient space usage:</p>
 	<div class="link_list_column_container">
 		<nui-link-list id="demo-tree" mode="tree">
@@ -331,6 +353,7 @@ This reduces tab stops while keeping full keyboard accessibility.
 		</nui-link-list>
 	</div>
 
+	<h3>Try It</h3>
 	<div class="demo-result">
 		<h4>Last Clicked Path:</h4>
 		<pre id="tree-path-display">No item selected</pre>
@@ -809,7 +832,7 @@ function init(element, params) {
 			updateFoldStateDisplay();
 		} else if (actionName === 'get-active-fold') {
 			const foldData = demoFold.getActiveData?.();
-						nui.components.dialog.alert('Active State', foldData ? `Fold Mode Active:\n\nText: ${foldData.text}` : 'Fold Mode: No active item');
+					nui.components.dialog.alert('Active State', foldData ? `Fold Mode Active:\n\nText: ${foldData.text}` : 'Fold Mode: No active item');
 			updateFoldStateDisplay();
 		} else if (actionName === 'clear-active-fold') {
 			demoFold.clearActive?.(true);
@@ -822,7 +845,7 @@ function init(element, params) {
 			updateTreePathDisplay(item?.closest('li'));
 		} else if (actionName === 'get-active-tree') {
 			const treeData = demoTree.getActiveData?.();
-						nui.components.dialog.alert('Active State', treeData ? `Tree Mode Active:\n\nText: ${treeData.text}` : 'Tree Mode: No active item');
+					nui.components.dialog.alert('Active State', treeData ? `Tree Mode Active:\n\nText: ${treeData.text}` : 'Tree Mode: No active item');
 			updateTreeStateDisplay();
 			updateTreePathDisplay();
 		} else if (actionName === 'clear-active-tree') {
@@ -847,15 +870,6 @@ function init(element, params) {
 	updateFoldStateDisplay();
 	updateTreeStateDisplay();
 	updateTreePathDisplay();
-}
-</script>
-
-// ...existing code...
-					eventLog.innerHTML = `<div>[${time}] Clicked: ${action || href}</div>` + eventLog.innerHTML;
-			});
-		});
-	}
-	
 }
 </script>
 
