@@ -4,38 +4,63 @@
 <script type="text/markdown">
 # LLM Guide: nui-table
 
-> **Global Note:** Always follow the global rules in `Playground/README.md`. Light DOM wrapper for native tables.
+## Design Philosophy
 
-## Strict DOM Structure
-- `<nui-table>` wraps a standard `<table>` with `<thead>`, `<tbody>`, `<th>`, `<td>`.
-- No custom markup inside; use semantic table elements.
+Tables present a challenge on mobile: wide tabular data doesn't fit narrow screens. NUI's table component solves this by transforming the display based on viewport size while preserving the semantic table markup for accessibility.
 
-**Correct:**
+## Structure
+
+`<nui-table>` wraps a standard HTML table:
+
 ```html
 <nui-table>
 	<table>
 		<thead>
-			<tr><th>Header</th></tr>
+			<tr>
+				<th>Name</th>
+				<th>Role</th>
+			</tr>
 		</thead>
 		<tbody>
-			<tr><td>Data</td></tr>
+			<tr>
+				<td>Alice</td>
+				<td>Developer</td>
+			</tr>
 		</tbody>
 	</table>
 </nui-table>
 ```
 
-## Critical Rules
-- Component adds responsive card-like layout on mobile automatically.
-- Use standard table semantics for best a11y and behavior.
-- Do not add custom CSS for responsiveness.
-- For dynamic tables, use nui.util.createElement or update inner table.
+The wrapper provides:
+- Consistent styling (borders, spacing, typography)
+- Responsive transformation on mobile
+- Theme integration via CSS variables
 
-## Anti-Patterns
-- Using divs instead of table elements.
-- Expecting data-binding like in other libs.
-- Inline styles or custom classes for rows/columns.
-- Ignoring responsive transformation.
-- Using without the nui-table wrapper.
+## Responsive Behavior
+
+On narrow screens, the table transforms into a card-like layout:
+- Each row becomes a card
+- Column headers become labels via `data-label` attributes
+- Horizontal scrolling is avoided
+
+This transformation uses CSS and preserves all table semantics for screen readers.
+
+## Data Tables
+
+For data-heavy tables, consider using the addon component `nui-list` which provides:
+- Virtual scrolling for large datasets
+- Built-in sorting and filtering
+- Customizable row rendering
+
+Use `<nui-table>` for:
+- Small to medium datasets (under 100 rows)
+- Static content tables
+- Simple data presentation
+
+Use `nui-list` for:
+- Large datasets (1000+ rows)
+- Dynamic data requiring sort/filter
+- Custom row layouts
 </script>
 		</nui-markdown>
 	</details>

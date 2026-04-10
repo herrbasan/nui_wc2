@@ -4,60 +4,66 @@
 		<summary><strong>LLM Guide - nui-banner</strong></summary>
 		<nui-markdown id="llm-guide" data-component="nui-banner" class="llm-guide">
 <script type="text/markdown">
-# LLM Guide: nui-banner (Notifications & Alerts)
+# LLM Guide: nui-banner
 
-> **Global Note:** Always follow the global rules in `Playground/README.md`. 
+## Design Philosophy
 
-## Usage Modes (Read carefully)
-Do not confuse `<nui-banner>` (in-page alerts) with `nui.components.banner.show()` (temporary "toast" notifications).
+Banners communicate status and feedback without interrupting user flow. Unlike dialogs which demand attention, banners appear at the edge of the screen (top or bottom) and can auto-dismiss.
 
-### 1. Temporary "Toast" Notifications (JS - Preferred)
-For short-lived feedback (e.g., "Saved successfully!", "Item deleted"), use the JavaScript factory. This creates a notification that appears globally (usually at the bottom right) and disappears automatically.
+NUI provides two ways to show banners: the declarative component for static alerts, and the JavaScript API for dynamic notifications.
 
-```js
-// Success toast
+## Toast Notifications (JavaScript API)
+
+For transient feedback, use the factory method:
+
+```javascript
 nui.components.banner.show({
-	content: 'Settings saved successfully',
-	type: 'success', // 'default', 'info', 'success', 'warning', 'danger'
-	autoClose: 3000 // Closes automatically after 3 seconds
-});
-
-// Actionable toast
-const myBanner = nui.components.banner.show({
-	content: 'Changes pending...',
-	type: 'warning',
-	closeBtn: true,
-	actions: [{ label: 'Apply Now', value: 'apply' }]
+	content: 'Settings saved',
+	priority: 'info',    // 'info' or 'alert'
+	placement: 'bottom', // 'top' or 'bottom'
+	autoClose: 3000      // ms, or 0 to persist
 });
 ```
 
-### 2. In-Page Inline Alerts (HTML)
-For persistent messages that live inside the page layout (e.g., "Your trial expires in 3 days"), use the declarative `<nui-banner>` component in HTML. 
+This creates a banner element, positions it fixed to the viewport edge, and manages its lifecycle. Multiple banners stack vertically.
 
-- Use the `type` attribute (`info`, `success`, `warning`, `danger`).
-- Wrap the main text in `<span class="nui-banner-content">`.
-- Optional: Add `<nui-button-container slot="actions">` if the alert requires an action.
+## Inline Banners (HTML)
 
-**Correct (Inline Alert):**
+For persistent alerts within page content:
+
 ```html
 <nui-banner type="warning">
 	<nui-icon name="warning">⚠</nui-icon>
 	<span class="nui-banner-content">
-		<strong>Warning!</strong> Your subscription is ending soon.
+		Your subscription expires in 3 days
 	</span>
 	<nui-button-container slot="actions">
-		<nui-button variant="primary"><button type="button">Renew</button></nui-button>
+		<nui-button><button type="button">Renew</button></nui-button>
 	</nui-button-container>
 </nui-banner>
 ```
 
-**Wrong / Will Fail:**
-```html
-<nui-banner>
-	<!-- Wrong: Missing the span wrapper with .nui-banner-content -->
-	Your subscription is ending soon.
-</nui-banner>
-```
+Inline banners flow in the document like any other block element. They support icons, rich content, and action buttons.
+
+## Priority Levels
+
+Banners have two priority levels:
+- **info** - General information, lower visual prominence
+- **alert** - Important information, higher visual prominence
+
+Use "alert" sparingly; if everything is urgent, nothing is.
+
+## Banner vs Dialog
+
+Use **banners** for:
+- Success/failure feedback
+- Background process completion
+- Non-blocking notifications
+
+Use **dialogs** for:
+- Decisions requiring user input
+- Critical warnings that need acknowledgment
+- Forms that gather information
 </script>
 		</nui-markdown>
 	</details>

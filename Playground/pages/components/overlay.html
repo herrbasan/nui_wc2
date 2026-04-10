@@ -6,44 +6,83 @@
 <script type="text/markdown">
 # LLM Guide: nui-overlay
 
-> **Global Note:** Always follow the global rules in `Playground/README.md`. Use data-action for interactions, no custom CSS.
+## Design Philosophy
 
-## Strict DOM Structure
-- `<nui-overlay id="my-overlay">` must contain a `<dialog>` element.
-- Content goes inside the `<dialog>`.
-- Use `data-action="overlay-open@#my-overlay"` on trigger buttons.
+While `nui-dialog` provides a structured modal with header/footer regions, `nui-overlay` is a minimal container for custom modal content. It provides the essential overlay behavior (backdrop, centering, focus management) without imposing layout constraints.
 
-**Correct:**
+Use overlay when:
+- Building lightboxes for images
+- Creating custom modal forms with unique layouts
+- Implementing full-screen loading states
+- Any content that needs modal presentation but doesn't fit the dialog structure
+
+## Structure
+
 ```html
-<button data-action="overlay-open@#my-overlay">Open</button>
-
-<nui-overlay id="my-overlay">
+<nui-overlay id="lightbox">
 	<dialog>
-		<!-- your content -->
-		<button data-action="overlay-close@#my-overlay">Close</button>
+		<img src="photo.jpg" alt="Photo">
+		<button data-action="overlay-close@#lightbox">Close</button>
 	</dialog>
 </nui-overlay>
 ```
 
-## Critical Rules
-- Prefer `nui-overlay` for custom modals/lightboxes; use `nui-dialog` for standard alert/confirm.
-- Supports `blocking` attribute to prevent backdrop close.
-- Events: `nui-overlay-open`, `nui-overlay-close`, `nui-overlay-cancel`.
-- Uses native `<dialog>.showModal()` internally.
-- Do not manually call showModal on the inner dialog - use the component's `showModal()` method or data-action.
-- Backdrop click closes unless `blocking`.
+The inner `<dialog>` element provides the native modal behavior. The overlay wrapper adds NUI styling and theme integration.
 
-## Usage Modes
-- **Declarative:** HTML with data-action attributes (preferred for demos).
-- **Programmatic:** `const overlay = document.getElementById('my-overlay'); overlay.showModal(); overlay.close();`
+## Opening and Closing
 
-## Anti-Patterns
-- Using `<div>` with fixed positioning and z-index instead of this component.
-- Forgetting the inner `<dialog>`.
-- Using CSS for modal behavior.
-- Calling `dialog.showModal()` directly bypassing the wrapper.
-- Expecting props like `open` or `onClose` (use events and methods).
-- Adding custom backdrop elements.
+Declarative triggers:
+```html
+<button data-action="overlay-open@#lightbox">View Photo</button>
+```
+
+Programmatic control:
+```javascript
+const overlay = document.getElementById('lightbox');
+overlay.showModal();
+// Later...
+overlay.close();
+```
+
+## Blocking Mode
+
+Add the `blocking` attribute to prevent closing by clicking the backdrop:
+
+```html
+<nui-overlay blocking>
+	<dialog>
+		<!-- Critical content that needs explicit dismissal -->
+	</dialog>
+</nui-overlay>
+```
+
+In blocking mode, users must interact with content inside the overlay or click an explicit close button.
+
+## Events
+
+Listen for overlay lifecycle:
+
+```javascript
+overlay.addEventListener('nui-overlay-open', () => {
+	// Overlay is now visible
+});
+
+overlay.addEventListener('nui-overlay-close', () => {
+	// Overlay was closed
+});
+```
+
+## Overlay vs Dialog
+
+**Use overlay for:**
+- Custom layouts (lightboxes, full-screen modals)
+- Content that doesn't fit dialog structure
+- Image galleries, media viewers
+
+**Use dialog for:**
+- Standard alerts and confirmations
+- Forms with standard header/content/footer
+- System-level notifications
 </script>
 		</nui-markdown>
 	</details>

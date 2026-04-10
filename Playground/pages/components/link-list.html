@@ -4,73 +4,82 @@
 		<summary><strong>LLM Guide - nui-link-list</strong></summary>
 		<nui-markdown id="llm-guide" data-component="nui-link-list" class="llm-guide">
 <script type="text/markdown">
-# LLM Guide: nui-link-list (Navigation Sidebar/Tree)
+# LLM Guide: nui-link-list
 
-> **Global Note:** Always follow the global rules in `Playground/README.md`. Use `nui.util.createElement` and do not invent tags.
+## Design Philosophy
 
-## Usage Modes (MUST READ)
-`nui-link-list` is primarily used inside `<nui-sidebar>` for application navigation. There are two ways to use it:
+Navigation lists are the backbone of application wayfinding. NUI provides both declarative HTML and data-driven JavaScript APIs to accommodate different content sources.
 
-### 1. Data-Driven (JavaScript - Preferred)
-Pass a JSON array of navigation groups to `nui.components.linkList.create()` or an existing element's `.loadData()`.
-- The data structure is an array of `group` objects.
-- Each `group` contains `header`, `icon`, and an `items` array.
-- Each `item` contains `label`, `icon`, and `href` (or `action` to trigger an event).
+The component transforms structured data (or structured HTML) into accessible navigation with keyboard support, active state management, and collapsible groups.
 
-**Correct (Data-Driven API):**
-```js
+## Data-Driven Usage
+
+For dynamic navigation loaded from configuration or APIs:
+
+```javascript
 const navData = [
 	{
-		header: 'Main Menu',
-		icon: 'home',
+		label: 'Main Menu',
 		items: [
-			{ label: 'Dashboard', icon: 'dashboard', href: '#dashboard' },
-			{ label: 'Settings', icon: 'settings', action: 'open-settings' } // Triggers a 'nui-action' event
+			{ label: 'Dashboard', href: '#dashboard', icon: 'dashboard' },
+			{ label: 'Settings', href: '#settings', icon: 'settings' }
+		]
+	},
+	{
+		label: 'Documents',
+		items: [
+			{ label: 'Overview', href: '#docs' },
+			{ label: 'API Reference', href: '#api' }
 		]
 	}
 ];
 
-// Creates the DOM structure automatically
-const navElement = nui.components.linkList.create(navData);
-document.querySelector('nui-sidebar').appendChild(navElement);
+const nav = nui.components.linkList.create(navData, { mode: 'fold' });
+document.querySelector('nui-sidebar').appendChild(nav);
 ```
 
-### 2. Declarative (HTML - Manual)
-If you must write the HTML manually, you MUST strictly follow the exact DOM structure below. The component relies on these specific tags (`nav`, `ul`, `li`, `a`, `button`, `details`, `summary`).
+The `mode` option controls group behavior:
+- **fold** - Only one group open at a time (accordion style)
+- **tree** - Multiple groups can be open simultaneously
 
-**Correct (Declarative DOM Structure):**
+## Active State Management
+
+The component automatically highlights the link matching the current URL hash. It sets `aria-current="page"` for accessibility and applies visual styling.
+
+```javascript
+// Set active link manually
+linkList.setActive('#dashboard');
+```
+
+## Declarative Usage
+
+For static navigation, write the HTML directly:
+
 ```html
-<nui-link-list>
-	<nav aria-label="Main Navigation">
-		<!-- Simple Item -->
-		<ul>
-			<li><a href="#home"><nui-icon name="home">🏠</nui-icon> Home</a></li>
-			<li><button data-action="logout"><nui-icon name="exit">🚪</nui-icon> Logout</button></li>
-		</ul>
-
-		<!-- Group (Collapsible) -->
+<nui-link-list mode="fold">
+	<nav>
 		<details open>
-			<summary><nui-icon name="folder">📁</nui-icon> Documents</summary>
+			<summary>Main Menu</summary>
 			<ul>
-				<li><a href="#docs" aria-current="page">Overview</a></li>
-				<li><a href="#api">API Reference</a></li>
+				<li><a href="#dashboard">Dashboard</a></li>
+				<li><a href="#settings">Settings</a></li>
 			</ul>
 		</details>
 	</nav>
 </nui-link-list>
 ```
 
-**Wrong / Will Fail:**
-```html
-<nui-link-list>
-	<div> <!-- Wrong: MUST be a <nav> -->
-		<div><a href="#home">Home</a></div> <!-- Wrong: MUST use <ul> and <li> -->
-	</div>
-</nui-link-list>
-```
+The structure uses `<details>`/`<summary>` for groups, providing native collapsibility before JavaScript enhances it.
 
-## Active States
-The component automatically sets `aria-current="page"` on links that match the current URL hash. Do not manually apply an `.active` class to links.
+## Keyboard Navigation
+
+Link lists implement roving tabindex:
+- Tab focuses the list itself
+- Arrow keys navigate between items
+- Enter/Space activates links
+- Right/Left expands/collapses groups
+
+This reduces tab stops while keeping full keyboard accessibility.
 </script>
 		</nui-markdown>
 	</details>
