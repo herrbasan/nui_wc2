@@ -1,5 +1,65 @@
 # NUI Current Tasks & Progress
 
+## Session: 2026-04-10
+
+### Completed
+
+#### 1. Inline Style Extraction
+
+Extracted inline styles from all Playground demo pages to CSS classes:
+
+**Added utility classes to `Playground/css/main.css`:**
+- `.collapsible-section--spaced` - Consistent section spacing
+- `.nui-table--api` - API documentation tables
+- `.demo-flex-center`, `.demo-flex-end`, `.demo-flex-wrap` - Flex layouts
+- `.demo-text-center`, `.demo-text-small`, `.demo-text-muted` - Text utilities
+- `.demo-mt-1`, `.demo-mb-1`, `.demo-mr-auto` - Spacing utilities
+- `.demo-icon-xs/sm/md/lg` - Icon sizing
+- Component-specific utilities (`.demo-lightbox-thumb`, `.demo-media-player`, etc.)
+
+**Impact:**
+- 35+ pages updated
+- ~200 inline style declarations removed
+- CSP-compliant (no inline styles)
+- Better IDE support for CSS editing
+
+**Files modified:**
+- `Playground/css/main.css` - 245 lines of utility classes added
+- 35 HTML pages updated to use CSS classes
+
+#### 2. LLM Guide Documentation Overhaul
+
+Completely rewrote all LLM Guides from "compliance mode" to "explorative/collaborative style":
+
+**Documentation pages (new LLM Guides added):**
+- `introduction.html` - NUI philosophy and architecture
+- `getting-started.html` - Project setup and patterns  
+- `architecture-patterns.html` - Router and application structure
+- `declarative-actions.html` - Event delegation pattern
+- `accessibility.html` - DOM-first a11y approach
+- `utilities.html` - Helper functions architecture
+- `api-structure.html` - Three-tier namespace design
+- `context-menu.html` - NEW guide for previously missing component
+
+**Component pages (rewritten to explorative style):**
+- Core: button, dialog, tabs, accordion, inputs, icon, table, select, banner, link-list, overlay
+- Extended: dropzone, sortable, slider, progress, tag-input, tooltip, skip-links, markdown, badge, code, layout, card
+- Addons: rich-text, menu, media-player, lightbox, code-editor, app-window
+
+**Style transformation:**
+- Before: "Critical Rules", "MUST", "NEVER", "Will Fail"
+- After: "Design Philosophy", "How It Works", "Usage Patterns", "When to Use"
+
+**Guideline added to `AGENTS.md`:**
+> Avoid inline styles unless needed for dynamic updates. Prefer CSS classes for static styling.
+
+**Files modified:**
+- `AGENTS.md` - Added CSS guideline
+- 43 HTML pages with new/updated LLM Guides
+- ~3,000 lines of new explorative documentation
+
+---
+
 ## Session: 2026-04-08
 
 ### Completed
@@ -160,7 +220,7 @@ Extend declarative actions with optional state tracking while keeping current si
 
 ### Suggested Documentation Improvements
 
-1. **Design Philosophy Section** - Capture reasoning behind patterns explicitly
+1. ✅ **Design Philosophy Section** - Completed: All LLM Guides now include Design Philosophy sections
 2. **Router naming** - `enableContentLoading` could be clearer
 3. **Visual cheatsheet** - All icons, CSS variables, common patterns
 
