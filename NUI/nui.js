@@ -1759,7 +1759,7 @@ function setupDialogBehavior(element, dialog, eventPrefix) {
 	});
 	dialog.addEventListener('touchstart', (e) => {
 		backdropMouseDown = e.target === dialog;
-	});
+	}, { passive: true });
 
 	dialog.addEventListener('click', (e) => {
 		if (element.hasAttribute('blocking') || e.target !== dialog || !backdropMouseDown) return;
