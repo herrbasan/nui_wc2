@@ -1,6 +1,6 @@
 {
 	"schemaVersion": 1,
-	"generated": "2026-04-11T07:45:27.085Z",
+	"generated": "2026-04-11T08:17:43.538Z",
 	"source": "Playground/pages/**",
 	"components": [
 		{
@@ -621,71 +621,76 @@
 			{
 				"namespace": "dialog",
 				"type": "ephemeral",
+				"description": "Modal and non-modal dialog wrapper, plus system dialog flows",
 				"methods": [
-					"alert()",
-					"confirm()",
-					"prompt()",
-					"page()"
+					{
+						"name": "alert",
+						"signature": "await nui.components.dialog.alert(title, message, options?)",
+						"description": "Show alert dialog",
+						"async": true
+					},
+					{
+						"name": "confirm",
+						"signature": "await nui.components.dialog.confirm(title, message, options?)",
+						"description": "Show confirmation dialog, returns boolean",
+						"async": true,
+						"returns": "boolean"
+					},
+					{
+						"name": "prompt",
+						"signature": "await nui.components.dialog.prompt(title, message, { fields: [{ id, label, type?, value? }] }, options?)",
+						"description": "Show prompt dialog, returns object or null",
+						"async": true,
+						"returns": "object | null"
+					},
+					{
+						"name": "page",
+						"signature": "await nui.components.dialog.page(title, subtitle?, { contentScroll, buttons: [{ label, type, value }] })",
+						"description": "Show custom page dialog",
+						"async": true,
+						"returns": "{ dialog, main }"
+					}
 				]
 			},
 			{
 				"namespace": "banner",
 				"type": "ephemeral",
+				"description": "Edge-anchored notification surface",
 				"methods": [
-					"show()"
+					{
+						"name": "show",
+						"signature": "nui.components.banner.show({ content, placement: 'top'|'bottom', priority: 'info'|'alert', autoClose: ms })",
+						"returns": "controller"
+					}
 				]
 			},
 			{
 				"namespace": "linkList",
 				"type": "persistent",
+				"description": "Hierarchical navigation list with fold and tree modes",
 				"methods": [
-					"create()"
+					{
+						"name": "create",
+						"signature": "nui.components.linkList.create(data, { mode: 'fold'|'tree' })",
+						"description": "Create navigation list from data",
+						"returns": "Element"
+					}
 				]
 			},
 			{
 				"namespace": "dropzone",
 				"type": "persistent",
+				"description": "File drop zone with named regions",
 				"methods": [
-					"create()"
+					{
+						"name": "create",
+						"signature": "nui.components.dropzone.create(target, { zones: [{ name, label }] })",
+						"returns": "Element"
+					}
 				]
 			}
 		],
 		"utilities": [
-			{
-				"name": "createElement",
-				"signature": "nui.util.createElement(tag, { class, attrs, data, events, content, target })",
-				"category": "dom"
-			},
-			{
-				"name": "createSvgElement",
-				"signature": "nui.util.createSvgElement(tag, attrs)",
-				"category": "dom"
-			},
-			{
-				"name": "enableDrag",
-				"signature": "nui.util.enableDrag(element, callback)",
-				"category": "interaction"
-			},
-			{
-				"name": "storage",
-				"signature": "nui.util.storage.get/set({ name, value, ttl, target })",
-				"category": "storage"
-			},
-			{
-				"name": "sortByKey",
-				"signature": "nui.util.sortByKey(array, key, order)",
-				"category": "array"
-			},
-			{
-				"name": "filter",
-				"signature": "nui.util.filter(array, predicate)",
-				"category": "array"
-			},
-			{
-				"name": "detectEnv",
-				"signature": "nui.util.detectEnv()",
-				"category": "environment"
-			},
 			{
 				"name": "createElement",
 				"signature": "nui.util.createElement(tag, { class, attrs, data, events, content, target })",
