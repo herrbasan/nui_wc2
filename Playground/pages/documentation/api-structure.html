@@ -1,5 +1,40 @@
 <div class="page-api-structure">
 
+<script type="application/ld+json">
+{
+  "@context": "nui",
+  "@type": "Reference",
+  "name": "api-structure",
+  "group": "documentation",
+  "description": "Three-tier API namespace design: root (lifecycle), components (factory APIs), utilities (helpers).",
+  "api": {
+    "root": [
+      { "name": "init", "signature": "nui.init()", "description": "Initialize library (auto-called on load)", "params": [], "returns": null },
+      { "name": "configure", "signature": "nui.configure({ iconSpritePath, baseFontSize, animationDuration })", "description": "Update configuration after init", "params": ["config"], "returns": null },
+      { "name": "setupRouter", "signature": "nui.setupRouter({ container, basePath, defaultPage })", "description": "Setup SPA router with fragment loading", "params": ["options"], "returns": null },
+      { "name": "registerFeature", "signature": "nui.registerFeature(name, fn)", "description": "Register JS-only page handler", "params": ["name", "fn"], "returns": null },
+      { "name": "registerType", "signature": "nui.registerType(name, fn)", "description": "Register content handler", "params": ["name", "fn"], "returns": null },
+      { "name": "version", "signature": "nui.version", "description": "Library version string", "params": [], "returns": "string" }
+    ],
+    "components": [
+      { "namespace": "dialog", "type": "ephemeral", "methods": ["alert()", "confirm()", "prompt()", "page()"] },
+      { "namespace": "banner", "type": "ephemeral", "methods": ["show()"] },
+      { "namespace": "linkList", "type": "persistent", "methods": ["create()"] },
+      { "namespace": "dropzone", "type": "persistent", "methods": ["create()"] }
+    ],
+    "utilities": [
+      { "name": "createElement", "signature": "nui.util.createElement(tag, { class, attrs, data, events, content, target })", "category": "dom" },
+      { "name": "createSvgElement", "signature": "nui.util.createSvgElement(tag, attrs)", "category": "dom" },
+      { "name": "enableDrag", "signature": "nui.util.enableDrag(element, callback)", "category": "interaction" },
+      { "name": "storage", "signature": "nui.util.storage.get/set({ name, value, ttl, target })", "category": "storage" },
+      { "name": "sortByKey", "signature": "nui.util.sortByKey(array, key, order)", "category": "array" },
+      { "name": "filter", "signature": "nui.util.filter(array, predicate)", "category": "array" },
+      { "name": "detectEnv", "signature": "nui.util.detectEnv()", "category": "environment" }
+    ]
+  }
+}
+</script>
+
 <details class="collapsible-section collapsible-section--spaced">
 	<summary><strong>LLM Guide - API Structure</strong></summary>
 	<nui-markdown id="llm-guide" data-component="nui-api-structure" class="llm-guide">

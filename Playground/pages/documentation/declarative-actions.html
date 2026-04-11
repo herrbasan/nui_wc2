@@ -1,5 +1,28 @@
 <div class="page-declarative-actions">
 
+<script type="application/ld+json">
+{
+  "@context": "nui",
+  "@type": "Reference",
+  "name": "declarative-actions",
+  "group": "documentation",
+  "description": "Event delegation pattern using data-action attribute for CSP-safe, decoupled HTML-to-JS communication.",
+  "patterns": {
+    "dataAction": {
+      "syntax": "data-action=\"name[:param][@targetSelector]\"",
+      "events": { "generic": "nui-action", "specific": "nui-action-${name}" },
+      "detail": "{ name, param, target, originalEvent }",
+      "bubbles": true,
+      "examples": [
+        { "code": "data-action=\"save:draft\"", "description": "Action with param" },
+        { "code": "data-action=\"dialog-open@#my-dialog\"", "description": "Action with target" },
+        { "code": "data-action=\"delete:item-123@#list\"", "description": "Action with param and target" }
+      ]
+    }
+  }
+}
+</script>
+
 <details class="collapsible-section collapsible-section--spaced">
 	<summary><strong>LLM Guide - Declarative Actions</strong></summary>
 	<nui-markdown id="llm-guide" data-component="nui-declarative-actions" class="llm-guide">

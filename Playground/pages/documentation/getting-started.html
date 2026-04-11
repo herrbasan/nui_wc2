@@ -1,5 +1,27 @@
 <div class="page-getting-started">
 
+<script type="application/ld+json">
+{
+  "@context": "nui",
+  "@type": "Reference",
+  "name": "getting-started",
+  "group": "documentation",
+  "description": "Setup, layout modes, SPA wiring, and the base shell structure.",
+  "setup": {
+    "minimal": {
+      "description": "Minimal standalone setup",
+      "code": "<link rel=\"stylesheet\" href=\"NUI/css/nui-theme.css\">\n<script type=\"module\" src=\"NUI/nui.js\"><\\/script>",
+      "lang": "html"
+    },
+    "foucPrevention": {
+      "description": "FOUC Prevention (App Mode)",
+      "code": "body { margin: 0; overflow: hidden; }\nnui-app:not(.nui-ready) { display: none; }",
+      "lang": "css"
+    }
+  }
+}
+</script>
+
 <details class="collapsible-section collapsible-section--spaced">
 	<summary><strong>LLM Guide - Getting Started</strong></summary>
 	<nui-markdown id="llm-guide" data-component="nui-getting-started" class="llm-guide">

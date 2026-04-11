@@ -1,0 +1,34 @@
+name: Check components.json Sync
+
+on:
+  push:
+    paths:
+      - 'Playground/pages/**/*.html'
+      - 'scripts/update-docs.js'
+      - 'docs/components.json'
+  pull_request:
+    paths:
+      - 'Playground/pages/**/*.html'
+      - 'scripts/update-docs.js'
+      - 'docs/components.json'
+
+jobs:
+  check-docs-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Regenerate components.json
+        run: node scripts/update-docs.js
+
+      - name: Check for uncommitted changes
+        run: |
+          git diff --exit-code docs/components.json || {
+            echo "::error::components.json is out of sync. Run 'node scripts/update-docs.js' and commit the changes."
+            exit 1
+          }

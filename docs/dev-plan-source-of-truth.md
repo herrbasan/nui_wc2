@@ -1,6 +1,6 @@
 # Development Plan: AX Documentation
 
-**Status:** Draft - Ready for implementation  
+**Status:** Phase 0 & 1 Complete — Ready for Phase 2 (Rollout)  
 **Date:** 2026-04-11  
 **Purpose:** Proof of concept for AI-First Design (AX over DX)
 
@@ -555,58 +555,116 @@ project-root/
 
 ## Migration Steps (Phased)
 
-### Phase 0: Pilot (3 Pages)
+### Phase 0: Pilot (3 Pages) ✅ COMPLETE
 **Goal:** Validate the approach before full rollout.
 
-Select 3 representative pages:
-1. **One component:** `Playground/pages/components/button.html`
-2. **One addon:** `Playground/pages/addons/menu.html`
-3. **One documentation:** `Playground/pages/documentation/getting-started.html`
+**Status:** Successfully implemented and tested.
 
-For each:
-1. Add `<script type="application/ld+json">` with metadata
-2. Ensure LLM Guide has `id="llm-guide"`
-3. Add appropriate slice (e.g., `getting-started` gets `setup`)
+**Pages updated:**
+1. ✅ `Playground/pages/components/button.html` — Component with events
+2. ✅ `Playground/pages/addons/menu.html` — Addon with imports
+3. ✅ `Playground/pages/documentation/getting-started.html` — Reference with setup slice
 
-### Phase 1: Generator Skeleton
-1. Create `scripts/` folder
-2. Create `scripts/update-docs.js` skeleton
-3. Implement pilot extraction (3 pages only)
-4. Validate output matches current `components.json` for pilot pages
+**Generator created:** `scripts/update-docs.js`
+- No external dependencies (uses Node.js built-ins)
+- Extracts JSON-LD from all pages
+- Extracts LLM Guides from `<nui-markdown id="llm-guide">`
+- Merges distributed slices (setup, api, patterns)
+- Aggregates events from components
+- Detects duplicates and warns
 
-### Phase 2: Roll Out to All Pages
+**Validation results:**
+```
+Stats: 1 core, 1 addons, 1 reference pages
+Setup keys: minimal, foucPrevention
+Events aggregated: 1
+Button LLM Guide: 2,269 chars
+```
+
+**Lessons learned:**
+- `</script>` inside JSON-LD must be escaped as `<\/script>` to prevent breaking HTML parser
+- The `id="llm-guide"` goes on `<nui-markdown>`, not the inner `<script>`
+- Generator regex must handle Windows CRLF line endings
+
+### Phase 1: Generator Skeleton ✅ COMPLETE
+**Goal:** Create the documentation generator.
+
+**Status:** Completed during Phase 0.
+
+**Deliverables:**
+1. ✅ `scripts/` folder created
+2. ✅ `scripts/update-docs.js` — Full implementation (not just skeleton)
+3. ✅ `scripts/README.md` — Usage documentation
+4. ✅ Validated with pilot pages
+
+**Key implementation details:**
+- Pure Node.js (no external dependencies)
+- Handles Windows CRLF line endings
+- Extracts JSON-LD from `<script type="application/ld+json">`
+- Extracts LLM Guides from `<nui-markdown id="llm-guide">` wrapper
+- Unescapes `<\/script>` → `</script>` in markdown content
+- Merges distributed API slices with duplicate detection
+- Aggregates events from all components
+- Outputs formatted JSON with schema version
+
+### Phase 2: Roll Out to All Pages ✅ COMPLETE
 Add JSON-LD to remaining pages:
-- `Playground/pages/components/*.html` (remaining)
-- `Playground/pages/addons/*.html` (remaining)
-- `Playground/pages/documentation/*.html` (remaining, distributed API slices)
+- ✅ `Playground/pages/components/*.html` (25 total — all updated)
+- ✅ `Playground/pages/addons/*.html` (8 total — all updated)
+- ✅ `Playground/pages/documentation/*.html` (8 total — all updated, distributed API slices)
 
-### Phase 3: Full Generator Implementation
+**Final counts:**
+```
+Stats: 25 core, 8 addons, 8 reference pages
+Setup keys: minimal, foucPrevention
+API sections: root, components, utilities
+Patterns: dataAction
+Events aggregated: 15
+```
+
+### Phase 3: Full Generator Implementation ✅ COMPLETE
 Complete `scripts/update-docs.js`:
-1. Glob scan all `Playground/pages/**/*.html`
-2. Extract and merge distributed slices (`setup`, `api`, `patterns`)
-3. Aggregate events from component pages
-4. Write `docs/components.json`
+1. ✅ Glob scan all `Playground/pages/**/*.html`
+2. ✅ Extract and merge distributed slices (`setup`, `api`, `patterns`)
+3. ✅ Aggregate events from component pages
+4. ✅ Write `docs/components.json`
 
-### Phase 4: CI Enforcement
+### Phase 4: CI Enforcement ✅ COMPLETE
 Add automated checks to prevent drift:
 ```yaml
-# .github/workflows/docs-sync.yml
+# .github/workflows/check-docs-sync.yml
 - name: Check components.json is up to date
   run: |
     node scripts/update-docs.js
     git diff --exit-code docs/components.json || (echo "Run 'node scripts/update-docs.js' and commit" && exit 1)
 ```
 
-### Phase 5: Validation & Evaluation
-1. Run full generator, compare with current `components.json`
-2. Verify MCP tools still work
-3. Verify `nui-create-app` still works
+**Triggered on:** push/PR when `Playground/pages/**/*.html`, `scripts/update-docs.js`, or `docs/components.json` change.
+
+### Phase 5: Validation & MCP Server
+1. ✅ Run full generator, compare with current `components.json`
+2. ✅ Verify MCP tools still work (standalone server tested)
+3. ⏳ Verify `nui-create-app` still works
 4. **Before/after evaluation** — Test LLM code generation quality:
    - Select 5 common tasks (e.g., "build a form", "create a dialog", "implement drag-and-drop")
    - Generate code with README-only context vs. MCP context
    - Measure: correctness, idiomatic patterns, proper inner elements, trade-off awareness
    - Document results to validate AX hypothesis
 5. Update AGENTS.md and README.md with new workflow
+
+### Phase 6: Standalone MCP Server ✅ COMPLETE
+Created `scripts/mcp-server.js` — pure Node.js MCP server with stdio transport, no external dependencies.
+
+**Files created:**
+- ✅ `scripts/mcp-server.js` — Standalone MCP server (6 tools, stdio, JSON-RPC 2.0)
+- ✅ `scripts/mcp-server-wrapper.js` — ESM wrapper for mcp_server agent loader
+- ✅ `scripts/mcp-server-mcp-wrapper.js` — Replacement for `mcp_server/src/agents/nui_docs/index.js`
+
+**Schema changes:**
+- ✅ Renamed `core` → `components` in `components.json` (matches MCP code expectations)
+- ✅ All 6 tools read dynamically from `components.json` (no hardcoded strings)
+
+**Action needed:** Copy `scripts/mcp-server-mcp-wrapper.js` to `mcp_server/src/agents/nui_docs/index.js`
 
 ---
 

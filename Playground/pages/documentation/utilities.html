@@ -1,5 +1,27 @@
 <div class="page-utilities">
 
+<script type="application/ld+json">
+{
+  "@context": "nui",
+  "@type": "Reference",
+  "name": "utilities",
+  "group": "documentation",
+  "description": "Utility functions: createElement, storage, enableDrag, array helpers, environment detection.",
+  "api": {
+    "utilities": [
+      { "name": "createElement", "signature": "nui.util.createElement(tag, { class, attrs, data, events, content, target })", "category": "dom", "description": "Concise DOM construction from declarative options" },
+      { "name": "createSvgElement", "signature": "nui.util.createSvgElement(tag, attrs)", "category": "dom", "description": "SVG element creation helper" },
+      { "name": "enableDrag", "signature": "nui.util.enableDrag(element, callback)", "category": "interaction", "description": "Unified pointer drag abstraction (mouse+touch), returns cleanup function" },
+      { "name": "storage.get", "signature": "nui.util.storage.get({ name, target })", "category": "storage", "description": "Read from cookie (default) or localStorage" },
+      { "name": "storage.set", "signature": "nui.util.storage.set({ name, value, ttl, target })", "category": "storage", "description": "Write to cookie or localStorage with optional TTL" },
+      { "name": "sortByKey", "signature": "nui.util.sortByKey(array, key, order)", "category": "array", "description": "Sort array of objects by key" },
+      { "name": "filter", "signature": "nui.util.filter(array, predicate)", "category": "array", "description": "Filter array with predicate" },
+      { "name": "detectEnv", "signature": "nui.util.detectEnv()", "category": "environment", "description": "Detect browser environment and capabilities" }
+    ]
+  }
+}
+</script>
+
 <details class="collapsible-section collapsible-section--spaced">
 	<summary><strong>LLM Guide - Utilities</strong></summary>
 	<nui-markdown id="llm-guide" data-component="nui-utilities" class="llm-guide">
