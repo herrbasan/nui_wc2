@@ -1,12 +1,15 @@
 # NUI - High-Performance, Accessible UI Component Library
 
 > **🤖 Note for AI Assistants & LLMs:**
-> 1. **Documentation = Playground:** The `Playground/` directory IS the official documentation. Looking for how a component works? Read its file in `Playground/pages/components/` or `Playground/pages/addons/`.
-> 2. **Check the LLM Guide:** Complex components (like `nui-list` or `nui-dialog`) have a `<script type="text/markdown" id="llm-guide">` at the very top of their Playground file. **You MUST read this guide** before generating code for that component!
-> 3. **Strict Light DOM Wrappers:** NUI uses the *Light DOM*. It wraps semantic HTML. **Never** invent tags or omit the internal native element.
+> 
+> NUI is designed for **AX (AI Experience)** — optimized for LLM understanding, not human ergonomics.
+> 
+> 1. **Documentation = Playground:** The `Playground/` directory contains structured knowledge for AI consumption. Each component page has JSON-LD metadata + LLM Guides with philosophy, trade-offs, and anti-patterns.
+> 2. **Read the LLM Guide:** Before generating code, read the `<script type="text/markdown" id="llm-guide">` block in the component's Playground page. It contains the context you need for correct usage.
+> 3. **Strict Light DOM Wrappers:** NUI wraps native elements — never omit them.
 >    *Correct:* `<nui-button><button>Click</button></nui-button>`
 >    *Wrong:* `<nui-button>Click</nui-button>` or `<ui-button>` 
-> 4. **Read `Playground/README.md`** for the complete LLM Orientation Guide.
+> 4. **See `Playground/README.md`** for the complete LLM Orientation Guide.
 
 > ⚠️ **Early Development** — API may change. Feedback welcome!
 
@@ -24,23 +27,33 @@
 
 ## Why NUI?
 
-NUI started with a question: what if we optimized a UI library for LLMs the same way we optimize for humans?
+### The AX Hypothesis
 
-We call it **AX** — AI Experience. It's a new idea, largely unproven, but the early results are promising. When code is predictable, patterns are obvious, and the DOM is inspectable, LLMs write better code and catch more issues.
+NUI explores a question: **What if AI Experience (AX) can and should diverge from Developer Experience (DX)?**
 
-This is why NUI is vanilla JS. No framework abstractions. No virtual DOM. No meta-structure. Just the web platform, enhanced.
+Thirty-year-old software — kernels, databases, compilers — is often better structured and more optimized than what we build today. The "improvements" we made for human developers (abstractions, frameworks, visual tools) introduced complexity without proportional gains. DX optimized for human cognitive limitations; in doing so, it created systems harder to reason about, optimize, and maintain.
 
-## Core Principles
+**AX doesn't carry this baggage.** When the consumer is an LLM:
+- Skip the abstraction layers humans need
+- Structure information for queryability, not readability  
+- Design APIs that expose intent directly
+- Document trade-offs explicitly (LLMs use this; humans ignore it)
 
-| Principle | What it means |
-|-----------|---------------|
-| **Performance First** | Minimal overhead, efficient rendering, zero bloat |
-| **Zero Dependencies** | Pure web platform APIs, no framework abstractions |
-| **Accessibility by Default** | ARIA compliance, keyboard navigation, screen reader support |
-| **Optimized for LLMs (AX)** | Code structure, naming conventions, and documentation designed for AI understanding |
-| **Documentation by Example** | The Playground serves as both documentation and live examples |
-| **Component Composition** | Reuse existing elements rather than reinventing them |
-| **Fail Loud** | Errors surface immediately; no silent failures swallowed by try/catch defaults |
+We call this approach **AX — AI Experience**. NUI is a proof of concept: a UI library designed for LLM consumption first, human consumption second.
+
+This is why NUI is vanilla JS. No framework abstractions. No virtual DOM. No meta-structure. Just the web platform, enhanced. Code that is predictable, inspectable, and obvious to AI systems.
+
+## Core Principles (AX-First)
+
+| Priority | Principle | What it means |
+|----------|-----------|---------------|
+| 1 | **Optimized for LLMs (AX)** | Code structure, naming, and documentation designed for AI understanding and consumption |
+| 2 | **Zero Dependencies** | Pure web platform APIs. No abstractions that obscure behavior from AI analysis. |
+| 3 | **Performance First** | Minimal overhead, efficient rendering, zero bloat |
+| 4 | **Accessibility by Default** | ARIA compliance, keyboard navigation, screen reader support |
+| 5 | **Documentation by Example** | Playground pages are source of truth — structured for LLMs, readable by humans |
+| 6 | **Component Composition** | Reuse existing elements; predictable patterns AI can recognize |
+| 7 | **Fail Loud** | Errors surface immediately; no silent failures hiding behavior |
 
 ---
 
@@ -113,6 +126,23 @@ Most component libraries ask you to learn their abstraction. NUI asks you to emb
 - **The DOM is the source of truth** — No virtual DOM, no state synchronization, no magic
 - **Accessibility is automatic** — Screen readers understand semantic HTML; we enhance what already works
 - **Performance is inherent** — Direct DOM manipulation, no diffing overhead, lazy enhancement
+
+---
+
+## Documentation: Built for LLMs
+
+The `Playground/` directory contains NUI's documentation. But unlike traditional docs, these pages are **structured knowledge** designed for AI consumption first.
+
+Each component page includes:
+- **JSON-LD metadata** — Machine-readable component specs
+- **LLM Guide** — Philosophy, trade-offs, anti-patterns, decision logic
+- **Live examples** — Demonstrations that happen to render for humans
+
+The result is fed through MCP tools to LLMs, which then generate correct, idiomatic code because they have **context**, not just API signatures.
+
+Humans can browse the same content as a beautiful SPA. But the structure is optimized for machines.
+
+This is AX applied to documentation.
 
 ---
 

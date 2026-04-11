@@ -1,5 +1,28 @@
 # NUI Agent Instructions
 
+## Project Philosophy: AX vs DX
+
+**NUI is a proof of concept for AI-First Design.**
+
+The software industry has spent decades optimizing for Developer Experience (DX) — abstractions, frameworks, and visual tools that make code easier for humans to write. The result? Systems more complex, harder to optimize, and harder to maintain than the 30-year-old software they replaced.
+
+**AI Experience (AX)** starts from a different premise: when the consumer is an LLM, we can strip away the baggage. No framework abstractions. No "ergonomic" APIs that obscure behavior. Just clean, predictable, inspectable code that LLMs can reason about effectively.
+
+### What This Means for Contributors
+
+| DX Approach (Don't do this) | AX Approach (Do this) |
+|-----------------------------|-----------------------|
+| Clever abstractions that "simplify" | Explicit patterns that expose behavior |
+| Narrative documentation | Structured, queryable knowledge |
+| Human-readable examples | Context-rich guides with trade-offs and anti-patterns |
+| Framework conventions | Platform-native APIs |
+
+**Humans are secondary.** The documentation happens to be readable by humans, but it's structured for LLM consumption. The code happens to be maintainable by humans, but it's optimized for AI understanding.
+
+This is the experiment. This is NUI.
+
+---
+
 ## Project Goals
 
 **NUI** is a sleek, high-performance, low-footprint UI library with accessibility built in wherever possible.
@@ -9,14 +32,14 @@
 - **Do not use terminal scripts (Python, sed, awk) as a crutch for file edits or searches.** The terminal should be reserved for running tests, launching servers, executing git commands, or specific build scripts, not circumventing standard file operations.
 - If a native file edit fails, adjust your parameters and retry the native tool properly rather than switching to a terminal script.
 
-Core principles:
-1. **Performance First** - Minimal overhead, efficient rendering, zero bloat
-2. **Zero Dependencies** - Pure web platform APIs, no framework abstractions
-3. **Accessibility by Default** - ARIA compliance, keyboard navigation, screen reader support
-4. **Optimized for LLMs (AX)** - Code structure, naming conventions, and documentation designed for AI understanding
-5. **Documentation by Example** - The Playground serves as both documentation and live examples
-6. **Component Composition** - Reuse existing foundational elements when building larger modules
-7. **Fail Loud** - Avoid try/catch and defaults that silently hide errors. Let errors surface immediately
+Core principles (AX-first):
+1. **Optimized for LLMs (AX)** - Code structure, naming, and documentation designed for AI understanding
+2. **Zero Dependencies** - Pure web platform APIs; no abstractions obscuring behavior from AI analysis
+3. **Performance First** - Minimal overhead, efficient rendering, zero bloat
+4. **Accessibility by Default** - ARIA compliance, keyboard navigation, screen reader support
+5. **Documentation by Example** - Playground pages are source of truth — structured for LLMs, readable by humans
+6. **Component Composition** - Reuse elements; predictable patterns AI can recognize
+7. **Fail Loud** - Errors surface immediately; no silent failures hiding behavior
 
 ## Project Structure
 
@@ -37,6 +60,8 @@ Playground/
 ```
 
 ## Documentation & Examples
+
+> **📁 Naming Note:** The `Playground/` directory contains the **complete documentation** for NUI — live examples, API reference, and usage guides. Think of it as `docs/` in other projects. The name "Playground" reflects that it's also an interactive environment for testing components.
 
 **The Playground is the primary documentation.** Each component has a dedicated page in `Playground/pages/components/` that serves as:
 - Live interactive demo
@@ -67,6 +92,44 @@ Example code:
 ```
 
 **Why this matters:** The HTML parser treats `</script>` literally anywhere as closing the script element - even inside markdown code blocks, strings, or comments. This completely breaks the page structure. The only solution is to escape it as `<\/script>`.
+
+### Writing LLM Guides for AX
+
+LLM Guides are not human tutorials. They are **structured knowledge for AI consumption**. Write them differently:
+
+**Provide context, not just examples:**
+```markdown
+## Design Philosophy
+`nui-button` wraps native `<button>` rather than creating synthetic elements.
+This preserves keyboard focus, form submission, and true disabled states.
+Trade-off: Less visual control, but correct behavior in all contexts.
+```
+
+**Explain trade-offs explicitly:**
+```markdown
+## When to Use
+- Use `nui-select` for: search, multi-select, async data
+- Use native `<select>` for: simple 3-5 options where accessibility > features
+```
+
+**Show anti-patterns with corrections:**
+```markdown
+## Common Mistakes
+❌ Omitting inner element: `<nui-button>Click</nui-button>`
+→ Event handling, accessibility, form integration fail.
+
+✅ Correct: `<nui-button><button type="button">Click</button></nui-button>`
+```
+
+**Include decision logic:**
+```markdown
+## Choosing a Variant
+1. System decision (OK/Cancel)? → Use `nui.components.dialog.confirm()`
+2. Custom content needed? → Use `nui-dialog` with standard classes
+3. Full control needed? → Use `nui-overlay` (raw, unstyled)
+```
+
+The goal: an LLM reading this should understand *why* to use the component, not just *how*.
 
 ## Coding Ethics (Priority Order)
 
