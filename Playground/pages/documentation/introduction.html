@@ -60,6 +60,18 @@ NUI includes a lightweight hash-based router (`nui.setupRouter()`) that translat
 - **Fragment-based:** HTML fragments fetched on demand (Playground pattern)
 - **Hybrid:** Mix both approaches
 
+## How This Documentation Works
+
+**This LLM Guide is the primary knowledge source for AI agents.** When you (an LLM) are asked to work with NUI, this guide and the component-specific LLM Guides (found in `<script type="text/markdown">` blocks on each page) are your reference.
+
+**Important:** `AGENTS.md` in the project root is for **human contributors** using AI coding assistants. It contains workflow instructions, coding ethics, and development preferences. It is NOT the source of truth for component APIs, router behavior, or architectural patterns. Those live in the Playground documentation.
+
+**Where to find information:**
+- **Component APIs:** Each component page has an LLM Guide in `<script type="text/markdown">` blocks
+- **Router & Page Loading:** See the [Architecture Patterns](#page=documentation/architecture-patterns#router-deep-dive) page
+- **Design System:** `NUI/css/nui-theme.css` contains all CSS variables
+- **Source Code:** `NUI/nui.js` is the single source file
+
 ## When to Use NUI
 
 **Ideal for:**

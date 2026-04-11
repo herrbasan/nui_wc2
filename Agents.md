@@ -251,20 +251,141 @@ This section describes the "Fragment-Based" SPA pattern used for the NUI Playgro
 
 ### Router + page script contract (critical)
 
-When a page is loaded, NUI inserts the fragment into a wrapper `div` and then:
+⚠️ **THIS IS THE MOST IMPORTANT SECTION FOR LLMs.** The router pattern is non-standard by design.
 
-1. Upgrades custom elements in that wrapper
-2. Finds and executes `<script type="nui/page">` inside the wrapper
-3. Removes that script tag after execution
+**Why this pattern exists:** Standard `<script>` tags execute immediately when HTML is parsed. But NUI pages contain custom elements (`<nui-button>`, `<nui-tabs>`, etc.) that need to be upgraded first. If scripts run too early, everything breaks.
 
-Important implications:
+**The solution:** NUI uses `<script type="nui/page">` - a custom type that browsers ignore. After fetching the HTML and upgrading custom elements, NUI manually extracts and executes this script.
 
-- `init(element, params)` runs **once per page instance** (router caches the wrapper element)
+**Execution flow (step by step):**
+
+```
+1. User navigates to: #page=components/button
+2. Router fetches: pages/components/button.html
+3. Router creates wrapper: <nui-page class="content-page ...">
+4. Router injects HTML into wrapper
+5. Router calls: customElements.upgrade(wrapper)
+   → All <nui-*> elements inside are now upgraded
+6. Router finds: <script type="nui/page">
+7. Router removes the script tag from DOM
+8. Router executes the script via new Function()
+```
+
+**⚠️ CSP Requirement:** Step 8 uses `new Function()` which requires `'unsafe-eval'` in your Content Security Policy. Without it, page scripts silently fail. Add `script-src 'self' 'unsafe-eval'` to your CSP.
+
+**⚠️ Script placement:** If the fragment uses `<nui-page>` as root, `<script type="nui/page">` must be **inside** the `<nui-page>` tag. NUI discards everything outside it when extracting content.
+9. Script's init(element, params, nui) is called automatically
+```
+
+**The script tag is a trigger, not a container:**
+
+The `<script type="nui/page">` tag signals "execute page logic now." The actual code can be:
+
+1. **Inline** - Code directly in the tag (most common)
+2. **Imported** - Module imported in `main.js`, trigger tag is empty or calls the imported function
+3. **Pre-loaded** - Standard `<script type="text/javascript">` defines the function, trigger tag calls it
+
+```html
+<!-- Option 1: Inline (most common) -->
+<script type="nui/page">
+function init(element, params, nui) {
+    element.querySelector('nui-button').addEventListener('nui-click', handler);
+}
+</script>
+
+<!-- Option 2: Empty trigger (logic imported in main.js) -->
+<script type="nui/page" data-init="components/button"></script>
+
+<!-- Option 3: Pre-loaded function -->
+<script type="text/javascript">
+function initButtonPage(element, params, nui) { /* ... */ }
+</script>
+<script type="nui/page">
+function init(element, params, nui) {
+    initButtonPage(element, params, nui);
+}
+</script>
+```
+
+**Important implications:**
+
+- `init(element, params, nui)` runs **ONCE** when the page is first loaded
+- Pages are **CACHED** - the wrapper element is reused on navigation
 - On navigation, the router calls `element.show(params)` when a page becomes active, and `element.hide()` when it becomes inactive
-- Page code should:
-  - Attach event listeners once (in `init`)
-  - Start timers/polling in `show` and stop in `hide`
-  - Scope DOM queries to the page wrapper (`element.querySelector(...)`), not `document.querySelector(...)`
+- `init()` will **NOT** be called again when returning to a cached page
+
+**Page code should:**
+- Attach event listeners once (in `init`)
+- Start timers/polling in `show` and stop in `hide`
+- Scope DOM queries to the page wrapper (`element.querySelector(...)`), not `document.querySelector(...)`
+
+**Caching behavior diagram:**
+
+```
+First visit to #page=components/button:
+  1. Fetch HTML
+  2. Create wrapper element
+  3. Execute init(element, params, nui)
+  4. Show page
+
+Second visit to #page=components/button:
+  1. Find cached wrapper element
+  2. Call element.show(params) ← init() is NOT called again
+  3. Show page
+
+When leaving the page:
+  1. Call element.hide()
+  2. Hide page (display: none)
+```
+
+**Common mistakes (DO NOT DO THESE):**
+
+```javascript
+// ❌ WRONG: Using document.querySelector
+function init(element, params, nui) {
+    const button = document.querySelector('nui-button');
+    // May find buttons from other pages or miss the target
+}
+
+// ✅ CORRECT: Using element.querySelector
+function init(element, params, nui) {
+    const button = element.querySelector('nui-button');
+    // Scoped to this page's wrapper
+}
+```
+
+```javascript
+// ❌ WRONG: Attaching global listeners without cleanup
+function init(element, params, nui) {
+    document.addEventListener('resize', handleResize);
+    // Listener persists after page is hidden
+}
+
+// ✅ CORRECT: Cleanup in hide()
+function init(element, params, nui) {
+    function handleResize() { /* ... */ }
+    document.addEventListener('resize', handleResize);
+    element.hide = () => {
+        document.removeEventListener('resize', handleResize);
+    };
+}
+```
+
+```javascript
+// ❌ WRONG: Assuming script re-runs on navigation
+function init(element, params, nui) {
+    let counter = 0;
+    // This won't reset when user navigates away and back
+}
+
+// ✅ CORRECT: Reset state in show()
+function init(element, params, nui) {
+    let counter = 0;
+    element.show = (params) => {
+        counter = 0; // Reset when page becomes visible
+    };
+}
+```
 
 ### Page script template
 

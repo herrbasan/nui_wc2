@@ -16,6 +16,8 @@
 <script type="text/markdown">
 # LLM Guide: NUI Application Architecture
 
+> **For LLMs:** This guide and the Playground documentation are your authoritative reference. `AGENTS.md` in the project root is for **human contributors** using AI coding assistants - it contains workflow instructions and development preferences, not component APIs or architectural patterns.
+
 ## The Layout Engine: nui-page
 
 Before diving into routing patterns, understand NUI's layout foundation:
@@ -98,6 +100,10 @@ nui.registerFeature('editor', (element, params) => {
 - Create HTML fragments in the pages folder
 - Navigation fetches fragments and injects them
 - Each fragment can have inline `<script type="nui/page">` for initialization
+
+**⚠️ CSP Requirement:** The router uses `new Function()` to execute page scripts. Your Content Security Policy must include `'unsafe-eval'` in `script-src`, otherwise scripts silently fail.
+
+**⚠️ Script placement:** If the fragment uses `<nui-page>` as root, the `<script type="nui/page">` must be **inside** the `<nui-page>` tag. NUI discards everything outside it when extracting content.
 
 **Best for:**
 - Content-heavy sites (documentation, blogs)
@@ -354,6 +360,10 @@ router.start();</code></pre>
 			<li>If the HTML contains <code>&lt;script type="nui/page"&gt;</code>, it is extracted and executed once with a scoped <code>init(element, params)</code> function.</li>
 		</ul>
 
+		<div class="demo-callout">
+			<strong>⚠️ Critical for LLMs:</strong> The <code>&lt;script type="nui/page"&gt;</code> pattern is non-standard. Browsers ignore this script type. NUI manually extracts and executes it <strong>after</strong> upgrading custom elements. See <a href="#page=documentation/architecture-patterns#router-deep-dive">Router Deep Dive</a> below for the full execution model.
+		</div>
+
 		<h3>Example</h3>
 		<nui-code>
 			<pre><code data-lang="html">&lt;!-- pages/about.html --&gt;
@@ -377,6 +387,188 @@ function init(element, params) {
 			<li>Documentation sites, blogs, or content-heavy sites.</li>
 			<li>Playgrounds and component libraries (where isolation is a feature).</li>
 			<li>When you want to split code automatically without a complex bundler setup.</li>
+		</ul>
+	</section>
+
+	<section id="router-deep-dive">
+		<h2>Router Deep Dive: Page Script Execution Model</h2>
+		<p>This section explains exactly how the NUI Router loads pages and executes scripts. Understanding this is critical for writing correct page code.</p>
+
+		<h3>The Problem: Script Timing</h3>
+		<p>Standard <code>&lt;script&gt;</code> tags execute immediately when HTML is parsed. But NUI pages contain custom elements (<code>&lt;nui-button&gt;</code>, <code>&lt;nui-tabs&gt;</code>, etc.) that need to be upgraded first. If scripts run too early, <code>querySelector</code> calls fail, event listeners attach to unupgraded elements, and everything breaks.</p>
+
+		<h3>The Solution: Deferred Script Execution</h3>
+		<p>NUI uses a <strong>custom script type</strong> that browsers ignore, then manually extracts and executes it after upgrading components.</p>
+
+		<h4>Execution Flow (Step by Step)</h4>
+		<nui-code>
+			<pre><code data-lang="text">1. User navigates to: #page=components/button
+2. Router fetches: pages/components/button.html
+3. Router creates wrapper: &lt;nui-page class="content-page ..."&gt;
+4. Router injects HTML into wrapper
+5. Router calls: customElements.upgrade(wrapper)
+   → All &lt;nui-*&gt; elements inside are now upgraded
+6. Router finds: &lt;script type="nui/page"&gt;
+7. Router removes the script tag from DOM
+8. Router executes the script via new Function()
+9. Script's init(element, params, nui) is called automatically</code></pre>
+		</nui-code>
+
+		<h4>The Script Tag is a Trigger, Not a Container</h4>
+		<p>The <code>&lt;script type="nui/page"&gt;</code> tag signals "execute page logic now." The actual code can be loaded three ways:</p>
+
+		<h5>Option 1: Inline (Most Common)</h5>
+		<nui-code>
+			<pre><code data-lang="html">&lt;script type="nui/page"&gt;
+function init(element, params, nui) {
+    element.querySelector('nui-button').addEventListener('nui-click', handler);
+}
+&lt;/script&gt;</code></pre>
+		</nui-code>
+
+		<h5>Option 2: Imported Module (For Complex Pages)</h5>
+		<p>Import the module in <code>main.js</code> and use an empty trigger tag:</p>
+		<nui-code>
+			<pre><code data-lang="javascript">// main.js
+import { initButtonPage } from './pages/components/button.js';
+window.nuiPageInit = window.nuiPageInit || {};
+window.nuiPageInit['components/button'] = initButtonPage;</code></pre>
+		</nui-code>
+		<nui-code>
+			<pre><code data-lang="html">&lt;!-- pages/components/button.html --&gt;
+&lt;!-- Empty trigger tag - router calls window.nuiPageInit['components/button'] --&gt;
+&lt;script type="nui/page" data-init="components/button"&gt;&lt;/script&gt;</code></pre>
+		</nui-code>
+
+		<h5>Option 3: Pre-loaded Function</h5>
+		<p>Define the function in a standard script tag, then call it from the trigger:</p>
+		<nui-code>
+			<pre><code data-lang="html">&lt;!-- Standard script - browser parses but doesn't auto-execute --&gt;
+&lt;script type="text/javascript"&gt;
+function initButtonPage(element, params, nui) { /* ... */ }
+&lt;/script&gt;
+
+&lt;!-- Trigger tag calls the pre-defined function --&gt;
+&lt;script type="nui/page"&gt;
+function init(element, params, nui) {
+    initButtonPage(element, params, nui);
+}
+&lt;/script&gt;</code></pre>
+		</nui-code>
+
+		<p><strong>Important:</strong> The router looks for <code>&lt;script type="nui/page"&gt;</code> and executes its contents. If the tag is empty or contains only a function call, that's perfectly valid. The tag's purpose is to signal "run page initialization now."</p>
+
+		<h4>Page Caching Behavior</h4>
+		<p>Pages are <strong>cached</strong> by the router. The wrapper element is created once, fetched once, and shown/hidden on navigation:</p>
+		<nui-code>
+			<pre><code data-lang="text">First visit to #page=components/button:
+  1. Fetch HTML
+  2. Create wrapper element
+  3. Execute init(element, params, nui)
+  4. Show page
+
+Second visit to #page=components/button:
+  1. Find cached wrapper element
+  2. Call element.show(params) ← init() is NOT called again
+  3. Show page
+
+When leaving the page:
+  1. Call element.hide()
+  2. Hide page (display: none)</code></pre>
+		</nui-code>
+
+		<h4>Common Mistakes (DO NOT DO THESE)</h4>
+		
+		<h5>❌ Wrong: Using document.querySelector</h5>
+		<nui-code>
+			<pre><code data-lang="javascript">function init(element, params, nui) {
+    const button = document.querySelector('nui-button'); // WRONG!
+    // May find buttons from other pages or miss the target
+}</code></pre>
+		</nui-code>
+
+		<h5>✅ Correct: Using element.querySelector</h5>
+		<nui-code>
+			<pre><code data-lang="javascript">function init(element, params, nui) {
+    const button = element.querySelector('nui-button'); // CORRECT!
+    // Scoped to this page's wrapper
+}</code></pre>
+		</nui-code>
+
+		<h5>❌ Wrong: Attaching global listeners without cleanup</h5>
+		<nui-code>
+			<pre><code data-lang="javascript">function init(element, params, nui) {
+    document.addEventListener('resize', handleResize); // WRONG!
+    // Listener persists after page is hidden
+}</code></pre>
+		</nui-code>
+
+		<h5>✅ Correct: Cleanup in hide()</h5>
+		<nui-code>
+			<pre><code data-lang="javascript">function init(element, params, nui) {
+    function handleResize() { /* ... */ }
+    
+    document.addEventListener('resize', handleResize);
+    
+    element.hide = () => {
+        document.removeEventListener('resize', handleResize); // CORRECT!
+    };
+}</code></pre>
+		</nui-code>
+
+		<h5>❌ Wrong: Assuming script re-runs on navigation</h5>
+		<nui-code>
+			<pre><code data-lang="javascript">function init(element, params, nui) {
+    let counter = 0; // WRONG! This won't reset on navigation
+    // Because init() only runs once
+}</code></pre>
+		</nui-code>
+
+		<h5>✅ Correct: Reset state in show()</h5>
+		<nui-code>
+			<pre><code data-lang="javascript">function init(element, params, nui) {
+    let counter = 0;
+    
+    element.show = (params) => {
+        counter = 0; // CORRECT! Reset when page becomes visible
+    };
+}</code></pre>
+		</nui-code>
+
+		<h4>Lifecycle Hooks Summary</h4>
+		<table class="nui-table nui-table--api">
+			<thead>
+				<tr>
+					<th>Hook</th>
+					<th>When Called</th>
+					<th>Use For</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><code>init(element, params, nui)</code></td>
+					<td>First page load only</td>
+					<td>Setup, attach listeners, cache elements</td>
+				</tr>
+				<tr>
+					<td><code>element.show(params)</code></td>
+					<td>Every time page becomes visible</td>
+					<td>Start timers, reset state, fetch data</td>
+				</tr>
+				<tr>
+					<td><code>element.hide()</code></td>
+					<td>Every time page is hidden</td>
+					<td>Stop timers, cleanup, save state</td>
+				</tr>
+			</tbody>
+		</table>
+
+		<h4>Why This Pattern Exists</h4>
+		<ul>
+			<li><strong>Custom elements must be upgraded first</strong> - Standard <code>&lt;script&gt;</code> runs too early</li>
+			<li><strong>Pages are cached for performance</strong> - <code>init()</code> runs once, <code>show()/hide()</code> handle visibility</li>
+			<li><strong>Scoped DOM access</strong> - <code>element</code> parameter prevents cross-page interference</li>
+			<li><strong>Zero dependencies</strong> - No framework, no build step, pure browser APIs</li>
 		</ul>
 	</section>
 

@@ -5,6 +5,27 @@ NUI PLAYGROUND PAGE TEMPLATE
 Copy this file when creating new component demo pages.
 Replace [component] with the component name (e.g., button, tabs, dialog).
 ================================================================================
+
+⚠️ CRITICAL: PAGE SCRIPT EXECUTION MODEL ⚠️
+
+This page is loaded dynamically by the NUI Router. The execution order is:
+1. Router fetches this HTML file
+2. Router injects HTML into a <nui-page> wrapper element
+3. Router calls customElements.upgrade() on the wrapper
+   → All <nui-*> elements are now functional
+4. Router finds <script type="nui/page"> below
+5. Router removes the script tag and executes it
+6. Router calls init(element, params, nui)
+
+IMPORTANT RULES:
+- The script runs ONCE when the page is first loaded
+- Pages are CACHED - init() won't re-run on navigation
+- Use element.show(params) / element.hide() for lifecycle management
+- ALWAYS use element.querySelector(), NOT document.querySelector()
+- The function MUST be named "init" - the router looks for this name
+
+See: Playground/pages/ROUTER-GUIDE.md for full documentation
+================================================================================
 -->
 
 <!-- 1. PAGE WRAPPER - Use nui-page as the root for proper layout handling -->
@@ -177,21 +198,85 @@ Explain the core design principles behind this component.
 		</ul>
 	</section>
 
+	<!-- 
+	================================================================================
+	PAGE SCRIPT - EXECUTED AFTER CUSTOM ELEMENTS ARE UPGRADED
+	================================================================================
+
+	⚠️ CRITICAL: This script MUST be INSIDE the <nui-page> tag.
+	NUI discards everything outside <nui-page> when extracting fragment content.
+
+	Execution flow:
+	1. Router fetches this HTML file
+	2. Router injects into <nui-page> wrapper
+	3. Router upgrades all <nui-*> custom elements
+	4. Router extracts THIS script tag (removes it from DOM)
+	5. Router executes it and calls init(element, params, nui)
+
+	The <script type="nui/page"> tag is a TRIGGER, not a container.
+	Three ways to provide the actual code:
+
+	Option 1: Inline (most common, shown below)
+	  → Code directly inside the trigger tag
+
+	Option 2: Imported module (for complex pages)
+	  → Import module in main.js, use empty trigger:
+	    <script type="nui/page" data-init="components/button"></script>
+
+	Option 3: Pre-loaded function
+	  → Standard <script type="text/javascript"> defines the function,
+	    trigger tag calls it:
+	    <script type="nui/page">
+	    function init(element, params, nui) {
+	        initButtonPage(element, params, nui);
+	    }
+	    </script>
+
+	Parameters:
+	- element: The <nui-page> wrapper (use element.querySelector for scoped access)
+	- params: URL parameters object (e.g., ?foo=bar → { foo: "bar" })
+	- nui: The NUI library instance
+
+	Lifecycle hooks (attach to element):
+	- element.show(params): Called every time page becomes visible
+	- element.hide(): Called every time page is hidden
+
+	Common patterns:
+	✅ element.querySelector('nui-button')     - Scoped to this page
+	✅ element.addEventListener('nui-action') - Safe, scoped listener
+	❌ document.querySelector('nui-button')    - May find wrong elements
+	❌ document.addEventListener('resize')     - Must cleanup in hide()
+
+	Page caching behavior:
+	- First visit: HTML fetched → init() called → page shown
+	- Return visit: Cached wrapper → show() called → page shown (init NOT called)
+	- Leaving page: hide() called → page hidden (display:none)
+	================================================================================
+	-->
+	<script type="nui/page">
+	function init(element, params, nui) {
+		// One-time setup: cache elements, attach listeners
+		// Use element.querySelector(...) NOT document.querySelector(...)
+		
+		// Example: Cache an element
+		// const output = element.querySelector('[data-demo-output]');
+		
+		// Example: Attach scoped event listener
+		// element.addEventListener('nui-action', (e) => {
+		//     console.log('Action:', e.detail.name);
+		// });
+		
+		// Optional lifecycle hook: called when page becomes visible
+		element.show = (params) => {
+			// Start timers/polling when page becomes visible
+			// Reset state if needed
+		};
+
+		// Optional lifecycle hook: called when page is hidden
+		element.hide = () => {
+			// Stop timers, detach observers, cleanup global listeners
+		};
+	}
+	</script>
+
 </nui-page>
-
-<!-- 10. PAGE SCRIPT - Always required (even if empty) -->
-<script type="nui/page">
-function init(element, params, nui) {
-	// One-time setup: cache elements, attach listeners
-	// Use element.querySelector(...) NOT document.querySelector(...)
-	
-	// Optional lifecycle hooks for the router
-	element.show = (params) => {
-		// Start timers/polling when page becomes visible
-	};
-
-	element.hide = () => {
-		// Stop timers, detach observers when page is hidden
-	};
-}
-</script>
