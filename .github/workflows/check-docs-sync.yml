@@ -1,11 +1,6 @@
 name: Check components.json Sync
 
 on:
-  push:
-    paths:
-      - 'Playground/pages/**/*.html'
-      - 'scripts/update-docs.js'
-      - 'docs/components.json'
   pull_request:
     paths:
       - 'Playground/pages/**/*.html'
