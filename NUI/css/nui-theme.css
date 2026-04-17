@@ -4634,7 +4634,6 @@ nui-card,
         border: solid var(--border-thickness) light-dark(rgb(0, 0, 0, 0.2), var(--border-shade2));
         border-radius: var(--border-radius2);
         box-shadow: 0 0.3rem 1rem light-dark(rgb(0, 0, 0, 0.1), rgba(0, 0, 0, 0.3));
-        overflow: hidden;
         position: relative;
         transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
   }
