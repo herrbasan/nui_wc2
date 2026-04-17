@@ -388,7 +388,7 @@ nui-link-list ul li {
 	min-height: var(--nui-space-double);
 }
 
-nui-link-list:first-child ul li:first-child {
+nui-link-list:first-child ul li.group-header {
 	font-weight: 200;
 	color: var(--color-highlight);
 }
@@ -484,7 +484,7 @@ nui-link-list li.separator {
 	min-height: 0;
 }
 
-nui-link-list[mode="fold"]:first-child ul li:first-child {
+nui-link-list[mode="fold"]:first-child ul li.group-header {
 	font-weight: unset;
 	font-size: unset;
 	color: var(--text-color-dim);
@@ -527,7 +527,7 @@ nui-link-list[mode="fold"] li:hover {
 }
 
 /* Ensure first item also gets hover color */
-nui-link-list[mode="fold"]:first-child ul li:first-child:hover {
+nui-link-list[mode="fold"]:first-child ul li.group-header:hover {
 	color: var(--color-contrast);
 }
 
@@ -546,7 +546,7 @@ nui-link-list[mode="fold"] li.list-item.active {
 }
 
 /* Ensure first item also gets active color */
-nui-link-list[mode="fold"]:first-child ul li:first-child.active {
+nui-link-list[mode="fold"]:first-child ul li.group-header.active {
 	color: light-dark(var(--color-highlight), var(--color-highlight));
 }
 
