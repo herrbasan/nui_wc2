@@ -416,9 +416,25 @@ function init(element, params, nui) {
 </script>
 ```
 
+### DOM helper shortcuts: `el` / `els`
+
+NUI extends `Element`, `Document`, and `DocumentFragment` prototypes with two lightweight helpers:
+
+- `element.el(selector)` — equivalent to `element.querySelector(selector)`
+- `element.els(selector)` — equivalent to `[...element.querySelectorAll(selector)]`
+
+These are used internally by all NUI components and are safe to use in page scripts. They do **not** pierce Shadow DOM (NUI components do not use shadow DOM).
+
+```javascript
+// Inside a page init script
+const button = element.el('nui-button');           // same as querySelector
+const inputs = element.els('input');               // same as querySelectorAll, returned as array
+const select = element.el('#my-select select');    // scoped to the page wrapper
+```
+
 ### `data-action` contract (how demos do interactions)
 
-NUI provides minimal event delegation for click actions.
+NUI provides minimal event delegation for click actions. Any element with a `data-action` attribute will trigger the action system on click.
 
 **Syntax:** `data-action="name[:param][@selector]"`
 
@@ -442,6 +458,15 @@ Both bubble. The `detail` object contains:
 - `detail.param`: param string (or undefined)
 - `detail.target`: resolved target element (selector target or the clicked element)
 - `detail.originalEvent`: the original click event
+
+**`nui-button` and `nui-click`:** `nui-button` wraps a native `<button>` and dispatches a `nui-click` custom event when clicked. For simple actions, add `data-action` directly to the `<nui-button>` or its inner `<button>`. For complex logic inside a page script, listen for `nui-click` on the `<nui-button>` host:
+
+```javascript
+// ✅ Preferred for custom page logic
+element.el('nui-button').addEventListener('nui-click', () => {
+    // run custom task
+});
+```
 
 ### Standard demo primitives
 
