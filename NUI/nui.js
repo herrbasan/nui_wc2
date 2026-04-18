@@ -1008,6 +1008,9 @@ registerComponent('nui-app', (element) => {
 	return () => {
 		resizeObserver.disconnect();
 	};
+}, (element) => {
+	// Reset init guard so re-connection re-attaches observers after DOM moves
+	element._nui_initialized = false;
 });
 
 registerComponent('nui-app-header', (element) => {
