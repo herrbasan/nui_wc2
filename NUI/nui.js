@@ -2368,8 +2368,13 @@ registerComponent('nui-banner', (element) => {
 
 // ################################# INPUT COMPONENTS
 
+let _idCounter = 0;
+function generateId(prefix = 'nui') {
+	return `${prefix}-${++_idCounter}`;
+}
+
 function generateInputId(prefix = 'nui-input') {
-	return `${prefix}-${crypto.randomUUID().slice(0, 8)}`;
+	return generateId(prefix);
 }
 
 function setupInputBehavior(element, input, config = {}) {
@@ -5397,6 +5402,7 @@ const util = {
 	dom,
 	enableDrag,
 	storage,
+	generateId,
 
 	sortByKey(array, path, numeric = false) {
 		const parts = path.split('.');
