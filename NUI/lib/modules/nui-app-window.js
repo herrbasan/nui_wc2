@@ -30,7 +30,7 @@ function appWindow(prop = {}) {
 	appEl.innerHTML = `
 		<div class="nui-app-titlebar">
 			<div class="title">
-				<div class="title-icon">${prop.icon ? `<nui-icon name="${prop.icon}"></nui-icon>` : ''}</div>
+				${prop.menuToggle ? `<div class="menu-toggle" title="Menu"><nui-icon name="menu"></nui-icon></div>` : `<div class="title-icon">${prop.icon ? `<nui-icon name="${prop.icon}"></nui-icon>` : ''}</div>`}
 				<div class="label">${title}</div>
 			</div>
 			<div class="controls">
@@ -47,6 +47,7 @@ function appWindow(prop = {}) {
 
 	const mainContent = appEl.querySelector('.nui-app-main');
 	const closeBtn = appEl.querySelector('.nui-app-titlebar .close');
+	const menuToggle = appEl.querySelector('.nui-app-titlebar .title .menu-toggle');
 
 	if (typeof inner === 'string') {
 		mainContent.innerHTML = inner;
@@ -80,6 +81,15 @@ function appWindow(prop = {}) {
 	closeBtn.addEventListener('click', () => {
 		app.close();
 	});
+
+	if (menuToggle) {
+		menuToggle.addEventListener('click', () => {
+			const nuiApp = mainContent.querySelector('nui-app');
+			if (nuiApp?.toggleSidebar) {
+				nuiApp.toggleSidebar('left');
+			}
+		});
+	}
 
 	const target = prop.target || document.body;
 	if (target === document.body) {

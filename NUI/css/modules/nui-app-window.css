@@ -116,6 +116,31 @@
 	fill: currentColor;
 }
 
+.nui-app .nui-app-titlebar .title .menu-toggle {
+	width: var(--nui-app-titlebar-height);
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	color: light-dark(var(--color-white), var(--color-shade8));
+	opacity: 0.7;
+	transition: opacity 0.15s, background-color 0.15s;
+	-webkit-app-region: no-drag;
+	margin-left: calc(-1 * var(--nui-space));
+}
+
+.nui-app .nui-app-titlebar .title .menu-toggle:hover {
+	opacity: 1;
+	background-color: var(--color-shade5);
+}
+
+.nui-app .nui-app-titlebar .title .menu-toggle nui-icon {
+	width: 1rem;
+	height: 1rem;
+	fill: currentColor;
+}
+
 .nui-app .nui-status-bar {
 	position: absolute;
 	bottom: 0;
