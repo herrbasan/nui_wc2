@@ -253,6 +253,7 @@ nui.registerFeature('dashboard', (element, params) => {
 
 // Navigation data (JSON) - mirrors the HTML structure
 const navigationData = [
+	{ label: 'Home', href: '#page=home', icon: 'public' },
 	{
 		label: 'Documentation',
 		icon: 'article',
@@ -359,7 +360,7 @@ nui.setupRouter({
 	container: 'nui-content nui-main',
 	navigation: 'nui-sidebar',
 	basePath: 'pages',
-	defaultPage: 'documentation/introduction'
+	defaultPage: 'home'
 });
 
 // Note: nui.init() is called automatically in nui.js unless ?skip-init parameter is present

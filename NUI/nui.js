@@ -1169,7 +1169,7 @@ registerComponent('nui-link-list', (element) => {
 	// ##### DATA LOADING & HTML GENERATION
 
 	element.loadData = (data) => {
-		const html = data.map(item => buildItemHTML(item)).join('');
+		const html = data.map(item => buildItemHTML(item, false, true)).join('');
 
 		const columnFlow = element.el('nui-column-flow');
 		if (columnFlow) {
@@ -1186,7 +1186,7 @@ registerComponent('nui-link-list', (element) => {
 		}
 	};
 
-	function buildItemHTML(item, nested = false) {
+	function buildItemHTML(item, nested = false, isRoot = false) {
 		if (item.separator) return '<li class="separator" role="none"><hr></li>';
 		if (item.items) {
 			const children = item.items.map(i => buildItemHTML(i, true)).join('');
@@ -1196,7 +1196,7 @@ registerComponent('nui-link-list', (element) => {
 		const dataAction = item.action ? ` data-action="${item.action}"` : '';
 		const link = `<li class="list-item" role="none"><a${hrefAttr}${dataAction} role="treeitem">` +
 			`${item.icon ? `<nui-icon name="${item.icon}"></nui-icon>` : ''}<span>${item.label}</span></a></li>`;
-		return nested ? link : `<ul role="group">${link}</ul>`;
+		return nested ? link : (isRoot ? `<ul role="group" class="root-item">${link}</ul>` : `<ul role="group">${link}</ul>`);
 	}
 
 	function buildGroupHeaderHTML(item) {

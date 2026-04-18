@@ -822,6 +822,10 @@ flex-direction: column;
 justify-content: center;
 }
 
+nui-card[layout="image-only"] > *:not(img) {
+padding: var(--nui-space);
+}
+
 .page-component-card .demo-overlay {
 padding: var(--nui-space);
 background: linear-gradient(transparent, rgba(0,0,0,0.8));

@@ -372,6 +372,10 @@ nui-link-list ul {
 	border-radius: var(--nui-space-quarter);
 }
 
+nui-link-list ul.root-item {
+	padding-left: var(--nui-space);
+}
+
 nui-link-list nui-column-flow>ul {
 	padding-left: 0;
 	padding: var(--nui-space);
@@ -583,6 +587,19 @@ nui-link-list[mode="fold"] ul {
 	margin: 0;
 	padding: 0;
 	background-color: transparent;
+}
+
+nui-link-list[mode="fold"] ul.root-item {
+	padding-left: 0;
+	border: none;
+}
+
+nui-link-list[mode="fold"] ul.root-item > li {
+	padding-left: 0;
+}
+
+nui-link-list[mode="fold"] ul.root-item > li > a {
+	padding-left: var(--nui-space);
 }
 
 nui-link-list[mode="fold"] ul li {
@@ -4644,6 +4661,14 @@ nui-card,
         gap: var(--nui-space);
         margin-bottom: var(--nui-space);
   }
+
+nui-card > *:first-child {
+	margin-top: 0;
+}
+
+nui-card > *:last-child {
+	margin-bottom: 0;
+}
 
   nui-card[layout="horizontal"] {
         flex-direction: row;
