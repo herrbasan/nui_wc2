@@ -823,7 +823,7 @@ justify-content: center;
 }
 
 nui-card[layout="image-only"] > *:not(img) {
-padding: var(--nui-space);
+	padding: var(--nui-space);
 }
 
 .page-component-card .demo-overlay {
