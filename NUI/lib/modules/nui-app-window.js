@@ -87,6 +87,22 @@ function appWindow(prop = {}) {
 	}
 	target.appendChild(appEl);
 
+	// Re-initialize nui-app responsive observers after moving content in the DOM.
+	// appWindow clears/replaces the body which disconnects nui-app's internal
+	// ResizeObserver. The nui-app component guards against double-init, so
+	// observers are never re-created. We detect moved nui-app elements and
+	// attach a fresh observer that calls invalidateBreakpointCache().
+	const nuiApps = mainContent.querySelectorAll('nui-app');
+	for (const nuiApp of nuiApps) {
+		if (nuiApp.invalidateBreakpointCache) {
+			nuiApp.invalidateBreakpointCache();
+			const ro = new ResizeObserver(() => {
+				nuiApp.invalidateBreakpointCache();
+			});
+			ro.observe(nuiApp);
+		}
+	}
+
 	return app;
 }
 
