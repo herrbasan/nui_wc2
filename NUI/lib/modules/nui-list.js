@@ -420,18 +420,48 @@ function createList(element, options) {
 	
 	function appendData() {
 		if (list.clone.length < options.data.length) {
-			for (let i = list.clone.length; i < options.data.length; i++) {
-				list.clone.push({
-					oidx: i,
-					el: null,
-					data: options.data[i],
-					selected: false
-				});
-			}
-			filter();
-			setContainerHeight();
+                        const newItems = [];
+                        let hasSearchOrFilter = false;
+                        
+                        if (list.currentSearch !== '' || (options.filters && list.currentFilters && Object.values(list.currentFilters).some(v => v !== '' && v !== '__all__'))) {
+                                hasSearchOrFilter = true;
+                        }
 
-			update(true);
+                        for (let i = list.clone.length; i < options.data.length; i++) {
+                                const item = {
+                                        oidx: i,
+                                        el: null,
+                                        data: options.data[i],
+                                        selected: false
+                                };
+                                list.clone.push(item);
+                                newItems.push(item);
+                        }
+                        
+                        if (hasSearchOrFilter || options.sort) {
+                                // Save selections and scroll
+                                const selectedOidxs = new Set(list.filtered.filter(i => i.selected).map(i => i.oidx));
+                                const savedScroll = list.viewport.scrollTop;
+                                
+                                filter();
+                                
+                                // Restore selection
+                                for (const item of list.filtered) {
+                                        if (selectedOidxs.has(item.oidx)) item.selected = true;
+                                }
+                                
+                                // Restore scroll if logmode was actively pinned, otherwise maintain position
+                                if (!list.scrollMute && options.logmode) {
+                                  // filter() already reset to bottom
+                                } else {
+                                  list.viewport.scrollTop = savedScroll;
+                                  list.scrollPos = savedScroll;
+                                }
+                        } else {
+                                list.filtered.push(...newItems);
+                                setContainerHeight();
+                                if (list.footerInfo) list.footerInfo.textContent = list.filtered.length;
+                        }
 		}
 	}
 	
