@@ -6,7 +6,11 @@
 
 The software industry has spent decades optimizing for Developer Experience (DX) — abstractions, frameworks, and visual tools that make code easier for humans to write. The result? Systems more complex, harder to optimize, and harder to maintain than the 30-year-old software they replaced.
 
-**AI Experience (AX)** starts from a different premise: when the consumer is an LLM, we can strip away the baggage. No framework abstractions. No "ergonomic" APIs that obscure behavior. Just clean, predictable, inspectable code that LLMs can reason about effectively.
+**AI Experience (AX)** starts from a different premise. A modern browser engine (V8, Blink, WebKit) is an engineering marvel. Google, Apple, and Mozilla have spent billions of dollars and two decades relentlessly optimizing layout engines, hardware-accelerated compositing, and JIT compilation. The browser can paint 60 frames per second, handle millions of nodes in a B-tree, and execute JavaScript at near-native speeds. It is an incredibly powerful, lean execution environment.
+
+But the industry took that Ferrari engine and strapped a Virtual DOM diffing engine, 5MB of bundled JavaScript, state-management middleware, and CSS-in-JS parsers to the roof. Of course it feels sluggish. When an app takes 2 seconds to register a click, it's not because the browser's DOM is slow—it's because React or Angular is executing 10,000 lines of abstraction logic before it finally allows the browser to do its job.
+
+When the consumer is an LLM, we can strip away the baggage. No Virtual DOM. No framework reactivity abstractions. No "ergonomic" APIs that obscure behavior. NUI embraces the native Web Platform as a highly-optimized UI layout engine, producing code that is blazingly fast because it gets out of the browser's way. 
 
 ### What This Means for Contributors
 
