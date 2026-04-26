@@ -3,7 +3,7 @@
  * NUI Documentation Generator
  * 
  * Extracts JSON-LD metadata and LLM Guides from Playground pages,
- * then generates docs/components.json as the machine-readable source of truth.
+ * then generates components.json as the machine-readable source of truth.
  * 
  * Usage:
  *   node scripts/update-docs.js
@@ -14,7 +14,7 @@ const path = require('path');
 
 // Configuration
 const PAGES_DIR = path.join(__dirname, '..', 'Playground', 'pages');
-const OUTPUT_FILE = path.join(__dirname, '..', 'docs', 'components.json');
+const OUTPUT_FILE = path.join(__dirname, '..', 'documentation', 'components.json');
 
 /**
  * Recursively find all HTML files in a directory
@@ -245,15 +245,15 @@ function generateComponentsJson() {
 	
 	// Write output
 	console.log('[update-docs] Writing components.json...');
+	
 	const outputDir = path.dirname(OUTPUT_FILE);
 	if (!fs.existsSync(outputDir)) {
 		fs.mkdirSync(outputDir, { recursive: true });
 	}
-	
 	fs.writeFileSync(OUTPUT_FILE, JSON.stringify(result, null, '\t'));
+	console.log(`[update-docs] Generated: ${OUTPUT_FILE}`);
 	
 	console.log('[update-docs] Done!');
-	console.log(`[update-docs] Generated: ${OUTPUT_FILE}`);
 	console.log(`[update-docs] Stats: ${result.components.length} components, ${result.addons.length} addons, ${result.reference.length} reference pages`);
 }
 

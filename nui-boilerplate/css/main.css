@@ -1,0 +1,9 @@
+/* NUI Boilerplate Specific Styles */
+
+/* 
+ * NUI sidebars don't enforce padding by default to stay layout-agnostic.
+ * For this application, we want standard spacing around sidebar contents.
+ */
+.config-sidebar {
+    padding: var(--nui-space);
+}

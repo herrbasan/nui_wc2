@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="color-scheme" content="light dark">
+    <title>NUI Boilerplate</title>
+    <!-- Core NUI CSS Variables and Components -->
+    <link rel="stylesheet" href="../NUI/css/nui-theme.css">
+    <!-- App Specific CSS -->
+    <link rel="stylesheet" href="css/main.css">
+    <style>
+        /* Prevent layout shifts by hiding app until upgraded and ready */
+        body { margin: 0; padding: 0; overflow: hidden; }
+        nui-app:not(.nui-ready) { display: none; }
+        nui-loading:not(.active) { display: none; }
+    </style>
+    <!-- Main App Logic -->
+    <script type="module" src="js/app.js"></script>
+</head>
+<body>
+    <nui-loading mode="bar"></nui-loading>
+
+    <nui-app content-min-width="50rem">
+        <nui-skip-links></nui-skip-links>
+
+        <nui-app-header>
+            <div slot="left">
+                <!-- Toggle Left Navigation Sidebar -->
+                <nui-button data-action="toggle-sidebar">
+                    <button type="button" aria-label="Toggle navigation menu">
+                        <nui-icon name="menu">☰</nui-icon>
+                    </button>
+                </nui-button>
+                <h1>NUI Application</h1>
+            </div>
+            
+            <div slot="right">
+                <!-- Toggle Light/Dark Mode -->
+                <nui-button data-action="toggle-theme">
+                    <button type="button" aria-label="Toggle light/dark theme">
+                        <nui-icon name="brightness">⛭</nui-icon>
+                    </button>
+                </nui-button>
+                <!-- Toggle Right Config Sidebar -->
+                <nui-button data-action="toggle-sidebar:right">
+                    <button type="button" aria-label="Toggle configuration panel">
+                        <nui-icon name="settings">⚙</nui-icon>
+                    </button>
+                </nui-button>
+            </div>
+        </nui-app-header>
+
+        <!-- Left Sidebar: Navigation -->
+        <nui-sidebar behavior="primary" id="nav-sidebar">
+            <nui-link-list mode="fold" id="main-navigation">
+                <!-- Loaded via JS -->
+            </nui-link-list>
+        </nui-sidebar>
+
+        <!-- Right Sidebar: Configuration -->
+        <nui-sidebar position="right" behavior="manual" id="config-sidebar">
+            <div class="config-sidebar">
+                <h3 style="margin-top: 0">Configuration</h3>
+                <p>Global app toggles go here.</p>
+                <br>
+                <label>Environment</label>
+                <nui-select>
+                    <select>
+                        <option>Production</option>
+                        <option>Staging</option>
+                        <option>Local</option>
+                    </select>
+                </nui-select>
+                <br>
+                <nui-button variant="primary" style="width: 100%">
+                    <button type="button" data-action="save-config">Apply Configuration</button>
+                </nui-button>
+            </div>
+        </nui-sidebar>
+
+        <nui-content>
+            <nui-main>
+                <!-- Dynamic pages loaded here via the router -->
+            </nui-main>
+        </nui-content>
+    </nui-app>
+</body>
+</html>

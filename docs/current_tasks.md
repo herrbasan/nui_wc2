@@ -35,5 +35,5 @@ See git history for detailed completed work:
 ## Reference
 
 - `docs/notes.md` - Full list of future ideas and brainstorming
-- `docs/components.json` - Component registry (source of truth)
+- `documentation/components.json` - Component registry (source of truth)
 - `Playground/pages/documentation/cheatsheet.html` - Visual cheatsheet for icons, CSS variables, and patterns

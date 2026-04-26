@@ -1,49 +1,17 @@
-# NUI Agent Instructions
+# NUI Contributor Instructions
 
-## Project Philosophy: AX vs DX
+> **🤖 Ground Truth for AI Assistants:**
+> For the core philosophy, AX principles, and architecture guide, please read:
+> 👉 **[`documentation/DOCUMENTATION.md`](documentation/DOCUMENTATION.md)**
 
-**NUI is a proof of concept for AI-First Design.**
-
-The software industry has spent decades optimizing for Developer Experience (DX) — abstractions, frameworks, and visual tools that make code easier for humans to write. The result? Systems more complex, harder to optimize, and harder to maintain than the 30-year-old software they replaced.
-
-**AI Experience (AX)** starts from a different premise. A modern browser engine (V8, Blink, WebKit) is an engineering marvel. Google, Apple, and Mozilla have spent billions of dollars and two decades relentlessly optimizing layout engines, hardware-accelerated compositing, and JIT compilation. The browser can paint 60 frames per second, handle millions of nodes in a B-tree, and execute JavaScript at near-native speeds. It is an incredibly powerful, lean execution environment.
-
-But the industry took that Ferrari engine and strapped a Virtual DOM diffing engine, 5MB of bundled JavaScript, state-management middleware, and CSS-in-JS parsers to the roof. Of course it feels sluggish. When an app takes 2 seconds to register a click, it's not because the browser's DOM is slow—it's because React or Angular is executing 10,000 lines of abstraction logic before it finally allows the browser to do its job.
-
-When the consumer is an LLM, we can strip away the baggage. No Virtual DOM. No framework reactivity abstractions. No "ergonomic" APIs that obscure behavior. NUI embraces the native Web Platform as a highly-optimized UI layout engine, producing code that is blazingly fast because it gets out of the browser's way. 
-
-### What This Means for Contributors
-
-| DX Approach (Don't do this) | AX Approach (Do this) |
-|-----------------------------|-----------------------|
-| Clever abstractions that "simplify" | Explicit patterns that expose behavior |
-| Narrative documentation | Structured, queryable knowledge |
-| Human-readable examples | Context-rich guides with trade-offs and anti-patterns |
-| Framework conventions | Platform-native APIs |
-
-**Humans are secondary.** The documentation happens to be readable by humans, but it's structured for LLM consumption. The code happens to be maintainable by humans, but it's optimized for AI understanding.
-
-This is the experiment. This is NUI.
+This document contains the **Engineering Manual** for developing and maintaining the NUI library itself.
 
 ---
 
-## Project Goals
-
-**NUI** is a sleek, high-performance, low-footprint UI library with accessibility built in wherever possible.
-
-### Agent Tool Usage Guidelines
+## Agent Tool Usage Guidelines
 - **Use native VS Code tools first:** Always use `read_file`, `replace_string_in_file`, `grep_search`, etc. for file inspection, search, and editing.
-- **Do not use terminal scripts (Python, sed, awk) as a crutch for file edits or searches.** The terminal should be reserved for running tests, launching servers, executing git commands, or specific build scripts, not circumventing standard file operations.
+- **Do not use terminal scripts (Python, sed, awk) as a crutch for file edits or searches.**
 - If a native file edit fails, adjust your parameters and retry the native tool properly rather than switching to a terminal script.
-
-Core principles (AX-first):
-1. **Optimized for LLMs (AX)** - Code structure, naming, and documentation designed for AI understanding
-2. **Zero Dependencies** - Pure web platform APIs; no abstractions obscuring behavior from AI analysis
-3. **Performance First** - Minimal overhead, efficient rendering, zero bloat
-4. **Accessibility by Default** - ARIA compliance, keyboard navigation, screen reader support
-5. **Documentation by Example** - Playground pages are source of truth — structured for LLMs, readable by humans
-6. **Component Composition** - Reuse elements; predictable patterns AI can recognize
-7. **Fail Loud** - Errors surface immediately; no silent failures hiding behavior
 
 ## Project Structure
 
@@ -63,92 +31,13 @@ Playground/
 └── js/main.js          # Navigation configuration
 ```
 
-## Documentation & Examples
+## Component Registry
 
-> **📁 Naming Note:** The `Playground/` directory contains the **complete documentation** for NUI — live examples, API reference, and usage guides. Think of it as `docs/` in other projects. The name "Playground" reflects that it's also an interactive environment for testing components.
+> **📋 Component Registry:** `documentation/components.json` is the **source of truth** for all components, their events, imports, and documentation pages. When adding or modifying components, update the registry. This file also contains `llmGuide` fields that provide crucial instructions for how to use each component. Read this file instead of guessing.
 
-**The Playground is the primary documentation.** Each component has a dedicated page in `Playground/pages/components/` that serves as:
-- Live interactive demo
-- Usage examples with code
-- API documentation
+---
 
-When adding new components, create a demo page following the guidelines in **Creating Demo Pages** section below. Also see [`Playground/README.md`](Playground/README.md) for the LLM orientation guide.
-
-### LLM Guide Documentation (Critical)
-
-For complex components, include an LLM Guide inside `<script type="text/markdown" id="llm-guide">`.
-
-**⚠️ CRITICAL RULE - Escaping Script Tags:**
-
-Inside `<script type="text/markdown">` blocks, **ANY** `</script>` sequence MUST be escaped as `<\/script>`:
-
-```html
-<script type="text/markdown">
-# LLM Guide
-
-Example code:
-```html
-<script>
-  console.log('Hello');
-<\/script>  <!-- ← Note the backslash before / -->
-```
-</script>
-```
-
-**Why this matters:** The HTML parser treats `</script>` literally anywhere as closing the script element - even inside markdown code blocks, strings, or comments. This completely breaks the page structure. The only solution is to escape it as `<\/script>`.
-
-### Writing LLM Guides for AX
-
-LLM Guides are not human tutorials. They are **structured knowledge for AI consumption**. Write them differently:
-
-**Provide context, not just examples:**
-```markdown
-## Design Philosophy
-`nui-button` wraps native `<button>` rather than creating synthetic elements.
-This preserves keyboard focus, form submission, and true disabled states.
-Trade-off: Less visual control, but correct behavior in all contexts.
-```
-
-**Explain trade-offs explicitly:**
-```markdown
-## When to Use
-- Use `nui-select` for: search, multi-select, async data
-- Use native `<select>` for: simple 3-5 options where accessibility > features
-```
-
-**Show anti-patterns with corrections:**
-```markdown
-## Common Mistakes
-❌ Omitting inner element: `<nui-button>Click</nui-button>`
-→ Event handling, accessibility, form integration fail.
-
-✅ Correct: `<nui-button><button type="button">Click</button></nui-button>`
-```
-
-**Include decision logic:**
-```markdown
-## Choosing a Variant
-1. System decision (OK/Cancel)? → Use `nui.components.dialog.confirm()`
-2. Custom content needed? → Use `nui-dialog` with standard classes
-3. Full control needed? → Use `nui-overlay` (raw, unstyled)
-```
-
-The goal: an LLM reading this should understand *why* to use the component, not just *how*.
-
-## Coding Ethics (Priority Order)
-
-1. **Reliability** - Code must work correctly; simplicity over cleverness
-2. **Performance** - Test and measure; zero dependencies preferred
-3. **Readability** - Natural outcome of simplicity
-4. **Maintainability** - Focus on extensibility, not "clean code" dogma
-
-## Development Philosophy
-
-### Core Principles
-- **Semantic HTML Foundation** - Custom elements enhance, not replace, native HTML
-- **Direct Platform APIs** - No abstraction layers; use browser APIs directly
-- **Element Reuse** - Cache and reuse DOM elements instead of recreating
-- **Measurable Performance** - Test and measure, don't assume
+## Engineering Patterns
 
 ### Component Pattern
 ```javascript
@@ -167,46 +56,59 @@ function setupButtonBehavior(element) {
 }
 ```
 
-### Key Patterns
-- **No inheritance hierarchies** - Each component is self-contained
-- **CustomEvent for communication** - No pub/sub abstractions
-- **CSS Variables for theming** - No CSS-in-JS
-- **data-action for simple interactions** - CSP-safe event delegation
+### LLM Guide Documentation (Critical)
 
-## Core Components
+For complex components, include an LLM Guide inside `<script type="text/markdown" id="llm-guide">` on the Playground page.
 
-> **📋 Component Registry:** `docs/components.json` is the **source of truth** for all components, their events, imports, and documentation pages. Both the MCP tools and the boilerplate generator (`nui-create-app.js`) consume this file. When adding or modifying components, update the registry.
+**⚠️ CRITICAL RULE - Escaping Script Tags:**
+Inside `<script type="text/markdown">` blocks, **ANY** `</script>` sequence MUST be escaped as `<\/script>`. This prevents the browser from prematurely closing the container.
 
-**Layout:** `nui-app`, `nui-app-header`, `nui-sidebar`, `nui-content`, `nui-main`, `nui-app-footer`, `nui-layout`, `nui-skip-links`, `nui-column-flow`
+---
 
-**UI:** `nui-button`, `nui-button-container`, `nui-icon`, `nui-tabs`, `nui-accordion`, `nui-overlay`, `nui-dialog`, `nui-banner`, `nui-table`, `nui-slider`, `nui-input`, `nui-textarea`, `nui-checkbox`, `nui-radio`, `nui-tag-input`, `nui-select`, `nui-link-list`, `nui-code`, `nui-loading`, `nui-progress`, `nui-dropzone`
+## Router + Page Script Contract (Critical)
 
-**Addons:** `nui-menu`, `nui-list`, `nui-syntax-highlight`
+The Playground uses a fragment-based SPA pattern.
 
-**Planned:** `nui-tooltip`
+**Execution flow:**
+1. Router fetches: `pages/components/button.html`
+2. Router injects HTML into wrapper.
+3. Router calls: `customElements.upgrade(wrapper)`.
+4. Router finds: `<script type="nui/page">`.
+5. Router executes the script via `new Function()`.
 
-## Utilities
+**Script template:**
+```html
+<script type="nui/page">
+function init(element, params, nui) {
+    // One-time setup
+    const output = element.querySelector('[data-demo-output]');
 
-**Array:** `nui.util.sortByKey()`, `nui.util.filter()`
+    // Optional lifecycle hooks
+    element.show = (params) => { /* Start timers */ };
+    element.hide = () => { /* Cleanup */ };
+}
+</script>
+```
 
-**DOM:** `nui.util.createElement()`, `nui.util.createSvgElement()`, `nui.util.enableDrag()`
+---
 
-**Storage:** `nui.util.storage`
+## `data-action` Contract
 
-**Environment:** `nui.util.detectEnv()`
+NUI provides minimal event delegation for click actions.
+**Syntax:** `data-action="name[:param][@selector]"`
 
-**Routing:** `nui.createRouter()`, `nui.enableContentLoading()`
+Examples:
+- `data-action="demo:hello"`
+- `data-action="dialog-open@#my-dialog"`
 
-**A11y:** `a11y.announce(message, assertive)`
-
-**Registration:** `nui.registerFeature()`, `nui.registerType()`, `nui.configure()`
+---
 
 ## Development Preferences
 
 - **Indentation:** Tabs
-- **Comments:** Only for code structure, not explanations
 - **Shell:** PowerShell (Windows)
-- **Testing:** VS Code Live Server at `http://127.0.0.1:5500/Playground/index.html`. Make use of the browser tools of the orchestrator MCP to test and interact with this live-server endpoint. If the server is not started and the endpoint is unreachable, ask the user to start it.
+- **CSS Variables:** Use existing variables from `NUI/css/nui-theme.css`. Never invent new variables.
+- **Testing:** VS Code Live Server at `http://127.0.0.1:5500/Playground/index.html`. If the server is not started and the endpoint is unreachable, ask the user to start it.
 
 ## Accessibility
 
@@ -396,26 +298,12 @@ function init(element, params, nui) {
 ```html
 <script type="nui/page">
 function init(element, params, nui) {
-    // One-time setup: cache elements, attach listeners
+    // One-time setup
     const output = element.querySelector('[data-demo-output]');
 
-    function render(text) {
-        if (output) output.textContent = text;
-    }
-
-    // Prefer listening on the page wrapper (scoped, cache-safe)
-    element.addEventListener('nui-action-demo', (e) => {
-        render('Action fired: ' + e.detail.param);
-    });
-
-    // Optional lifecycle hooks for the router
-    element.show = (params) => {
-        render('Visible');
-    };
-
-    element.hide = () => {
-        // Stop timers, detach observers, etc.
-    };
+    // Optional lifecycle hooks
+    element.show = (params) => { /* Start timers */ };
+    element.hide = () => { /* Cleanup */ };
 }
 </script>
 ```

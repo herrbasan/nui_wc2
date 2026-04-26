@@ -5,7 +5,7 @@ on:
     paths:
       - 'Playground/pages/**/*.html'
       - 'scripts/update-docs.js'
-      - 'docs/components.json'
+      - 'documentation/components.json'
 
 jobs:
   check-docs-sync:
@@ -23,7 +23,7 @@ jobs:
 
       - name: Check for uncommitted changes
         run: |
-          git diff --exit-code docs/components.json || {
+          git diff --exit-code documentation/components.json || {
             echo "::error::components.json is out of sync. Run 'node scripts/update-docs.js' and commit the changes."
             exit 1
           }

@@ -70,12 +70,12 @@ Key architectural decisions:
 
 ### The Component Registry
 
-`docs/components.json` is the single source of truth for:
+`documentation/components.json` is the single source of truth for:
 - Component names, categories, events
 - Whether a component needs addon CSS/JS
 - Documentation page paths
 
-Tooling (MCP tools, boilerplate generator) consumes this file. When adding components, update the registry first.
+Tooling (MCP tools, etc) consumes this file. When adding components, update the registry first.
 
 ### Two Development Patterns
 
@@ -208,7 +208,7 @@ Override in `:root` for global changes, or on specific elements for scoped themi
         └── button.html</code></pre>
 		</nui-code>
 		<div class="demo-callout">
-			<strong>📋 Component Registry:</strong> The NUI repository includes <code>docs/components.json</code> — a machine-readable registry of all components, their events, imports, and documentation pages. The boilerplate generator and MCP tools use this as the source of truth. If you're building tooling around NUI, start there.
+			<strong>📋 Component Registry:</strong> The NUI repository includes <code>documentation/components.json</code> — a machine-readable registry of all components, their events, imports, and documentation pages. MCP tools and integrations use this as the source of truth. If you're building tooling around NUI, start there.
 		</div>
 	</section>
 

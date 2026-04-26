@@ -627,7 +627,7 @@ Complete `scripts/update-docs.js`:
 1. ✅ Glob scan all `Playground/pages/**/*.html`
 2. ✅ Extract and merge distributed slices (`setup`, `api`, `patterns`)
 3. ✅ Aggregate events from component pages
-4. ✅ Write `docs/components.json`
+4. ✅ Write `documentation/components.json`
 
 ### Phase 4: CI Enforcement ✅ COMPLETE
 Add automated checks to prevent drift:
@@ -636,10 +636,10 @@ Add automated checks to prevent drift:
 - name: Check components.json is up to date
   run: |
     node scripts/update-docs.js
-    git diff --exit-code docs/components.json || (echo "Run 'node scripts/update-docs.js' and commit" && exit 1)
+    git diff --exit-code documentation/components.json || (echo "Run 'node scripts/update-docs.js' and commit" && exit 1)
 ```
 
-**Triggered on:** push/PR when `Playground/pages/**/*.html`, `scripts/update-docs.js`, or `docs/components.json` change.
+**Triggered on:** push/PR when `Playground/pages/**/*.html`, `scripts/update-docs.js`, or `documentation/components.json` change.
 
 ### Phase 5: Validation & MCP Server
 1. ✅ Run full generator, compare with current `components.json`
@@ -723,7 +723,7 @@ llmGuide = extractedContent.replace(/<\\\/script>/g, '</script>');
 ## Backward Compatibility
 
 ### Preserved
-- `docs/components.json` location unchanged
+- `documentation/components.json` location unchanged
 - `nui-create-app.js` and `nui-create-app/` folder unchanged
 - MCP tools read same file, same structure
 - All existing CLI commands work identically
@@ -877,7 +877,7 @@ function generateComponentsJson() {
     }
   }
   
-  fs.writeFileSync('docs/components.json', JSON.stringify(result, null, '\t'));
+  fs.writeFileSync('documentation/components.json', JSON.stringify(result, null, '\t'));
 }
 ```
 
