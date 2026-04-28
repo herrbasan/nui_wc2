@@ -1,0 +1,118 @@
+/* NUI Wizard */
+nui-wizard {
+display: flex;
+flex-direction: column;
+width: 100%;
+height: 100%;
+background-color: var(--color-base);
+position: relative;
+    border: var(--border-thickness) solid var(--border-shade1);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+nui-wizard[busy]::after {
+content: "";
+position: absolute;
+top: 0; left: 0; right: 0; bottom: 0;
+background: var(--color-shade2);
+    opacity: 0.5;
+cursor: progress;
+z-index: 10;
+}
+
+.nui-wizard-header {
+padding: var(--nui-space-half) var(--nui-space);
+border-bottom: var(--border-thickness) solid var(--border-shade1);
+background-color: var(--color-shade1);
+}
+
+.nui-wizard-nav {
+display: flex;
+gap: var(--nui-space-half);
+list-style: none;
+margin: 0;
+padding: 0;
+justify-content: flex-start;
+}
+
+.nui-wizard-nav-step {
+background: transparent;
+border: none;
+display: flex;
+align-items: center;
+gap: var(--nui-space-quarter);
+padding: var(--nui-space-half) var(--nui-space);
+cursor: pointer;
+border-radius: var(--border-radius);
+color: var(--color-text-muted);
+font-size: var(--font-size-base);
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.nui-wizard-nav-step:hover:not([disabled]) {
+    background-color: var(--color-shade2);
+}
+
+.nui-wizard-nav-step[disabled] {
+cursor: not-allowed;
+opacity: 0.6;
+}
+
+.nui-wizard-nav-step.active {
+color: var(--color-highlight);
+font-weight: bold;
+}
+
+.nui-wizard-nav-step.completed {
+color: var(--color-text);
+}
+
+.nui-wizard-nav-number {
+display: inline-flex;
+align-items: center;
+justify-content: center;
+width: 1.5rem;
+height: 1.5rem;
+border-radius: 50%;
+background-color: var(--color-shade2);
+font-size: 0.85em;
+}
+
+.nui-wizard-nav-step.active .nui-wizard-nav-number {
+background-color: var(--color-highlight);
+color: var(--color-base);
+}
+
+.nui-wizard-nav-step.completed .nui-wizard-nav-number {
+background-color: var(--color-shade3);
+}
+
+.nui-wizard-content {
+flex: 1;
+padding: var(--nui-space-double) var(--nui-space);
+overflow-y: auto;
+}
+
+nui-wizard-step {
+display: block;
+}
+
+nui-wizard-step[hidden] {
+display: none;
+}
+
+.nui-wizard-footer {
+display: flex;
+justify-content: space-between;
+align-items: center;
+padding: var(--nui-space);
+border-top: var(--border-thickness) solid var(--border-shade1);
+background-color: var(--color-shade1);
+}
+
+.nui-wizard-footer-left,
+.nui-wizard-footer-right {
+display: flex;
+gap: var(--nui-space-half);
+}

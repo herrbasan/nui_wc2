@@ -949,6 +949,26 @@
 					"name": "nui-rich-text-image"
 				}
 			]
+		},
+		{
+			"@context": "nui",
+			"@type": "Component",
+			"name": "nui-wizard",
+			"group": "addons",
+			"description": "Multi-step configuration wizard with progression navigation, validation, and layout modes.",
+			"events": [
+				"nui-wizard-before-next",
+				"nui-wizard-step-change",
+				"nui-wizard-cancel",
+				"nui-wizard-complete"
+			],
+			"innerElement": "<nui-wizard-step>",
+			"imports": [
+				"NUI/lib/modules/nui-wizard.js",
+				"NUI/css/modules/nui-wizard.css"
+			],
+			"page": "addons/wizard",
+			"llmGuide": "# LLM Guide: nui-wizard\n\n## Design Philosophy\nThe `nui-wizard` component is a Light DOM wrapper that takes `<nui-wizard-step>` children and automatically injects a navigation header and action footer containing Next/Back/Cancel/Complete buttons. It allows segmenting complex forms or configuration views into sequential logical steps.\n\n## Two Operation Modes\nThe `mode` attribute on `<nui-wizard>` determines constraints:\n1. **`mode=\"required\"` (default):** Steps are sequential. The Next button relies on the browser's native `form.reportValidity()`. If a step contains a `<form>`, it will be validated before allowing navigation to the next step. Future steps cannot be directly clicked in the navigation dots.\n2. **`mode=\"free\"`:** Unconstrained mode. All steps in the progress nav are clickable, and navigation does not check HTML5 form validation.\n\n## Structure\n```html\n<nui-wizard mode=\"required\">\n    <nui-wizard-step data-title=\"Profile\">\n        <form>\n            <!-- Step content -->\n            <input type=\"text\" required>\n        </form>\n    </nui-wizard-step>\n    <nui-wizard-step data-title=\"Settings\">\n        <p>Step 2 content</p>\n    </nui-wizard-step>\n</nui-wizard>\n```\n\n## Advanced Logic: Intercepting Navigation\nUsers can intercept the next action to perform async checks (like saving step data to a server) using the `nui-wizard-before-next` event, which is cancelable (`e.preventDefault()`).\n\n```js\nwizard.addEventListener('nui-wizard-before-next', async (e) => {\n    e.preventDefault(); // Pause navigation\n    wizard.setBusy(true); // Disable controls\n    await fetch('/api/save'); \n    wizard.setBusy(false);\n    wizard.goTo(e.detail.to); // Advance programmatically\n});\n```\n\n## Dialog Embedding\nWizards can operate inside page flow, but are often placed inside `<nui-dialog mode=\"page\">`. In such cases, listen for `nui-wizard-cancel` and `nui-wizard-complete` events to close the dialog container."
 		}
 	]
 }

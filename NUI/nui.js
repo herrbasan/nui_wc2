@@ -2408,13 +2408,20 @@ function setupInputBehavior(element, input, config = {}) {
 		}));
 	};
 
-	const ensureEl = (type, cls, role) => {
-		let el = type === 'error' ? errorEl : countEl;
-		if (!el) {
-			el = dom.create('div', { class: cls, attrs: role ? { role } : {}, target: element });
-			if (type === 'error') errorEl = el; else countEl = el;
-		}
-		return el;
+	const ensureErrorIndicator = () => {
+		if (errorEl) return errorEl;
+
+		const icon = dom.create('nui-icon', { attrs: { name: 'warning', role: 'status', tabindex: '0' }, target: element });
+		icon.id = generateInputId('error-icon');
+		icon.classList.add('nui-error-indicator');
+
+		const tooltip = document.createElement('nui-tooltip');
+		tooltip.id = generateInputId('error-tooltip');
+		tooltip.setAttribute('for', icon.id);
+		document.body.appendChild(tooltip);
+
+		errorEl = { icon, tooltip };
+		return errorEl;
 	};
 
 	const validate = () => {
@@ -2422,20 +2429,19 @@ function setupInputBehavior(element, input, config = {}) {
 		const hasValue = input.value !== '';
 		const hasValidationRules = ['required', 'pattern', 'minlength', 'maxlength', 'min', 'max']
 			.some(attr => input.hasAttribute(attr)) || element.hasAttribute('validate');
-		
-		// Show validation states if input has validation rules
+
 		if (hasValidationRules) {
 			element.classList.toggle('is-valid', valid && hasValue);
 			element.classList.toggle('is-invalid', !valid);
 		}
 
 		if (!valid && input.validationMessage) {
-			const el = ensureEl('error', 'nui-error-message', 'alert');
-			el.textContent = input.validationMessage;
+			const err = ensureErrorIndicator();
+			err.tooltip.textContent = input.validationMessage;
 			input.setAttribute('aria-invalid', 'true');
-			input.setAttribute('aria-describedby', el.id || (el.id = generateInputId('error')));
+			input.setAttribute('aria-describedby', err.tooltip.id);
 		} else {
-			if (errorEl) errorEl.textContent = '';
+			if (errorEl) errorEl.tooltip.textContent = '';
 			input.removeAttribute('aria-invalid');
 			input.removeAttribute('aria-describedby');
 		}

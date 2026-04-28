@@ -2578,19 +2578,24 @@ nui-input[clearable] input {
 	padding-right: calc(var(--nui-space) + 2rem);
 }
 
-/* Error message */
-nui-input .nui-error-message {
+/* Error indicator - alert icon inside input */
+nui-input .nui-error-indicator {
 	position: absolute;
-	top: 100%;
-	left: 0;
-	font-size: var(--font-size-small);
+	right: var(--nui-space-quarter);
+	top: 50%;
+	transform: translateY(-50%);
 	color: var(--palette-alert);
-	margin-top: var(--nui-space-quarter);
+	cursor: help;
+	outline: none;
 	display: none;
 }
 
-nui-input.is-invalid .nui-error-message {
-	display: block;
+nui-input.is-invalid .nui-error-indicator {
+	display: inline-flex;
+}
+
+nui-input.is-invalid input {
+	padding-right: calc(var(--nui-space) + var(--icon-size));
 }
 
 /* =============================================================================
