@@ -15,7 +15,7 @@ This document contains the **Engineering Manual** for developing and maintaining
 
 ## Project Structure
 
-```
+```text
 NUI/
 ├── nui.js              # Core library with all components
 ├── nui.d.ts            # TypeScript definitions
@@ -30,6 +30,11 @@ Playground/
 │   └── addons/         # Optional module demos
 └── js/main.js          # Navigation configuration
 ```
+
+### Documentation Folders
+
+- **`/docs`**: Internal **development documentation**. Contains notes, migration guides, component upgrade plans, and archived discussion/planning docs. Not meant for end-users.
+- **`/documentation`**: Official **front-facing documentation** and Ground Truth. Contains the main `DOCUMENTATION.md` orientation guide and the generated `components.json` registry. This is the source of truth for understanding how to use the library.
 
 ## Component Registry
 
