@@ -59,13 +59,26 @@ class NuiWizard extends HTMLElement {
         const nav = document.createElement('nav');
         nav.className = 'nui-wizard-nav';
         
+        const circlesRow = document.createElement('div');
+        circlesRow.className = 'nui-wizard-nav-row-circles';
+        
+        const labelsRow = document.createElement('div');
+        labelsRow.className = 'nui-wizard-nav-row-labels';
+        
         this.steps.forEach((step, index) => {
+            if (index > 0) {
+                const line = document.createElement('div');
+                line.className = 'nui-wizard-nav-line';
+                line.dataset.from = index - 1;
+                circlesRow.appendChild(line);
+            }
+
             const btn = document.createElement('button');
             btn.type = 'button';
             btn.className = 'nui-wizard-nav-step';
             
             const title = step.getAttribute('data-title') || `Step ${index + 1}`;
-            btn.innerHTML = `<span class="nui-wizard-nav-number">${index + 1}</span><span class="nui-wizard-nav-title">${title}</span>`;
+            btn.innerHTML = `<span class="nui-wizard-nav-number">${index + 1}</span>`;
             
             if (this.mode === 'free') {
                 btn.setAttribute('data-action', `wizard:goto:${index}`);
@@ -73,11 +86,27 @@ class NuiWizard extends HTMLElement {
                 btn.disabled = true;
             }
             
-            nav.appendChild(btn);
+            circlesRow.appendChild(btn);
+
+            const label = document.createElement('span');
+            label.className = 'nui-wizard-nav-title';
+            label.textContent = title;
+            label.style.gridColumn = (index * 2 + 1).toString();
+            labelsRow.appendChild(label);
         });
+
+        nav.appendChild(circlesRow);
+        nav.appendChild(labelsRow);
+
+        const colCount = this.steps.length * 2 - 1;
+        nav.style.gridTemplateColumns = `repeat(${colCount}, 3rem)`;
+        nav.style.gridTemplateRows = 'auto auto';
+        nav.style.width = 'fit-content';
+        nav.style.justifyContent = 'start';
 
         this.header.appendChild(nav);
         this.navButtons = Array.from(nav.querySelectorAll('.nui-wizard-nav-step'));
+        this.navLines = Array.from(nav.querySelectorAll('.nui-wizard-nav-line'));
     }
 
     buildFooter() {
@@ -86,7 +115,10 @@ class NuiWizard extends HTMLElement {
         
         this.footer.innerHTML = `
             <div class="nui-wizard-footer-left">
-                <nui-button variant="ghost"><button type="button" data-action="wizard:cancel">Cancel</button></nui-button>
+                <nui-button variant="outline"><button type="button" data-action="wizard:cancel">Cancel</button></nui-button>
+            </div>
+            <div class="nui-wizard-footer-center">
+                <span class="nui-wizard-step-indicator"></span>
             </div>
             <div class="nui-wizard-footer-right">
                 <nui-button-container>
@@ -173,6 +205,23 @@ class NuiWizard extends HTMLElement {
             }
         });
 
+        if (this.navLines) {
+            this.navLines.forEach(line => {
+                const fromIdx = parseInt(line.dataset.from, 10);
+                line.classList.toggle('completed', fromIdx < index);
+            });
+        }
+
+        const navTitles = this.header.querySelectorAll('.nui-wizard-nav-title');
+        navTitles.forEach((title, i) => {
+            title.classList.remove('active', 'completed');
+            if (i === index) {
+                title.classList.add('active');
+            } else if (i < index) {
+                title.classList.add('completed');
+            }
+        });
+
         this.currentIndex = index;
         this.updateFooter();
 
@@ -195,6 +244,8 @@ class NuiWizard extends HTMLElement {
         const btnBack = this.footer.querySelector('.btn-back');
         const btnNext = this.footer.querySelector('.btn-next');
         const btnComplete = this.footer.querySelector('.btn-complete');
+        const stepIndicator = this.footer.querySelector('.nui-wizard-step-indicator');
+        stepIndicator.textContent = `${this.currentIndex + 1} of ${this.steps.length}`;
 
         if (isFirst) {
             btnBack.setAttribute('hidden', '');
