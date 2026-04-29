@@ -1,29 +1,29 @@
 /* NUI Wizard */
 nui-wizard {
-display: flex;
-flex-direction: column;
-width: 100%;
-height: 100%;
-background-color: var(--color-shade1);
-position: relative;
-    border-radius: var(--border-radius);
-    overflow: hidden;
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	height: 100%;
+	background-color: var(--color-shade1);
+	position: relative;
+	border-radius: var(--border-radius);
+	overflow: hidden;
 }
 
 nui-wizard[busy]::after {
-content: "";
-position: absolute;
-top: 0; left: 0; right: 0; bottom: 0;
-background: var(--color-shade2);
-    opacity: 0.5;
-cursor: progress;
-z-index: 10;
+	content: "";
+	position: absolute;
+	top: 0; left: 0; right: 0; bottom: 0;
+	background: var(--color-shade2);
+	opacity: 0.5;
+	cursor: progress;
+	z-index: 10;
 }
 
 .nui-wizard-header {
-padding: var(--nui-space-half) var(--nui-space);
-border-bottom: var(--border-thickness) solid var(--border-shade1);
-background-color: var(--color-shade2);
+	padding: var(--nui-space-half) var(--nui-space);
+	border-bottom: var(--border-thickness) solid var(--border-shade1);
+	background-color: var(--color-shade2);
 }
 
 .nui-wizard-nav {
@@ -137,26 +137,26 @@ background-color: var(--color-shade2);
 }
 
 .nui-wizard-content {
-flex: 1;
-padding: var(--nui-space-double);
-overflow-y: auto;
+	flex: 1;
+	padding: var(--nui-space-double);
+	overflow-y: auto;
 }
 
 nui-wizard-step {
-display: block;
+	display: block;
 }
 
 nui-wizard-step[hidden] {
-display: none;
+	display: none;
 }
 
 footer.nui-wizard-footer {
-display: grid;
-grid-template-columns: auto 1fr auto;
-gap: var(--nui-space);
-padding: var(--nui-space);
-border-top: var(--border-thickness) solid var(--border-shade1);
-background-color: var(--color-shade2);
+	display: grid;
+	grid-template-columns: auto 1fr auto;
+	gap: var(--nui-space);
+	padding: var(--nui-space);
+	border-top: var(--border-thickness) solid var(--border-shade1);
+	background-color: var(--color-shade2);
 }
 
 .nui-wizard-footer-left,
@@ -175,4 +175,129 @@ background-color: var(--color-shade2);
 .nui-wizard-step-indicator {
 	font-size: var(--nui-font-size-sm, 0.875rem);
 	color: var(--color-shade5);
+}
+
+/* ── Step Status Indicators ── */
+
+.nui-wizard-nav-step.status-valid .nui-wizard-nav-number {
+	background-color: var(--palette-activate);
+	border-color: var(--palette-activate);
+	color: #fff;
+}
+
+.nui-wizard-nav-step.status-valid .nui-wizard-nav-number::before {
+	content: "";
+	display: block;
+	width: 0.55rem;
+	height: 0.3rem;
+	border-left: 2px solid #fff;
+	border-bottom: 2px solid #fff;
+	transform: rotate(-45deg) translateY(-1px);
+}
+
+.nui-wizard-nav-step.status-valid .nui-wizard-nav-number {
+	font-size: 0;
+}
+
+.nui-wizard-nav-step.status-invalid .nui-wizard-nav-number {
+	background-color: var(--palette-alert);
+	border-color: var(--palette-alert);
+	color: #fff;
+	font-size: 0;
+}
+
+.nui-wizard-nav-step.status-invalid .nui-wizard-nav-number::before,
+.nui-wizard-nav-step.status-invalid .nui-wizard-nav-number::after {
+	content: "";
+	position: absolute;
+	width: 0.6rem;
+	height: 2px;
+	background-color: #fff;
+	border-radius: 1px;
+}
+
+.nui-wizard-nav-step.status-invalid .nui-wizard-nav-number::before {
+	transform: rotate(45deg);
+}
+
+.nui-wizard-nav-step.status-invalid .nui-wizard-nav-number::after {
+	transform: rotate(-45deg);
+}
+
+.nui-wizard-nav-step.status-invalid .nui-wizard-nav-number {
+	position: relative;
+}
+
+.nui-wizard-nav-step.status-warning .nui-wizard-nav-number {
+	background-color: var(--palette-mark);
+	border-color: var(--palette-mark);
+	color: #fff;
+	font-size: 0;
+}
+
+.nui-wizard-nav-step.status-warning .nui-wizard-nav-number::before {
+	content: "!";
+	font-size: 0.85rem;
+	font-weight: 700;
+	font-style: normal;
+}
+
+.nui-wizard-nav-step.status-pending .nui-wizard-nav-number {
+	background-color: var(--color-shade3);
+	border-color: var(--color-shade4);
+	color: transparent;
+	font-size: 0;
+	animation: nui-wizard-spin 1s linear infinite;
+	border-width: 2px;
+	border-top-color: var(--color-highlight);
+}
+
+@keyframes nui-wizard-spin {
+	to { transform: rotate(360deg); }
+}
+
+.nui-wizard-nav-step.status-valid[title]::after,
+.nui-wizard-nav-step.status-invalid[title]::after,
+.nui-wizard-nav-step.status-warning[title]::after {
+	content: attr(title);
+	position: absolute;
+	bottom: calc(100% + 4px);
+	left: 50%;
+	transform: translateX(-50%);
+	background-color: var(--color-shade8);
+	color: var(--color-base);
+	font-size: 0.75rem;
+	font-weight: 400;
+	padding: 2px 6px;
+	border-radius: var(--border-radius1);
+	white-space: nowrap;
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity 0.15s ease;
+	z-index: 5;
+}
+
+.nui-wizard-nav-step.status-valid:hover[title]::after,
+.nui-wizard-nav-step.status-invalid:hover[title]::after,
+.nui-wizard-nav-step.status-warning:hover[title]::after {
+	opacity: 1;
+}
+
+.nui-wizard-nav-step.status-valid,
+.nui-wizard-nav-step.status-invalid,
+.nui-wizard-nav-step.status-warning,
+.nui-wizard-nav-step.status-pending {
+	position: relative;
+}
+
+.nui-wizard-nav-title.status-valid {
+	color: var(--palette-activate);
+}
+
+.nui-wizard-nav-title.status-invalid {
+	color: var(--palette-alert);
+}
+
+.nui-wizard-nav-title.status-warning {
+	color: var(--palette-mark);
 }

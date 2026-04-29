@@ -75,15 +75,21 @@ function extractPageData(htmlPath) {
 		console.warn(`[update-docs] Missing '@type' in ${relativePath}`);
 	}
 	
-	// Extract LLM Guide from <nui-markdown id="llm-guide">
-	// The markdown is inside a <script type="text/markdown"> within the nui-markdown wrapper
-	const llmWrapperMatch = html.match(/<nui-markdown[^>]*id="llm-guide"[^>]*>[\s\S]*?<script type="text\/markdown">([\s\S]*?)<\/script>/);
+	// Check for separate matching .md file
+	const mdPath = htmlPath.replace(/\.html$/, '.md');
 	let llmGuide = null;
-	if (llmWrapperMatch) {
-		// Unescape the script tag sequence for consumers
-		// The literal characters in the file are: < \/script>
-		// The backslash is NOT an escape - it's literally in the HTML source
-		llmGuide = llmWrapperMatch[1].replace(/<\\\/script>/g, '</script>').trim();
+	
+	if (fs.existsSync(mdPath)) {
+		llmGuide = fs.readFileSync(mdPath, 'utf-8').trim();
+	} else {
+		// Fallback to extracting from HTML (legacy approach)
+		const llmWrapperMatch = html.match(/<nui-markdown[^>]*id="llm-guide"[^>]*>[\s\S]*?<script type="text\/markdown">([\s\S]*?)<\/script>/);
+		if (llmWrapperMatch) {
+			// Unescape the script tag sequence for consumers
+			// The literal characters in the file are: < \/script>
+			// The backslash is NOT an escape - it's literally in the HTML source
+			llmGuide = llmWrapperMatch[1].replace(/<\\\/script>/g, '</script>').trim();
+		}
 	}
 	
 	return { ...metadata, llmGuide, _sourcePath: relativePath };

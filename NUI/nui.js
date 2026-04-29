@@ -5668,17 +5668,31 @@ class NuiMarkdown extends HTMLElement {
 		this._isStreaming = false;
 	}
 
-	connectedCallback() {
+	async connectedCallback() {
 		if (this._isStreaming) return;
 
 		let rawText = '';
+		const src = this.getAttribute('src');
 
-		// Read from <script type="text/markdown"> element
-		const mdScript = this.querySelector('script[type="text/markdown"]');
-		if (mdScript) {
-			rawText = mdScript.textContent.trim();
+		if (src) {
+			try {
+				const response = await fetch(src);
+				if (response.ok) {
+					rawText = await response.text();
+				} else {
+					console.warn(`[NuiMarkdown] Failed to fetch source: ${src}`);
+				}
+			} catch (err) {
+				console.error(`[NuiMarkdown] Error fetching source: ${src}`, err);
+			}
 		} else {
-			rawText = this.textContent.trim();
+			// Read from <script type="text/markdown"> element
+			const mdScript = this.querySelector('script[type="text/markdown"]');
+			if (mdScript) {
+				rawText = mdScript.textContent.trim();
+			} else {
+				rawText = this.textContent.trim();
+			}
 		}
 
 		if (!rawText) return;

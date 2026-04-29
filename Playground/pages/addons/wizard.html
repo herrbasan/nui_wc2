@@ -11,7 +11,8 @@
     "nui-wizard-before-next",
     "nui-wizard-step-change",
     "nui-wizard-cancel",
-    "nui-wizard-complete"
+    "nui-wizard-complete",
+    "nui-wizard-validation-error"
   ],
   "innerElement": "<nui-wizard-step>",
   "imports": {
@@ -22,8 +23,8 @@
 </script>
 
 <details class="collapsible-section collapsible-section--spaced">
-    <summary><strong>LLM Guide - nui-wizard</strong></summary>
-    <nui-markdown id="llm-guide" data-component="nui-wizard" class="llm-guide">
+	<summary><strong>LLM Guide - nui-wizard</strong></summary>
+	<nui-markdown id="llm-guide" data-component="nui-wizard" class="llm-guide">
 <script type="text/markdown">
 # LLM Guide: nui-wizard
 
@@ -50,6 +51,106 @@ The `mode` attribute on `<nui-wizard>` determines constraints:
 </nui-wizard>
 ```
 
+## Step Status API
+
+Each `<nui-wizard-step>` supports a `status` attribute that visually reflects validation state in the navigation dots. Four status values are available:
+
+| Status | Visual | Use Case |
+|--------|--------|----------|
+| `valid` | Green circle with checkmark | Step data is verified and saved |
+| `invalid` | Red circle with X mark | Validation failed |
+| `warning` | Yellow circle with ! | Partial or soft validation issue |
+| `pending` | Spinning circle | Async validation in progress |
+
+### Setting Status
+
+**Declarative** (HTML attribute):
+```html
+<nui-wizard-step status="valid" data-title="Profile">...</nui-wizard-step>
+```
+
+**Programmatic** (JS method):
+```js
+const step = wizard.querySelector('nui-wizard-step');
+step.setStatus('valid');                          // mark as valid
+step.setStatus('invalid', 'Email already taken'); // mark as invalid with message
+step.setStatus('warning', 'Saved as draft');      // mark with warning
+step.clearStatus();                               // remove all status
+```
+
+Status messages appear as tooltips when hovering over the nav dot.
+
+### Inspecting Status
+```js
+step.getStatus();  // returns 'valid', 'invalid', 'warning', 'pending', or ''
+```
+
+## Validation Strategies
+
+### Strategy 1: Native HTML5 Validation (Default)
+Works automatically in `mode="required"`. The wizard calls `form.reportValidity()` on any `<form>` inside the current step before advancing.
+
+```html
+<nui-wizard-step data-title="Profile">
+    <form>
+        <input type="text" required minlength="2">
+        <input type="email" required>
+    </form>
+</nui-wizard-step>
+```
+
+### Strategy 2: Custom Sync Validation via `before-next`
+Listen to `nui-wizard-before-next`, run your logic, and call `e.preventDefault()` to block or let it pass:
+
+```js
+wizard.addEventListener('nui-wizard-before-next', (e) => {
+    const step = wizard.steps[e.detail.from];
+    if (!myCustomCheck(step)) {
+        e.preventDefault();
+        step.setStatus('invalid', 'Custom validation failed');
+    }
+});
+```
+
+If you handle validation yourself, set `e.detail.handled = true` to skip the built-in HTML5 form check.
+
+### Strategy 3: Async Validation (Promise)
+Assign a Promise to `e.detail.promise`. The wizard auto-manages busy state:
+
+```js
+wizard.addEventListener('nui-wizard-before-next', (e) => {
+    e.detail.promise = fetch('/api/validate', { method: 'POST' })
+        .then(r => {
+            if (!r.ok) throw new Error('Server validation failed');
+            return r.json();
+        });
+});
+```
+- Wizard enters busy state while the Promise resolves
+- Navigation advances on success; returns `false` from the handler to block
+- On rejection, the wizard dispatches `nui-wizard-validation-error` and stays on the current step
+
+### Strategy 4: Manual Status Control
+Set step status directly whenever it makes sense for your UX:
+
+```js
+input.addEventListener('blur', () => {
+    const step = input.closest('nui-wizard-step');
+    if (input.value.length < 3) {
+        step.setStatus('invalid', 'Too short');
+    } else {
+        step.setStatus('valid');
+    }
+});
+```
+
+### Wizard-Level Validation Helpers
+```js
+wizard.validateStep(0);       // validate a specific step (runs form.reportValidity + sets status)
+wizard.validateAllSteps();    // validate all steps, returns true/false
+wizard.reset();               // clear all statuses and return to step 0
+```
+
 ## Advanced Logic: Intercepting Navigation
 Users can intercept the next action to perform async checks (like saving step data to a server) using the `nui-wizard-before-next` event, which is cancelable (`e.preventDefault()`).
 
@@ -66,142 +167,479 @@ wizard.addEventListener('nui-wizard-before-next', async (e) => {
 ## Dialog Embedding
 Wizards can operate inside page flow, but are often placed inside `<nui-dialog mode="page">`. In such cases, listen for `nui-wizard-cancel` and `nui-wizard-complete` events to close the dialog container.
 </script>
-    </nui-markdown>
+	</nui-markdown>
 </details>
 
-    <header>
-        <h1>nui-wizard</h1>
-        <p class="lead">A progressive multi-step container that supports free and required navigation modes.</p>
-    </header>
+	<header>
+		<h1>nui-wizard</h1>
+		<p class="lead">A progressive multi-step container with validation status feedback and multiple navigation modes.</p>
+	</header>
 
-    <section>
-        <h2>Required Mode (Default)</h2>
-        <p>In required mode, the user must satisfy native form validations before advancing.</p>
-        
-        <div class="demo-area" style="min-height: 400px; display: flex; align-items: stretch;">
-            <nui-wizard id="wizard1" mode="required">
-                <nui-wizard-step data-title="Profile">
-                    <form>
-                        <h3>User Profile</h3>
-                        <p>Please enter your information to proceed.</p>
-                        <nui-input-group>
-                            <label for="profile-name">Name</label>
-                            <nui-input>
-                                <input type="text" id="profile-name" name="name" required placeholder="Enter name...">
-                            </nui-input>
-                        </nui-input-group>
-                        <nui-input-group>
-                            <label for="profile-email">Email</label>
-                            <nui-input>
-                                <input type="email" id="profile-email" name="email" required placeholder="Enter email...">
-                            </nui-input>
-                        </nui-input-group>
-                    </form>
-                </nui-wizard-step>
+	<section>
+		<h2>Step Status Visual Reference</h2>
+		<p>Each step can have a status that shows visual feedback in the navigation dots. Use the buttons below to see all states on a live wizard.</p>
 
-                <nui-wizard-step data-title="Configuration">
-                    <form>
-                        <h3>Set Preferences</h3>
-                        <p>Configure your workspace settings.</p>
-                        <nui-input-group>
-                            <nui-checkbox>
-                                <input type="checkbox" id="terms" name="newsletter" required>
-                                <label for="terms">I agree to the terms and conditions</label>
-                            </nui-checkbox>
-                        </nui-input-group>
-                    </form>
-                </nui-wizard-step>
+		<div class="demo-area" style="min-height: 420px; display: flex; align-items: stretch;">
+			<nui-wizard id="wizard-status-demo" mode="free">
+				<nui-wizard-step data-title="Account">
+					<h3>Account Setup</h3>
+					<p>This step has no status yet.</p>
+				</nui-wizard-step>
+				<nui-wizard-step data-title="Details">
+					<h3>Personal Details</h3>
+					<p>This step will show various statuses.</p>
+				</nui-wizard-step>
+				<nui-wizard-step data-title="Review">
+					<h3>Review &amp; Submit</h3>
+					<p>Final review before completion.</p>
+				</nui-wizard-step>
+			</nui-wizard>
+		</div>
 
-                <nui-wizard-step data-title="Confirm">
-                    <h3>Ready to go!</h3>
-                    <p>Click Complete to finish the setup.</p>
-                </nui-wizard-step>
-            </nui-wizard>
-        </div>
+		<div class="demo-actions" style="margin-top: var(--nui-space);">
+			<nui-button variant="outline"><button type="button" id="btn-set-valid">Set Step 1 Valid</button></nui-button>
+			<nui-button variant="outline"><button type="button" id="btn-set-invalid">Set Step 2 Invalid</button></nui-button>
+			<nui-button variant="outline"><button type="button" id="btn-set-warning">Set Step 2 Warning</button></nui-button>
+			<nui-button variant="outline"><button type="button" id="btn-set-pending">Set Step 3 Pending</button></nui-button>
+			<nui-button variant="outline"><button type="button" id="btn-clear-status">Clear All</button></nui-button>
+		</div>
+		<p class="demo-result" id="status-demo-output">Click buttons above to see status indicators.</p>
+	</section>
 
-        <p class="demo-result" id="wizard1-output">Complete the wizard above to see the result.</p>
-    </section>
+	<section>
+		<h2>Strategy 1: Native HTML5 Validation</h2>
+		<p>In <code>mode="required"</code>, the wizard automatically validates any <code>&lt;form&gt;</code> inside the current step using <code>reportValidity()</code> before allowing navigation. No custom code needed.</p>
 
-    <section>
-        <h2>Free Mode & Dialog</h2>
-        <p>In free mode, the user can freely navigate steps without validation blocking them. This example also shows how the wizard looks inside a dialog.</p>
+		<nui-code>
+			<script type="example" data-lang="html"><nui-wizard mode="required">
+  <nui-wizard-step data-title="Profile">
+    <form>
+      <input type="text" required placeholder="Name">
+      <input type="email" required placeholder="Email">
+    </form>
+  </nui-wizard-step>
+</nui-wizard></script>
+		</nui-code>
 
-        <div class="demo-actions">
-            <nui-button variant="primary">
-                <button type="button" data-action="dialog-open@#wizard-dialog">Open Wizard Dialog</button>
-            </nui-button>
-        </div>
+		<div class="demo-area" style="min-height: 400px; display: flex; align-items: stretch;">
+			<nui-wizard id="wizard-native" mode="required">
+				<nui-wizard-step data-title="Profile">
+					<form>
+						<h3>User Profile</h3>
+						<p>Required fields must be filled to proceed.</p>
+						<nui-input-group>
+							<label for="native-name">Name *</label>
+							<nui-input>
+								<input type="text" id="native-name" name="name" required placeholder="Enter name...">
+							</nui-input>
+						</nui-input-group>
+						<nui-input-group>
+							<label for="native-email">Email *</label>
+							<nui-input>
+								<input type="email" id="native-email" name="email" required placeholder="Enter email...">
+							</nui-input>
+						</nui-input-group>
+					</form>
+				</nui-wizard-step>
+				<nui-wizard-step data-title="Terms">
+					<form>
+						<h3>Terms &amp; Conditions</h3>
+						<nui-input-group>
+							<nui-checkbox>
+								<input type="checkbox" id="native-terms" name="terms" required>
+								<label for="native-terms">I agree to the terms and conditions</label>
+							</nui-checkbox>
+						</nui-input-group>
+					</form>
+				</nui-wizard-step>
+				<nui-wizard-step data-title="Confirm">
+					<h3>Ready to go!</h3>
+					<p>Click Complete to finish the setup.</p>
+				</nui-wizard-step>
+			</nui-wizard>
+		</div>
+		<p class="demo-result" id="native-output">Fill required fields and click Next to advance. Try clicking Next with empty fields.</p>
+	</section>
 
-        <!-- The dialog containing the wizard -->
-        <nui-dialog id="wizard-dialog" mode="page" title="Setup Workflow" style="--nui-dialog-width: 600px; --nui-dialog-height: 500px;">
-            <dialog>
-                <nui-wizard id="wizard2" mode="free">
-                    <nui-wizard-step data-title="Basics">
-                        <h3>Basic Information</h3>
-                        <p>You can skip this and come back later.</p>
-                        <nui-input-group>
-                            <label for="ws-name">Workspace Name</label>
-                            <nui-input>
-                                <input type="text" id="ws-name" name="workspace">
-                            </nui-input>
-                        </nui-input-group>
-                    </nui-wizard-step>
-                    <nui-wizard-step data-title="Advanced">
-                        <h3>Advanced Options</h3>
-                        <nui-input-group>
-                            <label for="feature-flags">Feature Flags</label>
-                            <nui-textarea>
-                                <textarea id="feature-flags" name="flags" rows="4"></textarea>
-                            </nui-textarea>
-                        </nui-input-group>
-                    </nui-wizard-step>
-                    <nui-wizard-step data-title="Review">
-                        <h3>Review Everything</h3>
-                        <p>Click Complete when done.</p>
-                    </nui-wizard-step>
-                </nui-wizard>
-            </dialog>
-        </nui-dialog>
+	<section>
+		<h2>Strategy 2: Custom Sync Validation</h2>
+		<p>Use <code>nui-wizard-before-next</code> to run your own validation logic. Call <code>e.preventDefault()</code> to block navigation and set step status for visual feedback.</p>
 
-        <p class="demo-result" id="wizard2-output">Waiting for dialog wizard...</p>
-    </section>
+		<nui-code>
+			<script type="example" data-lang="js">wizard.addEventListener('nui-wizard-before-next', (e) => {
+    const step = wizard.steps[e.detail.from];
+    const code = step.querySelector('input[name="code"]');
+    if (code && code.value !== 'NUI') {
+        e.preventDefault();
+        step.setStatus('invalid', 'Invite code must be "NUI"');
+        return;
+    }
+    step.setStatus('valid');
+});</script>
+		</nui-code>
 
-    <script type="nui/page">
-        function init(element, params, nui) {
-            const w1 = element.el('#wizard1');
-            const out1 = element.el('#wizard1-output');
-            
-            w1.addEventListener('nui-wizard-complete', () => {
-                out1.textContent = 'Wizard 1 completed successfully!';
-                out1.style.color = 'var(--color-success)';
-                // Optional: setBusy test
-                w1.setBusy(true);
-                setTimeout(() => {
-                    w1.setBusy(false);
-                    w1.goTo(0);
-                    out1.textContent = 'Reset to start.';
-                    out1.style.color = '';
-                }, 1500);
-            });
+		<div class="demo-area" style="min-height: 400px; display: flex; align-items: stretch;">
+			<nui-wizard id="wizard-sync" mode="required">
+				<nui-wizard-step data-title="Invite Code">
+					<form>
+						<h3>Enter Invite Code</h3>
+						<p>The code is <strong>NUI</strong>. Anything else will be rejected with a custom error.</p>
+						<nui-input-group>
+							<label for="sync-code">Invite Code</label>
+							<nui-input>
+								<input type="text" id="sync-code" name="code" required placeholder="Enter code...">
+							</nui-input>
+						</nui-input-group>
+					</form>
+				</nui-wizard-step>
+				<nui-wizard-step data-title="Profile">
+					<form>
+						<h3>Your Name</h3>
+						<nui-input-group>
+							<label for="sync-name">Display Name</label>
+							<nui-input>
+								<input type="text" id="sync-name" name="name" required placeholder="Your name...">
+							</nui-input>
+						</nui-input-group>
+					</form>
+				</nui-wizard-step>
+				<nui-wizard-step data-title="Done">
+					<h3>Welcome aboard!</h3>
+					<p>Your custom-validated profile is ready.</p>
+				</nui-wizard-step>
+			</nui-wizard>
+		</div>
+		<p class="demo-result" id="sync-output">Enter "NUI" as the invite code to proceed. Wrong codes will show an error status.</p>
+	</section>
 
-            w1.addEventListener('nui-wizard-cancel', () => {
-                out1.textContent = 'Wizard 1 cancelled.';
-                out1.style.color = 'var(--color-danger)';
-            });
+	<section>
+		<h2>Strategy 3: Async Server-Side Validation</h2>
+		<p>Assign a <code>Promise</code> to <code>e.detail.promise</code> for server-side checks. The wizard automatically shows a busy state and advances when the promise resolves. Rejections show an error status.</p>
 
-            const w2 = element.el('#wizard2');
-            const out2 = element.el('#wizard2-output');
-            const dialog = element.el('#wizard-dialog');
+		<nui-code>
+			<script type="example" data-lang="js">wizard.addEventListener('nui-wizard-before-next', (e) => {
+    const step = wizard.steps[e.detail.from];
+    const username = step.querySelector('input').value;
 
-            w2.addEventListener('nui-wizard-complete', () => {
-                out2.textContent = 'Free wizard completed!';
-                dialog.el('dialog').close();
-            });
+    step.setStatus('pending');
+    e.detail.promise = simulateServerCheck(username)
+        .then(result => {
+            step.setStatus('valid');
+        })
+        .catch(err => {
+            step.setStatus('invalid', err.message);
+            throw err; // re-throw to block navigation
+        });
+});</script>
+		</nui-code>
 
-            w2.addEventListener('nui-wizard-cancel', () => {
-                out2.textContent = 'Free wizard cancelled.';
-                dialog.el('dialog').close();
-            });
-        }
-    </script>
+		<div class="demo-area" style="min-height: 420px; display: flex; align-items: stretch;">
+			<nui-wizard id="wizard-async" mode="required">
+				<nui-wizard-step data-title="Username">
+					<form>
+						<h3>Choose a Username</h3>
+						<p>Simulated server check takes 1.5s. Usernames starting with <strong>"admin"</strong> are "taken".</p>
+						<nui-input-group>
+							<label for="async-user">Username</label>
+							<nui-input>
+								<input type="text" id="async-user" name="username" required placeholder="Try 'admin' or anything else...">
+							</nui-input>
+						</nui-input-group>
+					</form>
+				</nui-wizard-step>
+				<nui-wizard-step data-title="Email">
+					<form>
+						<h3>Email Address</h3>
+						<nui-input-group>
+							<label for="async-email">Email</label>
+							<nui-input>
+								<input type="email" id="async-email" name="email" required placeholder="your@email.com">
+							</nui-input>
+						</nui-input-group>
+					</form>
+				</nui-wizard-step>
+				<nui-wizard-step data-title="Complete">
+					<h3>All checks passed!</h3>
+					<p>Your async-validated account is ready.</p>
+				</nui-wizard-step>
+			</nui-wizard>
+		</div>
+		<p class="demo-result" id="async-output">Try "admin" to see an async validation error, or any other value to succeed.</p>
+	</section>
+
+	<section>
+		<h2>Strategy 4: Manual Status Control</h2>
+		<p>Set step status directly from any event handler. This is useful for real-time validation feedback as the user types, without waiting for Next to be clicked.</p>
+
+		<nui-code>
+			<script type="example" data-lang="js">const input = step.querySelector('input');
+input.addEventListener('input', () => {
+    if (input.value.length === 0) {
+        step.clearStatus();
+    } else if (input.value.length < 3) {
+        step.setStatus('warning', 'Minimum 3 characters');
+    } else if (input.value.length > 20) {
+        step.setStatus('invalid', 'Too long (max 20)');
+    } else {
+        step.setStatus('valid');
+    }
+});</script>
+		</nui-code>
+
+		<div class="demo-area" style="min-height: 400px; display: flex; align-items: stretch;">
+			<nui-wizard id="wizard-manual" mode="free">
+				<nui-wizard-step data-title="Title">
+					<h3>Project Title</h3>
+					<p>Type below to see status change in real-time. Min 3 chars (warning), max 20 (error).</p>
+					<nui-input-group>
+						<label for="manual-title">Title</label>
+						<nui-input>
+							<input type="text" id="manual-title" name="title" placeholder="Type to see live status...">
+						</nui-input>
+					</nui-input-group>
+				</nui-wizard-step>
+				<nui-wizard-step data-title="Priority">
+					<h3>Priority Level</h3>
+					<p>Click a rating to set status.</p>
+					<div class="demo-actions">
+						<nui-button variant="outline"><button type="button" class="priority-btn" data-value="low">Low</button></nui-button>
+						<nui-button variant="outline"><button type="button" class="priority-btn" data-value="medium">Medium</button></nui-button>
+						<nui-button variant="outline"><button type="button" class="priority-btn" data-value="high">High</button></nui-button>
+					</div>
+					<p id="manual-priority-result" style="margin-top: var(--nui-space-half);"></p>
+				</nui-wizard-step>
+				<nui-wizard-step data-title="Confirm">
+					<h3>Create Project?</h3>
+					<p>Review your choices and click Complete.</p>
+				</nui-wizard-step>
+			</nui-wizard>
+		</div>
+		<p class="demo-result" id="manual-output">Type in the title field to see live status feedback on step 1.</p>
+	</section>
+
+	<section>
+		<h2>Free Mode in Dialog</h2>
+		<p>In <code>mode="free"</code>, all steps are clickable and validation is entirely manual. Wizards in dialogs are a common pattern for onboarding flows.</p>
+
+		<div class="demo-actions">
+			<nui-button variant="primary">
+				<button type="button" data-action="dialog-open@#wizard-dialog">Open Wizard Dialog</button>
+			</nui-button>
+		</div>
+
+		<nui-dialog id="wizard-dialog" mode="page" title="Quick Setup" style="--nui-dialog-width: 600px; --nui-dialog-height: 500px;">
+			<dialog>
+				<nui-wizard id="wizard-dialog-inner" mode="free">
+					<nui-wizard-step data-title="Welcome">
+						<h3>Welcome to NUI!</h3>
+						<p>This is a free-navigation wizard inside a dialog. Click any step in the nav to jump around.</p>
+					</nui-wizard-step>
+					<nui-wizard-step data-title="Theme">
+						<h3>Choose Theme</h3>
+						<p>Pick your preferred appearance.</p>
+					</nui-wizard-step>
+					<nui-wizard-step data-title="Finish">
+						<h3>You're all set!</h3>
+						<p>Click Complete to close.</p>
+					</nui-wizard-step>
+				</nui-wizard>
+			</dialog>
+		</nui-dialog>
+
+		<p class="demo-result" id="dialog-output">Waiting for dialog wizard...</p>
+	</section>
+
+	<script type="nui/page">
+		function init(element, params, nui) {
+			/* ── Status Visual Reference ── */
+			const wStatus = element.el('#wizard-status-demo');
+			const statusOut = element.el('#status-demo-output');
+
+			function bindStatusBtn(id, stepIdx, status, msg) {
+				element.el(id).addEventListener('click', () => {
+					wStatus.steps[stepIdx].setStatus(status, msg);
+					statusOut.textContent = `Step ${stepIdx + 1} status set to "${status}"` + (msg ? `: ${msg}` : '');
+				});
+			}
+
+			bindStatusBtn('#btn-set-valid', 0, 'valid', 'Account verified');
+			bindStatusBtn('#btn-set-invalid', 1, 'invalid', 'Details incomplete');
+			bindStatusBtn('#btn-set-warning', 1, 'warning', 'Partial data saved');
+			bindStatusBtn('#btn-set-pending', 2, 'pending', '');
+
+			element.el('#btn-clear-status').addEventListener('click', () => {
+				wStatus.steps.forEach(s => s.clearStatus());
+				statusOut.textContent = 'All statuses cleared.';
+			});
+
+			/* ── Strategy 1: Native HTML5 ── */
+			const wNative = element.el('#wizard-native');
+			const nativeOut = element.el('#native-output');
+
+			wNative.addEventListener('nui-wizard-step-change', (e) => {
+				nativeOut.textContent = `Now on step ${e.detail.current + 1}.`;
+				nativeOut.style.color = '';
+			});
+			wNative.addEventListener('nui-wizard-complete', () => {
+				nativeOut.textContent = 'Native validation wizard completed!';
+				nativeOut.style.color = 'var(--palette-activate)';
+			});
+			wNative.addEventListener('nui-wizard-cancel', () => {
+				nativeOut.textContent = 'Cancelled.';
+				nativeOut.style.color = 'var(--palette-alert)';
+			});
+
+			/* ── Strategy 2: Custom Sync Validation ── */
+			const wSync = element.el('#wizard-sync');
+			const syncOut = element.el('#sync-output');
+
+			wSync.addEventListener('nui-wizard-before-next', (e) => {
+				const step = wSync.steps[e.detail.from];
+				if (e.detail.from === 0) {
+					const code = step.querySelector('input[name="code"]');
+					if (code && code.value.toUpperCase() !== 'NUI') {
+						e.preventDefault();
+						step.setStatus('invalid', 'Invite code must be "NUI"');
+						syncOut.textContent = 'Rejected: wrong invite code.';
+						syncOut.style.color = 'var(--palette-alert)';
+						return;
+					}
+					step.setStatus('valid');
+				}
+				if (e.detail.from === 1) {
+					const name = step.querySelector('input[name="name"]');
+					if (name && name.value.trim().length < 2) {
+						e.preventDefault();
+						step.setStatus('invalid', 'Name too short');
+						return;
+					}
+					step.setStatus('valid');
+				}
+			});
+
+			wSync.addEventListener('nui-wizard-step-change', (e) => {
+				syncOut.textContent = `Step ${e.detail.current + 1} — custom sync validation active.`;
+				syncOut.style.color = '';
+			});
+			wSync.addEventListener('nui-wizard-complete', () => {
+				syncOut.textContent = 'Sync validation wizard completed!';
+				syncOut.style.color = 'var(--palette-activate)';
+			});
+
+			/* ── Strategy 3: Async Server-Side Validation ── */
+			const wAsync = element.el('#wizard-async');
+			const asyncOut = element.el('#async-output');
+
+			function simulateServerCheck(username) {
+				return new Promise((resolve, reject) => {
+					setTimeout(() => {
+						if (username.toLowerCase().startsWith('admin')) {
+							reject(new Error('Username is already taken'));
+						} else {
+							resolve({ available: true });
+						}
+					}, 1500);
+				});
+			}
+
+			wAsync.addEventListener('nui-wizard-before-next', (e) => {
+				const step = wAsync.steps[e.detail.from];
+				if (e.detail.from === 0) {
+					const username = step.querySelector('input[name="username"]').value.trim();
+					if (!username) return;
+					step.setStatus('pending');
+					e.detail.promise = simulateServerCheck(username)
+						.then((result) => {
+							step.setStatus('valid');
+							asyncOut.textContent = 'Username available!';
+							asyncOut.style.color = 'var(--palette-activate)';
+							return result;
+						})
+						.catch((err) => {
+							step.setStatus('invalid', err.message);
+							asyncOut.textContent = `Server error: ${err.message}`;
+							asyncOut.style.color = 'var(--palette-alert)';
+							throw err;
+						});
+				}
+				if (e.detail.from === 1) {
+					step.setStatus('valid');
+				}
+			});
+
+			wAsync.addEventListener('nui-wizard-validation-error', (e) => {
+				asyncOut.textContent = `Validation error on step ${e.detail.step + 1}: ${e.detail.message}`;
+				asyncOut.style.color = 'var(--palette-alert)';
+			});
+
+			wAsync.addEventListener('nui-wizard-step-change', (e) => {
+				asyncOut.textContent = `Step ${e.detail.current + 1} — async validation on step 1.`;
+				asyncOut.style.color = '';
+			});
+			wAsync.addEventListener('nui-wizard-complete', () => {
+				asyncOut.textContent = 'Async validation wizard completed!';
+				asyncOut.style.color = 'var(--palette-activate)';
+			});
+
+			/* ── Strategy 4: Manual Status Control ── */
+			const wManual = element.el('#wizard-manual');
+			const manualOut = element.el('#manual-output');
+			const titleInput = element.el('#manual-title');
+
+			titleInput.addEventListener('input', () => {
+				const step = wManual.steps[0];
+				const len = titleInput.value.length;
+				if (len === 0) {
+					step.clearStatus();
+					manualOut.textContent = 'Cleared.';
+				} else if (len < 3) {
+					step.setStatus('warning', 'Minimum 3 characters');
+					manualOut.textContent = `Too short (${len}/3).`;
+				} else if (len > 20) {
+					step.setStatus('invalid', 'Too long (max 20)');
+					manualOut.textContent = `Too long (${len}/20).`;
+				} else {
+					step.setStatus('valid');
+					manualOut.textContent = `Valid (${len} chars).`;
+				}
+			});
+
+			const priorityBtns = element.els('.priority-btn');
+			const priorityResult = element.el('#manual-priority-result');
+			priorityBtns.forEach(btn => {
+				btn.addEventListener('click', () => {
+					const val = btn.getAttribute('data-value');
+					const step = wManual.steps[1];
+					if (val === 'high') {
+						step.setStatus('warning', 'High priority selected');
+						priorityResult.textContent = 'High priority — marked with warning.';
+					} else {
+						step.setStatus('valid', `"${val}" priority set`);
+						priorityResult.textContent = `"${val}" priority selected.`;
+					}
+				});
+			});
+
+			wManual.addEventListener('nui-wizard-complete', () => {
+				manualOut.textContent = 'Manual control wizard completed!';
+				manualOut.style.color = 'var(--palette-activate)';
+			});
+
+			/* ── Dialog Wizard ── */
+			const wDialog = element.el('#wizard-dialog-inner');
+			const dialogOut = element.el('#dialog-output');
+			const dialog = element.el('#wizard-dialog');
+
+			wDialog.addEventListener('nui-wizard-complete', () => {
+				dialogOut.textContent = 'Dialog wizard completed!';
+				dialogOut.style.color = 'var(--palette-activate)';
+				dialog.el('dialog').close();
+			});
+			wDialog.addEventListener('nui-wizard-cancel', () => {
+				dialogOut.textContent = 'Dialog wizard cancelled.';
+				dialogOut.style.color = 'var(--palette-alert)';
+				dialog.el('dialog').close();
+			});
+		}
+	</script>
 </div>
