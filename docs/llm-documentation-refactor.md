@@ -63,7 +63,7 @@ When a new AI session picks up a component to migrate, follow this exact sequenc
     - Extract the existing LLM Guide from the `Playground/pages/.../[name].html` `<script type="text/markdown">` block.
     - **CRITICAL:** Do not just copy the existing `llmGuide` verbatim. You must read and understand the *entire* `[name].html` file. Extract any concepts, variants, configuration options, or code examples that exist in the live page but are missing from the `llmGuide`. Synthesize all of this into a single, comprehensive Markdown document that serves as the total ground truth for the component (philosophy, API, accessibility, variants, and code examples).
 2. **Setup the Markdown Fetcher:**
-    - At the top of the `[name].html` page, add: `<nui-markdown src="../../documentation/components/[name].md"></nui-markdown>` to render the docs for human users.
+    - At the top of the `[name].html` page, add: `<nui-markdown src="../documentation/components/[name].md"></nui-markdown>` to render the docs for human users. *(Note: The path is relative to `Playground/index.html`, so it is `../documentation/`, not `../../`)*
 3. **Refine the HTML Demo Page:**
     - **Goal:** The HTML file's primary purpose is to be an excellent interactive sandbox. Put a full-featured, interactive example of the component front and center at the top of the page.
     - Remove the old `<script type="text/markdown">` block and its `<details>` wrapper, as its contents are now in the dedicated `.md` file.
