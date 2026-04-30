@@ -101,7 +101,7 @@ When a new AI session picks up a component to migrate, follow this exact sequenc
 - [x] checkbox
 - [x] code
 - [x] context-menu
-- [ ] dialog
+- [x] dialog
 - [ ] grid
 - [ ] icon
 - [x] input
