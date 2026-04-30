@@ -15,21 +15,7 @@
 
 <details class="collapsible-section collapsible-section--spaced">
 		<summary><strong>LLM Guide - nui-app-header</strong></summary>
-		<nui-markdown id="llm-guide" data-component="nui-app-header" class="llm-guide">
-<script type="text/markdown">
-# LLM Guide: nui-app-header
-
-> **Layout Reference:** For the full structural rules of building an application shell, refer to the `nui-app` guide in `Playground/pages/components/app-layout.html`.
-
-## Key Rules
-- This is a structural component meant to live inside `<nui-app>`. 
-- Use the `slot` attribute (`slot="left"`, `slot="center"`, `slot="right"`) to place content inside the header.
-- Status badges are added directly to child elements (like buttons) via `data-badge="3"` or `data-badge=""`. Do not create separate badge wrapper DOM elements.
-- Toggle sidebars using `data-action="toggle-sidebar"` or `data-action="toggle-sidebar:right"`.
-</script>
-		</nui-markdown>
-	</details>
-
+		<nui-markdown src="../documentation/components/app-header.md"></nui-markdown>
     <header>
         <h1>App Header (<code>&lt;nui-app-header&gt;</code>)</h1>
         <p class="lead">A standardized application top bar with built-in layout management and semantic zones.</p>

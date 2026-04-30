@@ -38,7 +38,7 @@ Playground/
 
 ## Component Registry
 
-> **📋 Component Registry:** `documentation/components.json` is the **source of truth** for all components, their events, imports, and documentation pages. When adding or modifying components, update the registry. This file also contains `llmGuide` fields that provide crucial instructions for how to use each component. Read this file instead of guessing.
+> **📋 Component Registry:** `documentation/components.json` is the **source of truth** for all components, their events, imports, and documentation paths. When adding or modifying components, run `node scripts/update-docs.js` to update the registry. This file contains `docPath` fields pointing to pure Markdown files that provide crucial instructions for how to use each component. Read those markdown files instead of guessing.
 
 ---
 
@@ -63,17 +63,12 @@ function setupButtonBehavior(element) {
 
 ### LLM Guide Documentation (Critical)
 
-For complex components, place an LLM Guide inside a separate `.md` file alongside the demo page.
-For instance, if your demo is `Playground/pages/components/my-component.html`, place the guide in `my-component.md`.
-Then, reference it using `<nui-markdown src="pages/components/my-component.md"></nui-markdown>`.
+NUI components should have a strict Markdown API contract placed in the `/documentation/components/` directory (or `addons/`, etc.). 
 
-**🤖 LLM Reader Instruction:** If you are analyzing an HTML demo page and see a `<nui-markdown src="...">` tag, you MUST use your file reading tools to read the referenced `.md` file to understand the component's API and usage rules.
+**🤖 LLM Reader Instruction:** If you are analyzing an HTML demo page in the Playground and see `<nui-markdown src="...">`, you MUST read the referenced `.md` file to understand the component's API and usage rules.
 
 ```html
-<details class="collapsible-section">
-	<summary><strong>LLM Guide</strong></summary>
-	<nui-markdown id="llm-guide" data-component="nui-my-component" src="pages/components/my-component.md"></nui-markdown>
-</details>
+<nui-markdown src="../documentation/components/my-component.md"></nui-markdown>
 ```
 
 ---

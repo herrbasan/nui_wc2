@@ -77,15 +77,15 @@ When a new AI session picks up a component to migrate, follow this exact sequenc
 
 ## Phase 1: Foundation Setup (Next Steps)
 *(To be completed first before migrating content)*
-- [ ] **Create Folders**: Create `documentation/guides`, `documentation/components`, `documentation/addons`.
-- [ ] **NuiMarkdown Fix**: Ensure `<nui-markdown>` component in `NUI/nui.js` safely fetches and renders external `.md` files via `src` attribute. *(Check if previous async fetch code is intact).*
-- [ ] **Doc Generator Script**: Refactor `scripts/update-docs.js`. Instead of scraping `<nui-markdown id="llm-guide">` from the HTML, make it read the metadata and output a lightweight `components.json` that replaces the raw `llmGuide` string with `docPath` pointing to the new `.md` files. This keeps the index small and fast for LLMs to search.
-- [ ] **MCP Server Sync**: Ensure any local MCP servers (like `_Archive/mcp-server.js` or global tools) are updated to read the `docPath` from `components.json` instead of scraping HTML for `<script type="text/markdown">`.
-- [ ] **Update Agents.md**: Remove the confusing rules about escaping `</script>` tags, and instruct the LLM to use the `.md` files in `/documentation` as the ground truth.
+- [x] **Create Folders**: Create `documentation/guides`, `documentation/components`, `documentation/addons`.
+- [x] **NuiMarkdown Fix**: Ensure `<nui-markdown>` component in `NUI/nui.js` safely fetches and renders external `.md` files via `src` attribute. *(Check if previous async fetch code is intact).*
+- [x] **Doc Generator Script**: Refactor `scripts/update-docs.js`. Instead of scraping `<nui-markdown id="llm-guide">` from the HTML, make it read the metadata and output a lightweight `components.json` that replaces the raw `llmGuide` string with `docPath` pointing to the new `.md` files. This keeps the index small and fast for LLMs to search.
+- [x] **MCP Server Sync**: Ensure any local MCP servers (like `_Archive/mcp-server.js` or global tools) are updated to read the `docPath` from `components.json` instead of scraping HTML for `<script type="text/markdown">`.
+- [x] **Update Agents.md**: Remove the confusing rules about escaping `</script>` tags, and instruct the LLM to use the `.md` files in `/documentation` as the ground truth.
 
 ## Phase 2: Meta-Docs Migration
 *(General concepts that apply to the whole library)*
-- [ ] Getting Started (`documentation/guides/getting-started.md`)
+- [x] Getting Started (`documentation/guides/getting-started.md`)
 - [ ] Architecture / DOM First (`documentation/guides/architecture.md`)
 - [ ] Accessibility (`documentation/guides/accessibility.md`)
 - [ ] Routing & SPA (`documentation/guides/routing.md`)
@@ -93,8 +93,8 @@ When a new AI session picks up a component to migrate, follow this exact sequenc
 
 ## Phase 3: Components Migration
 *(Track progress here across sessions)*
-- [ ] accordion
-- [ ] app-header
+- [x] accordion
+- [x] app-header
 - [ ] badge
 - [ ] banner
 - [ ] button

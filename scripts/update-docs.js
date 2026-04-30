@@ -78,21 +78,35 @@ function extractPageData(htmlPath) {
 	// Check for separate matching .md file
 	const mdPath = htmlPath.replace(/\.html$/, '.md');
 	let llmGuide = null;
+	const docPathMatch = html.match(/<nui-markdown[^>]*src="([^"]+)"[^>]*>/);
 	
-	if (fs.existsSync(mdPath)) {
-		llmGuide = fs.readFileSync(mdPath, 'utf-8').trim();
-	} else {
-		// Fallback to extracting from HTML (legacy approach)
-		const llmWrapperMatch = html.match(/<nui-markdown[^>]*id="llm-guide"[^>]*>[\s\S]*?<script type="text\/markdown">([\s\S]*?)<\/script>/);
-		if (llmWrapperMatch) {
-			// Unescape the script tag sequence for consumers
-			// The literal characters in the file are: < \/script>
-			// The backslash is NOT an escape - it's literally in the HTML source
-			llmGuide = llmWrapperMatch[1].replace(/<\\\/script>/g, '</script>').trim();
+	let docPath = null;
+	if (docPathMatch) {
+		const relSrc = docPathMatch[1]; // e.g. "../documentation/components/accordion.md"
+		const absoluteHtmlDir = path.dirname(htmlPath);
+		const absoluteDocLoc = path.resolve(absoluteHtmlDir, relSrc);
+		
+		// Ensure it points to the NUI root /documentation folder so the path in JSON is relative to root
+		const repoRoot = path.join(__dirname, '..');
+		docPath = path.relative(repoRoot, absoluteDocLoc).replace(/\\/g, '/');
+	}
+
+	if (!docPath) {
+		if (fs.existsSync(mdPath)) {
+			llmGuide = fs.readFileSync(mdPath, 'utf-8').trim();
+		} else {
+			// Fallback to extracting from HTML (legacy approach)
+			const llmWrapperMatch = html.match(/<nui-markdown[^>]*id="llm-guide"[^>]*>[\s\S]*?<script type="text\/markdown">([\s\S]*?)<\/script>/);
+			if (llmWrapperMatch) {
+				// Unescape the script tag sequence for consumers
+				// The literal characters in the file are: < \/script>
+				// The backslash is NOT an escape - it's literally in the HTML source
+				llmGuide = llmWrapperMatch[1].replace(/<\\\/script>/g, '</script>').trim();
+			}
 		}
 	}
 	
-	return { ...metadata, llmGuide, _sourcePath: relativePath };
+	return { ...metadata, llmGuide, docPath, _sourcePath: relativePath };
 }
 
 /**
@@ -144,13 +158,20 @@ function generateComponentsJson() {
 		if (!data) continue;
 		
 		const pagePath = pathToPage(file);
-		const { _sourcePath, llmGuide, ...cleanData } = data;
+		const { _sourcePath, llmGuide, docPath, ...cleanData } = data;
 		
-		result.components.push({
+		const entry = {
 			...cleanData,
 			page: pagePath,
-			llmGuide
-		});
+			demoPath: `Playground/pages/${pagePath}.html`
+		};
+		if (docPath) {
+			entry.docPath = docPath;
+		} else if (llmGuide) {
+			entry.llmGuide = llmGuide;
+		}
+		
+		result.components.push(entry);
 		
 		// Aggregate events
 		if (data.events && data.events.length > 0) {
@@ -171,13 +192,20 @@ function generateComponentsJson() {
 		if (!data) continue;
 		
 		const pagePath = pathToPage(file);
-		const { _sourcePath, llmGuide, ...cleanData } = data;
+		const { _sourcePath, llmGuide, docPath, ...cleanData } = data;
 		
-		result.addons.push({
+		const entry = {
 			...cleanData,
 			page: pagePath,
-			llmGuide
-		});
+			demoPath: `Playground/pages/${pagePath}.html`
+		};
+		if (docPath) {
+			entry.docPath = docPath;
+		} else if (llmGuide) {
+			entry.llmGuide = llmGuide;
+		}
+
+		result.addons.push(entry);
 		
 		// Aggregate events from addons too
 		if (data.events && data.events.length > 0) {

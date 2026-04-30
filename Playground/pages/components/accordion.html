@@ -15,77 +15,7 @@
 
 <details class="collapsible-section collapsible-section--spaced">
 		<summary><strong>LLM Guide - nui-accordion</strong></summary>
-		<nui-markdown id="llm-guide" data-component="nui-accordion" class="llm-guide">
-<script type="text/markdown">
-# LLM Guide: nui-accordion
-
-## Design Philosophy
-
-Accordions and tabs solve similar problems (too much content for the available space) but with different trade-offs. While tabs show one panel at a time with navigation always visible, accordions:
-- Allow multiple sections open simultaneously
-- Show section headers even when collapsed
-- Work better for mobile where horizontal tab space is limited
-
-NUI's accordion uses the native `<details>`/`<summary>` elements as its foundation. This provides:
-- Built-in keyboard support (Enter/Space to toggle)
-- Built-in accessibility (screen readers understand the pattern)
-- Works without JavaScript (progressive enhancement)
-
-## Structure
-
-```html
-<nui-accordion>
-	<details>
-		<summary>First Section</summary>
-		<p>Content for the first section</p>
-	</details>
-	<details>
-		<summary>Second Section</summary>
-		<p>Content for the second section</p>
-	</details>
-</nui-accordion>
-```
-
-The `<summary>` element is always visible. Clicking it toggles the visibility of sibling content. The browser handles the toggle behavior natively.
-
-## Progressive Enhancement
-
-Without JavaScript, the accordion works perfectly:
-- Each `<details>` can be expanded/collapsed
-- Multiple sections can be open
-- Keyboard navigation works
-
-With JavaScript, NUI adds:
-- Smooth height animations
-- Exclusive mode option (only one open at a time)
-- Consistent styling integration
-
-## Exclusive Mode
-
-Add the `exclusive` attribute to allow only one section open at a time:
-
-```html
-<nui-accordion exclusive>
-	<details>...</details>
-	<details>...</details>
-</nui-accordion>
-```
-
-When a section is opened, others automatically close. This mimics tab behavior while keeping the accordion visual style.
-
-## When to Use
-
-**Use accordions when:**
-- Content is supplemental (users don't need to see everything)
-- On mobile where tabs might not fit
-- FAQs, where users scan headers to find relevant content
-
-**Use tabs when:**
-- All content is equally important
-- Users switch between views frequently
-- Content fits well in the available width
-</script>
-		</nui-markdown>
+		<nui-markdown src="../documentation/components/accordion.md"></nui-markdown>
 	</details>
 
 <header>
