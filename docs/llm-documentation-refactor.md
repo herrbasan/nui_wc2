@@ -95,28 +95,37 @@ When a new AI session picks up a component to migrate, follow this exact sequenc
 *(Track progress here across sessions)*
 - [x] accordion
 - [x] app-header
+- [x] app-layout
 - [x] badge
 - [x] banner
 - [x] button
-- [x] checkbox
+- [ ] card
 - [x] code
-- [x] context-menu
 - [x] dialog
-- [ ] grid
-- [ ] icon
+- [ ] dropzone
+- [x] icon
 - [x] input
-- [x] input-group
-- [ ] markdown
-- [ ] popover
-- [x] radio
-- [ ] select
-- [ ] tabs
+- [ ] layout
+- [ ] link-list
+- [x] markdown
+- [ ] overlay
+- [ ] progress
+- [x] select
+- [ ] skip-links
+- [ ] slider
+- [ ] sortable
+- [ ] table
+- [x] tabs
+- [ ] tag-input
+- [ ] tooltip
 
 ## Phase 4: Addons Migration
+- [ ] app-window
 - [ ] code-editor
+- [x] context-menu
 - [ ] lightbox
 - [ ] list
 - [ ] media-player
-- [ ] monitor
+- [ ] menu
 - [ ] rich-text
 - [ ] wizard
