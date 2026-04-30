@@ -59,19 +59,19 @@ The LLM searches this JSON, finds the `docPath` for the component it needs, and 
 When a new AI session picks up a component to migrate, follow this exact sequence:
 
 1. **Extract & Synthesize:**
-    - Create `documentation/components/[name].md` (or `addons/`).
+    - **Extract & Synthesize:** Create `documentation/components/[name].md` (or `addons/`).
     - **Read ALL Context:** Read the existing LLM Guide from the `<script type="text/markdown">` block in `Playground/pages/.../[name].html`. **CRUCIALLY**, you must also locate and read the component's actual source code (e.g., `NUI/nui.js` or `NUI/lib/modules/...`) and styles (`NUI/css/...`).
-    - **Document the API:** You must document the methods, properties, and events the component exposes. Never assume the existing guide is complete. Look at the source code to find all programmatic capabilities.
-    - **Document Patterns:** Clearly document both **declarative patterns** (HTML usage, attributes, `data-action`) and **programmatic patterns** (JavaScript instantiation, method calls, event listeners).
-    - Synthesize all of this into a single, comprehensive Markdown document that serves as the total ground truth for the component (philosophy, API, accessibility, variants, and code examples).
+    - **Structure the Documentation:** Model your markdown strictly on the structure and formatting of `accordion.md`. Your file should predictably contain sections for Design Philosophy, Declarative Usage, Attributes, Class Variants, and Programmatic Usage (Methods, Action Delegates, Events).
+    - **Document the API:** You must document the methods, attributes, properties, and events the component exposes in explicit markdown tables. Look at the source code to find all capabilities.
+    - **Document Patterns & Styling:** Clearly document declarative patterns (HTML usage, attributes, `data-action`), programmatic patterns (JavaScript instantiation, method calls), and critical styling variants.
+    - Synthesize all of this into a single, comprehensive Markdown document that serves as the total ground truth for the component.
 2. **Setup the Markdown Fetcher:**
-    - At the top of the `[name].html` page, add: `<nui-markdown src="../documentation/components/[name].md"></nui-markdown>` to render the docs for human users. *(Note: The path is relative to `Playground/index.html`, so it is `../documentation/`, not `../../`)*
+    - Place `<nui-markdown src="../documentation/components/[name].md"></nui-markdown>` inside a `<details>` block.
+    - **CRITICAL PLACEMENT**: The `<details class="collapsible-section collapsible-section--spaced">...<nui-markdown>...</details>` block MUST be placed exactly between the `<script type="application/ld+json">` metadata block and the `<header>` element at the top of the HTML file.
 3. **Refine the HTML Demo Page:**
-    - **Goal:** The HTML file's primary purpose is to be an excellent interactive sandbox. Put a full-featured, interactive example of the component front and center at the top of the page.
-    - Remove the old `<script type="text/markdown">` block and its `<details>` wrapper, as its contents are now in the dedicated `.md` file.
-    - It is perfectly fine (and encouraged) to keep `<p>`, `<h2>`, and `<nui-code>` elements if they provide context for the live demos. The goal isn't to ruthlessly strip HTML, but to ensure the page flows beautifully as a functional showcase.
-    - **CRITICAL:** Keep the `<script type="application/ld+json">` metadata block at the top of the HTML file so `update-docs.js` can still find the component's registry data.
-    - **CRITICAL:** For Meta-Docs (General Guides), you must also keep the HTML shell in `Playground/pages/documentation/` to hold the JSON-LD API definitions, using `<nui-markdown src="...">` to render the prose.
+    - **Goal:** The HTML file's primary purpose is to be an excellent interactive sandbox. Place a full-featured, interactive "hero" example of the component front and center.
+    - Remove the old `<script type="text/markdown">` bloat.
+    - **CRITICAL:** Keep the `<script type="application/ld+json">` metadata block at the very top of the HTML file, followed directly by the `<details>` block for the LLM guide, and then the `<header>`.
 
 ---
 
@@ -95,8 +95,8 @@ When a new AI session picks up a component to migrate, follow this exact sequenc
 *(Track progress here across sessions)*
 - [x] accordion
 - [x] app-header
-- [ ] badge
-- [ ] banner
+- [x] badge
+- [x] banner
 - [ ] button
 - [ ] checkbox
 - [ ] code

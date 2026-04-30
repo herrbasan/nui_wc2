@@ -1,4 +1,4 @@
-<div class="page-badge">
+﻿<div class="page-badge">
 
 <script type="application/ld+json">
 {
@@ -14,242 +14,156 @@
 </script>
 
 <details class="collapsible-section collapsible-section--spaced">
-	<summary><strong>LLM Guide - nui-badge</strong></summary>
-	<nui-markdown id="llm-guide" data-component="nui-badge" class="llm-guide">
-<script type="text/markdown">
-# LLM Guide: nui-badge
+		<summary><strong>LLM Guide - nui-badge</strong></summary>
+		<nui-markdown src="../documentation/components/badge.md"></nui-markdown>
+	</details>
 
-## Design Philosophy
+<header>
+<h1>Badge</h1>
+<p class="lead">A small structural indicator or overlapped status indicator for providing context, notifications, or categorization.</p>
+</header>
 
-Badges provide contextual status information through two complementary patterns: standalone labels for inline status indication, and overlay indicators for notification counts and alerts. The component prioritizes visual clarity while maintaining semantic meaning.
+<section>
+<h2>Interactive Example</h2>
+<p>Dynamically updating the <code>data-badge</code> attribute updates the badge instantly.</p>
 
-## How It Works
-
-The badge system offers two distinct patterns:
-
-### Standalone Badges
-
-Use `<nui-badge>` for inline status labels like "New", "Pending", or "Active". These are semantic elements that communicate state:
-
-```html
-<nui-badge variant="success">Active</nui-badge>
-<nui-badge variant="warning">Pending</nui-badge>
-```
-
-Available variants: `primary`, `success`, `danger`, `warning`, `info`
-
-### Status Indicators
-
-The `data-badge` attribute enables notification dots and counts on any element without additional DOM overhead. CSS pseudo-elements handle the visual presentation:
-
-```html
-<!-- Notification count -->
-<nui-button data-badge="3">
-    <button aria-label="Messages">
-        <nui-icon name="mail"></nui-icon>
-    </button>
+<div class="demo-area">
+<div class="demo-flex-center">
+<nui-button variant="ghost" id="demo-notification-btn" data-badge="">
+<button aria-label="Notifications">
+<nui-icon name="notifications"></nui-icon>
+</button>
 </nui-button>
 
-<!-- Alert indicator -->
-<nui-button data-badge="!">
-    <button aria-label="Warnings">
-        <nui-icon name="warning"></nui-icon>
-    </button>
+<div class="demo-flex-spacer"></div>
+
+<nui-button data-action="badge:increment">
+<button>Add Notification</button>
+</nui-button>
+<nui-button data-action="badge:clear" variant="secondary">
+<button>Clear</button>
+</nui-button>
+</div>
+</div>
+
+<nui-code>
+<script type="example" data-lang="html">
+<nui-button variant="ghost" id="notification-btn" data-badge="">
+<button aria-label="Notifications">
+<nui-icon name="notifications"></nui-icon>
+</button>
 </nui-button>
 
-<!-- Simple dot -->
-<nui-button data-badge="">
-    <button aria-label="New activity">
-        <nui-icon name="notifications"></nui-icon>
-    </button>
+<nui-button data-action="badge:increment">
+<button>Add Notification</button>
 </nui-button>
-```
-
-## Usage Patterns
-
-### Status Labels
-
-For categorization and workflow states:
-
-```html
-<nui-badge variant="primary">Beta</nui-badge>
-<nui-badge variant="success">Complete</nui-badge>
-<nui-badge variant="danger">Failed</nui-badge>
-```
-
-### Notification Badges
-
-For alerting users to new activity:
-
-```html
-<!-- Dynamic updates work by changing the attribute -->
-<nui-button id="inbox-btn" data-badge="5">
-    <button>Messages</button>
+<nui-button data-action="badge:clear" variant="secondary">
+<button>Clear</button>
 </nui-button>
-
-<script>
-// Update badge count
-document.getElementById('inbox-btn').setAttribute('data-badge', '12');
-
-// Clear badge
-document.getElementById('inbox-btn').removeAttribute('data-badge');
 </script>
-```
+</nui-code>
+</section>
 
-## When to Use
+<section>
+<h2>Standalone Badges</h2>
+<p>Use the <code>&lt;nui-badge&gt;</code> element to add inline labels or indicators to an interface.</p>
 
-- **Standalone badges**: Category labels, workflow states, version tags
-- **data-badge**: Notification counts, unread indicators, status alerts
-
-The `data-badge` approach keeps DOM structure minimal while providing flexible visual indicators.
-</script>
-	</nui-markdown>
-</details>
-
-	<header>
-		<h1>Badge</h1>
-		<p class="lead">A small structural indicator or overlapped status indicator for providing context, notifications, or categorization.</p>
-	</header>
-
-	<section>
-		<h2>Standalone Badges</h2>
-		<p>Use the <code>&lt;nui-badge&gt;</code> element to add inline labels or indicators to an interface.</p>
-		
-		<nui-code>
-			<script type="example" data-lang="html">
+<div class="demo-area">
+<div class="demo-flex-center">
 <nui-badge>Default</nui-badge>
 <nui-badge variant="primary">Primary</nui-badge>
 <nui-badge variant="success">Success</nui-badge>
 <nui-badge variant="danger">Danger</nui-badge>
 <nui-badge variant="warning">Warning</nui-badge>
 <nui-badge variant="info">Info</nui-badge>
-			</script>
-		</nui-code>
-		
-		<div class="demo-area">
-			<div class="demo-flex-center">
-				<nui-badge>Default</nui-badge>
-				<nui-badge variant="primary">Primary</nui-badge>
-				<nui-badge variant="success">Success</nui-badge>
-				<nui-badge variant="danger">Danger</nui-badge>
-				<nui-badge variant="warning">Warning</nui-badge>
-				<nui-badge variant="info">Info</nui-badge>
-			</div>
-		</div>
-	</section>
+</div>
+</div>
 
-	<section>
-		<h2>Integrated Status Badge</h2>
-		<p>Instead of wrapping elements in complex DOM hierarchies to show a notification dot or count, you can simply add the <code>data-badge</code> attribute to any container element. The badge uses a pseudo-element, enabling a zero-bloat approach for notification indicators (e.g. on icons or buttons).</p>
-		
-		<nui-code>
-			<script type="example" data-lang="html">
+<nui-code>
+<script type="example" data-lang="html">
+<nui-badge>Default</nui-badge>
+<nui-badge variant="primary">Primary</nui-badge>
+<nui-badge variant="success">Success</nui-badge>
+<nui-badge variant="danger">Danger</nui-badge>
+<nui-badge variant="warning">Warning</nui-badge>
+<nui-badge variant="info">Info</nui-badge>
+</script>
+</nui-code>
+</section>
+
+<section>
+<h2>Integrated Status Badge</h2>
+<p>Instead of wrapping elements in complex DOM hierarchies to show a notification dot or count, you can simply add the <code>data-badge</code> attribute to any container element. The badge uses a pseudo-element, enabling a zero-bloat approach for notification indicators (e.g. on icons or buttons).</p>
+
+<div class="demo-area">
+<div class="demo-flex-center" style="gap: 3rem;">
 <nui-button data-badge="3">
-	<button>
-		<nui-icon name="notifications"></nui-icon>
-		Messages
-	</button>
+<button>
+<nui-icon name="notifications"></nui-icon>
+Messages
+</button>
+</nui-button>
+
+<nui-button variant="ghost" data-badge="!" aria-label="Warnings">
+<button aria-label="Warnings">
+<nui-icon name="warning"></nui-icon>
+</button>
+</nui-button>
+
+<nui-button variant="ghost" data-badge="" title="Unread activity" aria-label="Mail">
+<button aria-label="Mail">
+<nui-icon name="mail"></nui-icon>
+</button>
+</nui-button>
+</div>
+</div>
+
+<nui-code>
+<script type="example" data-lang="html">
+<nui-button data-badge="3">
+<button>
+<nui-icon name="notifications"></nui-icon>
+Messages
+</button>
 </nui-button>
 
 <nui-button variant="ghost" data-badge="!">
-	<button style="padding: 0.5rem;">
-		<nui-icon name="warning"></nui-icon>
-	</button>
+<button style="padding: 0.5rem;">
+<nui-icon name="warning"></nui-icon>
+</button>
 </nui-button>
 
 <nui-button variant="ghost" data-badge="" title="Unread activity">
-	<button style="padding: 0.5rem;">
-		<nui-icon name="mail"></nui-icon>
-	</button>
+<button style="padding: 0.5rem;">
+<nui-icon name="mail"></nui-icon>
+</button>
 </nui-button>
-			</script>
-		</nui-code>
+</script>
+</nui-code>
 
-		<div class="demo-area">
-			<div class="demo-flex-center" style="gap: 3rem;">
-				<nui-button data-badge="3">
-					<button>
-						<nui-icon name="notifications"></nui-icon>
-						Messages
-					</button>
-				</nui-button>
-				
-				<nui-button variant="ghost" data-badge="!" aria-label="Warnings">
-					<button aria-label="Warnings">
-						<nui-icon name="warning"></nui-icon>
-					</button>
-				</nui-button>
-
-				<nui-button variant="ghost" data-badge="" title="Unread activity" aria-label="Mail">
-					<button aria-label="Mail">
-						<nui-icon name="mail"></nui-icon>
-					</button>
-				</nui-button>
-			</div>
-		</div>
-		
-		<div class="demo-callout demo-mt-1">
-			<nui-icon name="info"></nui-icon>
-			<p>An empty string (<code>data-badge=""</code>) renders as a small indicator dot, ideal for subtle unread notifications.</p>
-		</div>
-	</section>
-
-	<section>
-		<h2>Interactive Example</h2>
-		<p>Dynamically updating the <code>data-badge</code> attribute updates the badge instantly.</p>
-
-		<nui-code>
-			<script type="example" data-lang="html">
-<nui-button variant="ghost" id="notification-btn" data-badge="">
-	<button aria-label="Notifications">
-		<nui-icon name="notifications"></nui-icon>
-	</button>
-</nui-button>
-
-<nui-button data-action="badge:increment">
-	<button>Add Notification</button>
-</nui-button>
-<nui-button data-action="badge:clear" variant="secondary">
-	<button>Clear</button>
-</nui-button>
-			</script>
-		</nui-code>
-
-		<h3>Try It</h3>
-		<div class="demo-area">
-			<div class="demo-flex-center">
-				<nui-button variant="ghost" id="demo-notification-btn" data-badge="">
-					<button aria-label="Notifications">
-						<nui-icon name="notifications"></nui-icon>
-					</button>
-				</nui-button>
-
-				<div class="demo-flex-spacer"></div>
-
-				<nui-button data-action="badge:increment">
-					<button>Add Notification</button>
-				</nui-button>
-				<nui-button data-action="badge:clear" variant="secondary">
-					<button>Clear</button>
-				</nui-button>
-			</div>
-		</div>
-	</section>
-
-	<script type="nui/page">
-	function init(element) {
-		let count = 0;
-		const targetBtn = element.querySelector('#demo-notification-btn');
-
-		element.addEventListener('nui-action-badge', (e) => {
-			if (e.detail.param === 'increment') {
-				count++;
-				targetBtn.setAttribute('data-badge', count.toString());
-			} else if (e.detail.param === 'clear') {
-				count = 0;
-				targetBtn.removeAttribute('data-badge');
-			}
-		});
-	}
-	</script>
+<div class="demo-callout demo-mt-1">
+<nui-icon name="info"></nui-icon>
+<p>An empty string (<code>data-badge=""</code>) renders as a small indicator dot, ideal for subtle unread notifications.</p>
 </div>
+</section>
+
+<script type="nui/page">
+function init(element) {
+let count = 0;
+const targetBtn = element.querySelector('#demo-notification-btn');
+
+element.addEventListener('nui-action-badge', (e) => {
+if (e.detail.param === 'increment') {
+count++;
+targetBtn.setAttribute('data-badge', count.toString());
+} else if (e.detail.param === 'clear') {
+count = 0;
+targetBtn.removeAttribute('data-badge');
+}
+});
+}
+</script>
+</div>
+
+
+
