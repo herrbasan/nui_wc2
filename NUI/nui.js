@@ -2463,11 +2463,11 @@ function setupInputBehavior(element, input, config = {}) {
 			input.style.overflowY = scrollHeight > maxHeight ? 'auto' : 'hidden';
 		}
 		if (showCount) {
-			const el = ensureEl('count', 'nui-char-count');
+			if (!countEl) countEl = dom.create('div', { class: 'nui-char-count', target: element });
 			const max = input.maxLength > 0 ? input.maxLength : null;
 			const len = input.value.length;
-			el.textContent = max ? `${len} / ${max}` : len;
-			if (max) el.classList.toggle('at-limit', len >= max);
+			countEl.textContent = max ? `${len} / ${max}` : len;
+			if (max) countEl.classList.toggle('at-limit', len >= max);
 		}
 		if (clearBtn) clearBtn.style.display = input.value ? 'flex' : 'none';
 	};

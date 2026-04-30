@@ -97,18 +97,18 @@ When a new AI session picks up a component to migrate, follow this exact sequenc
 - [x] app-header
 - [x] badge
 - [x] banner
-- [ ] button
-- [ ] checkbox
-- [ ] code
+- [x] button
+- [x] checkbox
+- [x] code
 - [ ] context-menu
 - [ ] dialog
 - [ ] grid
 - [ ] icon
-- [ ] input
-- [ ] input-group
+- [x] input
+- [x] input-group
 - [ ] markdown
 - [ ] popover
-- [ ] radio
+- [x] radio
 - [ ] select
 - [ ] tabs
 

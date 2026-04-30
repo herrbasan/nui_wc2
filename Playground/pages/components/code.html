@@ -14,92 +14,9 @@
 </script>
 
 <details class="collapsible-section collapsible-section--spaced">
-		<summary><strong>LLM Guide - nui-code</strong></summary>
-		<nui-markdown id="llm-guide" data-component="nui-code" class="llm-guide">
-<script type="text/markdown">
-# LLM Guide: nui-code
-
-## Design Philosophy
-
-This component provides lightweight syntax highlighting focused on web development languages. Rather than bundling a heavy general-purpose highlighter, it covers the essential web languages (HTML, CSS, JavaScript, TypeScript, JSON) with a minimal footprint (~6.8KB gzipped).
-
-## How It Works
-
-The component wraps `<pre><code>` blocks and applies syntax highlighting via regex-based tokenization. It uses a placeholder token system to prevent nested span corruption during replacement.
-
-For Playground documentation pages, you can also use `<script type="example">` blocks inside `<nui-code>`, which are automatically converted to displayable code blocks.
-
-### Language Detection
-
-The component attempts automatic detection based on content patterns:
-
-- HTML: Starts with `<`
-- JSON: Contains `"key": value` patterns
-- TypeScript: Contains `interface`, `type`, or `enum`
-- CSS: Contains selectors followed by `{`
-- JavaScript: Default for remaining content
-
-Explicit specification via `data-lang` takes precedence.
-
-## Usage Patterns
-
-### Basic Code Block
-
-```html
-<nui-code>
-	<pre><code data-lang="js">
-function greet(name) {
-	return `Hello, ${name}!`;
-}
-	</code></pre>
-</nui-code>
-```
-
-### Example Blocks (Playground)
-
-For documentation that displays HTML examples:
-
-```html
-<nui-code>
-	<script type="example" data-lang="html">
-<nui-button>
-	<button>Click me</button>
-</nui-button>
-	</script>
-</nui-code>
-```
-
-### Dynamic Highlighting
-
-```javascript
-const codeBlock = document.querySelector('nui-code');
-// Re-highlight after content changes
-codeBlock.refresh();
-```
-
-## Theming
-
-Colors adapt automatically to light/dark mode via the `light-dark()` CSS function:
-
-```css
-.hl-keyword {
-	color: light-dark(#d73a49, #ff7b72);
-}
-```
-
-## When to Use
-
-- Documentation sites
-- Code examples in tutorials
-- Displaying configuration files
-- Anywhere you need lightweight, focused syntax highlighting
-
-## Module Loading
-
-The component lazy-loads its highlighting module only when `<nui-code>` elements are present, minimizing initial bundle impact.
-</script>
-		</nui-markdown>
-	</details>
+	<summary><strong>LLM Guide - nui-code</strong></summary>
+	<nui-markdown src="../documentation/components/code.md"></nui-markdown>
+</details>
 
 <header>
 	<h1>Code Component</h1>
@@ -171,7 +88,6 @@ console.log('Explicitly JavaScript');
 	<main class="container">
 		<h1 id="heading">Welcome</h1>
 		<p>This is a <strong>sample</strong> paragraph.</p>
-		<img src="image.jpg" alt="Description" />
 	</main>
 	<script src="app.js"><\/script>
 </body>
