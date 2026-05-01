@@ -13,8 +13,8 @@ The viewport math emerges from a simple principle: content must be consumable on
 | Viewport | Width | Columns | Reasoning |
 |----------|-------|---------|-----------|
 | Mobile | ~320px | 1 | Base unit |
-| Tablet | ~640px | 2 | 2× mobile width |
-| Desktop | ~960px+ | 3+ | 3× mobile width |
+| Tablet | ~640px | 2 | 2x mobile width |
+| Desktop | ~960px+ | 3+ | 3x mobile width |
 
 This means **1, 2, and 3 are the natural column counts**. The component encodes this pattern and handles responsive collapsing automatically.
 
@@ -58,13 +58,24 @@ Break out of max-width constraints for full-bleed sections using the `breakout` 
 
 Use `breakout` on any element that should span the full width of the container while siblings remain constrained for readability.
 
+
+## Attributes
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `type` | string | `"grid"` | Controls the internal layout algorithm. Options: `"grid"`, `"flow"`. |
+| `columns` | number | `1` | Target column count for desktop viewports. The component automatically scales this down for tablet/mobile. |
+| `gap` | string | `null` | Optional CSS string (e.g. `1rem`) to override the gap between elements. |
+| `column-width` | string | `null` | *(Flow layout only)* Optional explicit width setting. Accepts syntax like `"/3"` to force equal thirds dynamically. |
+| `sort` | string | `null` | *(Flow layout only)* If `"height"`, DOM elements will be automatically reordered so taller items appear first. |
+
 ## Responsive Contract
 
 The component automatically clamps column counts at different breakpoints:
 
 | Viewport | columns="2" | columns="3" | columns="4" |
 |----------|-------------|-------------|-------------|
-| Desktop (≥768px) | 2 | 3 | 4 |
+| Desktop (>=768px) | 2 | 3 | 4 |
 | Tablet (480-767px) | 2 | 2 | 2 |
 | Mobile (<480px) | 1 | 1 | 1 |
 

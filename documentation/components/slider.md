@@ -70,5 +70,17 @@ const slider = nui.util.createElement('nui-slider', {}, [input]);
 document.body.appendChild(slider);
 ```
 
+
+## Attributes
+*(All attributes such as `min`, `max`, `step`, and `value` should be placed directly on the nested native `<input type="range">`)*
+
+## Programmatic API
+
+| Method | Parameters | Return Type | Description |
+|--------|------------|-------------|-------------|
+| `setValue(val)` | `number \| string` | `void` | Programmatically sets the value of the internal native input and recalculates the visual track and thumb position immediately. |
+
+## Events
+*(This component relies completely on native `input` and `change` events bubbling up from the inner `<input type="range">`)*
 ## When to Use
 Use the slider when you need numeric input within a bounded range, especially for settings like volume, opacity, or any value where the relative position matters visually. The custom styling provides better visual integration with the NUI theme while maintaining full native input behavior.

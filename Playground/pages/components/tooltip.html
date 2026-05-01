@@ -1,5 +1,3 @@
-<div class="page-tooltip">
-
 <script type="application/ld+json">
 {
   "@context": "nui",
@@ -12,74 +10,12 @@
   "imports": null
 }
 </script>
-
 <details class="collapsible-section collapsible-section--spaced">
-		<summary><strong>LLM Guide - nui-tooltip</strong></summary>
-		<nui-markdown id="llm-guide" data-component="nui-tooltip" class="llm-guide">
-<script type="text/markdown">
-# LLM Guide: nui-tooltip
+        <summary><strong>LLM Guide - nui-tooltip</strong></summary>
+        <nui-markdown src="../documentation/components/tooltip.md"></nui-markdown>
+</details>
 
-## Design Philosophy
-
-The tooltip component provides contextual help and explanations without cluttering the interface. It follows the principle of progressive disclosure—showing information only when the user shows interest (hover or focus).
-
-## How It Works
-
-The component uses the native Popover API for top-layer rendering, eliminating z-index conflicts and complex positioning logic. It automatically handles:
-
-- **Smart positioning** - Detects viewport edges and adjusts placement
-- **Focus management** - Works with keyboard navigation
-- **ARIA attributes** - Links tooltip content to target element via `aria-describedby`
-
-## Usage Patterns
-
-### Adjacent Placement (Default)
-
-Place the tooltip immediately after its target element. The component automatically associates them:
-
-```html
-<nui-button><button type="button">Hover me</button></nui-button>
-<nui-tooltip>Helpful explanation here</nui-tooltip>
-```
-
-### Explicit Targeting
-
-Use the `for` attribute when the tooltip cannot be placed adjacent to the target:
-
-```html
-<button id="mybtn">Hover</button>
-<nui-tooltip for="mybtn">Tooltip text</nui-tooltip>
-```
-
-### Rich Content
-
-Tooltips support formatted content including headings, paragraphs, and interactive elements:
-
-```html
-<nui-tooltip>
-    <span class="title">Feature Name</span>
-    <p>Detailed description here</p>
-</nui-tooltip>
-```
-
-## Configuration Options
-
-- `position="top|bottom|left|right"` - Manual placement (defaults to auto)
-- `offset="16"` - Adjust distance from target in pixels
-
-## When to Use
-
-- Explaining icon buttons without text labels
-- Providing additional context for form fields
-- Showing keyboard shortcuts
-- Offering clarifications for technical terms
-
-## Integration Notes
-
-The component handles all event listeners internally. For rich content tooltips, the hover area extends to the tooltip itself, preventing premature closing when the user moves their mouse toward the content.
-</script>
-		</nui-markdown>
-	</details>
+<div class="page-tooltip">
 
     <header>
         <h1>Tooltip Component</h1>
@@ -212,3 +148,5 @@ function init(element, params, nui) {
 </script>
 
 </div>
+
+

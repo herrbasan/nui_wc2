@@ -66,14 +66,27 @@ sortable.setItems([htmlString1, htmlString2]);
 sortable.clear();
 ```
 
+
+## Attributes
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `data-layout` | string | `"vertical"` | Dictates the animation and drop calculation math. Options: `"horizontal"`, `"grid"`. Omit or use `"vertical"` for standard lists. |
+
+## Programmatic API
+
+| Method | Parameters | Return Type | Description |
+|--------|------------|-------------|-------------|
+| `getItems()` | none | `Array<{id, element}>` | Returns an array of objects representing the current DOM order of items. `id` maps to the `data-id` attribute. |
+| `addItem(htmlString)` | `string` | `void` | Appends a new `<nui-sortable-item>` to the end of the list using raw HTML string. |
+| `setItems(htmlStrings)` | `string[]` | `void` | Clears the list and replaces it entirely with an array of HTML strings. |
+| `clear()` | none | `void` | Empties the sortable container. |
+
 ## Events
-Listen for the `nui-sortable-change` event to respond to reordering:
 
-```javascript
-sortable.addEventListener('nui-sortable-change', (e) => {
-    console.log('New order:', e.detail.order); // ['task-2', 'task-1', ...]
-});
-```
-
+| Event | Detail Payload | Description |
+|-------|----------------|-------------|
+| `nui-sortable-change` | `{ order: string[] }` | Fired when a drag-and-drop operation concludes and the order has changed. `order` is an array of `data-id` values matching the new DOM sequence. |
+| `nui-sortable-delete` | `{ id: string }` | Fired when an item is removed (typically via `data-action="sortable-item-delete"`). |
 ## When to Use
 Use sortable when users need to prioritize, organize, or sequence items. Common scenarios include task prioritization, image galleries, playlist ordering, or any interface where item sequence carries meaning. The grid layout works well for dashboard widgets or photo arrangements.

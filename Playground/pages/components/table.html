@@ -11,74 +11,12 @@
 }
 </script>
 
-<details class="collapsible-section collapsible-section--spaced">
-		<summary><strong>LLM Guide - nui-table</strong></summary>
-		<nui-markdown id="llm-guide" data-component="nui-table" class="llm-guide">
-<script type="text/markdown">
-# LLM Guide: nui-table
-
-## Design Philosophy
-
-Tables present a challenge on mobile: wide tabular data doesn't fit narrow screens. NUI's table component solves this by transforming the display based on viewport size while preserving the semantic table markup for accessibility.
-
-## Structure
-
-`<nui-table>` wraps a standard HTML table:
-
-```html
-<nui-table>
-	<table>
-		<thead>
-			<tr>
-				<th>Name</th>
-				<th>Role</th>
-			</tr>
-		</thead>
-		<tbody>
-			<tr>
-				<td>Alice</td>
-				<td>Developer</td>
-			</tr>
-		</tbody>
-	</table>
-</nui-table>
-```
-
-The wrapper provides:
-- Consistent styling (borders, spacing, typography)
-- Responsive transformation on mobile
-- Theme integration via CSS variables
-
-## Responsive Behavior
-
-On narrow screens, the table transforms into a card-like layout:
-- Each row becomes a card
-- Column headers become labels via `data-label` attributes
-- Horizontal scrolling is avoided
-
-This transformation uses CSS and preserves all table semantics for screen readers.
-
-## Data Tables
-
-For data-heavy tables, consider using the addon component `nui-list` which provides:
-- Virtual scrolling for large datasets
-- Built-in sorting and filtering
-- Customizable row rendering
-
-Use `<nui-table>` for:
-- Small to medium datasets (under 100 rows)
-- Static content tables
-- Simple data presentation
-
-Use `nui-list` for:
-- Large datasets (1000+ rows)
-- Dynamic data requiring sort/filter
-- Custom row layouts
-</script>
-		</nui-markdown>
-	</details>
-
 <div class="page-table">
+
+<details class="collapsible-section collapsible-section--spaced">
+        <summary><strong>LLM Guide - nui-table</strong></summary>
+        <nui-markdown src="../documentation/components/table.md"></nui-markdown>
+</details>
 
 <header>
 	<h1>Table Component</h1>
@@ -1020,3 +958,4 @@ Use `nui-list` for:
 </section>
 
 </div>
+

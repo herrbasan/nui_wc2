@@ -2,7 +2,7 @@
 
 ## Design Philosophy
 
-Cards provide consistent surface styling while remaining flexible UI containers. Rather than enforcing strict internal layout constraints, the component focuses exclusively on presentationâ€”borders, shadows, background coloration, and interactive hover statesâ€”leaving content structure up to the developer. 
+Cards provide consistent surface styling while remaining flexible UI containers. Rather than enforcing strict internal layout constraints, the component focuses exclusively on presentation—borders, shadows, background coloration, and interactive hover states—leaving content structure up to the developer. 
 
 This separation of concerns allows cards to comfortably hold any combination of images, text, forms, or actions without fighting against internal DOM restrictions. Because they use standard NUI CSS variables natively, they fit right into standard layout grids.
 
@@ -75,6 +75,15 @@ If you want a card's entire surface area to act as an anchor tag, place a standa
     <p>Description text.</p>
 </nui-card>
 ```
+
+
+## Attributes
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `layout` | string | `null` | Controls the internal rendering structure. Options: `"horizontal"`, `"image-only"`, `"flip"`. If omitted, content stacks vertically. |
+| `interactive` | boolean | `false` | Assigns an interactive hover state and elevation shadow. Also automatically manages `tabindex` and `Enter`/`Space` keyboard execution for accessibility if no direct child anchor is present. |
+| `flipped` | boolean | `false` | When `layout="flip"` is enabled, toggling this boolean attribute physically rotates the card to reveal `.nui-card-back` and hides `.nui-card-front`. |
 
 ## Flip Cards
 

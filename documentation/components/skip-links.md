@@ -13,6 +13,15 @@ The component provides two usage modes:
 
 Skip links are visually hidden until focused, appearing as the first focusable element when users press Tab. The component automatically manages `tabindex="-1"` on target elements to ensure proper focus handling.
 
+
+## Attributes
+*(This component accepts no custom attributes)*
+
+## Programmatic API
+*(This component exposes no explicit DOM methods; it automatically binds to existing DOM structure upon initialization)*
+
+## Events
+*(This component exposes no custom events)*
 ## Usage Patterns
 
 ### Automatic Generation

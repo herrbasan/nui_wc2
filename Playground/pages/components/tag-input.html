@@ -1,5 +1,3 @@
-<div class="page-tag-input">
-
 <script type="application/ld+json">
 {
   "@context": "nui",
@@ -12,105 +10,12 @@
   "imports": null
 }
 </script>
-
 <details class="collapsible-section collapsible-section--spaced">
-		<summary><strong>LLM Guide - nui-tag-input</strong></summary>
-		<nui-markdown id="llm-guide" data-component="nui-tag-input" class="llm-guide">
-<script type="text/markdown">
-# LLM Guide: nui-tag-input
+        <summary><strong>LLM Guide - nui-tag-input</strong></summary>
+        <nui-markdown src="../documentation/components/tag-input.md"></nui-markdown>
+</details>
 
-## Design Philosophy
-The tag-input component provides a reusable pattern for managing lists of removable items. It serves as both a standalone tag manager and a composable building block for multi-select interfaces. The component maintains hidden form inputs automatically, ensuring native form submission compatibility.
-
-## How It Works
-Tags are stored as hidden input elements internally, making form submission automatic. Each tag displays with a remove button and supports full keyboard navigation (arrow keys to navigate, Enter/Space to remove). The component offers two modes: display-only (pre-populated) and editable (with an input field for adding new tags).
-
-When used inside other components like multi-select, it receives tags programmatically. For standalone use, it can parse initial tags from hidden inputs or start empty.
-
-## Usage Patterns
-
-### Pre-populated Tags
-Initialize with existing tags using hidden inputs:
-
-```html
-<nui-tag-input name="filters">
-	<input type="hidden" name="filters" value="active">
-	<input type="hidden" name="filters" value="published">
-</nui-tag-input>
-```
-
-### Editable Mode
-Allow users to add tags by typing:
-
-```html
-<nui-tag-input name="keywords" editable placeholder="Add keyword..."></nui-tag-input>
-```
-
-### Programmatic Control
-Manage tags through the component API:
-
-```javascript
-const tagInput = document.querySelector('nui-tag-input');
-
-// Add tags
-tagInput.addTag('javascript');
-tagInput.addTag('user123', 'User Name'); // with display label
-
-// Remove tags
-tagInput.removeTag('javascript');
-
-// Query state
-console.log(tagInput.getValues());    // ['user123']
-console.log(tagInput.listTags());     // [{value, label}, ...]
-console.log(tagInput.hasTag('user123')); // true
-
-// Clear all
-tagInput.clear();
-```
-
-### Dynamic Creation
-Create tag inputs programmatically:
-
-```javascript
-const tagInput = nui.util.createElement('nui-tag-input', {
-    attrs: { name: 'tags', editable: true, placeholder: 'Add...' }
-});
-
-document.body.appendChild(tagInput);
-tagInput.addTag('initial');
-```
-
-## Events
-The component dispatches events for tag changes:
-
-```javascript
-tagInput.addEventListener('nui-tag-add', (e) => {
-    console.log('Added:', e.detail.value, e.detail.label);
-});
-
-tagInput.addEventListener('nui-tag-remove', (e) => {
-    console.log('Removed:', e.detail.value);
-});
-
-tagInput.addEventListener('nui-change', (e) => {
-    console.log('All values:', e.detail.values);
-});
-```
-
-## Keyboard Navigation
-The component provides full keyboard accessibility:
-- **Left/Right arrows** — Navigate between tags
-- **Home** — Jump to first tag
-- **End** — Jump to last tag (or input in editable mode)
-- **Enter/Space** on tag — Remove tag
-- **Escape** — Clear focus
-- **Backspace** on empty input (editable) — Focus last tag
-
-## When to Use
-Use tag-input for filtering interfaces, keyword management, recipient lists, or any scenario where users need to build a collection of items. The editable mode works well for free-form tagging, while the non-editable mode suits displaying selected items from another interface (like a multi-select dropdown).
-</script>
-		</nui-markdown>
-	</details>
+<div class="page-tag-input">
 
 <header>
 	<h1>Tag Input</h1>
@@ -508,3 +413,5 @@ function init(element, params, nui) {
 </script>
 
 </div>
+
+

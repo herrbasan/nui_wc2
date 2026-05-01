@@ -65,6 +65,28 @@ For static navigation, write the HTML directly:
 
 The structure uses `<details>`/`<summary>` for groups, providing native collapsibility before JavaScript enhances it.
 
+
+## Attributes
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `mode` | string | `"tree"` | Controls whether multiple groups can be expanded simultaneously (`"tree"`) or if expanding one group collapses the others (`"fold"`). |
+
+## Programmatic API
+
+| Method | Parameters | Return Type | Description |
+|--------|------------|-------------|-------------|
+| `loadData(data)` | `Array` | `void` | Renders the link list dynamically from a JSON array of `{label, items, href, icon, separator}`. |
+| `setActive(selector)` | `string \| Element` | `boolean` | Programmatically marks a specific link as active (applies styling and ARIA attributes), and automatically expands its parent groups if collapsed. |
+| `getActive()` | none | `Element \| null` | Returns the currently active anchor element. |
+| `getActiveData()` | none | `Object \| null` | Returns an object containing the active element, its `href`, and its `text` content. |
+| `clearActive(closeAll)` | `boolean` | `void` | Clears the active selection state. If `closeAll` is true, it also collapses all open groups. |
+
+## Events
+
+| Event | Detail Payload | Description |
+|-------|----------------|-------------|
+| `nui-active-change` | `{ element, href, text }` | Fired whenever the active selected link changes natively (via click) or programmatically. |
 ## Keyboard Navigation
 
 Link lists implement roving tabindex:

@@ -99,21 +99,21 @@ When a new AI session picks up a component to migrate, follow this exact sequenc
 - [x] badge
 - [x] banner
 - [x] button
-- [ ] card
+- [x] card
 - [x] code
 - [x] dialog
-- [ ] dropzone
+- [x] dropzone
 - [x] icon
 - [x] input
-- [ ] layout
-- [ ] link-list
+- [x] layout
+- [x] link-list
 - [x] markdown
-- [ ] overlay
-- [ ] progress
+- [x] overlay
+- [x] progress
 - [x] select
-- [ ] skip-links
+- [x] skip-links
 - [ ] slider
-- [ ] sortable
+- [x] sortable
 - [ ] table
 - [x] tabs
 - [ ] tag-input
