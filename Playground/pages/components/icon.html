@@ -13,11 +13,6 @@
 }
 </script>
 
-<details class="collapsible-section collapsible-section--spaced">
-		<summary><strong>LLM Guide - nui-icon</strong></summary>
-		<nui-markdown src="../documentation/components/icon.md"></nui-markdown>
-	</details>
-
 	<header>
 		<h1>Icon Component</h1>
 		<p class="lead">SVG sprite-based icon system for consistent, scalable icons</p>
@@ -44,6 +39,12 @@
 	<section>
 		<h2>Basic Usage</h2>
 		<p>Use the <code>name</code> attribute to specify which icon to display:</p>
+		<div class="icon-demo">
+			<nui-icon name="settings" class="demo-icon-md"></nui-icon>
+			<nui-icon name="person" class="demo-icon-md"></nui-icon>
+			<nui-icon name="search" class="demo-icon-md"></nui-icon>
+		</div>
+
 		<nui-code>
 			<script type="example" data-lang="html">
 <nui-icon name="settings"></nui-icon>
@@ -51,17 +52,18 @@
 <nui-icon name="search"></nui-icon>
 			</script>
 		</nui-code>
-		
-		<div class="icon-demo">
-			<nui-icon name="settings" class="demo-icon-md"></nui-icon>
-			<nui-icon name="person" class="demo-icon-md"></nui-icon>
-			<nui-icon name="search" class="demo-icon-md"></nui-icon>
-		</div>
 	</section>
 	
 	<section>
 		<h2>Sizing</h2>
 		<p>Icons inherit font-size from their container or can be sized directly with CSS:</p>
+		<div class="icon-demo">
+			<nui-icon name="notifications" class="demo-icon-xs"></nui-icon>
+			<nui-icon name="notifications" class="demo-icon-sm"></nui-icon>
+			<nui-icon name="notifications" class="demo-icon-md"></nui-icon>
+			<nui-icon name="notifications" class="demo-icon-lg"></nui-icon>
+		</div>
+
 		<nui-code>
 			<script type="example" data-lang="html">
 <nui-icon name="notifications" style="font-size: 1rem;"></nui-icon>
@@ -70,18 +72,18 @@
 <nui-icon name="notifications" style="font-size: 3rem;"></nui-icon>
 			</script>
 		</nui-code>
-		
-		<div class="icon-demo">
-			<nui-icon name="notifications" class="demo-icon-xs"></nui-icon>
-			<nui-icon name="notifications" class="demo-icon-sm"></nui-icon>
-			<nui-icon name="notifications" class="demo-icon-md"></nui-icon>
-			<nui-icon name="notifications" class="demo-icon-lg"></nui-icon>
-		</div>
 	</section>
 	
 	<section>
 		<h2>Coloring</h2>
 		<p>Icons inherit the current text color and can be styled with CSS:</p>
+		<div class="icon-demo">
+			<nui-icon name="security" class="demo-icon-md demo-icon-red"></nui-icon>
+			<nui-icon name="analytics" class="demo-icon-md demo-icon-orange"></nui-icon>
+			<nui-icon name="done" class="demo-icon-md demo-icon-green"></nui-icon>
+			<nui-icon name="info" class="demo-icon-md demo-icon-blue"></nui-icon>
+		</div>
+
 		<nui-code>
 			<script type="example" data-lang="html">
 <nui-icon name="security" style="color: red;"></nui-icon>
@@ -90,18 +92,17 @@
 <nui-icon name="info" style="color: blue;"></nui-icon>
 			</script>
 		</nui-code>
-		
-		<div class="icon-demo">
-			<nui-icon name="security" class="demo-icon-md demo-icon-red"></nui-icon>
-			<nui-icon name="analytics" class="demo-icon-md demo-icon-orange"></nui-icon>
-			<nui-icon name="done" class="demo-icon-md demo-icon-green"></nui-icon>
-			<nui-icon name="info" class="demo-icon-md demo-icon-blue"></nui-icon>
-		</div>
 	</section>
 	
 	<section>
 		<h2>Inline with Text</h2>
 		<p>Icons can be used inline with text and will align with the baseline:</p>
+		<div class="icon-demo demo-flex-center">
+			<p><nui-icon name="mail"></nui-icon> Email Settings</p>
+			<p><nui-icon name="person"></nui-icon> User Profile</p>
+			<p><nui-icon name="notifications"></nui-icon> Notification Preferences</p>
+		</div>
+
 		<nui-code>
 			<script type="example" data-lang="html">
 <p>
@@ -112,12 +113,6 @@
 </p>
 			</script>
 		</nui-code>
-		
-		<div class="icon-demo demo-flex-center">
-			<p><nui-icon name="mail"></nui-icon> Email Settings</p>
-			<p><nui-icon name="person"></nui-icon> User Profile</p>
-			<p><nui-icon name="notifications"></nui-icon> Notification Preferences</p>
-		</div>
 	</section>
 	
 	<section>
@@ -183,6 +178,11 @@ python assets/generate_icon_sprite.py
 		</nui-code>
 	</section>
 </div>
+
+<details class="collapsible-section collapsible-section--spaced">
+	<summary><strong>LLM Guide - nui-icon</strong></summary>
+	<nui-markdown src="../documentation/components/icon.md"></nui-markdown>
+</details>
 
 <script type="nui/page">
 async function init(element, params) {

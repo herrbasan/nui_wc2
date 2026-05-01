@@ -13,11 +13,6 @@
 }
 </script>
 
-<details class="collapsible-section collapsible-section--spaced">
-		<summary><strong>LLM Guide - nui-accordion</strong></summary>
-		<nui-markdown src="../documentation/components/accordion.md"></nui-markdown>
-	</details>
-
 <header>
 	<h1>Accordion Component</h1>
 	<p>Expandable content sections using <code>&lt;nui-accordion&gt;</code>. Built on native <code>&lt;details&gt;</code> elements.</p>
@@ -27,21 +22,6 @@
 	<h2>Declarative Usage (Default)</h2>
 	<p>Wraps standard HTML <code>&lt;details&gt;</code> elements. Provides consistent styling and optional behavior enhancements.</p>
 	
-	<nui-code>
-		<script type="example" data-lang="html">
-<nui-accordion>
-	<details>
-		<summary>Section 1</summary>
-		<div>...</div>
-	</details>
-	<details>
-		<summary>Section 2</summary>
-		<div>...</div>
-	</details>
-</nui-accordion>
-		</script>
-	</nui-code>
-
 	<h3>Try It</h3>
 	<div class="demo-container">
 		<nui-accordion>
@@ -74,21 +54,27 @@
 			</details>
 		</nui-accordion>
 	</div>
+
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-accordion>
+	<details>
+		<summary>Section 1</summary>
+		<div>...</div>
+	</details>
+	<details>
+		<summary>Section 2</summary>
+		<div>...</div>
+	</details>
+</nui-accordion>
+		</script>
+	</nui-code>
 </section>
 
 <section class="page-accordion">
 	<h2>Exclusive Mode</h2>
 	<p>Add the <code>exclusive</code> attribute to allow only one section to be open at a time.</p>
 	
-	<nui-code>
-		<script type="example" data-lang="html">
-<nui-accordion exclusive>
-	<details open>...</details>
-	<details>...</details>
-</nui-accordion>
-		</script>
-	</nui-code>
-
 	<h3>Try It</h3>
 	<div class="demo-container">
 		<nui-accordion exclusive>
@@ -120,6 +106,15 @@
 			</details>
 		</nui-accordion>
 	</div>
+
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-accordion exclusive>
+	<details open>...</details>
+	<details>...</details>
+</nui-accordion>
+		</script>
+	</nui-code>
 </section>
 
 <section class="page-accordion">
@@ -211,6 +206,11 @@ acc.collapseAll();   // Collapses all
 		</script>
 	</nui-code>
 </section>
+
+<details class="collapsible-section collapsible-section--spaced">
+		<summary><strong>LLM Guide - nui-accordion</strong></summary>
+		<nui-markdown src="../documentation/components/accordion.md"></nui-markdown>
+	</details>
 
 <script type="nui/page">
 function init(element, params, nui) {

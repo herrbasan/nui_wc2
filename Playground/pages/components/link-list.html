@@ -10,11 +10,6 @@
   "imports": null
 }
 </script>
-<details class="collapsible-section collapsible-section--spaced">
-        <summary><strong>LLM Guide - nui-link-list</strong></summary>
-        <nui-markdown src="../documentation/components/link-list.md"></nui-markdown>
-</details>
-
 <div class="page-link-list">
 
 <header>
@@ -34,26 +29,6 @@
 	<h2>Fold Mode (Accordion)</h2>
 	<p>In fold mode, only one group can be open at a time. Opening a group automatically closes others:</p>
 	
-	<nui-code>
-		<script type="example" data-lang="html">
-<nui-link-list mode="fold">
-	<ul>
-		<li class="group-header">
-			<span>
-				<nui-icon name="folder"></nui-icon>
-				<span>Group Name</span>
-			</span>
-		</li>
-		<li>
-			<a href="#item">
-				<span>Item Name</span>
-			</a>
-		</li>
-	</ul>
-</nui-link-list>
-		</script>
-	</nui-code>
-
 	<h3>Try It</h3>
 	<div class="link_list_fold_container">
 		<nui-link-list id="demo-fold" mode="fold">
@@ -79,6 +54,26 @@
 		<h4>Fold Mode State:</h4>
 		<pre id="fold-state-display">No active item</pre>
 	</div>
+
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-link-list mode="fold">
+	<ul>
+		<li class="group-header">
+			<span>
+				<nui-icon name="folder"></nui-icon>
+				<span>Group Name</span>
+			</span>
+		</li>
+		<li>
+			<a href="#item">
+				<span>Item Name</span>
+			</a>
+		</li>
+	</ul>
+</nui-link-list>
+		</script>
+	</nui-code>
 
 </section>
 
@@ -608,6 +603,11 @@ const demoNavigationData = [
 		</tbody>
 	</table>
 </section>
+
+<details class="collapsible-section collapsible-section--spaced">
+        <summary><strong>LLM Guide - nui-link-list</strong></summary>
+        <nui-markdown src="../documentation/components/link-list.md"></nui-markdown>
+</details>
 
 <script type="nui/page">
 function init(element, params) {

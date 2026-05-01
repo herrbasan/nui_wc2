@@ -10,11 +10,6 @@
   "imports": null
 }
 </script>
-<details class="collapsible-section collapsible-section--spaced">
-        <summary><strong>LLM Guide - nui-overlay</strong></summary>
-        <nui-markdown src="../documentation/components/overlay.md"></nui-markdown>
-</details>
-
 <div class="page-overlay">
 
 <header>
@@ -26,19 +21,6 @@
 		<h2>Declarative Usage (Default)</h2>
 		<p>The <code>&lt;nui-overlay&gt;</code> component acts as a generic container that leverages the native <code>&lt;dialog&gt;</code> API to present content centrally over a shaded backdrop. Unlike <code>&lt;nui-dialog&gt;</code>, it doesn't enforce any padding or borders.</p>
 
-		<nui-code>
-			<script type="example" data-lang="html">
-<!-- Open the overlay declaratively -->
-<button data-action="overlay-open@#my-overlay">Open Overlay</button>
-
-<nui-overlay id="my-overlay">
-	<dialog>
-		<img src="images/nui_1.webp" alt="Sample" style="border-radius: var(--border-radius2); max-width: 90vw; max-height: 90vh;" />
-		<button data-action="overlay-close@#my-overlay">Close</button>
-	</dialog>
-</nui-overlay>
-			</script>
-		</nui-code>
 		<div class="demo-area">
 			<button data-action="overlay-open@#my-overlay">Open Overlay</button>
 			<nui-overlay id="my-overlay">
@@ -54,25 +36,25 @@
 				</dialog>
 			</nui-overlay>
 		</div>
+
+		<nui-code>
+			<script type="example" data-lang="html">
+<!-- Open the overlay declaratively -->
+<button data-action="overlay-open@#my-overlay">Open Overlay</button>
+
+<nui-overlay id="my-overlay">
+	<dialog>
+		<img src="images/nui_1.webp" alt="Sample" style="border-radius: var(--border-radius2); max-width: 90vw; max-height: 90vh;" />
+		<button data-action="overlay-close@#my-overlay">Close</button>
+	</dialog>
+</nui-overlay>
+			</script>
+		</nui-code>
 	</section>
 
 	<section>
 		<h2>Programmatic Usage (Advanced / Async)</h2>
 		<p>Use the programmatic API when you need to control the overlay during asynchronous workflows, such as showing a loader while saving data.</p>
-		<nui-code>
-			<script type="example" data-lang="javascript">
-const overlay = document.querySelector('#busy-overlay');
-
-// Show the overlay programmatically
-overlay.showModal();
-
-// Perform some async async work
-await new Promise(resolve => setTimeout(resolve, 3000));
-
-// Close the overlay
-overlay.close();
-			</script>
-		</nui-code>
 		<p>By adding the <code>blocking</code> attribute, the overlay will ignore backdrop clicks and Escape key presses. This is ideal for loading indicators.</p>
 
 		<div class="demo-area">
@@ -87,6 +69,21 @@ overlay.close();
 				</dialog>
 			</nui-overlay>
 		</div>
+
+		<nui-code>
+			<script type="example" data-lang="javascript">
+const overlay = document.querySelector('#busy-overlay');
+
+// Show the overlay programmatically
+overlay.showModal();
+
+// Perform some async async work
+await new Promise(resolve => setTimeout(resolve, 3000));
+
+// Close the overlay
+overlay.close();
+			</script>
+		</nui-code>
 	</section>
 
 	<section>
@@ -157,6 +154,11 @@ overlay.addEventListener('nui-overlay-close', (e) => {
 	</table>
 </section>
 </div>
+
+<details class="collapsible-section collapsible-section--spaced">
+        <summary><strong>LLM Guide - nui-overlay</strong></summary>
+        <nui-markdown src="../documentation/components/overlay.md"></nui-markdown>
+</details>
 
 <script type="nui/page">
 function init(element, params, nui) {

@@ -10,11 +10,6 @@
   "imports": null
 }
 </script>
-<details class="collapsible-section collapsible-section--spaced">
-		<summary><strong>LLM Guide - nui-markdown</strong></summary>
-		<nui-markdown src="../documentation/components/markdown.md"></nui-markdown>
-	</details>
-
 <div class="page-markdown">
 
 	<header>
@@ -240,6 +235,11 @@ mdRenderer.endStream();
 		<p>The HTML parser scans for <code>&lt;/script&gt;</code> to find the end of a script element. It doesn't understand that the tag is inside a code example - it just sees the string and closes the element. Escaping with <code>&lt;\/script&gt;</code> prevents this while still displaying correctly in the rendered output.</p>
 	</section>
 </div>
+
+<details class="collapsible-section collapsible-section--spaced">
+		<summary><strong>LLM Guide - nui-markdown</strong></summary>
+		<nui-markdown src="../documentation/components/markdown.md"></nui-markdown>
+	</details>
 
 <script type="nui/page">
 function init(element, params, nui) {

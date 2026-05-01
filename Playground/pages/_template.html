@@ -31,61 +31,26 @@ See: Playground/pages/ROUTER-GUIDE.md for full documentation
 <!-- 1. PAGE WRAPPER - Use nui-page as the root for proper layout handling -->
 <nui-page class="page-[component]">
 
-	<!-- 2. OPTIONAL: LLM Guide (for complex components) -->
-	<!-- Remove this section for simple components -->
-	<details class="collapsible-section collapsible-section--spaced">
-		<summary><strong>LLM Guide - nui-[component]</strong></summary>
-		<nui-markdown id="llm-guide" data-component="nui-[component]" class="llm-guide">
-			<script type="text/markdown">
-# LLM Guide: nui-[component]
-
-## Design Philosophy
-
-Explain the core design principles behind this component.
-
-## Usage Patterns
-
-```html
-<nui-[component]>
-	<!-- Example markup -->
-</nui-[component]>
-```
-
-## When to Use
-
-- Use case 1
-- Use case 2
-
-## When NOT to Use
-
-- Avoid for X (use Y instead)
-</script>
-		</nui-markdown>
-	</details>
-
-	<!-- 3. HEADER - Always required -->
+	<!-- 2. HEADER - Always required -->
 	<header>
 		<h1>[Component] Component</h1>
 		<p class="lead">One-sentence description of what this component does.</p>
 	</header>
 
-	<!-- 4. OVERVIEW SECTION - Optional but recommended -->
-	<!-- For complex components: explain what it is, key features -->
-	<section>
-		<h2>Overview</h2>
-		<p>The <code>&lt;nui-[component]&gt;</code> component ...</p>
-		<ul>
-			<li><strong>Key feature 1:</strong> Description</li>
-			<li><strong>Key feature 2:</strong> Description</li>
-		</ul>
-	</section>
-
-	<!-- 5. BASIC USAGE SECTION - Always required -->
+	<!-- 3. BASIC USAGE SECTION - Always required -->
+	<!-- DEMO FIRST, code example after -->
 	<section>
 		<h2>Declarative Usage (Default)</h2>
 		<p>Brief explanation of the basic usage pattern.</p>
 
-		<!-- Code example FIRST -->
+		<!-- Live demo FIRST (in .demo-container or .demo-area) -->
+		<div class="demo-container">
+			<nui-[component]>
+				<!-- Basic live demo -->
+			</nui-[component]>
+		</div>
+
+		<!-- Code example SECOND -->
 		<nui-code>
 			<script type="example" data-lang="html">
 <nui-[component]>
@@ -93,19 +58,18 @@ Explain the core design principles behind this component.
 </nui-[component]>
 			</script>
 		</nui-code>
-
-		<!-- Live demo SECOND (in .demo-container or .demo-area) -->
-		<div class="demo-container">
-			<nui-[component]>
-				<!-- Basic live demo -->
-			</nui-[component]>
-		</div>
 	</section>
 
-	<!-- 6. FEATURE SECTIONS - Repeat for each major feature -->
+	<!-- 4. FEATURE SECTIONS - Repeat for each major feature -->
+	<!-- Always: demo first, code example after -->
 	<section>
 		<h2>Feature Name</h2>
 		<p>Description of this feature.</p>
+
+		<h3>Try It</h3>
+		<div class="demo-area">
+			<!-- Interactive demo -->
+		</div>
 
 		<nui-code>
 			<script type="example" data-lang="html">
@@ -114,14 +78,9 @@ Explain the core design principles behind this component.
 </nui-[component]>
 			</script>
 		</nui-code>
-
-		<h3>Try It</h3>
-		<div class="demo-area">
-			<!-- Interactive demo -->
-		</div>
 	</section>
 
-	<!-- 7. COMPONENT API SECTION - Always required (except for simple layout components) -->
+	<!-- 5. COMPONENT API SECTION - Always required (except for simple layout components) -->
 	<section>
 		<h2>Component API</h2>
 		<p>The [component] component exposes properties, methods, and events for programmatic control.</p>
@@ -180,7 +139,7 @@ Explain the core design principles behind this component.
 		</table>
 	</section>
 
-	<!-- 8. ACCESSIBILITY SECTION - Optional but recommended -->
+	<!-- 6. ACCESSIBILITY SECTION - Optional but recommended -->
 	<section>
 		<h2>Accessibility</h2>
 		<ul>
@@ -189,7 +148,7 @@ Explain the core design principles behind this component.
 		</ul>
 	</section>
 
-	<!-- 9. BEST PRACTICES SECTION - Optional -->
+	<!-- 7. BEST PRACTICES SECTION - Optional -->
 	<section>
 		<h2>Best Practices</h2>
 		<ul>
@@ -197,6 +156,13 @@ Explain the core design principles behind this component.
 			<li>Best practice 2</li>
 		</ul>
 	</section>
+
+	<!-- 8. LLM GUIDE - Optional, placed at the bottom before page script -->
+	<!-- Remove this section for simple components -->
+	<details class="collapsible-section collapsible-section--spaced">
+		<summary><strong>LLM Guide - nui-[component]</strong></summary>
+		<nui-markdown src="../documentation/components/[component].md"></nui-markdown>
+	</details>
 
 	<!-- 
 	================================================================================

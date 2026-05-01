@@ -10,11 +10,6 @@
   "imports": null
 }
 </script>
-<details class="collapsible-section collapsible-section--spaced">
-        <summary><strong>LLM Guide - nui-tag-input</strong></summary>
-        <nui-markdown src="../documentation/components/tag-input.md"></nui-markdown>
-</details>
-
 <div class="page-tag-input">
 
 <header>
@@ -25,15 +20,6 @@
 <section>
 	<h2>Pre-populated Tags</h2>
 	<p>Initialize with tags using hidden inputs. These will be parsed on component upgrade.</p>
-
-	<nui-code>
-		<script type="example" data-lang="html">
-<nui-tag-input name="filters">
-	<input type="hidden" name="filters" value="active">
-	<input type="hidden" name="filters" value="published">
-</nui-tag-input>
-		</script>
-	</nui-code>
 
 	<h3>Try It</h3>
 	<div class="demo-area">
@@ -47,6 +33,15 @@
 			<pre data-output="prepopulated">Tags: active, published, featured</pre>
 		</div>
 	</div>
+
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-tag-input name="filters">
+	<input type="hidden" name="filters" value="active">
+	<input type="hidden" name="filters" value="published">
+</nui-tag-input>
+		</script>
+	</nui-code>
 
 	<div class="demo-callout">
 		<strong>Keyboard:</strong>
@@ -64,19 +59,6 @@
 	<h2>Basic Usage</h2>
 	<p>Tags are managed programmatically via the component's API. Hidden inputs provide form compatibility.</p>
 
-	<nui-code>
-		<script type="example" data-lang="html">
-<nui-tag-input name="keywords"></nui-tag-input>
-		</script>
-	</nui-code>
-	<nui-code>
-		<script type="example" data-lang="js">
-const tagInput = document.querySelector('nui-tag-input');
-tagInput.addTag('javascript');
-tagInput.addTag('typescript');
-		</script>
-	</nui-code>
-
 	<div class="demo-area">
 		<nui-tag-input name="demo-tags" data-demo="basic"></nui-tag-input>
 		<div class="demo-result">
@@ -89,18 +71,24 @@ tagInput.addTag('typescript');
 		<nui-button><button type="button" data-action="tag-remove:basic">Remove last</button></nui-button>
 		<nui-button><button type="button" data-action="tag-clear:basic">Clear all</button></nui-button>
 	</div>
+
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-tag-input name="keywords"></nui-tag-input>
+		</script>
+	</nui-code>
+	<nui-code>
+		<script type="example" data-lang="js">
+const tagInput = document.querySelector('nui-tag-input');
+tagInput.addTag('javascript');
+tagInput.addTag('typescript');
+		</script>
+	</nui-code>
 </section>
 
 <section>
 	<h2>Editable Mode</h2>
 	<p>Add the <code>editable</code> attribute to allow users to type and add new tags.</p>
-
-	<nui-code>
-		<script type="example" data-lang="html">
-<nui-tag-input name="keywords" editable placeholder="Add keyword...">
-</nui-tag-input>
-		</script>
-	</nui-code>
 
 	<div class="demo-area">
 		<nui-input-group>
@@ -111,6 +99,13 @@ tagInput.addTag('typescript');
 			<pre data-output="editable">Tags: (none)</pre>
 		</div>
 	</div>
+
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-tag-input name="keywords" editable placeholder="Add keyword...">
+</nui-tag-input>
+		</script>
+	</nui-code>
 
 	<div class="demo-callout">
 		<strong>Additional keys in editable mode:</strong>
@@ -148,6 +143,13 @@ tagInput.addTag('typescript');
 	<h2>Available Events</h2>
 	<p>The component dispatches events when tags are added, removed, or the list changes.</p>
 
+	<div class="demo-area">
+		<nui-tag-input name="events" editable placeholder="Add tags to see events..." data-demo="events"></nui-tag-input>
+		<div class="demo-result">
+			<pre data-output="events">Events will appear here...</pre>
+		</div>
+	</div>
+
 	<nui-code>
 		<script type="example" data-lang="js">
 tagInput.addEventListener('nui-tag-add', (e) => {
@@ -163,13 +165,6 @@ tagInput.addEventListener('nui-change', (e) => {
 });
 		</script>
 	</nui-code>
-
-	<div class="demo-area">
-		<nui-tag-input name="events" editable placeholder="Add tags to see events..." data-demo="events"></nui-tag-input>
-		<div class="demo-result">
-			<pre data-output="events">Events will appear here...</pre>
-		</div>
-	</div>
 </section>
 
 <section>
@@ -258,6 +253,11 @@ tagInput.addEventListener('nui-change', (e) => {
 		</tbody>
 	</table>
 </section>
+
+<details class="collapsible-section collapsible-section--spaced">
+        <summary><strong>LLM Guide - nui-tag-input</strong></summary>
+        <nui-markdown src="../documentation/components/tag-input.md"></nui-markdown>
+</details>
 
 <script type="nui/page">
 function init(element, params, nui) {

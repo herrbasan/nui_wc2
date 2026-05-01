@@ -10,11 +10,6 @@
   "imports": null
 }
 </script>
-<details class="collapsible-section collapsible-section--spaced">
-        <summary><strong>LLM Guide - nui-tooltip</strong></summary>
-        <nui-markdown src="../documentation/components/tooltip.md"></nui-markdown>
-</details>
-
 <div class="page-tooltip">
 
     <header>
@@ -25,13 +20,6 @@
     <section>
         <h2>Basic Usage (Auto Placement)</h2>
         <p>A tooltip automatically attaches to the element immediately preceding it. By default, it uses auto-placement based on the available screen space. It uses the native Popover API for accessible, top-layer rendering without complex JS scroll tracking or z-index issues.</p>
-        <nui-code>
-            <script type="example" data-lang="html">
-                <nui-button><button type="button">Hover me</button></nui-button>
-                <nui-tooltip>This is an auto-placed tooltip, resolving space dynamically.</nui-tooltip>
-            </script>
-        </nui-code>
-
         <h3>Try It</h3>
         <div class="demo-area">
             <div class="demo-flex-center">
@@ -39,24 +27,18 @@
                 <nui-tooltip>This is an auto-placed tooltip, resolving space dynamically.</nui-tooltip>
             </div>
         </div>
+
+        <nui-code>
+            <script type="example" data-lang="html">
+                <nui-button><button type="button">Hover me</button></nui-button>
+                <nui-tooltip>This is an auto-placed tooltip, resolving space dynamically.</nui-tooltip>
+            </script>
+        </nui-code>
     </section>
 
     <section>
         <h2>Rich Content & Interactivity</h2>
         <p>Tooltips can hold fully formatted rich content like headings, paragraphs, and interactive buttons without closing when you hover over them, closing smoothly after a short delay so the mouse can travel to it.</p>
-        <nui-code>
-            <script type="example" data-lang="html">
-                <nui-button><button type="button">Rich Content Hover</button></nui-button>
-                <nui-tooltip>
-                    <span class="title">Tooltip Title</span>
-                    <p>Tooltips display informative text when users hover over, focus on, or tap an element.</p>
-                    <div class="demo-flex-end">
-                        <nui-button variant="solid"><button type="button" data-action="demo:clicked">Button</button></nui-button>
-                    </div>
-                </nui-tooltip>
-            </script>
-        </nui-code>
-
         <h3>Try It</h3>
         <div class="demo-area" data-demo-output2>
             <div class="demo-flex-center">
@@ -70,19 +52,24 @@
                 </nui-tooltip>
             </div>
         </div>
+
+        <nui-code>
+            <script type="example" data-lang="html">
+                <nui-button><button type="button">Rich Content Hover</button></nui-button>
+                <nui-tooltip>
+                    <span class="title">Tooltip Title</span>
+                    <p>Tooltips display informative text when users hover over, focus on, or tap an element.</p>
+                    <div class="demo-flex-end">
+                        <nui-button variant="solid"><button type="button" data-action="demo:clicked">Button</button></nui-button>
+                    </div>
+                </nui-tooltip>
+            </script>
+        </nui-code>
     </section>
 
     <section>
         <h2>Using the 'for' attribute</h2>
         <p>For more complex layouts, you can explicitly link a tooltip to an element using the <code>for</code> attribute matching the target's <code>id</code>. This also pairs them correctly for accessibility via aria-describedby.</p>
-        <nui-code>
-            <script type="example" data-lang="html">
-                <nui-button id="target-btn"><button type="button">Target Button</button></nui-button>
-                <p>Some unrelated text...</p>
-                <nui-tooltip for="target-btn" position="bottom">Linked via 'for' attribute</nui-tooltip>
-            </script>
-        </nui-code>
-
         <h3>Try It</h3>
         <div class="demo-area">
             <div class="demo-flex-center">
@@ -91,31 +78,19 @@
                 <nui-tooltip for="demo-target-btn" position="bottom">Linked via 'for' attribute</nui-tooltip>
             </div>
         </div>
+
+        <nui-code>
+            <script type="example" data-lang="html">
+                <nui-button id="target-btn"><button type="button">Target Button</button></nui-button>
+                <p>Some unrelated text...</p>
+                <nui-tooltip for="target-btn" position="bottom">Linked via 'for' attribute</nui-tooltip>
+            </script>
+        </nui-code>
     </section>
 
     <section>
         <h2>Placement Options</h2>
         <p>While <code>auto</code> mode is recommended, you can use the <code>position</code> attribute to manually choose where the tooltip appears. Supports <code>top</code>, <code>bottom</code>, <code>left</code>, and <code>right</code>.</p>
-        <nui-code>
-            <script type="example" data-lang="html">
-                <!-- Top -->
-                <nui-button><button type="button">Top</button></nui-button>
-                <nui-tooltip position="top">Appears on top</nui-tooltip>
-
-                <!-- Bottom -->
-                <nui-button><button type="button">Bottom</button></nui-button>
-                <nui-tooltip position="bottom">Appears on bottom</nui-tooltip>
-
-                <!-- Left -->
-                <nui-button><button type="button">Left</button></nui-button>
-                <nui-tooltip position="left">Appears on left</nui-tooltip>
-
-                <!-- Right -->
-                <nui-button><button type="button">Right</button></nui-button>
-                <nui-tooltip position="right">Appears on right</nui-tooltip>
-            </script>
-        </nui-code>
-
         <h3>Try It</h3>
         <div class="demo-area">
             <div class="demo-flex-center demo-gap-2 demo-p-4">
@@ -137,7 +112,32 @@
                 </div>
             </div>
         </div>
+
+        <nui-code>
+            <script type="example" data-lang="html">
+                <!-- Top -->
+                <nui-button><button type="button">Top</button></nui-button>
+                <nui-tooltip position="top">Appears on top</nui-tooltip>
+
+                <!-- Bottom -->
+                <nui-button><button type="button">Bottom</button></nui-button>
+                <nui-tooltip position="bottom">Appears on bottom</nui-tooltip>
+
+                <!-- Left -->
+                <nui-button><button type="button">Left</button></nui-button>
+                <nui-tooltip position="left">Appears on left</nui-tooltip>
+
+                <!-- Right -->
+                <nui-button><button type="button">Right</button></nui-button>
+                <nui-tooltip position="right">Appears on right</nui-tooltip>
+            </script>
+        </nui-code>
     </section>
+
+<details class="collapsible-section collapsible-section--spaced">
+        <summary><strong>LLM Guide - nui-tooltip</strong></summary>
+        <nui-markdown src="../documentation/components/tooltip.md"></nui-markdown>
+</details>
 
 <script type="nui/page">
 function init(element, params, nui) {

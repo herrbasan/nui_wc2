@@ -10,11 +10,6 @@
   "imports": null
 }
 </script>
-<details class="collapsible-section collapsible-section--spaced">
-        <summary><strong>LLM Guide - nui-card</strong></summary>
-        <nui-markdown src="../documentation/components/card.md"></nui-markdown>
-</details>
-
 <div class="page-component-card">
 
 <header>
@@ -26,24 +21,6 @@
 		<h2>Declarative Usage (Default)</h2>
 		<p>The standard card stacks its content vertically. It automatically provides consistent borders, rounded
 			corners, and subtle shadows using our built-in CSS variables.</p>
-
-		<nui-code>
-			<script type="example" data-lang="html">
-<nui-card class="demo-card-standard">
-    <h3 class="demo-mt0">Card Title</h3>
-    <p class="demo-mb0">This is a basic vertical card. 
-        It holds standard content simply and beautifully.</p>
-    <nui-button-container class="demo-actions">
-        <nui-button variant="primary">
-            <button type="button">Primary Action</button>
-        </nui-button>
-        <nui-button>
-            <button type="button">Cancel</button>
-        </nui-button>
-    </nui-button-container>
-</nui-card>
-			</script>
-		</nui-code>
 
 		<h3>Try It</h3>
 		<div>
@@ -82,23 +59,30 @@
 				</nui-card>
 			</nui-layout>
 		</div>
+
+		<nui-code>
+			<script type="example" data-lang="html">
+<nui-card class="demo-card-standard">
+    <h3 class="demo-mt0">Card Title</h3>
+    <p class="demo-mb0">This is a basic vertical card. 
+        It holds standard content simply and beautifully.</p>
+    <nui-button-container class="demo-actions">
+        <nui-button variant="primary">
+            <button type="button">Primary Action</button>
+        </nui-button>
+        <nui-button>
+            <button type="button">Cancel</button>
+        </nui-button>
+    </nui-button-container>
+</nui-card>
+			</script>
+		</nui-code>
 	</section>
 
 	<section>
 		<h2>Horizontal Layout</h2>
 		<p>Use <code>layout="horizontal"</code> to position media and content side-by-side. Useful for lists or wide
 			displays.</p>
-
-		<nui-code>
-			<script type="example" data-lang="html">
-<nui-card layout="horizontal" class="demo-card-horizontal-code">
-<img src="images/Random_Picts/800p/002.webp" alt="Thumbnail" />
-
-<h3 class="demo-mt0">Horizontal Card</h3>
-<p class="demo-mb0">Content flows horizontally across the card.</p>
-</nui-card>
-</script>
-		</nui-code>
 
 		<h3>Try It</h3>
 		<div>
@@ -120,24 +104,23 @@
 				</nui-card>
 			</nui-layout>
 		</div>
+
+		<nui-code>
+			<script type="example" data-lang="html">
+<nui-card layout="horizontal" class="demo-card-horizontal-code">
+<img src="images/Random_Picts/800p/002.webp" alt="Thumbnail" />
+
+<h3 class="demo-mt0">Horizontal Card</h3>
+<p class="demo-mb0">Content flows horizontally across the card.</p>
+</nui-card>
+</script>
+		</nui-code>
 	</section>
 
 	<section>
 		<h2>Image-only with Text Overlay</h2>
 		<p>By specifying <code>layout="image-only"</code>, the card becomes an image container with layered text on top.
 		</p>
-
-		<nui-code>
-			<script type="example" data-lang="html">
-<nui-card layout="image-only" class="demo-card-image-only">
-<img src="images/Random_Picts/800p/004.webp" alt="Background" />
-<div class="demo-overlay">
-<h3 class="demo-overlay-title">Overlay Title</h3>
-<p class="demo-overlay-desc">Description sitting on top of the image.</p>
-</div>
-</nui-card>
-</script>
-		</nui-code>
 
 		<h3>Try It</h3>
 		<div>
@@ -167,6 +150,18 @@
 				</nui-card>
 			</nui-layout>
 		</div>
+
+		<nui-code>
+			<script type="example" data-lang="html">
+<nui-card layout="image-only" class="demo-card-image-only">
+<img src="images/Random_Picts/800p/004.webp" alt="Background" />
+<div class="demo-overlay">
+<h3 class="demo-overlay-title">Overlay Title</h3>
+<p class="demo-overlay-desc">Description sitting on top of the image.</p>
+</div>
+</nui-card>
+</script>
+		</nui-code>
 	</section>
 
 	<section>
@@ -175,22 +170,6 @@
 			<code>&lt;a class="nui-card-link"&gt;</code>, the link's hit area will seamlessly cover the whole card,
 			meaning you avoid wrapping complex nested elements in a large anchor tag. If no link is present, you can add 
 			a <code>data-action</code> attribute directly to the card. Keyboard navigation (pressing Enter or Space) is handled automatically.</p>
-
-		<nui-code>
-			<script type="example" data-lang="html">
-<!-- Banner Trigger Card -->
-<nui-card interactive data-action="banner-show@#card-demo-banner" class="demo-card-standard">
-    <h3 class="demo-mt0">Show Banner</h3>
-    <p class="demo-mb0">Clicking triggers a banner.</p>
-</nui-card>
-
-<!-- Dialog Trigger Card -->
-<nui-card interactive data-action="dialog-open@#card-demo-dialog" class="demo-card-standard">
-    <h3 class="demo-mt0">Open Dialog</h3>
-    <p class="demo-mb0">Clicking triggers a dialog modal.</p>
-</nui-card>
-			</script>
-		</nui-code>
 
 		<h3>Try It</h3>
 		<div>
@@ -235,6 +214,22 @@
 				</nui-button>
 			</div>
 		</nui-banner>
+
+		<nui-code>
+			<script type="example" data-lang="html">
+<!-- Banner Trigger Card -->
+<nui-card interactive data-action="banner-show@#card-demo-banner" class="demo-card-standard">
+    <h3 class="demo-mt0">Show Banner</h3>
+    <p class="demo-mb0">Clicking triggers a banner.</p>
+</nui-card>
+
+<!-- Dialog Trigger Card -->
+<nui-card interactive data-action="dialog-open@#card-demo-dialog" class="demo-card-standard">
+    <h3 class="demo-mt0">Open Dialog</h3>
+    <p class="demo-mb0">Clicking triggers a dialog modal.</p>
+</nui-card>
+			</script>
+		</nui-code>
 	</section>
 
 	<section>
@@ -242,29 +237,6 @@
 		<p>Add <code>layout="flip"</code> and configure internal <code>.nui-card-front</code> and
 			<code>.nui-card-back</code> elements. It flips automatically on pressing Space/Enter or via a
 			<code>data-action="card-flip"</code> button.</p>
-
-		<nui-code>
-			<script type="example" data-lang="html">
-<nui-card layout="flip" class="demo-card-flip">
-<div class="nui-card-inner">
-<!-- Front -->
-<div class="nui-card-front demo-flip-face">
-<h3>Front Side</h3>
-<nui-button data-action="card-flip">
-<button type="button">Flip Over</button>
-</nui-button>
-</div>
-<!-- Back -->
-<div class="nui-card-back demo-flip-face demo-flip-back">
-<h3>Back Side</h3>
-<p>Extra details can hide back here.</p>
-<nui-button data-action="card-flip">
-<button type="button">Flip Back</button>
-</nui-button>
-</div>
-</nui-card>
-</script>
-		</nui-code>
 
 		<h3>Try It</h3>
 		<div>
@@ -325,9 +297,37 @@
 				</nui-card>
 			</nui-layout>
 		</div>
+
+		<nui-code>
+			<script type="example" data-lang="html">
+<nui-card layout="flip" class="demo-card-flip">
+<div class="nui-card-inner">
+<!-- Front -->
+<div class="nui-card-front demo-flip-face">
+<h3>Front Side</h3>
+<nui-button data-action="card-flip">
+<button type="button">Flip Over</button>
+</nui-button>
+</div>
+<!-- Back -->
+<div class="nui-card-back demo-flip-face demo-flip-back">
+<h3>Back Side</h3>
+<p>Extra details can hide back here.</p>
+<nui-button data-action="card-flip">
+<button type="button">Flip Back</button>
+</nui-button>
+</div>
+</nui-card>
+</script>
+		</nui-code>
 	</section>
 
 </div>
+
+<details class="collapsible-section collapsible-section--spaced">
+        <summary><strong>LLM Guide - nui-card</strong></summary>
+        <nui-markdown src="../documentation/components/card.md"></nui-markdown>
+</details>
 
 <script type="nui/page">
 function init(element, params, nui) {

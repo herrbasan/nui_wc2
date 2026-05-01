@@ -13,11 +13,6 @@
 }
 </script>
 
-<details class="collapsible-section collapsible-section--spaced">
-	<summary><strong>LLM Guide - nui-dropzone</strong></summary>
-	<nui-markdown src="../documentation/components/dropzone.md"></nui-markdown>
-</details>
-
 	<header>
 		<h1>Dropzone</h1>
 		<p class="lead">A container-scoped overlay that appears when files are dragged over it, with auto-laid-out named drop zones.</p>
@@ -26,6 +21,14 @@
 	<section>
 		<h2>Declarative — Two Zones</h2>
 		<p>Two zones auto-layout as two columns.</p>
+
+		<div class="demo-area dropzone-demo">
+			<nui-dropzone id="demo-2">
+				<div data-drop="images">Images</div>
+				<div data-drop="documents">Documents</div>
+			</nui-dropzone>
+			<div data-demo-output class="dropzone-output">Drag files here to test...</div>
+		</div>
 
 		<nui-code>
 			<script type="example" data-lang="html">
@@ -37,19 +40,20 @@
 </div>
 			</script>
 		</nui-code>
-
-		<div class="demo-area dropzone-demo">
-			<nui-dropzone id="demo-2">
-				<div data-drop="images">Images</div>
-				<div data-drop="documents">Documents</div>
-			</nui-dropzone>
-			<div data-demo-output class="dropzone-output">Drag files here to test...</div>
-		</div>
 	</section>
 
 	<section>
 		<h2>Declarative — Three Zones</h2>
 		<p>Three zones auto-layout as 2 columns (2 top + 1 bottom).</p>
+
+		<div class="demo-area dropzone-demo-tall">
+			<nui-dropzone id="demo-3">
+				<div data-drop="images">Images</div>
+				<div data-drop="documents">Documents</div>
+				<div data-drop="other">Other Files</div>
+			</nui-dropzone>
+			<div data-demo-output-3 class="dropzone-output">Drag files here to test...</div>
+		</div>
 
 		<nui-code>
 			<script type="example" data-lang="html">
@@ -62,20 +66,15 @@
 </div>
 			</script>
 		</nui-code>
-
-		<div class="demo-area dropzone-demo-tall">
-			<nui-dropzone id="demo-3">
-				<div data-drop="images">Images</div>
-				<div data-drop="documents">Documents</div>
-				<div data-drop="other">Other Files</div>
-			</nui-dropzone>
-			<div data-demo-output-3 class="dropzone-output">Drag files here to test...</div>
-		</div>
 	</section>
 
 	<section>
 		<h2>Programmatic — Four Zones (2×2)</h2>
 		<p>Create a dropzone dynamically using <code>nui.components.dropzone.create()</code>. Pass an array of zone definitions, a drop callback, and a target container.</p>
+
+		<div class="demo-area dropzone-demo-tall" id="programmatic-target">
+			<div data-demo-output-4 class="dropzone-output">Drag files here to test...</div>
+		</div>
 
 		<nui-code>
 			<script type="example" data-lang="javascript">
@@ -94,10 +93,6 @@ nui.components.dropzone.create(
 );
 			</script>
 		</nui-code>
-
-		<div class="demo-area dropzone-demo-tall" id="programmatic-target">
-			<div data-demo-output-4 class="dropzone-output">Drag files here to test...</div>
-		</div>
 	</section>
 
 	<section>
@@ -198,6 +193,11 @@ dropzone.addEventListener('nui-dropzone-close', () => {
 		</table>
 	</section>
 </div>
+
+<details class="collapsible-section collapsible-section--spaced">
+	<summary><strong>LLM Guide - nui-dropzone</strong></summary>
+	<nui-markdown src="../documentation/components/dropzone.md"></nui-markdown>
+</details>
 
 <script type="nui/page">
 function init(element, params, nui) {

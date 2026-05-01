@@ -13,11 +13,6 @@
 }
 </script>
 
-<details class="collapsible-section collapsible-section--spaced">
-	<summary><strong>LLM Guide - nui-dialog</strong></summary>
-	<nui-markdown src="../documentation/components/dialog.md"></nui-markdown>
-</details>
-
 <header>
 	<h1>Dialog Component</h1>
 	<p>Modal and non-modal dialogs for user interactions requiring a response</p>
@@ -40,6 +35,15 @@
 <section>
 	<h2>System Dialogs</h2>
 	<p>Use the built-in factory methods for common dialog patterns. These return Promises and handle all the UI automatically.</p>
+	<h3>Try It</h3>
+	<nui-button-container gap="1rem">
+		<nui-button><button type="button" data-action="show-alert">Alert</button></nui-button>
+		<nui-button><button type="button" data-action="show-confirm">Confirm</button></nui-button>
+		<nui-button><button type="button" data-action="show-prompt">Prompt</button></nui-button>
+	</nui-button-container>
+	<div class="demo-result">
+		<pre id="dialog-result">Result: -</pre>
+	</div>
 	<nui-code>
 		<script type="example" data-lang="javascript">
 // Alert - simple message with OK button
@@ -61,32 +65,11 @@ if (result) {
 }
 		</script>
 	</nui-code>
-	<h3>Try It</h3>
-	<nui-button-container gap="1rem">
-		<nui-button><button type="button" data-action="show-alert">Alert</button></nui-button>
-		<nui-button><button type="button" data-action="show-confirm">Confirm</button></nui-button>
-		<nui-button><button type="button" data-action="show-prompt">Prompt</button></nui-button>
-	</nui-button-container>
-	<div class="demo-result">
-		<pre id="dialog-result">Result: -</pre>
-	</div>
 </section>
 
 <section>
 	<h2>Declarative Usage (Default)</h2>
 	<p>For simple cases, you can use <code>data-action</code> to trigger dialogs without writing JavaScript handlers:</p>
-	<nui-code>
-		<script type="example" data-lang="html">
-<!-- Open a dialog -->
-<button data-action="dialog-open@#my-dialog">Open Dialog</button>
-
-<!-- Close a dialog -->
-<button data-action="dialog-close@#my-dialog">Close Dialog</button>
-
-<!-- Close with return value -->
-<button data-action="dialog-close:confirmed@#my-dialog">Confirm</button>
-		</script>
-	</nui-code>
 	<h3>Try It</h3>
 	<nui-button-container gap="1rem">
 		<nui-button><button type="button" data-action="dialog-open@#test-declarative-dialog">Open Declarative Dialog</button></nui-button>
@@ -103,12 +86,36 @@ if (result) {
 			</div>
 		</dialog>
 	</nui-dialog>
+
+	<nui-code>
+		<script type="example" data-lang="html">
+<!-- Open a dialog -->
+<button data-action="dialog-open@#my-dialog">Open Dialog</button>
+
+<!-- Close a dialog -->
+<button data-action="dialog-close@#my-dialog">Close Dialog</button>
+
+<!-- Close with return value -->
+<button data-action="dialog-close:confirmed@#my-dialog">Confirm</button>
+		</script>
+	</nui-code>
 </section>
 
 <section>
 	<h2>Programmatic Page Mode</h2>
 	<p>For complex full-page dialogs constructed via JavaScript, use the <code>page()</code> system factory. This abstracts away the boilerplate of standard modals, returning an interaction object that gives you a reference to the <code>main</code> element for mounting content dynamically.</p>
 	<p>Listen for the <code>nui-dialog-close</code> event to know when a button was clicked and get its configured <code>value</code> via <code>e.detail.returnValue</code>.</p>
+	<h3>Try It</h3>
+	<nui-button-container gap="1rem">
+		<nui-button><button type="button" data-action="show-programmatic-page">Open Dynamic Page Dialog</button></nui-button>
+	</nui-button-container>
+	<div class="demo-result" id="page-dialog-result" hidden>
+		<strong>Action:</strong> <span id="page-dialog-action"></span>
+		<details>
+			<summary>Collected Values</summary>
+			<pre id="page-dialog-values"></pre>
+		</details>
+	</div>
 	<nui-code>
 		<script type="example" data-lang="javascript">
 // Create the page and retrieve a reference to the dialog and its main content container
@@ -225,22 +232,17 @@ dialog.addEventListener('nui-dialog-close', (e) => {
 });
 		</script>
 	</nui-code>
-	<h3>Try It</h3>
-	<nui-button-container gap="1rem">
-		<nui-button><button type="button" data-action="show-programmatic-page">Open Dynamic Page Dialog</button></nui-button>
-	</nui-button-container>
-	<div class="demo-result" id="page-dialog-result" hidden>
-		<strong>Action:</strong> <span id="page-dialog-action"></span>
-		<details>
-			<summary>Collected Values</summary>
-			<pre id="page-dialog-values"></pre>
-		</details>
-	</div>
 </section>
 
 <section>
 	<h2>System Dialog Options</h2>
 	<p>All system dialogs accept an options object as the last parameter:</p>
+	<h3>Try It</h3>
+	<nui-button-container gap="1rem">
+		<nui-button><button type="button" data-action="show-alert-top">Alert (Top)</button></nui-button>
+		<nui-button><button type="button" data-action="show-alert-bottom">Alert (Bottom)</button></nui-button>
+	</nui-button-container>
+
 	<nui-code>
 		<script type="example" data-lang="javascript">
 // Alert with placement
@@ -260,16 +262,17 @@ await nui.components.dialog.prompt('Login', fields, {
 });
 		</script>
 	</nui-code>
-	<h3>Try It</h3>
-	<nui-button-container gap="1rem">
-		<nui-button><button type="button" data-action="show-alert-top">Alert (Top)</button></nui-button>
-		<nui-button><button type="button" data-action="show-alert-bottom">Alert (Bottom)</button></nui-button>
-	</nui-button-container>
 </section>
 
 <section>
 	<h2>Blocking Dialogs</h2>
 	<p>Add the <code>blocking</code> attribute or option to create dialogs that can only be closed via buttons. Escape key and backdrop clicks are disabled.</p>
+	<h3>Try It</h3>
+	<nui-button-container gap="1rem">
+		<nui-button><button type="button" data-action="show-blocking-alert">Blocking Alert</button></nui-button>
+		<nui-button><button type="button" data-action="show-blocking-confirm">Blocking Confirm</button></nui-button>
+	</nui-button-container>
+
 	<nui-code>
 		<script type="example" data-lang="javascript">
 // Blocking system dialog - must click OK
@@ -291,16 +294,30 @@ const confirmed = await nui.components.dialog.confirm('Terms', 'Accept the terms
 </nui-dialog>
 		</script>
 	</nui-code>
-	<h3>Try It</h3>
-	<nui-button-container gap="1rem">
-		<nui-button><button type="button" data-action="show-blocking-alert">Blocking Alert</button></nui-button>
-		<nui-button><button type="button" data-action="show-blocking-confirm">Blocking Confirm</button></nui-button>
-	</nui-button-container>
 </section>
 
 <section>
 	<h2>Inline Dialogs</h2>
 	<p>Define dialogs in HTML for complex layouts, then control them with standard JavaScript.</p>
+	<h3>Try It</h3>
+	<nui-button-container gap="1rem" align="start">
+		<nui-button><button type="button" data-action="dialog-open@#custom-confirm">Open Custom Confirm</button></nui-button>
+		<span id="custom-confirm-state">State: closed | Result: -</span>
+	</nui-button-container>
+
+	<nui-dialog id="custom-confirm">
+		<dialog>
+			<div class="nui-dialog-alert">
+				<div class="nui-headline">Confirm Action</div>
+				<div class="nui-copy">Do you want to proceed with this action?</div>
+				<nui-button-container align="end">
+					<nui-button variant="outline"><button type="button" data-action="dialog-close:cancelled@#custom-confirm">Cancel</button></nui-button>
+					<nui-button variant="primary"><button type="button" data-action="dialog-close:confirmed@#custom-confirm">OK</button></nui-button>
+				</nui-button-container>
+			</div>
+		</dialog>
+	</nui-dialog>
+
 	<nui-code>
 		<script type="example" data-lang="html">
 <!-- Trigger -->
@@ -336,24 +353,6 @@ document.getElementById('ok-btn').onclick = () => {
 };
 		</script>
 	</nui-code>
-	<h3>Try It</h3>
-	<nui-button-container gap="1rem" align="start">
-		<nui-button><button type="button" data-action="dialog-open@#custom-confirm">Open Custom Confirm</button></nui-button>
-		<span id="custom-confirm-state">State: closed | Result: -</span>
-	</nui-button-container>
-
-	<nui-dialog id="custom-confirm">
-		<dialog>
-			<div class="nui-dialog-alert">
-				<div class="nui-headline">Confirm Action</div>
-				<div class="nui-copy">Do you want to proceed with this action?</div>
-				<nui-button-container align="end">
-					<nui-button variant="outline"><button type="button" data-action="dialog-close:cancelled@#custom-confirm">Cancel</button></nui-button>
-					<nui-button variant="primary"><button type="button" data-action="dialog-close:confirmed@#custom-confirm">OK</button></nui-button>
-				</nui-button-container>
-			</div>
-		</dialog>
-	</nui-dialog>
 
 		<h3>Available Events</h3>
 	<p>Dialogs dispatch custom events when they open or close. Listen for these to react to state changes:</p>
@@ -424,13 +423,6 @@ if (dialog.isOpen()) { ... }
 				</tr>
 			</tbody>
 		</table>
-	<nui-code>
-		<script type="example" data-lang="html">
-<nui-dialog id="top-dialog" placement="top">...</nui-dialog>
-<nui-dialog id="center-dialog" placement="center">...</nui-dialog>
-<nui-dialog id="bottom-dialog" placement="bottom">...</nui-dialog>
-		</script>
-	</nui-code>
 	<h3>Try It</h3>
 	<nui-button-container gap="1rem">
 		<nui-button><button type="button" data-action="dialog-open@#dialog-top">Top</button></nui-button>
@@ -479,6 +471,14 @@ if (dialog.isOpen()) { ... }
 			</div>
 		</dialog>
 	</nui-dialog>
+
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-dialog id="top-dialog" placement="top">...</nui-dialog>
+<nui-dialog id="center-dialog" placement="center">...</nui-dialog>
+<nui-dialog id="bottom-dialog" placement="bottom">...</nui-dialog>
+		</script>
+	</nui-code>
 </section>
 
 <section>
@@ -489,15 +489,6 @@ if (dialog.isOpen()) { ... }
 		<strong>Virtual Scroller Boundaries:</strong> If embedding a full-height virtual scroller like <code>&lt;nui-list&gt;</code> that physically dictates its own inner layout measurements based on viewport calculations, add the additional <code>content-scroll="false"</code> parameter to the <code>&lt;nui-dialog&gt;</code>. This prevents the dialog's default content wrapper from pushing the list down infinitely causing it to collapse.
 	</div>
 
-	<nui-code>
-		<script type="example" data-lang="html">
-<nui-dialog id="page-dialog" mode="page" title="Modal Page Title" data-buttons='[{"label": "Close", "type": "outline", "value": "close"}, {"label": "Save Changes", "type": "primary", "value": "save"}]'>
-	<p>Your scrollable content goes here.</p>
-	<!-- Very large content to show scrolling -->
-	<div style="height: 150vh; background: repeating-linear-gradient(45deg, transparent, transparent 10px, var(--color-shade2) 10px, var(--color-shade2) 20px);"></div>
-</nui-dialog>
-		</script>
-	</nui-code>
 	<h3>Try It</h3>
 	<nui-button-container gap="1rem">
 		<nui-button><button type="button" data-action="dialog-open@#page-dialog">Open Page Mode Dialog</button></nui-button>
@@ -525,6 +516,16 @@ if (dialog.isOpen()) { ... }
 		<p>More content down here.</p>
 		<div style="height: 400px; margin: 2rem 0; background: var(--color-shade2); border-radius: var(--border-radius2); display: flex; align-items: center; justify-content: center;">End of settings.</div>
 	</nui-dialog>
+
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-dialog id="page-dialog" mode="page" title="Modal Page Title" data-buttons='[{"label": "Close", "type": "outline", "value": "close"}, {"label": "Save Changes", "type": "primary", "value": "save"}]'>
+	<p>Your scrollable content goes here.</p>
+	<!-- Very large content to show scrolling -->
+	<div style="height: 150vh; background: repeating-linear-gradient(45deg, transparent, transparent 10px, var(--color-shade2) 10px, var(--color-shade2) 20px);"></div>
+</nui-dialog>
+		</script>
+	</nui-code>
 </section>
 
 <section>
@@ -688,6 +689,11 @@ dialog.close('return-value'); // Close with a return value
 			</tbody>
 		</table>
 	</section>
+
+<details class="collapsible-section collapsible-section--spaced">
+	<summary><strong>LLM Guide - nui-dialog</strong></summary>
+	<nui-markdown src="../documentation/components/dialog.md"></nui-markdown>
+</details>
 
 <script type="nui/page">
 function init(element, params, nui) {

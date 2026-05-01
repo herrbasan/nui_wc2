@@ -10,11 +10,6 @@
   "imports": null
 }
 </script>
-<details class="collapsible-section collapsible-section--spaced">
-        <summary><strong>LLM Guide - nui-slider</strong></summary>
-        <nui-markdown src="../documentation/components/slider.md"></nui-markdown>
-</details>
-
 <div class="page-slider">
 
 <header>
@@ -31,14 +26,6 @@
 	<h2>Basic Usage</h2>
 	<p>Wrap a native range input. The component automatically creates the visual track, fill, and thumb.</p>
 	
-	<nui-code>
-		<script type="example" data-lang="html">
-<nui-slider>
-	<input type="range" min="0" max="100" value="50">
-</nui-slider>
-		</script>
-	</nui-code>
-
 	<h3>Try It</h3>
 	<div class="demo-container">
 		<nui-slider id="demo-slider-1">
@@ -48,20 +35,20 @@
 			Value: <span id="slider-value-1">50</span>
 		</div>
 	</div>
+
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-slider>
+	<input type="range" min="0" max="100" value="50">
+</nui-slider>
+		</script>
+	</nui-code>
 </section>
 
 <section>
 	<h2>Custom Range</h2>
 	<p>Set <code>min</code>, <code>max</code>, and <code>step</code> on the native input.</p>
 	
-	<nui-code>
-		<script type="example" data-lang="html">
-<nui-slider>
-	<input type="range" min="0" max="10" step="1" value="5">
-</nui-slider>
-		</script>
-	</nui-code>
-
 	<h3>Try It</h3>
 	<div class="demo-container">
 		<nui-slider id="demo-slider-2">
@@ -71,12 +58,30 @@
 			Value: <span id="slider-value-2">5</span> / 10
 		</div>
 	</div>
+
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-slider>
+	<input type="range" min="0" max="10" step="1" value="5">
+</nui-slider>
+		</script>
+	</nui-code>
 </section>
 
 <section>
 	<h2>Available Events</h2>
 	<p>Listen to native <code>input</code> (continuous) and <code>change</code> (on release) events.</p>
 	
+	<h3>Try It</h3>
+	<div class="demo-container">
+		<nui-slider id="demo-slider-3">
+			<input type="range" min="0" max="100" value="25">
+		</nui-slider>
+		<div class="drag-value-display">
+			<span id="slider-events">Drag the slider...</span>
+		</div>
+	</div>
+
 	<nui-code>
 		<script type="example" data-lang="js">
 const slider = document.querySelector('nui-slider');
@@ -91,16 +96,6 @@ input.addEventListener('change', (e) => {
 });
 		</script>
 	</nui-code>
-
-	<h3>Try It</h3>
-	<div class="demo-container">
-		<nui-slider id="demo-slider-3">
-			<input type="range" min="0" max="100" value="25">
-		</nui-slider>
-		<div class="drag-value-display">
-			<span id="slider-events">Drag the slider...</span>
-		</div>
-	</div>
 </section>
 
 <section>
@@ -168,6 +163,11 @@ const cleanup = nui.util.enableDrag(element, (data) => {
 		</tbody>
 	</table>
 </section>
+
+<details class="collapsible-section collapsible-section--spaced">
+        <summary><strong>LLM Guide - nui-slider</strong></summary>
+        <nui-markdown src="../documentation/components/slider.md"></nui-markdown>
+</details>
 
 <script type="nui/page">
 	function init(element, params) {
