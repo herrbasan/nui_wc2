@@ -1,5 +1,14 @@
 # nui-rich-text
 
+## Setup
+
+This is an addon module. Load both the JS and CSS before use:
+
+```html
+<link rel="stylesheet" href="NUI/css/modules/nui-rich-text.css">
+<script type="module" src="NUI/lib/modules/nui-rich-text.js"></script>
+```
+
 ## Design Philosophy
 
 This component provides a lightweight WYSIWYG editing experience using native browser capabilities (`contenteditable` and `execCommand`). Rather than bundling a heavy editor like ProseMirror or CKEditor, it offers essential formatting tools with minimal overhead, making it suitable for simple content editing tasks.

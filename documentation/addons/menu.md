@@ -1,5 +1,14 @@
 # nui-menu
 
+## Setup
+
+This is an addon module. Load both the JS and CSS before use:
+
+```html
+<link rel="stylesheet" href="NUI/css/modules/nui-menu.css">
+<script type="module" src="NUI/lib/modules/nui-menu.js"></script>
+```
+
 ## Design Philosophy
 
 This component implements the W3C ARIA menubar pattern, providing application-style menu navigation with dropdowns and nested submenus. It prioritizes keyboard accessibility and predictable behavior over visual complexity, following VS Code's interaction model for familiarity.

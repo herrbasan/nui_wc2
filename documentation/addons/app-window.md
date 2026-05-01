@@ -1,5 +1,13 @@
 ﻿# appWindow
 
+## Setup
+
+This is an addon module. Load the JS before use (no CSS required):
+
+```html
+<script type="module" src="NUI/lib/modules/nui-app-window.js"></script>
+```
+
 ## Design Philosophy
 
 This module provides window chrome (title bar, content area, optional status bar) for Electron frameless windows. It is a programmatic utility, not a custom element, designed specifically for desktop application contexts where the browser chrome is hidden.

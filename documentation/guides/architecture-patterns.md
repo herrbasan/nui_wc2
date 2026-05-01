@@ -80,7 +80,7 @@ nui.registerFeature('editor', (element, params) => {
 **Philosophy:** Pages are HTML files. The router fetches and displays them.
 
 **How it works:**
-- Call `nui.enableContentLoading()` with basePath
+- Call `nui.setupRouter()` with basePath
 - Create HTML fragments in the pages folder
 - Navigation fetches fragments and injects them
 - Each fragment can have inline `<script type="nui/page">` for initialization

@@ -534,30 +534,27 @@
 			"@type": "Reference",
 			"name": "accessibility",
 			"group": "documentation",
-			"description": "DOM-first accessibility philosophy: semantic HTML foundation, ARIA auto-enhancement, roving tabindex, focus management.",
-			"docPath": null,
-			"page": "documentation/accessibility",
-			"llmGuide": "# LLM Guide: NUI Accessibility Architecture\r\n\r\n## The Philosophy: DOM-First A11y\r\n\r\nNUI's accessibility approach is built on a simple truth: **the browser knows more about accessibility than any JavaScript framework.** Instead of complex abstraction layers, NUI uses semantic HTML as the foundation and enhances it where necessary.\r\n\r\nThis means:\r\n- Native `<button>` elements are the interactive targets (not divs)\r\n- Native `<dialog>` provides focus trapping and Escape handling\r\n- Native `<input>` with proper labels for form controls\r\n- ARIA attributes are added automatically during component upgrade\r\n\r\nThe result: accessibility works even before JavaScript loads, and screen readers see standard, predictable markup.\r\n\r\n## Intelligent Enhancement\r\n\r\nNUI doesn't just preserve native accessibility - it enhances it intelligently:\r\n\r\n**Icon-Only Buttons:**\r\nWhen NUI sees `<button><nui-icon name=\"settings\"></nui-icon></button>`, it:\r\n1. Generates an appropriate `aria-label` based on the icon name\r\n2. Hides the icon from screen readers (`aria-hidden=\"true\"`)\r\n3. Logs a warning so developers know it happened\r\n\r\n**Composite Components:**\r\nComponents like tabs and menus implement roving tabindex automatically:\r\n- Only the active item is in the tab sequence\r\n- Arrow keys navigate between items\r\n- Screen readers announce state changes\r\n\r\n**Focus Management:**\r\nDialogs and overlays handle focus automatically:\r\n- Focus moves into the modal when opened\r\n- Focus is trapped within the modal while open\r\n- Focus returns to the trigger when closed\r\n\r\n## The A11y Utility\r\n\r\nNUI provides `nui.a11y.announce()` for dynamic content:\r\n\r\n```javascript\r\n// Screen reader will announce this\r\nnui.a11y.announce('File uploaded successfully');\r\n```\r\n\r\nThis uses a visually hidden live region that screen readers monitor. It's the standard pattern for announcing changes that aren't focus-driven.\r\n\r\n## Component-Specific Patterns\r\n\r\n**nui-tabs:**\r\nFollows the ARIA Tab Pattern exactly:\r\n- `role=\"tablist\"` on the navigation container\r\n- `role=\"tab\"` on each button with `aria-selected`\r\n- `role=\"tabpanel\"` on content sections with `aria-labelledby`\r\n\r\n**nui-select:**\r\nAdapts to the platform:\r\n- Desktop: Combobox pattern with typeahead search\r\n- Mobile: Native bottom sheet for touch optimization\r\n\r\n**nui-sortable:**\r\nImplements keyboard reordering:\r\n- Space/Enter to \"grab\" an item\r\n- Arrow keys to move it\r\n- Space/Enter to \"drop\" it\r\n- Live region announcements for each move\r\n\r\n**nui-table:**\r\nResponsive transformation:\r\n- Desktop: Standard table with headers\r\n- Mobile: Card layout with `data-label` attributes preserving column context for screen readers\r\n\r\n## Reduced Motion Support\r\n\r\nNUI respects `prefers-reduced-motion` automatically:\r\n- CSS transitions respect the media query\r\n- JavaScript animations check the preference\r\n- No action required from developers\r\n\r\n## Why This Matters for LLMs\r\n\r\nWhen generating NUI code, understanding this architecture means:\r\n- Don't add redundant ARIA attributes (components handle it)\r\n- Do use semantic HTML (the foundation of the system)\r\n- Don't use divs for buttons (breaks the enhancement model)\r\n- Do trust the component's built-in behaviors\r\n\r\nThe accessibility is batteries-included, not bolted-on."
+			"description": "DOM-first accessibility: semantic HTML foundation, ARIA auto-enhancement, roving tabindex, focus management, screen reader support.",
+			"docPath": "documentation/guides/accessibility.md",
+			"page": "documentation/accessibility"
 		},
 		{
 			"@context": "nui",
 			"@type": "Reference",
 			"name": "api-structure",
 			"group": "documentation",
-			"description": "Three-tier API namespace design: root (lifecycle), components (factory APIs), utilities (helpers).",
-			"docPath": null,
-			"page": "documentation/api-structure",
-			"llmGuide": "# LLM Guide: NUI API Organization\r\n\r\n## The Three-Tier Architecture\r\n\r\nNUI exports a single `nui` object organized into three conceptual layers:\r\n\r\n```\r\nnui.*                 → Root: Core library, lifecycle, configuration\r\nnui.components.*      → Components: Factory APIs for data-driven UI\r\nnui.util.*            → Utilities: Helper functions\r\n```\r\n\r\nThis structure provides clear extension points and makes the API discoverable.\r\n\r\n## Root Level: Core Library\r\n\r\n**Purpose:** Library initialization, configuration, and fundamental operations.\r\n\r\n**Key members:**\r\n- `nui.init()` - Initialize the library (auto-called on load)\r\n- `nui.configure()` - Update configuration\r\n- `nui.setupRouter()` - Setup SPA router (replaces enableContentLoading)\r\n- `nui.registerFeature()` - Register JS-only page types\r\n- `nui.registerType()` - Register content handlers\r\n\r\n**Design principle:** Root functions affect the entire application. They're called once at setup, not repeatedly during rendering.\r\n\r\n## Components Namespace: Data-Driven UI\r\n\r\n**Purpose:** Factory APIs for components that are created dynamically rather than declared in HTML.\r\n\r\n**Two component patterns:**\r\n\r\n**Ephemeral components** (created, shown, destroyed):\r\n```javascript\r\n// Dialog appears, user interacts, it closes\r\nawait nui.components.dialog.confirm('Delete?', 'Cannot undo');\r\n```\r\n\r\n**Persistent components** (created, appended, remain):\r\n```javascript\r\n// Create once, use indefinitely\r\nconst nav = nui.components.linkList.create(data);\r\ndocument.body.appendChild(nav);\r\n```\r\n\r\n**Built-in components:**\r\n- `dialog` - Modal system dialogs (alert, confirm, prompt)\r\n- `banner` - Toast notifications\r\n- `linkList` - Navigation tree from data\r\n\r\n**Addon pattern:**\r\nComponents register themselves under `nui.components.*`:\r\n```javascript\r\n// In nui-gallery.js\r\nnui.components.gallery = {\r\n\tcreate(images, options) { ... }\r\n};\r\n```\r\n\r\nThis enables a standard import-and-use pattern:\r\n```javascript\r\nimport './NUI/lib/modules/nui-gallery.js';\r\nconst gallery = nui.components.gallery.create(images);\r\n```\r\n\r\n## Utilities Namespace: Helper Functions\r\n\r\n**Purpose:** Stateless operations that don't render UI.\r\n\r\n**Categories:**\r\n- **DOM:** `createElement`, `createSvgElement`\r\n- **Data:** `sortByKey`, `filter`\r\n- **Storage:** `storage` (cookies/localStorage)\r\n- **Interaction:** `enableDrag`\r\n- **Environment:** `detectEnv`\r\n\r\n**Usage pattern:**\r\n```javascript\r\n// Destructure for convenience\r\nconst { createElement, storage } = nui.util;\r\n\r\n// Use directly\r\nconst el = createElement('div', { class: 'card' });\r\nstorage.set({ name: 'pref', value: 'dark' });\r\n```\r\n\r\n## Why This Organization Matters\r\n\r\n**Discoverability:**\r\n```javascript\r\n// See what's available\r\nconsole.log(Object.keys(nui.components));\r\n// ['dialog', 'banner', 'linkList', 'icon']\r\n```\r\n\r\n**Extensibility:**\r\nAddons extend the namespaces without conflicting:\r\n- New component? Add to `nui.components.*`\r\n- New utility? Add to `nui.util.*`\r\n- New root function? Add to `nui.*`\r\n\r\n**Tree-shaking:**\r\nThe namespace structure helps bundlers understand the API surface for dead code elimination.\r\n\r\n## The Component Lifecycle\r\n\r\nUnderstanding when things happen:\r\n\r\n1. **Import time:** Module loads, code executes\r\n2. **DOM ready:** `nui.init()` called (auto or manual)\r\n3. **Custom elements defined:** `customElements.define()` called\r\n4. **HTML parsed:** Elements upgrade automatically\r\n5. **connectedCallback:** Component initializes for each element\r\n\r\nFor factory APIs (like `nui.components.dialog.confirm()`), the lifecycle is immediate:\r\n- Function called\r\n- DOM created\r\n- Dialog shown\r\n- Promise resolves on close\r\n- DOM removed\r\n\r\n## API Stability\r\n\r\nNUI follows semantic versioning:\r\n- Root API: Very stable\r\n- Components namespace: Stable, additions only in minor versions\r\n- Utilities: Stable, additions only in minor versions\r\n\r\nAddons may have their own versioning but follow the same namespace pattern."
+			"description": "Three-tier API namespace: root (lifecycle), components (factory APIs), utilities (helpers).",
+			"docPath": "documentation/guides/api-structure.md",
+			"page": "documentation/api-structure"
 		},
 		{
 			"@context": "nui",
 			"@type": "Reference",
 			"name": "architecture-patterns",
 			"group": "documentation",
-			"description": "Application architecture patterns: centralized, fragment-based, and hybrid routing with nui-page layout engine.",
-			"docPath": null,
-			"page": "documentation/architecture-patterns",
-			"llmGuide": "# LLM Guide: NUI Application Architecture\r\n\r\n> **For LLMs:** This guide and the Playground documentation are your authoritative reference. `AGENTS.md` in the project root is for **human contributors** using AI coding assistants - it contains workflow instructions and development preferences, not component APIs or architectural patterns.\r\n\r\n## The Layout Engine: nui-page\r\n\r\nBefore diving into routing patterns, understand NUI's layout foundation:\r\n\r\n```html\r\n<nui-page>\r\n    <!-- All children constrained for readability (default) -->\r\n    <section>...</section>\r\n    \r\n    <!-- Break out for full-width sections -->\r\n    <nui-layout breakout>...</nui-layout>\r\n    \r\n    <section>...</section>\r\n</nui-page>\r\n```\r\n\r\n**Key points:**\r\n- `nui-page` wraps all page content (created by router or static)\r\n- Children are constrained to `--space-page-maxwidth` (~56rem) for readability\r\n- Add `breakout` attribute to any child to span full container width\r\n- Use `.maxwidth-container` inside breakout elements to re-constrain content\r\n\r\nThe `breakout` attribute works on any element, not just `nui-layout`.\r\n\r\n## The Router's Core Purpose\r\n\r\nNUI's router (`nui.createRouter()` / `nui.setupRouter()`) is fundamentally a **state-to-DOM coordinator**. It translates URL hash changes into DOM visibility operations. This is different from framework routers that dictate component hierarchies and data fetching.\r\n\r\nThe router's job is minimal by design:\r\n1. Parse URL hash (`#type=identifier?params`)\r\n2. Find or create a container element for that identifier\r\n3. Call `show()` on the active container, `hide()` on others\r\n4. Cache containers to preserve state between navigations\r\n\r\nThis simplicity enables multiple architectural patterns.\r\n\r\n## Pattern 1: Centralized Application Logic\r\n\r\n**Philosophy:** Your application is a JavaScript program. The router is just a view controller.\r\n\r\n**How it works:**\r\n- Register feature functions with `nui.registerFeature()`\r\n- Features receive a container element and URL parameters\r\n- Features build UI programmatically using DOM APIs or templates\r\n- State management happens in your code, not the router\r\n\r\n**Best for:**\r\n- Complex applications with shared state (dashboards, editors)\r\n- Real-time collaborative apps\r\n- Apps where multiple views access the same data\r\n\r\n**The pattern in practice:**\r\n```javascript\r\n// Centralized state\r\nconst appState = { documents: [], currentDoc: null };\r\n\r\n// Feature registration\r\nnui.registerFeature('editor', (element, params) => {\r\n\t// Build UI\r\n\telement.innerHTML = `\r\n\t\t<header><h1>${appState.currentDoc?.title}</h1></header>\r\n\t\t<div class=\"editor-content\"></div>\r\n\t`;\r\n\t\r\n\t// Sync with state\r\n\tconst content = element.querySelector('.editor-content');\r\n\tcontent.textContent = appState.currentDoc?.content;\r\n\t\r\n\t// Lifecycle hooks\r\n\telement.show = () => { /* refresh from state */ };\r\n});\r\n```\r\n\r\n## Pattern 2: Fragment-Based Pages\r\n\r\n**Philosophy:** Pages are HTML files. The router fetches and displays them.\r\n\r\n**How it works:**\r\n- Call `nui.enableContentLoading()` with basePath\r\n- Create HTML fragments in the pages folder\r\n- Navigation fetches fragments and injects them\r\n- Each fragment can have inline `<script type=\"nui/page\">` for initialization\r\n\r\n**⚠️ CSP Requirement:** The router uses `new Function()` to execute page scripts. Your Content Security Policy must include `'unsafe-eval'` in `script-src`, otherwise scripts silently fail.\r\n\r\n**⚠️ Script placement:** If the fragment uses `<nui-page>` as root, the `<script type=\"nui/page\">` must be **inside** the `<nui-page>` tag. NUI discards everything outside it when extracting content.\r\n\r\n**Best for:**\r\n- Content-heavy sites (documentation, blogs)\r\n- Component libraries and playgrounds\r\n- Rapid prototyping without build tools\r\n\r\n**The fragment contract:**\r\nWhen a fragment loads, the router:\r\n1. Creates a wrapper `<div>` and sets innerHTML\r\n2. Executes `<script type=\"nui/page\">` with `init(element, params, nui)`\r\n3. Removes the script tag\r\n4. Caches the wrapper for future navigation\r\n\r\nThe `init()` function runs once. `element.show()` and `element.hide()` are called on navigation.\r\n\r\n## Pattern 3: Hybrid Architecture\r\n\r\n**Philosophy:** Use the right tool for each view.\r\n\r\n**How it works:**\r\n- Static content uses fragment loading (`#page=help`)\r\n- Dynamic features use registered functions (`#feature=dashboard`)\r\n- Both coexist in the same application\r\n\r\n**Best for:**\r\n- Most real-world applications\r\n- Apps with both content pages and interactive tools\r\n- Migration scenarios (gradually moving from static to dynamic)\r\n\r\n## The Layout Engine: nui-page and Breakout\r\n\r\nThe `nui-page` component is the foundation of NUI's content layout system. It provides automatic text readability constraints while allowing flexible full-width sections.\r\n\r\n### How It Works\r\n\r\nWhen content is loaded (via router or static), `nui-page` automatically:\r\n1. **Constrains width** - All direct children get `max-width: var(--space-page-maxwidth)` for readability\r\n2. **Adds padding** - Consistent horizontal padding via CSS variables\r\n3. **Enables breakout** - Any child with `breakout` attribute spans full width\r\n\r\n```html\r\n<nui-page>\r\n    <section>\r\n        <!-- Constrained to ~56rem for readability -->\r\n        <h1>Article Title</h1>\r\n        <p>Body text is easy to read...</p>\r\n    </section>\r\n    \r\n    <div breakout>\r\n        <!-- Full container width -->\r\n        <nui-layout columns=\"3\">...</nui-layout>\r\n    </div>\r\n    \r\n    <section>\r\n        <!-- Back to constrained width -->\r\n    </section>\r\n</nui-page>\r\n```\r\n\r\n### The `breakout` Attribute\r\n\r\nThe `breakout` attribute is **not** specific to `nui-layout` — it's a layout engine feature that works on any direct child of `nui-page`:\r\n\r\n```html\r\n<!-- Hero image spans full width -->\r\n<img breakout src=\"hero.jpg\" alt=\"Hero\">\r\n\r\n<!-- Callout section breaks out -->\r\n<section breakout class=\"feature-callout\">\r\n    <div class=\"maxwidth-container\">\r\n        <!-- Content still readable -->\r\n    </div>\r\n</section>\r\n\r\n<!-- Entire page unconstrained -->\r\n<nui-page>\r\n    <div breakout>\r\n        <section>Full width content</section>\r\n        <section>Also full width</section>\r\n    </div>\r\n</nui-page>\r\n```\r\n\r\n### `.maxwidth-container` Utility\r\n\r\nWhen an element breaks out, its content loses the default max-width constraint. Use `.maxwidth-container` to re-apply it to specific children:\r\n\r\n```html\r\n<nui-layout breakout class=\"hero-banner\">\r\n    <!-- Full-bleed background -->\r\n    <div class=\"maxwidth-container\">\r\n        <!-- Text stays readable -->\r\n        <h2>Headline</h2>\r\n        <p>Description...</p>\r\n    </div>\r\n</nui-layout>\r\n```\r\n\r\nThis pattern enables:\r\n- **Full-bleed backgrounds** with readable text\r\n- **Edge-to-edge images** without horizontal scroll\r\n- **Flexible layouts** mixing constrained and full-width sections\r\n\r\n## URL Structure Philosophy\r\n\r\nNUI uses hash-based routing for a reason: **the server doesn't need to know about routes.**\r\n\r\n```\r\n#page=docs/introduction    → Load pages/docs/introduction.html\r\n#feature=dashboard         → Run registered 'dashboard' feature\r\n?page=settings&tab=users   → Query params available to features\r\n```\r\n\r\nThe hash is never sent to the server. This means:\r\n- Static hosting works perfectly (GitHub Pages, S3, etc.)\r\n- No server-side routing configuration needed\r\n- Deep linking works without backend coordination\r\n\r\n## State Management Philosophy\r\n\r\nNUI intentionally does not include a state management library. Instead, it provides patterns:\r\n\r\n**State in the URL:**\r\nQuery parameters are the source of truth for view state. Bookmark `#page=search?query=nui` and the search results load automatically.\r\n\r\n**State in the DOM:**\r\nForm inputs, scroll positions, and component states persist in the DOM because fragments are cached, not destroyed.\r\n\r\n**State in JavaScript:**\r\nFor complex apps, use your preferred pattern (store objects, reactive signals, etc.). The router doesn't care.\r\n\r\n## The Show/Hide Lifecycle\r\n\r\nUnderstanding when code runs is crucial:\r\n\r\n```javascript\r\nfunction init(element, params, nui) {\r\n\t// Runs ONCE when fragment first loads\r\n\t// Set up event listeners, fetch initial data\r\n\t\r\n\telement.show = (params) => {\r\n\t\t// Runs every time this page becomes active\r\n\t\t// Update from params, refresh data\r\n\t};\r\n\t\r\n\telement.hide = () => {\r\n\t\t// Runs when navigating away\r\n\t\t// Stop timers, clean up transient state\r\n\t};\r\n}\r\n```\r\n\r\nThis lifecycle enables:\r\n- Background data fetching (start in init, display in show)\r\n- Clean teardown (stop intervals in hide)\r\n- Parameter changes without reload (show receives new params)\r\n\r\n## Action Delegation and Component Boundaries\r\n\r\nThe `data-action` pattern enables clean component boundaries:\r\n\r\n```javascript\r\n// Component listens on its own element\r\nconst card = element.querySelector('.task-card');\r\ncard.addEventListener('nui-action', (e) => {\r\n\te.stopPropagation(); // Contain events\r\n\tconst { name } = e.detail;\r\n\t// Handle approve, reject, delete...\r\n});\r\n```\r\n\r\nEvents bubble up by default, allowing parent components to handle unclaimed actions. This creates a natural hierarchy without explicit parent-child wiring."
+			"description": "App architecture: centralized, fragment-based, and hybrid routing with nui-page layout engine.",
+			"docPath": "documentation/guides/architecture-patterns.md",
+			"page": "documentation/architecture-patterns"
 		},
 		{
 			"@context": "nui",
@@ -566,18 +563,16 @@
 			"group": "documentation",
 			"description": "Visual quick reference for icons, CSS variables, and common component patterns.",
 			"docPath": null,
-			"page": "documentation/cheatsheet",
-			"llmGuide": null
+			"page": "documentation/cheatsheet"
 		},
 		{
 			"@context": "nui",
 			"@type": "Reference",
 			"name": "declarative-actions",
 			"group": "documentation",
-			"description": "Event delegation pattern using data-action attribute for CSP-safe, decoupled HTML-to-JS communication.",
-			"docPath": null,
-			"page": "documentation/declarative-actions",
-			"llmGuide": "# LLM Guide: Declarative Actions Pattern\r\n\r\n## The Design Philosophy\r\n\r\nDeclarative actions in NUI solve a specific problem: **how do we connect HTML elements to JavaScript behavior without tight coupling?** The answer is event delegation with semantic syntax.\r\n\r\nThe browser already has a perfect event system - bubbling. Instead of attaching listeners to individual elements, we use a single delegated listener on a parent container. The `data-action` attribute provides the \"routing\" information within that container.\r\n\r\n## Syntax as Intent\r\n\r\n```\r\ndata-action=\"name:param@target\"\r\n```\r\n\r\nThis syntax encodes three pieces of information:\r\n- **name** - What happened (the semantic action)\r\n- **param** - Context data for the action (optional)\r\n- **target** - Which element to operate on (optional, defaults to trigger)\r\n\r\nThis is not configuration - it's **intent declaration**. The HTML says \"when clicked, the intent is to save a draft\" or \"the intent is to delete item #123.\" How that's handled is up to JavaScript.\r\n\r\n## The Event Flow\r\n\r\n1. **Click occurs** on an element with `data-action`\r\n2. **NUI intercepts** at the document level\r\n3. **Attribute is parsed** into `{ name, param, target }`\r\n4. **CustomEvent dispatched** with these details\r\n5. **Your code listens** and responds appropriately\r\n\r\nThe key insight: the dispatcher doesn't know what actions exist. It just parses and fires events. This decouples HTML (which declares intent) from JavaScript (which implements behavior).\r\n\r\n## Scoping and Containment\r\n\r\nActions bubble like all DOM events. This enables natural component boundaries:\r\n\r\n```javascript\r\n// Component-level handling\r\ncard.addEventListener('nui-action', (e) => {\r\n\te.stopPropagation(); // Keep it in the component\r\n\thandleCardAction(e.detail.name);\r\n});\r\n\r\n// Document-level handling (catches unscoped actions)\r\ndocument.addEventListener('nui-action', (e) => {\r\n\tif (e.detail.name === 'navigate') {\r\n\t\trouter.go(e.detail.param);\r\n\t}\r\n});\r\n```\r\n\r\nThis hierarchy means:\r\n- Components can be self-contained\r\n- Common actions (navigation) bubble up\r\n- No explicit parent-child registration needed\r\n\r\n## When to Use (And Not Use)\r\n\r\n**Use declarative actions when:**\r\n- You have lists of items with similar actions\r\n- Elements are dynamically added/removed\r\n- Actions are simple and contextual\r\n- You want HTML to be readable\r\n\r\n**Use standard event listeners when:**\r\n- The interaction is complex (drag and drop, gestures)\r\n- You need access to the raw event object\r\n- The action is truly one-off\r\n\r\n## Comparison with Framework Patterns\r\n\r\nUnlike framework event binding (React's `onClick`, Vue's `@click`), NUI's actions don't require:\r\n- Build step transformation\r\n- Component re-renders\r\n- Virtual DOM reconciliation\r\n\r\nThe browser's event system *is* the framework. NUI just adds a parsing layer and standardized event structure.\r\n\r\n## Programmatic Registration\r\n\r\nSometimes you want centralized action handling without scattered listeners. `nui.registerAction()` provides this:\r\n\r\n```javascript\r\nnui.registerAction('save', (target, element, event, param) => {\r\n\t// Handle all 'save' actions globally\r\n\treturn true; // Stop propagation\r\n});\r\n```\r\n\r\nThis is useful when:\r\n- An action should behave consistently everywhere\r\n- You want to avoid event listener setup\r\n- Actions might come from dynamically created content\r\n\r\n## The Simplicity Principle\r\n\r\nThe declarative actions system is intentionally minimal. It doesn't provide:\r\n- JSON payloads in attributes (complexity in HTML)\r\n- Action chaining (use JavaScript)\r\n- Async action handling (listen for the event)\r\n\r\nThese limitations are features. They keep the boundary clear: HTML declares intent, JavaScript implements behavior. Neither leaks into the other's concerns."
+			"description": "Event delegation via data-action attribute for CSP-safe, decoupled HTML-to-JS communication.",
+			"docPath": "documentation/guides/declarative-actions.md",
+			"page": "documentation/declarative-actions"
 		},
 		{
 			"@context": "nui",
@@ -586,18 +581,16 @@
 			"group": "documentation",
 			"description": "Setup, layout modes, SPA wiring, and the base shell structure.",
 			"docPath": "documentation/guides/getting-started.md",
-			"page": "documentation/getting-started",
-			"llmGuide": null
+			"page": "documentation/getting-started"
 		},
 		{
 			"@context": "nui",
 			"@type": "Reference",
 			"name": "introduction",
 			"group": "documentation",
-			"description": "NUI philosophy: browser-native UI toolkit, semantic HTML foundation, progressive enhancement, two usage patterns.",
-			"docPath": null,
-			"page": "documentation/introduction",
-			"llmGuide": "# LLM Guide: NUI Philosophy & Architecture\r\n\r\n## What NUI Is (And Isn't)\r\n\r\nNUI is a **browser-native UI toolkit** built on Custom Elements. It is not a framework, does not have a virtual DOM, and does not abstract away the browser. Instead, it provides well-designed custom elements that enhance semantic HTML with consistent styling, accessibility behaviors, and progressive enhancement.\r\n\r\n### Core Design Philosophy\r\n\r\n**1. The Browser is the Framework**\r\n- NUI uses the platform: Custom Elements, CSS Custom Properties, native `<dialog>`, `<button>`, etc.\r\n- No virtual DOM - direct DOM manipulation is encouraged and efficient\r\n- Event system uses native `CustomEvent` and `addEventListener`\r\n\r\n**2. Semantic HTML as Foundation**\r\nEvery NUI component expects valid HTML inside it:\r\n- `<nui-button>` wraps a native `<button>` element\r\n- `<nui-dialog>` wraps a native `<dialog>` element\r\n- `<nui-tabs>` organizes `<nav>` and `<section>` elements\r\n\r\nThis means accessibility (keyboard navigation, screen readers) works even before JavaScript loads, and the DOM remains readable and debuggable.\r\n\r\n**3. Progressive Enhancement**\r\nComponents upgrade existing markup rather than replacing it. The page renders meaningfully without JavaScript, then components add behaviors:\r\n- An `<nui-tabs>` with `<nav>` and `<section>` children works as plain HTML (shows all content)\r\n- After upgrade, it becomes an interactive tab interface with ARIA attributes\r\n\r\n**4. Two Usage Patterns**\r\n\r\n**Declarative (HTML-first):** For static content known at authoring time\r\n```html\r\n<nui-button>\r\n\t<button type=\"submit\">Save</button>\r\n</nui-button>\r\n```\r\n\r\n**Data-driven (JavaScript API):** For dynamic content\r\n```javascript\r\nconst dialog = await nui.components.dialog.confirm('Delete?', 'This cannot be undone.');\r\n```\r\n\r\n**5. Router as State Coordinator**\r\nNUI includes a lightweight hash-based router (`nui.setupRouter()`) that translates URL changes into DOM visibility. It's not a framework router - it doesn't dictate your architecture. Three patterns are supported:\r\n- **Centralized:** JavaScript generates all UI, router just shows/hides\r\n- **Fragment-based:** HTML fragments fetched on demand (Playground pattern)\r\n- **Hybrid:** Mix both approaches\r\n\r\n## How This Documentation Works\r\n\r\n**This LLM Guide is the primary knowledge source for AI agents.** When you (an LLM) are asked to work with NUI, this guide and the component-specific LLM Guides (found in `<script type=\"text/markdown\">` blocks on each page) are your reference.\r\n\r\n**Important:** `AGENTS.md` in the project root is for **human contributors** using AI coding assistants. It contains workflow instructions, coding ethics, and development preferences. It is NOT the source of truth for component APIs, router behavior, or architectural patterns. Those live in the Playground documentation.\r\n\r\n**Where to find information:**\r\n- **Component APIs:** Each component page has an LLM Guide in `<script type=\"text/markdown\">` blocks\r\n- **Router & Page Loading:** See the [Architecture Patterns](#page=documentation/architecture-patterns#router-deep-dive) page\r\n- **Design System:** `NUI/css/nui-theme.css` contains all CSS variables\r\n- **Source Code:** `NUI/nui.js` is the single source file\r\n\r\n## When to Use NUI\r\n\r\n**Ideal for:**\r\n- Applications that need high performance without framework overhead\r\n- Teams that prefer direct browser API usage\r\n- Projects where accessibility is mandatory\r\n- SPAs that don't need complex state management\r\n\r\n**Not ideal for:**\r\n- Apps requiring complex reactive state management (use frameworks)\r\n- Projects needing server-side rendering (NUI is client-side)\r\n- Teams wanting drag-and-drop visual builders\r\n\r\n## Key Concepts\r\n\r\n**Light DOM, Not Shadow DOM:**\r\nNUI components use the Light DOM. Content is visible to CSS and JavaScript without piercing shadow boundaries. This enables:\r\n- Global theming via CSS variables\r\n- Standard event bubbling\r\n- Easy debugging in browser devtools\r\n\r\n**CSS Variables for Theming:**\r\nAll styling uses CSS custom properties. The `:root` defines the design system, and components reference these variables. No CSS-in-JS, no build step required.\r\n\r\n**State Lives in the HTML:**\r\nInstead of hidden JavaScript state, NUI puts state in attributes and data attributes where it's visible:\r\n- `data-tab=\"active\"` shows which tab is active\r\n- `hidden` attribute controls panel visibility\r\n- This makes debugging easier and enables CSS to respond to state"
+			"description": "NUI philosophy: browser-native UI toolkit, semantic HTML, progressive enhancement, two usage patterns.",
+			"docPath": "documentation/guides/introduction.md",
+			"page": "documentation/introduction"
 		},
 		{
 			"@context": "nui",
@@ -605,9 +598,8 @@
 			"name": "utilities",
 			"group": "documentation",
 			"description": "Utility functions: createElement, storage, enableDrag, array helpers, environment detection.",
-			"docPath": null,
-			"page": "documentation/utilities",
-			"llmGuide": "# LLM Guide: NUI Utilities Architecture\r\n\r\n## Design Philosophy\r\n\r\nNUI utilities are **minimal, focused helpers** that complement the browser's native APIs rather than replacing them. They follow the same principles as the components: work with the platform, add convenience without abstraction.\r\n\r\nThe utilities are organized under `nui.util.*` as a flat namespace. Each utility solves a specific problem that comes up repeatedly when building UIs.\r\n\r\n## createElement: Concise DOM Construction\r\n\r\nThe native DOM API is verbose. `createElement` provides a declarative options object:\r\n\r\n```javascript\r\nconst button = nui.util.createElement('button', {\r\n\tclass: 'btn btn-primary',\r\n\tattrs: { type: 'submit', disabled: true },\r\n\tevents: { click: handleClick },\r\n\tcontent: 'Save Changes'\r\n});\r\n```\r\n\r\n**Key insight:** This isn't a virtual DOM or template system. It returns a real DOM element that can be appended immediately. The utility just collapses multiple imperative calls into one declarative call.\r\n\r\n## Storage: Unified Cookie/LocalStorage API\r\n\r\nBrowsers have two storage mechanisms with different APIs. `nui.util.storage` unifies them:\r\n\r\n```javascript\r\n// Same API, different backing stores\r\nnui.util.storage.set({ name: 'theme', value: 'dark' });                    // cookie\r\nnui.util.storage.set({ name: 'theme', value: 'dark', target: 'localStorage' }); // localStorage\r\n```\r\n\r\n**TTL support:** Both stores support time-to-live:\r\n```javascript\r\nnui.util.storage.set({ \r\n\tname: 'session', \r\n\tvalue: token, \r\n\tttl: '2-hours' \r\n});\r\n```\r\n\r\n**Why cookies by default?** They're sent to the server, enabling server-side rendering scenarios and sharing state between client and server.\r\n\r\n## enableDrag: Pointer Abstraction\r\n\r\nMouse and touch events have different APIs. `enableDrag` unifies them:\r\n\r\n```javascript\r\nnui.util.enableDrag(element, (data) => {\r\n\t// data.type: 'start' | 'move' | 'end'\r\n\t// data.x/y: pointer position relative to element\r\n\t// data.percentX/Y: 0..1 for slider-type interactions\r\n});\r\n```\r\n\r\nReturns a cleanup function to remove listeners. This pattern (return cleanup) is used throughout NUI for resource management.\r\n\r\n## sortByKey and filter: Array Operations\r\n\r\nWorking with data arrays is common. These utilities provide:\r\n\r\n**sortByKey:** Nested property sorting with numeric option\r\n```javascript\r\n// Sort by nested property\r\nnui.util.sortByKey(users, 'profile.name');\r\n\r\n// Numeric sort\r\nnui.util.sortByKey(products, 'price', true);\r\n```\r\n\r\n**filter:** Multi-property search\r\n```javascript\r\nnui.util.filter({\r\n\tdata: items,\r\n\tsearch: 'query',\r\n\tprop: ['title', 'description', 'tags']\r\n});\r\n```\r\n\r\nThese are simple wrappers around `Array.sort()` and `Array.filter()` with convenience features for common UI patterns.\r\n\r\n## detectEnv: Capability Detection\r\n\r\nFeature detection over browser sniffing, but sometimes you need to know:\r\n\r\n```javascript\r\nconst env = nui.util.detectEnv();\r\n// { isTouch, isMac, isIOS, isSafari, isFF }\r\n```\r\n\r\nUse sparingly. Prefer feature detection (`'ontouchstart' in window`) for capability checks.\r\n\r\n## Utilities vs Components\r\n\r\nUtilities are functions. Components are custom elements. The boundary:\r\n\r\n- **Utility:** Stateless operation on data or DOM (sort, createElement, storage get/set)\r\n- **Component:** Stateful UI element with lifecycle (button, dialog, tabs)\r\n\r\nWhen in doubt: if it needs to render something visible, it's probably a component. If it processes data or helps build UI, it's probably a utility.\r\n\r\n## Extending Utilities\r\n\r\nAddons can add utilities to `nui.util.*`. Follow the pattern:\r\n- Flat namespace (no nested objects)\r\n- Single responsibility\r\n- Return cleanup functions for anything that adds listeners\r\n- Accept options objects for complex parameters"
+			"docPath": "documentation/guides/utilities.md",
+			"page": "documentation/utilities"
 		}
 	],
 	"setup": {
@@ -666,6 +658,16 @@
 				"params": [
 					"name",
 					"fn"
+				],
+				"returns": null
+			},
+			{
+				"name": "registerAction",
+				"signature": "nui.registerAction(name, handler)",
+				"description": "Register a named action handler for the data-action system",
+				"params": [
+					"name",
+					"handler"
 				],
 				"returns": null
 			},
@@ -825,203 +827,5 @@
 				}
 			]
 		}
-	},
-	"events": [
-		{
-			"component": "nui-banner",
-			"events": [
-				{
-					"name": "nui-banner-open"
-				},
-				{
-					"name": "nui-banner-close"
-				}
-			]
-		},
-		{
-			"component": "nui-button",
-			"events": [
-				{
-					"name": "nui-click"
-				}
-			]
-		},
-		{
-			"component": "nui-dialog",
-			"events": [
-				{
-					"name": "nui-dialog-open"
-				},
-				{
-					"name": "nui-dialog-close"
-				},
-				{
-					"name": "nui-dialog-cancel"
-				}
-			]
-		},
-		{
-			"component": "nui-dropzone",
-			"events": [
-				{
-					"name": "nui-drop"
-				}
-			]
-		},
-		{
-			"component": "nui-input",
-			"events": [
-				{
-					"name": "nui-input"
-				},
-				{
-					"name": "nui-change"
-				},
-				{
-					"name": "nui-clear"
-				}
-			]
-		},
-		{
-			"component": "nui-link-list",
-			"events": [
-				{
-					"name": "nui-link-list-change"
-				}
-			]
-		},
-		{
-			"component": "nui-overlay",
-			"events": [
-				{
-					"name": "nui-overlay-open"
-				},
-				{
-					"name": "nui-overlay-close"
-				},
-				{
-					"name": "nui-overlay-cancel"
-				}
-			]
-		},
-		{
-			"component": "nui-select",
-			"events": [
-				{
-					"name": "nui-change"
-				},
-				{
-					"name": "nui-select"
-				},
-				{
-					"name": "nui-open"
-				},
-				{
-					"name": "nui-close"
-				},
-				{
-					"name": "nui-clear"
-				},
-				{
-					"name": "nui-enable"
-				},
-				{
-					"name": "nui-disable"
-				},
-				{
-					"name": "nui-item-add"
-				},
-				{
-					"name": "nui-item-remove"
-				},
-				{
-					"name": "nui-items-replace"
-				}
-			]
-		},
-		{
-			"component": "nui-slider",
-			"events": []
-		},
-		{
-			"component": "nui-sortable",
-			"events": [
-				{
-					"name": "nui-sortable-change"
-				}
-			]
-		},
-		{
-			"component": "nui-tabs",
-			"events": [
-				{
-					"name": "nui-tab-change"
-				}
-			]
-		},
-		{
-			"component": "nui-tag-input",
-			"events": [
-				{
-					"name": "nui-tag-add"
-				},
-				{
-					"name": "nui-tag-remove"
-				}
-			]
-		},
-		{
-			"component": "nui-code-editor",
-			"events": [
-				{
-					"name": "nui-code-editor-change"
-				}
-			]
-		},
-		{
-			"component": "nui-list",
-			"events": [
-				{
-					"name": "nui-list-change"
-				},
-				{
-					"name": "nui-list-select"
-				},
-				{
-					"name": "nui-item-action"
-				}
-			]
-		},
-		{
-			"component": "nui-rich-text",
-			"events": [
-				{
-					"name": "nui-rich-text-change"
-				},
-				{
-					"name": "nui-rich-text-image"
-				}
-			]
-		},
-		{
-			"component": "nui-wizard",
-			"events": [
-				{
-					"name": "nui-wizard-before-next"
-				},
-				{
-					"name": "nui-wizard-step-change"
-				},
-				{
-					"name": "nui-wizard-cancel"
-				},
-				{
-					"name": "nui-wizard-complete"
-				},
-				{
-					"name": "nui-wizard-validation-error"
-				}
-			]
-		}
-	]
+	}
 }

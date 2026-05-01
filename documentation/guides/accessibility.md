@@ -76,21 +76,21 @@ Components log helpful warnings when accessibility improvements are made:
 
 This teaches best practices while ensuring the app remains accessible.
 
-### 2. Progressive Enhancement
+### 3. Progressive Enhancement
 - **Without JavaScript**: Semantic HTML with proper structure
 - **With JavaScript**: 
   - ARIA attributes added dynamically for state management
   - Missing accessibility attributes detected and added automatically
   - Context-aware labels generated from parent elements and icon names
 
-### 3. Keyboard Navigation
+### 4. Keyboard Navigation
 All interactive elements support:
 - **Tab**: Navigate between elements
 - **Enter/Space**: Activate buttons and links
 - **Arrow keys**: Navigate lists and trees (where applicable)
 - **Escape**: Close dialogs and menus (where applicable)
 
-### 4. Screen Reader Support
+### 5. Screen Reader Support
 - Icons are marked `aria-hidden="true"` (decorative)
 - Parent elements (buttons/links) have descriptive `aria-label`
 - Dynamic state changes announced via ARIA attributes
@@ -356,7 +356,7 @@ Built on the **Native `<dialog>` Element**:
 }
 ```
 
-### 5. Screen Reader Announcements (`a11y.announce`)
+### Screen Reader Announcements (`a11y.announce`)
 
 For dynamic content changes that aren't automatically picked up by screen readers (like reordering items in a list), use the global `a11y.announce` utility. This utility manages a hidden ARIA live region to speak messages to users.
 

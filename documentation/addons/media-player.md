@@ -1,5 +1,14 @@
 # nui-media-player
 
+## Setup
+
+This is an addon module. Load both the JS and CSS before use:
+
+```html
+<link rel="stylesheet" href="NUI/css/modules/nui-media-player.css">
+<script type="module" src="NUI/lib/modules/nui-media-player.js"></script>
+```
+
 ## Design Philosophy
 
 This component wraps native `<video>` and `<audio>` elements with a customizable, skinnable UI. Rather than replacing the browser's media capabilities, it enhances them with consistent controls while preserving all native functionality like streaming, subtitles, and format support.

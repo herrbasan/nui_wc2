@@ -19,9 +19,10 @@ This structure provides clear extension points and makes the API discoverable.
 **Key members:**
 - `nui.init()` - Initialize the library (auto-called on load)
 - `nui.configure()` - Update configuration
-- `nui.setupRouter()` - Setup SPA router (replaces enableContentLoading)
+- `nui.setupRouter()` - Setup SPA router
 - `nui.registerFeature()` - Register JS-only page types
 - `nui.registerType()` - Register content handlers
+- `nui.registerAction()` - Register a named action handler for the `data-action` system
 
 **Design principle:** Root functions affect the entire application. They're called once at setup, not repeatedly during rendering.
 

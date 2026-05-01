@@ -1,5 +1,14 @@
 # nui-wizard
 
+## Setup
+
+This is an addon module. Load both the JS and CSS before use:
+
+```html
+<link rel="stylesheet" href="NUI/css/modules/nui-wizard.css">
+<script type="module" src="NUI/lib/modules/nui-wizard.js"></script>
+```
+
 ## Design Philosophy
 
 The `nui-wizard` component is a Light DOM wrapper that takes `<nui-wizard-step>` children and automatically injects a navigation header and action footer containing Next/Back/Cancel/Complete buttons. It allows segmenting complex forms or configuration views into sequential logical steps.

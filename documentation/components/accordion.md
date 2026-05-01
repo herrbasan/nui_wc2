@@ -52,12 +52,23 @@ Below are the JavaScript methods available on the `<nui-accordion>` element:
 | Method | Parameters | Description |
 |--------|------------|-------------|
 | `toggle(index)` | `index: number` | Programmatically toggles the state of the `<details>` component at the provided 0-based integer position. Uses animation when animations are enabled. |
-| `expandAll()` | none | Iterates over `<details>` components, forcing them all `open=true` and bypassing UI animation. (Ignored if `exclusive` mode is enabled). |
+| `expandAll()` | none | Opens all `<details>` sections. Ignored if `exclusive` mode is enabled. |
+| `collapseAll()` | none | Closes all `<details>` sections. |
 
 ### Action Delegates
 
-NUI provides declarative bindings for standard programmatic features. Assign these actions onto triggers inside or outside the accordion:
+NUI provides declarative bindings via `data-action`. Assign these to triggers inside or outside the accordion:
 
-- `data-action="accordion-toggle:{index}@{selector}"`: Triggers `toggle(index)` on the target accordion. Example: `accordion-toggle:1@#prog-accordion`.
-- `data-action="accordion-expand-all@{selector}"`: Triggers `expandAll()` on the target accordion.
-- `data-action="accordion-collapse-all@{selector}"`: Triggers `collapseAll()` internally by iterating `nui-accordion` children and shutting them via standard element property assignment. *(Note: While not an explicit exposed method on the custom element, it's often handled procedurally outside or by specialized generic actions).*
+| Action | Description |
+|--------|-------------|
+| `accordion-toggle:{index}@{selector}` | Triggers `toggle(index)` on the target accordion. Example: `accordion-toggle:1@#my-accordion`. |
+| `accordion-expand-all@{selector}` | Triggers `expandAll()` on the target accordion. |
+| `accordion-collapse-all@{selector}` | Triggers `collapseAll()` on the target accordion. |
+
+### Collapsing All Sections Manually
+
+Since `collapseAll()` operates on standard `<details>` elements, you can also collapse all sections without the action delegate:
+
+```javascript
+document.querySelectorAll('#my-accordion details').forEach(d => d.open = false);
+```

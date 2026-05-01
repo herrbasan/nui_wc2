@@ -1,5 +1,14 @@
 # nui-code-editor
 
+## Setup
+
+This is an addon module. Load both the JS and CSS before use:
+
+```html
+<link rel="stylesheet" href="NUI/css/modules/nui-code-editor.css">
+<script type="module" src="NUI/lib/modules/nui-code-editor.js"></script>
+```
+
 ## Design Philosophy
 
 This component provides an editable code input with real-time syntax highlighting. Unlike heavy editors like Monaco or CodeMirror, it uses a lightweight `contenteditable` approach with custom caret restoration, prioritizing fast load times and simplicity over advanced IDE features.

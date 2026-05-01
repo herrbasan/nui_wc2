@@ -1,5 +1,14 @@
 # Context Menu (`nui-context-menu`)
 
+## Setup
+
+This is an addon module. Load both the JS and CSS before use:
+
+```html
+<link rel="stylesheet" href="NUI/css/modules/nui-context-menu.css">
+<script type="module" src="NUI/lib/modules/nui-context-menu.js"></script>
+```
+
 ## Design Philosophy
 
 The context menu module is a **programmatic-only API** for creating floating popup menus. Unlike most NUI components, it is *not* a custom element you declare in HTML. It is a factory function that returns a menu controller you can show and hide via JavaScript.

@@ -117,10 +117,46 @@ The system parses this syntax: `action:param@target`
 
 ## CSS Variables for Theming
 
-NUI uses a semantic runtime-configurable color system:
-- `--color-base` - Background base
-- `--color-shade1` through `--color-shade9` - Surface/Text variations
-- `--color-highlight` - Primary accent
-- `--nui-space` - Base spacing unit
+NUI uses a semantic, runtime-configurable design token system defined in `NUI/css/nui-theme.css`. **That file is the authoritative reference** for every available variable. The naming conventions follow predictable patterns:
 
-Override within `:root {}` for global changes, or on specific container elements for scoped theming. The UI fully supports the `color-scheme: light dark;` CSS standard.
+### Variable Naming Conventions
+
+| Pattern | Examples | Purpose |
+|---------|----------|---------|
+| `--color-base` | Base background | Root surface color |
+| `--color-shade1` through `--color-shade9` | Progressive shades | Surfaces, text, borders (shade1 = lightest, shade9 = darkest) |
+| `--color-highlight` | Primary accent | Buttons, links, focus rings |
+| `--nui-space` | Base spacing unit | Padding, margins, gaps |
+| `--nui-space-half`, `--nui-space-double` | Spacing variants | Derived from the base unit |
+| `--border-thickness` | Border width | Consistent borders |
+| `--border-shade1` | Border color | Matches theme context |
+| `--border-radius1`, `--border-radius2` | Corner rounding | Buttons, cards, inputs |
+
+### How to Theme
+
+Override variables in `:root` for global changes, or on a specific container for scoped theming:
+
+```css
+:root {
+    --color-base: #1a1a2e;
+    --color-highlight: #e94560;
+}
+```
+
+The theme fully supports `color-scheme: light dark` via CSS `light-dark()`, so light and dark modes work automatically when the user's OS preference changes. To add dark mode overrides:
+
+```css
+@media (prefers-color-scheme: dark) {
+    :root {
+        --color-base: #0f0f1a;
+    }
+}
+```
+
+### What Not to Do
+
+- **Never invent new CSS variables.** Use only what `nui-theme.css` defines.
+- **Never hard-code colors, sizes, or spacing.** Always use variables.
+- **Avoid inline styles** for static layout — use CSS classes.
+
+To see the complete list of variables, read `NUI/css/nui-theme.css`.

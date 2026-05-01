@@ -1,5 +1,14 @@
 # nui-lightbox
 
+## Setup
+
+This is an addon module. Load both the JS and CSS before use:
+
+```html
+<link rel="stylesheet" href="NUI/css/modules/nui-lightbox.css">
+<script type="module" src="NUI/lib/modules/nui-lightbox.js"></script>
+```
+
 ## Design Philosophy
 
 The lightbox component provides focused image viewing without leaving the page. It emphasizes performance through lazy-loading of full-resolution images and accessibility through keyboard navigation and ARIA attributes.
