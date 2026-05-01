@@ -46,38 +46,99 @@ This registry acts as the master manifest, providing:
 
 ---
 
-## 4. Suggested Reading Order
+## 4. Documentation Navigation
 
-If you are new to NUI, read in this order:
+### Guides — Start Here
 
-1. **`guides/introduction.md`** — What NUI is, what it isn't, and the core design philosophy (browser-native, Light DOM, progressive enhancement).
-2. **`guides/getting-started.md`** — Minimal setup, loading sequence, layout modes, and the two development patterns (declarative vs. data-driven).
-3. **`guides/architecture-patterns.md`** — The router, fragment-based SPA, the `show/hide` lifecycle, and the `nui-page` layout engine. **Critical** if you are building or modifying Playground demo pages.
-4. **`guides/declarative-actions.md`** — The `data-action` event delegation pattern. Read this before writing interactive demos.
-5. **`guides/api-structure.md`** — The three-tier API (`nui.*`, `nui.components.*`, `nui.util.*`) and component lifecycle.
-6. **`guides/accessibility.md`** — DOM-first a11y, auto-enhancement, keyboard patterns, and the `a11y.announce` utility.
-7. **`guides/utilities.md`** — Helper functions (`createElement`, `storage`, `enableDrag`, etc.).
-8. **`components.json`** — The machine-readable registry. Use it to find the `docPath` for any specific component.
-9. **`components/*.md` or `addons/*.md`** — Component-specific API contracts. Read these after the guides, on demand.
+These cover the meta-concepts and architectural patterns. Read in order if you are new to NUI.
 
-**Quick decision tree:**
-- *"How do I set up a new project?"* → `getting-started.md`
-- *"How do I build a demo page?"* → `architecture-patterns.md`
-- *"How do I wire up button clicks?"* → `declarative-actions.md`
-- *"What component should I use for X?"* → `components.json`
-- *"What events does component Y emit?"* → `components.json` → `components/Y.md`
+1. [Introduction](#page=documentation/introduction) — What NUI is, what it isn't, core design philosophy.
+2. [Getting Started](#page=documentation/getting-started) — Minimal setup, loading sequence, layout modes, declarative vs. data-driven patterns.
+3. [Architecture Patterns](#page=documentation/architecture-patterns) — The router, fragment-based SPA, `show/hide` lifecycle, `nui-page` layout engine. **Critical** for building or modifying Playground pages.
+4. [Declarative Actions](#page=documentation/declarative-actions) — The `data-action` event delegation pattern. Read before writing interactive demos.
+5. [API Structure](#page=documentation/api-structure) — Three-tier API (`nui.*`, `nui.components.*`, `nui.util.*`) and component lifecycle.
+6. [Accessibility](#page=documentation/accessibility) — DOM-first a11y, auto-enhancement, keyboard patterns, `a11y.announce` utility.
+7. [Utilities](#page=documentation/utilities) — Helper functions: `createElement`, `storage`, `enableDrag`, array helpers, `detectEnv`.
+8. [Visual Cheatsheet](#page=documentation/cheatsheet) — Quick reference for icons, CSS variables, and common patterns.
 
-## 5. Deep Dive Documentation
+### Core Components — Dependency-Free
 
-The `/documentation/` folder contains pure, LLM-optimized Markdown files detailing the exact usage, edge cases, and API contracts for everything in NUI.
+No imports needed. Available after loading `nui.js`.
 
-- **`/documentation/guides/`**: Meta-concepts and architectural patterns. Start here before diving into individual components.
-- **`/documentation/components/`**: The core, dependency-free UI components (buttons, inputs, dialogs, layouts).
-- **`/documentation/addons/`**: More complex, optional modules that must be explicitly loaded (rich-text editors, code editors, virtualized lists).
+**Forms**
+- [Button](#page=components/button) — Native button wrapper with variants, loading state, icon support. Paired with `nui-button-container` for groups and segmented controls.
+- [Input](#page=components/inputs) — Text, textarea, checkbox, radio, toggle inputs wrapping native elements with validation.
+- [Select](#page=components/select) — Enhanced dropdown with search, multi-select tags, option groups, async loading, and mobile bottom sheet.
+- [Slider](#page=components/slider) — Range input wrapper with custom visual styling.
+- [Tag Input](#page=components/tag-input) — Tag/chip input with keyboard navigation and editable or display-only modes.
+- [Dropzone](#page=components/dropzone) — File drop overlay with named zones and automatic grid layout.
+
+**Layout**
+- [App Layout](#page=components/app-layout) — Application shell with CSS Grid: header, sidebar, content, footer.
+- [App Header](#page=components/app-header) — Top bar with left/center/right slot zones and sidebar toggle.
+- [Page](#page=components/app-layout) — Content layout engine with readable max-width and `breakout` attribute for full-width sections.
+- [Card](#page=components/card) — Flexible content container with surface styling and layout modes.
+- [Layout Grid](#page=components/layout) — Responsive column grid (1/2/3 columns based on viewport).
+
+**Navigation**
+- [Tabs](#page=components/tabs) — ARIA Tab Pattern with height animation and progressive enhancement.
+- [Accordion](#page=components/accordion) — Expandable sections using native `<details>`/`<summary>` with exclusive mode.
+- [Link List](#page=components/link-list) — Navigation tree with collapsible groups, active state, and data-driven API.
+
+**Overlays**
+- [Dialog](#page=components/dialog) — Modal and non-modal dialogs built on native `<dialog>` with system dialogs (alert/confirm/prompt).
+- [Overlay](#page=components/overlay) — Raw modal container for lightboxes and full-screen loaders.
+
+**Feedback**
+- [Banner](#page=components/banner) — Edge-anchored notification banners with auto-close and priority levels.
+- [Progress](#page=components/progress) — Linear, circular, and indeterminate progress indicators.
+
+**Data**
+- [Table](#page=components/table) — Responsive table wrapper with mobile card transformation.
+
+**UI**
+- [Badge](#page=components/badge) — Status badges and notification indicators with variant styling.
+- [Code](#page=components/code) — Code block with syntax highlighting for web languages.
+- [Icon](#page=components/icon) — SVG sprite-based icon with text fallback and decorative mode.
+- [Markdown](#page=components/markdown) — Lightweight Markdown-to-HTML converter with streaming support.
+- [Tooltip](#page=components/tooltip) — Contextual help using native Popover API with smart positioning.
+
+**Accessibility**
+- [Skip Links](#page=components/skip-links) — WCAG skip navigation links, auto-detects landmarks.
+
+**Interaction**
+- [Sortable](#page=components/sortable) — Drag-and-drop reordering with FLIP animations and touch/mouse/keyboard support.
+
+### Addons — Explicit Import Required
+
+These modules require loading additional JS (and often CSS). Each doc lists the exact import tags.
+
+- [Code Editor](#page=addons/code-editor) — Editable code input with real-time syntax highlighting, auto-indent, and line numbers.
+- [Context Menu](#page=addons/context-menu) — Programmatic floating popup menus with submenus and keyboard navigation.
+- [Lightbox](#page=addons/lightbox) — Image gallery with thumbnail/full-res lazy loading, carousel loop, and touch gestures.
+- [List](#page=addons/list) — Virtualized scroller with integrated search, sort, filter. Renders only visible items for large datasets.
+- [Media Player](#page=addons/media-player) — Custom-skinnable video/audio player wrapper over native media elements.
+- [Menu](#page=addons/menu) — Application-style menubar with dropdowns, nested submenus, and full keyboard navigation.
+- [Rich Text](#page=addons/rich-text) — Lightweight WYSIWYG editor with toolbar for basic formatting, links, tables, and images.
+- [Wizard](#page=addons/wizard) — Multi-step wizard with progression navigation, validation, and layout modes.
+- [App Window](#page=addons/app-window) — Programmatic window chrome for Electron frameless windows.
 
 ---
 
-## 6. The Playground: Execution Environment
+### Quick Decision Tree
+
+- *"How do I set up a new project?"* → [Getting Started](#page=documentation/getting-started)
+- *"How do I build a demo page?"* → [Architecture Patterns](#page=documentation/architecture-patterns)
+- *"How do I wire up button clicks?"* → [Declarative Actions](#page=documentation/declarative-actions)
+- *"What component should I use for X?"* → `components.json`
+- *"What events does component Y emit?"* → `components.json` → component's `.md` doc
+- *"How do I create a modal dialog?"* → [Dialog](#page=components/dialog)
+- *"How do I handle large datasets?"* → [List](#page=addons/list)
+- *"How do I make my app accessible?"* → [Accessibility](#page=documentation/accessibility)
+
+---
+
+## 5. The Playground: Execution Environment
 
 The `Playground/` directory serves as an interactive sandbox.
 
