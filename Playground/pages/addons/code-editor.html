@@ -18,78 +18,7 @@
 
 <details class="collapsible-section collapsible-section--spaced">
 		<summary><strong>LLM Guide - nui-code-editor</strong></summary>
-		<nui-markdown id="llm-guide" data-component="nui-code-editor" class="llm-guide">
-<script type="text/markdown">
-# LLM Guide: nui-code-editor (Experimental)
-
-## Design Philosophy
-
-This component provides an editable code input with real-time syntax highlighting. Unlike heavy editors like Monaco or CodeMirror, it uses a lightweight `contenteditable` approach with custom caret restoration, prioritizing fast load times and simplicity over advanced IDE features.
-
-## How It Works
-
-The component manages a `contenteditable` code block with:
-
-- **Syntax highlighting** - Real-time tokenization using the same engine as `nui-code`
-- **Caret preservation** - Cursor position maintained during re-highlighting
-- **Smart editing** - Auto-indentation, bracket matching, tab handling
-- **Line numbers** - Optional gutter showing line numbers
-
-The highlighting approach differs from static `nui-code`: it carefully manages the editable state to apply colors without disrupting the editing experience.
-
-## Usage Patterns
-
-### Basic Editor
-
-```html
-<nui-code-editor data-lang="js" data-line-numbers="true">
-function example() {
-    console.log('Hello');
-}
-</nui-code-editor>
-```
-
-### Listening for Changes
-
-```javascript
-const editor = document.querySelector('nui-code-editor');
-
-editor.addEventListener('nui-change', (e) => {
-    console.log('Code changed:', e.detail.value);
-    console.log('Language:', e.detail.lang);
-});
-```
-
-### Getting and Setting Values
-
-```javascript
-const editor = document.querySelector('nui-code-editor');
-
-// Get current code
-const code = editor.value;
-
-// Set new code
-editor.value = 'const x = 42;';
-```
-
-## Editor Features
-
-- **Auto-indent** - New lines inherit previous indentation
-- **Bracket matching** - Auto-closes brackets and quotes
-- **Tab handling** - Inserts spaces instead of changing focus
-- **Paste handling** - Intelligent paste for large code blocks
-
-## When to Use
-
-- Configuration file editing
-- Code snippet input
-- Simple scripting interfaces
-- Educational coding environments
-- Prototypes where IDE features aren't needed
-
-For full IDE capabilities (intellisense, debugging, multi-file), consider Monaco Editor or similar specialized solutions.
-</script>
-		</nui-markdown>
+		<nui-markdown src="../documentation/addons/code-editor.md"></nui-markdown>
 	</details>
 
     <header>

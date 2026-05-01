@@ -16,93 +16,9 @@
 }
 </script>
 
-<details class="collapsible-section collapsible-section--spaced">
+	<details class="collapsible-section collapsible-section--spaced">
 		<summary><strong>LLM Guide - nui-rich-text</strong></summary>
-		<nui-markdown id="llm-guide" data-component="nui-rich-text" class="llm-guide">
-<script type="text/markdown">
-# LLM Guide: nui-rich-text (Experimental)
-
-## Design Philosophy
-
-This component provides a lightweight WYSIWYG editing experience using native browser capabilities (`contenteditable` and `execCommand`). Rather than bundling a heavy editor like ProseMirror or CKEditor, it offers essential formatting tools with minimal overhead, making it suitable for simple content editing tasks.
-
-## How It Works
-
-The component builds a toolbar using NUI button components and manages a `contenteditable` region. It handles:
-
-- **Basic formatting** - Bold, italic, headings, lists
-- **Links** - Insert and edit hyperlinks
-- **Tables** - Simple table creation and editing
-- **Images** - Insert with extensible sourcing via events
-- **Code blocks** - Using `nui-code` integration
-
-The toolbar is auto-generated but can be customized. All editing operations use native browser commands for broad compatibility.
-
-## Usage Patterns
-
-### Basic Editor
-
-```html
-<nui-rich-text id="editor">
-    <h2>Welcome</h2>
-    <p>Start editing <strong>here</strong>.</p>
-</nui-rich-text>
-```
-
-### Custom Image Handling
-
-Intercept the image insertion to provide a custom picker:
-
-```javascript
-const editor = document.querySelector('nui-rich-text');
-
-editor.addEventListener('nui-image-request', (e) => {
-    e.preventDefault(); // Stop default prompt
-    
-    // Open your custom image picker
-    const url = await myImagePicker.open();
-    
-    // Insert the selected image
-    e.target.insertImage(url, 'Description');
-});
-```
-
-### Getting and Setting Content
-
-```javascript
-const editor = document.querySelector('nui-rich-text');
-
-// Get HTML content
-const html = editor.value;
-
-// Get Markdown content
-const markdown = editor.markdown;
-
-// Set HTML content
-editor.setValue('<p>New content</p>');
-
-// Set Markdown content
-editor.setMarkdown('# Hello\n\nParagraph');
-```
-
-### Listening for Changes
-
-```javascript
-editor.addEventListener('nui-change', (e) => {
-    console.log('Content changed:', e.detail.value);
-});
-```
-
-## When to Use
-
-- Simple content editing (comments, descriptions)
-- Admin interfaces needing basic formatting
-- Applications where heavy editors would be overkill
-- Prototypes and internal tools
-
-For complex document editing with collaborative features, consider dedicated editor libraries.
-</script>
-		</nui-markdown>
+		<nui-markdown src="../documentation/addons/rich-text.md"></nui-markdown>
 	</details>
 
     <header>

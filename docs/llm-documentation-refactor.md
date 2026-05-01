@@ -112,20 +112,20 @@ When a new AI session picks up a component to migrate, follow this exact sequenc
 - [x] progress
 - [x] select
 - [x] skip-links
-- [ ] slider
+- [x] slider
 - [x] sortable
-- [ ] table
+- [x] table
 - [x] tabs
-- [ ] tag-input
-- [ ] tooltip
+- [x] tag-input
+- [x] tooltip
 
 ## Phase 4: Addons Migration
-- [ ] app-window
-- [ ] code-editor
+- [x] app-window
+- [x] code-editor
 - [x] context-menu
-- [ ] lightbox
-- [ ] list
-- [ ] media-player
-- [ ] menu
-- [ ] rich-text
-- [ ] wizard
+- [x] lightbox
+- [x] list
+- [x] media-player
+- [x] menu
+- [x] rich-text
+- [x] wizard
