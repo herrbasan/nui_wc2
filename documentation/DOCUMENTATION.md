@@ -33,24 +33,35 @@ When the primary consumer or generator of code is an LLM, we can strip away the 
 
 **CRITICAL RULE FOR AI ASSISTANTS:** Do not guess component names, structures, imports, or CSS variables.
 
-The single machine-readable source of truth for all components is:
-👉 **`documentation/components.json`**
+The single machine-readable source of truth for the entire library is:
+?? **`documentation/components.json`**
 
-This registry contains everything you need to know to implement any NUI feature:
-- Component names, categories, and emitted events.
-- **`llmGuide` blocks:** Essential instructions embedded directly in the JSON that explain the design philosophy, exact DOM structure, trade-offs, and anti-patterns for each component. 
-- Required addons/imports for non-core features like the rich-text editor or virtualized lists.
+This registry acts as the master manifest, providing:
+- Component names, categories (components vs. addons), and emitted events.
+- Required JavaScript module imports for non-core features (if `imports` is not `null`).
+- **`docPath`:** The exact file path to the comprehensive Markdown API guide for the component (e.g., `documentation/components/accordion.md`).
+- **`demoPath`:** The exact file path to the interactive HTML demo snippet (e.g., `Playground/pages/components/accordion.html`).
 
-**Always read `documentation/components.json` before attempting to scaffold or debug a component.**
+**Always locate a component in `documentation/components.json` first, then read its corresponding `docPath` file before attempting to scaffold or debug it.**
 
 ---
 
-## 4. The Playground: Living Documentation
+## 4. Deep Dive Documentation
 
-The `Playground/` directory serves as both an interactive demo for human users and a rich context library for LLMs.
+The `/documentation/` folder contains pure, LLM-optimized Markdown files detailing the exact usage, edge cases, and API contracts for everything in NUI.
+
+- **`/documentation/guides/`**: Start here for meta-concepts. Read `architecture-patterns.md`, `getting-started.md`, `accessibility.md`, `api-structure.md`, etc., to understand the philosophical and structural rules of the toolkit.
+- **`/documentation/components/`**: The core, dependency-free UI components (buttons, inputs, dialogs, layouts).
+- **`/documentation/addons/`**: More complex, optional modules that must be explicitly loaded (rich-text editors, code editors, virtulized lists).
+
+---
+
+## 5. The Playground: Execution Environment
+
+The `Playground/` directory serves as an interactive sandbox.
 
 - **Fragment-Based SPA:** The playground demonstrates NUI's built-in application router (`nui.setupRouter()`). It dynamically fetches HTML fragments from `Playground/pages/**` and caches them.
-- **Documentation by Example:** Every component—from `<nui-layout>` to `<nui-dialog>`—has a dedicated page containing live, interactive examples.
-- **LLM-Optimized:** The code inside the Playground is structured for queryability. If you need to understand intricate architectural patterns (like setup, layout modes, or SPA wiring), reviewing the HTML inside `Playground/pages/documentation/` and `Playground/pages/components/` will provide the exact implementation patterns.
+- If you need to observe how a component's `<script type="nui/page">` executes in a real browser environment, check the HTML files within `Playground/pages/`.
+- **Note:** The `Playground` HTML files use `<nui-markdown src="...">` to render the guides for humans. The actual documentation content lives exclusively in the `documentation/**/*.md` files. 
 
-*(Note: If you are scaffolding a new application, a ready-made structure is provided in the `nui-boilerplate/` directory, which you can use as a starting point.)*
+*(If you are scaffolding a new application, a ready-made structure is provided in the `nui-boilerplate/` directory.)*

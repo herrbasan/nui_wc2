@@ -86,10 +86,10 @@ When a new AI session picks up a component to migrate, follow this exact sequenc
 ## Phase 2: Meta-Docs Migration
 *(General concepts that apply to the whole library)*
 - [x] Getting Started (`documentation/guides/getting-started.md`)
-- [ ] Architecture / DOM First (`documentation/guides/architecture.md`)
-- [ ] Accessibility (`documentation/guides/accessibility.md`)
-- [ ] Routing & SPA (`documentation/guides/routing.md`)
-- [ ] Utilities & Styling (`documentation/guides/styling.md`)
+- [x] Architecture / DOM First (`documentation/guides/architecture-patterns.md`)
+- [x] Accessibility (`documentation/guides/accessibility.md`)
+- [x] Routing & SPA (`documentation/guides/api-structure.md` and `declarative-actions.md`)
+- [x] Utilities & Styling (`documentation/guides/utilities.md`)
 
 ## Phase 3: Components Migration
 *(Track progress here across sessions)*
