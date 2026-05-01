@@ -46,17 +46,38 @@ This registry acts as the master manifest, providing:
 
 ---
 
-## 4. Deep Dive Documentation
+## 4. Suggested Reading Order
+
+If you are new to NUI, read in this order:
+
+1. **`guides/introduction.md`** — What NUI is, what it isn't, and the core design philosophy (browser-native, Light DOM, progressive enhancement).
+2. **`guides/getting-started.md`** — Minimal setup, loading sequence, layout modes, and the two development patterns (declarative vs. data-driven).
+3. **`guides/architecture-patterns.md`** — The router, fragment-based SPA, the `show/hide` lifecycle, and the `nui-page` layout engine. **Critical** if you are building or modifying Playground demo pages.
+4. **`guides/declarative-actions.md`** — The `data-action` event delegation pattern. Read this before writing interactive demos.
+5. **`guides/api-structure.md`** — The three-tier API (`nui.*`, `nui.components.*`, `nui.util.*`) and component lifecycle.
+6. **`guides/accessibility.md`** — DOM-first a11y, auto-enhancement, keyboard patterns, and the `a11y.announce` utility.
+7. **`guides/utilities.md`** — Helper functions (`createElement`, `storage`, `enableDrag`, etc.).
+8. **`components.json`** — The machine-readable registry. Use it to find the `docPath` for any specific component.
+9. **`components/*.md` or `addons/*.md`** — Component-specific API contracts. Read these after the guides, on demand.
+
+**Quick decision tree:**
+- *"How do I set up a new project?"* → `getting-started.md`
+- *"How do I build a demo page?"* → `architecture-patterns.md`
+- *"How do I wire up button clicks?"* → `declarative-actions.md`
+- *"What component should I use for X?"* → `components.json`
+- *"What events does component Y emit?"* → `components.json` → `components/Y.md`
+
+## 5. Deep Dive Documentation
 
 The `/documentation/` folder contains pure, LLM-optimized Markdown files detailing the exact usage, edge cases, and API contracts for everything in NUI.
 
-- **`/documentation/guides/`**: Start here for meta-concepts. Read `architecture-patterns.md`, `getting-started.md`, `accessibility.md`, `api-structure.md`, etc., to understand the philosophical and structural rules of the toolkit.
+- **`/documentation/guides/`**: Meta-concepts and architectural patterns. Start here before diving into individual components.
 - **`/documentation/components/`**: The core, dependency-free UI components (buttons, inputs, dialogs, layouts).
-- **`/documentation/addons/`**: More complex, optional modules that must be explicitly loaded (rich-text editors, code editors, virtulized lists).
+- **`/documentation/addons/`**: More complex, optional modules that must be explicitly loaded (rich-text editors, code editors, virtualized lists).
 
 ---
 
-## 5. The Playground: Execution Environment
+## 6. The Playground: Execution Environment
 
 The `Playground/` directory serves as an interactive sandbox.
 

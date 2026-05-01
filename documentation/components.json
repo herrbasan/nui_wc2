@@ -14,7 +14,7 @@
 			"imports": null,
 			"page": "components/accordion",
 			"demoPath": "Playground/pages/components/accordion.html",
-			"docPath": "Playground/pages/documentation/components/accordion.md"
+			"docPath": "documentation/components/accordion.md"
 		},
 		{
 			"@context": "nui",
@@ -27,7 +27,7 @@
 			"imports": null,
 			"page": "components/app-header",
 			"demoPath": "Playground/pages/components/app-header.html",
-			"docPath": "Playground/pages/documentation/components/app-header.md"
+			"docPath": "documentation/components/app-header.md"
 		},
 		{
 			"@context": "nui",
@@ -40,7 +40,7 @@
 			"imports": null,
 			"page": "components/app-layout",
 			"demoPath": "Playground/pages/components/app-layout.html",
-			"docPath": "Playground/pages/documentation/components/app-layout.md"
+			"docPath": "documentation/components/app-layout.md"
 		},
 		{
 			"@context": "nui",
@@ -53,7 +53,7 @@
 			"imports": null,
 			"page": "components/badge",
 			"demoPath": "Playground/pages/components/badge.html",
-			"docPath": "Playground/pages/documentation/components/badge.md"
+			"docPath": "documentation/components/badge.md"
 		},
 		{
 			"@context": "nui",
@@ -69,7 +69,7 @@
 			"imports": null,
 			"page": "components/banner",
 			"demoPath": "Playground/pages/components/banner.html",
-			"docPath": "Playground/pages/documentation/components/banner.md"
+			"docPath": "documentation/components/banner.md"
 		},
 		{
 			"@context": "nui",
@@ -84,7 +84,7 @@
 			"imports": null,
 			"page": "components/button",
 			"demoPath": "Playground/pages/components/button.html",
-			"docPath": "Playground/pages/documentation/components/button.md"
+			"docPath": "documentation/components/button.md"
 		},
 		{
 			"@context": "nui",
@@ -97,7 +97,7 @@
 			"imports": null,
 			"page": "components/card",
 			"demoPath": "Playground/pages/components/card.html",
-			"docPath": "Playground/pages/documentation/components/card.md"
+			"docPath": "documentation/components/card.md"
 		},
 		{
 			"@context": "nui",
@@ -110,7 +110,7 @@
 			"imports": null,
 			"page": "components/code",
 			"demoPath": "Playground/pages/components/code.html",
-			"docPath": "Playground/pages/documentation/components/code.md"
+			"docPath": "documentation/components/code.md"
 		},
 		{
 			"@context": "nui",
@@ -127,7 +127,7 @@
 			"imports": null,
 			"page": "components/dialog",
 			"demoPath": "Playground/pages/components/dialog.html",
-			"docPath": "Playground/pages/documentation/components/dialog.md"
+			"docPath": "documentation/components/dialog.md"
 		},
 		{
 			"@context": "nui",
@@ -142,7 +142,7 @@
 			"imports": null,
 			"page": "components/dropzone",
 			"demoPath": "Playground/pages/components/dropzone.html",
-			"docPath": "Playground/pages/documentation/components/dropzone.md"
+			"docPath": "documentation/components/dropzone.md"
 		},
 		{
 			"@context": "nui",
@@ -155,7 +155,7 @@
 			"imports": null,
 			"page": "components/icon",
 			"demoPath": "Playground/pages/components/icon.html",
-			"docPath": "Playground/pages/documentation/components/icon.md"
+			"docPath": "documentation/components/icon.md"
 		},
 		{
 			"@context": "nui",
@@ -172,7 +172,7 @@
 			"imports": null,
 			"page": "components/inputs",
 			"demoPath": "Playground/pages/components/inputs.html",
-			"docPath": "Playground/pages/documentation/components/input.md"
+			"docPath": "documentation/components/input.md"
 		},
 		{
 			"@context": "nui",
@@ -185,7 +185,7 @@
 			"imports": null,
 			"page": "components/layout",
 			"demoPath": "Playground/pages/components/layout.html",
-			"docPath": "Playground/pages/documentation/components/layout.md"
+			"docPath": "documentation/components/layout.md"
 		},
 		{
 			"@context": "nui",
@@ -200,7 +200,7 @@
 			"imports": null,
 			"page": "components/link-list",
 			"demoPath": "Playground/pages/components/link-list.html",
-			"docPath": "Playground/pages/documentation/components/link-list.md"
+			"docPath": "documentation/components/link-list.md"
 		},
 		{
 			"@context": "nui",
@@ -213,7 +213,7 @@
 			"imports": null,
 			"page": "components/markdown",
 			"demoPath": "Playground/pages/components/markdown.html",
-			"docPath": "Playground/pages/documentation/components/markdown.md"
+			"docPath": "documentation/components/markdown.md"
 		},
 		{
 			"@context": "nui",
@@ -230,7 +230,7 @@
 			"imports": null,
 			"page": "components/overlay",
 			"demoPath": "Playground/pages/components/overlay.html",
-			"docPath": "Playground/pages/documentation/components/overlay.md"
+			"docPath": "documentation/components/overlay.md"
 		},
 		{
 			"@context": "nui",
@@ -243,7 +243,7 @@
 			"imports": null,
 			"page": "components/progress",
 			"demoPath": "Playground/pages/components/progress.html",
-			"docPath": "Playground/pages/documentation/components/progress.md"
+			"docPath": "documentation/components/progress.md"
 		},
 		{
 			"@context": "nui",
@@ -267,7 +267,7 @@
 			"imports": null,
 			"page": "components/select",
 			"demoPath": "Playground/pages/components/select.html",
-			"docPath": "Playground/pages/documentation/components/select.md"
+			"docPath": "documentation/components/select.md"
 		},
 		{
 			"@context": "nui",
@@ -280,7 +280,7 @@
 			"imports": null,
 			"page": "components/skip-links",
 			"demoPath": "Playground/pages/components/skip-links.html",
-			"docPath": "Playground/pages/documentation/components/skip-links.md"
+			"docPath": "documentation/components/skip-links.md"
 		},
 		{
 			"@context": "nui",
@@ -288,14 +288,12 @@
 			"name": "nui-slider",
 			"group": "forms",
 			"description": "Enhanced range input wrapping native <input type='range'> with custom visual styling and drag interaction.",
-			"events": [
-				"nui-change"
-			],
+			"events": [],
 			"innerElement": "<input type=\"range\">",
 			"imports": null,
 			"page": "components/slider",
 			"demoPath": "Playground/pages/components/slider.html",
-			"docPath": "Playground/pages/documentation/components/slider.md"
+			"docPath": "documentation/components/slider.md"
 		},
 		{
 			"@context": "nui",
@@ -304,14 +302,13 @@
 			"group": "interaction",
 			"description": "Drag-and-drop reordering with FLIP animations, touch/mouse/keyboard support, and nui-sortable-item children.",
 			"events": [
-				"nui-sortable-reorder",
-				"nui-sortable-item-delete"
+				"nui-sortable-change"
 			],
 			"innerElement": null,
 			"imports": null,
 			"page": "components/sortable",
 			"demoPath": "Playground/pages/components/sortable.html",
-			"docPath": "Playground/pages/documentation/components/sortable.md"
+			"docPath": "documentation/components/sortable.md"
 		},
 		{
 			"@context": "nui",
@@ -324,7 +321,7 @@
 			"imports": null,
 			"page": "components/table",
 			"demoPath": "Playground/pages/components/table.html",
-			"docPath": "Playground/pages/documentation/components/table.md"
+			"docPath": "documentation/components/table.md"
 		},
 		{
 			"@context": "nui",
@@ -339,7 +336,7 @@
 			"imports": null,
 			"page": "components/tabs",
 			"demoPath": "Playground/pages/components/tabs.html",
-			"docPath": "Playground/pages/documentation/components/tabs.md"
+			"docPath": "documentation/components/tabs.md"
 		},
 		{
 			"@context": "nui",
@@ -355,7 +352,7 @@
 			"imports": null,
 			"page": "components/tag-input",
 			"demoPath": "Playground/pages/components/tag-input.html",
-			"docPath": "Playground/pages/documentation/components/tag-input.md"
+			"docPath": "documentation/components/tag-input.md"
 		},
 		{
 			"@context": "nui",
@@ -368,7 +365,7 @@
 			"imports": null,
 			"page": "components/tooltip",
 			"demoPath": "Playground/pages/components/tooltip.html",
-			"docPath": "Playground/pages/documentation/components/tooltip.md"
+			"docPath": "documentation/components/tooltip.md"
 		}
 	],
 	"addons": [
@@ -385,7 +382,7 @@
 			},
 			"page": "addons/app-window",
 			"demoPath": "Playground/pages/addons/app-window.html",
-			"docPath": "Playground/pages/documentation/addons/app-window.md"
+			"docPath": "documentation/addons/app-window.md"
 		},
 		{
 			"@context": "nui",
@@ -403,7 +400,7 @@
 			},
 			"page": "addons/code-editor",
 			"demoPath": "Playground/pages/addons/code-editor.html",
-			"docPath": "Playground/pages/documentation/addons/code-editor.md"
+			"docPath": "documentation/addons/code-editor.md"
 		},
 		{
 			"@context": "nui",
@@ -419,7 +416,7 @@
 			},
 			"page": "addons/context-menu",
 			"demoPath": "Playground/pages/addons/context-menu.html",
-			"docPath": "Playground/pages/documentation/addons/context-menu.md"
+			"docPath": "documentation/addons/context-menu.md"
 		},
 		{
 			"@context": "nui",
@@ -435,7 +432,7 @@
 			},
 			"page": "addons/lightbox",
 			"demoPath": "Playground/pages/addons/lightbox.html",
-			"docPath": "Playground/pages/documentation/addons/lightbox.md"
+			"docPath": "documentation/addons/lightbox.md"
 		},
 		{
 			"@context": "nui",
@@ -455,7 +452,7 @@
 			},
 			"page": "addons/list",
 			"demoPath": "Playground/pages/addons/list.html",
-			"docPath": "Playground/pages/documentation/addons/list.md"
+			"docPath": "documentation/addons/list.md"
 		},
 		{
 			"@context": "nui",
@@ -471,7 +468,7 @@
 			},
 			"page": "addons/media-player",
 			"demoPath": "Playground/pages/addons/media-player.html",
-			"docPath": "Playground/pages/documentation/addons/media-player.md"
+			"docPath": "documentation/addons/media-player.md"
 		},
 		{
 			"@context": "nui",
@@ -487,7 +484,7 @@
 			},
 			"page": "addons/menu",
 			"demoPath": "Playground/pages/addons/menu.html",
-			"docPath": "Playground/pages/documentation/addons/menu.md"
+			"docPath": "documentation/addons/menu.md"
 		},
 		{
 			"@context": "nui",
@@ -506,7 +503,7 @@
 			},
 			"page": "addons/rich-text",
 			"demoPath": "Playground/pages/addons/rich-text.html",
-			"docPath": "Playground/pages/documentation/addons/rich-text.md"
+			"docPath": "documentation/addons/rich-text.md"
 		},
 		{
 			"@context": "nui",
@@ -528,7 +525,7 @@
 			},
 			"page": "addons/wizard",
 			"demoPath": "Playground/pages/addons/wizard.html",
-			"docPath": "Playground/pages/documentation/addons/wizard.md"
+			"docPath": "documentation/addons/wizard.md"
 		}
 	],
 	"reference": [
@@ -588,7 +585,7 @@
 			"name": "getting-started",
 			"group": "documentation",
 			"description": "Setup, layout modes, SPA wiring, and the base shell structure.",
-			"docPath": "Playground/pages/documentation/guides/getting-started.md",
+			"docPath": "documentation/guides/getting-started.md",
 			"page": "documentation/getting-started",
 			"llmGuide": null
 		},
@@ -944,20 +941,13 @@
 		},
 		{
 			"component": "nui-slider",
-			"events": [
-				{
-					"name": "nui-change"
-				}
-			]
+			"events": []
 		},
 		{
 			"component": "nui-sortable",
 			"events": [
 				{
-					"name": "nui-sortable-reorder"
-				},
-				{
-					"name": "nui-sortable-item-delete"
+					"name": "nui-sortable-change"
 				}
 			]
 		},

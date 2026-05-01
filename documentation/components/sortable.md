@@ -87,6 +87,12 @@ sortable.clear();
 | Event | Detail Payload | Description |
 |-------|----------------|-------------|
 | `nui-sortable-change` | `{ order: string[] }` | Fired when a drag-and-drop operation concludes and the order has changed. `order` is an array of `data-id` values matching the new DOM sequence. |
-| `nui-sortable-delete` | `{ id: string }` | Fired when an item is removed (typically via `data-action="sortable-item-delete"`). |
+
+## Action Delegates
+
+| Action | Description |
+|--------|-------------|
+| `sortable-item-delete` | When placed on a button inside a `<nui-sortable-item>`, removes that item from the list with FLIP animation. |
+
 ## When to Use
 Use sortable when users need to prioritize, organize, or sequence items. Common scenarios include task prioritization, image galleries, playlist ordering, or any interface where item sequence carries meaning. The grid layout works well for dashboard widgets or photo arrangements.

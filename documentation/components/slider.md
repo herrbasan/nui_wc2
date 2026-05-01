@@ -6,7 +6,7 @@ The slider component enhances the native `<input type="range">` with custom visu
 ## How It Works
 The component wraps a native range input and automatically creates visual track, fill, and thumb elements. It uses `nui.util.enableDrag` internally to provide smooth touch and mouse interaction with a larger hit area than the visual appearance suggests.
 
-All range attributes (`min`, `max`, `step`, `value`, `disabled`) live on the inner native input, where they belong. Events bubble naturally from the input through the wrapper.
+All range attributes (`min`, `max`, `step`, `value`, `disabled`) live on the inner native input, where they belong. Native `input` and `change` events bubble naturally from the inner input through the wrapper.
 
 ## Usage Patterns
 
@@ -79,8 +79,15 @@ document.body.appendChild(slider);
 | Method | Parameters | Return Type | Description |
 |--------|------------|-------------|-------------|
 | `setValue(val)` | `number \| string` | `void` | Programmatically sets the value of the internal native input and recalculates the visual track and thumb position immediately. |
+| `getValue()` | none | `number` | Returns the current numeric value of the internal native input. |
 
 ## Events
-*(This component relies completely on native `input` and `change` events bubbling up from the inner `<input type="range">`)*
+This component does **not** dispatch custom NUI events. It relies completely on native `input` and `change` events bubbling up from the inner `<input type="range">`:
+
+| Event | Description |
+|-------|-------------|
+| `input` | Native event fired continuously while the slider thumb is being dragged. |
+| `change` | Native event fired when the slider thumb is released and the value is finalized. |
+
 ## When to Use
 Use the slider when you need numeric input within a bounded range, especially for settings like volume, opacity, or any value where the relative position matters visually. The custom styling provides better visual integration with the NUI theme while maintaining full native input behavior.

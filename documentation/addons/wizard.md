@@ -28,7 +28,9 @@ The `mode` attribute on `<nui-wizard>` determines constraints:
 
 ### Attributes
 
-None
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `mode` | string | `"required"` | `"required"` enforces sequential validation; `"free"` allows unconstrained navigation. |
 
 ### Class Variants
 
@@ -70,7 +72,8 @@ step.getStatus();  // returns 'valid', 'invalid', 'warning', 'pending', or ''
 ```
 
 ### Validation Strategies
-### Strategy 1: Native HTML5 Validation (Default)
+
+#### Strategy 1: Native HTML5 Validation (Default)
 Works automatically in `mode="required"`. The wizard calls `form.reportValidity()` on any `<form>` inside the current step before advancing.
 
 ```html
@@ -82,7 +85,7 @@ Works automatically in `mode="required"`. The wizard calls `form.reportValidity(
 </nui-wizard-step>
 ```
 
-### Strategy 2: Custom Sync Validation via `before-next`
+#### Strategy 2: Custom Sync Validation via `before-next`
 Listen to `nui-wizard-before-next`, run your logic, and call `e.preventDefault()` to block or let it pass:
 
 ```js
@@ -97,7 +100,7 @@ wizard.addEventListener('nui-wizard-before-next', (e) => {
 
 If you handle validation yourself, set `e.detail.handled = true` to skip the built-in HTML5 form check.
 
-### Strategy 3: Async Validation (Promise)
+#### Strategy 3: Async Validation (Promise)
 Assign a Promise to `e.detail.promise`. The wizard auto-manages busy state:
 
 ```js
@@ -113,7 +116,7 @@ wizard.addEventListener('nui-wizard-before-next', (e) => {
 - Navigation advances on success; returns `false` from the handler to block
 - On rejection, the wizard dispatches `nui-wizard-validation-error` and stays on the current step
 
-### Strategy 4: Manual Status Control
+#### Strategy 4: Manual Status Control
 Set step status directly whenever it makes sense for your UX:
 
 ```js
@@ -128,11 +131,14 @@ input.addEventListener('blur', () => {
 ```
 
 ### Wizard-Level Validation Helpers
-```js
-wizard.validateStep(0);       // validate a specific step (runs form.reportValidity + sets status)
-wizard.validateAllSteps();    // validate all steps, returns true/false
-wizard.reset();               // clear all statuses and return to step 0
-```
+
+| Method | Parameters | Return Type | Description |
+|--------|------------|-------------|-------------|
+| `validateStep(index)` | `number` | `boolean` | Validate a specific step (runs `form.reportValidity()` + sets status). |
+| `validateAllSteps()` | none | `boolean` | Validate all steps, returns `true` if all valid. |
+| `reset()` | none | `void` | Clear all statuses and return to step 0. |
+| `goTo(index)` | `number` | `void` | Navigate programmatically to a specific step index. |
+| `setBusy(isBusy)` | `boolean` | `void` | Enable/disable wizard controls (used during async operations). |
 
 ### Advanced Logic: Intercepting Navigation
 Users can intercept the next action to perform async checks (like saving step data to a server) using the `nui-wizard-before-next` event, which is cancelable (`e.preventDefault()`).
@@ -150,14 +156,23 @@ wizard.addEventListener('nui-wizard-before-next', async (e) => {
 ### Dialog Embedding
 Wizards can operate inside page flow, but are often placed inside `<nui-dialog mode="page">`. In such cases, listen for `nui-wizard-cancel` and `nui-wizard-complete` events to close the dialog container.
 
-### DOM Methods
+## Events
 
-None
+| Event | Type | Detail | Description |
+|-------|------|--------|-------------|
+| `nui-wizard-before-next` | `CustomEvent` | `{ from: number, to: number, handled: boolean, promise: Promise \| null }` | Fired before navigating to the next step. Cancelable (`e.preventDefault()`). Set `e.detail.promise` for async validation. Set `e.detail.handled = true` to skip built-in HTML5 validation. |
+| `nui-wizard-step-change` | `CustomEvent` | `{ current: number }` | Fired after the active step changes. |
+| `nui-wizard-cancel` | `CustomEvent` | none | Fired when the user clicks Cancel. |
+| `nui-wizard-complete` | `CustomEvent` | none | Fired when the user clicks Complete on the final step. Cancelable. |
+| `nui-wizard-validation-error` | `CustomEvent` | `{ step: number, message: string }` | Fired when async validation (via `e.detail.promise`) rejects. |
 
-### Action Delegates
+## When to Use
 
-None
+Use `nui-wizard` when you need to break a complex process into digestible steps:
+- Multi-step forms (checkout, onboarding, configuration)
+- Setup wizards with validation at each stage
+- Processes where step completion status should be visible
 
-### Events
-
-None
+Avoid for:
+- Simple single-page forms (overkill)
+- Content that should be skippable or non-linear without clear progression
