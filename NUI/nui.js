@@ -5527,6 +5527,9 @@ export const nui = {
 		const savedTheme = localStorage.getItem('nui-theme');
 		if (savedTheme) {
 			document.documentElement.style.colorScheme = savedTheme;
+		} else {
+			const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+			document.documentElement.style.colorScheme = prefersDark ? 'dark' : 'light';
 		}
 
 		const baseValue = getComputedStyle(document.documentElement)
