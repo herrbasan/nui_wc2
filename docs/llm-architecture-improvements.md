@@ -428,62 +428,17 @@ Console output:
 
 ---
 
-## Proposal 5: Replace `new Function()` CSP Footgun (P1)
+## Proposal 5: Replace `new Function()` CSP Footgun — **Dropped**
 
-### Current State
-Page scripts (`<script type="nui/page">`) execute via `new Function()`, which requires `'unsafe-eval'` in Content Security Policy. Without it, scripts silently fail. The May 19 update added a `try/catch` warning, but the fundamental problem remains.
+### Rationale
 
-### Proposal
-Replace with `Blob` URL approach (works with strict CSP):
+The `new Function()` → Blob URL swap would remove the `'unsafe-eval'` CSP requirement for page scripts. However:
+- No NUI user has hit a CSP issue in practice
+- The Playground has no CSP; the boilerplate already includes `'unsafe-eval'`
+- The fix has an async timing change that could break existing page scripts
+- CSP matrix testing across browsers is required before merging
 
-```javascript
-function executePageScript(wrapper, params) {
-  const scriptEl = wrapper.el('script[type="nui/page"]');
-  if (!scriptEl) return;
-
-  const scriptContent = scriptEl.textContent;
-  scriptEl.remove();
-
-  // Validation
-  if (!scriptContent.includes('function init(')) {
-    console.warn('[NUI] Page script missing init(element, params, nui) function.');
-  }
-
-  // Wrap in module and execute via Blob URL (no unsafe-eval needed)
-  const wrapped = `
-    export function __nuiPageInit(element, params, nui) {
-      ${scriptContent}
-      if (typeof init === "function") init(element, params, nui);
-    }
-  `;
-
-  const blob = new Blob([wrapped], { type: 'application/javascript' });
-  const url = URL.createObjectURL(blob);
-
-  import(url)
-    .then(module => {
-      module.__nuiPageInit(wrapper, params, nui);
-      URL.revokeObjectURL(url);
-    })
-    .catch(err => {
-      console.error('[NUI] Page script failed:', err);
-    });
-}
-```
-
-This works with `script-src 'self'` — no `'unsafe-eval'` needed. The `import()` dynamic module import is already allowed by the existing `nui-code` syntax highlight loader.
-
-**⚠️ CSP caveat:** Some strict CSP policies may still require `blob:` in `script-src` for `import(blobUrl)`. This needs verification across Chrome, Firefox, and Safari before adopting as the default. The claim "works with `script-src 'self'` only" must be tested in a CSP matrix.
-
-### Trade-off
-Slightly more complex. Need to handle module caching (Blob URLs should be revoked after use). Edge case: the wrapped code can't use top-level `return` statements (but page scripts shouldn't anyway). Another edge case: `this` inside the wrapped code changes because it runs as a module — any page scripts relying on `this === window` would break.
-
-### Pre-Merge Checklist
-Before merging the Blob URL change:
-1. `grep` all `<script type="nui/page">` blocks for `return` statements
-2. `grep` all `<script type="nui/page">` blocks for `this.` usage that might rely on `this === window`
-3. `URL.revokeObjectURL(url)` must happen AFTER `import()` completes (inside `.then()`, not before)
-4. Test against the Playground's existing page scripts (components, addons, documentation pages)
+**Decision:** Dropped in favor of addressing the real page-script usability problem — see [`docs/pages-with-logic.md`](pages-with-logic.md).
 
 ---
 
@@ -522,7 +477,7 @@ The `nui.ready()` Promise (added May 19) already solves the race condition. Ever
 | #2 Auto-Wrap Tier 1 | **P0** | **P0** | **P0** | **P0** | **P0** | **P0** | ✅ Unanimous P0 |
 | #3 Interaction boundary | Doc fix | Doc fix | Already done | Already done | Doc fix | Doc fix | ✅ Done |
 | #4 Addon auto-load | **P1** | **P1** | **P1** | **P1** | **P1** | **P1** | ✅ Unanimous P1 |
-| #5 Blob URL CSP | **P1** | **P1** | **P1** | **P1** | **P1** | **P1** ⚠️ | ⚠️ P1 with CSP caveat |
+| #5 Blob URL CSP | **P1** | **P1** | **P1** | **P1** | **P1** | **P1** ⚠️ | ❌ Dropped — see docs/pages-with-logic.md |
 | #6 Introspection API | **P2** | **P3** | Skip | Skip | — | Skip | ✅ Won't build |
 | #7 Explicit init | **P2** | Skip | Skip | Skip | — | Skip | ✅ Won't build |
 
@@ -555,7 +510,7 @@ GPT flagged an inconsistency: some docs reference 16 handlers, others 17. Resolu
 
 ### Unified Build Order
 
-1. **Debug addon** (Proposal 1) — with structured `fix` output, `data-action` selector validator, throttled dirty-region observer. Foundation for all other validation.
-2. **Auto-wrap Tier 1** (Proposal 2) — with `config.strict` production gate, always-log policy, `nui-select` flat-case-only handling.
-3. **CSP Blob URL** (Proposal 5) — after CSP compatibility matrix testing (Chrome, Firefox, Safari), with `blob:` caveat documented.
-4. **Addon auto-load** (Proposal 4) — dev-only, `_loading` Set guard, 8-entry hardcoded map.
+1. ✅ **Debug addon** (Proposal 1) — with structured `fix` output, `data-action` selector validator, throttled dirty-region observer.
+2. ✅ **Auto-wrap Tier 1** (Proposal 2) — with `config.strict` production gate, always-log policy, `nui-select` flat-case-only handling.
+3. ✅ **Addon auto-load** (Proposal 4) — dev-only, `_loading` Set guard, 8-entry hardcoded map.
+4. 🔮 **Pages with logic** — see [`docs/pages-with-logic.md`](pages-with-logic.md) for analysis of the `<script type="nui/page">` confusion problem and proposed solutions. Not yet implemented.
