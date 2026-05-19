@@ -419,7 +419,35 @@ function upgradeAccessibility(element) {
 // ################################# COMPONENT REGISTRATION
 
 registerComponent('nui-button', (element) => {
-	const button = element.el('button');
+	let button = element.el('button');
+
+	// Auto-wrap: create inner <button> if missing (Proposal 2 Tier 1)
+	if (!button && config.debug !== false) {
+		button = document.createElement('button');
+		button.type = 'button';
+
+		// Precedence: explicit <button> > label attribute > textContent
+		const label = element.getAttribute('label');
+		if (element.children.length === 0 && label) {
+			button.textContent = label;
+		} else {
+			// Move existing children into the button
+			while (element.firstChild) {
+				button.appendChild(element.firstChild);
+			}
+		}
+
+		element.appendChild(button);
+
+		// Copy variant-dependent attributes that might have been set on host
+		const variant = element.getAttribute('variant');
+		if (variant === 'icon' && !element.classList.contains('icon-only')) {
+			element.classList.add('icon-only');
+		}
+
+		console.info(`[NUI] ℹ <nui-button> auto-created inner <button>. For zero-JS fallback, use:\n  <nui-button><button type="button">${button.textContent.trim() || '...'}</button></nui-button>`);
+	}
+
 	if (!button) return;
 
 	upgradeAccessibility(element);
@@ -1878,6 +1906,10 @@ registerComponent('nui-dialog', (element) => {
 		}
 		
 		element.appendChild(dialog);
+
+		if (config.debug !== false) {
+			console.info(`[NUI] ℹ <nui-dialog> auto-created inner <dialog>. For zero-JS fallback, use:\n  <nui-dialog><dialog>...</dialog></nui-dialog>`);
+		}
 	}
 
 	setupDialogBehavior(element, dialog, 'nui-dialog');
@@ -1917,6 +1949,19 @@ registerComponent('nui-tabs', (element) => {
 		tabList = [...element.children].find(c => c.el('button, a'));
 		tabList?.setAttribute('role', 'tablist');
 	}
+
+	// Auto-wrap: create <nav> if tabs has bare <button> children (Proposal 2 Tier 1)
+	if (!tabList && config.debug !== false) {
+		const bareButtons = [...element.children].filter(c => c.tagName === 'BUTTON' || c.tagName === 'A');
+		if (bareButtons.length > 0) {
+			tabList = document.createElement('nav');
+			tabList.setAttribute('role', 'tablist');
+			bareButtons.forEach(btn => tabList.appendChild(btn));
+			element.insertBefore(tabList, element.firstChild);
+			console.info('[NUI] ℹ <nui-tabs> auto-created <nav role="tablist"> for bare buttons. For zero-JS fallback, use:\n  <nui-tabs><nav><button>Tab</button></nav><section>Content</section></nui-tabs>');
+		}
+	}
+
 	if (!tabList) return;
 
 	const tabs = tabList.els('button, a');
@@ -2635,7 +2680,20 @@ registerComponent('nui-input-group', (element) => {
 // ################################# nui-input COMPONENT
 
 registerComponent('nui-input', (element) => {
-	const input = element.el('input');
+	let input = element.el('input');
+	if (!input && element.el('textarea')) return; // nui-textarea handles textarea
+
+	// Auto-wrap: create inner <input> if missing (Proposal 2 Tier 1)
+	if (!input && config.debug !== false) {
+		input = document.createElement('input');
+		const type = element.getAttribute('type') || 'text';
+		input.type = type;
+		const placeholder = element.getAttribute('placeholder');
+		if (placeholder) input.placeholder = placeholder;
+		element.appendChild(input);
+		console.info(`[NUI] ℹ <nui-input> auto-created inner <input type="${type}">. For zero-JS fallback, use:\n  <nui-input><input type="${type}"${placeholder ? ` placeholder="${placeholder}"` : ''}></nui-input>`);
+	}
+
 	if (!input) return;
 
 	// Pass through type attribute from nui-input to internal input
@@ -2648,7 +2706,22 @@ registerComponent('nui-input', (element) => {
 // ################################# nui-textarea COMPONENT
 
 registerComponent('nui-textarea', (element) => {
-	const textarea = element.el('textarea');
+	let textarea = element.el('textarea');
+
+	// Auto-wrap: create inner <textarea> if missing (Proposal 2 Tier 1)
+	if (!textarea && config.debug !== false) {
+		textarea = document.createElement('textarea');
+		const placeholder = element.getAttribute('placeholder');
+		if (placeholder) textarea.placeholder = placeholder;
+		// Move text content into textarea
+		if (element.textContent.trim()) {
+			textarea.textContent = element.textContent.trim();
+			element.textContent = '';
+		}
+		element.appendChild(textarea);
+		console.info(`[NUI] ℹ <nui-textarea> auto-created inner <textarea>. For zero-JS fallback, use:\n  <nui-textarea><textarea${placeholder ? ` placeholder="${placeholder}"` : ''}>${textarea.value}</textarea></nui-textarea>`);
+	}
+
 	if (!textarea) return;
 
 	const autoResize = element.hasAttribute('auto-resize');
@@ -2908,7 +2981,28 @@ const getMobileSelectModal = () => {
 };
 
 registerComponent('nui-select', (element) => {
-	const select = element.el('select');
+	let select = element.el('select');
+
+	// Auto-wrap: create inner <select> if missing (Proposal 2 Tier 1)
+	// Only handles flat <option> children — warns for complex cases
+	if (!select && config.debug !== false) {
+		const options = element.querySelectorAll(':scope > option');
+		const optgroups = element.querySelectorAll(':scope > optgroup');
+
+		if (optgroups.length > 0) {
+			console.warn('[NUI] <nui-select> has <optgroup> children but no inner <select>. Auto-wrap only handles flat <option> children. Add <select> explicitly.');
+		} else if (options.length > 0) {
+			select = document.createElement('select');
+			const isMulti = element.hasAttribute('multiple') || element.querySelector('option[selected]');
+			if (isMulti) select.multiple = true;
+			while (element.firstChild) {
+				select.appendChild(element.firstChild);
+			}
+			element.appendChild(select);
+			console.info('[NUI] ℹ <nui-select> auto-created inner <select>. For zero-JS fallback, use:\n  <nui-select><select>...</select></nui-select>');
+		}
+	}
+
 	if (!select) return;
 
 	const isMulti = select.multiple;
@@ -5581,39 +5675,79 @@ export const nui = {
 			}
 		});
 
-		// Warn about unregistered nui-* addon elements in the DOM (missing import)
+		// Addon auto-loading (dev-only) — Proposal 4
 		if (config.debug !== false) {
-			const knownAddons = ['nui-list', 'nui-lightbox', 'nui-code-editor', 'nui-media-player',
-				'nui-wizard', 'nui-menu', 'nui-context-menu', 'nui-rich-text', 'nui-app-window'];
-			const foundUnregistered = new Set();
-			document.querySelectorAll(knownAddons.join(',')).forEach(el => {
-				if (!customElements.get(el.tagName.toLowerCase())) {
-					foundUnregistered.add(el.tagName.toLowerCase());
-				}
-			});
-			foundUnregistered.forEach(tag => {
-				console.warn(`[NUI] <${tag}> found in DOM but component is not registered. Addon requires both JS import AND CSS link. See LLM-CHEATSHEET.md for exact import paths.`);
-			});
+			const ADDON_MAP = {
+				'nui-list':         { js: 'lib/modules/nui-list.js',         css: 'css/modules/nui-list.css' },
+				'nui-lightbox':     { js: 'lib/modules/nui-lightbox.js',     css: 'css/modules/nui-lightbox.css' },
+				'nui-code-editor':  { js: 'lib/modules/nui-code-editor.js',  css: 'css/modules/nui-code-editor.css' },
+				'nui-media-player': { js: 'lib/modules/nui-media-player.js', css: 'css/modules/nui-media-player.css' },
+				'nui-wizard':       { js: 'lib/modules/nui-wizard.js',       css: 'css/modules/nui-wizard.css' },
+				'nui-menu':         { js: 'lib/modules/nui-menu.js',         css: 'css/modules/nui-menu.css' },
+				'nui-context-menu': { js: 'lib/modules/nui-context-menu.js', css: 'css/modules/nui-context-menu.css' },
+				'nui-rich-text':    { js: 'lib/modules/nui-rich-text.js',    css: 'css/modules/nui-rich-text.css' },
+			};
 
-			// Ongoing observer for dynamically added unregistered addons
+			const _loading = new Set();
+
+			async function tryAutoLoad(tag) {
+				const map = ADDON_MAP[tag];
+				if (!map) return;
+				if (_loading.has(tag)) return;
+				_loading.add(tag);
+
+				try {
+					// Inject CSS
+					if (map.css) {
+						const cssHref = `${nuiBasePath}/${map.css}`;
+						if (!document.querySelector(`link[href$="${map.css}"]`)) {
+							const link = document.createElement('link');
+							link.rel = 'stylesheet';
+							link.href = cssHref;
+							document.head.appendChild(link);
+						}
+					}
+
+					// Dynamic import JS
+					const jsPath = `${nuiBasePath}/${map.js}`;
+					await import(jsPath);
+
+					console.info(`[NUI] Auto-loaded <${tag}> (JS + CSS). Add explicit imports for production:\n  <link rel="stylesheet" href="NUI/${map.css}">\n  <script type="module" src="NUI/${map.js}"></script>`);
+				} catch (err) {
+					console.warn(`[NUI] Failed to auto-load <${tag}>. Add explicit imports:\n  <link rel="stylesheet" href="NUI/${map.css}">\n  <script type="module" src="NUI/${map.js}"></script>`, err);
+				} finally {
+					_loading.delete(tag);
+				}
+			}
+
+			function checkAndAutoLoad(root) {
+				Object.keys(ADDON_MAP).forEach(tag => {
+					root.querySelectorAll(tag).forEach(el => {
+						if (!customElements.get(tag)) {
+							tryAutoLoad(tag);
+						}
+					});
+				});
+			}
+
+			// Initial scan
+			checkAndAutoLoad(document);
+
+			// Ongoing observer
 			new MutationObserver((mutations) => {
 				for (const m of mutations) {
 					for (const node of m.addedNodes) {
 						if (node.nodeType !== Node.ELEMENT_NODE) continue;
 						const tag = node.tagName?.toLowerCase();
-						if (tag && knownAddons.includes(tag) && !customElements.get(tag)) {
-							console.warn(`[NUI] <${tag}> added to DOM but component is not registered. Addon requires both JS import AND CSS link. See LLM-CHEATSHEET.md for exact import paths.`);
+						if (tag && ADDON_MAP[tag] && !customElements.get(tag)) {
+							tryAutoLoad(tag);
 						}
 						if (node.querySelectorAll) {
-							node.querySelectorAll(knownAddons.join(',')).forEach(el => {
-								if (!customElements.get(el.tagName.toLowerCase())) {
-									console.warn(`[NUI] <${el.tagName.toLowerCase()}> added to DOM but component is not registered. Addon requires both JS import AND CSS link. See LLM-CHEATSHEET.md for exact import paths.`);
-								}
-							});
+							checkAndAutoLoad(node);
 						}
 					}
 				}
-			}).observe(document.body, { childList: true, subtree: true });
+			}).observe(document.documentElement, { childList: true, subtree: true });
 		}
 
 		// Resolve ready promise so consumers can await nui.ready()

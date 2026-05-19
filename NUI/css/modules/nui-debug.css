@@ -1,0 +1,7 @@
+/* NUI Debug Addon — visual overlays for structural issues */
+/* Only loaded with nui-debug.js — zero production cost */
+
+/* Elements with validation issues get a red dashed outline */
+/* (Outline is applied via JS to _debugMarked elements) */
+
+/* The title attribute on _debugMarked elements shows the issue message on hover */

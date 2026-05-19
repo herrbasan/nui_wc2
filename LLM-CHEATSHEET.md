@@ -4,9 +4,37 @@
 
 ---
 
+## Development Tools
+
+### Debug Addon (`nui-debug`)
+
+Validates your HTML for common mistakes and logs structured warnings. **Zero production cost** — just don't import it.
+
+```html
+<!-- Development only — remove for production -->
+<script type="module" src="NUI/lib/modules/nui-debug.js"></script>
+<link rel="stylesheet" href="NUI/css/modules/nui-debug.css">
+```
+
+Or auto-load via query param: `http://localhost:5500/?nui-debug`
+
+**What it checks:** missing inner elements, wrong `nui-app` children, `data-action` selector targets, attribute typos, unregistered addon elements, tabs structure.
+
+**Programmatic use:**
+```javascript
+const result = nui.debug.run();
+// { valid: false, count: 3, issues: [{ element: 'nui-button', message: '...', fix: '<nui-button><button>...</button></nui-button>' }] }
+```
+
+### Addon Auto-Loading (dev-only)
+
+When `config.debug !== false` (the default), NUI automatically imports JS + CSS for addon elements found in the DOM. You can write `<nui-list></nui-list>` without imports and it just works — with a console message showing the explicit imports to add for production.
+
+---
+
 ## Quick Rules (read before generating ANY NUI HTML)
 
-1. **Every NUI component wraps a native HTML element.** You CANNOT use `<nui-button>Click</nui-button>`. You MUST put a real `<button>` inside.
+1. **Every NUI component wraps a native HTML element.** In development, NUI auto-creates the inner element if missing (with an info log). For production, always include it explicitly.
 2. **Use `data-action` for built-in operations** (dialog-open, tabs-select, banner-close, card-flip, etc.) and simple declarative wiring. **Use `addEventListener` in `<script type="nui/page">`** for complex page-specific logic that does multiple things, async work, or state management. `nui-click` is an internal event — do not listen for it directly.
 3. **`<nui-app>` requires EXACT children in order.** See the structure diagram below.
 4. **Addons require BOTH JS import AND CSS.** Core components work without imports.
@@ -179,10 +207,14 @@ If you MUST apply CSS (spacing on your own wrappers, very rare theming), use ONL
 ### nui-button
 
 ```html
-<!-- ✅ CORRECT -->
+<!-- ✅ CORRECT (production) -->
 <nui-button>
   <button type="button">Click Me</button>
 </nui-button>
+
+<!-- ✅ ALSO WORKS (dev — auto-creates inner <button> with info log) -->
+<nui-button>Click Me</nui-button>
+<nui-button label="Save" variant="primary"></nui-button>
 
 <nui-button variant="primary">
   <button type="submit">Submit</button>
@@ -193,9 +225,6 @@ If you MUST apply CSS (spacing on your own wrappers, very rare theming), use ONL
     <nui-icon name="close"></nui-icon>
   </button>
 </nui-button>
-
-<!-- ❌ WRONG — no inner button -->
-<nui-button>Click Me</nui-button>
 
 <!-- ❌ WRONG — do not listen for nui-click, use data-action instead -->
 <!-- Instead use: -->
@@ -208,6 +237,7 @@ If you MUST apply CSS (spacing on your own wrappers, very rare theming), use ONL
 | State | `state="loading"` (also disable inner button) |
 | Method | `.setLoading(bool)` — toggles loading state and disabled |
 | Inner element | `<button>` or `<a>` — always set `type="button"` unless it's a submit |
+| Auto-wrap | `label="Text"` attribute creates button with that text. Plain `textContent` also works in dev. |
 
 📖 **Full docs:** [`documentation/components/button.md`](documentation/components/button.md)
 
