@@ -7,7 +7,7 @@
 ## Quick Rules (read before generating ANY NUI HTML)
 
 1. **Every NUI component wraps a native HTML element.** You CANNOT use `<nui-button>Click</nui-button>`. You MUST put a real `<button>` inside.
-2. **Use `data-action` for click handling, NOT `addEventListener('nui-click', ...)`. `nui-click` is an internal event.**
+2. **Use `data-action` for built-in operations** (dialog-open, tabs-select, banner-close, card-flip, etc.) and simple declarative wiring. **Use `addEventListener` in `<script type="nui/page">`** for complex page-specific logic that does multiple things, async work, or state management. `nui-click` is an internal event — do not listen for it directly.
 3. **`<nui-app>` requires EXACT children in order.** See the structure diagram below.
 4. **Addons require BOTH JS import AND CSS.** Core components work without imports.
 5. **Use `nui.ready()` before calling programmatic APIs.** `await nui.ready()` — resolves when init is complete.

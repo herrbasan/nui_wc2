@@ -63,13 +63,16 @@ validators.push({
     root.querySelectorAll('nui-app').forEach(app => {
       const kids = [...app.children].filter(c => c.tagName.includes('-'));
       if (!kids.some(c => c.tagName === 'NUI-APP-HEADER'))
-        warn(app, 'Missing <nui-app-header>. Layout will break.');
+        warn(app, 'Missing <nui-app-header>. Layout will break.',
+          'Add <nui-app-header><header>...</header></nui-app-header> as first child of <nui-app>');
       if (!kids.some(c => c.tagName === 'NUI-CONTENT'))
-        warn(app, 'Missing <nui-content>. Layout will break.');
+        warn(app, 'Missing <nui-content>. Layout will break.',
+          'Add <nui-content><main>...</main></nui-content> as child of <nui-app>');
       // Bare native elements
       [...app.children].forEach(c => {
         if (['HEADER','NAV','MAIN','FOOTER'].includes(c.tagName) && !c.closest('nui-app-header, nui-sidebar, nui-content'))
-          warn(c, `Bare <${c.tagName.toLowerCase()}> in <nui-app>. Wrap: <nui-app-header><${c.tagName.toLowerCase()}></nui-app-header>`);
+          warn(c, `Bare <${c.tagName.toLowerCase()}> in <nui-app>.`,
+            `<nui-app-header><${c.tagName.toLowerCase()}>...</${c.tagName.toLowerCase()}></nui-app-header>`);
       });
     });
   }
@@ -79,17 +82,17 @@ validators.push({
   name: 'missing inner elements',
   check(root) {
     const needs = {
-      'NUI-BUTTON': '<button>',
-      'NUI-INPUT': '<input> or <textarea>',
-      'NUI-SELECT': '<select>',
-      'NUI-DIALOG': '<dialog>',
-      'NUI-TABLE': '<table>',
+      'NUI-BUTTON': ['button', '<nui-button><button type="button">Click</button></nui-button>'],
+      'NUI-INPUT':  ['input', '<nui-input><input type="text" placeholder="..."></nui-input>'],
+      'NUI-SELECT': ['select', '<nui-select><select>...</select></nui-select>'],
+      'NUI-DIALOG': ['dialog', '<nui-dialog><dialog>...</dialog></nui-dialog>'],
+      'NUI-TABLE':  ['table', '<nui-table><table>...</table></nui-table>'],
+      'NUI-TABS':   ['nav', '<nui-tabs><nav><button>Tab</button></nav><section>Content</section></nui-tabs>'],
     };
-    Object.entries(needs).forEach(([tag, inner]) => {
+    Object.entries(needs).forEach(([tag, [innerTag, fix]]) => {
       root.querySelectorAll(tag).forEach(el => {
-        const innerTag = inner.match(/<(\w+)/)?.[1];
-        if (innerTag && !el.querySelector(innerTag)) {
-          warn(el, `Missing inner ${inner}. Required: <${tag.toLowerCase()}>${inner}</${tag.toLowerCase()}>`);
+        if (!el.querySelector(innerTag)) {
+          warn(el, `Missing inner <${innerTag}>.`, fix);
         }
       });
     });
@@ -160,6 +163,7 @@ function warn(element, message) {
 }
 
 function runAll(root = document) {
+  issues.length = 0;
   warnCount = 0;
   validators.forEach(v => {
     try { v.check(root); } catch(e) { console.error(`[NUI DEBUG] Validator "${v.name}" failed:`, e); }
@@ -171,7 +175,7 @@ function runAll(root = document) {
     console.log(`[NUI DEBUG] ${warnCount} issue(s) found. Fix them before going to production.`);
   }
 
-  return { valid: warnCount === 0, count: warnCount };
+  return { valid: warnCount === 0, count: warnCount, issues: issues.map(i => ({...i})) };
 }
 
 // --- Hooks ---
@@ -246,7 +250,7 @@ nui.debug.run({ level: 'pedantic'}); // Even suggests better patterns
 
 ---
 
-## Proposal 2: Auto-Wrap Missing Inner Elements (P0)
+## Proposal 2: Auto-Wrap Missing Inner Elements (P0 — Tier 1 only)
 
 ### Current State
 NUI requires wrapping native elements inside custom elements:
@@ -256,8 +260,9 @@ NUI requires wrapping native elements inside custom elements:
 
 This pattern contradicts millions of LLM training examples where components are self-contained (`<Button>Click</Button>` in React, `<v-btn>Click</v-btn>` in Vuetify, etc.).
 
-### Proposal
-Detect missing inner native elements at `connectedCallback` time and auto-create them, logging an `info` message.
+### Proposal: Ship Only Tier 1 (Forms)
+
+Detect missing inner native elements at `connectedCallback` time and auto-create them, logging an `info` message. **Tier 2 (layout auto-wrap) is handled by the debug addon's validators instead — less risk, same feedback.**
 
 **Tier 1 — Form components (auto-wrap + info log):**
 
@@ -272,7 +277,21 @@ Detect missing inner native elements at `connectedCallback` time and auto-create
 | `nui-dialog` | `<nui-dialog><p>Content</p></nui-dialog>` | `<dialog>`, wraps content |
 | `nui-tabs` | `<nui-tabs><button>Tab1</button><section>C</section></nui-tabs>` | Wraps buttons in `<nav>`, keeps panels |
 
-All forms remain backward compatible. Explicit inner elements work silently. Auto-wrapped elements work with an info log suggesting the explicit form for zero-JS fallback.
+**`label` attribute precedence for `nui-button`:**
+
+```html
+<!-- Case 1: label attribute wins if no explicit <button> -->
+<nui-button label="Save" variant="primary"></nui-button>
+<!-- → creates: <nui-button variant="primary"><button type="button">Save</button></nui-button> -->
+
+<!-- Case 2: explicit <button> wins over label (label ignored) -->
+<nui-button label="Save"><button type="button">Cancel</button></nui-button>
+<!-- → keeps "Cancel", ignores label -->
+
+<!-- Case 3: bare textContent wins if no label and no button -->
+<nui-button>Click Me</nui-button>
+<!-- → creates: <nui-button><button type="button">Click Me</button></nui-button> -->
+```
 
 Console output example:
 ```
@@ -280,29 +299,16 @@ Console output example:
   <nui-button><button type="button">Click</button></nui-button>
 ```
 
-**Tier 2 — Layout components (auto-wrap + warning):**
+**Tier 2 — NOT auto-wrapping (debug addon handles this):**
 
-For `nui-app`, detect bare `<header>`, `<nav>`, `<main>`, `<footer>` children and wrap them:
-```javascript
-// LLM writes:
-<nui-app>
-  <header>Title</header>
-  <main>Content</main>
-</nui-app>
+For `nui-app` bare children: do NOT auto-wrap at runtime. DOM mutation during `connectedCallback` can cause re-entrancy issues when the MutationObserver fires validators, which fire more mutations, etc. Instead, the debug addon's validators flag it with a clear `fix` field. The LLM reads the warning and corrects the HTML.
 
-// Auto-corrected to:
-<nui-app>
-  <nui-app-header><header>Title</header></nui-app-header>
-  <nui-content><main>Content</main></nui-content>
-</nui-app>
-// console.warn: "[NUI] Auto-wrapped bare <header> in <nui-app-header>."
-```
-
-**What we do NOT auto-wrap (Tier 3):**
+**What we do NOT auto-wrap:**
 
 - `nui-checkbox` / `nui-radio` — needs `<input>` + `<label>` with `for`/`id` linking, too fragile to guess
 - `nui-link-list` — deeply nested tree structure, structure IS the data
 - `nui-sortable` — needs `nui-sortable-item` children with `data-id`
+- `nui-app` children — Tier 2, handled by debug validators
 
 ### Precedent
 Several NUI components already auto-generate their internal DOM:
@@ -316,69 +322,62 @@ This proposal extends an existing pattern, not inventing one.
 
 ---
 
-## Proposal 3: Pick One Interaction Model (P2)
+## Proposal 3: Settle the Interaction Model Confusion (P0-equivalent — just add 2 lines to cheatsheet)
 
 ### Current State
 Two competing models for handling clicks:
 
-1. **`data-action="name:param@selector"`** — declarative, CSP-safe, 17 built-in handlers, well-documented in the cheatsheet
-2. **`addEventListener('click', ...)`** — imperative, standard, used everywhere in the actual codebase
+1. **`data-action="name:param@selector"`** — declarative, CSP-safe, 17 built-in handlers
+2. **`addEventListener('click', ...)`** — imperative, standard, used everywhere in the codebase
 
-An LLM reading the cheatsheet learns `data-action`. An LLM reading the Playground source code sees `addEventListener`. Contradiction → confusion.
+LLMs discover both and don't know which to use. This is not a code problem — it's a documentation boundary problem.
 
-### Options
+### Resolution: Option C — Keep Both, Clarify Boundary
 
-**Option A — Go all-in on `data-action`:**
-- Remove `nui-click` CustomEvent entirely
-- Make every Playground demo use only `data-action`
-- Add console warning when `addEventListener` is used on NUI component hosts: "[NUI] Prefer data-action over addEventListener on <nui-button>. See LLM-CHEATSHEET.md"
-- `nui.registerAction()` becomes the standard way to handle custom interactions
+No code change. Add these two sentences to `LLM-CHEATSHEET.md` Quick Rules:
 
-**Option B — Deprecate `data-action`, provide helper:**
-- `data-action` is complex (syntax parsing, selector resolution, built-in handler map)
-- Replace with simpler: `nui.on('click', 'nui-button', handler)` delegation helper
-- This mirrors jQuery-style delegation that LLMs know well
+> - **Use `data-action` for built-in operations** (dialog-open, tabs-select, banner-close, etc.) and simple declarative wiring.
+> - **Use `addEventListener` in `<script type="nui/page">`** for complex page-specific logic that does multiple things, async work, or state management.
 
-**Option C — Keep both, document boundaries clearly:**
-- `data-action` for simple built-in operations (dialog-open, select-open, etc.)
-- `addEventListener` for complex page logic in `<script type="nui/page">`
-- This is the current state — the problem is the boundary is unclear
+This is the right answer because:
+- `data-action` is NUI's most distinctive feature — throwing it away removes the declarative pattern entirely
+- `addEventListener` is necessary for complex logic that `data-action` can't express (async, multi-step, conditional)
+- The confusion is about boundaries, not about either pattern being wrong
 
 ---
 
 ## Proposal 4: Addon Auto-Loading (P1)
 
 ### Current State
-9 addons require BOTH `<script>` import AND `<link>` CSS. 18 manual statements. Forgetting one = silent failure. The MutationObserver added in the May 19 update detects this but only warns — it doesn't fix.
+9 addons require BOTH `<script>` import AND `<link>` CSS. 18 manual statements. Forgetting one = silent failure.
 
-### Proposal
-Addon manifest + auto-loading:
+### Proposal: Hardcoded Lookup Table (Simplified)
+
+Instead of each addon exporting its own manifest, use a single lookup table in `nui.js` derived from `components.json`:
 
 ```javascript
-// In nui-list.js:
-export const manifest = {
-  css: '../css/modules/nui-list.css',
-  tagName: 'nui-list'
+// In nui.js — single source of truth for addon auto-loading
+const ADDON_MAP = {
+  'nui-list':         { js: 'lib/modules/nui-list.js',         css: 'css/modules/nui-list.css' },
+  'nui-lightbox':     { js: 'lib/modules/nui-lightbox.js',     css: 'css/modules/nui-lightbox.css' },
+  'nui-code-editor':  { js: 'lib/modules/nui-code-editor.js',  css: 'css/modules/nui-code-editor.css' },
+  'nui-media-player': { js: 'lib/modules/nui-media-player.js', css: 'css/modules/nui-media-player.css' },
+  'nui-wizard':       { js: 'lib/modules/nui-wizard.js',       css: 'css/modules/nui-wizard.css' },
+  'nui-menu':         { js: 'lib/modules/nui-menu.js',         css: 'css/modules/nui-menu.css' },
+  'nui-context-menu': { js: 'lib/modules/nui-context-menu.js', css: 'css/modules/nui-context-menu.css' },
+  'nui-rich-text':    { js: 'lib/modules/nui-rich-text.js',    css: 'css/modules/nui-rich-text.css' },
+  'nui-app-window':   { js: 'lib/modules/nui-app-window.js',   css: 'css/modules/nui-app-window.css' },
 };
+
+// MutationObserver: on detecting unregistered nui-* element,
+// dynamically import JS + inject CSS, then log instructions.
 ```
 
-```javascript
-// In nui.js init(): MutationObserver watches for any unregistered nui-* element.
-// When detected, dynamically imports the JS module, which triggers CSS injection.
-
-new MutationObserver((mutations) => {
-  for (const m of mutations) {
-    for (const node of m.addedNodes) {
-      if (node.nodeType !== Node.ELEMENT_NODE) continue;
-      const tag = node.tagName.toLowerCase();
-      if (tag.startsWith('nui-') && !customElements.get(tag)) {
-        // Try to auto-load
-        tryAutoLoad(tag, node);
-      }
-    }
-  }
-}).observe(document.documentElement, { childList: true, subtree: true });
-```
+**Why hardcoded instead of per-addon manifests:**
+- No need to touch all 9 addon files
+- Data already exists in `components.json`
+- 9 entries is trivial to maintain
+- Auto-load + info-log pattern (suggesting explicit imports for production) is exactly right
 
 Console output:
 ```
@@ -386,8 +385,6 @@ Console output:
   <link rel="stylesheet" href="NUI/css/modules/nui-list.css">
   <script type="module" src="NUI/lib/modules/nui-list.js"></script>
 ```
-
-**Backward compatibility:** Explicit imports still work and are preferred. Auto-loading is a development convenience that logs instructions for production hardening.
 
 ---
 
@@ -437,87 +434,66 @@ function executePageScript(wrapper, params) {
 This works with `script-src 'self'` — no `'unsafe-eval'` needed. The `import()` dynamic module import is already allowed by the existing `nui-code` syntax highlight loader.
 
 ### Trade-off
-Slightly more complex. Need to handle module caching (Blob URLs should be revoked after use). Edge case: the wrapped code can't use top-level `return` statements (but page scripts shouldn't anyway).
+Slightly more complex. Need to handle module caching (Blob URLs should be revoked after use). Edge case: the wrapped code can't use top-level `return` statements (but page scripts shouldn't anyway). Another edge case: `this` inside the wrapped code changes because it runs as a module — any page scripts relying on `this === window` would break (unlikely but worth documenting).
 
 ---
 
-## Proposal 6: Component Introspection API (P2)
+## Proposal 6: Component Introspection API (P3 — Nice-to-have, not critical)
 
-### Current State
-LLMs can't ask "what components exist?" or "what does nui-dialog support?" at runtime. Information lives only in documentation files.
+### Assessment
+This is the least valuable proposal. LLMs already have `components.json` and `LLM-CHEATSHEET.md` — they read those at session start. An introspection API would only help in live browser sessions where the LLM can call it. In most LLM workflows, editing files is the primary mode, not running console commands.
 
-### Proposal
+### If Built
+Generate from `components.json` statically rather than maintaining a parallel data structure. A build step that produces a `nui-help.js` module with the structured API data embedded.
+
 ```javascript
-// List all available components
-nui.listComponents();
-// → ['nui-accordion', 'nui-app', 'nui-app-header', ...]
-
-// Get structured API for a component
+// Generated at build time from components.json
 nui.help('nui-dialog');
-// → {
-//   tagName: 'nui-dialog',
-//   innerElement: '<dialog>',
-//   attributes: { mode: 'page', title: 'string', placement: 'center|top|bottom', blocking: 'boolean' },
-//   methods: ['showModal()', 'show()', 'close(returnValue)', 'isOpen()'],
-//   events: ['nui-dialog-open', 'nui-dialog-close', 'nui-dialog-cancel'],
-//   programmatic: {
-//     'nui.components.dialog.alert(title, message, options?)': 'Promise<true>',
-//     'nui.components.dialog.confirm(title, message, options?)': 'Promise<boolean>',
-//     'nui.components.dialog.prompt(title, message, options?)': 'Promise<Object|null>',
-//     'nui.components.dialog.page(title, htmlContent, options?)': '{ dialog, main, result }'
-//   },
-//   docPath: 'documentation/components/dialog.md'
-// }
+// → { tagName, innerElement, attributes, methods, events, programmatic, docPath }
 ```
-
-This could be generated from `components.json` at build time and embedded as a static data structure, or queried at runtime from the registry.
-
-### Value for LLMs
-An LLM stuck on "how do I open a dialog?" could call `nui.help('nui-dialog')` and get the answer immediately without reading files. This is the most LLM-native API possible — it mirrors how LLMs use tools.
 
 ---
 
-## Proposal 7: Explicit Init (No Auto-Init) (P2)
+## Proposal 7: Explicit Init (Won't Build — `nui.ready()` already solves this)
 
-### Current State
-`nui.js` auto-calls `nui.init()` on module load. This creates a race condition: code that runs before the module loads can't use programmatic APIs. The May 19 update added `nui.ready()` to mitigate this, but the auto-init pattern is still fragile.
-
-### Proposal
-Don't auto-init. Require explicit initialization:
-
-```javascript
-// Old (auto-init, still works for backward compat):
-<script type="module" src="NUI/nui.js"></script>
-
-// New (explicit, recommended):
-<script type="module">
-  import { nui } from './NUI/nui.js';
-  await nui.init();
-  // Now safe to use programmatic APIs
-  await nui.components.dialog.confirm('Title', 'Message');
-</script>
-```
-
-Or for HTML-first usage:
-```html
-<script type="module" src="NUI/nui.js"></script>
-<script type="module">
-  await nui.ready(); // already exists
-</script>
-```
-
-**Backward compatibility:** Keep auto-init for `<script src="NUI/nui.js">` usage. Add a deprecation notice. This is how most modern libraries work — explicit is safer.
+### Assessment
+The `nui.ready()` Promise (added May 19) already solves the race condition. Every LLM already knows to use `await nui.ready()` — it's in the cheatsheet's Quick Rules (#5). Making init explicit is a breaking change for minimal benefit. This is solving a problem that documentation already addresses.
 
 ---
 
-## Summary: Priority Matrix
+## Peer Review: GLM (Gemini Language Model) Feedback
+
+*Incorporated into the proposals above. Key refinements:*
+
+| Feedback | Action |
+|----------|--------|
+| Debug addon should return structured issues with `fix` field | ✅ Added — `{ element, id, message, fix }` in return value |
+| Tier 2 auto-wrap risks DOM re-entrancy | ✅ Moved Tier 2 to debug addon validators only (log, don't mutate) |
+| `label` attribute needs precedence rules | ✅ Documented: explicit `<button>` wins, `label` falls back, `textContent` last |
+| Interaction model: Option C is correct | ✅ Settled on 2-line boundary rule in cheatsheet, no code change |
+| Addon auto-loading: hardcode the map | ✅ Single `ADDON_MAP` lookup table instead of per-addon manifests |
+| CSP Blob URL: note `this` change | ✅ Documented edge case |
+| Introspection API: low value for LLMs | ✅ Deprioritized to P3, won't build unless need arises |
+| Explicit init: `nui.ready()` already solves | ✅ Won't build |
+
+---
+
+## Summary: Refined Priority Matrix
 
 | Priority | Proposal | Impact | Risk |
 |----------|----------|--------|------|
-| **P0** | #1 Debug Addon (`nui-debug`) | Eliminates silent failures entirely | None — addon, zero production code |
-| **P0** | #2 Auto-wrap missing inner elements | Eliminates #1 LLM mistake pattern | Medium — must preserve existing explicit patterns |
-| **P1** | #4 Addon auto-loading | Eliminates "forgot CSS" class of bugs | Medium — dynamic imports in observer |
-| **P1** | #5 Replace `new Function()` with Blob URL | Removes CSP fragility | Low-Medium — behavior change for page scripts |
-| **P2** | #3 Pick one interaction model | Removes dual-pattern confusion | High — existing codebase uses both |
-| **P2** | #6 Component introspection API | LLM-native API discovery | Low — generated from components.json |
-| **P2** | #7 Explicit init | Removes race condition | Low-Medium — backward compat needed |
+| **P0** | #1 Debug Addon (`nui-debug`) + structured `fix` output | Eliminates silent failures, LLMs can self-correct | None — addon, zero production code |
+| **P0** | #2 Auto-wrap Tier 1 (form components only) | Fixes the #1 LLM mistake pattern | Low — Tier 2 moved to debug addon |
+| **P0** | #3 Add 2-line boundary rule to cheatsheet | Resolves `data-action` vs `addEventListener` confusion | None — documentation only |
+| **P1** | #4 Addon auto-loading (hardcoded lookup) | Eliminates "forgot CSS import" class of bugs | Low-Medium — dynamic imports in observer |
+| **P1** | #5 Replace `new Function()` with Blob URL | Removes CSP fragility | Low-Medium — `this` edge case documented |
+| **P3** | #6 Component introspection API | Marginal LLM value — cheatsheet already serves this | Low — generated from components.json |
+| — | #7 Explicit init | Won't build — `nui.ready()` already solves the problem | — |
+
+### Build Order
+
+1. **Cheatsheet: add 2 lines** (Proposal 3) — 5 minutes, immediate impact
+2. **Debug addon** (Proposal 1) — the foundation. All other validation lives here.
+3. **Auto-wrap Tier 1** (Proposal 2) — eliminates the most common silent mistake
+4. **Addon auto-loading** (Proposal 4) — kills the "forgot CSS" class of bugs
+5. **Blob URL** (Proposal 5) — removes CSP requirements for page scripts
