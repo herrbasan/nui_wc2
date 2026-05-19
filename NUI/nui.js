@@ -4,6 +4,9 @@ const components = {};
 
 const nuiBasePath = new URL('.', import.meta.url).pathname.replace(/\/$/, '');
 
+let _readyResolve;
+const _readyPromise = new Promise(resolve => { _readyResolve = resolve; });
+
 const config = {
 	sanitizeActions: true,
 	sanitizeRoutes: true,
@@ -742,6 +745,19 @@ registerComponent('nui-app', (element) => {
 	document.addEventListener('gesturestart', (e) => e.preventDefault());
 	document.addEventListener('gesturechange', (e) => e.preventDefault());
 	document.addEventListener('gestureend', (e) => e.preventDefault());
+
+	// Validate child structure and warn for common LLM mistakes
+	if (config.debug !== false) {
+		const directChildren = [...element.children].filter(c => c.tagName.includes('-') || ['HEADER', 'NAV', 'MAIN', 'FOOTER'].includes(c.tagName));
+		const hasAppHeader = directChildren.some(c => c.tagName === 'NUI-APP-HEADER');
+		const hasSidebar = directChildren.some(c => c.tagName === 'NUI-SIDEBAR');
+		const hasContent = directChildren.some(c => c.tagName === 'NUI-CONTENT');
+		const hasBareElements = [...element.children].some(c => ['HEADER', 'NAV', 'MAIN', 'FOOTER', 'DIV', 'SECTION'].includes(c.tagName) && !c.closest('nui-app-header, nui-sidebar, nui-content, nui-app-footer'));
+
+		if (!hasAppHeader) console.warn('[NUI] <nui-app> is missing <nui-app-header>. The app shell requires: <nui-app-header>, <nui-sidebar>, <nui-content>.', element);
+		if (!hasContent) console.warn('[NUI] <nui-app> is missing <nui-content>. The app shell requires: <nui-app-header>, <nui-sidebar>, <nui-content>.', element);
+		if (hasBareElements) console.warn('[NUI] <nui-app> contains bare elements (e.g., <header>, <main>) outside layout wrappers. Each region must be wrapped: bare <header> → <nui-app-header><header>. Bare <main> → <nui-content><main>.', element);
+	}
 
 	let cachedBreakpoint = { left: null, right: null };
 
@@ -4736,15 +4752,29 @@ function executePageScript(wrapper, params) {
 	const scriptEl = wrapper.el('script[type="nui/page"]');
 	if (!scriptEl) return;
 
+	const scriptContent = scriptEl.textContent;
 	scriptEl.remove();
 
-	const initFn = new Function(
-		'element',
-		'params',
-		'nui',
-		scriptEl.textContent + '\nif (typeof init === "function") init(element, params, nui);'
-	);
-	initFn(wrapper, params, nui);
+	// Validate script has an init function
+	if (!scriptContent.includes('function init(') && !scriptContent.includes('init(')) {
+		console.warn('[NUI] Page script is missing an init(element, params, nui) function. Page scripts MUST define function init(element, params, nui) { ... }.', wrapper);
+	}
+
+	try {
+		const initFn = new Function(
+			'element',
+			'params',
+			'nui',
+			scriptContent + '\nif (typeof init === "function") init(element, params, nui);'
+		);
+		initFn(wrapper, params, nui);
+	} catch (e) {
+		if (e instanceof EvalError || e.message?.includes('eval')) {
+			console.error('[NUI] CSP blocks page script execution. Add \'unsafe-eval\' to script-src in your Content Security Policy. Without it, <script type="nui/page"> scripts will silently fail.', e);
+		} else {
+			console.error('[NUI] Page script execution failed:', e);
+		}
+	}
 }
 
 async function loadFragment(url, wrapper, params) {
@@ -5516,6 +5546,10 @@ export const nui = {
 	util,
 	components: componentsApi,
 
+	ready() {
+		return _readyPromise;
+	},
+
 	init(options) {
 		if (options) {
 			this.configure(options);
@@ -5542,6 +5576,45 @@ export const nui = {
 				customElements.define(tagName, ComponentClass);
 			}
 		});
+
+		// Warn about unregistered nui-* addon elements in the DOM (missing import)
+		if (config.debug !== false) {
+			const knownAddons = ['nui-list', 'nui-lightbox', 'nui-code-editor', 'nui-media-player',
+				'nui-wizard', 'nui-menu', 'nui-context-menu', 'nui-rich-text', 'nui-app-window'];
+			const foundUnregistered = new Set();
+			document.querySelectorAll(knownAddons.join(',')).forEach(el => {
+				if (!customElements.get(el.tagName.toLowerCase())) {
+					foundUnregistered.add(el.tagName.toLowerCase());
+				}
+			});
+			foundUnregistered.forEach(tag => {
+				console.warn(`[NUI] <${tag}> found in DOM but component is not registered. Addon requires both JS import AND CSS link. See LLM-CHEATSHEET.md for exact import paths.`);
+			});
+
+			// Ongoing observer for dynamically added unregistered addons
+			new MutationObserver((mutations) => {
+				for (const m of mutations) {
+					for (const node of m.addedNodes) {
+						if (node.nodeType !== Node.ELEMENT_NODE) continue;
+						const tag = node.tagName?.toLowerCase();
+						if (tag && knownAddons.includes(tag) && !customElements.get(tag)) {
+							console.warn(`[NUI] <${tag}> added to DOM but component is not registered. Addon requires both JS import AND CSS link. See LLM-CHEATSHEET.md for exact import paths.`);
+						}
+						if (node.querySelectorAll) {
+							node.querySelectorAll(knownAddons.join(',')).forEach(el => {
+								if (!customElements.get(el.tagName.toLowerCase())) {
+									console.warn(`[NUI] <${el.tagName.toLowerCase()}> added to DOM but component is not registered. Addon requires both JS import AND CSS link. See LLM-CHEATSHEET.md for exact import paths.`);
+								}
+							});
+						}
+					}
+				}
+			}).observe(document.body, { childList: true, subtree: true });
+		}
+
+		// Resolve ready promise so consumers can await nui.ready()
+		_readyResolve();
+		_readyResolve = null; // Release closure
 	},
 
 	registerFeature(name, initFn) {

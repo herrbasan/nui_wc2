@@ -56,24 +56,42 @@ const values = await nui.components.dialog.prompt('Rename File', '', {
 if (values) console.log(values.filename);
 ```
 
-### `nui.components.dialog.page(title, subtitle, options?)`
+### `nui.components.dialog.page(title, htmlContent, options?)`
+
+> ⚠️ **CRITICAL:** The second parameter is `htmlContent` (an HTML string injected as the dialog body), NOT a subtitle. Passing a plain string as the second argument will render it as HTML content inside the dialog's `<main>` element.
+
 Spawns an empty shell dialog with predefined layout structure (Header, Main, Footer buttons). Ideal for dynamically injected content (e.g. from an SPA router).
-- **Returns**: Object `{ dialog: HTMLElement, main: HTMLElement }`.
+
+- **Parameters:**
+  - `title` — Dialog header title
+  - `htmlContent` — HTML string inserted into the dialog's `<main>` body
+  - `options.buttons` — Array of `{ label, value, type, icon? }` for footer buttons
+  - `options.placement` — `'center'` (default), `'top'`, `'bottom'`
+  - `options.blocking` — If true, prevents close via Escape or backdrop click
+  - `options.target` — DOM node to attach dialog to (defaults to `document.body`)
+- **Returns**: Object `{ dialog: HTMLElement, main: HTMLElement, result: Promise<string> }`. The `result` Promise resolves with the clicked button's `value` when the dialog is closed.
 ```javascript
-const { dialog, main } = await nui.components.dialog.page('Settings', '', {
-	buttons: [
-		{ label: 'Cancel', value: 'cancel', type: 'outline' },
-		{ label: 'Save', value: 'save', type: 'primary' }
-	]
-});
+// ✅ CORRECT — htmlContent as second parameter
+const { dialog, main, result } = nui.components.dialog.page(
+    'Settings',
+    '<p>Custom form content here.</p>',
+    {
+        buttons: [
+            { label: 'Cancel', value: 'cancel', type: 'outline' },
+            { label: 'Save', value: 'save', type: 'primary' }
+        ]
+    }
+);
 
-main.innerHTML = '<p>Custom form content here.</p>';
+// ❌ WRONG — treating second param as subtitle
+const { dialog } = nui.components.dialog.page('Settings', 'My subtitle', { ... });
+// "My subtitle" will render as the content body, not a subtitle!
 
-dialog.addEventListener('nui-dialog-close', (e) => {
-	if (e.detail.returnValue === 'save') {
-		// Save action
-	}
-});
+// Await the result to know which button was clicked
+const returnValue = await result;
+if (returnValue === 'save') {
+    // Save action
+}
 ```
 
 ### System Dialog Options

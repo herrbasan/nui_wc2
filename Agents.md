@@ -1,8 +1,8 @@
 # NUI Contributor Instructions
 
 > **🤖 Ground Truth for AI Assistants:**
-> For the core philosophy, AX principles, and architecture guide, please read:
-> 👉 **[`documentation/DOCUMENTATION.md`](documentation/DOCUMENTATION.md)**
+> 👉 **Read [`LLM-CHEATSHEET.md`](LLM-CHEATSHEET.md) FIRST.** Every component's exact HTML structure, all 17 built-in `data-action` handlers, addon imports, and the full public API — in one file. Then read:
+> 👉 **[`documentation/DOCUMENTATION.md`](documentation/DOCUMENTATION.md)** for philosophy and architecture.
 
 This document contains the **Engineering Manual** for developing and maintaining the NUI library itself.
 

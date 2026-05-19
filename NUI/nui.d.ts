@@ -133,6 +133,9 @@ export interface NuiAPI {
 	/** Initialize the library and register components */
 	init(options?: Partial<NuiConfig> & Record<string, unknown>): void;
 
+	/** Promise that resolves when init() completes. Await before calling programmatic APIs. */
+	ready(): Promise<void>;
+
 	/** Update configuration */
 	configure(config: Partial<NuiConfig>): void;
 
