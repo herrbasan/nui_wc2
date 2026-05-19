@@ -18,42 +18,230 @@ When an LLM writes `<nui-app><header>Title</header></nui-app>`, the page renders
 
 ---
 
-## Proposal 1: Debug Mode (P0)
+## Proposal 1: Debug Addon (`nui-debug`) — P0
 
 ### Current State
-`config.debug` exists but defaults to `true`. However, most component validation is either missing or uses `console.warn` inconsistently. Many failure modes are completely silent.
+Many failure modes are completely silent. Wrong `nui-app` children → broken layout, zero console output. Missing inner `<button>` → unstyled text, zero warnings. This is production-friendly but LLM-hostile.
 
-### Proposal
-A comprehensive debug mode, defaulting ON, that:
+The few warnings that exist (May 19 update) are baked into `nui.js`, adding code that ships to production.
 
-```javascript
-nui.debug = {
-  validateStructure: true,   // Check inner native elements exist
-  suggestAttributes: true,   // Warn on attribute typos (variant="primry")
-  reportMissingAddons: true, // Warn when addon elements lack imports
-  autoWrap: true,            // Auto-create missing inner elements (see Proposal 2)
-};
+### Proposal: Addon, Not Core
+
+A `nui-debug` addon module — zero production cost, loaded only during development:
+
+```html
+<!-- Development only — remove for production -->
+<script type="module" src="NUI/lib/modules/nui-debug.js"></script>
 ```
 
-The LLM sees: `[NUI] <nui-button> missing inner <button>. Auto-created.`  
-The human sees the same thing and fixes it.
+Or auto-load via query param (for LLM-driven development):
+```
+http://localhost:5500/?nui-debug
+```
+→ NUI detects the param, dynamically imports the debug module.
 
-Muting for production:
-```javascript
-// In production entry point:
-nui.configure({ debug: false });
+### Architecture
+
+The debug module hooks into NUI's existing systems — no changes needed to individual components:
+
+```
+NUI/lib/modules/nui-debug.js   ← validation logic
+NUI/css/modules/nui-debug.css  ← optional visual overlays (red border on broken elements)
 ```
 
-Or via query param for one-off silence: `?nui-debug=0`
-
-### New API
 ```javascript
-// Returns structured validation results — LLMs can call this and check
-const result = nui.validate();
-// { valid: false, errors: [
-//   { element: <nui-app>, message: "Missing <nui-content>" },
-//   { element: <nui-button#save>, message: "No inner <button>" }
-// ]}
+// nui-debug.js
+import { nui } from '../../nui.js';
+
+const validators = [];
+
+// --- Registry: each validator checks one class of mistake ---
+
+validators.push({
+  name: 'nui-app structure',
+  check(root) {
+    root.querySelectorAll('nui-app').forEach(app => {
+      const kids = [...app.children].filter(c => c.tagName.includes('-'));
+      if (!kids.some(c => c.tagName === 'NUI-APP-HEADER'))
+        warn(app, 'Missing <nui-app-header>. Layout will break.');
+      if (!kids.some(c => c.tagName === 'NUI-CONTENT'))
+        warn(app, 'Missing <nui-content>. Layout will break.');
+      // Bare native elements
+      [...app.children].forEach(c => {
+        if (['HEADER','NAV','MAIN','FOOTER'].includes(c.tagName) && !c.closest('nui-app-header, nui-sidebar, nui-content'))
+          warn(c, `Bare <${c.tagName.toLowerCase()}> in <nui-app>. Wrap: <nui-app-header><${c.tagName.toLowerCase()}></nui-app-header>`);
+      });
+    });
+  }
+});
+
+validators.push({
+  name: 'missing inner elements',
+  check(root) {
+    const needs = {
+      'NUI-BUTTON': '<button>',
+      'NUI-INPUT': '<input> or <textarea>',
+      'NUI-SELECT': '<select>',
+      'NUI-DIALOG': '<dialog>',
+      'NUI-TABLE': '<table>',
+    };
+    Object.entries(needs).forEach(([tag, inner]) => {
+      root.querySelectorAll(tag).forEach(el => {
+        const innerTag = inner.match(/<(\w+)/)?.[1];
+        if (innerTag && !el.querySelector(innerTag)) {
+          warn(el, `Missing inner ${inner}. Required: <${tag.toLowerCase()}>${inner}</${tag.toLowerCase()}>`);
+        }
+      });
+    });
+  }
+});
+
+validators.push({
+  name: 'nui-tabs structure',
+  check(root) {
+    root.querySelectorAll('nui-tabs').forEach(tabs => {
+      const tablist = tabs.querySelector('[role="tablist"]') || [...tabs.children].find(c => c.querySelector('button, a'));
+      const panels = [...tabs.children].filter(c => c !== tablist && c.tagName !== 'SCRIPT');
+      if (!tablist) warn(tabs, 'No tab buttons found. Add <nav> with <button> elements.');
+      if (tablist && panels.length === 0) warn(tabs, 'Has tab buttons but no content panels. Add <section> elements.');
+    });
+  }
+});
+
+validators.push({
+  name: 'unregistered addon elements',
+  check(root) {
+    const knownAddons = ['nui-list','nui-lightbox','nui-code-editor','nui-media-player',
+      'nui-wizard','nui-menu','nui-context-menu','nui-rich-text'];
+    knownAddons.forEach(tag => {
+      root.querySelectorAll(tag).forEach(el => {
+        if (!customElements.get(tag)) {
+          warn(el, `<${tag}> not registered. Missing JS import. See LLM-CHEATSHEET.md.`);
+        }
+      });
+    });
+  }
+});
+
+validators.push({
+  name: 'attribute typos',
+  check(root) {
+    const knownVariants = {
+      'NUI-BUTTON': ['primary','outline','ghost','danger','delete','warning','icon'],
+      'NUI-BADGE': ['primary','success','danger','warning','info'],
+      'NUI-PROGRESS': ['bar','circular','busy','circular-busy'],
+    };
+    Object.entries(knownVariants).forEach(([tag, valid]) => {
+      root.querySelectorAll(tag).forEach(el => {
+        const variant = el.getAttribute('variant') || el.getAttribute('type');
+        if (variant && !valid.includes(variant)) {
+          const suggestion = valid.find(v => v.startsWith(variant.slice(0,2)));
+          warn(el, `Unknown variant/type="${variant}".${suggestion ? ' Did you mean "' + suggestion + '"?' : ' Valid: ' + valid.join(', ')}`);
+        }
+      });
+    });
+  }
+});
+
+// --- Engine ---
+
+let warnCount = 0;
+
+function warn(element, message) {
+  warnCount++;
+  console.warn(`[NUI DEBUG #${warnCount}] ${message}`, element);
+
+  // Optional: add visual indicator in the DOM (requires nui-debug.css)
+  if (!element._debugMarked) {
+    element._debugMarked = true;
+    element.style.outline = '2px dashed red';
+    element.style.setProperty('--debug-message', `"${message}"`);
+  }
+}
+
+function runAll(root = document) {
+  warnCount = 0;
+  validators.forEach(v => {
+    try { v.check(root); } catch(e) { console.error(`[NUI DEBUG] Validator "${v.name}" failed:`, e); }
+  });
+
+  if (warnCount === 0) {
+    console.log('[NUI DEBUG] ✓ No issues found.');
+  } else {
+    console.log(`[NUI DEBUG] ${warnCount} issue(s) found. Fix them before going to production.`);
+  }
+
+  return { valid: warnCount === 0, count: warnCount };
+}
+
+// --- Hooks ---
+
+// Run after NUI is initialized
+nui.ready().then(() => {
+  // Small delay to let all custom elements upgrade
+  setTimeout(() => runAll(), 100);
+});
+
+// Also observe for dynamically added elements
+new MutationObserver(() => {
+  // Debounced — don't spam on rapid DOM changes
+  clearTimeout(runAll._debounce);
+  runAll._debounce = setTimeout(() => runAll(), 500);
+}).observe(document.documentElement, { childList: true, subtree: true });
+
+// Expose for manual calls
+nui.debug = { run: runAll, validators };
+```
+
+### Usage
+
+```html
+<!-- Option A: Explicit import (dev only, remove for production) -->
+<script type="module" src="NUI/lib/modules/nui-debug.js"></script>
+
+<!-- Option B: Auto-load via query param (for LLM-driven dev) -->
+<!-- Just open http://localhost:5500/?nui-debug — NUI auto-imports the module -->
+
+<!-- Option C: Programmatic -->
+<script type="module">
+  import { nui } from './NUI/nui.js';
+  await nui.ready();
+  await import('./NUI/lib/modules/nui-debug.js');
+  const result = nui.debug.run();
+  if (!result.valid) console.table(result.warnings);
+</script>
+```
+
+### What This Enables
+
+| For LLMs | For Humans |
+|----------|-----------|
+| Console output is their primary feedback — every mistake produces a clear message | Red dashed outlines on broken elements, hover to see the message |
+| `nui.debug.run()` returns structured results an LLM can check | Open `?nui-debug` to audit a page before shipping |
+| MutationObserver catches dynamically added mistakes | Zero production overhead — don't import the module |
+| Validators are self-contained — easy to add new ones without touching core | Can be shipped as a browser extension bookmarklet |
+
+### Zero Production Cost
+
+The debug module is never loaded in production. `nui.js` itself stays lean — no validation logic, no `if (debug)` branches, no console.warn calls for structural mistakes. The few warnings that already exist in `nui.js` (May 19 additions for CSP eval, unregistered addons) should migrate to the debug module.
+
+### Validator Catalog (What It Checks)
+
+| Validator | Detects |
+|-----------|---------|
+| `nui-app structure` | Missing layout children, bare native elements outside wrappers |
+| `missing inner elements` | `<nui-button>` without `<button>`, `<nui-select>` without `<select>`, etc. |
+| `nui-tabs structure` | Missing tablist, missing panels |
+| `unregistered addon elements` | `<nui-list>` in DOM but `nui-list.js` not imported |
+| `attribute typos` | `variant="primry"`, `type="circlar"` |
+| (extensible) | Add more validators without touching core |
+
+### Level System (Future)
+
+```javascript
+nui.debug.run({ level: 'strict' });  // Everything
+nui.debug.run({ level: 'basic' });   // Missing elements only
+nui.debug.run({ level: 'pedantic'}); // Even suggests better patterns
 ```
 
 ---
@@ -326,7 +514,7 @@ Or for HTML-first usage:
 
 | Priority | Proposal | Impact | Risk |
 |----------|----------|--------|------|
-| **P0** | #1 Debug Mode (verbose by default) | Eliminates silent failures entirely | Low — additive |
+| **P0** | #1 Debug Addon (`nui-debug`) | Eliminates silent failures entirely | None — addon, zero production code |
 | **P0** | #2 Auto-wrap missing inner elements | Eliminates #1 LLM mistake pattern | Medium — must preserve existing explicit patterns |
 | **P1** | #4 Addon auto-loading | Eliminates "forgot CSS" class of bugs | Medium — dynamic imports in observer |
 | **P1** | #5 Replace `new Function()` with Blob URL | Removes CSP fragility | Low-Medium — behavior change for page scripts |
