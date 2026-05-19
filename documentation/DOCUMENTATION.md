@@ -2,7 +2,7 @@
 
 **NUI** is a high-performance, low-footprint UI component library built on native web standards. This document serves as the primary orientation guide for LLMs and AI Assistants working with the codebase.
 
-> **🤖 LLMs: Read `LLM-CHEATSHEET.md` first.** It contains every component's exact HTML structure, all 16 built-in `data-action` handlers, addon import requirements, and the public API — all in one file. Then return here for architecture and philosophy.
+> **🤖 LLMs: Read `LLM-CHEATSHEET.md` first.** It contains every component's exact HTML structure, all 17 built-in `data-action` handlers, addon import requirements, and the public API — all in one file. Then return here for architecture and philosophy.
 
 ---
 

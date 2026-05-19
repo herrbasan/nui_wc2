@@ -238,7 +238,32 @@ The debug module is never loaded in production. `nui.js` itself stays lean — n
 | `nui-tabs structure` | Missing tablist, missing panels |
 | `unregistered addon elements` | `<nui-list>` in DOM but `nui-list.js` not imported |
 | `attribute typos` | `variant="primry"`, `type="circlar"` |
+| **`data-action selector resolution`** | `data-action="dialog-open@#my-dialog"` when `#my-dialog` doesn't exist in DOM |
 | (extensible) | Add more validators without touching core |
+
+### Performance: Throttled Dirty-Region Strategy
+
+Full-document rescans on every MutationObserver callback can become expensive on large pages. The debug addon should:
+
+1. **Debounce** rescan calls (already in the proposal — 500ms)
+2. **Scope** rescan to the mutated subtree, not the full document
+3. **Skip** rescan during programmatic DOM updates by NUI itself (mark internal mutations with a `_nuiInternal` flag)
+
+```javascript
+// Scoped rescan: only validate the mutated subtree
+new MutationObserver((mutations) => {
+  const dirtyRoots = new Set();
+  for (const m of mutations) {
+    for (const node of m.addedNodes) {
+      if (node.nodeType === Node.ELEMENT_NODE) dirtyRoots.add(node);
+    }
+    if (m.target.nodeType === Node.ELEMENT_NODE) dirtyRoots.add(m.target);
+  }
+  clearTimeout(runAll._debounce);
+  runAll._debounce = setTimeout(() => {
+    dirtyRoots.forEach(root => runAll(root));
+  }, 500);
+}).observe(document.documentElement, { childList: true, subtree: true, attributes: true });
 
 ### Level System (Future)
 
@@ -304,6 +329,8 @@ Console output example:
 **Tier 2 — NOT auto-wrapping (debug addon handles this):**
 
 For `nui-app` bare children: do NOT auto-wrap at runtime. DOM mutation during `connectedCallback` can cause re-entrancy issues when the MutationObserver fires validators, which fire more mutations, etc. Instead, the debug addon's validators flag it with a clear `fix` field. The LLM reads the warning and corrects the HTML.
+
+**Production guard:** Auto-wrap should be gated behind a config flag (`config.strict !== true`) and ALWAYS emit an info message. In production (`config.strict = true`), missing inner elements should warn but never auto-wrap — this prevents hiding authoring errors in shipped code.
 
 **What we do NOT auto-wrap:**
 
@@ -383,7 +410,14 @@ const ADDON_MAP = {
 - 8 entries is trivial to maintain
 - Auto-load + info-log pattern (suggesting explicit imports for production) is exactly right
 
-**Dev-only guard:** Auto-loading only activates when `config.debug !== false`. In production, unregistered addons are simply ignored (they already render as unknown HTML elements). This prevents auto-loading from triggering for elements the user intentionally hasn't imported yet.
+**Dev-only guard (refined):** Auto-loading only activates when `config.debug !== false`. In production, unregistered addons are simply ignored. Also add a **duplicate-load guard** — a `_loading` Set — to prevent the MutationObserver from firing repeated `<link>` and `import()` calls for the same element if it moves in the DOM:
+
+```javascript
+const _loading = new Set();
+// In observer callback:
+if (_loading.has(tag)) return;
+_loading.add(tag);
+```
 
 Console output:
 ```
@@ -439,6 +473,8 @@ function executePageScript(wrapper, params) {
 
 This works with `script-src 'self'` — no `'unsafe-eval'` needed. The `import()` dynamic module import is already allowed by the existing `nui-code` syntax highlight loader.
 
+**⚠️ CSP caveat:** Some strict CSP policies may still require `blob:` in `script-src` for `import(blobUrl)`. This needs verification across Chrome, Firefox, and Safari before adopting as the default. The claim "works with `script-src 'self'` only" must be tested in a CSP matrix.
+
 ### Trade-off
 Slightly more complex. Need to handle module caching (Blob URLs should be revoked after use). Edge case: the wrapped code can't use top-level `return` statements (but page scripts shouldn't anyway). Another edge case: `this` inside the wrapped code changes because it runs as a module — any page scripts relying on `this === window` would break.
 
@@ -474,36 +510,52 @@ The `nui.ready()` Promise (added May 19) already solves the race condition. Ever
 
 ---
 
-## Peer Review: Multi-LLM Feedback
+## Peer Review: 5-LLM Consensus
 
-*Two LLMs (GLM and Kimi) independently reviewed these proposals. Strong consensus on P0 items, with specific refinements incorporated below.*
+*Five LLMs independently reviewed these proposals: DeepSeek (author), GLM, Kimi (Chinese models), Claude, Gemini 3.1 Pro, GPT 5.3 Codex (Western models). Strong consensus on what to build, with specific refinements from each.*
 
-### Consensus
+### Consensus Matrix
 
-| Proposal | GLM | Kimi | Result |
-|----------|-----|------|--------|
-| #1 Debug Addon | **P0** — single highest-value change | **P0** — build this first | ✅ Unanimous P0 |
-| #2 Auto-Wrap Tier 1 | **P0** with reservations | **P0** — strict logging non-negotiable | ✅ Unanimous P0 |
-| #3 Interaction model | Option C is correct | Already solved in cheatsheet | ✅ Done, no code change |
-| #4 Addon auto-load | **P1** — simplify to hardcoded map | **P1** — dev-only guard needed | ⚠️ P1 with refinements |
-| #5 Blob URL CSP | **P1** | **P1** — test existing scripts first | ⚠️ P1 with caution |
-| #6 Introspection API | Low value | **Skip it** | ✅ Won't build |
-| #7 Explicit init | `ready()` already solves | **Skip** | ✅ Won't build |
+| Proposal | DeepSeek | GLM | Kimi | Claude | Gemini | GPT | Result |
+|----------|----------|-----|------|--------|--------|-----|--------|
+| #1 Debug Addon | **P0** | **P0** | **P0** | **P0** | **P0** | **P0** | ✅ Unanimous P0 |
+| #2 Auto-Wrap Tier 1 | **P0** | **P0** | **P0** | **P0** | **P0** | **P0** | ✅ Unanimous P0 |
+| #3 Interaction boundary | Doc fix | Doc fix | Already done | Already done | Doc fix | Doc fix | ✅ Done |
+| #4 Addon auto-load | **P1** | **P1** | **P1** | **P1** | **P1** | **P1** | ✅ Unanimous P1 |
+| #5 Blob URL CSP | **P1** | **P1** | **P1** | **P1** | **P1** | **P1** ⚠️ | ⚠️ P1 with CSP caveat |
+| #6 Introspection API | **P2** | **P3** | Skip | Skip | — | Skip | ✅ Won't build |
+| #7 Explicit init | **P2** | Skip | Skip | Skip | — | Skip | ✅ Won't build |
 
-### Refinements from Kimi
+### Refinements by Reviewer
 
-| Feedback | Action |
-|----------|--------|
-| `issues` array must be cleared in `runAll()` | ✅ Code bug fixed — `issues.length = 0` added |
-| `nui-select` auto-wrap riskier than others (`optgroup`, `selected`, `multiple`) | ✅ Noted — only handle simplest case, warn on complex |
-| Auto-load should be dev-only (restrict to `config.debug !== false`) | ✅ Added guard clause to proposal |
-| `nui-app-window` is a factory function, not a custom element — remove from ADDON_MAP | ✅ Removed — MutationObserver would never detect it |
-| Before merging Blob URL: grep existing page scripts for `return` and `this` | ✅ Added pre-merge checklist |
-| `URL.revokeObjectURL(url)` must happen AFTER import completes | ✅ Fixed in proposal code |
+| Reviewer | Unique contribution |
+|----------|-------------------|
+| **GLM** | Structured `fix` field in debug output; Tier 2 moved to debug validators (DOM re-entrancy risk); `label` attribute precedence rules |
+| **Kimi** | `nui-select` auto-wrap caution (`optgroup`/`selected`/`multiple`); dev-only guard for auto-load; `nui-app-window` removed from ADDON_MAP; CSP pre-merge checklist |
+| **Claude** | `data-action` `@selector` validator (check targets resolve); duplicate-load `_loading` Set guard for addon auto-load observer |
+| **Gemini 3.1 Pro** | Philosophical validation of AX-over-DX thesis; confirmation that auto-wrap addresses "statistical gravity" of training data |
+| **GPT 5.3 Codex** | Blob URL CSP claim needs verification (`blob:` may still need `script-src`); debug MutationObserver needs throttled dirty-region; auto-wrap needs `config.strict` production gate; action handler count mismatch (16 vs 17) across docs |
 
-### Combined Build Order
+### Cross-Model Blind Spot Analysis
 
-1. **Debug addon** (Proposal 1) — the foundation. All validation lives here. Console is LLMs' only feedback channel.
-2. **Auto-wrap Tier 1** (Proposal 2) — fixes the #1 training-data mismatch. Info log on every auto-wrap so LLMs learn the explicit pattern.
-3. **Blob URL CSP fix** (Proposal 5) — removes `'unsafe-eval'` requirement. Pre-merge: grep all `<script type="nui/page">` blocks for `return` and `this === window`.
-4. **Addon auto-load** (Proposal 4) — dev-only convenience. Hardcoded 8-entry lookup (not 9 — `nui-app-window` excluded). Guarded by `config.debug !== false`.
+Chinese models (DeepSeek, GLM, Kimi) and Western models (Claude, Gemini, GPT) identified **different** gaps:
+
+| Gap | Found by |
+|-----|----------|
+| Structured `fix` field, DOM re-entrancy, label precedence | Chinese (GLM) |
+| `nui-select` complexity, dev-only guards, pre-merge checklist | Chinese (Kimi) |
+| `data-action` selector validation, duplicate-load guard | Western (Claude) |
+| CSP Blob URL verification, MutationObserver performance, `config.strict` gate | Western (GPT) |
+
+The Western models surfaced concerns about production hardening (CSP, performance, strict mode) that the Chinese models didn't flag. Both groups converged on the same P0/P1 build order — the disagreements are about implementation details, not direction.
+
+### Action-Handler Count Standardization
+
+GPT flagged an inconsistency: some docs reference 16 handlers, others 17. Resolution: the authoritative count is **17** (all entries in the `builtinActionHandlers` object in `nui.js`, including `scroll-to-top` which was the missing one). All docs should use this count.
+
+### Unified Build Order
+
+1. **Debug addon** (Proposal 1) — with structured `fix` output, `data-action` selector validator, throttled dirty-region observer. Foundation for all other validation.
+2. **Auto-wrap Tier 1** (Proposal 2) — with `config.strict` production gate, always-log policy, `nui-select` flat-case-only handling.
+3. **CSP Blob URL** (Proposal 5) — after CSP compatibility matrix testing (Chrome, Firefox, Safari), with `blob:` caveat documented.
+4. **Addon auto-load** (Proposal 4) — dev-only, `_loading` Set guard, 8-entry hardcoded map.
