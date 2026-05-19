@@ -11,8 +11,62 @@
 3. **`<nui-app>` requires EXACT children in order:** `<nui-app-header>`, `<nui-sidebar>`, `<nui-content>`, optionally `<nui-app-footer>`.
 4. **Addons require BOTH JS import AND CSS.** Core components work without imports.
 5. **Use `nui.ready()` before calling programmatic APIs.** `await nui.ready()` — resolves when init is complete.
-6. **Only use CSS variables from `nui-theme.css`.** Never invent new variables. Space: `--nui-space`, `--nui-space-half`, `--nui-space-double`. Colors: `--color-base`, `--color-shade1` through `--color-shade9`. Borders: `--border-thickness`, `--border-radius1`/`2`/`3`.
-7. **In page scripts, use `element.querySelector()` not `document.querySelector()`.** The element is the page wrapper.
+6. **In page scripts, use `element.querySelector()` not `document.querySelector()`.** The element is the page wrapper.
+7. **NEVER style NUI components.** Adding `style=""`, `<style>` blocks, or custom CSS classes to NUI components breaks the design system. The component IS the style — visual variation comes from attributes (`variant`, `type`, `size`, `fill`), not from CSS. If you feel the urge to style something, you are almost certainly using the wrong pattern. See the **Styling Rules** section below.
+
+---
+
+## Styling Rules (CRITICAL — read before adding ANY CSS)
+
+### ❌ NEVER do these:
+
+```html
+<!-- ❌ Inline styles on NUI components -->
+<nui-button style="background: blue; padding: 12px;">...</nui-button>
+<nui-card style="border: 2px solid red;">...</nui-card>
+<nui-tabs style="margin-top: 20px;">...</nui-tabs>
+
+<!-- ❌ Custom CSS targeting NUI components -->
+<style>
+  nui-button { border-radius: 12px; }
+  .my-custom-card { box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+</style>
+```
+
+### ✅ DO these instead:
+
+```html
+<!-- ✅ Use component attributes for visual variation -->
+<nui-button variant="primary">...</nui-button>
+<nui-card>...</nui-card>
+<nui-tabs fill>...</nui-tabs>
+
+<!-- ✅ For spacing between YOUR elements, use theme variables on YOUR wrappers -->
+<div style="display: flex; gap: var(--nui-space);">
+  <nui-button><button>Save</button></nui-button>
+  <nui-button variant="outline"><button>Cancel</button></nui-button>
+</div>
+
+<!-- ✅ For layout-only CSS, scope under your page class in main.css -->
+<!-- In Playground/css/main.css: -->
+<!-- .page-my-feature .my-layout { display: grid; gap: var(--nui-space-double); } -->
+```
+
+### Decision Tree (follow when tempted to add CSS)
+
+| You want to... | Do this instead |
+|---------------|-----------------|
+| Change a button's color | Use `variant="primary\|outline\|ghost\|danger\|warning"` |
+| Make a button look like an icon | Use `variant="icon"` with `<nui-icon>` inside |
+| Change spacing between elements | Use your own wrapper `<div>` with `gap: var(--nui-space)` |
+| Add a border to something | Check if `<nui-card>` already does what you want |
+| Change font size | Use `<h1>`–`<h6>` or the `lead` class — NUI handles typography |
+| Make something full-width | Use `nui-page` `breakout` attribute or `nui-layout` |
+| Add a shadow/elevation | NUI components handle elevation — check component docs |
+| Tabular data | Use `<nui-table><table>...</table></nui-table>` |
+| Still stuck? | Read the component's `.md` doc in `documentation/components/` |
+
+**Rule of thumb:** If you're reaching for CSS, stop and ask: "Is there a NUI component or attribute that already does this?" 95% of the time, the answer is yes.
 
 ---
 
@@ -51,6 +105,8 @@
 | Method | `.setLoading(bool)` — toggles loading state and disabled |
 | Inner element | `<button>` or `<a>` — always set `type="button"` unless it's a submit |
 
+📖 **Full docs:** [`documentation/components/button.md`](documentation/components/button.md)
+
 ### nui-input / nui-textarea / nui-checkbox / nui-radio
 
 ```html
@@ -84,6 +140,8 @@
 | Events | `nui-input`, `nui-change`, `nui-clear` (CustomEvent, bubbles) |
 | Methods | `.validate()`, `.clear()`, `.focus()` |
 
+📖 **Full docs:** [`documentation/components/input.md`](documentation/components/input.md)
+
 ### nui-select
 
 ```html
@@ -114,6 +172,8 @@
 | Events | `nui-change`, `nui-select`, `nui-open`, `nui-close`, `nui-clear` |
 | Methods | `.open()`, `.close()`, `.setValue(v)`, `.getValue()`, `.clear()`, `.setItems(arr)`, `.addItem(v,l)`, `.removeItem(v)`, `.enable()`, `.disable()`, `.loadOptions(asyncFn)` |
 
+📖 **Full docs:** [`documentation/components/select.md`](documentation/components/select.md)
+
 ### nui-slider
 
 ```html
@@ -122,6 +182,8 @@
 </nui-slider>
 ```
 | Methods | `.getValue()`, `.setValue(val)` |
+
+📖 **Full docs:** [`documentation/components/slider.md`](documentation/components/slider.md)
 
 ### nui-tag-input
 
@@ -132,6 +194,8 @@
 | Events | `nui-tag-add`, `nui-tag-remove`, `nui-change` |
 | Methods | `.addTag(value, label?)`, `.removeTag(value)`, `.hasTag(value)`, `.listTags()`, `.getValues()`, `.clear()`, `.focus()` |
 
+📖 **Full docs:** [`documentation/components/tag-input.md`](documentation/components/tag-input.md)
+
 ### nui-dropzone
 
 ```html
@@ -141,6 +205,8 @@
 </nui-dropzone>
 ```
 | Events | `nui-dropzone-drop` (detail: `{ zone, dataTransfer }`) |
+
+📖 **Full docs:** [`documentation/components/dropzone.md`](documentation/components/dropzone.md)
 
 ---
 
@@ -186,9 +252,13 @@
 </nui-app>
 ```
 
+📖 **Full docs:** [`documentation/components/app-layout.md`](documentation/components/app-layout.md)
+
 ### nui-app-header
 | Slots | `left`, `center`, `right` |
 | Inner | `<header>` (auto-gets `role="banner"`) |
+
+📖 **Full docs:** [`documentation/components/app-header.md`](documentation/components/app-header.md)
 
 ### nui-sidebar
 | Attributes | `behavior="primary"` (collapses first), `behavior="secondary"`, `behavior="manual"`, `position="right"` |
@@ -200,6 +270,8 @@
 ### nui-page
 | Attributes | `breakout` (allows full-width child sections) |
 | Use as | Content wrapper in page fragments |
+
+📖 **Full docs:** [`documentation/components/page.md`](documentation/components/page.md)
 
 ### nui-card
 
@@ -216,6 +288,8 @@
 ```
 | Attributes | `layout="flip"`, `interactive`, `flipped` |
 
+📖 **Full docs:** [`documentation/components/card.md`](documentation/components/card.md)
+
 ### nui-layout
 
 ```html
@@ -225,6 +299,8 @@
 </nui-layout>
 ```
 | Attributes | `type="grid"|"flow"`, `columns`, `gap`, `column-width`, `sort` |
+
+📖 **Full docs:** [`documentation/components/layout.md`](documentation/components/layout.md)
 
 ### nui-button-container
 
@@ -264,6 +340,8 @@
 | Event | `nui-tab-change` (detail: `{ tab, panel }`) |
 | Method | `.selectTab(indexOrId)` |
 
+📖 **Full docs:** [`documentation/components/tabs.md`](documentation/components/tabs.md)
+
 ### nui-accordion
 
 ```html
@@ -281,6 +359,8 @@
 | Attributes | `exclusive`, `no-animation` |
 | Methods | `.toggle(index)`, `.expandAll()`, `.collapseAll()` |
 
+📖 **Full docs:** [`documentation/components/accordion.md`](documentation/components/accordion.md)
+
 ### nui-link-list
 
 ```html
@@ -296,6 +376,8 @@
 | Attributes | `mode="tree|fold"` |
 | Event | `nui-active-change` |
 | Methods | `.loadData(data)`, `.setActive(selector)`, `.getActive()`, `.clearActive()`, `.clearSubs()` |
+
+📖 **Full docs:** [`documentation/components/link-list.md`](documentation/components/link-list.md)
 
 ---
 
@@ -360,6 +442,8 @@ const returnValue = await result;
 | Events | `nui-dialog-open`, `nui-dialog-close`, `nui-dialog-cancel` |
 | ⚠️ `page()` signature | `page(title, htmlContent, options)` — 2nd param is HTML content, NOT subtitle |
 
+📖 **Full docs:** [`documentation/components/dialog.md`](documentation/components/dialog.md)
+
 ### nui-overlay
 
 ```html
@@ -369,6 +453,8 @@ const returnValue = await result;
   </dialog>
 </nui-overlay>
 ```
+
+📖 **Full docs:** [`documentation/components/overlay.md`](documentation/components/overlay.md)
 
 ---
 
@@ -389,6 +475,8 @@ nui.components.banner.hideAll();
 ```
 | Events | `nui-banner-open`, `nui-banner-close` |
 
+📖 **Full docs:** [`documentation/components/banner.md`](documentation/components/banner.md)
+
 ### nui-progress
 
 ```html
@@ -398,6 +486,8 @@ nui.components.banner.hideAll();
 <nui-progress type="circular-busy"></nui-progress>
 ```
 | Attributes | `type="bar|circular|busy|circular-busy"`, `value`, `max`, `hide-text`, `size` |
+
+📖 **Full docs:** [`documentation/components/progress.md`](documentation/components/progress.md)
 
 ---
 
@@ -414,6 +504,8 @@ nui.components.banner.hideAll();
 </nui-table>
 ```
 
+📖 **Full docs:** [`documentation/components/table.md`](documentation/components/table.md)
+
 ---
 
 ## UI Components
@@ -428,6 +520,8 @@ nui.components.banner.hideAll();
 ```
 | Variants | `primary`, `success`, `danger`, `warning`, `info` |
 
+📖 **Full docs:** [`documentation/components/badge.md`](documentation/components/badge.md)
+
 ### nui-code
 
 ```html
@@ -441,6 +535,8 @@ nui.components.banner.hideAll();
 </nui-code>
 ```
 
+📖 **Full docs:** [`documentation/components/code.md`](documentation/components/code.md)
+
 ### nui-icon
 
 ```html
@@ -448,6 +544,8 @@ nui.components.banner.hideAll();
 <nui-icon name="close" decorative></nui-icon>
 ```
 | Attribute | `name` (Material Icons sprite name) |
+
+📖 **Full docs:** [`documentation/components/icon.md`](documentation/components/icon.md)
 
 ### nui-markdown
 
@@ -462,6 +560,8 @@ nui.components.banner.hideAll();
 ```
 | Streaming | `.beginStream()`, `.appendChunk(text)`, `.endStream()` |
 
+📖 **Full docs:** [`documentation/components/markdown.md`](documentation/components/markdown.md)
+
 ### nui-tooltip
 
 ```html
@@ -470,12 +570,16 @@ nui.components.banner.hideAll();
 ```
 | Attributes | `for` (target element ID), `position="top|bottom|left|right|auto"`, `offset` |
 
+📖 **Full docs:** [`documentation/components/tooltip.md`](documentation/components/tooltip.md)
+
 ### nui-skip-links
 
 ```html
 <!-- Auto-generates skip links for nui-app structure -->
 <nui-skip-links></nui-skip-links>
 ```
+
+📖 **Full docs:** [`documentation/components/skip-links.md`](documentation/components/skip-links.md)
 
 ---
 
@@ -497,6 +601,8 @@ nui.components.banner.hideAll();
 ```
 | Event | `nui-sortable-change` (detail: `{ order: string[] }`) |
 | Methods | `.addItem(htmlString)`, `.getItems()`, `.setItems(arr)`, `.clear()` |
+
+📖 **Full docs:** [`documentation/components/sortable.md`](documentation/components/sortable.md)
 
 ---
 
@@ -521,6 +627,8 @@ nui.components.banner.hideAll();
 <link rel="stylesheet" href="NUI/css/modules/nui-list.css">
 <script type="module" src="NUI/lib/modules/nui-list.js"></script>
 ```
+
+📖 **Addon docs:** [`documentation/addons/`](documentation/addons/) — list.md, lightbox.md, code-editor.md, media-player.md, wizard.md, menu.md, context-menu.md, rich-text.md, app-window.md
 
 ---
 
@@ -557,6 +665,8 @@ document.addEventListener('nui-action-my-custom', (e) => {
   console.log(e.detail.name, e.detail.param, e.detail.target);
 });
 ```
+
+📖 **Full docs:** [`documentation/DOCUMENTATION.md`](documentation/DOCUMENTATION.md) — Declarative Actions section
 
 ---
 
@@ -601,6 +711,8 @@ nui.registerFeature(name, initFn)    // Register a feature handler
 nui.registerAction(name, handler)     // Register a data-action handler
 nui.registerType(type, handler)       // Register a custom route type
 ```
+
+📖 **Full API docs:** [`documentation/DOCUMENTATION.md`](documentation/DOCUMENTATION.md) — API Structure section
 
 ---
 
