@@ -7,6 +7,7 @@ import '../../NUI/lib/modules/nui-lightbox.js';
 import '../../NUI/lib/modules/nui-code-editor.js';
 import '../../NUI/lib/modules/nui-media-player.js';
 import '../../NUI/lib/modules/nui-wizard.js';
+import '../../NUI/lib/modules/nui-debug.js';
 //import { createMonitor } from '../../NUI/lib/modules/nui-monitor.js';
 
 console.log('nui imported');
