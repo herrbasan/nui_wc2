@@ -277,6 +277,8 @@ Detect missing inner native elements at `connectedCallback` time and auto-create
 | `nui-dialog` | `<nui-dialog><p>Content</p></nui-dialog>` | `<dialog>`, wraps content |
 | `nui-tabs` | `<nui-tabs><button>Tab1</button><section>C</section></nui-tabs>` | Wraps buttons in `<nav>`, keeps panels |
 
+**⚠️ `nui-select` caution:** Auto-wrapping bare `<option>` elements is riskier than other components because of `optgroup` nesting, `selected` state, and `multiple` semantics. If implemented, only handle the simplest case (flat `<option>` children, no `optgroup`, no `multiple`) and warn for complex structures.
+
 **`label` attribute precedence for `nui-button`:**
 
 ```html
@@ -357,6 +359,8 @@ Instead of each addon exporting its own manifest, use a single lookup table in `
 
 ```javascript
 // In nui.js — single source of truth for addon auto-loading
+// Note: 8 entries, not 9. nui-app-window is a factory function,
+// not a custom element — the MutationObserver would never detect it.
 const ADDON_MAP = {
   'nui-list':         { js: 'lib/modules/nui-list.js',         css: 'css/modules/nui-list.css' },
   'nui-lightbox':     { js: 'lib/modules/nui-lightbox.js',     css: 'css/modules/nui-lightbox.css' },
@@ -366,18 +370,20 @@ const ADDON_MAP = {
   'nui-menu':         { js: 'lib/modules/nui-menu.js',         css: 'css/modules/nui-menu.css' },
   'nui-context-menu': { js: 'lib/modules/nui-context-menu.js', css: 'css/modules/nui-context-menu.css' },
   'nui-rich-text':    { js: 'lib/modules/nui-rich-text.js',    css: 'css/modules/nui-rich-text.css' },
-  'nui-app-window':   { js: 'lib/modules/nui-app-window.js',   css: 'css/modules/nui-app-window.css' },
 };
 
-// MutationObserver: on detecting unregistered nui-* element,
-// dynamically import JS + inject CSS, then log instructions.
+// MutationObserver: on detecting unregistered nui-* element in ADDON_MAP,
+// dynamically import JS + inject CSS, then log explicit import instructions.
+// ONLY runs when config.debug !== false (dev-only, not production).
 ```
 
 **Why hardcoded instead of per-addon manifests:**
-- No need to touch all 9 addon files
+- No need to touch all 8 addon files
 - Data already exists in `components.json`
-- 9 entries is trivial to maintain
+- 8 entries is trivial to maintain
 - Auto-load + info-log pattern (suggesting explicit imports for production) is exactly right
+
+**Dev-only guard:** Auto-loading only activates when `config.debug !== false`. In production, unregistered addons are simply ignored (they already render as unknown HTML elements). This prevents auto-loading from triggering for elements the user intentionally hasn't imported yet.
 
 Console output:
 ```
@@ -434,7 +440,14 @@ function executePageScript(wrapper, params) {
 This works with `script-src 'self'` — no `'unsafe-eval'` needed. The `import()` dynamic module import is already allowed by the existing `nui-code` syntax highlight loader.
 
 ### Trade-off
-Slightly more complex. Need to handle module caching (Blob URLs should be revoked after use). Edge case: the wrapped code can't use top-level `return` statements (but page scripts shouldn't anyway). Another edge case: `this` inside the wrapped code changes because it runs as a module — any page scripts relying on `this === window` would break (unlikely but worth documenting).
+Slightly more complex. Need to handle module caching (Blob URLs should be revoked after use). Edge case: the wrapped code can't use top-level `return` statements (but page scripts shouldn't anyway). Another edge case: `this` inside the wrapped code changes because it runs as a module — any page scripts relying on `this === window` would break.
+
+### Pre-Merge Checklist
+Before merging the Blob URL change:
+1. `grep` all `<script type="nui/page">` blocks for `return` statements
+2. `grep` all `<script type="nui/page">` blocks for `this.` usage that might rely on `this === window`
+3. `URL.revokeObjectURL(url)` must happen AFTER `import()` completes (inside `.then()`, not before)
+4. Test against the Playground's existing page scripts (components, addons, documentation pages)
 
 ---
 
@@ -461,39 +474,36 @@ The `nui.ready()` Promise (added May 19) already solves the race condition. Ever
 
 ---
 
-## Peer Review: GLM (Gemini Language Model) Feedback
+## Peer Review: Multi-LLM Feedback
 
-*Incorporated into the proposals above. Key refinements:*
+*Two LLMs (GLM and Kimi) independently reviewed these proposals. Strong consensus on P0 items, with specific refinements incorporated below.*
+
+### Consensus
+
+| Proposal | GLM | Kimi | Result |
+|----------|-----|------|--------|
+| #1 Debug Addon | **P0** — single highest-value change | **P0** — build this first | ✅ Unanimous P0 |
+| #2 Auto-Wrap Tier 1 | **P0** with reservations | **P0** — strict logging non-negotiable | ✅ Unanimous P0 |
+| #3 Interaction model | Option C is correct | Already solved in cheatsheet | ✅ Done, no code change |
+| #4 Addon auto-load | **P1** — simplify to hardcoded map | **P1** — dev-only guard needed | ⚠️ P1 with refinements |
+| #5 Blob URL CSP | **P1** | **P1** — test existing scripts first | ⚠️ P1 with caution |
+| #6 Introspection API | Low value | **Skip it** | ✅ Won't build |
+| #7 Explicit init | `ready()` already solves | **Skip** | ✅ Won't build |
+
+### Refinements from Kimi
 
 | Feedback | Action |
 |----------|--------|
-| Debug addon should return structured issues with `fix` field | ✅ Added — `{ element, id, message, fix }` in return value |
-| Tier 2 auto-wrap risks DOM re-entrancy | ✅ Moved Tier 2 to debug addon validators only (log, don't mutate) |
-| `label` attribute needs precedence rules | ✅ Documented: explicit `<button>` wins, `label` falls back, `textContent` last |
-| Interaction model: Option C is correct | ✅ Settled on 2-line boundary rule in cheatsheet, no code change |
-| Addon auto-loading: hardcode the map | ✅ Single `ADDON_MAP` lookup table instead of per-addon manifests |
-| CSP Blob URL: note `this` change | ✅ Documented edge case |
-| Introspection API: low value for LLMs | ✅ Deprioritized to P3, won't build unless need arises |
-| Explicit init: `nui.ready()` already solves | ✅ Won't build |
+| `issues` array must be cleared in `runAll()` | ✅ Code bug fixed — `issues.length = 0` added |
+| `nui-select` auto-wrap riskier than others (`optgroup`, `selected`, `multiple`) | ✅ Noted — only handle simplest case, warn on complex |
+| Auto-load should be dev-only (restrict to `config.debug !== false`) | ✅ Added guard clause to proposal |
+| `nui-app-window` is a factory function, not a custom element — remove from ADDON_MAP | ✅ Removed — MutationObserver would never detect it |
+| Before merging Blob URL: grep existing page scripts for `return` and `this` | ✅ Added pre-merge checklist |
+| `URL.revokeObjectURL(url)` must happen AFTER import completes | ✅ Fixed in proposal code |
 
----
+### Combined Build Order
 
-## Summary: Refined Priority Matrix
-
-| Priority | Proposal | Impact | Risk |
-|----------|----------|--------|------|
-| **P0** | #1 Debug Addon (`nui-debug`) + structured `fix` output | Eliminates silent failures, LLMs can self-correct | None — addon, zero production code |
-| **P0** | #2 Auto-wrap Tier 1 (form components only) | Fixes the #1 LLM mistake pattern | Low — Tier 2 moved to debug addon |
-| **P0** | #3 Add 2-line boundary rule to cheatsheet | Resolves `data-action` vs `addEventListener` confusion | None — documentation only |
-| **P1** | #4 Addon auto-loading (hardcoded lookup) | Eliminates "forgot CSS import" class of bugs | Low-Medium — dynamic imports in observer |
-| **P1** | #5 Replace `new Function()` with Blob URL | Removes CSP fragility | Low-Medium — `this` edge case documented |
-| **P3** | #6 Component introspection API | Marginal LLM value — cheatsheet already serves this | Low — generated from components.json |
-| — | #7 Explicit init | Won't build — `nui.ready()` already solves the problem | — |
-
-### Build Order
-
-1. **Cheatsheet: add 2 lines** (Proposal 3) — 5 minutes, immediate impact
-2. **Debug addon** (Proposal 1) — the foundation. All other validation lives here.
-3. **Auto-wrap Tier 1** (Proposal 2) — eliminates the most common silent mistake
-4. **Addon auto-loading** (Proposal 4) — kills the "forgot CSS" class of bugs
-5. **Blob URL** (Proposal 5) — removes CSP requirements for page scripts
+1. **Debug addon** (Proposal 1) — the foundation. All validation lives here. Console is LLMs' only feedback channel.
+2. **Auto-wrap Tier 1** (Proposal 2) — fixes the #1 training-data mismatch. Info log on every auto-wrap so LLMs learn the explicit pattern.
+3. **Blob URL CSP fix** (Proposal 5) — removes `'unsafe-eval'` requirement. Pre-merge: grep all `<script type="nui/page">` blocks for `return` and `this === window`.
+4. **Addon auto-load** (Proposal 4) — dev-only convenience. Hardcoded 8-entry lookup (not 9 — `nui-app-window` excluded). Guarded by `config.debug !== false`.
