@@ -58,9 +58,13 @@
 
         <nui-code>
             <script type="example" data-lang="html">
-<nui-button>
-    <button type="button">Click Me</button>
-</nui-button>
+&lt;!-- Simplified (auto-creates inner &lt;button&gt; in dev) --&gt;
+&lt;nui-button&gt;Click Me&lt;/nui-button&gt;
+
+&lt;!-- Explicit (production-ready, works without JS) --&gt;
+&lt;nui-button&gt;
+    &lt;button type="button"&gt;Click Me&lt;/button&gt;
+&lt;/nui-button&gt;
             </script>
         </nui-code>
 
@@ -69,11 +73,11 @@
 
     <section>
         <h2>Quick Links</h2>
-        <div class="demo-area">
-            <nui-button><button type="button" data-action="navigate:#page=documentation/getting-started">Getting Started</button></nui-button>
-            <nui-button><button type="button" data-action="navigate:#page=components/button">Button Component</button></nui-button>
-            <nui-button><button type="button" data-action="navigate:#page=components/dialog">Dialog Component</button></nui-button>
-            <nui-button><button type="button" data-action="navigate:#page=documentation/architecture-patterns">Architecture Patterns</button></nui-button>
+        <div class="demo-actions">
+            <nui-button data-action="navigate:#page=documentation/getting-started">Getting Started</nui-button>
+            <nui-button data-action="navigate:#page=components/button" variant="primary">Button Component</nui-button>
+            <nui-button data-action="navigate:#page=components/dialog" variant="outline">Dialog Component</nui-button>
+            <nui-button data-action="navigate:#page=documentation/architecture-patterns" variant="ghost">Architecture Patterns</nui-button>
         </div>
     </section>
 </div>

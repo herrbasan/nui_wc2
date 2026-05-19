@@ -28,27 +28,18 @@
 
         <nui-app-header>
             <div slot="left">
-                <!-- Toggle Left Navigation Sidebar -->
-                <nui-button data-action="toggle-sidebar">
-                    <button type="button" aria-label="Toggle navigation menu">
-                        <nui-icon name="menu">☰</nui-icon>
-                    </button>
+                <nui-button data-action="toggle-sidebar" variant="icon">
+                    <nui-icon name="menu">☰</nui-icon>
                 </nui-button>
                 <h1>NUI Application</h1>
             </div>
             
             <div slot="right">
-                <!-- Toggle Light/Dark Mode -->
-                <nui-button data-action="toggle-theme">
-                    <button type="button" aria-label="Toggle light/dark theme">
-                        <nui-icon name="brightness">⛭</nui-icon>
-                    </button>
+                <nui-button data-action="toggle-theme" variant="icon">
+                    <nui-icon name="brightness">⛭</nui-icon>
                 </nui-button>
-                <!-- Toggle Right Config Sidebar -->
-                <nui-button data-action="toggle-sidebar:right">
-                    <button type="button" aria-label="Toggle configuration panel">
-                        <nui-icon name="settings">⚙</nui-icon>
-                    </button>
+                <nui-button data-action="toggle-sidebar:right" variant="icon">
+                    <nui-icon name="settings">⚙</nui-icon>
                 </nui-button>
             </div>
         </nui-app-header>
