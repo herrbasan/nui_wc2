@@ -1165,7 +1165,11 @@ function setupCodeBlock(element, pre, codeBlock, rawText) {
 		if (lang) {
 			codeBlock.innerHTML = module.highlight(rawText, lang);
 		}
-	}).catch(() => { });
+	}).catch((err) => {
+		if (config.debug !== false) {
+			console.warn('[NUI] <nui-code> syntax highlighting unavailable. The module NUI/lib/modules/nui-syntax-highlight.js was not found. Code will display without highlighting. Copy the lib/modules/ directory alongside nui.js.', err.message || err);
+		}
+	});
 
 	return () => {
 		copyButton.remove();

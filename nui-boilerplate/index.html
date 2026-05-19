@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="color-scheme" content="light dark">
+    <!-- Content Security Policy — 'unsafe-eval' required for NUI page scripts -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline';">
     <title>NUI Boilerplate</title>
     <!-- Core NUI CSS Variables and Components -->
     <link rel="stylesheet" href="../NUI/css/nui-theme.css">

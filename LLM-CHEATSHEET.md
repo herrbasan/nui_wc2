@@ -7,12 +7,35 @@
 ## Quick Rules (read before generating ANY NUI HTML)
 
 1. **Every NUI component wraps a native HTML element.** You CANNOT use `<nui-button>Click</nui-button>`. You MUST put a real `<button>` inside.
-2. **Use `data-action` for click handling, NOT `addEventListener('nui-click', ...)`.**
-3. **`<nui-app>` requires EXACT children in order:** `<nui-app-header>`, `<nui-sidebar>`, `<nui-content>`, optionally `<nui-app-footer>`.
+2. **Use `data-action` for click handling, NOT `addEventListener('nui-click', ...)`. `nui-click` is an internal event.**
+3. **`<nui-app>` requires EXACT children in order.** See the structure diagram below.
 4. **Addons require BOTH JS import AND CSS.** Core components work without imports.
 5. **Use `nui.ready()` before calling programmatic APIs.** `await nui.ready()` — resolves when init is complete.
 6. **In page scripts, use `element.querySelector()` not `document.querySelector()`.** The element is the page wrapper.
 7. **NEVER style NUI components.** Adding `style=""`, `<style>` blocks, or custom CSS classes to NUI components breaks the design system. The component IS the style — visual variation comes from attributes (`variant`, `type`, `size`, `fill`), not from CSS. If you feel the urge to style something, you are almost certainly using the wrong pattern. See the **Styling Rules** section below.
+
+---
+
+## `nui-app` Required Structure
+
+```
+<nui-app>                          ← Activates CSS Grid app shell
+├── <nui-skip-links></nui-skip-links>  ← ACCESSIBILITY: auto-generates skip links
+├── <nui-app-header>               ← REQUIRED: top bar
+│   └── <header>                   ← MUST wrap native <header>
+│       ├── <div slot="left">      ← Left zone (menu toggle, title)
+│       ├── <div slot="center">    ← Center zone (optional)
+│       └── <div slot="right">     ← Right zone (actions, theme toggle)
+├── <nui-sidebar behavior="primary">  ← REQUIRED: left nav
+│   └── <nav> or <nui-link-list>   ← MUST wrap native <nav>
+├── <nui-content>                  ← REQUIRED: main content area
+│   └── <main>                     ← MUST wrap native <main>
+│       └── (your page content)
+└── <nui-app-footer> (optional)    ← Bottom bar
+    └── <footer>                   ← MUST wrap native <footer>
+```
+
+**Every `nui-*` layout wrapper MUST contain its native HTML element.** Missing inner native elements = broken layout with zero visual feedback.
 
 ---
 
@@ -67,6 +90,87 @@
 | Still stuck? | Read the component's `.md` doc in `documentation/components/` |
 
 **Rule of thumb:** If you're reaching for CSS, stop and ask: "Is there a NUI component or attribute that already does this?" 95% of the time, the answer is yes.
+
+---
+
+## Theme CSS Variables (complete reference)
+
+If you MUST apply CSS (spacing on your own wrappers, very rare theming), use ONLY these variables. Never invent new ones.
+
+### Spacing
+| Variable | Value |
+|----------|-------|
+| `--nui-space` | `1rem` (base unit) |
+| `--nui-space-eighth` | `calc(1rem / 8)` |
+| `--nui-space-quarter` | `calc(1rem / 4)` |
+| `--nui-space-half` | `calc(1rem / 2)` |
+| `--nui-space-double` | `calc(1rem * 2)` |
+| `--nui-space-triple` | `calc(1rem * 3)` |
+| `--nui-space-quadruple` | `calc(1rem * 4)` |
+
+### Surfaces (light → dark gradient)
+| Variable | Role |
+|----------|------|
+| `--color-base` | Page background |
+| `--color-shade1` | Slightly elevated |
+| `--color-shade2` | Card, input backgrounds |
+| `--color-shade3` | Hover states |
+| `--color-shade4` | Active/pressed states |
+| `--color-shade5`–`--color-shade9` | Borders, dim text, disabled |
+
+### Text
+| Variable | Use |
+|----------|-----|
+| `--text-color` | Primary text |
+| `--text-color-dim` | Secondary text |
+| `--color-text` | Alias for primary |
+| `--color-text-dim` | Alias for secondary |
+| `--color-text-muted` | Muted/disabled text |
+| `--color-text-subtle` | Very faint text |
+
+### Borders
+| Variable | Use |
+|----------|-----|
+| `--border-thickness` | Border width (typically `thin`) |
+| `--border-radius1` | Small radius (eighth-space) |
+| `--border-radius2` | Medium radius (quarter-space) |
+| `--border-radius3` | Large radius (half-space) |
+| `--border-shade1`–`--border-shade4` | Border colors (light→dark) |
+
+### Accent / Highlight
+| Variable | Use |
+|----------|-----|
+| `--color-highlight` | Primary accent (buttons, links, focus) |
+| `--color-highlight-dim` | Muted accent |
+| `--color-accent` | Alias for `--color-highlight` |
+
+### Typography
+| Variable | Value |
+|----------|-------|
+| `--font-size-base` | `1rem` |
+| `--font-size-xsmall` | `0.8rem` |
+| `--font-size-small` | `0.9rem` |
+| `--font-size-medium` | `1.2rem` |
+| `--font-size-large` | `1.5rem` |
+| `--font-size-xlarge` | `2rem` |
+| `--system-ui` | System font stack |
+
+### Layout
+| Variable | Use |
+|----------|-----|
+| `--sidebar-width` | Sidebar width (`21rem`) |
+| `--app-header-height` | Top bar height (`4rem`) |
+| `--nui-form-row-height` | Form control height (`2.5rem`) |
+| `--icon-size` | Icon dimensions (`1.2rem`) |
+
+### Other
+| Variable | Use |
+|----------|-----|
+| `--color-white` | Always white |
+| `--color-black` | Always black |
+| `--shadow-color` | Box-shadow base color |
+| `--nui-breakpoint-mobile` | `320px` |
+| `--nui-breakpoint-tablet` | `640px` |
 
 ---
 

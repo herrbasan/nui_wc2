@@ -78,7 +78,7 @@
 			"group": "forms",
 			"description": "Styled wrapper around native buttons, including icon buttons and variant styling.",
 			"events": [
-				"nui-click"
+				"nui-click (INTERNAL — use data-action instead)"
 			],
 			"innerElement": "<button> or <a>",
 			"imports": null,
@@ -378,7 +378,8 @@
 			"events": [],
 			"innerElement": null,
 			"imports": {
-				"js": "NUI/lib/modules/nui-app-window.js"
+				"js": "NUI/lib/modules/nui-app-window.js",
+				"css": "NUI/css/modules/nui-app-window.css"
 			},
 			"page": "addons/app-window",
 			"demoPath": "Playground/pages/addons/app-window.html",
