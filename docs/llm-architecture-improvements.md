@@ -277,7 +277,7 @@ nui.debug.run({ level: 'pedantic'}); // Even suggests better patterns
 
 ---
 
-## Proposal 2: Auto-Wrap Missing Inner Elements (Rejected)
+## Proposal 2: Auto-Wrap Missing Inner Elements ✅ Implemented
 
 ### Current State
 NUI requires wrapping native elements inside custom elements:
@@ -287,13 +287,38 @@ NUI requires wrapping native elements inside custom elements:
 
 This pattern contradicts millions of LLM training examples where components are self-contained (`<Button>Click</Button>` in React, `<v-btn>Click</v-btn>` in Vuetify, etc.).
 
-### Decision: Rejected for Pure AX
-Auto-wrapping violates NUI's core philosophy ("Explicit over Clever... No 'magic' abstractions. DOM as the Source of Truth"). If the library secretly transforms the DOM into `<nui-button><button>Save</button></nui-button>`, the live DOM diverges from the LLM's source code. When the LLM subsequently tries to write script to manipulate it, it references the wrong structure.
+### Decision: Implemented (Tier 1 — Form Components Only)
 
-Instead of auto-wrapping, **fail explicitly and loudly**. The `nui-debug` module (Proposal 1) must catch this and throw a massive error in the console:
-`[NUI] ❌ <nui-button> requires an inner <button>. Fix your HTML: <nui-button><button>Save</button></nui-button>`
+Auto-wrapping bridges the training-data gap while preserving the explicit pattern for production. When an LLM writes `<nui-button>Click</nui-button>`, the component auto-creates the inner `<button>` and logs:
 
-The console error is highly effective for LLM training while preserving strict predictability.
+```
+[NUI] ℹ <nui-button> auto-created inner <button>. For zero-JS fallback, use:
+  <nui-button><button type="button">Click</button></nui-button>
+```
+
+The console message teaches the LLM the correct pattern while making their code work immediately. Gated behind `config.debug !== false` with a `config.strict` production gate — in strict mode, missing inner elements warn but never auto-wrap.
+
+**Note:** Gemini raised an AX-purist objection — auto-wrap creates DOM that diverges from source code, which could confuse subsequent script manipulation. This is a valid concern. The resolution: the auto-wrap info log is **always emitted**, so the LLM learns the explicit pattern. In `config.strict` mode (production), auto-wrap is disabled entirely — only validation runs.
+
+### Precedent
+Several NUI components already auto-generate their internal DOM:
+- `nui-slider` already creates `<input type="range">` if missing
+- `nui-progress` generates all internal SVG/div structure
+- `nui-skip-links` auto-generates links from landmark detection
+- `nui-dropzone` restructures children into backdrop + content
+- `nui-dialog` (page mode) creates `<dialog>`, `<header>`, `<main>`, `<footer>`
+
+This proposal extends an existing pattern, not inventing one.
+
+### Implemented Components
+| Component | Auto-wrap behavior |
+|-----------|-------------------|
+| `nui-button` | Creates `<button>` from `label` attr or `textContent` |
+| `nui-input` | Creates `<input>` with type/placeholder from host attrs |
+| `nui-textarea` | Creates `<textarea>` with placeholder |
+| `nui-select` | Creates `<select>` for flat `<option>` children only |
+| `nui-dialog` | Already auto-creates `<dialog>` — added info log |
+| `nui-tabs` | Creates `<nav role="tablist">` for bare buttons |
 
 ---
 
@@ -321,19 +346,28 @@ This is the right answer because:
 
 ---
 
-## Proposal 4: Addon Auto-Loading (Rejected) -> The "Dev-Kit" Bundle
+## Proposal 4: Addon Auto-Loading ✅ Implemented
 
 ### Current State
-9 addons require BOTH `<script>` import AND `<link>` CSS. Forgetting one = silent failure.
+8 addons require BOTH `<script>` import AND `<link>` CSS. 16 manual statements. Forgetting one = silent failure.
 
-### Decision: Rejected in favor of the Dev-Kit Bundle
-Dynamically injecting `<script>` and `<link>` tags via an async MutationObserver introduces a race condition, layout shifts, and timing nightmares for interactive scripts written by an LLM. 
+### Decision: Implemented (Dev-Only, Hardcoded Map)
 
-**The AX Alternative:** Create a single `nui-dev.js` and `nui-dev.css` "Dev-Kit" bundle that statically imports **everything** (core + all addons + debug validators).
-Instruct the LLM: *“During development, always point to `nui-dev.js`."*
-This ensures everything works synchronously and predictably without any auto-loading logic.
+Auto-loading runs ONLY when `config.debug !== false`. A MutationObserver detects unregistered addon elements in the DOM, dynamically imports their JS + injects their CSS, and logs explicit import paths for production:
 
-Before deployment, `nui-debug` can audit the page and output: *"You only used `nui-button` and `nui-lightbox`. For production, change your imports to just these two."*
+```
+[NUI] Auto-loaded nui-list (JS + CSS). Add explicit imports for production:
+  <link rel="stylesheet" href="NUI/css/modules/nui-list.css">
+  <script type="module" src="NUI/lib/modules/nui-list.js"></script>
+```
+
+A `_loading` Set guard prevents duplicate injection. The hardcoded `ADDON_MAP` has 8 entries (nui-app-window excluded — it's a factory function, not a custom element).
+
+### Future: Dev-Kit Bundle (Gemini's suggestion)
+
+Gemini proposed a simpler alternative: a single `nui-dev.js` + `nui-dev.css` bundle that statically imports ALL addons. The LLM uses one import during development. Before deployment, `nui-debug` audits which components are actually used and outputs the minimal production imports.
+
+This is worth considering as an alternative or complement — the bundle is simpler but less granular. Both approaches can coexist.
 
 ---
 
@@ -419,6 +453,12 @@ GPT flagged an inconsistency: some docs reference 16 handlers, others 17. Resolu
 
 ### Unified Build Order
 
-1. ✅ **Debug addon** (Proposal 1) — strictly enforcing valid markup with structured `fix` output, `data-action` selector validator, and loud console errors for missing wrap elements.
-2. 🔮 **Pages with logic** — strict linting against raw `<script>` tags, prioritizing `registerPage()` implementation (see [`docs/pages-with-logic.md`](pages-with-logic.md)).
-3. 📦 **Dev-Kit Bundle** — static dev-only bundle combining all addons for synchronous usage, paired with a production-ready usage auditor in `nui-debug`.
+1. ✅ **Debug addon** (Proposal 1) — with structured `fix` output, `data-action` selector validator, throttled dirty-region observer. Implemented.
+2. ✅ **Auto-wrap Tier 1** (Proposal 2) — with `config.strict` production gate, always-log policy. Implemented.
+3. ✅ **Addon auto-load** (Proposal 4) — dev-only, `_loading` Set guard, 8-entry hardcoded map. Implemented.
+4. 🔮 **Pages with logic** — see [`docs/pages-with-logic.md`](pages-with-logic.md) for the dev plan. Phase 1 (Option B+) and Phase 2 (registerPage()).
+5. 📦 **Dev-Kit Bundle** (future consideration) — Gemini's suggestion: single `nui-dev.js` + `nui-dev.css` for development. Worth evaluating alongside auto-loading.
+
+### Dissenting View: Gemini on Auto-Wrap
+
+Gemini raised a valid AX-purist concern: auto-wrap creates DOM that diverges from the written source code. When an LLM writes `<nui-button>Click</nui-button>` and the DOM contains `<nui-button><button>Click</button></nui-button>`, subsequent script manipulation references the wrong structure. The mitigation is the always-logged info message — the LLM learns the explicit pattern. In `config.strict` mode, auto-wrap is disabled entirely.
