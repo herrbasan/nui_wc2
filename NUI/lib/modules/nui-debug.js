@@ -178,12 +178,6 @@ function runAll(root = document) {
 		}
 	});
 
-	if (warnCount === 0) {
-		console.log('[NUI DEBUG] ✓ No issues found.');
-	} else {
-		console.log(`[NUI DEBUG] ${warnCount} issue(s) found. Fix them before going to production.`);
-	}
-
 	return {
 		valid: warnCount === 0,
 		count: warnCount,
@@ -191,15 +185,25 @@ function runAll(root = document) {
 	};
 }
 
+function runAndReport(root = document) {
+	const result = runAll(root);
+	if (result.count === 0) {
+		console.log('[NUI DEBUG] ✓ No issues found.');
+	} else {
+		console.log(`[NUI DEBUG] ${result.count} issue(s) found. Fix them before going to production.`);
+	}
+	return result;
+}
+
 // ---------------------------------------------------------------------------
 // Hooks — run after NUI initializes
 // ---------------------------------------------------------------------------
 
 nui.ready().then(() => {
-	// Small delay to ensure all custom elements are upgraded
-	setTimeout(() => runAll(), 100);
+	// Initial scan — log summary
+	setTimeout(() => runAndReport(), 100);
 
-	// MutationObserver — scoped dirty-region, throttled
+	// MutationObserver — scoped dirty-region, throttled, silent per-subtree
 	new MutationObserver((mutations) => {
 		// Skip internal NUI mutations
 		const isInternal = mutations.some(m => m.target._nuiInternal);
@@ -233,4 +237,4 @@ nui.ready().then(() => {
 });
 
 // Expose for programmatic use
-nui.debug = { run: runAll, validators };
+nui.debug = { run: runAndReport, runSilent: runAll, validators };

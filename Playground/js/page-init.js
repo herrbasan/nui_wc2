@@ -1553,7 +1553,7 @@ nui.registerPage('addons/app-window', {
 			const container = element.querySelector('#app-window-container');
 		
 			launchBtn.addEventListener('click', async () => {
-				const { appWindow } = await import('../NUI/lib/modules/nui-app-window.js');
+				const { appWindow } = await import('../../NUI/lib/modules/nui-app-window.js');
 		
 				overlay.showModal();
 		
@@ -1663,7 +1663,7 @@ nui.registerPage('addons/context-menu', {
 				{ label: 'Paste', action: 'paste', disabled: true }
 			];
 		
-			import('../NUI/lib/modules/nui-context-menu.js').then(({ contextMenu }) => {
+			import('../../NUI/lib/modules/nui-context-menu.js').then(({ contextMenu }) => {
 				// Create three separate menus
 				const basicMenu = contextMenu(basicMenuItems, {
 					onAction: (action, item) => {
@@ -1962,7 +1962,7 @@ nui.registerPage('addons/menu', {
 	html: 'addons/menu.html',
 	init(element, params, nui) {
 		// Load the menu addon module
-			import('../NUI/lib/modules/nui-menu.js').then(() => {
+			import('../../NUI/lib/modules/nui-menu.js').then(() => {
 				// Basic menu data
 				const basicMenuData = {
 				items: [
@@ -2105,7 +2105,7 @@ nui.registerPage('addons/rich-text', {
 		                link.href = '../NUI/css/modules/nui-rich-text.css';
 		                document.head.appendChild(link);
 		
-		                await import('../NUI/lib/modules/nui-rich-text.js');
+		                await import('../../NUI/lib/modules/nui-rich-text.js');
 		            }
 		            if (!customElements.get('nui-list')) {
 		                const linkList = document.createElement('link');
@@ -2113,7 +2113,7 @@ nui.registerPage('addons/rich-text', {
 		                linkList.href = '../NUI/css/modules/nui-list.css';
 		                document.head.appendChild(linkList);
 		
-		                await import('../NUI/lib/modules/nui-list.js');
+		                await import('../../NUI/lib/modules/nui-list.js');
 		            }
 		        };
 		
@@ -2123,8 +2123,7 @@ nui.registerPage('addons/rich-text', {
 		        
 		        let currentEditor = null; // Track which editor triggered it
 		        let selectedItemData = null;
-		
-		        // Ensure dependencies are loaded
+		let selectedItems = []; // Moved to init scope for hide() access
 		        loadDependencies().catch(console.error);
 		
 		        // Generate mock image data
@@ -2225,7 +2224,7 @@ nui.registerPage('addons/rich-text', {
 		            const confirmBtn = dialog.querySelector('button[data-value="insert"]');
 		            if (confirmBtn) confirmBtn.disabled = true;
 		            
-		            let selectedItems = [];
+		            selectedItems = [];
 		            function onListEvents(ev) {
 		                if (ev.type === 'selection') {
 		                    const selected = listElement.getSelection ? listElement.getSelection(true) : [];
