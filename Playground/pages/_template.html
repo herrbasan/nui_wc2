@@ -9,22 +9,18 @@ Replace [component] with the component name (e.g., button, tabs, dialog).
 ⚠️ CRITICAL: PAGE SCRIPT EXECUTION MODEL ⚠️
 
 This page is loaded dynamically by the NUI Router. The execution order is:
-1. Router fetches this HTML file
-2. Router injects HTML into a <nui-page> wrapper element
-3. Router calls customElements.upgrade() on the wrapper
+1. Router checks for registered page handler (nui.registerPage)
+2. Router fetches this HTML file
+3. Router injects HTML into a <nui-page> wrapper element
+4. Router calls customElements.upgrade() on the wrapper
    → All <nui-*> elements are now functional
-4. Router calls registered page handler (nui.registerPage)
-5. Router removes the script tag and executes it
-6. Router calls init(element, params, nui)
+5. Router calls registered.init(element, params, nui)
 
 IMPORTANT RULES:
-- The script runs ONCE when the page is first loaded
+- The init function runs ONCE when the page is first loaded
 - Pages are CACHED - init() won't re-run on navigation
 - Use element.show(params) / element.hide() for lifecycle management
 - ALWAYS use element.querySelector(), NOT document.querySelector()
-- The function MUST be named "init" - the router looks for this name
-
-See: Playground/pages/ROUTER-GUIDE.md for full documentation
 ================================================================================
 -->
 
