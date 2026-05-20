@@ -82,13 +82,4 @@
     </section>
 </div>
 
-<script type="nui/page">
-function init(element, params, nui) {
-    element.addEventListener('nui-action', (e) => {
-        const { param } = e.detail;
-        if (param?.startsWith('#')) {
-            window.location.hash = param.slice(1);
-        }
-    });
-}
-</script>
+

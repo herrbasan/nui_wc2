@@ -4925,7 +4925,20 @@ function pageContent(type, id, params, options = {}) {
 
 	if (type === 'page') {
 		const basePath = options.basePath || '/pages';
-		wrapper.nuiLoaded = loadFragment(`${basePath}/${id}.html`, wrapper, params);
+
+		// Check for registered page handler (nui.registerPage())
+		const registered = registeredFeatures.get(`page:${id}`);
+		if (registered) {
+			const fragmentPath = registered.html || `${id}.html`;
+			wrapper.nuiLoaded = loadFragment(`${basePath}/${fragmentPath}`, wrapper, params)
+				.then(() => {
+					if (registered.init) {
+						registered.init(wrapper, params, nui);
+					}
+				});
+		} else {
+			wrapper.nuiLoaded = loadFragment(`${basePath}/${id}.html`, wrapper, params);
+		}
 	} else if (type === 'feature') {
 		const initFn = registeredFeatures.get(id);
 		if (initFn) {
@@ -5757,6 +5770,22 @@ export const nui = {
 
 	registerFeature(name, initFn) {
 		registeredFeatures.set(name, initFn);
+	},
+
+	/**
+	 * Register a page handler with optional HTML fragment.
+	 * Preferred pattern for page logic — uses standard JS modules, no <script type="nui/page"> needed.
+	 * 
+	 * @param {string} id - Page ID matching the hash route (e.g., "components/button")
+	 * @param {object} options
+	 * @param {string} [options.html] - Path to HTML fragment (relative to basePath)
+	 * @param {function} options.init - init(element, params, nui) called after upgrade
+	 */
+	registerPage(id, options = {}) {
+		registeredFeatures.set(`page:${id}`, {
+			html: options.html || null,
+			init: options.init
+		});
 	},
 
 	registerAction(name, handler) {

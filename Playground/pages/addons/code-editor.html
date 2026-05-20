@@ -405,18 +405,6 @@ export { NuiCodeEditor };
     </section>
 </div>
 
-<script type="nui/page">
-function init(element, params, nui) {
-    const editor = element.querySelector('#demo-editor');
-    const output = element.querySelector('[data-output]');
 
-    if (editor && output) {
-        output.textContent = editor.value; // init
-        editor.addEventListener('nui-change', (e) => {
-            output.textContent = e.detail.value;
-        });
-    }
-}
-</script>
 
 </div>

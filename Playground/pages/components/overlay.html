@@ -160,23 +160,4 @@ overlay.addEventListener('nui-overlay-close', (e) => {
         <nui-markdown src="../documentation/components/overlay.md"></nui-markdown>
 </details>
 
-<script type="nui/page">
-function init(element, params, nui) {
-	element.addEventListener('nui-action-overlay-open', (e) => {
-		const target = e.detail.target;
-		if (target && target.showModal) target.showModal();
-	});
 
-	element.addEventListener('nui-action-overlay-open-loader', (e) => {
-		const target = e.detail.target;
-		if (target && target.showModal) {
-			target.showModal();
-			
-			// Simulate a delay and then close
-			setTimeout(() => {
-				target.close();
-			}, 3000);
-		}
-	});
-}
-</script>

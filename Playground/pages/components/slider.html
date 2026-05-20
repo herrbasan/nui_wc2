@@ -169,35 +169,7 @@ const cleanup = nui.util.enableDrag(element, (data) => {
         <nui-markdown src="../documentation/components/slider.md"></nui-markdown>
 </details>
 
-<script type="nui/page">
-	function init(element, params) {
-		function bindValueMirror(sliderSelector, outputSelector) {
-			const input = element.querySelector(sliderSelector);
-			const output = element.querySelector(outputSelector);
-			if (!input || !output) return;
 
-			output.textContent = input.value;
-			input.addEventListener('input', () => {
-				output.textContent = input.value;
-			});
-		}
-
-		bindValueMirror('#demo-slider-1 input', '#slider-value-1');
-		bindValueMirror('#demo-slider-2 input', '#slider-value-2');
-
-		const slider3 = element.querySelector('#demo-slider-3 input');
-		const events = element.querySelector('#slider-events');
-		if (slider3 && events) {
-			events.textContent = 'Drag the slider...';
-			slider3.addEventListener('input', () => {
-				events.textContent = 'input: ' + slider3.value;
-			});
-			slider3.addEventListener('change', () => {
-				events.textContent = 'change (final): ' + slider3.value;
-			});
-		}
-	}
-</script>
 
 </div>
 

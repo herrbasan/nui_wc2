@@ -620,46 +620,6 @@
 	<nui-markdown src="../documentation/components/input.md"></nui-markdown>
 </details>
 
-<script type="nui/page">
-function init(element) {
-	// Handle actions
-	element.addEventListener('nui-action', (e) => {
-		const action = e.detail.name;
-		
-		if (action === 'validate-form') {
-			const inputs = element.querySelectorAll('#demo-form nui-input, #demo-form nui-textarea');
-			let allValid = true;
-			inputs.forEach(input => {
-				if (input.validate && !input.validate()) {
-					allValid = false;
-				}
-			});
-			if (allValid) {
-				nui.components.banner.create({
-					content: '<p>All fields are valid!</p>',
-					priority: 'info',
-					autoClose: 3000
-				});
-			}
-			e.stopPropagation();
-		}
-	});
 
-	// Handle event logging
-	const eventDemo = element.querySelector('#event-demo');
-	const eventLog = element.querySelector('#event-log');
-	
-	if (eventDemo && eventLog) {
-		['nui-input', 'nui-change', 'nui-clear'].forEach(eventType => {
-			eventDemo.addEventListener(eventType, (e) => {
-				const time = new Date().toLocaleTimeString();
-				const detail = JSON.stringify(e.detail || {});
-				eventLog.innerHTML = `<div>[${time}] ${eventType}: ${detail}</div>` + eventLog.innerHTML;
-			});
-		});
-	}
-	
-}
-</script>
 
 </div>

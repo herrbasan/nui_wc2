@@ -118,36 +118,4 @@
         <nui-markdown src="../documentation/components/progress.md"></nui-markdown>
 </details>
 
-<script type="nui/page">
-	function init(element, params, nui) {
-		let intervalId;
 
-		const updateProgress = () => {
-			const progressEls = element.querySelectorAll('.simulated-progress');
-			progressEls.forEach(el => {
-				const current = parseFloat(el.getAttribute('value')) || 0;
-				let next = current + (Math.random() * 5 + 1);
-				if (next >= 100) next = 0; // Reset back to 0
-				el.setAttribute('value', next.toString());
-			});
-		};
-
-		// Start background simulation when fragment is shown
-		element.show = () => {
-			if (!intervalId) {
-				intervalId = setInterval(updateProgress, 600);
-			}
-		};
-
-		// Clean up when fragment is hidden
-		element.hide = () => {
-			if (intervalId) {
-				clearInterval(intervalId);
-				intervalId = null;
-			}
-		};
-		
-		// If already visible on initial load, invoke show() directly
-		element.show();
-	}
-</script>

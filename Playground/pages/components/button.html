@@ -444,59 +444,7 @@ document.addEventListener('nui-action', (e) => {
 		</script>
 	</nui-code>
 
-	<script type="nui/page">
-		function init(element) {
-			const busyBtns = element.querySelectorAll('.demo-busy-btn');
-			busyBtns.forEach(btn => {
-				btn.addEventListener('click', () => {
-					btn.setLoading(true);
-					setTimeout(() => {
-						btn.setLoading(false);
-					}, 2000);
-				});
-			});
-
-			const uploadBtn = element.querySelector('#demo-upload-btn');
-			const uploadResult = element.querySelector('#demo-upload-result');
-			if (uploadBtn) {
-				uploadBtn.addEventListener('nui-file-selected', (e) => {
-					const files = e.detail.files;
-					if (files.length > 0) {
-						uploadResult.textContent = `Selected: ${files[0].name} (${files[0].size} bytes)`;
-					} else {
-						uploadResult.textContent = 'Selection canceled';
-					}
-				});
-			}
-
-			const segmented = element.querySelector('#demo-segmented');
-			const segmentedResult = element.querySelector('#demo-segmented-result');
-			if (segmented) {
-				segmented.addEventListener('nui-change', (e) => {
-					segmentedResult.textContent = `Selected: ${e.detail.value}`;
-				});
-			}
-
-			element.addEventListener('nui-action', (e) => {
-				const { name, target } = e.detail;
-				
-				if (name === 'highlight-target') {
-					if (target) {
-						target.style.backgroundColor = 'var(--color-highlight)';
-						target.style.color = 'white';
-						setTimeout(() => {
-							target.style.backgroundColor = 'var(--color-shade2)';
-							target.style.color = 'inherit';
-						}, 500);
-					}
-				} else if (name === 'toggle-highlight') {
-					if (target) {
-						target.classList.toggle('highlight');
-					}
-				}
-			});
-		}
-	</script>
+	
 </section>
 
 <section>
@@ -620,9 +568,6 @@ nui-button button:disabled {
 	<nui-markdown src="../documentation/components/button.md"></nui-markdown>
 </details>
 
-<script type="nui/page">
-function init(element, params, nui) {
-}
-</script>
+
 
 </nui-page>

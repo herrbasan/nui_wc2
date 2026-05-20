@@ -107,29 +107,4 @@ nui.components.lightbox.show([
     </section>
 </div>
 
-<script type="nui/page">
-function init(element, params) {
-    // Declarative setup
-    const declarativeWrapper = element.querySelector('#demo-lightbox');
-    if (declarativeWrapper) {
-        const imgs = declarativeWrapper.querySelectorAll('img');
-        imgs.forEach((img, i) => {
-            img.addEventListener('click', () => {
-                declarativeWrapper.open([], i);
-            });
-        });
-    }
 
-    // Programmatic setup
-    element.addEventListener('nui-action', (e) => {
-        if (e.detail.name === 'lightbox-demo' && e.detail.param === 'programmatic') {
-            if (nui.components && nui.components.lightbox) {
-                nui.components.lightbox.show([
-                    { src: 'images/Random_Picts/1080p/054.webp', title: 'Forest' },
-                    { src: 'images/Random_Picts/1080p/060.webp', title: 'River' }
-                ], 0);
-            }
-        }
-    });
-}
-</script>

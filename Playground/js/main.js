@@ -2,6 +2,7 @@
 console.log('main.js loading...');
 
 import { nui } from '../../NUI/nui.js';
+import './page-init.js';
 import '../../NUI/lib/modules/nui-list.js';
 import '../../NUI/lib/modules/nui-lightbox.js';
 import '../../NUI/lib/modules/nui-code-editor.js';

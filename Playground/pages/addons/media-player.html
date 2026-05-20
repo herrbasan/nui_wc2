@@ -170,43 +170,4 @@ nui.components.mediaPlayer.create('#my-target', {
     </section>
 </div>
 
-<script type="nui/page">
-function init(element, params) {
-    element.addEventListener('nui-action-demo-media', (e) => {
-        const target = element.querySelector('#prog-player-target');
-        if (!target) return;
-        
-        if (e.detail.param === 'createVideo') {
-            target.innerHTML = '';
-            target.style.display = 'block';
-            
-            nui.components.mediaPlayer.create(target, {
-                url: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
-                type: 'video',
-                poster: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/Sintel.jpg',
-                attributes: {
-                    loop: true
-                },
-                playerAttributes: {
-                    style: 'width: 100%; aspect-ratio: 16/9; display: block;'
-                }
-            });
-        }
-        else if (e.detail.param === 'createAudio') {
-            target.innerHTML = '';
-            target.style.display = 'block';
 
-            nui.components.mediaPlayer.create(target, {
-                url: 'https://herrbasan.com/files/AlmostFinished/herrbasan_Baer.mp3',
-                type: 'audio',
-                attributes: {
-                    loop: true
-                },
-                playerAttributes: {
-                    style: 'width: 100%; display: block;'
-                }
-            });
-        }
-    });
-}
-</script>

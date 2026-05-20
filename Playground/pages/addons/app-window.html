@@ -199,44 +199,6 @@ document.documentElement.style.colorScheme = 'dark';
 	</nui-code>
 </section>
 
-<script type="nui/page">
-function init(element, params, nui) {
-	const launchBtn = element.querySelector('#launch-app button');
-	const overlay = element.querySelector('#app-window-overlay');
-	const container = element.querySelector('#app-window-container');
 
-	launchBtn.addEventListener('click', async () => {
-		const { appWindow } = await import('../NUI/lib/modules/nui-app-window.js');
-
-		overlay.showModal();
-
-		appWindow({
-			title: 'Demo Application',
-			icon: 'settings',
-			inner: `
-				<div style="padding: var(--nui-space-double);">
-					<h1 style="margin-top: 0;">Welcome to NUI App Window</h1>
-					<p>This is the app window chrome rendered inside an overlay.</p>
-					<p>Click the close button in the title bar to dismiss.</p>
-				</div>
-			`,
-			statusbar: true,
-			target: container,
-			onClose: () => {
-				overlay.close();
-				container.innerHTML = '';
-			}
-		});
-	});
-
-	element.show = () => {};
-	element.hide = () => {
-		if (overlay?.open) {
-			overlay.close();
-		}
-		container.innerHTML = '';
-	};
-}
-</script>
 
 </div>

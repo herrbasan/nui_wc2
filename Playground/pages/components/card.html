@@ -329,27 +329,5 @@
         <nui-markdown src="../documentation/components/card.md"></nui-markdown>
 </details>
 
-<script type="nui/page">
-function init(element, params, nui) {
-    const output = element.querySelector('[data-demo-output]');
 
-    function render(text) {
-        if (output) output.textContent = text;
-    }
-
-    element.addEventListener('nui-action', (e) => {
-        const { name, target, param } = e.detail;
-        
-        switch (name) {
-            case 'demo':
-                if (param === 'mock') {
-                    render('Mock action fired natively from interactive card!');
-                }
-                break;
-            // Note: banner-show, banner-close, dialog-open, & dialog-close are globally registered natively by NUI
-        }
-    });
-
-}
-</script>
 

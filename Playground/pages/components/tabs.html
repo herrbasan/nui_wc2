@@ -308,21 +308,6 @@ tabs.selectTab('panel-b');   // Switch by associated panel ID or tab ID
 		<nui-markdown src="../documentation/components/tabs.md"></nui-markdown>
 </details>
 
-<script type="nui/page">
-function init(element) {
-	const tabs = element.querySelector('#event-tabs');
-	const log = element.querySelector('#tab-log');
-	
-	if (tabs && log) {
-		tabs.addEventListener('nui-tab-change', (e) => {
-			const detail = e.detail;
-			const tabText = detail.tab.textContent.trim();
-			const panelId = detail.panel.id;
-			log.textContent = `Log: Switched to "${tabText}" (Panel ID: ${panelId})`;
-		});
-	}
-	
-}
-</script>
+
 
 </div>

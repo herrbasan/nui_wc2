@@ -147,22 +147,7 @@ Messages
 		<nui-markdown src="../documentation/components/badge.md"></nui-markdown>
 	</details>
 
-<script type="nui/page">
-function init(element) {
-let count = 0;
-const targetBtn = element.querySelector('#demo-notification-btn');
 
-element.addEventListener('nui-action-badge', (e) => {
-if (e.detail.param === 'increment') {
-count++;
-targetBtn.setAttribute('data-badge', count.toString());
-} else if (e.detail.param === 'clear') {
-count = 0;
-targetBtn.removeAttribute('data-badge');
-}
-});
-}
-</script>
 </div>
 
 

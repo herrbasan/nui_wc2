@@ -142,6 +142,12 @@ export interface NuiAPI {
 	/** Register a feature initializer */
 	registerFeature(name: string, initFn: () => void): void;
 
+	/** Register a page handler. Preferred pattern — no <script type="nui/page"> needed. */
+	registerPage(id: string, options: {
+		html?: string;
+		init: (element: HTMLElement, params: Record<string, string>, nui: any) => void;
+	}): void;
+
 	/** Register a type handler */
 	registerType(type: string, handler: (value: string) => unknown): void;
 
