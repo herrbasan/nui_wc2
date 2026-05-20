@@ -1,5 +1,7 @@
 # Rethinking "Pages with Logic" for LLM Usability
 
+> **AX first, DX an afterthought at best.** When there's tension between AI Experience and Developer Experience, NUI prioritizes the LLM consumer. The LLM is the primary code generator — the human developer configures, reviews, and ships.
+>
 > The `<script type="nui/page">` contract is unique to NUI and foreign to all LLM training data. This document analyzes the problem and proposes solutions. Updated with peer review from GLM.
 
 ---
@@ -58,33 +60,11 @@ Use <script type="nui/page"> with function init(element, params, nui) { ... } in
 **Pro:** LLMs see the warning and learn. Low effort.  
 **Con:** Doesn't fix the problem, just flags it.
 
-### Option B+: Auto-Detect + Auto-Wrap + Scope Correction (GLM's recommendation)
+### Option B+: Auto-Detect + Auto-Wrap + Scope Correction (Rejected)
 
-Same detection, but auto-wrap the script content AND fix the scope:
+Same detection, but auto-wrap the script content AND fix the scope via regex replacement (`document.*` → `element.*`).
 
-```javascript
-// In loadFragment(), after innerHTML and customElements.upgrade():
-if (!hasNuiPageScript) {
-    const standardScripts = wrapper.els('script:not([type]):not([src]), script[type="text/javascript"]');
-    if (standardScripts.length) {
-        let content = standardScripts.map(s => s.textContent).join('\n');
-        // Fix scope: document.* → element.*
-        content = content
-            .replace(/document\.querySelector\(/g, 'element.querySelector(')
-            .replace(/document\.querySelectorAll\(/g, 'element.querySelectorAll(')
-            .replace(/document\.el\(/g, 'element.el(')
-            .replace(/document\.els\(/g, 'element.els(');
-        console.info('[NUI] Auto-wrapped <script> → <script type="nui/page">. ' +
-            'Replaced document.querySelector → element.querySelector. ' +
-            'Use <script type="nui/page"> explicitly for production.');
-        standardScripts.forEach(s => s.remove());
-        executeWrappedScript(wrapper, params, content);
-    }
-}
-```
-
-**Pro:** LLM's code "just works." They see the console message and learn the correct pattern. Handles 90% of cases.  
-**Con:** Regex-based replacement has risk of false positives in strings/comments (low risk for the demo page use case). Complex scripts with `import` or top-level `return` would still need the explicit pattern.
+**Decision:** REJECTED. AX is the absolute priority, which demands strict predictability over DX "magic." Using regex to mutate executable JavaScript at runtime is an architectural footgun. It breaks unexpectedly on variable names, comments, and strings. Mutating code before `new Function()` creates debugging nightmares where the executed code doesn't match the LLM's written source.
 
 ### Option C: `nui.registerPage()` — The Best Long-Term Answer
 
@@ -127,8 +107,8 @@ The HTML fragment becomes pure markup — no inline scripts:
 
 | Phase | Action | When |
 |-------|--------|------|
-| **1. Now** | Option B+ — auto-detect, auto-wrap with scope correction, console info | Already in debug addon scope |
-| **2. Next** | Add `nui.registerPage()` API (builds on `registerFeature()`) | When ready to add new pattern |
+| **1. Now** | Option B — Strict linting. Detect `<script>`, throw loud console error | Built into debug addon |
+| **2. Next** | Add `nui.registerPage()` API (builds on `registerFeature()`) | High priority |
 | **3. Later** | `<script type="nui/page">` becomes legacy. 54 existing pages keep working. | Gradual migration |
 
 `registerPage()` is the cleanest long-term answer because it uses standard module patterns, eliminates the CSP problem entirely, and coexists with the existing script-tag approach.
