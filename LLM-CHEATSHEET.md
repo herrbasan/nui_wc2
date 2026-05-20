@@ -35,7 +35,7 @@ When `config.debug !== false` (the default), NUI automatically imports JS + CSS 
 ## Quick Rules (read before generating ANY NUI HTML)
 
 1. **Every NUI component wraps a native HTML element.** In development, NUI auto-creates the inner element if missing (with an info log). For production, always include it explicitly.
-2. **Use `data-action` for built-in operations** (dialog-open, tabs-select, banner-close, card-flip, etc.) and simple declarative wiring. **Use `addEventListener` in `<script type="nui/page">`** for complex page-specific logic that does multiple things, async work, or state management. `nui-click` is an internal event — do not listen for it directly.
+2. **Use `data-action` for built-in operations** (dialog-open, tabs-select, banner-close, card-flip, etc.) and simple declarative wiring. **Use `nui.registerPage()` + `addEventListener`** for complex page-specific logic. `nui-click` is an internal event — do not listen for it directly.
 3. **`<nui-app>` requires EXACT children in order.** See the structure diagram below.
 4. **Addons require BOTH JS import AND CSS.** Core components work without imports.
 5. **Use `nui.ready()` before calling programmatic APIs.** `await nui.ready()` — resolves when init is complete.
@@ -850,28 +850,25 @@ nui.registerType(type, handler)       // Register a custom route type
 
 ---
 
-## Page Script Pattern (Playground)
+## Page Logic Pattern
 
-```html
-<!-- Inside a page fragment at Playground/pages/components/foo.html -->
-<script type="nui/page">
-function init(element, params, nui) {
-    // Runs ONCE when page is first loaded
-    // element = the page wrapper — ALWAYS scope queries to it
-    const button = element.querySelector('nui-button');
+**Primary (recommended):** `nui.registerPage()` — standard JS module, no custom script types, no CSP issues.
 
-    element.show = (params) => {
-        // Runs every time page becomes active (after init)
-    };
+```javascript
+// In your app's main module (e.g., js/page-init.js):
+import { nui } from './NUI/nui.js';
 
-    element.hide = () => {
-        // Runs every time page becomes inactive — cleanup timers, listeners
-    };
-}
-</script>
+nui.registerPage('my-page', {
+    html: 'my-page.html',
+    init(element, params, nui) {
+        element.querySelector('nui-button').addEventListener('click', () => {
+            nui.components.dialog.alert('Hello', 'Clicked!');
+        });
+    }
+});
 ```
 
-**⚠️ CSP:** Page scripts require `script-src 'unsafe-eval'` in your Content Security Policy.
+**Legacy (still supported, not recommended for new code):** `<script type="nui/page">` inside HTML fragments. Requires `'unsafe-eval'` in CSP.
 
 ---
 

@@ -68,26 +68,3 @@
     </section>
 </div>
 
-<!-- Page Runtime Script executed via injection by nui.js router -->
-<script type="nui/page">
-function init(element, params, nui) {
-    const inputEl = element.querySelector('#demo-input');
-    const selectEl = element.querySelector('#demo-select');
-    const outputEl = element.querySelector('#action-output');
-
-    // Rather than listening on the document, attach specific local actions to the isolated component wrapper.
-    element.addEventListener('click', (e) => {
-        const actionEl = e.target.closest('[data-action="demo-run"]');
-        if (actionEl) {
-            const inputVal = inputEl.value || 'Nothing typed';
-            const selectVal = selectEl.value || 'Nothing selected';
-            outputEl.textContent = `Action Executed | Input: "${inputVal}", Select: "${selectVal}"`;
-        }
-    });
-
-    // Cleanup hook for router if needed
-    element.hide = () => {
-        outputEl.textContent = '';
-    }
-}
-</script>

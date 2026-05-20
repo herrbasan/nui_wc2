@@ -1,6 +1,9 @@
 // Import NUI and any Addons
 import { nui } from '../../NUI/nui.js';
 
+// Import page registrations (nui.registerPage pattern)
+import './page-init.js';
+
 // Setup Application Global Actions via the Data-Action system
 document.addEventListener('click', (e) => {
     // Traverse element tree up for a data-action attribute

@@ -83,19 +83,31 @@ nui.registerFeature('editor', (element, params) => {
 - Call `nui.setupRouter()` with basePath
 - Create HTML fragments in the pages folder
 - Navigation fetches fragments and injects them
-- Each fragment can have inline `<script type="nui/page">` for initialization
+- Page logic uses `nui.registerPage()` (standard JS module) — or the legacy `<script type="nui/page">` inline pattern
 
-**⚠️ CSP Requirement:** The router uses `new Function()` to execute page scripts. Your Content Security Policy must include `'unsafe-eval'` in `script-src`, otherwise scripts silently fail.
-
-**⚠️ Script placement:** If the fragment uses `<nui-page>` as root, the `<script type="nui/page">` must be **inside** the `<nui-page>` tag. NUI discards everything outside it when extracting content.
+**⚠️ Legacy CSP Requirement:** The legacy `<script type="nui/page">` pattern uses `new Function()` which requires `'unsafe-eval'` in CSP. `nui.registerPage()` does NOT have this requirement.
 
 **Best for:**
 - Content-heavy sites (documentation, blogs)
 - Component libraries and playgrounds
 - Rapid prototyping without build tools
 
-**The fragment contract:**
-When a fragment loads, the router:
+**The fragment contract (primary):**
+```javascript
+// In js/page-init.js:
+import { nui } from '../NUI/nui.js';
+
+nui.registerPage('my-page', {
+    html: 'my-page.html',
+    init(element, params, nui) {
+        // element = the page wrapper — scope queries to it
+        const button = element.querySelector('nui-button');
+    }
+});
+```
+
+**The fragment contract (legacy):**
+When a fragment loads without a registered page, the router:
 1. Creates a wrapper `<div>` and sets innerHTML
 2. Executes `<script type="nui/page">` with `init(element, params, nui)`
 3. Removes the script tag

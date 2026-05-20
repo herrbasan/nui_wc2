@@ -145,7 +145,7 @@ These modules require loading additional JS (and often CSS). Each doc lists the 
 The `Playground/` directory serves as an interactive sandbox.
 
 - **Fragment-Based SPA:** The playground demonstrates NUI's built-in application router (`nui.setupRouter()`). It dynamically fetches HTML fragments from `Playground/pages/**` and caches them.
-- If you need to observe how a component's `<script type="nui/page">` executes in a real browser environment, check the HTML files within `Playground/pages/`.
+- If you need to observe how page logic executes in a real browser environment, check `Playground/js/page-init.js` for `nui.registerPage()` registrations.
 - **Note:** The `Playground` HTML files use `<nui-markdown src="...">` to render the guides for humans. The actual documentation content lives exclusively in the `documentation/**/*.md` files. 
 
 *(If you are scaffolding a new application, a ready-made structure is provided in the `nui-boilerplate/` directory.)*

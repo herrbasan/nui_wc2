@@ -13,7 +13,7 @@ This page is loaded dynamically by the NUI Router. The execution order is:
 2. Router injects HTML into a <nui-page> wrapper element
 3. Router calls customElements.upgrade() on the wrapper
    → All <nui-*> elements are now functional
-4. Router finds <script type="nui/page"> below
+4. Router calls registered page handler (nui.registerPage)
 5. Router removes the script tag and executes it
 6. Router calls init(element, params, nui)
 
@@ -172,31 +172,24 @@ See: Playground/pages/ROUTER-GUIDE.md for full documentation
 	⚠️ CRITICAL: This script MUST be INSIDE the <nui-page> tag.
 	NUI discards everything outside <nui-page> when extracting fragment content.
 
-	Execution flow:
-	1. Router fetches this HTML file
-	2. Router injects into <nui-page> wrapper
-	3. Router upgrades all <nui-*> custom elements
-	4. Router extracts THIS script tag (removes it from DOM)
-	5. Router executes it and calls init(element, params, nui)
+	Execution flow (primary — nui.registerPage()):
+	1. Router checks for registered page handler in js/page-init.js
+	2. Router fetches this HTML file
+	3. Router injects into <nui-page> wrapper
+	4. Router upgrades all <nui-*> custom elements
+	5. Router calls registered.init(element, params, nui)
 
-	The <script type="nui/page"> tag is a TRIGGER, not a container.
-	Three ways to provide the actual code:
+	Add your page logic in Playground/js/page-init.js:
 
-	Option 1: Inline (most common, shown below)
-	  → Code directly inside the trigger tag
+		nui.registerPage('components/your-page', {
+			html: 'components/your-page.html',
+			init(element, params, nui) {
+				// One-time setup
+				// element = the <nui-page> wrapper — scope ALL queries to it
+			}
+		});
 
-	Option 2: Imported module (for complex pages)
-	  → Import module in main.js, use empty trigger:
-	    <script type="nui/page" data-init="components/button"></script>
-
-	Option 3: Pre-loaded function
-	  → Standard <script type="text/javascript"> defines the function,
-	    trigger tag calls it:
-	    <script type="nui/page">
-	    function init(element, params, nui) {
-	        initButtonPage(element, params, nui);
-	    }
-	    </script>
+	Legacy: <script type="nui/page"> is still supported but not recommended.
 
 	Parameters:
 	- element: The <nui-page> wrapper (use element.querySelector for scoped access)
@@ -219,30 +212,4 @@ See: Playground/pages/ROUTER-GUIDE.md for full documentation
 	- Leaving page: hide() called → page hidden (display:none)
 	================================================================================
 	-->
-	<script type="nui/page">
-	function init(element, params, nui) {
-		// One-time setup: cache elements, attach listeners
-		// Use element.querySelector(...) NOT document.querySelector(...)
-		
-		// Example: Cache an element
-		// const output = element.querySelector('[data-demo-output]');
-		
-		// Example: Attach scoped event listener
-		// element.addEventListener('nui-action', (e) => {
-		//     console.log('Action:', e.detail.name);
-		// });
-		
-		// Optional lifecycle hook: called when page becomes visible
-		element.show = (params) => {
-			// Start timers/polling when page becomes visible
-			// Reset state if needed
-		};
-
-		// Optional lifecycle hook: called when page is hidden
-		element.hide = () => {
-			// Stop timers, detach observers, cleanup global listeners
-		};
-	}
-	</script>
-
 </nui-page>

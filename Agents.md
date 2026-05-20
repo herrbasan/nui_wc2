@@ -77,23 +77,34 @@ NUI components should have a strict Markdown API contract placed in the `/docume
 
 The Playground uses a fragment-based SPA pattern.
 
-**Execution flow:**
-1. Router fetches: `pages/components/button.html`
-2. Router injects HTML into wrapper.
-3. Router calls: `customElements.upgrade(wrapper)`.
-4. Router finds: `<script type="nui/page">`.
-5. Router executes the script via `new Function()`.
+**Execution flow (primary — `nui.registerPage()` pattern):**
+```
+1. User navigates to: #page=components/button
+2. Router checks for registered page handler (registeredFeatures.get('page:components/button'))
+3. Router fetches: pages/components/button.html
+4. Router creates wrapper: <nui-page class="content-page ...">
+5. Router injects HTML into wrapper
+6. Router calls: customElements.upgrade(wrapper)
+   → All <nui-*> elements inside are now upgraded
+7. Router calls: registered.init(wrapper, params, nui)
+```
 
-**Script template:**
+**Page logic (primary):**
+```javascript
+// In js/page-init.js:
+nui.registerPage('components/button', {
+    html: 'components/button.html',
+    init(element, params, nui) {
+        element.querySelector('nui-button').addEventListener('click', handler);
+    }
+});
+```
+
+**Page logic (legacy — `<script type="nui/page">`, still supported):**
 ```html
 <script type="nui/page">
 function init(element, params, nui) {
-    // One-time setup
-    const output = element.querySelector('[data-demo-output]');
-
-    // Optional lifecycle hooks
-    element.show = (params) => { /* Start timers */ };
-    element.hide = () => { /* Cleanup */ };
+    // Runs via new Function() — requires 'unsafe-eval' in CSP
 }
 </script>
 ```
@@ -163,61 +174,38 @@ This section describes the "Fragment-Based" SPA pattern used for the NUI Playgro
 - Navigation uses hash routes like `#page=components/button` or `#feature=dashboard`
 - Pages are cached by the router: a page fragment is fetched and initialized **once**, then shown/hidden on navigation
 
-### Router + page script contract (critical)
+### Page Logic Contract
 
-⚠️ **THIS IS THE MOST IMPORTANT SECTION FOR LLMs.** The router pattern is non-standard by design.
+**⚠️ THIS IS THE MOST IMPORTANT SECTION FOR LLMs.**
 
-**Why this pattern exists:** Standard `<script>` tags execute immediately when HTML is parsed. But NUI pages contain custom elements (`<nui-button>`, `<nui-tabs>`, etc.) that need to be upgraded first. If scripts run too early, everything breaks.
+**Primary pattern — `nui.registerPage()`:**
+Page logic lives in a JS module, not in the HTML fragment. This is the standard pattern LLMs know from every framework.
 
-**The solution:** NUI uses `<script type="nui/page">` - a custom type that browsers ignore. After fetching the HTML and upgrading custom elements, NUI manually extracts and executes this script.
+```javascript
+// In js/page-init.js (imported by main.js):
+import { nui } from '../../NUI/nui.js';
 
-**Execution flow (step by step):**
-
+nui.registerPage('components/my-page', {
+    html: 'components/my-page.html',  // path relative to basePath
+    init(element, params, nui) {
+        // element = page wrapper — scope ALL queries to it
+        const button = element.querySelector('nui-button');
+        button.addEventListener('click', handler);
+        element.show = (params) => { /* runs when page becomes active */ };
+        element.hide = () => { /* cleanup */ };
+    }
+});
 ```
-1. User navigates to: #page=components/button
-2. Router fetches: pages/components/button.html
-3. Router creates wrapper: <nui-page class="content-page ...">
-4. Router injects HTML into wrapper
-5. Router calls: customElements.upgrade(wrapper)
-   → All <nui-*> elements inside are now upgraded
-6. Router finds: <script type="nui/page">
-7. Router removes the script tag from DOM
-8. Router executes the script via new Function()
-```
-
-**⚠️ CSP Requirement:** Step 8 uses `new Function()` which requires `'unsafe-eval'` in your Content Security Policy. Without it, page scripts silently fail. Add `script-src 'self' 'unsafe-eval'` to your CSP.
-
-**⚠️ Script placement:** If the fragment uses `<nui-page>` as root, `<script type="nui/page">` must be **inside** the `<nui-page>` tag. NUI discards everything outside it when extracting content.
-9. Script's init(element, params, nui) is called automatically
-```
-
-**The script tag is a trigger, not a container:**
-
-The `<script type="nui/page">` tag signals "execute page logic now." The actual code can be:
-
-1. **Inline** - Code directly in the tag (most common)
-2. **Imported** - Module imported in `main.js`, trigger tag is empty or calls the imported function
-3. **Pre-loaded** - Standard `<script type="text/javascript">` defines the function, trigger tag calls it
 
 ```html
-<!-- Option 1: Inline (most common) -->
-<script type="nui/page">
-function init(element, params, nui) {
-    element.querySelector('nui-button').addEventListener('nui-click', handler);
-}
-</script>
+<!-- pages/components/my-page.html — pure markup, no scripts -->
+<div class="page-my-page">
+    <nui-button>Click Me</nui-button>
+</div>
+```
 
-<!-- Option 2: Empty trigger (logic imported in main.js) -->
-<script type="nui/page" data-init="components/button"></script>
-
-<!-- Option 3: Pre-loaded function -->
-<script type="text/javascript">
-function initButtonPage(element, params, nui) { /* ... */ }
-</script>
-<script type="nui/page">
-function init(element, params, nui) {
-    initButtonPage(element, params, nui);
-}
+**Legacy pattern — `<script type="nui/page">` (still supported, not recommended):**
+Inline scripts inside HTML fragments. Requires `'unsafe-eval'` in CSP.
 </script>
 ```
 
@@ -301,19 +289,19 @@ function init(element, params, nui) {
 }
 ```
 
-### Page script template
+### Page logic template
 
-```html
-<script type="nui/page">
-function init(element, params, nui) {
-    // One-time setup
-    const output = element.querySelector('[data-demo-output]');
-
-    // Optional lifecycle hooks
-    element.show = (params) => { /* Start timers */ };
-    element.hide = () => { /* Cleanup */ };
-}
-</script>
+```javascript
+// Primary (recommended) — in js/page-init.js:
+nui.registerPage('components/my-page', {
+    html: 'components/my-page.html',
+    init(element, params, nui) {
+        // One-time setup
+        const output = element.querySelector('[data-demo-output]');
+        element.show = (params) => { /* Start timers */ };
+        element.hide = () => { /* Cleanup */ };
+    }
+});
 ```
 
 ### DOM helper shortcuts: `el` / `els`
@@ -430,7 +418,7 @@ Most demo pages should read like documentation:
    - `<div class="page-<name>"> ... </div>`
    - Add styles to `Playground/css/main.css` under clearly labeled comment
 4. If page needs JavaScript:
-   - Add `<script type="nui/page">` at the bottom
+   - Add `nui.registerPage()` to `Playground/js/page-init.js`
    - Use `init(element, params, nui)` and attach `element.show/element.hide` if needed
 
 ### Common pitfalls (LLM guardrails)
