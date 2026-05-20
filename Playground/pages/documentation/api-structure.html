@@ -99,7 +99,7 @@ nui.registerType('markdown', (container, content) => { ... });
 const router = nui.createRouter(container, options);
 
 // Enable SPA content loading
-nui.enableContentLoading(options);
+nui.setupRouter(options);
 		</script>
 	</nui-code>
 	
@@ -145,7 +145,7 @@ nui.enableContentLoading(options);
 					<td>Create a router instance for SPA navigation</td>
 				</tr>
 				<tr>
-					<td><code>enableContentLoading(options)</code></td>
+					<td><code>setupRouter(options)</code></td>
 					<td>Function</td>
 					<td>Enable hash-based content loading</td>
 				</tr>

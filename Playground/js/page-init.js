@@ -363,9 +363,9 @@ nui.registerPage('components/dialog', {
 								</section>
 							`;
 		
-							const resultEl = document.getElementById('page-dialog-result');
-							const actionEl = document.getElementById('page-dialog-action');
-							const valuesEl = document.getElementById('page-dialog-values');
+							const resultEl = element.querySelector('#page-dialog-result');
+							const actionEl = element.querySelector('#page-dialog-action');
+							const valuesEl = element.querySelector('#page-dialog-values');
 		
 							dialog.addEventListener('nui-dialog-open', () => {
 								resultEl.hidden = false;

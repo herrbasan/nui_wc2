@@ -261,7 +261,7 @@ When leaving the page:
 
 		<h3>How it works</h3>
 		<ul>
-			<li>You use <code>nui.enableContentLoading()</code> to handle <code>#page=...</code> routes automatically.</li>
+			<li>You use <code>nui.setupRouter()</code> to handle <code>#page=...</code> routes automatically.</li>
 			<li>You use <code>nui.registerFeature()</code> to handle <code>#feature=...</code> routes with centralized logic.</li>
 		</ul>
 
@@ -279,7 +279,7 @@ nui.registerFeature('editor', (element, params) => {
 });
 
 // 2. Enable content loading for static pages (Help, About, etc.)
-nui.enableContentLoading({
+nui.setupRouter({
     container: 'nui-main',
     basePath: '/pages',
     defaultPage: 'home'

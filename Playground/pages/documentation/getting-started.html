@@ -175,7 +175,7 @@ const navigationData = [
 document.querySelector('nui-link-list').loadData(navigationData);
 
 // Enable SPA routing
-nui.enableContentLoading({
+nui.setupRouter({
 	container: 'nui-main',
 	navigation: 'nui-sidebar',
 	basePath: 'pages',
@@ -230,7 +230,7 @@ nui.enableContentLoading({
 				<tbody>
 					<tr><td><code>nui.init()</code></td><td>Initialize library (auto-called)</td></tr>
 					<tr><td><code>nui.configure({...})</code></td><td>Update config after init</td></tr>
-					<tr><td><code>nui.enableContentLoading({...})</code></td><td>Enable SPA routing</td></tr>
+					<tr><td><code>nui.setupRouter({...})</code></td><td>Enable SPA routing</td></tr>
 					<tr><td><code>nui.registerFeature(name, fn)</code></td><td>Register JS-only page</td></tr>
 					<tr><td><code>nui.version</code></td><td>Library version string</td></tr>
 				</tbody>
@@ -335,7 +335,7 @@ document.querySelector('nav').appendChild(nav);</code></pre>
 		<h3>Enable Routing</h3>
 		<p>The simplest way to get started is using the built-in content loader, which fetches HTML fragments based on the URL:</p>
 		<nui-code>
-			<pre><code>nui.enableContentLoading({
+			<pre><code>nui.setupRouter({
 	container: 'nui-main',              // Where content loads
 	navigation: 'nui-sidebar',            // Auto-close sidebar on navigate
 	basePath: 'pages',                    // Folder containing page fragments
@@ -609,7 +609,7 @@ document.addEventListener('click', (e) => {
 });
 
 // Enable routing
-nui.enableContentLoading({
+nui.setupRouter({
 	container: 'nui-main',
 	navigation: 'nui-sidebar',
 	basePath: 'pages',
