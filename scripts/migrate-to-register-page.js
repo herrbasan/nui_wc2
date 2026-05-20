@@ -120,7 +120,7 @@ for (const [section, filter] of Object.entries(sections)) {
 		const asyncKeyword = hasAwait ? 'async ' : '';
 
 		output += `nui.registerPage('${reg.routeId}', {\n`;
-		output += `\thtml: 'pages/${reg.routeId}.html',\n`;
+		output += `\thtml: '${reg.routeId}.html',\n`;
 		output += `\t${asyncKeyword}init(element, params, nui) {\n`;
 
         if (dedented.trim()) {

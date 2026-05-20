@@ -7,7 +7,7 @@ import { nui } from '../../NUI/nui.js';
 // ── Home ──
 
 nui.registerPage('home', {
-	html: 'pages/home.html',
+	html: 'home.html',
 	init(element, params, nui) {
 		element.addEventListener('nui-action', (e) => {
 		        const { param } = e.detail;
@@ -21,7 +21,7 @@ nui.registerPage('home', {
 // ── Core Components ──
 
 nui.registerPage('components/badge', {
-	html: 'pages/components/badge.html',
+	html: 'components/badge.html',
 	init(element, params, nui) {
 		let count = 0;
 		const targetBtn = element.querySelector('#demo-notification-btn');
@@ -39,7 +39,7 @@ nui.registerPage('components/badge', {
 });
 
 nui.registerPage('components/banner', {
-	html: 'pages/components/banner.html',
+	html: 'components/banner.html',
 	init(element, params, nui) {
 		let replacementCounter = 0;
 		
@@ -155,7 +155,7 @@ nui.registerPage('components/banner', {
 });
 
 nui.registerPage('components/button', {
-	html: 'pages/components/button.html',
+	html: 'components/button.html',
 	init(element, params, nui) {
 		const busyBtns = element.querySelectorAll('.demo-busy-btn');
 					busyBtns.forEach(btn => {
@@ -210,7 +210,7 @@ nui.registerPage('components/button', {
 });
 
 nui.registerPage('components/card', {
-	html: 'pages/components/card.html',
+	html: 'components/card.html',
 	init(element, params, nui) {
 		const output = element.querySelector('[data-demo-output]');
 		
@@ -234,14 +234,14 @@ nui.registerPage('components/card', {
 });
 
 nui.registerPage('components/code', {
-	html: 'pages/components/code.html',
+	html: 'components/code.html',
 	init(element, params, nui) {
 		// One-time setup if needed
 	}
 });
 
 nui.registerPage('components/dialog', {
-	html: 'pages/components/dialog.html',
+	html: 'components/dialog.html',
 	init(element, params, nui) {
 		// Import rich-text addon if not already registered (needed for programmatic page demo)
 			if (!customElements.get('nui-rich-text')) {
@@ -405,7 +405,7 @@ nui.registerPage('components/dialog', {
 });
 
 nui.registerPage('components/dropzone', {
-	html: 'pages/components/dropzone.html',
+	html: 'components/dropzone.html',
 	init(element, params, nui) {
 		function wireDropzone(id, outputSelector) {
 				const dropzone = element.querySelector('#' + id);
@@ -465,7 +465,7 @@ nui.registerPage('components/dropzone', {
 });
 
 nui.registerPage('components/icon', {
-	html: 'pages/components/icon.html',
+	html: 'components/icon.html',
 	async init(element, params, nui) {
 		const iconGrid = element.querySelector('#icon-grid');
 			const iconSearch = element.querySelector('#icon-search');
@@ -539,7 +539,7 @@ nui.registerPage('components/icon', {
 });
 
 nui.registerPage('components/inputs', {
-	html: 'pages/components/inputs.html',
+	html: 'components/inputs.html',
 	init(element, params, nui) {
 		// Handle actions
 			element.addEventListener('nui-action', (e) => {
@@ -581,7 +581,7 @@ nui.registerPage('components/inputs', {
 });
 
 nui.registerPage('components/link-list', {
-	html: 'pages/components/link-list.html',
+	html: 'components/link-list.html',
 	init(element, params, nui) {
 		// Navigation data structure
 			const demoNavigationData = [
@@ -779,7 +779,7 @@ nui.registerPage('components/link-list', {
 });
 
 nui.registerPage('components/markdown', {
-	html: 'pages/components/markdown.html',
+	html: 'components/markdown.html',
 	init(element, params, nui) {
 		// The component auto-initializes the markdown on connection.
 			
@@ -1030,7 +1030,7 @@ nui.registerPage('components/markdown', {
 });
 
 nui.registerPage('components/overlay', {
-	html: 'pages/components/overlay.html',
+	html: 'components/overlay.html',
 	init(element, params, nui) {
 		element.addEventListener('nui-action-overlay-open', (e) => {
 				const target = e.detail.target;
@@ -1052,7 +1052,7 @@ nui.registerPage('components/overlay', {
 });
 
 nui.registerPage('components/progress', {
-	html: 'pages/components/progress.html',
+	html: 'components/progress.html',
 	init(element, params, nui) {
 		let intervalId;
 		
@@ -1087,7 +1087,7 @@ nui.registerPage('components/progress', {
 });
 
 nui.registerPage('components/select', {
-	html: 'pages/components/select.html',
+	html: 'components/select.html',
 	async init(element, params, nui) {
 		// API Demo handlers
 			const apiSelect = element.querySelector('#api-demo-select');
@@ -1267,14 +1267,14 @@ nui.registerPage('components/select', {
 });
 
 nui.registerPage('components/skip-links', {
-	html: 'pages/components/skip-links.html',
+	html: 'components/skip-links.html',
 	init(element, params, nui) {
 		// Page initialization logic
 	}
 });
 
 nui.registerPage('components/slider', {
-	html: 'pages/components/slider.html',
+	html: 'components/slider.html',
 	init(element, params, nui) {
 		function bindValueMirror(sliderSelector, outputSelector) {
 					const input = element.querySelector(sliderSelector);
@@ -1305,7 +1305,7 @@ nui.registerPage('components/slider', {
 });
 
 nui.registerPage('components/sortable', {
-	html: 'pages/components/sortable.html',
+	html: 'components/sortable.html',
 	init(element, params, nui) {
 		const output = element.querySelector('[data-demo-output]');
 			const sortable = element.querySelector('#demo-sortable');
@@ -1364,7 +1364,7 @@ nui.registerPage('components/sortable', {
 });
 
 nui.registerPage('components/tabs', {
-	html: 'pages/components/tabs.html',
+	html: 'components/tabs.html',
 	init(element, params, nui) {
 		const tabs = element.querySelector('#event-tabs');
 			const log = element.querySelector('#tab-log');
@@ -1381,7 +1381,7 @@ nui.registerPage('components/tabs', {
 });
 
 nui.registerPage('components/tag-input', {
-	html: 'pages/components/tag-input.html',
+	html: 'components/tag-input.html',
 	init(element, params, nui) {
 		// Helper to get output element
 			function out(name) {
@@ -1535,7 +1535,7 @@ nui.registerPage('components/tag-input', {
 });
 
 nui.registerPage('components/tooltip', {
-	html: 'pages/components/tooltip.html',
+	html: 'components/tooltip.html',
 	init(element, params, nui) {
 		element.addEventListener('nui-action-demo:clicked', () => {
 		        alert('Tooltip button clicked!');
@@ -1546,7 +1546,7 @@ nui.registerPage('components/tooltip', {
 // ── Addons ──
 
 nui.registerPage('addons/app-window', {
-	html: 'pages/addons/app-window.html',
+	html: 'addons/app-window.html',
 	init(element, params, nui) {
 		const launchBtn = element.querySelector('#launch-app button');
 			const overlay = element.querySelector('#app-window-overlay');
@@ -1587,7 +1587,7 @@ nui.registerPage('addons/app-window', {
 });
 
 nui.registerPage('addons/code-editor', {
-	html: 'pages/addons/code-editor.html',
+	html: 'addons/code-editor.html',
 	init(element, params, nui) {
 		const editor = element.querySelector('#demo-editor');
 		    const output = element.querySelector('[data-output]');
@@ -1602,7 +1602,7 @@ nui.registerPage('addons/code-editor', {
 });
 
 nui.registerPage('addons/context-menu', {
-	html: 'pages/addons/context-menu.html',
+	html: 'addons/context-menu.html',
 	init(element, params, nui) {
 		const outputLog = element.querySelector('#output-log');
 			
@@ -1715,7 +1715,7 @@ nui.registerPage('addons/context-menu', {
 });
 
 nui.registerPage('addons/lightbox', {
-	html: 'pages/addons/lightbox.html',
+	html: 'addons/lightbox.html',
 	init(element, params, nui) {
 		// Declarative setup
 		    const declarativeWrapper = element.querySelector('#demo-lightbox');
@@ -1743,7 +1743,7 @@ nui.registerPage('addons/lightbox', {
 });
 
 nui.registerPage('addons/list', {
-	html: 'pages/addons/list.html',
+	html: 'addons/list.html',
 	init(element, params, nui) {
 		const api = window.nui || nui;
 			if (!api || !api.util) return;
@@ -1917,7 +1917,7 @@ nui.registerPage('addons/list', {
 });
 
 nui.registerPage('addons/media-player', {
-	html: 'pages/addons/media-player.html',
+	html: 'addons/media-player.html',
 	init(element, params, nui) {
 		element.addEventListener('nui-action-demo-media', (e) => {
 		        const target = element.querySelector('#prog-player-target');
@@ -1959,7 +1959,7 @@ nui.registerPage('addons/media-player', {
 });
 
 nui.registerPage('addons/menu', {
-	html: 'pages/addons/menu.html',
+	html: 'addons/menu.html',
 	init(element, params, nui) {
 		// Load the menu addon module
 			import('../NUI/lib/modules/nui-menu.js').then(() => {
@@ -2095,7 +2095,7 @@ nui.registerPage('addons/menu', {
 });
 
 nui.registerPage('addons/rich-text', {
-	html: 'pages/addons/rich-text.html',
+	html: 'addons/rich-text.html',
 	async init(element, params, nui) {
 		// We ensure NUI is ready and dynamically load the JS and CSS for the module if not already loaded by the page lifecycle
 		        const loadDependencies = async () => {
@@ -2314,7 +2314,7 @@ nui.registerPage('addons/rich-text', {
 });
 
 nui.registerPage('addons/wizard', {
-	html: 'pages/addons/wizard.html',
+	html: 'addons/wizard.html',
 	init(element, params, nui) {
 		/* ── Status Visual Reference ── */
 					const wStatus = element.el('#wizard-status-demo');
@@ -2511,7 +2511,7 @@ nui.registerPage('addons/wizard', {
 // ── Documentation ──
 
 nui.registerPage('documentation/cheatsheet', {
-	html: 'pages/documentation/cheatsheet.html',
+	html: 'documentation/cheatsheet.html',
 	async init(element, params, nui) {
 		// ===== Icons Section =====
 			const iconGrid = element.querySelector('#icon-grid');
@@ -2649,7 +2649,7 @@ nui.registerPage('documentation/cheatsheet', {
 });
 
 nui.registerPage('documentation/declarative-actions', {
-	html: 'pages/documentation/declarative-actions.html',
+	html: 'documentation/declarative-actions.html',
 	init(element, params, nui) {
 		// We can listen on the page element itself since events bubble up
 			element.addEventListener('nui-action', (e) => {
@@ -2707,7 +2707,7 @@ nui.registerPage('documentation/declarative-actions', {
 });
 
 nui.registerPage('documentation/experiments/html-standards', {
-	html: 'pages/documentation/experiments/html-standards.html',
+	html: 'documentation/experiments/html-standards.html',
 	init(element, params, nui) {
 		const c = element.querySelector('#math-canvas');
 		                            if(!c) return;
@@ -2744,7 +2744,7 @@ nui.registerPage('documentation/experiments/html-standards', {
 // ── Experiments ──
 
 nui.registerPage('experiments/html-standards', {
-	html: 'pages/experiments/html-standards.html',
+	html: 'experiments/html-standards.html',
 	init(element, params, nui) {
 		const c = element.querySelector('#math-canvas');
 		                            if(!c) return;
