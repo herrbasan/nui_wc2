@@ -386,7 +386,14 @@ If you MUST apply CSS (spacing on your own wrappers, very rare theming), use ONL
 </nui-app>
 ```
 
-📖 **Full docs:** [`documentation/components/app-layout.md`](documentation/components/app-layout.md)
+| `<nui-app>` Attributes | `content-min-width="55rem"` (min content width for breakpoints), `sidebar-breakpoint="none"|"768px"` (override auto breakpoint) |
+| `<nui-sidebar>` Attributes | `behavior="primary|secondary|auto|manual"` (breakpoint priority), `position="left|right"` |
+| `data-action` | `toggle-sidebar` (left), `toggle-sidebar:left`, `toggle-sidebar:right` |
+| Events | `nui-sidebar-change` → `detail: { position, state }` where state is `open|closed|forced` |
+| Methods | `app.toggleSidebar(pos)`, `app.invalidateBreakpointCache()` |
+| CSS Vars | `--sidebar-width` (21rem), `--app-header-height` (4rem) |
+
+📖 **Full docs:** [`documentation/components/app.md`](documentation/components/app.md)
 
 ### nui-app-header
 | Slots | `left`, `center`, `right` |

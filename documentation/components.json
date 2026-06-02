@@ -34,13 +34,13 @@
 			"@type": "Component",
 			"name": "nui-app",
 			"group": "layout",
-			"description": "Application shell creating CSS Grid layout with fixed regions: header, sidebar, content, and optional footer.",
-			"events": [],
+			"description": "Application shell creating CSS Grid layout with fixed regions: header, sidebar, content, and optional footer. Supports content-min-width, sidebar-breakpoint, sidebar behavior/position declarative attributes.",
+			"events": ["nui-sidebar-change"],
 			"innerElement": null,
 			"imports": null,
 			"page": "components/app-layout",
 			"demoPath": "Playground/pages/components/app-layout.html",
-			"docPath": "documentation/components/app-layout.md"
+			"docPath": "documentation/components/app.md"
 		},
 		{
 			"@context": "nui",
