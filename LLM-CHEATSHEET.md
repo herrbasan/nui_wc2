@@ -386,7 +386,7 @@ If you MUST apply CSS (spacing on your own wrappers, very rare theming), use ONL
 </nui-app>
 ```
 
-| `<nui-app>` Attributes | `content-min-width="55rem"` (min content width for breakpoints), `sidebar-breakpoint="none"|"768px"` (override auto breakpoint) |
+| `<nui-app>` Attributes | `content-min-width="55rem"` (breakpoint trigger), `content-width="48rem"` (max content column width), `sidebar-width="18rem"` (overrides CSS var), `sidebar-breakpoint="none"|"768px"` (override auto breakpoint) |
 | `<nui-sidebar>` Attributes | `behavior="primary|secondary|auto|manual"` (breakpoint priority), `position="left|right"` |
 | `data-action` | `toggle-sidebar` (left), `toggle-sidebar:left`, `toggle-sidebar:right` |
 | Events | `nui-sidebar-change` → `detail: { position, state }` where state is `open|closed|forced` |

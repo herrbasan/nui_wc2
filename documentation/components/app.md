@@ -72,6 +72,24 @@ Sets the minimum width the content area needs before sidebars are forced to coll
 </nui-app>
 ```
 
+### `content-width`
+
+Sets the maximum width of the readable content column. This **overrides** the CSS `--space-page-maxwidth` variable — the declarative attribute takes precedence over the stylesheet default.
+
+| Value | Behavior |
+|-------|----------|
+| `"55rem"` | Content column is capped at 55rem wide. Accepts `px`, `rem`, `em`, or any CSS length. |
+| *(not set)* | Falls back to the CSS `--space-page-maxwidth` variable (default: `56rem`). |
+
+```html
+<!-- Narrower content column -->
+<nui-app content-width="48rem">
+	...
+</nui-app>
+```
+
+> **Difference from `content-min-width`:** `content-width` controls the *actual* max-width of your content (replaces `--space-page-maxwidth`). `content-min-width` controls the *breakpoint* at which sidebars collapse. They serve different purposes and can be used together.
+
 ### `sidebar-breakpoint`
 
 Global override for when sidebars collapse. Overrides the automatic hierarchical breakpoint calculation.
@@ -93,6 +111,29 @@ Global override for when sidebars collapse. Overrides the automatic hierarchical
 	...
 </nui-app>
 ```
+
+### `sidebar-width`
+
+Sets the width of all sidebars. This **overrides** the CSS `--sidebar-width` variable — declarative attributes take precedence over stylesheet defaults.
+
+| Value | Behavior |
+|-------|----------|
+| `"18rem"` | Sidebars are 18rem wide. Accepts `px`, `rem`, `em`, `vw`, or any CSS length. |
+| *(not set)* | Falls back to the CSS `--sidebar-width` variable (default: `21rem`). |
+
+```html
+<!-- Narrower sidebars -->
+<nui-app sidebar-width="16rem">
+	...
+</nui-app>
+
+<!-- Wide sidebars with custom breakpoint -->
+<nui-app sidebar-width="24rem" sidebar-breakpoint="72rem">
+	...
+</nui-app>
+```
+
+> **Priority:** Declarative HTML attributes > CSS variables > built-in defaults. Setting `sidebar-width="20rem"` on the element always wins over `:root { --sidebar-width: 21rem; }`.
 
 ---
 

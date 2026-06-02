@@ -162,7 +162,7 @@
 			<li><strong>App Mode</strong> - Fixed sidebar with toggle capability. Supports optional <code>position="right"</code> for dual sidebars.</li>
 			<li><strong>Page Mode</strong> - Can float beside content or stack</li>
 			<li><strong>Content</strong> - Should contain <code>&lt;nav&gt;</code> with navigation structure, or settings panels for right sidebars</li>
-			<li><strong>State Management</strong> - Collapsible via toggle button or resize. Toggle specific sidebars with <code>data-action="app-toggle-sidenav:left"</code> or <code>data-action="app-toggle-sidenav:right"</code></li>
+			<li><strong>State Management</strong> - Collapsible via toggle button or resize. Toggle with <code>data-action="toggle-sidebar"</code> (left) or <code>data-action="toggle-sidebar:right"</code>. Supports <code>behavior="primary|secondary|auto|manual"</code> for breakpoint priority.</li>
 		</ul>
 		
 		<div class="component-diagram">
@@ -284,33 +284,109 @@ nui-app-footer { grid-area: footer; }</code></pre>
 	</section>
 	
 	<section>
-		<h2>CSS Variables</h2>
-		<p>Customize layout dimensions with CSS variables:</p>
-		
+		<h2>Declarative Configuration</h2>
+		<p>
+			All layout dimensions can be set as HTML attributes on <code>&lt;nui-app&gt;</code>.
+			Declarative attributes <strong>override</strong> the CSS variable defaults — no custom CSS needed.
+		</p>
+
+		<h3>Sidebar Width</h3>
+		<p>Control sidebar width with <code>sidebar-width</code>. Accepts any CSS length unit.</p>
 		<nui-code>
-			<pre><code>nui-app {
-	/* Sidebar configuration */
-	--nui-sidebar-width: 15rem;           /* Default sidebar width */
-	--nui-sidebar-force-breakpoint: 75rem; /* When to force collapse */
-	
-	/* Heights */
-	--nui-topnav-height: 3.5rem;          /* Top nav bar height */
-	--nui-footer-height: auto;            /* Footer height */
-	
-	/* Z-index layers */
-	--nui-topnav-z: 1000;
-	--nui-sidebar-z: 900;
-	--nui-overlay-z: 800;
-}</code></pre>
+			<pre><code>&lt;nui-app sidebar-width="18rem"&gt;
+	&lt;!-- Narrower sidebars (default: 21rem) --&gt;
+&lt;/nui-app&gt;
+
+&lt;nui-app sidebar-width="280px"&gt;
+	&lt;!-- Fixed pixel width --&gt;
+&lt;/nui-app&gt;</code></pre>
 		</nui-code>
-		
-		<p>Set via attributes for per-instance customization:</p>
+
+		<h3>Content Width</h3>
+		<p>
+			Set the maximum width of the readable content column with <code>content-width</code>.
+			This overrides the <code>--space-page-maxwidth</code> CSS variable (default: 56rem).
+		</p>
 		<nui-code>
-			<pre><code>&lt;nui-app 
-	nui-vars-sidebar_width="20rem" 
-	nui-vars-sidebar_force-breakpoint="60rem"&gt;
+			<pre><code>&lt;nui-app content-width="48rem"&gt;
+	&lt;!-- Narrower reading column --&gt;
+&lt;/nui-app&gt;
+
+&lt;nui-app content-width="800px"&gt;
+	&lt;!-- Fixed pixel max-width --&gt;
+&lt;/nui-app&gt;</code></pre>
+		</nui-code>
+
+		<h3>Responsive Breakpoints</h3>
+		<p>
+			Control when sidebars collapse with <code>content-min-width</code> and <code>sidebar-breakpoint</code>.
+			These work together: <code>content-min-width</code> sets the minimum content space needed before
+			sidebars collapse, and <code>sidebar-breakpoint</code> provides a global override.
+		</p>
+		<nui-code>
+			<pre><code>&lt;!-- Sidebars collapse when content has less than 55rem of space --&gt;
+&lt;nui-app content-min-width="55rem"&gt;
+	...
+&lt;/nui-app&gt;
+
+&lt;!-- Never collapse sidebars --&gt;
+&lt;nui-app sidebar-breakpoint="none"&gt;
+	...
+&lt;/nui-app&gt;
+
+&lt;!-- All together --&gt;
+&lt;nui-app 
+	sidebar-width="18rem"
+	content-width="48rem"
+	content-min-width="50rem"&gt;
 	&lt;!-- Layout components --&gt;
 &lt;/nui-app&gt;</code></pre>
+		</nui-code>
+
+		<h3>Per-Sidebar Behavior</h3>
+		<p>
+			Each <code>&lt;nui-sidebar&gt;</code> can declare its breakpoint priority with <code>behavior</code>.
+			A <code>primary</code> sidebar stays visible longest; a <code>secondary</code> sidebar collapses first.
+		</p>
+		<nui-code>
+			<pre><code>&lt;nui-app content-min-width="50rem"&gt;
+	&lt;nui-sidebar behavior="primary"&gt;
+		&lt;nav&gt;Main navigation (collapses last)&lt;/nav&gt;
+	&lt;/nui-sidebar&gt;
+	
+	&lt;nui-sidebar position="right" behavior="secondary"&gt;
+		&lt;nav&gt;Context panel (collapses first)&lt;/nav&gt;
+	&lt;/nui-sidebar&gt;
+	
+	&lt;nui-content&gt;
+		&lt;main&gt;Content&lt;/main&gt;
+	&lt;/nui-content&gt;
+&lt;/nui-app&gt;</code></pre>
+		</nui-code>
+	</section>
+
+	<section>
+		<h2>CSS Variables</h2>
+		<p>These are the underlying CSS variables that declarative attributes map to. Set them on <code>:root</code> to change defaults globally:</p>
+
+		<table>
+			<thead>
+				<tr><th>Variable</th><th>Default</th><th>Declarative Attribute</th><th>Controls</th></tr>
+			</thead>
+			<tbody>
+				<tr><td><code>--sidebar-width</code></td><td>21rem</td><td><code>sidebar-width</code></td><td>Width of all sidebars</td></tr>
+				<tr><td><code>--space-page-maxwidth</code></td><td>56rem</td><td><code>content-width</code></td><td>Max width of content column</td></tr>
+				<tr><td><code>--app-header-height</code></td><td>4rem</td><td><em>(CSS only)</em></td><td>Height of the top bar</td></tr>
+				<tr><td><code>--footer-height</code></td><td>2rem</td><td><em>(CSS only)</em></td><td>Height of the footer</td></tr>
+			</tbody>
+		</table>
+
+		<nui-code>
+			<pre><code>:root {
+	--sidebar-width: 18rem;        /* Global sidebar width */
+	--app-header-height: 3.5rem;   /* Global header height */
+	--space-page-maxwidth: 50rem;  /* Global content max-width */
+}</code></pre>
 		</nui-code>
 	</section>
 	

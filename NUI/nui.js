@@ -1012,6 +1012,21 @@ registerComponent('nui-app', (element) => {
 	}
 
 	element.setAttribute('data-layout', 'app');
+
+	// Apply declarative attributes as CSS custom properties (override :root defaults)
+	const sidebarWidth = element.getAttribute('sidebar-width') || element.getAttribute('nui-vars-sidebar_width');
+	if (sidebarWidth) {
+		element.style.setProperty('--sidebar-width', sidebarWidth);
+	}
+	const breakpointOverride = element.getAttribute('sidebar-breakpoint') || element.getAttribute('nui-vars-sidebar_force-breakpoint');
+	if (breakpointOverride) {
+		element.style.setProperty('--nui-sidebar-breakpoint', breakpointOverride);
+	}
+	const contentWidth = element.getAttribute('content-width');
+	if (contentWidth) {
+		element.style.setProperty('--space-page-maxwidth', contentWidth);
+	}
+
 	updateLayoutClasses(element);
 
 	element.toggleSidebar = (position = 'left') => toggleSidebar(element, position);
