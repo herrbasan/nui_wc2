@@ -1,3 +1,5 @@
+<div class="page-markdown">
+
 <script type="application/ld+json">
 {
   "@context": "nui",
@@ -10,7 +12,11 @@
   "imports": null
 }
 </script>
-<div class="page-markdown">
+
+	<details class="collapsible-section collapsible-section--spaced">
+		<summary><strong>LLM Guide - nui-markdown</strong></summary>
+		<nui-markdown src="../documentation/components/markdown.md"></nui-markdown>
+	</details>
 
 	<header>
 		<h1>Markdown (<nui-badge class="primary">Addon</nui-badge>)</h1>
@@ -234,12 +240,6 @@ mdRenderer.endStream();
 		<h3>Why This Happens</h3>
 		<p>The HTML parser scans for <code>&lt;/script&gt;</code> to find the end of a script element. It doesn't understand that the tag is inside a code example - it just sees the string and closes the element. Escaping with <code>&lt;\/script&gt;</code> prevents this while still displaying correctly in the rendered output.</p>
 	</section>
-</div>
-
-<details class="collapsible-section collapsible-section--spaced">
-		<summary><strong>LLM Guide - nui-markdown</strong></summary>
-		<nui-markdown src="../documentation/components/markdown.md"></nui-markdown>
-	</details>
 
 
 
