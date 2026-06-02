@@ -24,8 +24,8 @@ IMPORTANT RULES:
 ================================================================================
 -->
 
-<!-- 1. PAGE WRAPPER - Use nui-page as the root for proper layout handling -->
-<nui-page class="page-[component]">
+<!-- 1. PAGE WRAPPER - Use a div as root; the router wraps in nui-page automatically -->
+<div class="page-[component]">
 
 	<!-- 2. HEADER - Always required -->
 	<header>
@@ -208,4 +208,4 @@ IMPORTANT RULES:
 	- Leaving page: hide() called → page hidden (display:none)
 	================================================================================
 	-->
-</nui-page>
+</div>
