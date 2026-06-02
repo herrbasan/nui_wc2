@@ -3686,9 +3686,9 @@ nui-accordion.nui-accordion-clean .accordion-content {
    ============================================================================= */
 
 nui-details {
+	position: relative;
 	display: block;
 	margin: var(--nui-space) 0;
-	border-bottom: var(--border-thickness) solid var(--border-shade3);
 }
 
 nui-details details summary {
@@ -3709,7 +3709,7 @@ nui-details details summary strong {
 	margin-left: 0.2rem;
 }
 
-nui-details details > div {
+nui-details-content {
 	padding: var(--nui-space);
 	background: var(--color-shade1);
 	border-radius: 0 0 var(--border-radius1) var(--border-radius1);
@@ -3720,6 +3720,8 @@ nui-details details pre {
 	overflow-x: auto;
 	font-size: 0.875rem;
 }
+
+
 
 
 /* =============================================================================

@@ -2268,7 +2268,7 @@ registerComponent('nui-details', (element) => {
 		loaded = true;
 
 		const isMarkdown = src.endsWith('.md');
-		const contentDiv = document.createElement('div');
+		const contentDiv = document.createElement('nui-details-content');
 
 		fetch(src)
 			.then(res => {
