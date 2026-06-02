@@ -3682,6 +3682,47 @@ nui-accordion.nui-accordion-clean .accordion-content {
 
 
 /* =============================================================================
+   NUI-DETAILS COMPONENT
+   ============================================================================= */
+
+nui-details {
+	display: block;
+	margin: var(--nui-space) 0;
+	border-bottom: var(--border-thickness) solid var(--border-shade3);
+}
+
+nui-details details summary {
+	cursor: pointer;
+	font-weight: bold;
+	padding: var(--nui-space-half) var(--nui-space);
+	background: var(--color-shade2);
+	border-radius: var(--border-radius2);
+}
+
+nui-details details summary::marker {
+	font-size: 1rem;
+	color: var(--color-text-dim);
+}
+
+nui-details details summary strong {
+	font-weight: 400;
+	margin-left: 0.2rem;
+}
+
+nui-details details > div {
+	padding: var(--nui-space);
+	background: var(--color-shade1);
+	border-radius: 0 0 var(--border-radius1) var(--border-radius1);
+}
+
+nui-details details pre {
+	margin: 0;
+	overflow-x: auto;
+	font-size: 0.875rem;
+}
+
+
+/* =============================================================================
    ROUTER TRANSITIONS
    ============================================================================= */
 

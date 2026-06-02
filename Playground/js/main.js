@@ -312,6 +312,7 @@ const navigationData = [
 					{ label: 'Link List', href: '#page=components/link-list' },
 					{ label: 'Tabs', href: '#page=components/tabs' },
 					{ label: 'Accordion', href: '#page=components/accordion' },
+					{ label: 'Details', href: '#page=components/details' },
 					{ label: 'Sortable', href: '#page=components/sortable' }
 				]
 			},

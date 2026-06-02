@@ -1,0 +1,116 @@
+<div class="page-details">
+
+<script type="application/ld+json">
+{
+  "@context": "nui",
+  "@type": "Component",
+  "name": "nui-details",
+  "group": "ui",
+  "description": "Styled details/summary wrapper with optional lazy-loaded content from URL sources.",
+  "events": [],
+  "innerElement": "<details>",
+  "imports": null
+}
+</script>
+
+<header>
+	<h1>Details Component</h1>
+	<p class="lead">A styled <code>&lt;details&gt;</code> wrapper with built-in lazy loading support.</p>
+</header>
+
+<section>
+	<h2>Static Content (Default)</h2>
+	<p>Without a <code>src</code> attribute, <code>&lt;nui-details&gt;</code> acts as a styled wrapper for any HTML content. Children render immediately.</p>
+
+	<div class="demo-area">
+		<nui-details summary="Licensing Information">
+			<p>This component is part of the NUI library. It's free to use in any project.</p>
+			<p>The styling adapts to light and dark themes automatically.</p>
+		</nui-details>
+	</div>
+
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-details summary="Licensing Information">
+	<p>This component is part of the NUI library.</p>
+	<p>The styling adapts to light and dark themes automatically.</p>
+</nui-details></script>
+	</nui-code>
+</section>
+
+<section>
+	<h2>Immediate Load from URL</h2>
+	<p>With a <code>src</code> attribute pointing to a <code>.md</code> or <code>.html</code> file, content is fetched and rendered immediately on page load.</p>
+
+	<div class="demo-area">
+		<nui-details summary="LLM Guide - nui-details" src="../documentation/components/details.md"></nui-details>
+	</div>
+
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-details summary="LLM Guide - nui-details"
+            src="../documentation/components/details.md">
+</nui-details></script>
+	</nui-code>
+</section>
+
+<section>
+	<h2>Lazy Load</h2>
+	<p>Add the <code>lazy</code> attribute to defer loading until the user opens the details. The content is <strong>cached</strong> after the first fetch, so subsequent opens are instant.</p>
+
+	<div class="demo-area">
+		<nui-details summary="Lazy-Loaded Example" src="../documentation/components/details.md" lazy>
+		</nui-details>
+	</div>
+
+	<nui-code>
+		<script type="example" data-lang="html">
+<!-- Content only fetched when user opens this -->
+<nui-details summary="Lazy-Loaded Example"
+            src="/path/to/content.md"
+            lazy>
+</nui-details></script>
+	</nui-code>
+</section>
+
+<section>
+	<h2>Content Type Detection</h2>
+	<p>Content type is auto-detected from the file extension:</p>
+
+	<nui-table>
+		<table>
+			<thead>
+				<tr><th>Extension</th><th>Render Method</th><th>Use Case</th></tr>
+			</thead>
+			<tbody>
+				<tr><td><code>.md</code></td><td>Renders via <code>&lt;nui-markdown&gt;</code></td><td>Documentation, guides</td></tr>
+				<tr><td><code>.html</code></td><td>Injected as innerHTML</td><td>HTML fragments, templates</td></tr>
+				<tr><td>Other / none</td><td>Inserted as plain text</td><td>Code, logs</td></tr>
+			</tbody>
+		</table>
+	</nui-table>
+</section>
+
+<section>
+	<h2>API Reference</h2>
+
+	<nui-table>
+		<table>
+			<thead>
+				<tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr>
+			</thead>
+			<tbody>
+				<tr><td><code>summary</code></td><td>string</td><td>—</td><td>Text for the summary element. Auto-wrapped in <code>&lt;strong&gt;</code>.</td></tr>
+				<tr><td><code>src</code></td><td>URL</td><td>—</td><td>URL to fetch content from. Without this, child content renders normally.</td></tr>
+				<tr><td><code>lazy</code></td><td>boolean</td><td>false</td><td>When set, content is only fetched when the details are first opened.</td></tr>
+			</tbody>
+		</table>
+	</nui-table>
+</section>
+
+<details class="collapsible-section collapsible-section--spaced">
+	<summary><strong>LLM Guide - nui-details</strong></summary>
+	<nui-markdown src="../documentation/components/details.md"></nui-markdown>
+</details>
+
+</div>

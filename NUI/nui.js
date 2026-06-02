@@ -2241,6 +2241,71 @@ registerComponent('nui-accordion', (element) => {
 	};
 });
 
+// ################################# nui-details COMPONENT
+
+registerComponent('nui-details', (element) => {
+	const src = element.getAttribute('src');
+	if (!src) return; // No src — children render as-is, no lazy loading needed
+
+	const summaryText = element.getAttribute('summary') || '';
+	const isLazy = element.hasAttribute('lazy');
+
+	// Build the details structure
+	const detailsEl = document.createElement('details');
+	const summaryEl = document.createElement('summary');
+	if (summaryText) {
+		const strong = document.createElement('strong');
+		strong.textContent = summaryText;
+		summaryEl.appendChild(strong);
+	}
+	detailsEl.appendChild(summaryEl);
+	element.appendChild(detailsEl);
+
+	let loaded = false;
+
+	function loadContent() {
+		if (loaded) return;
+		loaded = true;
+
+		const isMarkdown = src.endsWith('.md');
+		const contentDiv = document.createElement('div');
+
+		fetch(src)
+			.then(res => {
+				if (!res.ok) throw new Error(`Failed to load ${src}`);
+				return res.text();
+			})
+			.then(text => {
+				if (isMarkdown) {
+					const mdEl = document.createElement('nui-markdown');
+					mdEl.setAttribute('src', src);
+					contentDiv.appendChild(mdEl);
+				} else if (src.endsWith('.html')) {
+					contentDiv.innerHTML = text;
+				} else {
+					contentDiv.textContent = text;
+				}
+				detailsEl.appendChild(contentDiv);
+			})
+			.catch(err => {
+				contentDiv.textContent = `Error loading content: ${err.message}`;
+				contentDiv.style.color = 'var(--palette-alert)';
+				contentDiv.style.padding = 'var(--nui-space)';
+				detailsEl.appendChild(contentDiv);
+			});
+	}
+
+	if (isLazy) {
+		// Load only when user opens the details
+		detailsEl.addEventListener('toggle', () => {
+			if (detailsEl.open) loadContent();
+		}, { once: true });
+	} else {
+		// Load immediately (on upgrade)
+		loadContent();
+	}
+});
+
 // ################################# nui-table COMPONENT
 
 registerComponent('nui-table', (element) => {

@@ -520,6 +520,24 @@ If you MUST apply CSS (spacing on your own wrappers, very rare theming), use ONL
 
 📖 **Full docs:** [`documentation/components/link-list.md`](documentation/components/link-list.md)
 
+### nui-details
+
+```html
+<!-- Static content -->
+<nui-details summary="License Info">
+  <p>Content here.</p>
+</nui-details>
+
+<!-- Load from URL (immediate by default, or lazy) -->
+<nui-details summary="Changelog" src="/docs/changelog.md"></nui-details>
+<nui-details summary="Changelog" src="/docs/changelog.md" lazy></nui-details>
+```
+| Attributes | `summary="Title"`, `src="/path.md"`, `lazy` (defer fetch until opened) |
+| Content types | `.md` → nui-markdown, `.html` → innerHTML, other → text |
+| Caching | Content fetched once, reused on subsequent opens |
+
+📖 **Full docs:** [`documentation/components/details.md`](documentation/components/details.md)
+
 ---
 
 ## Overlay Components

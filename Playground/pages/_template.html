@@ -27,11 +27,9 @@ IMPORTANT RULES:
 <!-- 1. PAGE WRAPPER - Use a div as root; the router wraps in nui-page automatically -->
 <div class="page-[component]">
 
-	<!-- 2. LLM GUIDE - Placed at the top after the script block, before the header -->
-	<details class="collapsible-section collapsible-section--spaced">
-		<summary><strong>LLM Guide - nui-[component]</strong></summary>
-		<nui-markdown src="../documentation/components/[component].md"></nui-markdown>
-	</details>
+	<!-- 2. LLM GUIDE - Uses nui-details with lazy loading to defer markdown fetch -->
+	<nui-details summary="LLM Guide - nui-[component]" src="../documentation/components/[component].md" lazy>
+	</nui-details>
 
 	<!-- 3. HEADER - Always required -->
 	<header>

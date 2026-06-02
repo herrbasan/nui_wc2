@@ -115,6 +115,19 @@
 		{
 			"@context": "nui",
 			"@type": "Component",
+			"name": "nui-details",
+			"group": "ui",
+			"description": "Styled details/summary wrapper with optional lazy-loaded content from URL sources.",
+			"events": [],
+			"innerElement": "<details>",
+			"imports": null,
+			"page": "components/details",
+			"demoPath": "Playground/pages/components/details.html",
+			"docPath": "documentation/components/details.md"
+		},
+		{
+			"@context": "nui",
+			"@type": "Component",
 			"name": "nui-dialog",
 			"group": "overlays",
 			"description": "Modal and non-modal dialogs built on native <dialog> element with focus trapping, system dialogs (alert/confirm/prompt), and placement options.",
