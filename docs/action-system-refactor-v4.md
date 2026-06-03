@@ -80,22 +80,30 @@ The key difference: resolution is no longer coupled to a click event. The `dispa
 
 ### 2.4 Built-in Actions (zero configuration)
 
-These actions work out of the box — no `nui.registerAction()` needed. NUI pre-registers them at startup:
+These actions work out of the box — no `nui.registerAction()` needed. NUI pre-registers them at startup. The list is based on an audit of 42 Playground pages (~180 `data-action` usages):
 
-| Category | Actions |
-|---|---|
-| **App shell** | `toggle-sidebar`, `toggle-sidebar:left`, `toggle-sidebar:right` |
-| **Theme** | `toggle-theme` |
-| **Dialog** | `dialog-open`, `dialog-show`, `dialog-close` |
-| **Overlay** | `overlay-open`, `overlay-close` |
-| **Banner** | `banner-show`, `banner-close` |
-| **Select** | `select-open`, `select-close` |
-| **Card** | `card-flip` |
-| **Tabs** | `tabs-select` |
-| **Accordion** | `accordion-toggle`, `accordion-expand-all`, `accordion-collapse-all` |
-| **Utility** | `scroll-to-top` |
+| Action | Usage | Status |
+|---|---|---|
+| `dialog-open` | 16× across 4 files | ✅ Existing built-in |
+| `dialog-close` | 15× across 4 files | ✅ Existing built-in |
+| `card-flip` | 9× in card.html | ✅ Existing built-in |
+| **`toggle-sidebar`** | **7× across 3 files** | 🔄 **Move from boilerplate → core** |
+| `banner-close` | 5× across 2 files | ✅ Existing built-in |
+| `banner-show` | 4× across 2 files | ✅ Existing built-in |
+| `tabs-select` | 4× in tabs.html | ✅ Existing built-in |
+| **`toggle-theme`** | **4× across 2 files** | 🔄 **Move from boilerplate → core** |
+| `overlay-close` | 3× in overlay.html | ✅ Existing built-in |
+| `select-open` | 3× in select.html | ✅ Existing built-in |
+| `overlay-open` | 2× in overlay.html | ✅ Existing built-in |
+| `accordion-expand-all` | 2× in accordion.html | ✅ Existing built-in |
+| `accordion-toggle` | 2× in accordion.html | ✅ Existing built-in |
+| `accordion-collapse-all` | 2× in accordion.html | ✅ Existing built-in |
 
-This is a **superset** of the current built-in handlers. `toggle-sidebar` and `toggle-theme` move from boilerplate `app.js` into core — they should just work everywhere, not require app-level wiring.
+Also in code but unused in Playground (keep for API completeness): `select-close`, `dialog-show`, `scroll-to-top`.
+
+**Demo-only actions (not built-ins):** ~65 additional actions are playground demos (`sortable-item-delete`, `handle-cookies`, `multi-demo`, menu addon actions, rich-text API actions, etc.). These demonstrate how users register their own actions — they don't belong in core.
+
+Full audit: `docs/playground-action-audit.txt`
 
 ### 2.5 Component integration pattern
 
