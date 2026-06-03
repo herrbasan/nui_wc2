@@ -78,7 +78,26 @@ nui.registerAction(name, handler)   // → void
 
 The key difference: resolution is no longer coupled to a click event. The `dispatchAction` call can originate from any event type.
 
-### 2.4 Component integration pattern
+### 2.4 Built-in Actions (zero configuration)
+
+These actions work out of the box — no `nui.registerAction()` needed. NUI pre-registers them at startup:
+
+| Category | Actions |
+|---|---|
+| **App shell** | `toggle-sidebar`, `toggle-sidebar:left`, `toggle-sidebar:right` |
+| **Theme** | `toggle-theme` |
+| **Dialog** | `dialog-open`, `dialog-show`, `dialog-close` |
+| **Overlay** | `overlay-open`, `overlay-close` |
+| **Banner** | `banner-show`, `banner-close` |
+| **Select** | `select-open`, `select-close` |
+| **Card** | `card-flip` |
+| **Tabs** | `tabs-select` |
+| **Accordion** | `accordion-toggle`, `accordion-expand-all`, `accordion-collapse-all` |
+| **Utility** | `scroll-to-top` |
+
+This is a **superset** of the current built-in handlers. `toggle-sidebar` and `toggle-theme` move from boilerplate `app.js` into core — they should just work everywhere, not require app-level wiring.
+
+### 2.5 Component integration pattern
 
 Each component reads `data-action` from its host element and dispatches on its natural trigger:
 
@@ -161,9 +180,10 @@ nui.dispatchAction('file-upload', { payload: { files: [...], name: 'doc.pdf' } }
 
 ┌──────────────────────────────────────────────┐
 │  Boilerplate app.js                           │
-│  nui.registerAction('toggle-sidebar', ...)     │
-│  nui.registerAction('toggle-theme', ...)       │
+│  // Built-in actions work without registration │
+│  // Only app-specific custom actions needed:   │
 │  nui.registerAction('save-config', ...)        │
+│  nui.registerAction('export-data', ...)        │
 └──────────────────────────────────────────────┘
 ```
 
