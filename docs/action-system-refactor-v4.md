@@ -1,392 +1,205 @@
-# Action System Reform — Proposal for NUI v4.0
+# Action System — Minimal Reform (NUI v4.0)
 
-> **Status:** Draft for discussion. Not committed.  
-> **Breaking change:** Yes.  
-> **Goal:** Produce a plan solid enough to share, debate, refine, or discard.
+> **Status:** Draft for discussion.  
+> **Breaking change:** Yes (click-only delegation removed).  
+> **Principle:** Solve 90% with minimal complexity. Don't build a framework.
 
 ---
 
-## 1. Problem Statement
-
-### 1.1 The current system has one structural flaw
+## 1. The Only Real Problem
 
 ```javascript
-// nui.js — setupActionDelegation()
+// Current — works great, but ONLY for clicks
 document.addEventListener('click', (e) => {
     const el = e.target.closest('[data-action]');
-    // parse, resolve, dispatch...
+    // ...
 });
 ```
 
-The trigger event is **hardcoded to `click`**. This means:
-
-- A form can't fire `data-action="login"` on `submit`
-- An input can't fire `data-action="search"` on `change`
-- A slider can't fire `data-action="price-filter"` on release
-- Every consumer (boilerplate, Playground, user apps) reimplements the same click delegation pattern
-
-The resolution logic is solid. The triggering mechanism is the problem.
-
-### 1.2 Secondary issues
-
-- **No payload support.** `param` is always a string from the attribute. Can't pass objects, FormData, files.
-- **Boilerplate sprawl.** `toggle-sidebar` and `toggle-theme` are defined in the boilerplate `app.js`, not in NUI core. They should just work everywhere.
-- **No observability.** There's no way to inspect which actions are firing, from where, in what order.
+`data-action="search"` on an `<input>` doesn't fire on Enter. `data-action="login"` on a `<form>` doesn't fire on submit. That's the bug. Everything else is fine.
 
 ---
 
-## 2. Design Principles
+## 2. How Components Actually Work
 
-These define what the system should be. Proposals that violate these are rejected.
+Components have two kinds of events — we only care about one.
 
-### 2.1 State-changing events only
+### Internal events (component's business — ignore these)
 
-> `data-action` fires on **committed state**, never intermediate state.
-
-A user dragging a slider produces dozens of `input` events per second — none of them are meaningful as "actions." The action fires once, on release. This principle eliminates noise and makes throttling the component's responsibility, not the consumer's.
-
-| Component | Transitional (NOT an action) | State-changing (action trigger) |
-|---|---|---|
-| `nui-input` | `input` (every keystroke) | `change` (blur/enter) |
-| `nui-slider` | `input` (while dragging) | `change` (release) |
-| `nui-sortable` | drag events | `nui-sortable-reorder` |
-| `nui-dropzone` | `dragenter`/`dragleave` | `nui-drop` |
-| `nui-button` | — | `click` |
-| `nui-checkbox` | — | `change` |
-| `nui-select` | — | `nui-change` |
-| `nui-tabs` | — | `nui-tab-change` |
-| `nui-accordion` | — | `toggle` |
-| Bare `<form>` | — | `submit` |
-
-### 2.2 Opt-in, not always-on
-
-Components do NOT report every event to the action system. They only report when `data-action` is present on the host element. Without it, behavior is unchanged — standard CustomEvents fire as they always have.
-
-```html
-<!-- Reports to action system on change -->
-<nui-input data-action="search">
-    <input type="text" placeholder="Search...">
-</nui-input>
-
-<!-- No action system involvement -->
-<nui-input>
-    <input type="text" placeholder="Name">
-</nui-input>
+```
+nui-list:    item-hovered, group-toggled, scroll-position
+nui-select:  dropdown-opened, option-highlighted
+nui-sortable: drag-started
 ```
 
-### 2.3 Zero configuration for built-in actions
+These solve UI problems. Nobody outside the component needs to know.
 
-`dialog-open`, `toggle-sidebar`, `card-flip` — these just work. No registration needed. Built-in actions cover the 14 most-used patterns from the Playground audit. App-specific actions (`save-config`, `export-data`) are registered by the application.
+### External events (other code cares — these become actions)
 
-### 2.4 Scoped, not global
-
-Handlers can be registered globally or scoped to a specific element. This gives applications control over which components they react to.
-
-```javascript
-// Global — fires for any element with data-action="save"
-nui.onAction('save', handler);
-
-// Scoped — only fires for this specific element
-nui.onAction('save', { target: document.querySelector('#editor') }, handler);
-
-// Scoped — only fires for elements of this component type
-nui.onAction('save', { component: 'nui-rich-text' }, handler);
+```
+nui-list:    selection-changed, item-activated
+nui-select:  value-committed
+nui-sortable: order-committed
+nui-input:   value-committed (change)
+nui-tabs:    tab-changed
+nui-dropzone: files-dropped
 ```
 
-### 2.5 Observable, debuggable
-
-```javascript
-nui.configure({ debugActions: true })
-// Logs: [nui-action] search  ← fired  from <nui-input#search-box>  payload: "hello world"
-// Logs: [nui-action] save    ← fired  from <nui-button#save-btn>    payload: undefined
-```
-
-Or listen programmatically:
-
-```javascript
-nui.onAction('*', ({ name, target, payload }) => {
-    console.log(`Action: ${name} from`, target, payload);
-});
-```
+A component has 1–3 external events. That's the action surface. Small, predictable, worth naming.
 
 ---
 
-## 3. Architecture
+## 3. What We Actually Need (90% solution)
 
-### 3.1 Before (current)
+### 3.1 Components dispatch on their natural event
 
-```
-click → document listener → parse data-action → resolveAction(name)
-                                                → registeredActions.get(name)
-                                                → builtinActionHandlers[name]  
-                                                → CustomEvent dispatch
-```
-
-One entry point. One event type.
-
-### 3.2 After (proposed)
-
-```
-Component fires its natural state-changing event
-    ↓
-Component checks: does host have data-action?
-    ↓ YES
-calls nui.dispatchAction(name, { target, payload, event })
-    ↓
-resolution chain:
-  1. nui.* namespace functions     (nui.components.dialog.open)
-  2. registered scoped handlers     (nui.onAction('save', { target: el }, fn))
-  3. registered global handlers     (nui.onAction('save', fn))
-  4. built-in handlers              (dialog-open, card-flip, etc.)
-  5. CustomEvent dispatch           (nui-action, nui-action-${name})
-    ↓
-if debugActions: console.log(...)
-```
-
-### 3.3 What disappears
-
-| Removed | Replaced by |
-|---|---|
-| `setupActionDelegation()` global click listener | Per-component event listeners |
-| `builtinActionHandlers` standalone object | `nui.registerAction()` calls at startup |
-| Boilerplate `app.js` switch-case | `nui.registerAction()` in user code |
-| `nui-action` event as the primary mechanism | `nui-action` remains as a fallback observable |
-
----
-
-## 4. API Design
-
-### 4.1 Public API
-
-```typescript
-// Fire an action (called internally by components)
-nui.dispatchAction(name: string, options: {
-    target: HTMLElement,      // the element that carries data-action
-    payload?: any,            // arbitrary data (string, object, FormData...)
-    event?: Event             // the original DOM event that triggered this
-}): boolean                   // true if any handler consumed it
-
-// Register a handler (global scope)
-nui.registerAction(name: string, handler: ActionHandler): void
-
-// Register a handler (scoped)
-nui.onAction(name: string, scope: { target?: HTMLElement, component?: string }, handler: ActionHandler): void
-
-// Listen for debugging/logging (wildcard)
-nui.onAction('*', handler: ActionHandler): void
-
-// Handler signature
-type ActionHandler = (ctx: {
-    name: string,             // action name
-    target: HTMLElement,      // element that carries data-action
-    payload: any,             // data carried with the action
-    event: Event              // original DOM event (may be a CustomEvent)
-}) => boolean | void;         // return true to stop propagation
-
-// Off (cleanup)
-nui.offAction(name: string, handler: ActionHandler): void
-```
-
-### 4.2 Built-in actions (14 total, zero config)
-
-Based on audit of 180+ `data-action` usages across 42 Playground pages:
-
-| Action | Playground usage | What it does |
-|---|---|---|
-| `dialog-open` | 16× (wizard, card, dialog, cheatsheet) | Opens a `<dialog>` element |
-| `dialog-close` | 15× (rich-text, card, dialog, cheatsheet) | Closes a `<dialog>` element |
-| `card-flip` | 9× (card) | Flips a card front/back |
-| `toggle-sidebar` | 7× (app-header, app-layout, getting-started) | Toggles the app sidebar |
-| `banner-close` | 5× (banner, card) | Closes a banner |
-| `banner-show` | 4× (banner, card) | Shows a banner |
-| `tabs-select` | 4× (tabs) | Selects a tab |
-| `toggle-theme` | 4× (button, getting-started) | Toggles light/dark theme |
-| `overlay-close` | 3× (overlay) | Closes an overlay |
-| `select-open` | 3× (select) | Opens a select dropdown |
-| `overlay-open` | 2× (overlay) | Opens an overlay |
-| `accordion-toggle` | 2× (accordion) | Toggles an accordion item |
-| `accordion-expand-all` | 2× (accordion) | Expands all accordion items |
-| `accordion-collapse-all` | 2× (accordion) | Collapses all accordion items |
-
-### 4.3 App-specific actions (user registers)
+Each component reads `data-action` from its host. On its committed-state event, it calls a dispatch function with the action name and payload.
 
 ```javascript
-// In app.js — only custom actions
-nui.registerAction('save-config', ({ payload }) => {
-    localStorage.setItem('config', JSON.stringify(payload));
-});
-nui.registerAction('export-data', () => {
-    downloadFile('/api/export');
-});
-```
-
-The boilerplate shrinks from 30 lines of click delegation to 5 lines of action registration.
-
-### 4.4 Comparison: before vs after
-
-**Before (boilerplate app.js):**
-```javascript
-document.addEventListener('click', (e) => {
-    const actionEl = e.target.closest('[data-action]');
-    if (!actionEl) return;
-    const spec = actionEl.dataset.action;
-    const [actionPart] = spec.split('@');
-    const [action, param] = actionPart.split(':');
-    switch (action) {
-        case 'toggle-sidebar':
-            document.querySelector('nui-app')?.toggleSidebar(param || 'left');
-            break;
-        case 'toggle-theme':
-            const s = document.documentElement.style;
-            s.colorScheme = s.colorScheme === 'dark' ? 'light' : 'dark';
-            break;
-        case 'save-config':
-            console.log('Save config');
-            break;
-    }
-});
-```
-
-**After:**
-```javascript
-// Built-in actions (toggle-sidebar, toggle-theme, etc.) just work — no code needed.
-
-// App-specific actions:
-nui.registerAction('save-config', ({ payload }) => {
-    localStorage.setItem('config', JSON.stringify(payload));
-});
-```
-
----
-
-## 5. Component Migration
-
-### 5.1 What each component must do
-
-Each component that wants to support `data-action` adds a few lines in its setup:
-
-```javascript
-// Pattern for any component
-registerComponent('nui-input', (element) => {
-    const inner = element.querySelector('input');
-    if (!inner) return;
+// Inside nui-input setup
+inner.addEventListener('change', () => {
+    // Normal behavior
+    element.dispatchEvent(new CustomEvent('nui-change', { bubbles: true, detail: { value: inner.value } }));
     
-    // Normal behavior: fire nui-change CustomEvent
-    inner.addEventListener('change', () => {
-        element.dispatchEvent(new CustomEvent('nui-change', { 
-            bubbles: true, 
-            detail: { value: inner.value } 
-        }));
-        
-        // Action system hook — only if data-action is present
-        const action = element.getAttribute('data-action');
-        if (action) {
-            nui.dispatchAction(action, {
-                target: element,
-                payload: inner.value,
-                event: event
-            });
-        }
-    });
+    // Action system — only if data-action is set
+    const action = element.getAttribute('data-action');
+    if (action) nui.dispatchAction(action, { target: element, payload: inner.value });
 });
 ```
 
-### 5.2 Migration checklist
+That's the pattern. Every component adds ~4 lines.
 
-| Component | Trigger event | data-action support |
-|---|---|---|
-| `nui-button` | `click` | ✅ Already emits `nui-click`, add dispatch |
-| `nui-input` | `change` | 🔲 Add |
-| `nui-textarea` | `change` | 🔲 Add |
-| `nui-checkbox` | `change` | 🔲 Add |
-| `nui-radio` | `change` | 🔲 Add |
-| `nui-select` | `nui-change` | 🔲 Add |
-| `nui-slider` | `nui-change` | 🔲 Add |
-| `nui-tabs` | `nui-tab-change` | 🔲 Add |
-| `nui-accordion` | toggle | 🔲 Add |
-| `nui-sortable` | `nui-sortable-reorder` | 🔲 Add |
-| `nui-dropzone` | `nui-drop` | 🔲 Add |
-| Bare `<form>` | `submit` | 🔲 Add fallback listener |
-| Bare `<button>`/`<a>` | `click` | 🔲 Add fallback listener |
+### 3.2 Built-in actions work without registration
 
-### 5.3 Click fallback (for bare elements)
+The 14 actions from the Playground audit ship pre-registered:
 
 ```javascript
-// Minimal — only handles elements without a NUI component wrapper
-function setupClickFallback() {
-    document.addEventListener('click', (e) => {
-        const el = e.target.closest('[data-action]');
-        if (!el) return;
-        // Skip if a NUI component already handles this
-        const handledBy = el.closest('nui-button, nui-input, nui-select, nui-tabs, nui-sortable, nui-dropzone, nui-accordion, nui-slider, nui-checkbox, nui-radio');
-        if (handledBy) return;
-        
-        const spec = el.dataset.action;
-        const [part, sel] = spec.split('@');
-        const [name, param] = part.split(':');
-        const target = sel ? document.querySelector(sel) : el;
-        
-        nui.dispatchAction(name, { target, payload: param, event: e });
-    });
+// Registered at startup in nui.js
+nui.registerAction('dialog-open',  ({ target }) => target.showModal());
+nui.registerAction('dialog-close', ({ target, payload }) => target.close(payload));
+nui.registerAction('card-flip', ({ target }) => target.toggleAttribute('flipped'));
+nui.registerAction('toggle-sidebar', () => {
+    document.querySelector('nui-app')?.toggleSidebar();
+});
+// ... 10 more
+```
+
+### 3.3 Users register custom actions
+
+```javascript
+// In app.js — replaces the old switch-case block
+nui.registerAction('save-config', ({ payload }) => {
+    localStorage.setItem('config', JSON.stringify(payload));
+});
+```
+
+### 3.4 Cross-tree dispatch (the one thing DOM can't do)
+
+When a button in `<nui-app-header>` needs to open a dialog in `<nui-content>`, CustomEvent bubbling can't reach it. The dispatch function fires on `document` as a fallback for these cases. This is internal — users never see it.
+
+```javascript
+function dispatchAction(name, { target, payload }) {
+    // 1. Try DOM bubbling first (same subtree)
+    const event = new CustomEvent('nui-action', { bubbles: true, detail: { name, target, payload } });
+    target.dispatchEvent(event);
+    
+    // 2. If still unhandled, try document-level (cross-tree)
+    if (!event.defaultPrevented) {
+        document.dispatchEvent(new CustomEvent('nui-action', { detail: { name, target, payload } }));
+    }
 }
 ```
 
 ---
 
-## 6. Migration Strategy
+## 4. The API (small by design)
 
-### Phase 1: Core API (non-breaking, additive)
-- Add `nui.dispatchAction()`, `nui.onAction()`, `nui.offAction()` to the public API
-- Wire `nui-button` to call dispatchAction on click (alongside existing `nui-click`)
-- Convert `builtinActionHandlers` to pre-registered actions
-- Add `toggle-sidebar` and `toggle-theme` as built-ins
-- Add `nui.configure({ debugActions: true })`
+```javascript
+// Core — called by components
+nui.dispatchAction(name, { target, payload, event })
 
-### Phase 2: Component Integration (breaking)
-- Add dispatchAction calls to all 13 components in the checklist
-- Add click fallback for bare elements
-- Remove `setupActionDelegation()` click listener
-- Test all 42 Playground demo pages
+// User registration
+nui.registerAction(name, handler)
+nui.unregisterAction(name)  // clears all handlers for that name
 
-### Phase 3: Consumer Migration
-- Rewrite `nui-boilerplate/js/app.js` to use `nui.registerAction()`
-- Update Playground `main.js` if needed
-- Update all documentation (cheatsheet, guides, component docs)
+// Debug
+nui.configure({ debugActions: true })
+// Logs: [action] search  ← nui-input#search  payload: "hello"
+
+// Handler signature
+handler({ name, target, payload }) → void
+```
+
+No scoping API. No wildcard listeners. No pub-sub bus. The DOM already scopes events; `nui.registerAction` is for the cross-tree case.
 
 ---
 
-## 7. Risk Assessment
+## 5. Component Migration (simple)
 
-| Risk | Severity | Mitigation |
+Each component adds ~4 lines in its existing event listener:
+
+```
+nui-button    → click  → if data-action: dispatch
+nui-input     → change → if data-action: dispatch  
+nui-select    → nui-change → if data-action: dispatch
+nui-slider    → nui-change → if data-action: dispatch
+nui-checkbox  → change → if data-action: dispatch
+nui-tabs      → nui-tab-change → if data-action: dispatch
+nui-accordion → toggle → if data-action: dispatch
+nui-sortable  → nui-sortable-reorder → if data-action: dispatch
+nui-dropzone  → nui-drop → if data-action: dispatch
+bare <form>   → submit → if data-action: dispatch
+bare <button> → click  → if data-action: dispatch  (fallback)
+```
+
+---
+
+## 6. What Gets Deleted
+
+```
+✗ setupActionDelegation() — the global click listener
+✗ builtinActionHandlers object — replaced by registerAction calls
+✗ Boilerplate app.js switch-case — replaced by registerAction
+```
+
+---
+
+## 7. What Stays the Same
+
+```
+✓ data-action="name:param@selector" syntax
+✓ nui-action CustomEvent (for direct DOM listeners)
+✓ All 14 built-in action names
+✓ Playground demo pages (most just work via the button/form fallback)
+```
+
+---
+
+## 8. Migration Path
+
+| Phase | What | Breaking? |
 |---|---|---|
-| Existing user `data-action` on bare buttons breaks | High | Click fallback preserves backward compat for bare elements |
-| Component event timing | Low | Each component fires its natural event; no new timing introduced |
-| Playground demo breakage | Medium | 42 pages to verify; fallback handles most cases |
-| Performance | Low | Fewer global listeners, more scoped per-component listeners |
-| Over-engineering | Medium | Decision gate below — we evaluate before committing |
+| 1 | Add `dispatchAction`, `registerAction` to core. Wire `nui-button`. Convert built-ins. Add fallback for bare elements. | No — additive only |
+| 2 | Wire all 11 components. Remove old click listener. Test 42 Playground pages. | Yes |
+| 3 | Update boilerplate `app.js`. Update docs. | Yes (for new users) |
 
 ---
 
-## 8. Decision Gate
+## 9. What We're NOT Building
 
-Before committing to this refactor, we need clear answers:
-
-- [ ] Does the proposal solve a real problem for actual users (not just hypothetical)?
-- [ ] Is the new API simpler than the old one? (Count lines of code for common tasks)
-- [ ] Does the opt-in gate prevent performance regressions?
-- [ ] Is the transitional/state-changing distinction clear enough to document in one sentence?
-- [ ] Can we build a prototype of Phase 1 in < 4 hours as a proof of concept?
+- **Not a global event bus.** Components fire events; the DOM routes them. Cross-tree built-ins use document-level dispatch as a narrow escape hatch.
+- **Not a state management system.** No stores, no reducers, no middleware. Actions are fire-and-forget messages.
+- **Not a scoping API.** If you want to listen to `nui-list` selection changes, add a listener on the parent `<div>` — the event bubbles there naturally.
+- **Not a debugging framework.** `debugActions: true` logs to console. That's it.
 
 ---
 
-## 9. Open Questions
+## 10. Decision Checklist
 
-1. **CustomEvent payload shape.** Should `nui-action` change from `{ name, target, param, originalEvent }` to `{ name, target, payload, event }`? Changing it is a breaking change for anyone listening to `nui-action` directly.
-
-2. **`nui-button` click target.** If `data-action` is on `<nui-button>` but the actual click is on the inner `<button>`, which element is `target`? Proposal: target is the custom element host (`<nui-button>`), not the inner native element.
-
-3. **Form submit handling.** Push to a future `nui-form` component, or handle via bare-element fallback now? Leaning toward fallback now, component later.
-
-4. **Action namespacing.** Should built-in actions have a namespace prefix (`nui:dialog-open`) to avoid collisions with user actions? Leaning toward: no prefix for now, document that built-in names are reserved.
-
-5. **Unregistering.** `nui.offAction()` clears a specific handler. Should there also be `nui.clearActions(name)` to remove all handlers for a given action name?
+- [x] Fixes the click-only bug
+- [x] Components control their own trigger events
+- [x] Built-in actions work without registration  
+- [x] User registration is simpler than the current switch-case
+- [x] No new concepts beyond what's already in the DOM
+- [x] Playground pages still work
+- [ ] Prototype exists and works
