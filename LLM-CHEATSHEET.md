@@ -186,7 +186,7 @@ If you MUST apply CSS (spacing on your own wrappers, very rare theming), use ONL
 ### Layout
 | Variable | Use |
 |----------|-----|
-| `--sidebar-width` | Sidebar width (`21rem`) |
+| `--sidebar-width` | Sidebar width (`21rem`) — shared by BOTH left and right sidebars; per-side widths are not supported (use the `sidebar-width` attribute on `<nui-app>` to override) |
 | `--app-header-height` | Top bar height (`4rem`) |
 | `--nui-form-row-height` | Form control height (`2.5rem`) |
 | `--icon-size` | Icon dimensions (`1.2rem`) |
@@ -386,8 +386,9 @@ If you MUST apply CSS (spacing on your own wrappers, very rare theming), use ONL
 </nui-app>
 ```
 
-| `<nui-app>` Attributes | `content-min-width="55rem"` (breakpoint trigger), `content-width="48rem"` (max content column width), `sidebar-width="18rem"` (overrides CSS var), `sidebar-breakpoint="none"|"768px"` (override auto breakpoint) |
+| `<nui-app>` Attributes | `content-min-width="55rem"` (breakpoint trigger), `content-width="48rem"` (max content column width), `sidebar-width="18rem"` (overrides CSS var — **shared by BOTH left and right sidebars**; per-side widths are not supported), `sidebar-breakpoint="none"|"768px"` (override auto breakpoint — applies to BOTH sidebars; for per-side breakpoints, see Legacy Attributes below) |
 | `<nui-sidebar>` Attributes | `behavior="primary|secondary|auto|manual"` (breakpoint priority), `position="left|right"` |
+| Legacy `<nui-app>` Attributes | `nui-vars-sidebar_width`, `nui-vars-sidebar_force-breakpoint` (left only), `nui-vars-sidebar-right_force-breakpoint` (right only) — still honored. Use the per-side `*_force-breakpoint` variants when left and right need different breakpoints. The new `sidebar-width` attribute takes precedence and applies to both sidebars. |
 | `data-action` | `toggle-sidebar` (left), `toggle-sidebar:left`, `toggle-sidebar:right` |
 | Events | `nui-sidebar-change` → `detail: { position, state }` where state is `open|closed|forced` |
 | Methods | `app.toggleSidebar(pos)`, `app.invalidateBreakpointCache()` |
