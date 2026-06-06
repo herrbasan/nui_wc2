@@ -3168,11 +3168,11 @@ registerComponent('nui-select', (element) => {
 	let searchInput = null;
 	if (isSearchable) {
 		const searchWrap = dom.create('div', { class: 'nui-select-search', target: popup });
-		const nuiInput = dom.create('nui-input', { target: searchWrap });
-		searchInput = dom.create('input', {
-			attrs: { type: 'text', placeholder: 'Search...', autocomplete: 'off' },
-			target: nuiInput
-		});
+		searchInput = document.createElement('input');
+		searchInput.type = 'text';
+		searchInput.placeholder = 'Search...';
+		searchInput.autocomplete = 'off';
+		const nuiInput = dom.create('nui-input', { content: searchInput, target: searchWrap });
 		searchInput.addEventListener('input', () => filter(searchInput.value));
 	}
 
