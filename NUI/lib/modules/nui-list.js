@@ -942,13 +942,19 @@ function createList(element, options) {
 	// ################################# UTILITIES
 	
 	function checkHeight() {
+		// Skip measurement while hidden — the IntersectionObserver pauses the
+		// render loop (list.stop = true) when the list is not visible. During
+		// this window, the firstChild's offsetHeight is unreliable (it reads
+		// as 0 when any ancestor has display:none), which would clobber
+		// list.itemHeight to 0 and break the layout on re-show.
+		if (list.stop) return;
 		const container = list.mode === 'fixed' ? list.fixedList : list.container;
 		if (container.firstChild) {
 			const computed = window.getComputedStyle(container.firstChild);
-			const height = container.firstChild.offsetHeight 
-				+ parseInt(computed.marginTop) 
+			const height = container.firstChild.offsetHeight
+				+ parseInt(computed.marginTop)
 				+ parseInt(computed.marginBottom);
-			
+
 			if (height !== list.itemHeight) {
 				log(`Item Height Changed: ${height}`);
 				list.eventCallback({ target: list, type: 'height_change', value: height });
