@@ -142,21 +142,20 @@ function createList(element, options) {
 	updateData();
 	reset();
 	
-	// Defer initial render to ensure CSS is applied and viewport has dimensions
-	requestAnimationFrame(() => {
+	// Defer initial render to ensure CSS is applied and viewport has dimensions.
+	// If the host page is initially display:none, keep retrying until the list
+	// has measurable geometry; rendering into a zero-height viewport produces
+	// items with zero geometry and breaks itemHeight detection.
+	function tryInitialRender() {
+		if (list.viewport.offsetHeight === 0) {
+			requestAnimationFrame(tryInitialRender);
+			return;
+		}
 		update(true);
 		loop();
+	}
+	requestAnimationFrame(tryInitialRender);
 
-		// Fallback: if viewport has no height, retry after a short delay
-		if (list.viewport.offsetHeight === 0) {
-			setTimeout(() => {
-				update(true);
-			}, 100);
-		}
-	});
-	
-	return list;
-	
 	// ################################# STRUCTURE BUILDING
 	
 	function buildStructure() {
@@ -942,11 +941,12 @@ function createList(element, options) {
 	// ################################# UTILITIES
 	
 	function checkHeight() {
-		// Skip measurement while hidden — the IntersectionObserver pauses the
-		// render loop (list.stop = true) when the list is not visible. During
-		// this window, the firstChild's offsetHeight is unreliable (it reads
-		// as 0 when any ancestor has display:none), which would clobber
-		// list.itemHeight to 0 and break the layout on re-show.
+		// Skip measurement while hidden or when the first rendered item has
+		// no measurable height. The IntersectionObserver sets list.stop=true
+		// when the list is not visible, but timing races can still let this
+		// interval fire before the observer callback runs (or while an
+		// ancestor is display:none). Measuring 0 here would clobber
+		// list.itemHeight and collapse the container, leaving the list empty.
 		if (list.stop) return;
 		const container = list.mode === 'fixed' ? list.fixedList : list.container;
 		if (container.firstChild) {
@@ -954,6 +954,11 @@ function createList(element, options) {
 			const height = container.firstChild.offsetHeight
 				+ parseInt(computed.marginTop)
 				+ parseInt(computed.marginBottom);
+
+			// Never accept a zero-height measurement. If the item is genuinely
+			// zero-height, rendering is already broken elsewhere; preserving
+			// the default/previous itemHeight keeps virtual scrolling alive.
+			if (height === 0) return;
 
 			if (height !== list.itemHeight) {
 				log(`Item Height Changed: ${height}`);
