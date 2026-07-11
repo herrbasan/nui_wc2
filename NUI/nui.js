@@ -5993,6 +5993,7 @@ class NuiMarkdown extends HTMLElement {
 
 	async connectedCallback() {
 		if (this._isStreaming) return;
+		if (this._processed) return; // Guard: skip re-processing on re-attach (virtual scroll)
 
 		let rawText = '';
 		const src = this.getAttribute('src');
@@ -6021,6 +6022,7 @@ class NuiMarkdown extends HTMLElement {
 		if (!rawText) return;
 
 		this.innerHTML = markdownToHtml(rawText);
+		this._processed = true; // Mark as processed so re-attach is free
 	}
 
 	_isInsideCodeBlock(text) {
