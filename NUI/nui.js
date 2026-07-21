@@ -1206,7 +1206,7 @@ function setupCodeBlock(element, pre, codeBlock, rawText) {
 		}
 
 		if (lang) {
-			codeBlock.innerHTML = module.highlight(rawText, lang);
+			codeBlock.innerHTML = module.highlight(rawText, lang, true);
 		}
 	}).catch((err) => {
 		if (config.debug !== false) {
@@ -5918,7 +5918,7 @@ function markdownToHtml(md) {
 		codeBlocks.push({ token, lang, code });
 		return token;
 	});
-	html = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+	html = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 	// Simple tables
 	html = html.replace(/^[ \t]*\|(.+)\|\n[ \t]*\|([-:| ]+)\|\n((?:[ \t]*\|.+\|\n?)*)/gm, (match, header, sep, body) => {
@@ -5966,8 +5966,21 @@ function markdownToHtml(md) {
 	html = htmlBlocks.join('\n');
 
 	// Inline elements
-	html = html.replace(/!\[([^\]]+)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">');
-	html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+	// Scheme-validate URLs before interpolating into attributes. Blocks javascript:, data:, vbscript: etc.
+	// Relative paths, #anchors, http(s), and mailto pass through; dangerous schemes render as plain text.
+	const safeUrl = (url) => {
+		const trimmed = url.trim();
+		const scheme = trimmed.match(/^([a-z][a-z0-9+.-]*):/i);
+		return (scheme && !/^(https?|mailto)$/i.test(scheme[1])) ? null : trimmed;
+	};
+	html = html.replace(/!\[([^\]]+)\]\(([^)]+)\)/g, (m, alt, src) => {
+		const url = safeUrl(src);
+		return url ? `<img src="${url}" alt="${alt}">` : alt;
+	});
+	html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (m, text, href) => {
+		const url = safeUrl(href);
+		return url ? `<a href="${url}">${text}</a>` : text;
+	});
 	html = html.replace(/(\*\*|__)(.*?)\1/g, '<strong>$2</strong>');
 	html = html.replace(/(\*|_)(.*?)\1/g, '<em>$2</em>');
 	html = html.replace(/~~(.*?)~~/g, '<s>$1</s>');
