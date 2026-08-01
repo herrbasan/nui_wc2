@@ -16,14 +16,14 @@ A basic selection dropdown requires wrapping a native `<select>` element inside 
 ```html
 <nui-select>
 	<select name="fruit">
-		<option value="">Select a fruit...</option>
+		<option value="" disabled selected>Select a fruit...</option>
 		<option value="apple">Apple</option>
 		<option value="banana">Banana</option>
 	</select>
 </nui-select>
 ```
 
-> **Note on Placeholders:** The first `<option>` with a blank `value=""` is automatically treated as the placeholder.
+> **Placeholder is display text, not data.** The prompt shown when nothing is selected comes from (in precedence order): the `placeholder` attribute on `<nui-select>`, then the explicit markup idiom `<option value="" disabled selected>`, then a generic "Select..." fallback. The component **never injects or hides options** — every `<option>` in the markup is a real, selectable row, including one with `value=""`. A blank option is only treated as the placeholder when it is **also `disabled`** (the idiom above). A non-disabled `<option value="">Real choice</option>` is a legitimate value: it renders in the list, is selectable, and displays as the current value when chosen.
 
 ### Searchable Select
 
@@ -32,7 +32,7 @@ By adding the `searchable` attribute, `nui-select` injects an inner search field
 ```html
 <nui-select searchable>
 	<select name="country">
-		<option value="">Select a country...</option>
+		<option value="" disabled selected>Select a country...</option>
 		<option value="no">Norway</option>
 		<option value="de">Germany</option>
 		<option value="fr">France</option>
@@ -77,7 +77,7 @@ To enable multiple selections, simply apply the native `multiple` attribute dire
 |-----------|------|-------------|
 | `searchable` | boolean | Enables real-time text-filtering of select options. |
 | `mobile-sheet` | boolean | Forces mobile bottom-sheet UI presentation instead of dropdowns. *(Automatically engaged on devices <= 640px wide).* |
-| `placeholder` | string | Used as a fallback if no `value=""` `<option>` is supplied in the raw HTML. |
+| `placeholder` | string | Prompt text shown when nothing is selected. Takes precedence over the disabled-blank-option idiom. |
 
 ## Programmatic Usage
 

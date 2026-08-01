@@ -32,7 +32,7 @@
 
 <section>
 	<h2>Declarative Usage (Default)</h2>
-	<p>A simple dropdown for selecting a single option. The first empty-value option serves as placeholder text. You can toggle its state declaratively using <code>data-action="select-open"</code> or <code>select-close</code>.</p>
+	<p>A simple dropdown for selecting a single option. The prompt shown when nothing is selected comes from the <code>placeholder</code> attribute or a disabled blank option. You can toggle its state declaratively using <code>data-action="select-open"</code> or <code>select-close</code>.</p>
 
 	<h3>Try It</h3>
 	<div class="demo-area">
@@ -43,7 +43,7 @@
 			<label>Choose a Fruit</label>
 			<nui-select id="basic-select">
 				<select name="fruit">
-					<option value="">Select a fruit...</option>
+					<option value="" disabled selected>Select a fruit...</option>
 					<option value="apple">Apple</option>
 					<option value="banana">Banana</option>
 					<option value="cherry">Cherry</option>
@@ -62,7 +62,7 @@
 	<label>Choose a Fruit</label>
 	<nui-select id="basic-select">
 		<select name="fruit">
-			<option value="">Select a fruit...</option>
+			<option value="" disabled selected>Select a fruit...</option>
 			<option value="apple">Apple</option>
 			<option value="banana">Banana</option>
 			<option value="cherry">Cherry</option>
@@ -83,7 +83,7 @@
 			<label>Country</label>
 			<nui-select searchable>
 				<select name="country">
-					<option value="">Select a country...</option>
+					<option value="" disabled selected>Select a country...</option>
 					<option value="no">Norway</option>
 					<option value="se">Sweden</option>
 					<option value="dk">Denmark</option>
@@ -103,10 +103,41 @@
 		<script type="example" data-lang="html">
 <nui-select searchable>
 	<select name="country">
-		<option value="">Select a country...</option>
+		<option value="" disabled selected>Select a country...</option>
 		<option value="no">Norway</option>
 		<option value="se">Sweden</option>
 		<option value="dk">Denmark</option>
+	</select>
+</nui-select>
+		</script>
+	</nui-code>
+</section>
+
+<section>
+	<h2>Empty String as a Real Value</h2>
+	<p>An empty string is a legitimate option value. Placeholder text comes from the <code>placeholder</code> attribute (or a <em>disabled</em> blank option) — never from overloading a real <code>value=""</code> option. Here, "Local (default)" has an empty value: it renders in the list, is selectable, and remains reachable after picking another option.</p>
+
+	<h3>Try It</h3>
+	<div class="demo-area">
+		<nui-input-group>
+			<label>TTS Engine</label>
+			<nui-select placeholder="Select engine...">
+				<select name="engine">
+					<option value="">Local (default)</option>
+					<option value="minimax">Minimax</option>
+					<option value="elevenlabs">ElevenLabs</option>
+				</select>
+			</nui-select>
+		</nui-input-group>
+	</div>
+
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-select placeholder="Select engine...">
+	<select name="engine">
+		<option value="">Local (default)</option>
+		<option value="minimax">Minimax</option>
+		<option value="elevenlabs">ElevenLabs</option>
 	</select>
 </nui-select>
 		</script>
@@ -177,7 +208,7 @@
 			<label>Car Brand & Model</label>
 			<nui-select searchable>
 				<select name="vehicle">
-					<option value="">Select a car...</option>
+					<option value="" disabled selected>Select a car...</option>
 					<optgroup label="German">
 						<option value="audi-a4">Audi A4</option>
 						<option value="bmw-3">BMW 3 Series</option>
@@ -196,7 +227,7 @@
 		<script type="example" data-lang="html">
 <nui-select searchable>
 	<select name="vehicle">
-		<option value="">Select a car...</option>
+		<option value="" disabled selected>Select a car...</option>
 		<optgroup label="German">
 			<option value="audi-a4">Audi A4</option>
 			<option value="bmw-3">BMW 3 Series</option>
@@ -220,7 +251,7 @@
 			<label>API Demo Select</label>
 			<nui-select id="api-demo-select" searchable>
 				<select name="api-demo">
-					<option value="">Select an item...</option>
+					<option value="" disabled selected>Select an item...</option>
 					<option value="opt1">Option 1</option>
 					<option value="opt2">Option 2</option>
 					<option value="opt3">Option 3</option>
@@ -306,7 +337,7 @@ select.syncOptions();  // Use after modifying native <select> options
 			<label>Select with Async Data</label>
 			<nui-select id="async-demo-select" searchable>
 				<select name="async-demo">
-					<option value="">Select an item...</option>
+					<option value="" disabled selected>Select an item...</option>
 				</select>
 			</nui-select>
 		</nui-input-group>
@@ -411,7 +442,7 @@ console.log('Is disabled:', select.isDisabled());
 			<label>Event Demo</label>
 			<nui-select id="event-demo" searchable>
 				<select name="event-test">
-					<option value="">Choose something...</option>
+					<option value="" disabled selected>Choose something...</option>
 					<option value="a">Choice A</option>
 					<option value="b">Choice B</option>
 					<option value="c">Choice C</option>
@@ -530,7 +561,7 @@ select.addEventListener('nui-items-replace', (e) => {
 				<label>Required Selection</label>
 				<nui-select>
 					<select name="required-select" required>
-						<option value="">Please select...</option>
+						<option value="" disabled selected>Please select...</option>
 						<option value="yes">Yes</option>
 						<option value="no">No</option>
 					</select>
@@ -547,7 +578,7 @@ select.addEventListener('nui-items-replace', (e) => {
 <form id="demo-form">
 	<nui-select>
 		<select name="required" required>
-			<option value="">Please select...</option>
+			<option value="" disabled selected>Please select...</option>
 			<option value="yes">Yes</option>
 		</select>
 	</nui-select>
@@ -578,7 +609,7 @@ document.getElementById('demo-form').addEventListener('submit', (e) => {
 			<label>Mobile Optimized (Forced)</label>
 			<nui-select mobile-sheet searchable>
 				<select>
-					<option value="">Select an option...</option>
+					<option value="" disabled selected>Select an option...</option>
 					<option value="1">Option 1</option>
 					<option value="2">Option 2</option>
 					<option value="3">Option 3</option>
@@ -594,7 +625,7 @@ document.getElementById('demo-form').addEventListener('submit', (e) => {
 <!-- Force bottom sheet on all viewports -->
 <nui-select mobile-sheet searchable>
 	<select>
-		<option value="">Select...</option>
+		<option value="" disabled selected>Select...</option>
 		<option value="1">Option 1</option>
 	</select>
 </nui-select>

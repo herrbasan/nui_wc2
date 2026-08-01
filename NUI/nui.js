@@ -3088,17 +3088,15 @@ registerComponent('nui-select', (element) => {
 	const isMulti = select.multiple;
 	const isSearchable = element.hasAttribute('searchable');
 	const isMobileEnabled = element.hasAttribute('mobile-sheet');
-	
-	// Ensure select has a placeholder option if not multi-select
-	if (!isMulti && !select.querySelector('option[value=""]')) {
-		const placeholderOpt = document.createElement('option');
-		placeholderOpt.value = '';
-		placeholderOpt.textContent = element.getAttribute('placeholder') || 'Select...';
-		select.prepend(placeholderOpt);
-	}
-	
+
+	// Placeholder is display text, not data. Precedence:
+	// 1. `placeholder` attribute on <nui-select>
+	// 2. Explicit markup idiom: <option value="" disabled selected>Prompt...</option>
+	// 3. Generic fallback
+	// A real option with value="" (NOT disabled) is a legitimate, selectable value.
+	const explicitPlaceholderOpt = select.querySelector('option[value=""][disabled]');
 	const placeholder = element.getAttribute('placeholder') ||
-		select.querySelector('option[value=""]')?.textContent || 'Select...';
+		explicitPlaceholderOpt?.textContent || 'Select...';
 
 	// Extract label from parent nui-input-group or element attributes
 	const label = element.getAttribute('label') || 
@@ -3187,7 +3185,9 @@ registerComponent('nui-select', (element) => {
 		list.els('.nui-select-option, .nui-select-group').forEach(el => el.remove());
 
 		const addOption = (opt, parent) => {
-			if (opt.value === '' && !isMulti) return; // Skip placeholder
+			// Every option is rendered — including value="" options, which are
+			// legitimate selectable values. A disabled blank option (the explicit
+			// placeholder idiom) renders as a disabled row, matching native select.
 			const row = dom.create('div', {
 				class: 'nui-select-option' + (opt.disabled ? ' is-disabled' : ''),
 				attrs: { 'data-value': opt.value },
@@ -3213,12 +3213,16 @@ registerComponent('nui-select', (element) => {
 
 	// Sync visual state with native select
 	const syncState = (dispatchChange = true) => {
-		const selected = Array.from(select.selectedOptions).filter(o => o.value !== '');
+		// All selected options count — including value="" (a legitimate value).
+		// Exception: a disabled blank option is the explicit placeholder idiom;
+		// it represents "no selection", not a value.
+		const selected = Array.from(select.selectedOptions)
+			.filter(o => !(o.value === '' && o.disabled));
 
 		// Update option rows
 		Array.from(select.options).forEach(opt => {
 			const row = rowCache.get(opt);
-			if (row) row.classList.toggle('is-selected', opt.selected);
+			if (row) row.classList.toggle('is-selected', opt.selected && !(opt.value === '' && opt.disabled));
 		});
 
 		if (isMulti) {
@@ -3498,7 +3502,8 @@ registerComponent('nui-select', (element) => {
 		if (isMulti) {
 			Array.from(select.options).forEach(o => o.selected = false);
 		} else {
-			select.value = '';
+			// "No selection" is distinct from "selected the empty-value option".
+			select.selectedIndex = -1;
 		}
 		select.dispatchEvent(new Event('change', { bubbles: true }));
 		syncState();
@@ -3551,10 +3556,10 @@ registerComponent('nui-select', (element) => {
 	};
 
 	const setItems = (items) => {
-		// Clear existing options (except placeholder for single select)
-		const placeholderOpt = !isMulti ? select.querySelector('option[value=""]') : null;
+		// Replace all options verbatim — no placeholder special-casing.
+		// An explicit <option value="" disabled> in markup is preserved via markup,
+		// not via data; setItems is a data API and replaces everything.
 		select.innerHTML = '';
-		if (placeholderOpt) select.appendChild(placeholderOpt);
 
 		// Add new items
 		items.forEach(item => {
@@ -3590,8 +3595,8 @@ registerComponent('nui-select', (element) => {
 	};
 
 	const getItems = () => {
+		// All options are real — including value="" options.
 		return Array.from(select.options)
-			.filter(o => o.value !== '')
 			.map(o => ({ value: o.value, label: o.textContent, disabled: o.disabled }));
 	};
 
