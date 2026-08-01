@@ -5913,6 +5913,98 @@ export const nui = {
  * Converts Markdown to HTML using a lightweight parser.
  * Supports headers, lists, links, code blocks (with nui-code), tables, bold/italic, etc.
  */
+// List parser for markdownToHtml. Line-based; handles flat, loose
+// (blank-line-separated) and nested lists. Lists never span an existing HTML
+// block (headers, tables, etc.) or a code-block token — those always terminate.
+function parseLists(text) {
+	const lines = text.split('\n');
+	const out = [];
+	let i = 0;
+
+	const isListItem = (line) => {
+		const m = line.match(/^([ \t]*)(-|\*|\d+\.)\s+(.*)$/);
+		if (!m) return null;
+		return { indent: m[1].replace(/\t/g, '    ').length, ordered: /^\d/.test(m[2]), content: m[3] };
+	};
+
+	while (i < lines.length) {
+		const item = isListItem(lines[i]);
+		if (!item) { out.push(lines[i]); i++; continue; }
+
+		// Parse one list starting here
+		const rootTag = item.ordered ? 'ol' : 'ul';
+		// Stack of open lists; each level tracks its own open <li>
+		const stack = [];
+		let html = '';
+
+		const openList = (tag, indent) => {
+			html += `<${tag}>`;
+			stack.push({ tag, indent, liOpen: false });
+		};
+		const closeLi = () => {
+			const top = stack[stack.length - 1];
+			if (top && top.liOpen) { html += '</li>'; top.liOpen = false; }
+		};
+		const closeList = () => {
+			closeLi();              // close this level's open <li>
+			const top = stack.pop();
+			html += `</${top.tag}>`;
+		};
+
+		while (i < lines.length) {
+			const line = lines[i];
+			const trimmed = line.trim();
+
+			// Blank line: loose-list separator — may continue the list
+			if (trimmed === '') {
+				// Look ahead: does the list continue after the blank(s)?
+				let j = i;
+				while (j < lines.length && lines[j].trim() === '') j++;
+				const next = j < lines.length ? isListItem(lines[j]) : null;
+				if (next) { i = j; continue; }  // skip blanks, keep parsing
+				i = j;                          // skip blanks, list ends
+				break;
+			}
+
+			const it = isListItem(line);
+			if (!it) {
+				// Non-item line: continuation of current item if deeper-indented,
+				// otherwise the list ends here
+				const indent = line.match(/^[ \t]*/)[0].replace(/\t/g, '    ').length;
+				if (stack.length && stack[stack.length - 1].liOpen && indent > stack[stack.length - 1].indent) {
+					html += ' ' + trimmed;
+					i++;
+					continue;
+				}
+				break;
+			}
+
+			if (stack.length === 0) {
+				openList(rootTag, it.indent);
+			} else if (it.indent > stack[stack.length - 1].indent) {
+				// Nested list — opens inside the current <li> (do NOT close the li)
+				openList(it.ordered ? 'ol' : 'ul', it.indent);
+			} else {
+				// Same or lower indent: close deeper lists, then this level's <li>
+				while (stack.length > 1 && it.indent < stack[stack.length - 1].indent) closeList();
+				// Indent dropped below the root list — list is over
+				if (it.indent < stack[0].indent) break;
+				closeLi();
+			}
+
+			html += `<li>${it.content}`;
+			stack[stack.length - 1].liOpen = true;
+			i++;
+		}
+
+		while (stack.length) closeList();
+		// Hard block boundary after the list so following text is not glued on
+		out.push(html + '\n');
+	}
+
+	return out.join('\n');
+}
+
 function markdownToHtml(md) {
 	if (typeof md !== 'string' || !md.trim()) return '';
 	
@@ -5941,17 +6033,10 @@ function markdownToHtml(md) {
 	// Blockquotes
 	html = html.replace(/^[ \t]*(&gt;\s+.+(:?\n[ \t]*&gt;\s+.+)*)/gm, (match) => `<blockquote>${match.replace(/^[ \t]*&gt;\s+/gm, '')}</blockquote>`);
 
-	// Unordered lists
-	html = html.replace(/^((?:[ \t]*(?:-|\*)\s.+\n?)+)/gm, (match) => {
-		const items = match.trim().split('\n').map(item => `<li>${item.replace(/^[ \t]*(?:-|\*)\s+/, '')}</li>`).join('');
-		return `<ul>${items}</ul>`;
-	});
-	
-	// Ordered lists
-	html = html.replace(/^((?:[ \t]*\d+\.\s.+\n?)+)/gm, (match) => {
-		const items = match.trim().split('\n').map(item => `<li>${item.replace(/^[ \t]*\d+\.\s+/, '')}</li>`).join('');
-		return `<ol>${items}</ol>`;
-	});
+	// Lists — line-based parser handling flat, loose (blank-line-separated) and
+	// nested lists. Runs before block separation so blank lines inside a list do
+	// not fragment it into multiple one-item lists (issue #13).
+	html = parseLists(html);
 
 	// Horizontal rules
 	html = html.replace(/^[ \t]*(={3,})[ \t]*$/gm, '<hr class="equals">');
@@ -6048,6 +6133,15 @@ class NuiMarkdown extends HTMLElement {
 		return matches && matches.length % 2 !== 0;
 	}
 
+	// A \n\n boundary is unsafe to drain when the block before it ends on a list
+	// item — the list may continue with the next chunk (blank-separated loose
+	// items). Hold it until a non-list line arrives or the stream ends (#13).
+	_endsOnListItem(blockText) {
+		const lines = blockText.split('\n');
+		const lastLine = lines[lines.length - 1].trim();
+		return /^(?:-|\*|\d+\.)\s/.test(lastLine);
+	}
+
 	beginStream() {
 		this._isStreaming = true;
 		this._streamText = '';
@@ -6081,30 +6175,53 @@ class NuiMarkdown extends HTMLElement {
 	}
 
 	_processBuffer(forceDrain) {
+		// Final drain: parse the entire remaining buffer as one block. Splitting
+		// at \n\n here would fragment blank-separated lists into one-item lists.
+		if (forceDrain) {
+			if (this._activeBuffer) {
+				const drainDiv = document.createElement('div');
+				drainDiv.innerHTML = markdownToHtml(this._activeBuffer);
+				while (drainDiv.firstChild) {
+					this._stableContainer.appendChild(drainDiv.firstChild);
+				}
+				this._activeBuffer = '';
+			}
+			this._tempContainer.innerHTML = '';
+			return;
+		}
+
 		while (true) {
-			if (!forceDrain && this._isInsideCodeBlock(this._streamText)) {
+			if (this._isInsideCodeBlock(this._streamText)) {
 				break;
 			}
-			
+
 			let boundary = -1;
 			let searchIndex = 0;
-			
+
 			while (true) {
 				const nextIndex = this._activeBuffer.indexOf('\n\n', searchIndex);
 				if (nextIndex === -1) break;
-				
+
 				const blockSoFar = this._activeBuffer.substring(0, nextIndex);
-				if (!this._isInsideCodeBlock(blockSoFar)) {
-					boundary = nextIndex;
-					break;
+				if (this._isInsideCodeBlock(blockSoFar)) {
+					searchIndex = nextIndex + 1;
+					continue;
 				}
-				searchIndex = nextIndex + 1;
+				// Hold blocks ending on a list item until the list provably ends
+				// (a non-list line arrives) or the stream drains — prevents
+				// blank-separated items from fragmenting into one-item lists.
+				if (this._endsOnListItem(blockSoFar)) {
+					searchIndex = nextIndex + 1;
+					continue;
+				}
+				boundary = nextIndex;
+				break;
 			}
 
 			if (boundary !== -1) {
 				const block = this._activeBuffer.substring(0, boundary + 2);
 				this._activeBuffer = this._activeBuffer.substring(boundary + 2);
-				
+
 				const tempDiv = document.createElement('div');
 				tempDiv.innerHTML = markdownToHtml(block);
 				while (tempDiv.firstChild) {
@@ -6115,15 +6232,6 @@ class NuiMarkdown extends HTMLElement {
 			}
 		}
 
-		if (forceDrain && this._activeBuffer) {
-			const drainDiv = document.createElement('div');
-			drainDiv.innerHTML = markdownToHtml(this._activeBuffer);
-			while (drainDiv.firstChild) {
-				this._stableContainer.appendChild(drainDiv.firstChild);
-			}
-			this._activeBuffer = '';
-		}
-		
 		this._tempContainer.innerHTML = markdownToHtml(this._activeBuffer);
 	}
 }

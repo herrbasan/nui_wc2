@@ -35,13 +35,15 @@ Alternatively, you can fetch Markdown from an external `.md` file using the `src
 The built-in parser supports:
 - Headers (H1-H6)
 - Bold, italic, strikethrough
-- Lists (ordered and unordered)
+- Lists (ordered and unordered, tight or loose, nested by indentation)
 - Links
 - Code blocks (fenced and inline)
 - Tables
 - Blockquotes
 - Horizontal rules
 - Images
+
+**List notes:** Blank lines between items (loose lists) keep items in a single list. Indent a marker under an item to nest a sub-list. This holds for the streaming API too — chunks that split a list across `\n\n` boundaries are held in the live region until the list ends, so numbering never restarts mid-list.
 
 ## Programmatic Usage
 
