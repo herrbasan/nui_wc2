@@ -6017,6 +6017,16 @@ function markdownToHtml(md) {
 	});
 	html = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
+	// Inline code spans -> tokens so the emphasis/bold/strike regexes below cannot
+	// mangle code content (e.g. `vita_ai_change_manager_v4.md` must stay literal,
+	// not become <em>). Restored as <code> last, after fenced code blocks.
+	const inlineCode = [];
+	html = html.replace(/`([^`]+)`/g, (match, code) => {
+		const token = `\uE100${inlineCode.length}\uE101`;
+		inlineCode.push({ token, code });
+		return token;
+	});
+
 	// Simple tables
 	html = html.replace(/^[ \t]*\|(.+)\|\n[ \t]*\|([-:| ]+)\|\n((?:[ \t]*\|.+\|\n?)*)/gm, (match, header, sep, body) => {
 		const headCells = header.trim().replace(/^\||\|$/g, '').split('|').map(c => `<th>${c.trim()}</th>`).join('');
@@ -6074,11 +6084,11 @@ function markdownToHtml(md) {
 	html = html.replace(/(\*\*|__)(.*?)\1/g, '<strong>$2</strong>');
 	html = html.replace(/(\*|_)(.*?)\1/g, '<em>$2</em>');
 	html = html.replace(/~~(.*?)~~/g, '<s>$1</s>');
-	html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
 	html = codeBlocks.reduce((result, { token, lang, code }) => {
 		const safeCode = code.replace(/<\/script/gi, '<\\/script');
 		return result.replace(token, `<nui-code><script type="example"${lang ? ` data-lang="${lang}"` : ''}>${safeCode}</script></nui-code>`);
 	}, html);
+	html = inlineCode.reduce((result, { token, code }) => result.replace(token, `<code>${code}</code>`), html);
 
 	return html;
 }
@@ -6144,6 +6154,7 @@ class NuiMarkdown extends HTMLElement {
 
 	beginStream() {
 		this._isStreaming = true;
+		this._processed = false; // A new stream invalidates any prior processed state
 		this._streamText = '';
 		this._activeBuffer = '';
 		
@@ -6171,6 +6182,7 @@ class NuiMarkdown extends HTMLElement {
 		if (this._isStreaming) {
 			this._processBuffer(true);
 			this._isStreaming = false;
+			this._processed = true; // Re-attach is free: connectedCallback must not re-parse the rendered DOM
 		}
 	}
 
