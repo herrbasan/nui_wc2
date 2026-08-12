@@ -6005,8 +6005,216 @@ function parseLists(text) {
 	return out.join('\n');
 }
 
-function markdownToHtml(md) {
+// ---------------------------------------------------------------------------
+// YAML frontmatter support
+// ---------------------------------------------------------------------------
+// Minimal YAML-subset parser for document frontmatter. Handles the shapes that
+// appear in real frontmatter: nested maps, sequences of scalars, sequences of
+// maps, quoted scalars, numbers, booleans, null, and inline flow sequences.
+
+function fmEscape(s) {
+	return String(s)
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;');
+}
+
+function parseYaml(src) {
+	if (typeof src !== 'string') return {};
+	const lines = src.replace(/\r\n/g, '\n').split('\n');
+	let i = 0;
+
+	const indentOf = (line) => line.match(/^[ \t]*/)[0].replace(/\t/g, '    ').length;
+
+	const stripComment = (s) => {
+		let inS = false, inD = false;
+		for (let k = 0; k < s.length; k++) {
+			const c = s[k];
+			if (c === "'" && !inD) inS = !inS;
+			else if (c === '"' && !inS) inD = !inD;
+			else if (c === '#' && !inS && !inD && (k === 0 || /\s/.test(s[k - 1]))) return s.slice(0, k);
+		}
+		return s;
+	};
+
+	function parseScalar(raw) {
+		let s = stripComment(raw).trim();
+		if (s === '' || s === '~' || /^null$/i.test(s)) return null;
+		if (/^true$/i.test(s)) return true;
+		if (/^false$/i.test(s)) return false;
+		if ((s[0] === '"' && s[s.length - 1] === '"') || (s[0] === "'" && s[s.length - 1] === "'")) {
+			let body = s.slice(1, -1);
+			if (s[0] === '"') body = body.replace(/\\(["\\nrt])/g, (m, c) => ({ '"': '"', '\\': '\\', n: '\n', r: '\r', t: '\t' }[c]));
+			else body = body.replace(/''/g, "'");
+			return body;
+		}
+		if (s.startsWith('[') && s.endsWith(']')) {
+			const inner = s.slice(1, -1).trim();
+			if (!inner) return [];
+			return inner.split(',').map((p) => parseScalar(p.trim()));
+		}
+		if (/^-?\d+$/.test(s)) return parseInt(s, 10);
+		if (/^-?\d*\.\d+$/.test(s)) return parseFloat(s);
+		return s;
+	}
+
+	const nextMeaningful = () => {
+		let j = i;
+		while (j < lines.length && (lines[j].trim() === '' || lines[j].trim().startsWith('#'))) j++;
+		return j;
+	};
+
+	function parseValue(rest, indent) {
+		if (rest.trim() !== '') return parseScalar(rest);
+		const j = nextMeaningful();
+		if (j < lines.length && indentOf(lines[j]) > indent) return parseBlock(indentOf(lines[j]));
+		return null;
+	}
+
+	function parseSeqItem(content, indent) {
+		const c = content.trim();
+		if (c === '') {
+			i++; // consume the "- " line
+			const j = nextMeaningful();
+			if (j < lines.length && indentOf(lines[j]) > indent) return parseBlock(indentOf(lines[j]));
+			return null;
+		}
+		const m = c.match(/^([^:]+):(.*)$/);
+		if (m) {
+			const obj = {};
+			i++; // consume the "- key: ..." line
+			obj[m[1].trim()] = parseValue(m[2], indent);
+			// Sibling deeper-indented "key: value" lines continue this inline map.
+			while (i < lines.length) {
+				const nl = lines[i];
+				if (nl.trim() === '' || nl.trim().startsWith('#')) { i++; continue; }
+				const nind = indentOf(nl);
+				if (nind <= indent) break;
+				const nm = nl.match(/^([^:]+):(.*)$/);
+				if (!nm) { i++; continue; }
+				const k2 = nm[1].trim();
+				const r2 = nm[2];
+				i++;
+				obj[k2] = parseValue(r2, nind);
+			}
+			return obj;
+		}
+		i++; // consume the "- scalar" line
+		return parseScalar(c);
+	}
+
+	function parseBlock(indent) {
+		const map = {};
+		const arr = [];
+		let isSeq = null;
+		while (i < lines.length) {
+			const line = lines[i];
+			if (line.trim() === '' || line.trim().startsWith('#')) { i++; continue; }
+			const ind = indentOf(line);
+			if (ind < indent) break;
+			if (ind > indent) { i++; continue; }
+			const dash = line.match(/^(\s*)-[ \t]*(.*)$/);
+			if (dash) {
+				if (isSeq === null) isSeq = true;
+				if (!isSeq) break;
+				arr.push(parseSeqItem(dash[2], indent));
+				continue;
+			}
+			const m = line.match(/^([^:]+):(.*)$/);
+			if (m) {
+				if (isSeq === null) isSeq = false;
+				if (isSeq) break;
+				const key = m[1].trim();
+				const rest = m[2];
+				i++; // consume the "key:" line
+				map[key] = parseValue(rest, indent);
+				continue;
+			}
+			break;
+		}
+		return isSeq ? arr : map;
+	}
+
+	i = nextMeaningful();
+	if (i >= lines.length) return {};
+	return parseBlock(indentOf(lines[i]));
+}
+
+// Extract leading YAML frontmatter (a "---" fenced block at the very top of the
+// document). Returns null when there is none.
+function parseFrontmatter(md) {
+	if (typeof md !== 'string') return null;
+	const m = md.match(/^---[ \t]*\n([\s\S]*?)\n---[ \t]*(?:\n|$)/);
+	if (!m) return null;
+	return {
+		raw: m[0],
+		data: parseYaml(m[1]),
+		content: md.slice(m[0].length),
+	};
+}
+
+function humanizeKey(key) {
+	return String(key).replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function renderFrontmatterObject(obj) {
+	const entries = Object.entries(obj);
+	if (entries.length === 0) return '<span class="nui-md-frontmatter-null">&mdash;</span>';
+	return '<dl class="nui-md-frontmatter-nested">' + entries.map(([k, v]) =>
+		`<div><dt>${fmEscape(humanizeKey(k))}</dt><dd>${renderFrontmatterValue(v)}</dd></div>`
+	).join('') + '</dl>';
+}
+
+function renderFrontmatterValue(v) {
+	if (v === null || v === undefined) return '<span class="nui-md-frontmatter-null">&mdash;</span>';
+	if (Array.isArray(v)) {
+		if (v.length === 0) return '<span class="nui-md-frontmatter-null">&mdash;</span>';
+		if (v.every((x) => x === null || typeof x !== 'object')) {
+			return '<span class="nui-md-frontmatter-tags">' + v.map((x) =>
+				`<span class="nui-md-frontmatter-chip">${fmEscape(x)}</span>`
+			).join('') + '</span>';
+		}
+		return v.map((x) => (typeof x === 'object' && x !== null)
+			? renderFrontmatterObject(x)
+			: `<span class="nui-md-frontmatter-chip">${fmEscape(x)}</span>`).join('');
+	}
+	if (typeof v === 'object') return renderFrontmatterObject(v);
+	return fmEscape(v);
+}
+
+// Render parsed frontmatter as a metadata card. Returns null when there is
+// nothing to show.
+function renderFrontmatter(data) {
+	if (!data || typeof data !== 'object' || Array.isArray(data)) return null;
+	const rows = Object.entries(data).map(([k, v]) => {
+		if (v === null || v === undefined || (Array.isArray(v) && v.length === 0)) return '';
+		const dt = `<dt>${fmEscape(humanizeKey(k))}</dt>`;
+		if (k === 'summary' && typeof v === 'string') {
+			return `<div class="nui-md-frontmatter-field nui-md-frontmatter-summary">${dt}<dd>${fmEscape(v)}</dd></div>`;
+		}
+		return `<div class="nui-md-frontmatter-field">${dt}<dd>${renderFrontmatterValue(v)}</dd></div>`;
+	}).filter(Boolean).join('');
+	if (!rows) return null;
+	return `<dl class="nui-md-frontmatter" aria-label="Document metadata">${rows}</dl>`;
+}
+
+function markdownToHtml(md, options) {
+	options = options || {};
 	if (typeof md !== 'string' || !md.trim()) return '';
+
+	// YAML frontmatter handling: 'show' renders a metadata card, 'strip' removes
+	// it, anything else (false / 'false' / omitted-with-undefined) disables it.
+	// Default 'show'.
+	const fmMode = options.frontmatter !== undefined ? options.frontmatter : 'show';
+	let fmHtml = '';
+	if (fmMode === 'show' || fmMode === 'strip') {
+		const fm = parseFrontmatter(md);
+		if (fm) {
+			if (fmMode === 'show') fmHtml = renderFrontmatter(fm.data) || '';
+			md = fm.content;
+		}
+	}
 	
 	let html = md.trim().replace(/\r\n/g, '\n');
 	const codeBlocks = [];
@@ -6090,11 +6298,14 @@ function markdownToHtml(md) {
 	}, html);
 	html = inlineCode.reduce((result, { token, code }) => result.replace(token, `<code>${code}</code>`), html);
 
-	return html;
+	return fmHtml + html;
 }
 
 // Add to util for global access
 util.markdownToHtml = markdownToHtml;
+util.parseYaml = parseYaml;
+util.parseFrontmatter = parseFrontmatter;
+util.renderFrontmatter = renderFrontmatter;
 
 class NuiMarkdown extends HTMLElement {
 	constructor() {
@@ -6102,6 +6313,23 @@ class NuiMarkdown extends HTMLElement {
 		this._streamText = '';
 		this._activeBuffer = '';
 		this._isStreaming = false;
+		this._frontmatterMode = undefined; // programmatic override; wins over the attribute
+		this._metadata = null;
+	}
+
+	// Parsed YAML frontmatter as a data structure (or null when absent/disabled).
+	get metadata() { return this._metadata; }
+	set metadata(v) { this._metadata = v; }
+
+	// Programmatic frontmatter mode: 'show' | 'strip' | 'false'.
+	// When set, takes precedence over the `frontmatter` attribute.
+	get frontmatterMode() { return this._frontmatterMode; }
+	set frontmatterMode(v) { this._frontmatterMode = v; }
+
+	_renderMode() {
+		if (this._frontmatterMode !== undefined) return this._frontmatterMode;
+		const attr = this.getAttribute('frontmatter');
+		return (attr === 'strip' || attr === 'show' || attr === 'false') ? attr : 'show';
 	}
 
 	async connectedCallback() {
@@ -6134,7 +6362,10 @@ class NuiMarkdown extends HTMLElement {
 
 		if (!rawText) return;
 
-		this.innerHTML = markdownToHtml(rawText);
+		const mode = this._renderMode();
+		const fm = (mode === 'show' || mode === 'strip') ? parseFrontmatter(rawText) : null;
+		this._metadata = fm ? fm.data : null;
+		this.innerHTML = markdownToHtml(rawText, { frontmatter: mode });
 		this._processed = true; // Mark as processed so re-attach is free
 	}
 

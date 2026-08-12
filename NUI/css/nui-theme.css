@@ -4924,3 +4924,71 @@ nui-tooltip:popover-open {
 opacity: 0;
 }
 }
+
+/* ################################# nui-markdown FRONTMATTER */
+/* Metadata card rendered from YAML frontmatter by nui-markdown / markdownToHtml */
+.nui-md-frontmatter {
+	display: grid;
+	gap: var(--nui-space-half);
+	margin: 0 0 var(--nui-space-double);
+	padding: var(--nui-space);
+	background: light-dark(var(--color-shade2), var(--color-shade1));
+	border: solid var(--border-thickness) var(--border-shade2);
+	border-left: 4px solid var(--color-highlight);
+	border-radius: var(--border-radius1);
+}
+.nui-md-frontmatter-field {
+	display: grid;
+	grid-template-columns: minmax(5rem, max-content) 1fr;
+	gap: var(--nui-space);
+	align-items: baseline;
+}
+.nui-md-frontmatter-field dt {
+	color: var(--text-color-dim);
+	font-size: var(--font-size-small);
+	font-weight: 600;
+}
+.nui-md-frontmatter-field dd {
+	margin: 0;
+	color: var(--text-color);
+	overflow-wrap: anywhere;
+}
+.nui-md-frontmatter-summary dd {
+	color: var(--text-color-dim);
+	line-height: 1.5;
+}
+.nui-md-frontmatter-tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--nui-space-quarter);
+}
+.nui-md-frontmatter-chip {
+	display: inline-block;
+	padding: 0 var(--nui-space-half);
+	background: var(--color-shade3);
+	border: solid var(--border-thickness) var(--border-shade3);
+	border-radius: var(--border-radius2);
+	font-size: var(--font-size-small);
+	color: var(--text-color);
+}
+.nui-md-frontmatter-null {
+	color: var(--text-color-subtle);
+}
+.nui-md-frontmatter-nested {
+	display: grid;
+	gap: var(--nui-space-quarter);
+	margin: 0;
+}
+.nui-md-frontmatter-nested div {
+	display: grid;
+	grid-template-columns: minmax(5rem, max-content) 1fr;
+	gap: var(--nui-space);
+}
+.nui-md-frontmatter-nested dt {
+	color: var(--text-color-dim);
+	font-size: var(--font-size-small);
+	font-weight: 600;
+}
+.nui-md-frontmatter-nested dd {
+	margin: 0;
+}

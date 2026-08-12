@@ -241,7 +241,95 @@ mdRenderer.endStream();
 		<p>The HTML parser scans for <code>&lt;/script&gt;</code> to find the end of a script element. It doesn't understand that the tag is inside a code example - it just sees the string and closes the element. Escaping with <code>&lt;\/script&gt;</code> prevents this while still displaying correctly in the rendered output.</p>
 	</section>
 
+	<section>
+		<h2>YAML Frontmatter</h2>
+		<p>A leading <code>---</code>-fenced YAML block is parsed and rendered as a metadata card by default. Use <code>frontmatter="strip"</code> to remove it entirely, or <code>frontmatter="false"</code> to leave it untouched (legacy rendering). The parsed object is exposed on the element as <code>.metadata</code>.</p>
 
+		<nui-code>
+			<script type="example" data-lang="yaml">
+---
+title: "The Abyss Gazes Back"
+slug: the-abyss-gazes-back
+lang: en
+created: 2026-07-25
+modified: 2026-08-12
+authors:
+  - id: david-a-renelt
+    role: human
+  - id: kimi-k3
+    role: editor
+tags:
+  - ai
+  - nietzsche
+  - purpose
+series: null
+summary: "A one-line summary rendered as a distinct field."
+---
+			</script>
+		</nui-code>
+
+		<h3>Default — rendered card</h3>
+		<div class="demo-area">
+			<nui-markdown>
+				<script type="text/markdown">
+---
+title: "Example Post"
+lang: en
+created: 2026-08-12
+tags:
+  - ai
+  - markdown
+authors:
+  - id: copilot
+    role: assistant
+summary: "A short post demonstrating YAML frontmatter rendering."
+---
+
+# Example Post
+
+Body content appears below the metadata card.
+				</script>
+			</nui-markdown>
+		</div>
+
+		<h3>Stripped</h3>
+		<div class="demo-area">
+			<nui-markdown frontmatter="strip">
+				<script type="text/markdown">
+---
+title: "Hidden"
+slug: hidden
+---
+
+# No Card
+
+Only the body renders.
+				</script>
+			</nui-markdown>
+		</div>
+
+		<h3>Programmatic metadata access</h3>
+		<p>The parsed frontmatter is available as a data structure on the element via <code>md.metadata</code>.</p>
+		<nui-markdown id="fm-demo">
+			<script type="text/markdown">
+---
+title: "Metadata Demo"
+tags: [ai, frontmatter]
+version: 1
+---
+
+# Metadata
+
+Read <code>md.metadata</code> from the console.
+			</script>
+		</nui-markdown>
+		<nui-code>
+			<script type="example" data-lang="js">
+const md = document.getElementById('fm-demo');
+console.log(md.metadata); // { title: 'Metadata Demo', tags: ['ai','frontmatter'], version: 1 }
+			</script>
+		</nui-code>
+	</section>
 
 </div>
 
