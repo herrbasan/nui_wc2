@@ -336,6 +336,12 @@ function createList(element, options) {
 				list.filter_timeout = setTimeout(filter, 100);
 			});
 		}
+
+		// Apply popup sizing to every header select (sort + filters) so the
+		// dropdowns share the configured geometry. Passed via loadData({ popup }).
+		if (options.popup) {
+			list.header.querySelectorAll('nui-select').forEach(sel => sel.setPopup?.(options.popup));
+		}
 	}
 	
 	// ################################# FOOTER

@@ -3178,6 +3178,49 @@ registerComponent('nui-select', (element) => {
 	const list = dom.create('div', { class: 'nui-select-options', target: popup });
 	const noResults = dom.create('div', { class: 'nui-select-no-results', text: 'No results', attrs: { hidden: '' }, target: list });
 
+	// ##### SIZING (control + popup)
+
+	// Programmatic control sizing. width/height set the control box (the
+	// <nui-select> itself); numeric values are interpreted as px.
+	const setDimensions = (dims = {}) => {
+		if (dims.width != null) element.style.width = typeof dims.width === 'number' ? dims.width + 'px' : dims.width;
+		if (dims.height != null) element.style.height = typeof dims.height === 'number' ? dims.height + 'px' : dims.height;
+	};
+
+	// Programmatic popup sizing/offset. The popup is positioned relative to its
+	// containing block (the nearest positioned ancestor). By default that is the
+	// <nui-select> itself (position: relative) so left:0/right:0 match the select.
+	// Set left/right (or position the select static) to extend the popup beyond
+	// the select — e.g. to make the dropdown span a full-width container.
+	const setPopup = (dims = {}) => {
+		const map = { width: 'width', height: 'height', minWidth: 'minWidth', maxHeight: 'maxHeight', left: 'left', right: 'right' };
+		Object.entries(map).forEach(([key, prop]) => {
+			const v = dims[key];
+			if (v == null) return;
+			popup.style[prop] = typeof v === 'number' ? v + 'px' : v;
+		});
+	};
+
+	// Declarative attribute support:
+	//   width / height        → control box size
+	//   popup-width/-height/-min-width/-max-height/-left/-right → popup size/offset
+	['width', 'height'].forEach(p => {
+		const v = element.getAttribute(p);
+		if (v) element.style[p] = v;
+	});
+	const popupAttrMap = {
+		'popup-width': 'width',
+		'popup-height': 'height',
+		'popup-min-width': 'minWidth',
+		'popup-max-height': 'maxHeight',
+		'popup-left': 'left',
+		'popup-right': 'right'
+	};
+	Object.entries(popupAttrMap).forEach(([attr, prop]) => {
+		const v = element.getAttribute(attr);
+		if (v) popup.style[prop] = v;
+	});
+
 	// ##### PRIVATE FUNCTIONS
 
 	// Build option rows from native select
@@ -3995,6 +4038,10 @@ registerComponent('nui-select', (element) => {
 	element.isDisabled = () => select.disabled;
 	element.isSearchable = () => isSearchable;
 	element.isLoading = () => isLoading;
+
+	// Sizing
+	element.setDimensions = setDimensions;
+	element.setPopup = setPopup;
 
 	// Async loading helpers
 	element.showLoading = showLoading;
