@@ -2668,6 +2668,22 @@ function setupInputBehavior(element, input, config = {}) {
 	element.focus = () => input.focus();
 
 	updateState();
+
+	// grow-on-load: opt-in fit-to-content after first layout. At setup time the
+	// element may not be laid out yet (page just parsed, or hidden during
+	// routing), so scrollHeight for prefilled content is unreliable and
+	// auto-resize stays collapsed. With this flag, re-measure cached metrics
+	// and re-run updateState on the first frame. Opt-in because changing the
+	// initial height of existing prefilled textareas is a breaking visual change.
+	if (autoResize && element.hasAttribute('grow-on-load')) {
+		requestAnimationFrame(() => {
+			const style = getComputedStyle(input);
+			cachedLineHeight = parseInt(style.lineHeight) || parseInt(style.fontSize) * 1.5;
+			cachedPadding = parseInt(style.paddingTop) + parseInt(style.paddingBottom);
+			cachedBorder = parseInt(style.borderTopWidth) + parseInt(style.borderBottomWidth);
+			updateState();
+		});
+	}
 }
 
 function setupCheckableBehavior(element, type) {
