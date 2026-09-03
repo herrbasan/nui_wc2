@@ -6346,7 +6346,11 @@ function markdownToHtml(md, options) {
 	};
 	html = html.replace(/!\[([^\]]+)\]\(([^)]+)\)/g, (m, alt, src) => {
 		const url = safeUrl(src);
-		return url ? `<img src="${url}" alt="${alt}">` : alt;
+		if (!url) return alt;
+		// App-level origin allow-list (setMarkdownImagePolicy): an image whose
+		// source the app does not trust renders as its alt text, never as a request.
+		if (typeof markdownImagePolicy === 'function' && !markdownImagePolicy(url)) return alt;
+		return `<img src="${url}" alt="${alt}">`;
 	});
 	html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (m, text, href) => {
 		const url = safeUrl(href);
@@ -6363,6 +6367,11 @@ function markdownToHtml(md, options) {
 
 	return fmHtml + html;
 }
+
+// App-level markdown image policy (issue #32, LLM-Gateway-Chat): fn(url) →
+// boolean. Null = allow everything safeUrl passes (previous behavior).
+let markdownImagePolicy = null;
+util.setMarkdownImagePolicy = (fn) => { markdownImagePolicy = (typeof fn === 'function') ? fn : null; };
 
 // Add to util for global access
 util.markdownToHtml = markdownToHtml;
