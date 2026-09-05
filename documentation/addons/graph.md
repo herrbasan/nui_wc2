@@ -94,6 +94,25 @@ graph.addEventListener('nui-graph-scrub', (e) => {
 
 ---
 
+## Smooth Streaming (Opt-In)
+
+Add the `smooth` attribute for continuously panning charts (Smoothie-style, like the opnSense dashboard): the line glides leftward at the sample rate and a "head dot" holds the newest value at the right edge until the next sample lands.
+
+```html
+<nui-graph smooth interval="1000" capacity="120"></nui-graph>
+```
+
+**Performance contract — this is NOT an always-on rAF loop:**
+
+- The animation loop starts on `push()` and runs **only while the stream is fresh** (within `1.5 × interval` of the last push).
+- When the stream stalls, is paused, or the tab is hidden, the loop stops and the graph reverts to the default paint-on-change path with **zero rAF loops**.
+- Static `data` attribute graphs never animate.
+- Rendering cost during streaming: one canvas render per frame (identical path math to the static render — the pan is applied to the X coordinates only).
+
+**When to use it:** live dashboards with slow sample rates (1s+) where discrete jumps feel choppy. Do not enable it on high-frequency streams where the jump per interval is already sub-pixel — it would only burn frames.
+
+---
+
 ## Programmatic Streaming API
 
 ```javascript
@@ -128,6 +147,7 @@ graph.clear();
 | `label` | String | `null` | Embedded text label rendered inside the graph container (e.g. `label="CPU Package"`). |
 | `label-position` | `'top-left'` \| `'top-right'` \| `'bottom-left'` \| `'bottom-right'` | `'top-left'` | Corner placement for the embedded label. |
 | `interactive` | Boolean | `false` | Enables mouse scrubbing crosshair, target pip, and floating HUD tooltip. |
+| `smooth` | Boolean | `false` | Opt-in smooth streaming: pans the chart continuously between samples with a head dot at the right edge. rAF loop runs only while the stream is fresh. |
 | `unit` | String | `""` | Value unit label (e.g., `'MB/s'`, `'W'`, `'%'`). |
 | `interval` | Number | `1000` | Time per sample in ms (used for time calculations). |
 | `time-format` | String | `'relative'` | Tooltip time display: `'relative'`, `'clock'`, `'both'`, `'none'`. |

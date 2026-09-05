@@ -49,7 +49,7 @@ class NuiGraph extends HTMLElement {
         return [
             'stroke', 'fill', 'min', 'max', 'line-width', 'data', 'reverse',
             'capacity', 'scale', 'floor-max', 'interval', 'interactive', 'unit',
-            'decimals', 'time-format', 'label', 'label-position'
+            'decimals', 'time-format', 'label', 'label-position', 'smooth'
         ];
     }
 
@@ -76,6 +76,11 @@ class NuiGraph extends HTMLElement {
 
         // Adaptive scale state
         this._currentCeiling = 0;
+
+        // Smooth streaming mode state (opt-in via `smooth` attribute)
+        this._smoothRaf = null;
+        this._smoothPhase = 0;       // fractional sample offset 0..1 within the current interval
+        this._lastPushTime = 0;
 
         // Performance & state flags
         this._needsRedraw = false;
@@ -109,6 +114,7 @@ class NuiGraph extends HTMLElement {
     disconnectedCallback() {
         this._connected = false;
         document.removeEventListener('visibilitychange', this._onVisibilityChange);
+        this._stopSmoothLoop();
         if (this._resizeObserver) {
             this._resizeObserver.disconnect();
             this._resizeObserver = null;
@@ -163,6 +169,8 @@ class NuiGraph extends HTMLElement {
         this._decimals = this.hasAttribute('decimals') ? parseInt(this.getAttribute('decimals'), 10) : null;
         this._timeFormat = this.getAttribute('time-format') || 'relative'; // 'relative' | 'clock' | 'both' | 'none'
         this._label = this.getAttribute('label') || null;
+        this._isSmooth = this.hasAttribute('smooth');
+        if (!this._isSmooth) this._stopSmoothLoop();
 
         this._syncLabel();
 
@@ -224,6 +232,10 @@ class NuiGraph extends HTMLElement {
     _onVisibilityChange() {
         if (!document.hidden && this._connected && this.clientWidth > 0 && this.clientHeight > 0) {
             this._scheduleDraw();
+            // Resume smooth loop if a fresh stream is in progress
+            if (this._isSmooth && this._lastPushTime && (Date.now() - this._lastPushTime) <= this._interval * 1.5) {
+                this._startSmoothLoop();
+            }
         }
     }
 
@@ -274,11 +286,20 @@ class NuiGraph extends HTMLElement {
 
         if (this._isInteractive) {
             if (!this._tooltip) {
-                // Portaled to body with position:fixed — escapes ancestor overflow clipping
+                // Portaled to body with position:fixed — escapes ancestor overflow clipping.
+                // Structured children updated via textContent only — never innerHTML.
                 this._tooltip = document.createElement('div');
                 this._tooltip.className = 'nui-graph-tooltip';
+                this._tipVal = document.createElement('span');
+                this._tipVal.className = 'val';
+                this._tipTime = document.createElement('span');
+                this._tipTime.className = 'time';
+                this._tooltip.appendChild(this._tipVal);
+                this._tooltip.appendChild(this._tipTime);
                 document.body.appendChild(this._tooltip);
-                this._lastTipHTML = null;
+                this._lastTipVal = null;
+                this._lastTipTime = null;
+                this._tipWasVisible = false;
             }
             this._wrap.style.pointerEvents = 'auto';
             this._wrap.style.cursor = 'crosshair';
@@ -325,9 +346,15 @@ class NuiGraph extends HTMLElement {
     _handlePointerPos(clientX) {
         if (!this._data || this._data.length < 2) return;
         const rect = this._wrap.getBoundingClientRect();
-        this._hoverCursorX = clientX - rect.left;
         const step = rect.width / (this._data.length - 1);
-        let index = Math.round(this._hoverCursorX / step);
+        this._hoverCursorX = clientX - rect.left;
+        // Smooth mode inverts the time-anchored mapping: x = W - ((n1-i)+frac)*step
+        let index;
+        if (this._isSmooth && this._smoothPhase > 0) {
+            index = Math.round((this._data.length - 1) + this._smoothPhase - (rect.width - this._hoverCursorX) / step);
+        } else {
+            index = Math.round(this._hoverCursorX / step);
+        }
         index = Math.max(0, Math.min(this._data.length - 1, index));
 
         this._hoverIndex = index;
@@ -346,6 +373,7 @@ class NuiGraph extends HTMLElement {
         this._hoverCursorX = -1;
         this._hoverIndex = -1;
         this._hoverX = -1;
+        this._tipWasVisible = false;
         if (this._tooltip) {
             this._tooltip.classList.remove('visible');
         }
@@ -368,8 +396,7 @@ class NuiGraph extends HTMLElement {
         if (!this._isInteractive) return;
         this._hoverCursorX = -1;
         this._hoverIndex = -1;
-        this._hoverX = -1;
-        if (this._tooltip) {
+        this._hoverX = -1;        this._tipWasVisible = false;        if (this._tooltip) {
             this._tooltip.classList.remove('visible');
         }
         this._scheduleDraw();
@@ -420,7 +447,8 @@ class NuiGraph extends HTMLElement {
             timeStr = '';
         }
 
-        // Custom programmatic formatter hook if provided
+        // Custom programmatic formatter hook if provided.
+        // A returned string is rendered as plain text (textContent, no HTML parsing).
         if (typeof this.formatTooltip === 'function') {
             const customContent = this.formatTooltip({
                 value: val,
@@ -434,23 +462,15 @@ class NuiGraph extends HTMLElement {
                 samplesFromNow
             });
             if (typeof customContent === 'string') {
-                if (customContent !== this._lastTipHTML) {
-                    this._tooltip.innerHTML = customContent;
-                    this._lastTipHTML = customContent;
-                }
+                this._setTipContent(customContent, '');
             } else if (customContent instanceof Node) {
-                this._tooltip.innerHTML = '';
-                this._tooltip.appendChild(customContent);
-                this._lastTipHTML = null;
+                this._tooltip.replaceChildren(customContent);
+                this._lastTipVal = null;
+                this._lastTipTime = null;
             }
         } else {
-            const timeSpan = timeStr ? `<span class="time">${timeStr}</span>` : '';
-            const html = `<span class="val">${displayVal}${this._unit ? ' ' + this._unit : ''}</span>${timeSpan}`;
-            // Perf: only touch the DOM when content actually changed
-            if (html !== this._lastTipHTML) {
-                this._tooltip.innerHTML = html;
-                this._lastTipHTML = html;
-            }
+            const valText = `${displayVal}${this._unit ? ' ' + this._unit : ''}`;
+            this._setTipContent(valText, timeStr);
         }
 
         // Measure tooltip for boundary positioning
@@ -478,8 +498,17 @@ class NuiGraph extends HTMLElement {
         if (topPos < 4) topPos = rect.top + pipY + 14;
         if (topPos + tipHeight > vpH - 4) topPos = vpH - tipHeight - 4;
 
-        this._tooltip.style.left = `${Math.round(leftPos)}px`;
-        this._tooltip.style.top = `${Math.round(topPos)}px`;
+        // First position after show: skip the transform transition so the tooltip
+        // doesn't slide in from its previous (0,0) location
+        if (!this._tipWasVisible) {
+            this._tooltip.style.transition = 'none';
+            this._tooltip.style.transform = `translate3d(${Math.round(leftPos)}px, ${Math.round(topPos)}px, 0)`;
+            void this._tooltip.offsetWidth; // flush before restoring the transition
+            this._tooltip.style.transition = '';
+            this._tipWasVisible = true;
+        } else {
+            this._tooltip.style.transform = `translate3d(${Math.round(leftPos)}px, ${Math.round(topPos)}px, 0)`;
+        }
         this._tooltip.classList.add('visible');
 
         // Dispatch custom event for linked dashboards
@@ -493,6 +522,21 @@ class NuiGraph extends HTMLElement {
                 samplesFromNow
             }
         }));
+    }
+
+    _setTipContent(valText, timeText) {
+        // Restore structured spans after a custom Node replaced them
+        if (this._tipVal.parentNode !== this._tooltip) {
+            this._tooltip.replaceChildren(this._tipVal, this._tipTime);
+        }
+        if (valText !== this._lastTipVal) {
+            this._tipVal.textContent = valText;
+            this._lastTipVal = valText;
+        }
+        if (timeText !== this._lastTipTime) {
+            this._tipTime.textContent = timeText;
+            this._lastTipTime = timeText;
+        }
     }
 
     _syncCanvasResolution() {
@@ -535,6 +579,12 @@ class NuiGraph extends HTMLElement {
             this._data.shift();
         }
         this._scheduleDraw();
+        if (this._isSmooth) {
+            // Re-anchor the smooth clock: the new sample starts at frac 0
+            this._lastPushTime = Date.now();
+            this._smoothPhase = 0;
+            this._startSmoothLoop();
+        }
     }
 
     /**
@@ -548,6 +598,11 @@ class NuiGraph extends HTMLElement {
         }
         if (Array.isArray(timestamps)) {
             this._timestamps = timestamps;
+        }
+        if (this._isSmooth) {
+            this._lastPushTime = Date.now();
+            this._smoothPhase = 0;
+            this._startSmoothLoop();
         }
         this._scheduleDraw();
     }
@@ -566,6 +621,46 @@ class NuiGraph extends HTMLElement {
             }
             this._render();
         });
+    }
+
+    /**
+     * Smooth streaming mode (opt-in via `smooth` attribute): renders at rAF pace
+     * (refresh rate), fully decoupled from data pushes. X positions are anchored
+     * to wall-clock time — frac = (now - lastPush) / interval — so a push only
+     * appends a sample and re-anchors; the animation never snaps. The loop runs
+     * ONLY while data is fresh and the tab is visible — idle and static graphs
+     * keep zero loops, exactly like the default paint-on-change path.
+     */
+    _startSmoothLoop() {
+        if (!this._isSmooth || !this._connected || this._smoothRaf !== null) return;
+        const stepFrame = () => {
+            this._smoothRaf = null;
+            if (!this._isSmooth || !this._connected) return;
+            if (document.hidden) {
+                // Hidden: park the loop; visibility handler restarts it
+                return;
+            }
+            const age = Date.now() - this._lastPushTime;
+            if (age > this._interval * 1.5) {
+                // Stream stalled — revert to paint-on-change economics
+                this._smoothPhase = 0;
+                this._scheduleDraw();
+                return;
+            }
+            // Fractional age of the newest sample, 0..1 — read by _render
+            this._smoothPhase = Math.min(1, age / this._interval);
+            this._render();
+            this._smoothRaf = requestAnimationFrame(stepFrame);
+        };
+        this._smoothRaf = requestAnimationFrame(stepFrame);
+    }
+
+    _stopSmoothLoop() {
+        if (this._smoothRaf !== null && this._smoothRaf !== undefined) {
+            cancelAnimationFrame(this._smoothRaf);
+            this._smoothRaf = null;
+        }
+        this._smoothPhase = 0;
     }
 
     _render() {
@@ -589,7 +684,12 @@ class NuiGraph extends HTMLElement {
         if (this._isInteractive && this._hoverCursorX >= 0 && this._wrap) {
             const wrapWidth = this._wrap.offsetWidth || (width / (this._dpr * 2));
             const step = wrapWidth / (data.length - 1);
-            let idx = Math.round(this._hoverCursorX / step);
+            let idx;
+            if (this._isSmooth && this._smoothPhase > 0) {
+                idx = Math.round((data.length - 1) + this._smoothPhase - (wrapWidth - this._hoverCursorX) / step);
+            } else {
+                idx = Math.round(this._hoverCursorX / step);
+            }
             this._hoverIndex = Math.max(0, Math.min(data.length - 1, idx));
             this._hoverX = this._hoverIndex * step;
             this._updateTooltip(this._wrap.getBoundingClientRect());
@@ -625,38 +725,74 @@ class NuiGraph extends HTMLElement {
         const stepX = width / (data.length - 1);
         const strokeWidth = this._lineWidth * (this._dpr * 2);
 
+        // Smooth mode: time-anchored X. The newest sample drifts leftward from the
+        // right edge as it ages — frac is recomputed FROM THE CLOCK on every render,
+        // fully decoupling the animation (rAF pace) from data pushes. A push only
+        // appends a sample and re-anchors the clock; nothing snaps.
+        const isSmooth = this._isSmooth && this._smoothPhase > 0;
+        const n1 = data.length - 1;
+        const xOf = (i) => {
+            if (!isSmooth) return i * stepX;
+            return width - ((n1 - i) + this._smoothPhase) * stepX;
+        };
+        const yOf = (v) => {
+            const norm = Math.max(0, Math.min(1, ((v === undefined || v === null ? min : v) - min) / range));
+            return this._reverse
+                ? norm * (height - strokeWidth) + (strokeWidth / 2)
+                : (1 - norm) * (height - strokeWidth) + (strokeWidth / 2);
+        };
+
         ctx.save();
         ctx.lineWidth = strokeWidth;
         ctx.strokeStyle = this._stroke;
         ctx.lineJoin = 'miter';
         ctx.lineCap = 'round';
 
-        // Draw waveform path
-        ctx.beginPath();
+        // Draw waveform. In smooth mode the newest value is EXTRAPOLATED flat to
+        // the right edge (hold-last, "repeat the line until the next update").
+        // Line points are computed ONCE and reused: the fill is the closed polygon
+        // (line + bottom legs), the stroke is the line only — same vertices, so
+        // no seam or flicker, and the fill's closing legs never get stroked.
+        const pts = new Float32Array(data.length * 2);
         for (let i = 0; i < data.length; i++) {
-            const rawVal = data[i] !== undefined && data[i] !== null ? data[i] : min;
-            const norm = Math.max(0, Math.min(1, (rawVal - min) / range));
-            
-            const y = this._reverse 
-                ? norm * (height - strokeWidth) + (strokeWidth / 2)
-                : (1 - norm) * (height - strokeWidth) + (strokeWidth / 2);
-            const x = i * stepX;
+            pts[i * 2] = xOf(i);
+            pts[i * 2 + 1] = yOf(data[i]);
+        }
+        const lastY = pts[(n1) * 2 + 1];
 
-            if (i === 0) {
-                ctx.moveTo(x, y);
-            } else {
-                ctx.lineTo(x, y);
+        if (this._fill) {
+            ctx.beginPath();
+            ctx.moveTo(pts[0], pts[1]);
+            for (let i = 1; i < data.length; i++) {
+                ctx.lineTo(pts[i * 2], pts[i * 2 + 1]);
             }
+            if (isSmooth) {
+                ctx.lineTo(width, lastY);
+            }
+            const bottomY = this._reverse ? strokeWidth / 2 : height;
+            const fillRight = isSmooth ? width : pts[n1 * 2];
+            ctx.lineTo(fillRight, bottomY);
+            ctx.lineTo(pts[0], bottomY);
+            ctx.closePath();
+            ctx.fillStyle = this._fill;
+            ctx.fill();
+        }
+
+        ctx.beginPath();
+        ctx.moveTo(pts[0], pts[1]);
+        for (let i = 1; i < data.length; i++) {
+            ctx.lineTo(pts[i * 2], pts[i * 2 + 1]);
+        }
+        if (isSmooth) {
+            ctx.lineTo(width, lastY);
         }
         ctx.stroke();
 
-        // Optional bottom-anchored fill
-        if (this._fill) {
-            ctx.fillStyle = this._fill;
-            const bottomY = this._reverse ? strokeWidth / 2 : height;
-            ctx.lineTo(width, bottomY);
-            ctx.lineTo(0, bottomY);
-            ctx.closePath();
+        // Smooth mode: head dot riding the right edge at the newest value
+        if (isSmooth) {
+            ctx.beginPath();
+            ctx.arc(width, lastY, strokeWidth * 0.7, 0, Math.PI * 2);
+            ctx.fillStyle = this._stroke;
             ctx.fill();
         }
 
@@ -667,7 +803,7 @@ class NuiGraph extends HTMLElement {
             const ptY = this._reverse 
                 ? norm * (height - strokeWidth) + (strokeWidth / 2)
                 : (1 - norm) * (height - strokeWidth) + (strokeWidth / 2);
-            const ptX = this._hoverIndex * stepX;
+            const ptX = xOf(this._hoverIndex);
 
             // Subtle vertical guideline
             ctx.beginPath();

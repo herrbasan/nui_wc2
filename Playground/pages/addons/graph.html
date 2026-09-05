@@ -178,75 +178,61 @@ setInterval(() => {
         </div>
     </section>
 
+    <!-- 5. Smooth Streaming (opt-in `smooth` attribute) -->
+    <section>
+        <h2>Smooth Streaming (Opt-In)</h2>
+        <p>
+            The <code>smooth</code> attribute pans the chart continuously between sample updates
+            (like the opnSense dashboard): the line glides leftward at the sample rate and a "head dot"
+            rides the right edge until the next value lands.
+        </p>
+        <div class="demo-callout">
+            <strong>Performance:</strong> the animation loop runs <em>only while the stream is fresh</em>
+            (within 1.5× the sample interval after the last <code>push()</code>). Paused streams, idle
+            graphs and static <code>data</code> attributes revert to the default paint-on-change path
+            with zero rAF loops. Below, both graphs get identical data — toggle the stream to compare.
+        </div>
+
+        <div class="demo-area">
+            <div style="display: flex; flex-wrap: wrap; gap: 0.75rem 1rem; align-items: center; margin-bottom: 1rem;">
+                <nui-button id="btn-smooth-toggle" variant="primary">
+                    <button type="button">Pause Stream</button>
+                </nui-button>
+                <span id="smooth-value-badge" style="font-weight: bold; font-family: monospace; font-size: 1.1rem; color: #2ecc71;">Value: 45%</span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <h4 style="margin: 0; min-height: 2.8em; display: flex; align-items: flex-end;">
+                        Default (discrete steps)
+                    </h4>
+                    <div style="height: 64px; background: rgba(180, 180, 180, 0.08); border-radius: 4px; padding: 4px;">
+                        <nui-graph id="graph-plain-stream" interval="200" stroke="#9b59b6" fill="rgba(155, 89, 182, 0.2)" min="0" max="100" capacity="120"></nui-graph>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--color-text-dim); margin: 0;">
+                        Jumps once per sample — cheapest possible render path.
+                    </p>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <h4 style="margin: 0; min-height: 2.8em; display: flex; align-items: flex-end; color: #2ecc71;">
+                        <code>smooth</code> (continuous pan)
+                    </h4>
+                    <div style="height: 64px; background: rgba(180, 180, 180, 0.08); border-radius: 4px; padding: 4px;">
+                        <nui-graph id="graph-smooth-stream" smooth interval="200" stroke="#2ecc71" fill="rgba(46, 204, 113, 0.2)" min="0" max="100" capacity="120"></nui-graph>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--color-text-dim); margin: 0;">
+                        Glides at the sample rate; head dot holds the newest value at the edge.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <nui-code>
+            <script type="example" data-lang="html">
+<nui-graph smooth interval="200" capacity="120"></nui-graph>
+            </script>
+        </nui-code>
+    </section>
+
 </div>
-
-<script type="module">
-import { nui } from '../../NUI/nui.js';
-import '../../NUI/lib/modules/nui-graph.js';
-
-nui.registerPage('addons/graph', {
-    init(element) {
-        const liveGraph = element.querySelector('#live-stream-graph');
-        const valBadge = element.querySelector('#stream-value-badge');
-        const toggleBtn = element.querySelector('#btn-stream-toggle button');
-        const spikeBtn = element.querySelector('#btn-stream-spike');
-
-        let currentVal = 40;
-        let isRunning = true;
-        let timer = null;
-
-        // Seed initial history
-        const initial = [];
-        for (let i = 0; i < 60; i++) {
-            currentVal += (Math.random() - 0.48) * 6;
-            currentVal = Math.max(10, Math.min(90, currentVal));
-            initial.push(Math.round(currentVal));
-        }
-        liveGraph.draw(initial);
-
-        function tick() {
-            currentVal += (Math.random() - 0.48) * 8;
-            currentVal = Math.max(5, Math.min(95, currentVal));
-            const rounded = Math.round(currentVal);
-            liveGraph.push(rounded);
-            if (valBadge) valBadge.textContent = `Value: ${rounded}%`;
-        }
-
-        function startStream() {
-            if (timer) clearInterval(timer);
-            timer = setInterval(tick, 200);
-            isRunning = true;
-            if (toggleBtn) toggleBtn.textContent = 'Pause Stream';
-        }
-
-        function stopStream() {
-            if (timer) clearInterval(timer);
-            timer = null;
-            isRunning = false;
-            if (toggleBtn) toggleBtn.textContent = 'Resume Stream';
-        }
-
-        toggleBtn?.addEventListener('click', () => {
-            if (isRunning) stopStream();
-            else startStream();
-        });
-
-        spikeBtn?.addEventListener('click', () => {
-            currentVal = Math.min(100, currentVal + 40);
-            liveGraph.push(currentVal);
-            if (valBadge) valBadge.textContent = `Value: ${Math.round(currentVal)}%`;
-        });
-
-        startStream();
-
-        // Lifecycle management: pause streaming when navigating away from this playground page
-        element.hide = () => {
-            stopStream();
-        };
-
-        element.show = () => {
-            if (!isRunning) startStream();
-        };
-    }
-});
-</script>

@@ -1837,13 +1837,65 @@ nui.registerPage('addons/graph', {
 			scrubGraph.draw(historyData);
 		}
 
+		// ── Section 5: Smooth Streaming (opt-in `smooth`) Demo Setup ──
+		const plainGraph = element.querySelector('#graph-plain-stream');
+		const smoothGraph = element.querySelector('#graph-smooth-stream');
+		const smoothBadge = element.querySelector('#smooth-value-badge');
+		const smoothToggleBtn = element.querySelector('#btn-smooth-toggle button') || element.querySelector('#btn-smooth-toggle');
+
+		let smoothVal = 45;
+		let smoothRunning = true;
+		let smoothTimer = null;
+
+		const smoothSeed = [];
+		for (let i = 0; i < 60; i++) {
+			smoothVal += (Math.random() - 0.48) * 6;
+			smoothVal = Math.max(10, Math.min(90, smoothVal));
+			smoothSeed.push(Math.round(smoothVal));
+		}
+		plainGraph?.draw(smoothSeed.slice());
+		smoothGraph?.draw(smoothSeed.slice());
+
+		function smoothTick() {
+			if (!smoothGraph || !smoothGraph.push) return;
+			smoothVal += (Math.random() - 0.48) * 8;
+			smoothVal = Math.max(5, Math.min(95, smoothVal));
+			const rounded = Math.round(smoothVal);
+			plainGraph?.push(rounded);
+			smoothGraph?.push(rounded);
+			if (smoothBadge) smoothBadge.textContent = `Value: ${rounded}%`;
+		}
+
+		function startSmoothStream() {
+			if (smoothTimer) clearInterval(smoothTimer);
+			smoothTimer = setInterval(smoothTick, 200);
+			smoothRunning = true;
+			if (smoothToggleBtn) smoothToggleBtn.textContent = 'Pause Stream';
+		}
+
+		function stopSmoothStream() {
+			if (smoothTimer) clearInterval(smoothTimer);
+			smoothTimer = null;
+			smoothRunning = false;
+			if (smoothToggleBtn) smoothToggleBtn.textContent = 'Resume Stream';
+		}
+
+		smoothToggleBtn?.addEventListener('click', () => {
+			if (smoothRunning) stopSmoothStream();
+			else startSmoothStream();
+		});
+
+		startSmoothStream();
+
 		// Lifecycle hooks
 		element.hide = () => {
 			stopStream();
+			stopSmoothStream();
 		};
 
 		element.show = () => {
 			if (!isRunning) startStream();
+			if (!smoothRunning) startSmoothStream();
 		};
 	}
 });
