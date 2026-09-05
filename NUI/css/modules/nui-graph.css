@@ -8,6 +8,8 @@ nui-graph {
     height: 100%;
     min-height: 24px;
     box-sizing: border-box;
+    background: var(--nui-graph-bg, light-dark(var(--color-shade2), var(--color-shade3)));
+    border-radius: var(--border-radius1);
 }
 
 nui-graph .graph-canvas-wrap {
