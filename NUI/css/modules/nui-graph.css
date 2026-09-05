@@ -8,7 +8,7 @@ nui-graph {
     height: 100%;
     min-height: 24px;
     box-sizing: border-box;
-    background: var(--nui-graph-bg, light-dark(var(--color-shade2), var(--color-shade3)));
+    background: var(--nui-graph-bg, light-dark(rgba(0, 0, 0, 0.04), rgba(255, 255, 255, 0.04)));
     border-radius: var(--border-radius1);
 }
 
