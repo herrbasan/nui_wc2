@@ -527,14 +527,16 @@ class NuiGraph extends HTMLElement {
      */
     _scheduleDraw() {
         if (this._needsRedraw) return;
-        if (document.hidden) {
+        if (document.hidden || this.closest('[hidden]') || !this.isConnected) {
             this._needsRedraw = true;
-            document.addEventListener('visibilitychange', () => {
-                if (!document.hidden && this._needsRedraw) {
-                    this._needsRedraw = false;
-                    this._render();
-                }
-            }, { once: true });
+            if (document.hidden) {
+                document.addEventListener('visibilitychange', () => {
+                    if (!document.hidden && this._needsRedraw) {
+                        this._needsRedraw = false;
+                        this._render();
+                    }
+                }, { once: true });
+            }
             return;
         }
 
