@@ -130,7 +130,7 @@ class NuiGraph extends HTMLElement {
     _initDOM() {
         if (this._wrap) return;
 
-        // Structure: nui-graph > .graph-canvas-wrap > canvas + .graph-tooltip (light DOM)
+        // Structure: nui-graph > .graph-canvas-wrap > canvas (tooltip lives in document.body)
         let wrap = this.querySelector('.graph-canvas-wrap');
         if (!wrap) {
             wrap = document.createElement('div');
@@ -274,9 +274,11 @@ class NuiGraph extends HTMLElement {
 
         if (this._isInteractive) {
             if (!this._tooltip) {
+                // Portaled to body with position:fixed — escapes ancestor overflow clipping
                 this._tooltip = document.createElement('div');
-                this._tooltip.className = 'graph-tooltip';
-                this.appendChild(this._tooltip);
+                this._tooltip.className = 'nui-graph-tooltip';
+                document.body.appendChild(this._tooltip);
+                this._lastTipHTML = null;
             }
             this._wrap.style.pointerEvents = 'auto';
             this._wrap.style.cursor = 'crosshair';
@@ -432,33 +434,49 @@ class NuiGraph extends HTMLElement {
                 samplesFromNow
             });
             if (typeof customContent === 'string') {
-                this._tooltip.innerHTML = customContent;
+                if (customContent !== this._lastTipHTML) {
+                    this._tooltip.innerHTML = customContent;
+                    this._lastTipHTML = customContent;
+                }
             } else if (customContent instanceof Node) {
                 this._tooltip.innerHTML = '';
                 this._tooltip.appendChild(customContent);
+                this._lastTipHTML = null;
             }
         } else {
             const timeSpan = timeStr ? `<span class="time">${timeStr}</span>` : '';
-            this._tooltip.innerHTML = `<span class="val">${displayVal}${this._unit ? ' ' + this._unit : ''}</span>${timeSpan}`;
+            const html = `<span class="val">${displayVal}${this._unit ? ' ' + this._unit : ''}</span>${timeSpan}`;
+            // Perf: only touch the DOM when content actually changed
+            if (html !== this._lastTipHTML) {
+                this._tooltip.innerHTML = html;
+                this._lastTipHTML = html;
+            }
         }
-        
+
         // Measure tooltip for boundary positioning
         const tipWidth = this._tooltip.offsetWidth || 100;
         const tipHeight = this._tooltip.offsetHeight || 22;
 
-        // Position horizontally centered over hover point, clamped inside container
-        const halfWidth = tipWidth / 2;
-        let leftPos = this._hoverX - halfWidth;
-        if (leftPos < 2) leftPos = 2;
-        if (leftPos + tipWidth > rect.width - 2) leftPos = rect.width - tipWidth - 2;
-
-        // Position vertically: prefer above hover pip; if too close to top, flip below
-        const pipY = this._hoverPipY !== undefined ? this._hoverPipY : 20;
-        let topPos = pipY - tipHeight - 6;
-        if (topPos < -tipHeight) {
-            // Flip below pip
-            topPos = pipY + 8;
+        // Logical pip Y in CSS px within the wrap (computed from stored range —
+        // avoids waiting for the canvas render to publish _hoverPipY)
+        let pipY = 20;
+        if (this._rangeMax !== undefined) {
+            const rawVal = val !== undefined && val !== null ? val : this._rangeMin;
+            const range = (this._rangeMax - this._rangeMin) || 1;
+            const norm = Math.max(0, Math.min(1, (rawVal - this._rangeMin) / range));
+            pipY = this._reverse ? norm * rect.height : (1 - norm) * rect.height;
         }
+
+        // Fixed positioning: viewport coordinates = wrap rect origin + logical offset
+        const vpW = window.innerWidth, vpH = window.innerHeight;
+        let leftPos = rect.left + this._hoverX - tipWidth / 2;
+        if (leftPos < 4) leftPos = 4;
+        if (leftPos + tipWidth > vpW - 4) leftPos = vpW - tipWidth - 4;
+
+        // Prefer above the pip; flip below when clipped at the top
+        let topPos = rect.top + pipY - tipHeight - 10;
+        if (topPos < 4) topPos = rect.top + pipY + 14;
+        if (topPos + tipHeight > vpH - 4) topPos = vpH - tipHeight - 4;
 
         this._tooltip.style.left = `${Math.round(leftPos)}px`;
         this._tooltip.style.top = `${Math.round(topPos)}px`;
@@ -600,20 +618,12 @@ class NuiGraph extends HTMLElement {
         }
 
         this._currentCeiling = max;
+        this._rangeMin = min;
+        this._rangeMax = max;
 
         const range = max - min || 1;
         const stepX = width / (data.length - 1);
         const strokeWidth = this._lineWidth * (this._dpr * 2);
-
-        // Store logical pip Y for interactive tooltip
-        if (this._hoverIndex >= 0 && this._hoverIndex < data.length) {
-            const hoverVal = data[this._hoverIndex] !== undefined ? data[this._hoverIndex] : min;
-            const normH = Math.max(0, Math.min(1, (hoverVal - min) / range));
-            const logicalH = height / (this._dpr * 2);
-            this._hoverPipY = this._reverse ? normH * logicalH : (1 - normH) * logicalH;
-        } else {
-            this._hoverPipY = undefined;
-        }
 
         ctx.save();
         ctx.lineWidth = strokeWidth;
