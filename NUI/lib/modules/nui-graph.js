@@ -79,6 +79,9 @@ class NuiGraph extends HTMLElement {
 
         // Performance & state flags
         this._needsRedraw = false;
+        this._resizeTimer = null;
+        this._pendingWidth = 0;
+        this._pendingHeight = 0;
         this._width = 0;
         this._height = 0;
         this._dpr = window.devicePixelRatio || 1;
@@ -103,6 +106,10 @@ class NuiGraph extends HTMLElement {
         if (this._resizeObserver) {
             this._resizeObserver.disconnect();
             this._resizeObserver = null;
+        }
+        if (this._resizeTimer) {
+            cancelAnimationFrame(this._resizeTimer);
+            this._resizeTimer = null;
         }
         this._teardownInteractivity();
     }
@@ -215,10 +222,30 @@ class NuiGraph extends HTMLElement {
                 const cr = entry.contentRect;
                 if (cr.width > 0 && cr.height > 0) {
                     if (this._width !== cr.width || this._height !== cr.height) {
-                        this._width = cr.width;
-                        this._height = cr.height;
-                        this._syncCanvasResolution();
-                        this._scheduleDraw();
+                        this._pendingWidth = cr.width;
+                        this._pendingHeight = cr.height;
+
+                        // Immediate first layout if dimensions were uninitialized
+                        if (this._width === 0 || this._height === 0) {
+                            this._width = this._pendingWidth;
+                            this._height = this._pendingHeight;
+                            this._syncCanvasResolution();
+                            this._scheduleDraw();
+                            return;
+                        }
+
+                        // Debounce consecutive resize events via rAF coalescing
+                        if (!this._resizeTimer) {
+                            this._resizeTimer = requestAnimationFrame(() => {
+                                this._resizeTimer = null;
+                                if (this._width !== this._pendingWidth || this._height !== this._pendingHeight) {
+                                    this._width = this._pendingWidth;
+                                    this._height = this._pendingHeight;
+                                    this._syncCanvasResolution();
+                                    this._scheduleDraw();
+                                }
+                            });
+                        }
                     }
                 }
             }
