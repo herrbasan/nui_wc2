@@ -93,6 +93,7 @@ class NuiGraph extends HTMLElement {
         this._onTouchStart = this._onTouchStart.bind(this);
         this._onTouchMove = this._onTouchMove.bind(this);
         this._onTouchEnd = this._onTouchEnd.bind(this);
+        this._onVisibilityChange = this._onVisibilityChange.bind(this);
     }
 
     connectedCallback() {
@@ -101,11 +102,13 @@ class NuiGraph extends HTMLElement {
         this._readAttributes();
         this._setupResizeObserver();
         this._setupInteractivity();
+        document.addEventListener('visibilitychange', this._onVisibilityChange);
         this._scheduleDraw();
     }
 
     disconnectedCallback() {
         this._connected = false;
+        document.removeEventListener('visibilitychange', this._onVisibilityChange);
         if (this._resizeObserver) {
             this._resizeObserver.disconnect();
             this._resizeObserver = null;
@@ -218,18 +221,25 @@ class NuiGraph extends HTMLElement {
         }
     }
 
+    _onVisibilityChange() {
+        if (!document.hidden && this._connected && this.clientWidth > 0 && this.clientHeight > 0) {
+            this._scheduleDraw();
+        }
+    }
+
     _setupResizeObserver() {
         if (typeof ResizeObserver === 'undefined') return;
         this._resizeObserver = new ResizeObserver((entries) => {
             for (const entry of entries) {
                 const cr = entry.contentRect;
                 if (cr.width > 0 && cr.height > 0) {
-                    if (this._width !== cr.width || this._height !== cr.height) {
+                    const wasZero = (this._width === 0 || this._height === 0);
+                    if (this._width !== cr.width || this._height !== cr.height || wasZero) {
                         this._pendingWidth = cr.width;
                         this._pendingHeight = cr.height;
 
-                        // Immediate first layout if dimensions were uninitialized
-                        if (this._width === 0 || this._height === 0) {
+                        // Immediate first layout or restoring from hidden state
+                        if (wasZero) {
                             this._width = this._pendingWidth;
                             this._height = this._pendingHeight;
                             this._syncCanvasResolution();
@@ -250,6 +260,9 @@ class NuiGraph extends HTMLElement {
                             });
                         }
                     }
+                } else {
+                    this._width = 0;
+                    this._height = 0;
                 }
             }
         });
@@ -523,26 +536,16 @@ class NuiGraph extends HTMLElement {
 
     /**
      * Low-power paint scheduler: batches multiple rapid updates into the next animation frame.
-     * Skips drawing if tab/window is hidden.
+     * Skips drawing if tab/window is hidden or element has zero dimensions.
      */
     _scheduleDraw() {
         if (this._needsRedraw) return;
-        if (document.hidden || this.closest('[hidden]') || !this.isConnected) {
-            this._needsRedraw = true;
-            if (document.hidden) {
-                document.addEventListener('visibilitychange', () => {
-                    if (!document.hidden && this._needsRedraw) {
-                        this._needsRedraw = false;
-                        this._render();
-                    }
-                }, { once: true });
-            }
-            return;
-        }
-
         this._needsRedraw = true;
         requestAnimationFrame(() => {
             this._needsRedraw = false;
+            if (document.hidden || !this._connected || this.clientWidth === 0 || this.clientHeight === 0) {
+                return;
+            }
             this._render();
         });
     }
