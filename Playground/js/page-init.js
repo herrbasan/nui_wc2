@@ -1714,6 +1714,140 @@ nui.registerPage('addons/context-menu', {
 	}
 });
 
+nui.registerPage('addons/graph', {
+	html: 'addons/graph.html',
+	async init(element, params, nui) {
+		await import('../../NUI/lib/modules/nui-graph.js');
+
+		const liveGraph = element.querySelector('#live-stream-graph');
+		const valBadge = element.querySelector('#stream-value-badge');
+		const toggleBtn = element.querySelector('#btn-stream-toggle button') || element.querySelector('#btn-stream-toggle');
+		const spikeBtn = element.querySelector('#btn-stream-spike button') || element.querySelector('#btn-stream-spike');
+
+		let currentVal = 40;
+		let isRunning = true;
+		let timer = null;
+
+		// Seed initial history
+		const initial = [];
+		for (let i = 0; i < 60; i++) {
+			currentVal += (Math.random() - 0.48) * 6;
+			currentVal = Math.max(10, Math.min(90, currentVal));
+			initial.push(Math.round(currentVal));
+		}
+		if (liveGraph && liveGraph.draw) {
+			liveGraph.draw(initial);
+		}
+
+		function tick() {
+			if (!liveGraph || !liveGraph.push) return;
+			currentVal += (Math.random() - 0.48) * 8;
+			currentVal = Math.max(5, Math.min(95, currentVal));
+			const rounded = Math.round(currentVal);
+			liveGraph.push(rounded);
+			if (valBadge) valBadge.textContent = `Value: ${rounded}%`;
+		}
+
+		function startStream() {
+			if (timer) clearInterval(timer);
+			timer = setInterval(tick, 200);
+			isRunning = true;
+			if (toggleBtn) toggleBtn.textContent = 'Pause Stream';
+		}
+
+		function stopStream() {
+			if (timer) clearInterval(timer);
+			timer = null;
+			isRunning = false;
+			if (toggleBtn) toggleBtn.textContent = 'Resume Stream';
+		}
+
+		toggleBtn?.addEventListener('click', () => {
+			if (isRunning) stopStream();
+			else startStream();
+		});
+
+		spikeBtn?.addEventListener('click', () => {
+			if (!liveGraph || !liveGraph.push) return;
+			currentVal = Math.min(100, currentVal + 40);
+			liveGraph.push(currentVal);
+			if (valBadge) valBadge.textContent = `Value: ${Math.round(currentVal)}%`;
+		});
+
+		startStream();
+
+		// ── Section 3: Adaptive Hybrid Scale Demo Setup ──
+		const rawScaleGraph = element.querySelector('#graph-raw-scale');
+		const adaptScaleGraph = element.querySelector('#graph-adaptive-scale');
+		const ceilingBadge = element.querySelector('#adaptive-ceiling-badge');
+		const btnSimIdle = element.querySelector('#btn-sim-idle');
+		const btnSimBurst = element.querySelector('#btn-sim-burst');
+
+		function feedIdle() {
+			const idleData = [];
+			for (let i = 0; i < 40; i++) {
+				idleData.push(+(0.1 + Math.random() * 0.25).toFixed(2));
+			}
+			rawScaleGraph?.draw(idleData);
+			adaptScaleGraph?.draw(idleData);
+			if (ceilingBadge && adaptScaleGraph) {
+				requestAnimationFrame(() => {
+					ceilingBadge.textContent = `Ceiling: ${adaptScaleGraph.ceiling} MB/s (Floor-max active)`;
+				});
+			}
+		}
+
+		function feedBurst() {
+			const burstData = [];
+			for (let i = 0; i < 40; i++) {
+				if (i > 18 && i < 26) {
+					burstData.push(+(28 + Math.random() * 12).toFixed(1));
+				} else {
+					burstData.push(+(0.2 + Math.random() * 0.3).toFixed(2));
+				}
+			}
+			rawScaleGraph?.draw(burstData);
+			adaptScaleGraph?.draw(burstData);
+			if (ceilingBadge && adaptScaleGraph) {
+				requestAnimationFrame(() => {
+					ceilingBadge.textContent = `Ceiling: ${adaptScaleGraph.ceiling} MB/s (Ladder snapped to 50)`;
+				});
+			}
+		}
+
+		btnSimIdle?.addEventListener('click', feedIdle);
+		btnSimBurst?.addEventListener('click', feedBurst);
+		feedIdle();
+
+		// ── Section 4: Time Scrubbing Demo Setup ──
+		const scrubGraph = element.querySelector('#graph-scrubbing-demo');
+		if (scrubGraph) {
+			const historyData = [];
+			let baseVal = 25;
+			for (let i = 0; i < 120; i++) {
+				if (i > 35 && i < 48) {
+					// Historical spike 15-18 mins ago
+					historyData.push(Math.round(85 + Math.random() * 45));
+				} else {
+					baseVal += (Math.random() - 0.5) * 4;
+					baseVal = Math.max(15, Math.min(38, baseVal));
+					historyData.push(Math.round(baseVal));
+				}
+			}
+			scrubGraph.draw(historyData);
+		}
+
+		// Lifecycle hooks
+		element.hide = () => {
+			stopStream();
+		};
+
+		element.show = () => {
+			if (!isRunning) startStream();
+		};
+	}
+});
+
 nui.registerPage('addons/lightbox', {
 	html: 'addons/lightbox.html',
 	init(element, params, nui) {

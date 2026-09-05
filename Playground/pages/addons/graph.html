@@ -1,0 +1,242 @@
+<!-- 
+================================================================================
+NUI PLAYGROUND PAGE: nui-graph Addon
+================================================================================
+-->
+<div class="page-graph">
+
+    <!-- LLM Guide - Lazy documentation -->
+    <nui-details summary="LLM Guide - nui-graph" src="../documentation/addons/graph.md" lazy>
+    </nui-details>
+
+    <header>
+        <h1>Graph Addon (&lt;nui-graph&gt;)</h1>
+        <p class="lead">Ultra-fast, low-power canvas sparkline component for live telemetry and sensor waveforms.</p>
+    </header>
+
+    <!-- 1. Declarative Demo -->
+    <section>
+        <h2>Declarative Usage</h2>
+        <p>Define sparklines directly in HTML with colors, min/max limits, and initial JSON data.</p>
+
+        <div class="demo-area" style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <div>
+                <h4 style="margin: 0 0 0.5rem 0; color: var(--color-text-dim);">Accent Blue with In-Graph Label (Sysmon Sensor Style)</h4>
+                <div style="height: 48px; background: rgba(180, 180, 180, 0.08); border-radius: 4px; padding: 4px;">
+                    <nui-graph 
+                        label="CPU Package"
+                        stroke="rgb(76, 132, 229)" 
+                        fill="rgba(76, 132, 229, 0.25)" 
+                        min="0" 
+                        max="100" 
+                        data="[20, 24, 22, 28, 35, 42, 38, 45, 60, 58, 62, 55, 48, 52, 65, 70, 68, 72, 85, 78, 80, 75, 68, 72, 80]">
+                    </nui-graph>
+                </div>
+            </div>
+
+            <div>
+                <h4 style="margin: 0 0 0.5rem 0; color: var(--color-text-dim);">Telemetry Multi-Color Variants with Positioned Labels</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                    <!-- Orange WAN RX -->
+                    <div style="height: 40px; background: rgba(180, 180, 180, 0.08); border-radius: 4px; padding: 4px;">
+                        <nui-graph label="WAN 1 RX" stroke="#e67e22" data="[5, 12, 8, 14, 25, 18, 30, 22, 19, 45, 32, 28, 40, 38, 50]"></nui-graph>
+                    </div>
+                    <!-- Magenta WAN TX -->
+                    <div style="height: 40px; background: rgba(180, 180, 180, 0.08); border-radius: 4px; padding: 4px;">
+                        <nui-graph label="WAN 1 TX" label-position="top-right" stroke="#9b59b6" data="[15, 18, 12, 10, 14, 20, 16, 24, 22, 18, 25, 20, 15, 12, 10]"></nui-graph>
+                    </div>
+                    <!-- Green Uplink / Top Talkers -->
+                    <div style="height: 40px; background: rgba(180, 180, 180, 0.08); border-radius: 4px; padding: 4px;">
+                        <nui-graph label="Uplink" label-position="bottom-left" stroke="#2ecc71" data="[2, 4, 3, 5, 8, 6, 12, 10, 8, 15, 14, 18, 22, 20, 25]"></nui-graph>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <nui-code>
+            <script type="example" data-lang="html">
+<nui-graph 
+    stroke="rgb(76, 132, 229)" 
+    fill="rgba(76, 132, 229, 0.25)" 
+    min="0" 
+    max="100" 
+    data="[20, 24, 22, 28, 35, 42, 38, 45, 60, ...]">
+</nui-graph>
+            </script>
+        </nui-code>
+    </section>
+
+    <!-- 2. Live High-Frequency Streaming Demo -->
+    <section>
+        <h2>Live Realtime Streaming (Programmatic Fast-Path)</h2>
+        <p>Demonstrates sub-millisecond updates using the <code>.push(value)</code> API, mimicking live PC hardware monitoring.</p>
+
+        <div class="demo-area">
+            <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;">
+                <nui-button id="btn-stream-toggle" variant="primary">
+                    <button type="button">Pause Stream</button>
+                </nui-button>
+                <nui-button id="btn-stream-spike">
+                    Spike Value (+40)
+                </nui-button>
+                <span id="stream-value-badge" style="font-weight: bold; font-family: monospace; font-size: 1.1rem; color: #4c84e9;">Value: 45%</span>
+            </div>
+
+            <div style="height: 64px; background: rgba(180, 180, 180, 0.08); border-radius: 4px; padding: 4px;">
+                <nui-graph 
+                    id="live-stream-graph" 
+                    stroke="rgb(76, 132, 229)" 
+                    fill="rgba(76, 132, 229, 0.2)" 
+                    min="0" 
+                    max="100" 
+                    capacity="120">
+                </nui-graph>
+            </div>
+        </div>
+
+        <nui-code>
+            <script type="example" data-lang="javascript">
+const graph = element.querySelector('#live-stream-graph');
+
+// Push continuous 1-second telemetry samples
+setInterval(() => {
+    const cpuLoad = fetchLatestMetric();
+    graph.push(cpuLoad);
+}, 1000);
+            </script>
+        </nui-code>
+    </section>
+
+    <!-- 3. Adaptive Hybrid Scaling (Anti-Jitter) Demo -->
+    <section>
+        <h2>Adaptive Hybrid Scaling (Anti-Jitter Ceiling)</h2>
+        <p>Compare raw auto-scaling (which magnifies idle noise to 100% height) with <strong>Adaptive Hybrid Scaling</strong> (snaps to friendly 1-2-5 ladders with a <code>floor-max</code> boundary).</p>
+
+        <div class="demo-area">
+            <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;">
+                <nui-button id="btn-sim-idle">
+                    Simulate Idle (0.1 - 0.4 MB/s)
+                </nui-button>
+                <nui-button id="btn-sim-burst">
+                    Simulate Spike (35 MB/s)
+                </nui-button>
+                <span id="adaptive-ceiling-badge" style="font-family: monospace; font-size: 0.95rem; color: var(--color-text-dim);">Ceiling: 10 MB/s</span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div>
+                    <h4 style="margin: 0 0 0.5rem 0; color: #e74c3c;">Standard Auto-Scale (Jittery / Noise Amplified)</h4>
+                    <div style="height: 64px; background: rgba(180, 180, 180, 0.08); border-radius: 4px; padding: 4px;">
+                        <nui-graph id="graph-raw-scale" stroke="#e74c3c" fill="rgba(231, 76, 60, 0.2)" capacity="60"></nui-graph>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--color-text-dim); margin-top: 0.5rem;">Idle values (0.2 MB/s) stretch to the full ceiling!</p>
+                </div>
+
+                <div>
+                    <h4 style="margin: 0 0 0.5rem 0; color: #2ecc71;">Adaptive Scale (<code>scale="adaptive" floor-max="5"</code>)</h4>
+                    <div style="height: 64px; background: rgba(180, 180, 180, 0.08); border-radius: 4px; padding: 4px;">
+                        <nui-graph id="graph-adaptive-scale" scale="adaptive" floor-max="5" stroke="#2ecc71" fill="rgba(46, 204, 113, 0.2)" capacity="60"></nui-graph>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--color-text-dim); margin-top: 0.5rem;">Idle stays calm on the floor; real spikes scale cleanly to 50.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. Interactive Time-Scrubbing & History Inspection -->
+    <section>
+        <h2>Time-Aware Scrubbing & History Inspection</h2>
+        <p>Hover over the graph to scrub historical telemetry. Displays relative time offset (e.g., <code>-18m 20s ago</code>) and metric value with zero compute when not hovered.</p>
+
+        <div class="demo-area">
+            <div style="height: 80px; background: rgba(180, 180, 180, 0.08); border-radius: 4px; padding: 6px; position: relative;">
+                <nui-graph 
+                    id="graph-scrubbing-demo" 
+                    interactive 
+                    scale="adaptive" 
+                    floor-max="10" 
+                    interval="10000" 
+                    unit="W" 
+                    time-format="both"
+                    decimals="1"
+                    stroke="#3498db" 
+                    fill="rgba(52, 152, 219, 0.25)" 
+                    capacity="120">
+                </nui-graph>
+            </div>
+            <p style="font-size: 0.85rem; color: var(--color-text-dim); margin-top: 0.5rem;">Configured with <code>unit="W"</code>, <code>time-format="both"</code> (relative + clock), and <code>decimals="1"</code> over 120 samples at 10s intervals.</p>
+        </div>
+    </section>
+
+</div>
+
+<script type="module">
+import { nui } from '../../NUI/nui.js';
+import '../../NUI/lib/modules/nui-graph.js';
+
+nui.registerPage('addons/graph', {
+    init(element) {
+        const liveGraph = element.querySelector('#live-stream-graph');
+        const valBadge = element.querySelector('#stream-value-badge');
+        const toggleBtn = element.querySelector('#btn-stream-toggle button');
+        const spikeBtn = element.querySelector('#btn-stream-spike');
+
+        let currentVal = 40;
+        let isRunning = true;
+        let timer = null;
+
+        // Seed initial history
+        const initial = [];
+        for (let i = 0; i < 60; i++) {
+            currentVal += (Math.random() - 0.48) * 6;
+            currentVal = Math.max(10, Math.min(90, currentVal));
+            initial.push(Math.round(currentVal));
+        }
+        liveGraph.draw(initial);
+
+        function tick() {
+            currentVal += (Math.random() - 0.48) * 8;
+            currentVal = Math.max(5, Math.min(95, currentVal));
+            const rounded = Math.round(currentVal);
+            liveGraph.push(rounded);
+            if (valBadge) valBadge.textContent = `Value: ${rounded}%`;
+        }
+
+        function startStream() {
+            if (timer) clearInterval(timer);
+            timer = setInterval(tick, 200);
+            isRunning = true;
+            if (toggleBtn) toggleBtn.textContent = 'Pause Stream';
+        }
+
+        function stopStream() {
+            if (timer) clearInterval(timer);
+            timer = null;
+            isRunning = false;
+            if (toggleBtn) toggleBtn.textContent = 'Resume Stream';
+        }
+
+        toggleBtn?.addEventListener('click', () => {
+            if (isRunning) stopStream();
+            else startStream();
+        });
+
+        spikeBtn?.addEventListener('click', () => {
+            currentVal = Math.min(100, currentVal + 40);
+            liveGraph.push(currentVal);
+            if (valBadge) valBadge.textContent = `Value: ${Math.round(currentVal)}%`;
+        });
+
+        startStream();
+
+        // Lifecycle management: pause streaming when navigating away from this playground page
+        element.hide = () => {
+            stopStream();
+        };
+
+        element.show = () => {
+            if (!isRunning) startStream();
+        };
+    }
+});
+</script>

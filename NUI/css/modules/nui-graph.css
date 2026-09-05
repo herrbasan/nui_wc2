@@ -1,0 +1,92 @@
+/**
+ * nui-graph.css - Lightweight styling for nui-graph canvas component
+ */
+nui-graph {
+    display: block;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 24px;
+    box-sizing: border-box;
+}
+
+nui-graph .graph-canvas-wrap {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+nui-graph canvas {
+    display: block;
+    transform-origin: 0 0;
+}
+
+/* Subtle Hover Tooltip / HUD Chip (Zero framework, pure CSS) */
+nui-graph .graph-tooltip {
+    position: absolute;
+    pointer-events: none;
+    background: rgba(18, 20, 24, 0.94);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    color: #f0f3f6;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+    font-size: 11px;
+    line-height: 1.3;
+    padding: 3px 7px;
+    border-radius: 4px;
+    white-space: nowrap;
+    z-index: 10;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    transition: opacity 0.1s ease;
+    opacity: 0;
+}
+
+nui-graph .graph-tooltip.visible {
+    opacity: 1;
+}
+
+nui-graph .graph-tooltip .val {
+    font-weight: 700;
+    color: #fff;
+}
+
+nui-graph .graph-tooltip .time {
+    color: rgba(255, 255, 255, 0.6);
+    margin-left: 5px;
+    font-size: 10px;
+}
+
+/* In-graph Title / Sensor Label */
+nui-graph .graph-label {
+    position: absolute;
+    top: 5px;
+    left: 8px;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1;
+    color: rgba(255, 255, 255, 0.45);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    pointer-events: none;
+    z-index: 2;
+    user-select: none;
+}
+
+nui-graph[label-position="top-right"] .graph-label {
+    left: auto;
+    right: 8px;
+}
+
+nui-graph[label-position="bottom-left"] .graph-label {
+    top: auto;
+    bottom: 5px;
+}
+
+nui-graph[label-position="bottom-right"] .graph-label {
+    top: auto;
+    bottom: 5px;
+    left: auto;
+    right: 8px;
+}
