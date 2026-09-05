@@ -123,22 +123,22 @@ setInterval(() => {
                 <span id="adaptive-ceiling-badge" style="font-family: monospace; font-size: 0.95rem; color: var(--color-text-dim);">Ceiling: 10 MB/s</span>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-                <div>
-                    <h4 style="margin: 0 0 0.5rem 0; color: #e74c3c;">Standard Auto-Scale (Jittery / Noise Amplified)</h4>
-                    <div style="height: 64px; background: rgba(180, 180, 180, 0.08); border-radius: 4px; padding: 4px;">
-                        <nui-graph id="graph-raw-scale" stroke="#e74c3c" fill="rgba(231, 76, 60, 0.2)" capacity="60"></nui-graph>
-                    </div>
-                    <p style="font-size: 0.85rem; color: var(--color-text-dim); margin-top: 0.5rem;">Idle values (0.2 MB/s) stretch to the full ceiling!</p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; row-gap: 0.75rem; column-gap: 1.5rem; align-items: start;">
+                <!-- Row 1: Aligned Titles -->
+                <h4 style="margin: 0; color: #e74c3c;">Standard Auto-Scale (Jittery / Noise Amplified)</h4>
+                <h4 style="margin: 0; color: #2ecc71;">Adaptive Scale (<code>scale="adaptive" floor-max="5"</code>)</h4>
+
+                <!-- Row 2: Aligned Graphs -->
+                <div style="height: 64px; background: rgba(180, 180, 180, 0.08); border-radius: 4px; padding: 4px;">
+                    <nui-graph id="graph-raw-scale" stroke="#e74c3c" fill="rgba(231, 76, 60, 0.2)" capacity="60"></nui-graph>
+                </div>
+                <div style="height: 64px; background: rgba(180, 180, 180, 0.08); border-radius: 4px; padding: 4px;">
+                    <nui-graph id="graph-adaptive-scale" scale="adaptive" floor-max="5" stroke="#2ecc71" fill="rgba(46, 204, 113, 0.2)" capacity="60"></nui-graph>
                 </div>
 
-                <div>
-                    <h4 style="margin: 0 0 0.5rem 0; color: #2ecc71;">Adaptive Scale (<code>scale="adaptive" floor-max="5"</code>)</h4>
-                    <div style="height: 64px; background: rgba(180, 180, 180, 0.08); border-radius: 4px; padding: 4px;">
-                        <nui-graph id="graph-adaptive-scale" scale="adaptive" floor-max="5" stroke="#2ecc71" fill="rgba(46, 204, 113, 0.2)" capacity="60"></nui-graph>
-                    </div>
-                    <p style="font-size: 0.85rem; color: var(--color-text-dim); margin-top: 0.5rem;">Idle stays calm on the floor; real spikes scale cleanly to 50.</p>
-                </div>
+                <!-- Row 3: Aligned Captions -->
+                <p style="font-size: 0.85rem; color: var(--color-text-dim); margin: 0;">Idle values (0.2 MB/s) stretch to the full ceiling!</p>
+                <p style="font-size: 0.85rem; color: var(--color-text-dim); margin: 0;">Idle stays calm on the floor; real spikes scale cleanly to 50.</p>
             </div>
         </div>
     </section>
