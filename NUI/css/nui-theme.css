@@ -721,6 +721,13 @@ nui-button {
 	margin: 0;
 }
 
+/* Ghost layout component (registered without setup). Give the host a real
+   layout box so a11y/test tooling (Playwright visibility, offsetParent)
+   reports it correctly — the host must not rely on inner content for size. */
+nui-icon-button {
+	display: inline-block;
+}
+
 nui-button-container {
 	display: flex;
 	flex-wrap: wrap;

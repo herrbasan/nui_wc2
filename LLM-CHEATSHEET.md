@@ -306,6 +306,8 @@ If you MUST apply CSS (spacing on your own wrappers, very rare theming), use ONL
 | Events | `nui-change`, `nui-select`, `nui-open`, `nui-close`, `nui-clear` |
 | Methods | `.open()`, `.close()`, `.setValue(v)`, `.getValue()`, `.clear()`, `.setItems(arr)`, `.addItem(v,l)`, `.removeItem(v)`, `.enable()`, `.disable()`, `.loadOptions(asyncFn)` |
 
+⚠️ **Populating options: ALWAYS use the programmatic API** — `.setItems()` / `.addItem()`. They are synchronous, dispatch events, and integrate with `.getValue()`/`.setValue()`. Writing `<option>` elements into the inner `<select>` directly is only a tolerated fallback (a MutationObserver rebuilds the dropdown, but no events fire); in older NUI copies it silently does nothing visible. When verifying state, read what the component RENDERS (`.getItems()`, visible rows), not the slotted DOM.
+
 📖 **Full docs:** [`documentation/components/select.md`](documentation/components/select.md)
 
 ### nui-slider

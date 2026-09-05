@@ -71,6 +71,32 @@ To enable multiple selections, simply apply the native `multiple` attribute dire
 </nui-select>
 ```
 
+## Populating Options Dynamically
+
+**Programmatic API is the preferred method.** Always reach for `.setItems()` / `.addItem()` / `.removeItem()` first — they are synchronous, validated, dispatch the matching events (`nui-items-replace`, `nui-item-add`, `nui-item-remove`), and integrate with `.setValue()` / `.getItems()` state management.
+
+```javascript
+const select = element.el('nui-select');
+
+// ✅ PREFERRED — programmatic data API
+select.setItems([
+	{ value: 'us', label: 'United States' },
+	{ value: 'uk', label: 'United Kingdom' }
+]);
+```
+
+Direct DOM writes into the inner `<select>` also work — the component observes mutations on the slotted select and rebuilds the visible dropdown automatically — but they are a **compatibility fallback, not the recommended path**: no events are dispatched, and the rebuild is deferred to a microtask.
+
+```javascript
+// ⚠️ WORKS, but fallback — no events, deferred sync
+const inner = select.el('select');
+inner.innerHTML = '<option value="us">United States</option>';
+```
+
+> ⚠️ **Historical trap:** the dropdown renders from component state, not from a live read of the slotted DOM. Before the mutation observer existed, `innerHTML` population left the visible dropdown stale while the DOM silently held your options — a failure with zero errors. If you maintain an old vendored copy of NUI (pre-observer), direct DOM writes fail silently: always use the programmatic API.
+
+> **Verifying state (LLM/test consumers):** read what the component RENDERS (open the dropdown, read the visible rows, use `.getItems()`), not the underlying slotted DOM — the two can diverge.
+
 ## Attributes
 
 | Attribute | Type | Description |

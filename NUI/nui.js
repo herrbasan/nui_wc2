@@ -3581,19 +3581,21 @@ registerComponent('nui-select', (element) => {
 		if (options.disabled) opt.disabled = true;
 		if (options.selected) opt.selected = true;
 
-		if (options.group) {
-			// Find or create optgroup
-			let group = Array.from(select.querySelectorAll('optgroup')).find(g => g.label === options.group);
-			if (!group) {
-				group = document.createElement('optgroup');
-				group.label = options.group;
-				select.appendChild(group);
+		mutateOptions(() => {
+			if (options.group) {
+				// Find or create optgroup
+				let group = Array.from(select.querySelectorAll('optgroup')).find(g => g.label === options.group);
+				if (!group) {
+					group = document.createElement('optgroup');
+					group.label = options.group;
+					select.appendChild(group);
+				}
+				group.appendChild(opt);
+			} else {
+				select.appendChild(opt);
 			}
-			group.appendChild(opt);
-		} else {
-			select.appendChild(opt);
-		}
-		buildOptions();
+			buildOptions();
+		});
 		element.dispatchEvent(new CustomEvent('nui-item-add', { 
 			bubbles: true, 
 			detail: { value, label, options } 
@@ -3604,9 +3606,11 @@ registerComponent('nui-select', (element) => {
 	const removeItem = (value) => {
 		const opt = Array.from(select.options).find(o => o.value === value);
 		if (!opt) return false;
-		opt.remove();
-		rowCache.delete(opt);
-		buildOptions();
+		mutateOptions(() => {
+			opt.remove();
+			rowCache.delete(opt);
+			buildOptions();
+		});
 		element.dispatchEvent(new CustomEvent('nui-item-remove', { 
 			bubbles: true, 
 			detail: { value } 
@@ -3618,35 +3622,37 @@ registerComponent('nui-select', (element) => {
 		// Replace all options verbatim — no placeholder special-casing.
 		// An explicit <option value="" disabled> in markup is preserved via markup,
 		// not via data; setItems is a data API and replaces everything.
-		select.innerHTML = '';
+		mutateOptions(() => {
+			select.innerHTML = '';
 
-		// Add new items
-		items.forEach(item => {
-			if (typeof item === 'string') {
-				const opt = document.createElement('option');
-				opt.value = item;
-				opt.textContent = item;
-				select.appendChild(opt);
-			} else if (item.group) {
-				const group = document.createElement('optgroup');
-				group.label = item.group;
-				item.options?.forEach(sub => {
+			// Add new items
+			items.forEach(item => {
+				if (typeof item === 'string') {
 					const opt = document.createElement('option');
-					opt.value = sub.value || sub;
-					opt.textContent = sub.label || sub.value || sub;
-					opt.disabled = sub.disabled || false;
-					group.appendChild(opt);
-				});
-				select.appendChild(group);
-			} else {
-				const opt = document.createElement('option');
-				opt.value = item.value;
-				opt.textContent = item.label || item.value;
-				opt.disabled = item.disabled || false;
-				select.appendChild(opt);
-			}
+					opt.value = item;
+					opt.textContent = item;
+					select.appendChild(opt);
+				} else if (item.group) {
+					const group = document.createElement('optgroup');
+					group.label = item.group;
+					item.options?.forEach(sub => {
+						const opt = document.createElement('option');
+						opt.value = sub.value || sub;
+						opt.textContent = sub.label || sub.value || sub;
+						opt.disabled = sub.disabled || false;
+						group.appendChild(opt);
+					});
+					select.appendChild(group);
+				} else {
+					const opt = document.createElement('option');
+					opt.value = item.value;
+					opt.textContent = item.label || item.value;
+					opt.disabled = item.disabled || false;
+					select.appendChild(opt);
+				}
+			});
+			buildOptions();
 		});
-		buildOptions();
 		element.dispatchEvent(new CustomEvent('nui-items-replace', { 
 			bubbles: true, 
 			detail: { count: items.length } 
@@ -4018,6 +4024,25 @@ registerComponent('nui-select', (element) => {
 	}
 	buildOptions();
 
+	// ##### DOM OBSERVER (external population support)
+	// The intuitive consumer path — writing <option> elements into the inner
+	// <select> directly — must work. The dropdown renders from the select's
+	// children, so observe mutations and rebuild. Internal writes (setItems,
+	// addItem, removeItem) mutate the same subtree; they run through
+	// mutateOptions() which swallows the observer's pending records so no
+	// redundant rebuild happens.
+	const domObserver = new MutationObserver(() => buildOptions());
+	const mutateOptions = (fn) => {
+		try {
+			fn();
+		} finally {
+			// Clear pending records so the async observer callback never fires
+			// for internal mutations.
+			domObserver.takeRecords();
+		}
+	};
+	domObserver.observe(select, { childList: true, subtree: true });
+
 	// ##### PUBLIC API
 	element.open = open;
 	element.close = close;
@@ -4068,6 +4093,7 @@ registerComponent('nui-select', (element) => {
 	return () => {
 		openSelects.delete(element);
 		document.removeEventListener('click', onOutsideClick);
+		domObserver.disconnect();
 	};
 });
 
