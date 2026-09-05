@@ -90,6 +90,9 @@ class NuiGraph extends HTMLElement {
         // Bind event listeners
         this._onMouseMove = this._onMouseMove.bind(this);
         this._onMouseLeave = this._onMouseLeave.bind(this);
+        this._onTouchStart = this._onTouchStart.bind(this);
+        this._onTouchMove = this._onTouchMove.bind(this);
+        this._onTouchEnd = this._onTouchEnd.bind(this);
     }
 
     connectedCallback() {
@@ -264,10 +267,20 @@ class NuiGraph extends HTMLElement {
             }
             this._wrap.style.pointerEvents = 'auto';
             this._wrap.style.cursor = 'crosshair';
+            this._wrap.style.touchAction = 'none'; // allow dragging finger across graph without scrolling page
             this._wrap.removeEventListener('mousemove', this._onMouseMove);
             this._wrap.removeEventListener('mouseleave', this._onMouseLeave);
+            this._wrap.removeEventListener('touchstart', this._onTouchStart);
+            this._wrap.removeEventListener('touchmove', this._onTouchMove);
+            this._wrap.removeEventListener('touchend', this._onTouchEnd);
+            this._wrap.removeEventListener('touchcancel', this._onTouchEnd);
+
             this._wrap.addEventListener('mousemove', this._onMouseMove, { passive: true });
             this._wrap.addEventListener('mouseleave', this._onMouseLeave, { passive: true });
+            this._wrap.addEventListener('touchstart', this._onTouchStart, { passive: false });
+            this._wrap.addEventListener('touchmove', this._onTouchMove, { passive: false });
+            this._wrap.addEventListener('touchend', this._onTouchEnd, { passive: true });
+            this._wrap.addEventListener('touchcancel', this._onTouchEnd, { passive: true });
         } else {
             this._teardownInteractivity();
         }
@@ -277,21 +290,27 @@ class NuiGraph extends HTMLElement {
         if (this._wrap) {
             this._wrap.style.pointerEvents = 'none';
             this._wrap.style.cursor = 'default';
+            this._wrap.style.touchAction = '';
             this._wrap.removeEventListener('mousemove', this._onMouseMove);
             this._wrap.removeEventListener('mouseleave', this._onMouseLeave);
+            this._wrap.removeEventListener('touchstart', this._onTouchStart);
+            this._wrap.removeEventListener('touchmove', this._onTouchMove);
+            this._wrap.removeEventListener('touchend', this._onTouchEnd);
+            this._wrap.removeEventListener('touchcancel', this._onTouchEnd);
         }
         if (this._tooltip) {
             this._tooltip.remove();
             this._tooltip = null;
         }
+        this._hoverCursorX = -1;
         this._hoverIndex = -1;
         this._hoverX = -1;
     }
 
-    _onMouseMove(e) {
-        if (!this._isInteractive || !this._data || this._data.length < 2) return;
+    _handlePointerPos(clientX) {
+        if (!this._data || this._data.length < 2) return;
         const rect = this._wrap.getBoundingClientRect();
-        this._hoverCursorX = e.clientX - rect.left;
+        this._hoverCursorX = clientX - rect.left;
         const step = rect.width / (this._data.length - 1);
         let index = Math.round(this._hoverCursorX / step);
         index = Math.max(0, Math.min(this._data.length - 1, index));
@@ -302,7 +321,35 @@ class NuiGraph extends HTMLElement {
         this._scheduleDraw();
     }
 
+    _onMouseMove(e) {
+        if (!this._isInteractive) return;
+        this._handlePointerPos(e.clientX);
+    }
+
     _onMouseLeave() {
+        if (!this._isInteractive) return;
+        this._hoverCursorX = -1;
+        this._hoverIndex = -1;
+        this._hoverX = -1;
+        if (this._tooltip) {
+            this._tooltip.classList.remove('visible');
+        }
+        this._scheduleDraw();
+    }
+
+    _onTouchStart(e) {
+        if (!this._isInteractive || !e.touches || e.touches.length === 0) return;
+        if (e.cancelable) e.preventDefault();
+        this._handlePointerPos(e.touches[0].clientX);
+    }
+
+    _onTouchMove(e) {
+        if (!this._isInteractive || !e.touches || e.touches.length === 0) return;
+        if (e.cancelable) e.preventDefault();
+        this._handlePointerPos(e.touches[0].clientX);
+    }
+
+    _onTouchEnd() {
         if (!this._isInteractive) return;
         this._hoverCursorX = -1;
         this._hoverIndex = -1;
