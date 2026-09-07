@@ -1,103 +1,384 @@
 /**
  * NUI File Tree - Addon Component Styles
- * Lazy-loading file explorer tree (ARIA treeview)
+ * VS Code-inspired high-density file explorer tree (ARIA treeview)
  */
 
 nui-file-tree {
 	display: block;
 	overflow: auto;
+	box-sizing: border-box;
+	--nft-row-height: calc(var(--nui-space) * 1.85); /* default cozy density ~29.6px */
+	--nft-font-size: var(--font-size-small);
+	--nft-icon-size: 1.1rem;
+	--nft-caret-size: 1.1rem;
+	--nft-row-gap: 2px;
+}
+
+/* Density variants: compact vs cozy */
+nui-file-tree[density="compact"],
+nui-file-tree.compact {
+	--nft-row-height: calc(var(--nui-space) * 1.5); /* 24px high density */
+	--nft-font-size: var(--font-size-small);
+	--nft-icon-size: 1rem;
+	--nft-caret-size: 1rem;
+	--nft-row-gap: 0px;
+}
+
+nui-file-tree[density="cozy"],
+nui-file-tree.cozy {
+	--nft-row-height: calc(var(--nui-space) * 2); /* 32px comfortable density */
+	--nft-font-size: var(--font-size-base);
+	--nft-icon-size: 1.2rem;
+	--nft-caret-size: 1.2rem;
+	--nft-row-gap: 3px;
 }
 
 .nui-file-tree {
 	font-family: var(--system-ui);
-	font-size: var(--font-size-small);
-	padding: var(--nui-space-quarter) 0;
+	font-size: var(--nft-font-size);
+	line-height: 1;
 	user-select: none;
+	width: 100%;
+	box-sizing: border-box;
+	padding: var(--nui-space-eighth) 0;
 }
+
+/* =============================================================================
+   ROW & HIT TARGETS
+   ============================================================================= */
 
 .nui-file-tree-row {
 	display: flex;
 	align-items: center;
-	gap: var(--nui-space-quarter);
-	height: calc(var(--nui-space) * 1.75);
+	height: var(--nft-row-height);
+	margin-bottom: var(--nft-row-gap);
 	padding-right: var(--nui-space-half);
-	padding-left: calc(var(--nui-space-quarter) + var(--nft-level, 0) * var(--nui-space));
-	border-radius: var(--border-radius1);
+	padding-left: var(--nui-space-quarter);
 	color: var(--text-color);
 	cursor: pointer;
 	white-space: nowrap;
 	outline: none;
+	position: relative;
+	box-sizing: border-box;
+	border-radius: var(--border-radius1);
+	transition: background-color 0.1s ease;
 }
 
 .nui-file-tree-row:hover {
-	background: var(--color-shade3);
+	background-color: var(--color-shade2);
 }
 
 .nui-file-tree-row:focus-visible {
-	outline: 2px solid var(--color-highlight);
-	outline-offset: -2px;
+	outline: 1px solid var(--color-highlight);
+	outline-offset: -1px;
 }
 
-.nui-file-tree-row.nui-file-tree-selected,
+/* Selected row */
+.nui-file-tree-row.nui-file-tree-selected {
+	background-color: var(--color-shade3);
+	color: var(--text-color);
+}
+
+.nui-file-tree:focus-within .nui-file-tree-row.nui-file-tree-selected {
+	background-color: var(--color-shade3);
+	box-shadow: inset 2px 0 0 var(--color-highlight);
+}
+
 .nui-file-tree-row.nui-file-tree-selected:hover {
-	background: var(--color-highlight);
-	color: var(--color-white);
+	background-color: var(--color-shade4);
+}
+
+/* =============================================================================
+   INDENT GUIDES (VS Code hierarchy lines)
+   ============================================================================= */
+
+.nui-file-tree-indent {
+	display: inline-flex;
+	align-items: center;
+	height: 100%;
+	flex-shrink: 0;
+}
+
+.nui-file-tree-guide {
+	display: inline-block;
+	width: 1rem;
+	height: 100%;
+	position: relative;
+	box-sizing: border-box;
+}
+
+.nui-file-tree-guide::after {
+	content: '';
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0.5rem;
+	width: 1px;
+	background-color: var(--border-shade2);
+	opacity: 0.7;
+	transition: opacity 0.15s ease, background-color 0.15s ease;
+}
+
+.nui-file-tree:hover .nui-file-tree-guide::after {
+	opacity: 0.95;
+}
+
+/* =============================================================================
+   CARETS (TWISTIE) & LOADING
+   ============================================================================= */
+
+.nui-file-tree-caret-wrap {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.1rem;
+	height: 100%;
+	flex-shrink: 0;
+	margin-right: var(--nui-space-eighth);
 }
 
 .nui-file-tree-caret {
-	width: var(--icon-size);
-	height: var(--icon-size);
-	flex-shrink: 0;
-	transition: transform 0.15s ease;
-	opacity: 0.7;
+	width: var(--nft-caret-size);
+	height: var(--nft-caret-size);
+	transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+	opacity: 0.65;
+	color: var(--text-color-dim);
 }
 
-/* Files get a span spacer instead of an icon — no visibility hack needed */
-span.nui-file-tree-caret {
-	opacity: 0;
+.nui-file-tree-row:hover .nui-file-tree-caret {
+	opacity: 1;
+	color: var(--text-color);
 }
 
-.nui-file-tree-row.nui-file-tree-open > .nui-file-tree-caret {
+.nui-file-tree-row.nui-file-tree-open > .nui-file-tree-caret-wrap > .nui-file-tree-caret {
 	transform: rotate(90deg);
 }
 
-.nui-file-tree-row.nui-file-tree-loading > .nui-file-tree-caret {
-	animation: nui-file-tree-pulse 0.8s ease-in-out infinite;
+.nui-file-tree-caret-spacer {
+	width: 1.1rem;
+	height: 100%;
 }
 
-@keyframes nui-file-tree-pulse {
-	0%, 100% { opacity: 0.3; }
-	50% { opacity: 1; }
+.nui-file-tree-row.nui-file-tree-loading > .nui-file-tree-caret-wrap > .nui-file-tree-caret {
+	animation: nui-file-tree-spin 0.75s linear infinite;
+	opacity: 1;
+	color: var(--color-highlight);
 }
+
+@keyframes nui-file-tree-spin {
+	from { transform: rotate(0deg); }
+	to { transform: rotate(360deg); }
+}
+
+/* =============================================================================
+   ICONS & FILE-TYPE ACCENTS
+   ============================================================================= */
 
 .nui-file-tree-icon {
-	width: var(--icon-size);
-	height: var(--icon-size);
+	width: var(--nft-icon-size);
+	height: var(--nft-icon-size);
 	flex-shrink: 0;
+	margin-right: var(--nui-space-quarter);
+	opacity: 0.9;
+	transition: transform 0.1s ease;
+}
+
+.nui-file-tree-row:hover .nui-file-tree-icon {
+	opacity: 1;
+}
+
+/* Directory icon */
+.nft-icon-folder {
+	color: light-dark(#d97706, #eab308);
+}
+
+/* File type colors (VS Code palette) */
+.nft-color-js { color: light-dark(#ca8a04, #facc15); }
+.nft-color-ts { color: light-dark(#2563eb, #38bdf8); }
+.nft-color-jsx { color: light-dark(#0284c7, #22d3ee); }
+.nft-color-json { color: light-dark(#b45309, #fbbf24); }
+.nft-color-html { color: light-dark(#ea580c, #fb923c); }
+.nft-color-css { color: light-dark(#7c3aed, #a78bfa); }
+.nft-color-md { color: light-dark(#0284c7, #38bdf8); }
+.nft-color-img { color: light-dark(#9333ea, #c084fc); }
+.nft-color-media { color: light-dark(#e11d48, #fb7185); }
+.nft-color-archive { color: light-dark(#b45309, #d97706); }
+.nft-color-code { color: light-dark(#059669, #34d399); }
+.nft-color-txt { color: light-dark(#475569, #94a3b8); }
+.nft-color-cfg { color: light-dark(#64748b, #94a3b8); }
+.nft-color-default { color: var(--text-color-dim); }
+
+/* =============================================================================
+   NAME, BADGES & HIGHLIGHT
+   ============================================================================= */
+
+.nui-file-tree-name {
+	flex: 1 1 auto;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: var(--font-size-small);
+	line-height: 1.2;
+}
+
+.nui-file-tree-name mark.nft-match {
+	background: light-dark(rgba(234, 179, 8, 0.35), rgba(234, 179, 8, 0.45));
+	color: inherit;
+	border-radius: 2px;
+	padding: 0 1px;
+}
+
+.nui-file-tree-badge {
+	margin-left: auto;
+	padding-left: var(--nui-space-half);
+	font-size: var(--font-size-xsmall);
+	color: var(--text-color-dim);
+	flex-shrink: 0;
+	font-variant-numeric: tabular-nums;
 	opacity: 0.85;
 }
 
-.nui-file-tree-name {
-	overflow: hidden;
-	text-overflow: ellipsis;
+.nui-file-tree-badge.nft-badge-modified {
+	color: light-dark(#ca8a04, #facc15);
+	font-weight: 600;
 }
 
-.nui-file-tree-group {
-	/* indentation handled per-row via --nft-level */
+.nui-file-tree-badge.nft-badge-added {
+	color: light-dark(#16a34a, #4ade80);
+	font-weight: 600;
 }
+
+/* =============================================================================
+   NOTES / EMPTY STATE
+   ============================================================================= */
 
 .nui-file-tree-note {
-	padding: var(--nui-space-quarter) var(--nui-space-half);
+	display: flex;
+	align-items: center;
+	height: calc(var(--nui-space) * 1.5);
 	color: var(--text-color-dim);
+	font-size: var(--font-size-xsmall);
 	font-style: italic;
+	user-select: none;
+}
+
+.nui-file-tree-note-text {
+	padding-left: calc(1.1rem + var(--nui-space-quarter));
+	opacity: 0.7;
 }
 
 .nui-file-tree-note.nui-file-tree-error {
-	color: var(--text-color-dim);
+	color: var(--palette-alert);
 	font-style: normal;
+}
+
+/* =============================================================================
+   EXPLORER PANEL CHROME (VS Code style container)
+   ============================================================================= */
+
+.nui-file-tree-panel {
+	display: flex;
+	flex-direction: column;
+	border: var(--border-thickness) solid var(--border-shade2);
+	border-radius: var(--border-radius2);
+	background: var(--color-base);
+	overflow: hidden;
+}
+
+.nui-file-tree-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	height: 2rem;
+	padding: 0 var(--nui-space-half);
+	background: var(--color-shade1);
+	border-bottom: var(--border-thickness) solid var(--border-shade1);
+	user-select: none;
+}
+
+.nui-file-tree-title {
+	font-size: var(--font-size-xsmall);
+	font-weight: 700;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	color: var(--text-color-dim);
+}
+
+.nui-file-tree-tools {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--nui-space-eighth);
+}
+
+.nui-file-tree-tool-btn {
+	background: transparent;
+	border: none;
+	padding: var(--nui-space-eighth);
+	width: 1.5rem;
+	height: 1.5rem;
+	border-radius: var(--border-radius1);
+	color: var(--text-color-dim);
+	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	outline: none;
+	transition: background-color 0.1s ease, color 0.1s ease;
+}
+
+.nui-file-tree-tool-btn:hover {
+	background: var(--color-shade3);
+	color: var(--text-color);
+}
+
+.nui-file-tree-tool-btn:focus-visible {
+	outline: 1px solid var(--color-highlight);
+}
+
+.nui-file-tree-tool-btn nui-icon {
+	width: 1rem;
+	height: 1rem;
+}
+
+.nui-file-tree-filter-bar {
+	display: flex;
+	align-items: center;
+	gap: var(--nui-space-quarter);
+	padding: var(--nui-space-quarter) var(--nui-space-half);
+	background: var(--color-shade1);
+	border-bottom: var(--border-thickness) solid var(--border-shade1);
+}
+
+.nui-file-tree-filter-input {
+	flex: 1;
+	height: 1.6rem;
+	font-size: var(--font-size-xsmall);
+	padding: 0 var(--nui-space-quarter);
+	border: var(--border-thickness) solid var(--border-shade3);
+	border-radius: var(--border-radius1);
+	background: var(--color-base);
+	color: var(--text-color);
+	outline: none;
+}
+
+.nui-file-tree-filter-input:focus {
+	border-color: var(--color-highlight);
+}
+
+.nui-file-tree-status-bar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	height: 1.5rem;
+	padding: 0 var(--nui-space-half);
+	background: var(--color-shade1);
+	border-top: var(--border-thickness) solid var(--border-shade1);
+	font-size: var(--font-size-xsmall);
+	color: var(--text-color-dim);
+	user-select: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
 	.nui-file-tree-caret { transition: none; }
-	.nui-file-tree-row.nui-file-tree-loading > .nui-file-tree-caret { animation: none; }
+	.nui-file-tree-row.nui-file-tree-loading > .nui-file-tree-caret-wrap > .nui-file-tree-caret { animation: none; }
 }

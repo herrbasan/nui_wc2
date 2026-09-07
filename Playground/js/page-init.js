@@ -2292,90 +2292,281 @@ nui.registerPage('addons/file-tree', {
 			await import('../../NUI/lib/modules/nui-file-tree.js');
 		}
 
+		// Optional context-menu integration
+		let contextMenuFn = null;
+		try {
+			if (!customElements.get('nui-context-menu')) {
+				const menuCss = document.createElement('link');
+				menuCss.rel = 'stylesheet';
+				menuCss.href = '../NUI/css/modules/nui-context-menu.css';
+				document.head.appendChild(menuCss);
+			}
+			const menuMod = await import('../../NUI/lib/modules/nui-context-menu.js');
+			contextMenuFn = menuMod.contextMenu || menuMod.default;
+		} catch (err) {
+			console.warn('nui-file-tree: context-menu addon could not be preloaded', err);
+		}
+
 		const eventLog = element.querySelector('#event-log');
 		const logEvent = (name, detail) => {
 			const entry = detail?.entry ? `${detail.entry.kind} ${detail.entry.path}` : (detail?.error || '');
 			eventLog.textContent = `${name}  ${entry}\n` + eventLog.textContent.split('\n').slice(0, 11).join('\n');
 		};
 
-		// Static tree via loadData
+		// Static tree via loadData with VS Code-like rich workspace structure
 		const staticTree = element.querySelector('#tree-static');
+		const statusText = element.querySelector('#tree-status-text');
+
 		staticTree.loadData({
 			name: 'nui_wc2', kind: 'dir', children: [
 				{ name: 'documentation', kind: 'dir', children: [
 					{ name: 'components', kind: 'dir', children: [
-						{ name: 'markdown.md', kind: 'file' },
-						{ name: 'button.md', kind: 'file' },
-						{ name: 'dialog.md', kind: 'file' }
+						{ name: 'button.md', kind: 'file', size: '3.4 KB' },
+						{ name: 'dialog.md', kind: 'file', size: '5.1 KB' },
+						{ name: 'markdown.md', kind: 'file', size: '2.8 KB' }
 					]},
 					{ name: 'guides', kind: 'dir', children: [
-						{ name: 'introduction.md', kind: 'file' },
-						{ name: 'getting-started.md', kind: 'file' }
+						{ name: 'getting-started.md', kind: 'file', size: '6.2 KB' },
+						{ name: 'introduction.md', kind: 'file', size: '4.0 KB' }
 					]},
-					{ name: 'components.json', kind: 'file' }
+					{ name: 'components.json', kind: 'file', size: '14.2 KB' }
 				]},
 				{ name: 'NUI', kind: 'dir', children: [
 					{ name: 'css', kind: 'dir', children: [
-						{ name: 'nui-theme.css', kind: 'file' }
+						{ name: 'nui-theme.css', kind: 'file', size: '22 KB' },
+						{ name: 'modules', kind: 'dir', children: [
+							{ name: 'nui-file-tree.css', kind: 'file', badge: 'M', badgeType: 'modified', size: '6.1 KB' },
+							{ name: 'nui-context-menu.css', kind: 'file', size: '3.2 KB' }
+						]}
 					]},
-					{ name: 'nui.js', kind: 'file' }
+					{ name: 'lib', kind: 'dir', children: [
+						{ name: 'modules', kind: 'dir', children: [
+							{ name: 'nui-file-tree.js', kind: 'file', badge: 'M', badgeType: 'modified', size: '12.4 KB' },
+							{ name: 'nui-context-menu.js', kind: 'file', size: '5.8 KB' }
+						]}
+					]},
+					{ name: 'nui.js', kind: 'file', badge: 'M', badgeType: 'modified', size: '185 KB' },
+					{ name: 'nui.d.ts', kind: 'file', size: '42 KB' }
 				]},
 				{ name: 'assets', kind: 'dir', children: [
-					{ name: 'logo.svg', kind: 'file' },
-					{ name: 'screenshot.png', kind: 'file' }
+					{ name: 'logo.svg', kind: 'file', size: '1.8 KB' },
+					{ name: 'screenshot.png', kind: 'file', size: '240 KB' }
+				]},
+				{ name: 'Playground', kind: 'dir', children: [
+					{ name: 'index.html', kind: 'file', badge: 'M', badgeType: 'modified', size: '18 KB' },
+					{ name: 'js', kind: 'dir', children: [
+						{ name: 'main.js', kind: 'file', size: '11 KB' },
+						{ name: 'page-init.js', kind: 'file', badge: 'U', badgeType: 'added', size: '64 KB' }
+					]}
 				]},
 				{ name: 'empty-dir', kind: 'dir', children: [] },
-				{ name: 'LLM-CHEATSHEET.md', kind: 'file' },
-				{ name: 'README.md', kind: 'file' },
-				{ name: 'LICENSE', kind: 'file' }
+				{ name: '.gitignore', kind: 'file', size: '180 B' },
+				{ name: 'package.json', kind: 'file', size: '1.2 KB' },
+				{ name: 'LLM-CHEATSHEET.md', kind: 'file', size: '28 KB' },
+				{ name: 'README.md', kind: 'file', size: '8.5 KB' },
+				{ name: 'LICENSE', kind: 'file', size: '1.1 KB' }
 			]
 		});
 
+		// VS Code Toolbar: Collapse All & Expand All
+		const btnCollapse = element.querySelector('#btn-collapse-all');
+		if (btnCollapse) btnCollapse.addEventListener('click', () => staticTree.collapseAll());
+
+		const btnExpand = element.querySelector('#btn-expand-all');
+		if (btnExpand) btnExpand.addEventListener('click', () => staticTree.expandAll(3));
+
+		const btnRefresh = element.querySelector('#btn-refresh');
+		if (btnRefresh) btnRefresh.addEventListener('click', () => staticTree.refresh());
+
+		// VS Code Toolbar: Filter / Search toggle
+		const btnSearch = element.querySelector('#btn-toggle-search');
+		const filterBar = element.querySelector('#tree-filter-bar');
+		const filterInput = element.querySelector('#tree-filter-input');
+		const filterCount = element.querySelector('#tree-filter-count');
+
+		if (btnSearch && filterBar && filterInput) {
+			btnSearch.addEventListener('click', () => {
+				filterBar.hidden = !filterBar.hidden;
+				if (!filterBar.hidden) {
+					filterInput.focus();
+					filterInput.select();
+				} else {
+					filterInput.value = '';
+					staticTree.filter = null;
+					if (filterCount) filterCount.textContent = '';
+				}
+			});
+
+			filterInput.addEventListener('input', () => {
+				const val = filterInput.value.trim();
+				staticTree.filter = val || null;
+				if (val) {
+					const count = staticTree.querySelectorAll('.nui-file-tree-row').length;
+					if (filterCount) filterCount.textContent = `${count} match${count === 1 ? '' : 'es'}`;
+				} else {
+					if (filterCount) filterCount.textContent = '';
+				}
+			});
+
+			filterInput.addEventListener('keydown', (e) => {
+				if (e.key === 'Escape') {
+					filterBar.hidden = true;
+					filterInput.value = '';
+					staticTree.filter = null;
+					if (filterCount) filterCount.textContent = '';
+					staticTree.focus();
+				}
+			});
+		}
+
+		// Action handlers
 		element.addEventListener('nui-action-toggle-filter', (e) => {
 			const tree = e.detail.target;
 			tree.filter = tree.filter ? null : ['.md'];
 			e.target.querySelector('button').textContent = tree.filter ? 'Filter: off' : 'Filter: .md only';
 		});
 
+		element.addEventListener('nui-action-select-readme', (e) => {
+			staticTree.select('nui_wc2/README.md');
+		});
+
+		element.addEventListener('nui-action-toggle-density', (e) => {
+			const tree = e.detail.target;
+			const isCompact = tree.density === 'compact';
+			tree.density = isCompact ? 'cozy' : 'compact';
+			const btn = element.querySelector('#btn-toggle-density');
+			if (btn) btn.textContent = isCompact ? 'Density: Compact' : 'Density: Cozy';
+			if (statusText) statusText.textContent = `Density set to: ${tree.density}`;
+		});
+
+		element.addEventListener('nui-action-toggle-open-mode', (e) => {
+			const tree = e.detail.target;
+			const isDbl = tree.openMode === 'doubleClick';
+			tree.openMode = isDbl ? 'singleClick' : 'doubleClick';
+			const btn = element.querySelector('#btn-toggle-open-mode');
+			if (btn) btn.textContent = isDbl ? 'Open Mode: Double-Click' : 'Open Mode: Single-Click';
+			if (statusText) statusText.textContent = `Open Mode set to: ${tree.openMode}`;
+		});
+
 		element.addEventListener('nui-action-refresh', (e) => {
 			e.detail.target.refresh();
 		});
 
-		// Live filesystem tree via File System Access API provider
-		element.addEventListener('nui-action-pick-folder', async (e) => {
-			if (!window.showDirectoryPicker) {
-				eventLog.textContent = 'showDirectoryPicker unavailable — use Chrome/Edge.\n' + eventLog.textContent;
-				return;
+		// Selection and status bar
+		staticTree.addEventListener('nui-file-select', (e) => {
+			const entry = e.detail?.entry;
+			if (entry && statusText) {
+				const meta = entry.size ? ` (${entry.size})` : '';
+				statusText.textContent = `${entry.kind.toUpperCase()}: ${entry.path}${meta}`;
 			}
-			const tree = e.detail.target;
-			let dirHandle;
-			try {
-				dirHandle = await window.showDirectoryPicker();
-			} catch (err) {
-				if (err.name === 'AbortError') return;
-				throw err;
-			}
+		});
 
-			const resolve = async (path) => {
-				let dir = dirHandle;
-				for (const seg of path.split('/').filter(Boolean)) {
-					dir = await dir.getDirectoryHandle(seg);
+		// Context Menu Integration
+		staticTree.addEventListener('nui-file-context', (e) => {
+			const { entry, x, y } = e.detail;
+			if (!contextMenuFn) return;
+			const isDir = entry.kind === 'dir';
+
+			const items = isDir ? [
+				{ label: 'Expand / Collapse', action: 'toggle', icon: 'folder_open' },
+				{ label: 'New File...', action: 'new-file', icon: 'article' },
+				{ label: 'New Folder...', action: 'new-folder', icon: 'folder' },
+				{ type: 'separator' },
+				{ label: 'Copy Path', action: 'copy-path', icon: 'content_copy' },
+				{ label: 'Refresh Folder', action: 'refresh', icon: 'sync' }
+			] : [
+				{ label: 'Open File', action: 'open', icon: 'description' },
+				{ label: 'Copy Path', action: 'copy-path', icon: 'content_copy' },
+				{ label: 'Reveal in Explorer', action: 'reveal', icon: 'visibility' },
+				{ type: 'separator' },
+				{ label: 'Rename', action: 'rename', icon: 'edit' },
+				{ label: 'Delete', action: 'delete', icon: 'delete' }
+			];
+
+			const menu = contextMenuFn(items, {
+				onAction: (action) => {
+					logEvent(`context-menu:${action}`, { entry });
+					if (action === 'toggle') staticTree.toggle(entry.path);
+					if (action === 'open') staticTree.dispatchEvent(new CustomEvent('nui-file-activate', { detail: { entry }, bubbles: true }));
+					if (action === 'copy-path') {
+						navigator.clipboard?.writeText(entry.path);
+						if (statusText) statusText.textContent = `Copied: ${entry.path}`;
+					}
+					if (action === 'refresh') staticTree.refresh(entry.path);
 				}
-				const entries = [];
-				for await (const child of dir.values()) {
-					entries.push({
-						name: child.name,
-						path: path ? `${path}/${child.name}` : child.name,
-						kind: child.kind === 'directory' ? 'dir' : 'file'
-					});
-				}
-				return entries;
+			});
+			menu.show(x, y);
+		});
+
+		// Async lazy-loading provider demo (works everywhere on static hosts)
+		const mockFileSystem = {
+			'root': [
+				{ name: 'src', path: 'root/src', kind: 'dir' },
+				{ name: 'packages', path: 'root/packages', kind: 'dir' },
+				{ name: 'public', path: 'root/public', kind: 'dir' },
+				{ name: 'tests', path: 'root/tests', kind: 'dir' },
+				{ name: 'package.json', path: 'root/package.json', kind: 'file', size: '1.4 KB' },
+				{ name: 'tsconfig.json', path: 'root/tsconfig.json', kind: 'file', size: '420 B' },
+				{ name: 'README.md', path: 'root/README.md', kind: 'file', size: '3.1 KB' }
+			],
+			'root/src': [
+				{ name: 'components', path: 'root/src/components', kind: 'dir' },
+				{ name: 'services', path: 'root/src/services', kind: 'dir' },
+				{ name: 'index.ts', path: 'root/src/index.ts', kind: 'file', size: '1.2 KB', badge: 'M', badgeType: 'modified' },
+				{ name: 'app.css', path: 'root/src/app.css', kind: 'file', size: '4.8 KB' }
+			],
+			'root/src/components': [
+				{ name: 'Tree.tsx', path: 'root/src/components/Tree.tsx', kind: 'file', size: '8.4 KB' },
+				{ name: 'Toolbar.tsx', path: 'root/src/components/Toolbar.tsx', kind: 'file', size: '3.2 KB' },
+				{ name: 'Caret.tsx', path: 'root/src/components/Caret.tsx', kind: 'file', size: '1.1 KB' }
+			],
+			'root/src/services': [
+				{ name: 'api.ts', path: 'root/src/services/api.ts', kind: 'file', size: '2.5 KB' },
+				{ name: 'storage.ts', path: 'root/src/services/storage.ts', kind: 'file', size: '3.9 KB' }
+			],
+			'root/packages': [
+				{ name: 'core', path: 'root/packages/core', kind: 'dir' },
+				{ name: 'cli', path: 'root/packages/cli', kind: 'dir' }
+			],
+			'root/packages/core': [
+				{ name: 'index.js', path: 'root/packages/core/index.js', kind: 'file', size: '14.2 KB' },
+				{ name: 'package.json', path: 'root/packages/core/package.json', kind: 'file', size: '890 B' }
+			],
+			'root/packages/cli': [
+				{ name: 'bin.js', path: 'root/packages/cli/bin.js', kind: 'file', size: '4.1 KB' }
+			],
+			'root/public': [
+				{ name: 'favicon.ico', path: 'root/public/favicon.ico', kind: 'file', size: '1.2 KB' },
+				{ name: 'manifest.json', path: 'root/public/manifest.json', kind: 'file', size: '340 B' }
+			],
+			'root/tests': [
+				{ name: 'tree.test.ts', path: 'root/tests/tree.test.ts', kind: 'file', size: '6.5 KB' }
+			]
+		};
+
+		const connectAsyncProvider = async (tree) => {
+			// Simulated remote async provider with network latency
+			const asyncProvider = async (path) => {
+				await new Promise(resolve => setTimeout(resolve, 250)); // simulate network delay
+				return mockFileSystem[path] || [];
 			};
 
-			tree.setProvider(resolve);
-			await tree.setRoot({ name: dirHandle.name, path: '' });
-			element.querySelector('#live-label').textContent = `root: ${dirHandle.name}`;
+			tree.setProvider(asyncProvider);
+			await tree.setRoot({ name: 'repository', path: 'root' });
+			element.querySelector('#live-label').textContent = 'Async provider connected (click folders to lazy-load)';
+			const liveTitle = element.querySelector('#live-tree-title');
+			if (liveTitle) liveTitle.textContent = 'REPOSITORY (ASYNC LAZY)';
+		};
+
+		element.addEventListener('nui-action-connect-provider', (e) => {
+			connectAsyncProvider(e.detail.target);
 		});
+
+		const liveTree = element.querySelector('#tree-live');
+		const btnLiveCollapse = element.querySelector('#btn-live-collapse');
+		if (btnLiveCollapse) btnLiveCollapse.addEventListener('click', () => liveTree.collapseAll());
+		const btnLiveRefresh = element.querySelector('#btn-live-refresh');
+		if (btnLiveRefresh) btnLiveRefresh.addEventListener('click', () => liveTree.refresh());
 
 		for (const tree of element.querySelectorAll('nui-file-tree')) {
 			tree.addEventListener('nui-file-select', (e) => logEvent('nui-file-select', e.detail));

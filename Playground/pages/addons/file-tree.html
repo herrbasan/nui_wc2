@@ -44,43 +44,100 @@ tree.loadData({
 
 		<h3>Try It</h3>
 		<div class="demo-area">
-			<nui-file-tree id="tree-static" style="max-height: 20rem; border: var(--border-thickness) solid var(--border-shade2); border-radius: var(--border-radius2); padding: var(--nui-space-half);">
-				<nav></nav>
-			</nui-file-tree>
+			<!-- VS Code Explorer Container -->
+			<div class="nui-file-tree-panel" style="max-width: 32rem;">
+				<div class="nui-file-tree-header">
+					<span class="nui-file-tree-title" id="tree-title">WORKSPACE: NUI_WC2</span>
+					<div class="nui-file-tree-tools">
+						<button type="button" class="nui-file-tree-tool-btn" id="btn-toggle-search" title="Filter files" aria-label="Filter files">
+							<nui-icon name="search"></nui-icon>
+						</button>
+						<button type="button" class="nui-file-tree-tool-btn" id="btn-collapse-all" title="Collapse All" aria-label="Collapse All">
+							<nui-icon name="unfold_less"></nui-icon>
+						</button>
+						<button type="button" class="nui-file-tree-tool-btn" id="btn-expand-all" title="Expand All" aria-label="Expand All">
+							<nui-icon name="unfold_more"></nui-icon>
+						</button>
+						<button type="button" class="nui-file-tree-tool-btn" id="btn-refresh" title="Refresh Tree" aria-label="Refresh Tree">
+							<nui-icon name="sync"></nui-icon>
+						</button>
+					</div>
+				</div>
+
+				<!-- Search / Quick Filter Bar (Collapsible) -->
+				<div class="nui-file-tree-filter-bar" id="tree-filter-bar" hidden>
+					<input type="search" class="nui-file-tree-filter-input" id="tree-filter-input" placeholder="Filter by name (e.g. .md, json)..." aria-label="Filter files by name">
+					<span class="demo-ml-1" id="tree-filter-count" style="font-size: var(--font-size-xsmall); color: var(--text-color-dim); white-space: nowrap;"></span>
+				</div>
+
+				<!-- File Tree Component -->
+				<nui-file-tree id="tree-static" style="max-height: 22rem;">
+					<nav></nav>
+				</nui-file-tree>
+
+				<!-- Status Bar / Selection Indicator -->
+				<div class="nui-file-tree-status-bar">
+					<span id="tree-status-text">Ready — right-click items for context menu</span>
+					<span id="tree-status-hint">↑↓ / Enter / Keys</span>
+				</div>
+			</div>
+
 			<nui-button-container class="demo-mt-1">
-				<nui-button>
+				<nui-button variant="outline">
 					<button type="button" data-action="toggle-filter@#tree-static">Filter: .md only</button>
 				</nui-button>
 				<nui-button variant="outline">
-					<button type="button" data-action="refresh@#tree-static">Refresh</button>
+					<button type="button" data-action="select-readme@#tree-static">Select README.md</button>
+				</nui-button>
+				<nui-button variant="outline">
+					<button type="button" data-action="toggle-density@#tree-static" id="btn-toggle-density">Density: Compact</button>
+				</nui-button>
+				<nui-button variant="outline">
+					<button type="button" data-action="toggle-open-mode@#tree-static" id="btn-toggle-open-mode">Open Mode: Double-Click</button>
 				</nui-button>
 			</nui-button-container>
 		</div>
 	</section>
 
 	<section>
-		<h2>Live Filesystem (provider)</h2>
-		<p>The real use case: hand the tree a <code>readdir(path)</code> provider and a root. Children are fetched lazily on first expansion. This demo uses the File System Access API (<code>showDirectoryPicker</code>, Chromium only) — an Electron host would provide the same shape from native <code>fs</code>.</p>
+		<h2>Async Provider (Lazy Loading)</h2>
+		<p>The real use case for large trees: hand the tree a <code>readdir(path)</code> provider and a root. Children are fetched lazily on first expansion. This demo simulates an async remote filesystem API with simulated latency, so it works reliably on any static web hosting.</p>
 
 		<nui-code>
 			<script type="example" data-lang="js">
+// Provider: returns entries on demand when a directory is expanded
 tree.setProvider(async (path) => {
-	const entries = await readdirSomehow(path);
+	const entries = await fetchDirectory(path);
 	return entries; // [{ name, path, kind: 'dir'|'file' }]
 });
-await tree.setRoot({ name: 'my-folder', path: '' });
+await tree.setRoot({ name: 'repository', path: 'root' });
 			</script>
 		</nui-code>
 
 		<h3>Try It</h3>
 		<div class="demo-area">
-			<nui-button variant="primary">
-				<button type="button" data-action="pick-folder@#tree-live">Pick a Folder…</button>
-			</nui-button>
-			<span id="live-label" class="demo-ml-1"></span>
-			<nui-file-tree id="tree-live" class="demo-mt-1" style="max-height: 24rem; border: var(--border-thickness) solid var(--border-shade2); border-radius: var(--border-radius2); padding: var(--nui-space-half);">
-				<nav></nav>
-			</nui-file-tree>
+			<nui-button-container>
+				<nui-button variant="primary">
+					<button type="button" data-action="connect-provider@#tree-live">Connect Async Provider</button>
+				</nui-button>
+				<span id="live-label" style="align-self: center; font-size: var(--font-size-small); color: var(--text-color-dim);">Click 'Connect Async Provider' to test lazy loading</span>
+			</nui-button-container>
+			<div class="nui-file-tree-panel demo-mt-1" style="max-width: 32rem;">
+				<div class="nui-file-tree-header">
+					<span class="nui-file-tree-title" id="live-tree-title">ASYNC FILESYSTEM</span>
+					<div class="nui-file-tree-tools">
+						<button type="button" class="nui-file-tree-tool-btn" id="btn-live-collapse" title="Collapse All" aria-label="Collapse All">
+							<nui-icon name="unfold_less"></nui-icon>
+						</button>
+						<button type="button" class="nui-file-tree-tool-btn" id="btn-live-refresh" title="Refresh" aria-label="Refresh">
+							<nui-icon name="sync"></nui-icon>
+						</button>
+					</div>
+				</div>
+				<nui-file-tree id="tree-live" style="max-height: 20rem;">
+					<nav></nav>
+				</nui-file-tree>
+			</div>
 		</div>
 	</section>
 
@@ -102,11 +159,15 @@ await tree.setRoot({ name: 'my-folder', path: '' });
 				<tr><td><code>loadData(rootNode)</code></td><td>method</td><td>Render a static nested tree. No provider needed.</td></tr>
 				<tr><td><code>refresh(path?)</code></td><td>method (async)</td><td>Re-fetch the tree (or one directory), preserving expansion state.</td></tr>
 				<tr><td><code>expand(path)</code> / <code>collapse(path)</code> / <code>toggle(path)</code></td><td>methods</td><td>Programmatic expansion control.</td></tr>
+				<tr><td><code>collapseAll()</code></td><td>method</td><td>Collapse all currently open directories.</td></tr>
+				<tr><td><code>expandAll(maxDepth?)</code></td><td>method (async)</td><td>Expand all directories up to maxDepth (default: 3).</td></tr>
 				<tr><td><code>select(path)</code></td><td>method</td><td>Programmatic selection. Path must be loaded.</td></tr>
 				<tr><td><code>getSelected()</code></td><td>method</td><td>Returns the selected entry <code>{ name, path, kind }</code> or <code>null</code>.</td></tr>
-				<tr><td><code>filter</code></td><td>property</td><td><code>fn(entry)</code> receives every entry; an array of extensions (<code>['.md']</code>) filters files only. <code>null</code> (default) shows everything.</td></tr>
+				<tr><td><code>filter</code></td><td>property</td><td><code>string</code> substring search, <code>fn(entry)</code> predicate, or array of extensions (<code>['.md']</code>). <code>null</code> shows all.</td></tr>
 				<tr><td><code>sort</code></td><td>property</td><td>Custom comparator. Default: dirs first, then natural alpha.</td></tr>
 				<tr><td><code>selectable</code></td><td>attribute</td><td><code>all</code> (default) | <code>files</code> | <code>dirs</code>.</td></tr>
+				<tr><td><code>density</code></td><td>attribute / prop</td><td><code>cozy</code> (default, ~30px rows with comfortable spacing) | <code>compact</code> (24px high density).</td></tr>
+				<tr><td><code>open-mode</code></td><td>attribute / prop</td><td><code>singleClick</code> (default) | <code>doubleClick</code>. In double-click mode, single click selects (preview), double-click activates/toggles. Caret twistie always toggles on single click.</td></tr>
 			</tbody>
 		</table>
 
@@ -121,6 +182,7 @@ await tree.setRoot({ name: 'my-folder', path: '' });
 				<tr><td><code>←</code></td><td>Collapse dir, or move to parent</td></tr>
 				<tr><td><code>Enter</code> / <code>Space</code></td><td>Select + activate (file) or toggle (dir)</td></tr>
 				<tr><td><code>Home</code> / <code>End</code></td><td>First / last visible row</td></tr>
+				<tr><td><code>A-Z</code> / <code>0-9</code></td><td>Type-ahead: jump to next visible row starting with pressed key</td></tr>
 			</tbody>
 		</table>
 	</section>

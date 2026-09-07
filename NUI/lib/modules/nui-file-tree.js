@@ -11,23 +11,80 @@ import { nui } from '../../nui.js';
 // have their own fallbacks.
 const EXT_ICONS = {
 	'.md': 'article', '.markdown': 'article', '.txt': 'description',
-	'.js': 'code', '.mjs': 'code', '.ts': 'code', '.jsx': 'code', '.tsx': 'code',
-	'.html': 'code', '.css': 'code', '.json': 'data_object', '.py': 'code',
-	'.rs': 'code', '.go': 'code', '.c': 'code', '.cpp': 'code', '.h': 'code',
+	'.js': 'code', '.mjs': 'code', '.cjs': 'code', '.ts': 'code', '.jsx': 'code', '.tsx': 'code',
+	'.html': 'code', '.htm': 'code', '.css': 'palette', '.scss': 'palette', '.less': 'palette',
+	'.json': 'file_json', '.py': 'code', '.rs': 'code', '.go': 'code', '.c': 'code', '.cpp': 'code', '.h': 'code',
 	'.png': 'image', '.jpg': 'image', '.jpeg': 'image', '.gif': 'image',
 	'.webp': 'image', '.svg': 'image', '.ico': 'image',
-	'.mp3': 'audio_file', '.wav': 'audio_file', '.ogg': 'audio_file', '.flac': 'audio_file',
-	'.mp4': 'video_file', '.webm': 'video_file', '.mkv': 'video_file',
-	'.pdf': 'picture_as_pdf',
-	'.zip': 'folder_zip', '.tar': 'folder_zip', '.gz': 'folder_zip', '.7z': 'folder_zip'
+	'.mp3': 'headphones', '.wav': 'headphones', '.ogg': 'headphones', '.flac': 'headphones',
+	'.mp4': 'smart_display', '.webm': 'smart_display', '.mkv': 'smart_display',
+	'.pdf': 'description',
+	'.zip': 'archive', '.tar': 'archive', '.gz': 'archive', '.7z': 'archive'
 };
 
-const FILE_ICON = 'draft';
+const FILE_ICON = 'description';
 const DIR_ICON = 'folder';
+const DIR_OPEN_ICON = 'folder_open';
 
 function extOf(name) {
 	const i = name.lastIndexOf('.');
 	return i > 0 ? name.slice(i).toLowerCase() : '';
+}
+
+function colorClassFor(name, ext) {
+	if (ext === '.js' || ext === '.mjs' || ext === '.cjs') return 'nft-color-js';
+	if (ext === '.ts' || ext === '.tsx') return 'nft-color-ts';
+	if (ext === '.jsx') return 'nft-color-jsx';
+	if (ext === '.json') return 'nft-color-json';
+	if (ext === '.html' || ext === '.htm') return 'nft-color-html';
+	if (ext === '.css' || ext === '.scss' || ext === '.less') return 'nft-color-css';
+	if (ext === '.md' || ext === '.markdown') return 'nft-color-md';
+	if (['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.ico'].includes(ext)) return 'nft-color-img';
+	if (['.mp3', '.wav', '.ogg', '.flac', '.mp4', '.webm', '.mkv'].includes(ext)) return 'nft-color-media';
+	if (['.zip', '.tar', '.gz', '.7z'].includes(ext)) return 'nft-color-archive';
+	if (['.py', '.rs', '.go', '.c', '.cpp', '.h'].includes(ext)) return 'nft-color-code';
+	if (['.txt', '.log', '.pdf'].includes(ext)) return 'nft-color-txt';
+	if (name.startsWith('.') || ['license', 'makefile', 'dockerfile'].includes(name.toLowerCase())) return 'nft-color-cfg';
+	return 'nft-color-default';
+}
+
+function entryMatches(entry, q) {
+	if (entry.name.toLowerCase().includes(q)) return true;
+	if (entry.kind === 'dir' && Array.isArray(entry.children)) {
+		return entry.children.some(child => entryMatches(child, q));
+	}
+	return false;
+}
+
+function highlightText(container, text, query) {
+	if (!query || typeof query !== 'string') {
+		container.textContent = text;
+		return;
+	}
+	const q = query.toLowerCase();
+	const lower = text.toLowerCase();
+	const idx = lower.indexOf(q);
+	if (idx === -1) {
+		container.textContent = text;
+		return;
+	}
+	container.replaceChildren();
+	let cursor = 0;
+	let matchIndex = lower.indexOf(q, cursor);
+	while (matchIndex !== -1) {
+		if (matchIndex > cursor) {
+			container.appendChild(document.createTextNode(text.slice(cursor, matchIndex)));
+		}
+		const mark = document.createElement('mark');
+		mark.className = 'nft-match';
+		mark.textContent = text.slice(matchIndex, matchIndex + q.length);
+		container.appendChild(mark);
+		cursor = matchIndex + q.length;
+		matchIndex = lower.indexOf(q, cursor);
+	}
+	if (cursor < text.length) {
+		container.appendChild(document.createTextNode(text.slice(cursor)));
+	}
 }
 
 class NuiFileTree extends HTMLElement {
@@ -36,17 +93,44 @@ class NuiFileTree extends HTMLElement {
 		this._provider = null;
 		this._root = null;
 		this._staticData = null; // retained source for static-mode refresh
-		this._nodes = new Map();   // path → { entry, row, group, expanded, loaded, state }
-		this._filter = null;       // fn(entry) | string[] extensions | null
+		this._nodes = new Map();   // path → record
+		this._filter = null;       // fn(entry) | string[] extensions | string query | null
 		this._sortFn = null;       // fn(a, b) | null → default dirs-first alpha
 		this._selected = null;     // selected row element
 		this._focused = null;      // roving tabindex row
 		this._generation = 0;      // stale-response guard for async loads
 	}
 
-	static get observedAttributes() { return ['selectable', 'filter-ext']; }
+	static get observedAttributes() { return ['selectable', 'filter-ext', 'open-mode', 'density']; }
 
 	get selectable() { return this.getAttribute('selectable') || 'all'; }
+
+	/**
+	 * Spacing / density: 'cozy' (default) | 'compact'.
+	 */
+	get density() { return this.getAttribute('density') || 'cozy'; }
+	set density(val) {
+		if (val && val !== 'cozy' && val !== 'compact') {
+			throw new Error('nui-file-tree: density must be "cozy" or "compact"');
+		}
+		if (val) this.setAttribute('density', val);
+		else this.removeAttribute('density');
+	}
+
+	/**
+	 * Open/activation mode: 'singleClick' (default) | 'doubleClick'.
+	 * - 'singleClick': single-click toggles dirs & activates files.
+	 * - 'doubleClick': single-click selects (preview); double-click toggles dirs & activates files.
+	 *   Clicking directly on the caret twistie always toggles immediately.
+	 */
+	get openMode() { return this.getAttribute('open-mode') || 'singleClick'; }
+	set openMode(val) {
+		if (val && val !== 'singleClick' && val !== 'doubleClick') {
+			throw new Error('nui-file-tree: open-mode must be "singleClick" or "doubleClick"');
+		}
+		if (val) this.setAttribute('open-mode', val);
+		else this.removeAttribute('open-mode');
+	}
 
 	connectedCallback() {
 		if (this.hasAttribute('data-initialized')) return;
@@ -83,13 +167,15 @@ class NuiFileTree extends HTMLElement {
 	}
 
 	/**
-	 * Filter entries. fn(entry) → boolean receives every entry (dirs included).
-	 * An array of extensions (['.md']) filters FILES only — dirs always pass,
-	 * otherwise the tree becomes unnavigable. null shows everything (default).
+	 * Filter entries.
+	 * - fn(entry) → boolean: receives every entry (dirs included).
+	 * - string[] (e.g. ['.md']): filters files only — dirs always pass.
+	 * - string (e.g. 'test'): substring search in entry names.
+	 * - null: clears filter (shows everything).
 	 */
 	set filter(v) {
-		if (v !== null && typeof v !== 'function' && !Array.isArray(v)) {
-			throw new Error('nui-file-tree: filter must be a function, an array of extensions, or null');
+		if (v !== null && typeof v !== 'function' && !Array.isArray(v) && typeof v !== 'string') {
+			throw new Error('nui-file-tree: filter must be a function, an array of extensions, a search string, or null');
 		}
 		this._filter = v;
 		if (this._root) this.refresh();
@@ -124,7 +210,7 @@ class NuiFileTree extends HTMLElement {
 		this._focused = null;
 		this._root = { name: rootNode.name, path: rootNode.path || rootNode.name };
 		this._treeEl.replaceChildren();
-		this._buildStatic(rootNode, this._rootRec().group, 1, this._root.path);
+		this._buildStatic(rootNode, this._rootRec().group, 1, this._root.path, this._rootRec());
 		this._rootRec().loaded = true;
 	}
 
@@ -157,6 +243,34 @@ class NuiFileTree extends HTMLElement {
 	expand(path) { const r = this._get(path); return this._expand(r); }
 	collapse(path) { const r = this._get(path); this._collapse(r); }
 	toggle(path) { const r = this._get(path); return r.expanded ? this._collapse(r) : this._expand(r); }
+
+	/** Collapse all currently expanded directories. */
+	collapseAll() {
+		for (const rec of this._nodes.values()) {
+			if (rec.row && rec.entry.kind === 'dir' && rec.expanded) {
+				this._collapse(rec);
+			}
+		}
+	}
+
+	/** Expand all directories up to maxDepth (default: 3). */
+	async expandAll(maxDepth = 3) {
+		const expandRec = async (rec, depth) => {
+			if (rec.entry.kind !== 'dir' || depth > maxDepth) return;
+			await this._expand(rec);
+			for (const child of rec.children) {
+				if (child.entry.kind === 'dir') {
+					await expandRec(child, depth + 1);
+				}
+			}
+		};
+		const root = this._rootRec();
+		for (const child of root.children) {
+			if (child.entry.kind === 'dir') {
+				await expandRec(child, 1);
+			}
+		}
+	}
 
 	/** Programmatic selection. Path must be loaded (expand ancestors first). */
 	select(path) {
@@ -191,45 +305,100 @@ class NuiFileTree extends HTMLElement {
 	}
 
 	// Creates (once) the record + DOM for a node and registers it.
-	_makeNode(entry, parentGroup, level) {
-		const rec = { entry, row: null, group: null, expanded: false, loaded: false, state: 'idle' };
+	_makeNode(entry, parentGroup, level, parentRec = null) {
+		const rec = {
+			entry,
+			row: null,
+			group: null,
+			iconEl: null,
+			nameEl: null,
+			expanded: false,
+			loaded: false,
+			state: 'idle',
+			level,
+			parent: parentRec,
+			children: []
+		};
+		if (parentRec) parentRec.children.push(rec);
 
 		const row = document.createElement('div');
 		row.className = 'nui-file-tree-row';
 		row.setAttribute('role', 'treeitem');
 		row.setAttribute('aria-level', String(level));
-		row.style.setProperty('--nft-level', String(level - 1));
 		row.dataset.path = entry.path;
+		row.dataset.kind = entry.kind;
 		row.tabIndex = -1;
 
-		let caret;
+		// 1. Indent guides
+		const indent = document.createElement('span');
+		indent.className = 'nui-file-tree-indent';
+		indent.setAttribute('aria-hidden', 'true');
+		for (let i = 0; i < level - 1; i++) {
+			const guide = document.createElement('span');
+			guide.className = 'nui-file-tree-guide';
+			indent.appendChild(guide);
+		}
+
+		// 2. Caret / Twistie
+		const caretWrap = document.createElement('span');
+		caretWrap.className = 'nui-file-tree-caret-wrap';
 		if (entry.kind === 'dir') {
-			caret = document.createElement('nui-icon');
+			const caret = document.createElement('nui-icon');
 			caret.className = 'nui-file-tree-caret';
 			caret.setAttribute('decorative', '');
 			caret.setAttribute('name', 'chevron_right');
+			caretWrap.appendChild(caret);
 			row.setAttribute('aria-expanded', 'false');
+
+			// Clicking caret twistie directly always toggles immediately regardless of openMode
+			caretWrap.addEventListener('click', (e) => {
+				e.stopPropagation();
+				this._focusRow(row);
+				if (this.selectable !== 'files') this._applySelection(rec);
+				this._toggle(rec);
+			});
 		} else {
-			// Spacer keeps the icon column aligned without a nameless nui-icon
-			caret = document.createElement('span');
-			caret.className = 'nui-file-tree-caret';
-			caret.setAttribute('aria-hidden', 'true');
+			caretWrap.classList.add('nui-file-tree-caret-spacer');
+			caretWrap.setAttribute('aria-hidden', 'true');
 			row.classList.add('nui-file-tree-leaf');
 		}
 
+		// 3. File / Folder Icon
+		const ext = extOf(entry.name);
 		const icon = document.createElement('nui-icon');
 		icon.className = 'nui-file-tree-icon';
 		icon.setAttribute('decorative', '');
-		icon.setAttribute('name', entry.kind === 'dir' ? DIR_ICON : (EXT_ICONS[extOf(entry.name)] || FILE_ICON));
+		if (entry.kind === 'dir') {
+			icon.setAttribute('name', DIR_ICON);
+			icon.classList.add('nft-icon-folder');
+		} else {
+			const iconName = entry.icon || EXT_ICONS[ext] || FILE_ICON;
+			icon.setAttribute('name', iconName);
+			icon.classList.add(colorClassFor(entry.name, ext));
+		}
+		rec.iconEl = icon;
 
+		// 4. File / Folder Name
 		const name = document.createElement('span');
 		name.className = 'nui-file-tree-name';
-		name.textContent = entry.name;
+		const query = typeof this._filter === 'string' ? this._filter.trim() : null;
+		highlightText(name, entry.name, query);
+		rec.nameEl = name;
 
-		row.append(caret, icon, name);
+		row.append(indent, caretWrap, icon, name);
+
+		// 5. Optional Badge / Metadata
+		if (entry.badge || entry.size) {
+			const badge = document.createElement('span');
+			badge.className = 'nui-file-tree-badge';
+			if (entry.badgeType) badge.classList.add(`nft-badge-${entry.badgeType}`);
+			badge.textContent = entry.badge || entry.size;
+			row.appendChild(badge);
+		}
+
 		parentGroup.appendChild(row);
-
 		rec.row = row;
+
 		if (entry.kind === 'dir') {
 			const group = document.createElement('div');
 			group.className = 'nui-file-tree-group';
@@ -243,14 +412,28 @@ class NuiFileTree extends HTMLElement {
 			this._focusRow(row);
 			if (entry.kind === 'dir') {
 				if (this.selectable !== 'files') this._applySelection(rec);
-				this._toggle(rec);
+				if (this.openMode !== 'doubleClick') {
+					this._toggle(rec);
+				}
 			} else {
 				if (this.selectable !== 'dirs') this._applySelection(rec);
+				if (this.openMode !== 'doubleClick') {
+					this._emit('nui-file-activate', { entry });
+				}
 			}
 		});
+
 		row.addEventListener('dblclick', () => {
-			if (entry.kind === 'file') this._emit('nui-file-activate', { entry });
+			this._focusRow(row);
+			if (entry.kind === 'file') {
+				if (this.selectable !== 'dirs') this._applySelection(rec);
+				this._emit('nui-file-activate', { entry });
+			} else if (entry.kind === 'dir') {
+				if (this.selectable !== 'files') this._applySelection(rec);
+				this._toggle(rec);
+			}
 		});
+
 		row.addEventListener('contextmenu', (e) => {
 			e.preventDefault();
 			this._focusRow(row);
@@ -266,7 +449,19 @@ class NuiFileTree extends HTMLElement {
 		// The root itself is a virtual node: no row, children live in _treeEl.
 		let rec = this._nodes.get(this._root.path);
 		if (!rec) {
-			rec = { entry: { name: this._root.name, path: this._root.path, kind: 'dir' }, row: null, group: this._treeEl, expanded: true, loaded: false, state: 'idle' };
+			rec = {
+				entry: { name: this._root.name, path: this._root.path, kind: 'dir' },
+				row: null,
+				group: this._treeEl,
+				iconEl: null,
+				nameEl: null,
+				expanded: true,
+				loaded: false,
+				state: 'idle',
+				level: 0,
+				parent: null,
+				children: []
+			};
 			this._nodes.set(this._root.path, rec);
 		}
 		return rec;
@@ -281,8 +476,9 @@ class NuiFileTree extends HTMLElement {
 			const entries = await this._provider(rec.entry.path);
 			if (gen !== this._generation) return; // root changed meanwhile — discard stale response
 			rec.group.replaceChildren();
+			rec.children = [];
 			const level = rec.row ? Number(rec.row.getAttribute('aria-level')) + 1 : 1;
-			this._buildEntries(entries, rec.group, level);
+			this._buildEntries(entries, rec.group, level, rec);
 			rec.loaded = true;
 			rec.state = 'loaded';
 		} catch (err) {
@@ -299,12 +495,23 @@ class NuiFileTree extends HTMLElement {
 		}
 	}
 
-	_buildEntries(entries, group, level) {
+	_buildEntries(entries, group, level, parentRec = null) {
 		const visible = this._applyFilter(entries).sort(this._sortFn || defaultSort);
 		if (!visible.length) {
 			const empty = document.createElement('div');
 			empty.className = 'nui-file-tree-note';
-			empty.textContent = '(empty)';
+			const indent = document.createElement('span');
+			indent.className = 'nui-file-tree-indent';
+			indent.setAttribute('aria-hidden', 'true');
+			for (let i = 0; i < level - 1; i++) {
+				const guide = document.createElement('span');
+				guide.className = 'nui-file-tree-guide';
+				indent.appendChild(guide);
+			}
+			const text = document.createElement('span');
+			text.className = 'nui-file-tree-note-text';
+			text.textContent = 'No files';
+			empty.append(indent, text);
 			group.appendChild(empty);
 			return;
 		}
@@ -312,25 +519,54 @@ class NuiFileTree extends HTMLElement {
 			if (typeof entry.name !== 'string' || typeof entry.path !== 'string' || (entry.kind !== 'dir' && entry.kind !== 'file')) {
 				throw new Error(`nui-file-tree: provider returned malformed entry — expected { name, path, kind: 'dir'|'file' }, got ${JSON.stringify(entry)}`);
 			}
-			this._makeNode(entry, group, level);
+			this._makeNode(entry, group, level, parentRec);
 		}
 	}
 
-	_buildStatic(node, group, level, parentPath) {
+	_buildStatic(node, group, level, parentPath, parentRec = null) {
+		const q = typeof this._filter === 'string' ? this._filter.trim().toLowerCase() : null;
 		const children = this._applyFilter(node.children || []);
 		for (const child of children) {
 			const path = child.path || `${parentPath}/${child.name}`;
-			const entry = { name: child.name, path, kind: child.kind };
-			const rec = this._makeNode(entry, group, level);
+			const entry = {
+				name: child.name,
+				path,
+				kind: child.kind,
+				icon: child.icon,
+				badge: child.badge,
+				badgeType: child.badgeType,
+				size: child.size,
+				children: child.children
+			};
+			const rec = this._makeNode(entry, group, level, parentRec);
 			if (child.kind === 'dir') {
 				rec.loaded = true;
 				if (child.children?.length) {
-					this._buildStatic(child, rec.group, level + 1, path);
+					this._buildStatic(child, rec.group, level + 1, path, rec);
+				}
+				// Auto-expand folder if query matches any descendant
+				if (q && child.children?.some(c => entryMatches(c, q))) {
+					rec.expanded = true;
+					rec.row.setAttribute('aria-expanded', 'true');
+					rec.row.classList.add('nui-file-tree-open');
+					if (rec.iconEl && !rec.entry.icon) rec.iconEl.setAttribute('name', DIR_OPEN_ICON);
+					rec.group.hidden = false;
 				}
 				if (!rec.group.childNodes.length) {
 					const empty = document.createElement('div');
 					empty.className = 'nui-file-tree-note';
-					empty.textContent = '(empty)';
+					const indent = document.createElement('span');
+					indent.className = 'nui-file-tree-indent';
+					indent.setAttribute('aria-hidden', 'true');
+					for (let i = 0; i < level; i++) {
+						const guide = document.createElement('span');
+						guide.className = 'nui-file-tree-guide';
+						indent.appendChild(guide);
+					}
+					const text = document.createElement('span');
+					text.className = 'nui-file-tree-note-text';
+					text.textContent = 'No files';
+					empty.append(indent, text);
 					rec.group.appendChild(empty);
 				}
 			}
@@ -343,23 +579,36 @@ class NuiFileTree extends HTMLElement {
 			const exts = this._filter.map(e => e.toLowerCase());
 			return entries.filter(e => e.kind === 'dir' || exts.includes(extOf(e.name)));
 		}
+		if (typeof this._filter === 'string') {
+			const q = this._filter.trim().toLowerCase();
+			if (!q) return entries;
+			return entries.filter(e => entryMatches(e, q));
+		}
 		return entries.filter(e => this._filter(e));
 	}
 
 	async _expand(rec) {
 		if (rec.entry.kind !== 'dir' || rec.expanded) return;
 		rec.expanded = true;
-		rec.row.setAttribute('aria-expanded', 'true');
-		rec.row.classList.add('nui-file-tree-open');
+		if (rec.row) {
+			rec.row.setAttribute('aria-expanded', 'true');
+			rec.row.classList.add('nui-file-tree-open');
+		}
+		if (rec.iconEl && !rec.entry.icon) {
+			rec.iconEl.setAttribute('name', DIR_OPEN_ICON);
+		}
 		rec.group.hidden = false;
 		if (!rec.loaded) await this._loadChildren(rec);
 	}
 
 	_collapse(rec) {
-		if (rec.entry.kind !== 'dir' || !rec.expanded) return;
+		if (rec.entry.kind !== 'dir' || !rec.expanded || !rec.row) return;
 		rec.expanded = false;
 		rec.row.setAttribute('aria-expanded', 'false');
 		rec.row.classList.remove('nui-file-tree-open');
+		if (rec.iconEl && !rec.entry.icon) {
+			rec.iconEl.setAttribute('name', DIR_ICON);
+		}
 		rec.group.hidden = true;
 	}
 
@@ -398,6 +647,23 @@ class NuiFileTree extends HTMLElement {
 		const rows = this._visibleRows();
 		const idx = rows.indexOf(row);
 		const isDir = rec.entry.kind === 'dir';
+
+		// Type-ahead navigation (jump to item starting with pressed character)
+		if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+			const char = e.key.toLowerCase();
+			const startIdx = rows.indexOf(row);
+			const count = rows.length;
+			for (let offset = 1; offset <= count; offset++) {
+				const targetRow = rows[(startIdx + offset) % count];
+				const targetRec = this._nodes.get(targetRow.dataset.path);
+				if (targetRec && targetRec.entry.name.toLowerCase().startsWith(char)) {
+					e.preventDefault();
+					this._focusRow(targetRow);
+					break;
+				}
+			}
+			return;
+		}
 
 		switch (e.key) {
 			case 'ArrowDown':
@@ -463,6 +729,8 @@ nui.components.fileTree = {
 	create(target, options = {}) {
 		const el = document.createElement('nui-file-tree');
 		if (options.selectable) el.setAttribute('selectable', options.selectable);
+		if (options.openMode) el.setAttribute('open-mode', options.openMode);
+		if (options.density) el.setAttribute('density', options.density);
 		if (options.filter) el.filter = options.filter;
 		if (options.sort) el.sort = options.sort;
 		(typeof target === 'string' ? document.querySelector(target) : target).appendChild(el);

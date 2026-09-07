@@ -111,6 +111,7 @@ tree.loadData({ name: 'project', kind: 'dir', children: [ /* nested nodes */ ] }
 ### Filtering and sorting
 
 ```javascript
+tree.filter = 'json';                // string: search query, highlights matching text & auto-expands folders
 tree.filter = ['.md', '.markdown'];  // array: filters FILES only, dirs always pass
 tree.filter = (entry) => entry.kind === 'dir' || !entry.name.startsWith('.'); // fn: every entry
 tree.filter = null;                  // default: show everything
@@ -119,8 +120,16 @@ tree.sort = (a, b) => a.name.localeCompare(b.name); // default: dirs first, natu
 ```
 
 An extension-array filter applies to files only — filtering out directories
-would make the tree unnavigable. Changing `filter` or `sort` triggers a
-`refresh()`.
+would make the tree unnavigable. A string query performs instant substring
+matching, auto-expands directories containing matches, and highlights matching text.
+Changing `filter` or `sort` triggers a `refresh()`.
+
+### Bulk Expansion
+
+```javascript
+tree.collapseAll();         // Collapses all open directories
+await tree.expandAll(3);    // Expands all directories up to depth 3
+```
 
 ### Factory
 
@@ -142,11 +151,15 @@ const tree = await nui.components.fileTree.create('#container', {
 | `loadData(rootNode)` | method | Render a static nested tree. No provider needed. |
 | `refresh(path?)` | async method | Re-fetch the tree (or one directory), preserving expansion state. |
 | `expand(path)` / `collapse(path)` / `toggle(path)` | methods | Expansion control. Path must be loaded — throws otherwise. |
+| `collapseAll()` | method | Collapse all currently open directories. |
+| `expandAll(maxDepth?)` | async method | Expand all directories up to maxDepth (default: 3). |
 | `select(path)` | method | Programmatic selection. Path must be loaded. |
 | `getSelected()` | method | Selected entry `{ name, path, kind }` or `null`. |
-| `filter` | property | `fn(entry)` or extension array or `null` (default). |
+| `filter` | property | String search query, extension array, `fn(entry)`, or `null` (default). |
 | `sort` | property | Comparator or `null` (default dirs-first alpha). |
 | `selectable` | attribute | `all` (default) \| `files` \| `dirs` — controls what click/Enter selects. |
+| `density` | attribute / prop | `cozy` (default, ~30px rows with comfortable spacing) \| `compact` (24px high density). |
+| `open-mode` | attribute / prop | `singleClick` (default) \| `doubleClick`. In `doubleClick` mode, single click selects (preview), double-click activates/toggles. Caret twistie always toggles on single click. |
 
 ## Events
 
@@ -170,6 +183,7 @@ Roving tabindex — one tab stop for the whole tree.
 | `←` | Collapse dir, or move to parent |
 | `Enter` / `Space` | File: select + activate. Dir: select (if allowed) + toggle |
 | `Home` / `End` | First / last visible row |
+| `A-Z` / `0-9` | Type-ahead: jump to next visible row starting with pressed key |
 
 ## Error Handling
 
