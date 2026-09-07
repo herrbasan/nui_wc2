@@ -583,6 +583,13 @@ function createList(element, options) {
 	function update(force = false) {
 		const data = list.filtered;
 		if (data.length === 0) {
+			// If a filter/search yields zero matches, clear both containers and
+			// drop out of fixed mode. Otherwise the previous (unfiltered) rows
+			// stay on screen and a "no matches" filter looks identical to "All".
+			clearChildren(list.container);
+			clearChildren(list.fixedList);
+			if (list.fixedList) list.fixedList.style.display = 'none';
+			list.mode = 'normal';
 			return;
 		}
 
