@@ -2280,6 +2280,112 @@ nui.registerPage('addons/menu', {
 	}
 });
 
+nui.registerPage('addons/file-tree', {
+	html: 'addons/file-tree.html',
+	async init(element, params, nui) {
+		if (!customElements.get('nui-file-tree')) {
+			const link = document.createElement('link');
+			link.rel = 'stylesheet';
+			link.href = '../NUI/css/modules/nui-file-tree.css';
+			document.head.appendChild(link);
+
+			await import('../../NUI/lib/modules/nui-file-tree.js');
+		}
+
+		const eventLog = element.querySelector('#event-log');
+		const logEvent = (name, detail) => {
+			const entry = detail?.entry ? `${detail.entry.kind} ${detail.entry.path}` : (detail?.error || '');
+			eventLog.textContent = `${name}  ${entry}\n` + eventLog.textContent.split('\n').slice(0, 11).join('\n');
+		};
+
+		// Static tree via loadData
+		const staticTree = element.querySelector('#tree-static');
+		staticTree.loadData({
+			name: 'nui_wc2', kind: 'dir', children: [
+				{ name: 'documentation', kind: 'dir', children: [
+					{ name: 'components', kind: 'dir', children: [
+						{ name: 'markdown.md', kind: 'file' },
+						{ name: 'button.md', kind: 'file' },
+						{ name: 'dialog.md', kind: 'file' }
+					]},
+					{ name: 'guides', kind: 'dir', children: [
+						{ name: 'introduction.md', kind: 'file' },
+						{ name: 'getting-started.md', kind: 'file' }
+					]},
+					{ name: 'components.json', kind: 'file' }
+				]},
+				{ name: 'NUI', kind: 'dir', children: [
+					{ name: 'css', kind: 'dir', children: [
+						{ name: 'nui-theme.css', kind: 'file' }
+					]},
+					{ name: 'nui.js', kind: 'file' }
+				]},
+				{ name: 'assets', kind: 'dir', children: [
+					{ name: 'logo.svg', kind: 'file' },
+					{ name: 'screenshot.png', kind: 'file' }
+				]},
+				{ name: 'empty-dir', kind: 'dir', children: [] },
+				{ name: 'LLM-CHEATSHEET.md', kind: 'file' },
+				{ name: 'README.md', kind: 'file' },
+				{ name: 'LICENSE', kind: 'file' }
+			]
+		});
+
+		element.addEventListener('nui-action-toggle-filter', (e) => {
+			const tree = e.detail.target;
+			tree.filter = tree.filter ? null : ['.md'];
+			e.target.querySelector('button').textContent = tree.filter ? 'Filter: off' : 'Filter: .md only';
+		});
+
+		element.addEventListener('nui-action-refresh', (e) => {
+			e.detail.target.refresh();
+		});
+
+		// Live filesystem tree via File System Access API provider
+		element.addEventListener('nui-action-pick-folder', async (e) => {
+			if (!window.showDirectoryPicker) {
+				eventLog.textContent = 'showDirectoryPicker unavailable — use Chrome/Edge.\n' + eventLog.textContent;
+				return;
+			}
+			const tree = e.detail.target;
+			let dirHandle;
+			try {
+				dirHandle = await window.showDirectoryPicker();
+			} catch (err) {
+				if (err.name === 'AbortError') return;
+				throw err;
+			}
+
+			const resolve = async (path) => {
+				let dir = dirHandle;
+				for (const seg of path.split('/').filter(Boolean)) {
+					dir = await dir.getDirectoryHandle(seg);
+				}
+				const entries = [];
+				for await (const child of dir.values()) {
+					entries.push({
+						name: child.name,
+						path: path ? `${path}/${child.name}` : child.name,
+						kind: child.kind === 'directory' ? 'dir' : 'file'
+					});
+				}
+				return entries;
+			};
+
+			tree.setProvider(resolve);
+			await tree.setRoot({ name: dirHandle.name, path: '' });
+			element.querySelector('#live-label').textContent = `root: ${dirHandle.name}`;
+		});
+
+		for (const tree of element.querySelectorAll('nui-file-tree')) {
+			tree.addEventListener('nui-file-select', (e) => logEvent('nui-file-select', e.detail));
+			tree.addEventListener('nui-file-activate', (e) => logEvent('nui-file-activate', e.detail));
+			tree.addEventListener('nui-file-context', (e) => logEvent('nui-file-context', e.detail));
+			tree.addEventListener('nui-tree-error', (e) => logEvent('nui-tree-error', e.detail));
+		}
+	}
+});
+
 nui.registerPage('addons/rich-text', {
 	html: 'addons/rich-text.html',
 	async init(element, params, nui) {

@@ -5873,6 +5873,7 @@ export const nui = {
 				'nui-menu':         { js: 'lib/modules/nui-menu.js',         css: 'css/modules/nui-menu.css' },
 				'nui-context-menu': { js: 'lib/modules/nui-context-menu.js', css: 'css/modules/nui-context-menu.css' },
 				'nui-rich-text':    { js: 'lib/modules/nui-rich-text.js',    css: 'css/modules/nui-rich-text.css' },
+				'nui-file-tree':    { js: 'lib/modules/nui-file-tree.js',    css: 'css/modules/nui-file-tree.css' },
 			};
 
 			const _loading = new Set();

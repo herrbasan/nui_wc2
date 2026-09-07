@@ -1,0 +1,128 @@
+<div class="page-file-tree">
+
+<script type="application/ld+json">
+{
+  "@context": "nui",
+  "@type": "Component",
+  "name": "nui-file-tree",
+  "group": "navigation",
+  "description": "Lazy-loading file explorer tree with ARIA treeview keyboard navigation. Filesystem-agnostic: the host supplies a readdir provider or static data.",
+  "events": ["nui-file-select", "nui-file-activate", "nui-file-context", "nui-tree-error"],
+  "innerElement": "<nav>",
+  "imports": {
+    "js": "NUI/lib/modules/nui-file-tree.js",
+    "css": "NUI/css/modules/nui-file-tree.css"
+  }
+}
+</script>
+
+	<nui-details summary="LLM Guide - nui-file-tree" src="../documentation/addons/file-tree.md" lazy>
+
+	</nui-details>
+
+	<header>
+		<h1>File Tree</h1>
+		<p class="lead">A lazy-loading file explorer tree. The component is filesystem-agnostic — the host provides directory data, the tree handles expansion, selection, and keyboard navigation.</p>
+	</header>
+
+	<section>
+		<h2>Static Tree (loadData)</h2>
+		<p>For static or already-known structures, pass a nested data object — no provider needed. Dirs start collapsed and expand on click.</p>
+
+		<nui-code>
+			<script type="example" data-lang="js">
+tree.loadData({
+	name: 'project', kind: 'dir', children: [
+		{ name: 'docs', kind: 'dir', children: [
+			{ name: 'SPEC.md', kind: 'file' }
+		]},
+		{ name: 'README.md', kind: 'file' }
+	]
+});
+			</script>
+		</nui-code>
+
+		<h3>Try It</h3>
+		<div class="demo-area">
+			<nui-file-tree id="tree-static" style="max-height: 20rem; border: var(--border-thickness) solid var(--border-shade2); border-radius: var(--border-radius2); padding: var(--nui-space-half);">
+				<nav></nav>
+			</nui-file-tree>
+			<nui-button-container class="demo-mt-1">
+				<nui-button>
+					<button type="button" data-action="toggle-filter@#tree-static">Filter: .md only</button>
+				</nui-button>
+				<nui-button variant="outline">
+					<button type="button" data-action="refresh@#tree-static">Refresh</button>
+				</nui-button>
+			</nui-button-container>
+		</div>
+	</section>
+
+	<section>
+		<h2>Live Filesystem (provider)</h2>
+		<p>The real use case: hand the tree a <code>readdir(path)</code> provider and a root. Children are fetched lazily on first expansion. This demo uses the File System Access API (<code>showDirectoryPicker</code>, Chromium only) — an Electron host would provide the same shape from native <code>fs</code>.</p>
+
+		<nui-code>
+			<script type="example" data-lang="js">
+tree.setProvider(async (path) => {
+	const entries = await readdirSomehow(path);
+	return entries; // [{ name, path, kind: 'dir'|'file' }]
+});
+await tree.setRoot({ name: 'my-folder', path: '' });
+			</script>
+		</nui-code>
+
+		<h3>Try It</h3>
+		<div class="demo-area">
+			<nui-button variant="primary">
+				<button type="button" data-action="pick-folder@#tree-live">Pick a Folder…</button>
+			</nui-button>
+			<span id="live-label" class="demo-ml-1"></span>
+			<nui-file-tree id="tree-live" class="demo-mt-1" style="max-height: 24rem; border: var(--border-thickness) solid var(--border-shade2); border-radius: var(--border-radius2); padding: var(--nui-space-half);">
+				<nav></nav>
+			</nui-file-tree>
+		</div>
+	</section>
+
+	<section>
+		<h2>Events</h2>
+		<p>Click a file (<code>nui-file-select</code>), double-click or press Enter (<code>nui-file-activate</code>), right-click (<code>nui-file-context</code>). Provider failures surface as <code>nui-tree-error</code>.</p>
+		<pre class="demo-chrome demo-output-area" id="event-log">Interact with either tree…</pre>
+	</section>
+
+	<section>
+		<h2>Component API</h2>
+		<table class="nui-table nui-table--api">
+			<thead>
+				<tr><th>Member</th><th>Type</th><th>Description</th></tr>
+			</thead>
+			<tbody>
+				<tr><td><code>setProvider(fn)</code></td><td>method</td><td>Set the directory provider: <code>(path) =&gt; Promise&lt;entries&gt;</code>. Required for dynamic trees.</td></tr>
+				<tr><td><code>setRoot({ name, path })</code></td><td>method (async)</td><td>Open a dynamic root via the provider.</td></tr>
+				<tr><td><code>loadData(rootNode)</code></td><td>method</td><td>Render a static nested tree. No provider needed.</td></tr>
+				<tr><td><code>refresh(path?)</code></td><td>method (async)</td><td>Re-fetch the tree (or one directory), preserving expansion state.</td></tr>
+				<tr><td><code>expand(path)</code> / <code>collapse(path)</code> / <code>toggle(path)</code></td><td>methods</td><td>Programmatic expansion control.</td></tr>
+				<tr><td><code>select(path)</code></td><td>method</td><td>Programmatic selection. Path must be loaded.</td></tr>
+				<tr><td><code>getSelected()</code></td><td>method</td><td>Returns the selected entry <code>{ name, path, kind }</code> or <code>null</code>.</td></tr>
+				<tr><td><code>filter</code></td><td>property</td><td><code>fn(entry)</code> receives every entry; an array of extensions (<code>['.md']</code>) filters files only. <code>null</code> (default) shows everything.</td></tr>
+				<tr><td><code>sort</code></td><td>property</td><td>Custom comparator. Default: dirs first, then natural alpha.</td></tr>
+				<tr><td><code>selectable</code></td><td>attribute</td><td><code>all</code> (default) | <code>files</code> | <code>dirs</code>.</td></tr>
+			</tbody>
+		</table>
+
+		<h3>Keyboard (ARIA treeview)</h3>
+		<table class="nui-table nui-table--api">
+			<thead>
+				<tr><th>Key</th><th>Action</th></tr>
+			</thead>
+			<tbody>
+				<tr><td><code>↑</code> / <code>↓</code></td><td>Move between visible rows</td></tr>
+				<tr><td><code>→</code></td><td>Expand dir, or move to first child</td></tr>
+				<tr><td><code>←</code></td><td>Collapse dir, or move to parent</td></tr>
+				<tr><td><code>Enter</code> / <code>Space</code></td><td>Select + activate (file) or toggle (dir)</td></tr>
+				<tr><td><code>Home</code> / <code>End</code></td><td>First / last visible row</td></tr>
+			</tbody>
+		</table>
+	</section>
+
+</div>

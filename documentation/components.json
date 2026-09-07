@@ -1,6 +1,6 @@
 {
 	"schemaVersion": 1,
-	"generated": "2026-05-01T04:57:24.969Z",
+	"generated": "2026-09-07T03:58:11.166Z",
 	"source": "Playground/pages/**",
 	"components": [
 		{
@@ -13,8 +13,7 @@
 			"innerElement": "<details> and <summary>",
 			"imports": null,
 			"page": "components/accordion",
-			"demoPath": "Playground/pages/components/accordion.html",
-			"docPath": "documentation/components/accordion.md"
+			"demoPath": "Playground/pages/components/accordion.html"
 		},
 		{
 			"@context": "nui",
@@ -26,21 +25,19 @@
 			"innerElement": "<header>",
 			"imports": null,
 			"page": "components/app-header",
-			"demoPath": "Playground/pages/components/app-header.html",
-			"docPath": "documentation/components/app-header.md"
+			"demoPath": "Playground/pages/components/app-header.html"
 		},
 		{
 			"@context": "nui",
 			"@type": "Component",
 			"name": "nui-app",
 			"group": "layout",
-			"description": "Application shell creating CSS Grid layout with fixed regions: header, sidebar, content, and optional footer. Supports content-min-width, sidebar-breakpoint, sidebar behavior/position declarative attributes.",
-			"events": ["nui-sidebar-change"],
+			"description": "Application shell creating CSS Grid layout with fixed regions: header, sidebar, content, and optional footer.",
+			"events": [],
 			"innerElement": null,
 			"imports": null,
 			"page": "components/app-layout",
-			"demoPath": "Playground/pages/components/app-layout.html",
-			"docPath": "documentation/components/app.md"
+			"demoPath": "Playground/pages/components/app-layout.html"
 		},
 		{
 			"@context": "nui",
@@ -52,8 +49,7 @@
 			"innerElement": null,
 			"imports": null,
 			"page": "components/badge",
-			"demoPath": "Playground/pages/components/badge.html",
-			"docPath": "documentation/components/badge.md"
+			"demoPath": "Playground/pages/components/badge.html"
 		},
 		{
 			"@context": "nui",
@@ -68,8 +64,7 @@
 			"innerElement": null,
 			"imports": null,
 			"page": "components/banner",
-			"demoPath": "Playground/pages/components/banner.html",
-			"docPath": "documentation/components/banner.md"
+			"demoPath": "Playground/pages/components/banner.html"
 		},
 		{
 			"@context": "nui",
@@ -78,13 +73,12 @@
 			"group": "forms",
 			"description": "Styled wrapper around native buttons, including icon buttons and variant styling.",
 			"events": [
-				"nui-click (INTERNAL — use data-action instead)"
+				"nui-click"
 			],
 			"innerElement": "<button> or <a>",
 			"imports": null,
 			"page": "components/button",
-			"demoPath": "Playground/pages/components/button.html",
-			"docPath": "documentation/components/button.md"
+			"demoPath": "Playground/pages/components/button.html"
 		},
 		{
 			"@context": "nui",
@@ -96,8 +90,7 @@
 			"innerElement": null,
 			"imports": null,
 			"page": "components/card",
-			"demoPath": "Playground/pages/components/card.html",
-			"docPath": "documentation/components/card.md"
+			"demoPath": "Playground/pages/components/card.html"
 		},
 		{
 			"@context": "nui",
@@ -109,8 +102,7 @@
 			"innerElement": "<pre><code>",
 			"imports": null,
 			"page": "components/code",
-			"demoPath": "Playground/pages/components/code.html",
-			"docPath": "documentation/components/code.md"
+			"demoPath": "Playground/pages/components/code.html"
 		},
 		{
 			"@context": "nui",
@@ -122,8 +114,7 @@
 			"innerElement": "<details>",
 			"imports": null,
 			"page": "components/details",
-			"demoPath": "Playground/pages/components/details.html",
-			"docPath": "documentation/components/details.md"
+			"demoPath": "Playground/pages/components/details.html"
 		},
 		{
 			"@context": "nui",
@@ -139,8 +130,7 @@
 			"innerElement": "<dialog>",
 			"imports": null,
 			"page": "components/dialog",
-			"demoPath": "Playground/pages/components/dialog.html",
-			"docPath": "documentation/components/dialog.md"
+			"demoPath": "Playground/pages/components/dialog.html"
 		},
 		{
 			"@context": "nui",
@@ -154,8 +144,7 @@
 			"innerElement": null,
 			"imports": null,
 			"page": "components/dropzone",
-			"demoPath": "Playground/pages/components/dropzone.html",
-			"docPath": "documentation/components/dropzone.md"
+			"demoPath": "Playground/pages/components/dropzone.html"
 		},
 		{
 			"@context": "nui",
@@ -167,8 +156,7 @@
 			"innerElement": null,
 			"imports": null,
 			"page": "components/icon",
-			"demoPath": "Playground/pages/components/icon.html",
-			"docPath": "documentation/components/icon.md"
+			"demoPath": "Playground/pages/components/icon.html"
 		},
 		{
 			"@context": "nui",
@@ -184,8 +172,7 @@
 			"innerElement": "<input>, <textarea>",
 			"imports": null,
 			"page": "components/inputs",
-			"demoPath": "Playground/pages/components/inputs.html",
-			"docPath": "documentation/components/input.md"
+			"demoPath": "Playground/pages/components/inputs.html"
 		},
 		{
 			"@context": "nui",
@@ -197,8 +184,7 @@
 			"innerElement": null,
 			"imports": null,
 			"page": "components/layout",
-			"demoPath": "Playground/pages/components/layout.html",
-			"docPath": "documentation/components/layout.md"
+			"demoPath": "Playground/pages/components/layout.html"
 		},
 		{
 			"@context": "nui",
@@ -212,8 +198,7 @@
 			"innerElement": null,
 			"imports": null,
 			"page": "components/link-list",
-			"demoPath": "Playground/pages/components/link-list.html",
-			"docPath": "documentation/components/link-list.md"
+			"demoPath": "Playground/pages/components/link-list.html"
 		},
 		{
 			"@context": "nui",
@@ -225,8 +210,7 @@
 			"innerElement": "<script type=\"text/markdown\">",
 			"imports": null,
 			"page": "components/markdown",
-			"demoPath": "Playground/pages/components/markdown.html",
-			"docPath": "documentation/components/markdown.md"
+			"demoPath": "Playground/pages/components/markdown.html"
 		},
 		{
 			"@context": "nui",
@@ -242,8 +226,7 @@
 			"innerElement": "<dialog>",
 			"imports": null,
 			"page": "components/overlay",
-			"demoPath": "Playground/pages/components/overlay.html",
-			"docPath": "documentation/components/overlay.md"
+			"demoPath": "Playground/pages/components/overlay.html"
 		},
 		{
 			"@context": "nui",
@@ -255,8 +238,7 @@
 			"innerElement": null,
 			"imports": null,
 			"page": "components/progress",
-			"demoPath": "Playground/pages/components/progress.html",
-			"docPath": "documentation/components/progress.md"
+			"demoPath": "Playground/pages/components/progress.html"
 		},
 		{
 			"@context": "nui",
@@ -279,8 +261,7 @@
 			"innerElement": "<select>",
 			"imports": null,
 			"page": "components/select",
-			"demoPath": "Playground/pages/components/select.html",
-			"docPath": "documentation/components/select.md"
+			"demoPath": "Playground/pages/components/select.html"
 		},
 		{
 			"@context": "nui",
@@ -292,8 +273,7 @@
 			"innerElement": null,
 			"imports": null,
 			"page": "components/skip-links",
-			"demoPath": "Playground/pages/components/skip-links.html",
-			"docPath": "documentation/components/skip-links.md"
+			"demoPath": "Playground/pages/components/skip-links.html"
 		},
 		{
 			"@context": "nui",
@@ -301,12 +281,13 @@
 			"name": "nui-slider",
 			"group": "forms",
 			"description": "Enhanced range input wrapping native <input type='range'> with custom visual styling and drag interaction.",
-			"events": [],
+			"events": [
+				"nui-change"
+			],
 			"innerElement": "<input type=\"range\">",
 			"imports": null,
 			"page": "components/slider",
-			"demoPath": "Playground/pages/components/slider.html",
-			"docPath": "documentation/components/slider.md"
+			"demoPath": "Playground/pages/components/slider.html"
 		},
 		{
 			"@context": "nui",
@@ -315,13 +296,13 @@
 			"group": "interaction",
 			"description": "Drag-and-drop reordering with FLIP animations, touch/mouse/keyboard support, and nui-sortable-item children.",
 			"events": [
-				"nui-sortable-change"
+				"nui-sortable-reorder",
+				"nui-sortable-item-delete"
 			],
 			"innerElement": null,
 			"imports": null,
 			"page": "components/sortable",
-			"demoPath": "Playground/pages/components/sortable.html",
-			"docPath": "documentation/components/sortable.md"
+			"demoPath": "Playground/pages/components/sortable.html"
 		},
 		{
 			"@context": "nui",
@@ -333,8 +314,7 @@
 			"innerElement": "<table>",
 			"imports": null,
 			"page": "components/table",
-			"demoPath": "Playground/pages/components/table.html",
-			"docPath": "documentation/components/table.md"
+			"demoPath": "Playground/pages/components/table.html"
 		},
 		{
 			"@context": "nui",
@@ -348,8 +328,7 @@
 			"innerElement": "<nav> with <button> tabs, <section> or <div> panels",
 			"imports": null,
 			"page": "components/tabs",
-			"demoPath": "Playground/pages/components/tabs.html",
-			"docPath": "documentation/components/tabs.md"
+			"demoPath": "Playground/pages/components/tabs.html"
 		},
 		{
 			"@context": "nui",
@@ -364,8 +343,7 @@
 			"innerElement": null,
 			"imports": null,
 			"page": "components/tag-input",
-			"demoPath": "Playground/pages/components/tag-input.html",
-			"docPath": "documentation/components/tag-input.md"
+			"demoPath": "Playground/pages/components/tag-input.html"
 		},
 		{
 			"@context": "nui",
@@ -377,8 +355,7 @@
 			"innerElement": null,
 			"imports": null,
 			"page": "components/tooltip",
-			"demoPath": "Playground/pages/components/tooltip.html",
-			"docPath": "documentation/components/tooltip.md"
+			"demoPath": "Playground/pages/components/tooltip.html"
 		}
 	],
 	"addons": [
@@ -391,12 +368,10 @@
 			"events": [],
 			"innerElement": null,
 			"imports": {
-				"js": "NUI/lib/modules/nui-app-window.js",
-				"css": "NUI/css/modules/nui-app-window.css"
+				"js": "NUI/lib/modules/nui-app-window.js"
 			},
 			"page": "addons/app-window",
-			"demoPath": "Playground/pages/addons/app-window.html",
-			"docPath": "documentation/addons/app-window.md"
+			"demoPath": "Playground/pages/addons/app-window.html"
 		},
 		{
 			"@context": "nui",
@@ -413,8 +388,7 @@
 				"css": "NUI/css/modules/nui-code-editor.css"
 			},
 			"page": "addons/code-editor",
-			"demoPath": "Playground/pages/addons/code-editor.html",
-			"docPath": "documentation/addons/code-editor.md"
+			"demoPath": "Playground/pages/addons/code-editor.html"
 		},
 		{
 			"@context": "nui",
@@ -429,8 +403,27 @@
 				"css": "NUI/css/modules/nui-context-menu.css"
 			},
 			"page": "addons/context-menu",
-			"demoPath": "Playground/pages/addons/context-menu.html",
-			"docPath": "documentation/addons/context-menu.md"
+			"demoPath": "Playground/pages/addons/context-menu.html"
+		},
+		{
+			"@context": "nui",
+			"@type": "Component",
+			"name": "nui-file-tree",
+			"group": "navigation",
+			"description": "Lazy-loading file explorer tree with ARIA treeview keyboard navigation. Filesystem-agnostic: the host supplies a readdir provider or static data.",
+			"events": [
+				"nui-file-select",
+				"nui-file-activate",
+				"nui-file-context",
+				"nui-tree-error"
+			],
+			"innerElement": "<nav>",
+			"imports": {
+				"js": "NUI/lib/modules/nui-file-tree.js",
+				"css": "NUI/css/modules/nui-file-tree.css"
+			},
+			"page": "addons/file-tree",
+			"demoPath": "Playground/pages/addons/file-tree.html"
 		},
 		{
 			"@context": "nui",
@@ -445,8 +438,7 @@
 				"css": "NUI/css/modules/nui-lightbox.css"
 			},
 			"page": "addons/lightbox",
-			"demoPath": "Playground/pages/addons/lightbox.html",
-			"docPath": "documentation/addons/lightbox.md"
+			"demoPath": "Playground/pages/addons/lightbox.html"
 		},
 		{
 			"@context": "nui",
@@ -465,8 +457,7 @@
 				"css": "NUI/css/modules/nui-list.css"
 			},
 			"page": "addons/list",
-			"demoPath": "Playground/pages/addons/list.html",
-			"docPath": "documentation/addons/list.md"
+			"demoPath": "Playground/pages/addons/list.html"
 		},
 		{
 			"@context": "nui",
@@ -481,8 +472,7 @@
 				"css": "NUI/css/modules/nui-media-player.css"
 			},
 			"page": "addons/media-player",
-			"demoPath": "Playground/pages/addons/media-player.html",
-			"docPath": "documentation/addons/media-player.md"
+			"demoPath": "Playground/pages/addons/media-player.html"
 		},
 		{
 			"@context": "nui",
@@ -497,8 +487,7 @@
 				"css": "NUI/css/modules/nui-menu.css"
 			},
 			"page": "addons/menu",
-			"demoPath": "Playground/pages/addons/menu.html",
-			"docPath": "documentation/addons/menu.md"
+			"demoPath": "Playground/pages/addons/menu.html"
 		},
 		{
 			"@context": "nui",
@@ -516,8 +505,7 @@
 				"css": "NUI/css/modules/nui-rich-text.css"
 			},
 			"page": "addons/rich-text",
-			"demoPath": "Playground/pages/addons/rich-text.html",
-			"docPath": "documentation/addons/rich-text.md"
+			"demoPath": "Playground/pages/addons/rich-text.html"
 		},
 		{
 			"@context": "nui",
@@ -538,8 +526,7 @@
 				"css": "NUI/css/modules/nui-wizard.css"
 			},
 			"page": "addons/wizard",
-			"demoPath": "Playground/pages/addons/wizard.html",
-			"docPath": "documentation/addons/wizard.md"
+			"demoPath": "Playground/pages/addons/wizard.html"
 		}
 	],
 	"reference": [
@@ -548,27 +535,30 @@
 			"@type": "Reference",
 			"name": "accessibility",
 			"group": "documentation",
-			"description": "DOM-first accessibility: semantic HTML foundation, ARIA auto-enhancement, roving tabindex, focus management, screen reader support.",
-			"docPath": "documentation/guides/accessibility.md",
-			"page": "documentation/accessibility"
+			"description": "DOM-first accessibility philosophy: semantic HTML foundation, ARIA auto-enhancement, roving tabindex, focus management.",
+			"docPath": null,
+			"page": "documentation/accessibility",
+			"llmGuide": null
 		},
 		{
 			"@context": "nui",
 			"@type": "Reference",
 			"name": "api-structure",
 			"group": "documentation",
-			"description": "Three-tier API namespace: root (lifecycle), components (factory APIs), utilities (helpers).",
-			"docPath": "documentation/guides/api-structure.md",
-			"page": "documentation/api-structure"
+			"description": "Three-tier API namespace design: root (lifecycle), components (factory APIs), utilities (helpers).",
+			"docPath": null,
+			"page": "documentation/api-structure",
+			"llmGuide": null
 		},
 		{
 			"@context": "nui",
 			"@type": "Reference",
 			"name": "architecture-patterns",
 			"group": "documentation",
-			"description": "App architecture: centralized, fragment-based, and hybrid routing with nui-page layout engine.",
-			"docPath": "documentation/guides/architecture-patterns.md",
-			"page": "documentation/architecture-patterns"
+			"description": "Application architecture patterns: centralized, fragment-based, and hybrid routing with nui-page layout engine.",
+			"docPath": null,
+			"page": "documentation/architecture-patterns",
+			"llmGuide": null
 		},
 		{
 			"@context": "nui",
@@ -577,16 +567,18 @@
 			"group": "documentation",
 			"description": "Visual quick reference for icons, CSS variables, and common component patterns.",
 			"docPath": null,
-			"page": "documentation/cheatsheet"
+			"page": "documentation/cheatsheet",
+			"llmGuide": null
 		},
 		{
 			"@context": "nui",
 			"@type": "Reference",
 			"name": "declarative-actions",
 			"group": "documentation",
-			"description": "Event delegation via data-action attribute for CSP-safe, decoupled HTML-to-JS communication.",
-			"docPath": "documentation/guides/declarative-actions.md",
-			"page": "documentation/declarative-actions"
+			"description": "Event delegation pattern using data-action attribute for CSP-safe, decoupled HTML-to-JS communication.",
+			"docPath": null,
+			"page": "documentation/declarative-actions",
+			"llmGuide": null
 		},
 		{
 			"@context": "nui",
@@ -594,17 +586,19 @@
 			"name": "getting-started",
 			"group": "documentation",
 			"description": "Setup, layout modes, SPA wiring, and the base shell structure.",
-			"docPath": "documentation/guides/getting-started.md",
-			"page": "documentation/getting-started"
+			"docPath": null,
+			"page": "documentation/getting-started",
+			"llmGuide": null
 		},
 		{
 			"@context": "nui",
 			"@type": "Reference",
 			"name": "introduction",
 			"group": "documentation",
-			"description": "NUI philosophy: browser-native UI toolkit, semantic HTML, progressive enhancement, two usage patterns.",
-			"docPath": "documentation/guides/introduction.md",
-			"page": "documentation/introduction"
+			"description": "NUI philosophy: browser-native UI toolkit, semantic HTML foundation, progressive enhancement, two usage patterns.",
+			"docPath": null,
+			"page": "documentation/introduction",
+			"llmGuide": null
 		},
 		{
 			"@context": "nui",
@@ -612,8 +606,9 @@
 			"name": "utilities",
 			"group": "documentation",
 			"description": "Utility functions: createElement, storage, enableDrag, array helpers, environment detection.",
-			"docPath": "documentation/guides/utilities.md",
-			"page": "documentation/utilities"
+			"docPath": null,
+			"page": "documentation/utilities",
+			"llmGuide": null
 		}
 	],
 	"setup": {
@@ -672,16 +667,6 @@
 				"params": [
 					"name",
 					"fn"
-				],
-				"returns": null
-			},
-			{
-				"name": "registerAction",
-				"signature": "nui.registerAction(name, handler)",
-				"description": "Register a named action handler for the data-action system",
-				"params": [
-					"name",
-					"handler"
 				],
 				"returns": null
 			},
@@ -841,5 +826,227 @@
 				}
 			]
 		}
-	}
+	},
+	"events": [
+		{
+			"component": "nui-banner",
+			"events": [
+				{
+					"name": "nui-banner-open"
+				},
+				{
+					"name": "nui-banner-close"
+				}
+			]
+		},
+		{
+			"component": "nui-button",
+			"events": [
+				{
+					"name": "nui-click"
+				}
+			]
+		},
+		{
+			"component": "nui-dialog",
+			"events": [
+				{
+					"name": "nui-dialog-open"
+				},
+				{
+					"name": "nui-dialog-close"
+				},
+				{
+					"name": "nui-dialog-cancel"
+				}
+			]
+		},
+		{
+			"component": "nui-dropzone",
+			"events": [
+				{
+					"name": "nui-drop"
+				}
+			]
+		},
+		{
+			"component": "nui-input",
+			"events": [
+				{
+					"name": "nui-input"
+				},
+				{
+					"name": "nui-change"
+				},
+				{
+					"name": "nui-clear"
+				}
+			]
+		},
+		{
+			"component": "nui-link-list",
+			"events": [
+				{
+					"name": "nui-link-list-change"
+				}
+			]
+		},
+		{
+			"component": "nui-overlay",
+			"events": [
+				{
+					"name": "nui-overlay-open"
+				},
+				{
+					"name": "nui-overlay-close"
+				},
+				{
+					"name": "nui-overlay-cancel"
+				}
+			]
+		},
+		{
+			"component": "nui-select",
+			"events": [
+				{
+					"name": "nui-change"
+				},
+				{
+					"name": "nui-select"
+				},
+				{
+					"name": "nui-open"
+				},
+				{
+					"name": "nui-close"
+				},
+				{
+					"name": "nui-clear"
+				},
+				{
+					"name": "nui-enable"
+				},
+				{
+					"name": "nui-disable"
+				},
+				{
+					"name": "nui-item-add"
+				},
+				{
+					"name": "nui-item-remove"
+				},
+				{
+					"name": "nui-items-replace"
+				}
+			]
+		},
+		{
+			"component": "nui-slider",
+			"events": [
+				{
+					"name": "nui-change"
+				}
+			]
+		},
+		{
+			"component": "nui-sortable",
+			"events": [
+				{
+					"name": "nui-sortable-reorder"
+				},
+				{
+					"name": "nui-sortable-item-delete"
+				}
+			]
+		},
+		{
+			"component": "nui-tabs",
+			"events": [
+				{
+					"name": "nui-tab-change"
+				}
+			]
+		},
+		{
+			"component": "nui-tag-input",
+			"events": [
+				{
+					"name": "nui-tag-add"
+				},
+				{
+					"name": "nui-tag-remove"
+				}
+			]
+		},
+		{
+			"component": "nui-code-editor",
+			"events": [
+				{
+					"name": "nui-code-editor-change"
+				}
+			]
+		},
+		{
+			"component": "nui-file-tree",
+			"events": [
+				{
+					"name": "nui-file-select"
+				},
+				{
+					"name": "nui-file-activate"
+				},
+				{
+					"name": "nui-file-context"
+				},
+				{
+					"name": "nui-tree-error"
+				}
+			]
+		},
+		{
+			"component": "nui-list",
+			"events": [
+				{
+					"name": "nui-list-change"
+				},
+				{
+					"name": "nui-list-select"
+				},
+				{
+					"name": "nui-item-action"
+				}
+			]
+		},
+		{
+			"component": "nui-rich-text",
+			"events": [
+				{
+					"name": "nui-rich-text-change"
+				},
+				{
+					"name": "nui-rich-text-image"
+				}
+			]
+		},
+		{
+			"component": "nui-wizard",
+			"events": [
+				{
+					"name": "nui-wizard-before-next"
+				},
+				{
+					"name": "nui-wizard-step-change"
+				},
+				{
+					"name": "nui-wizard-cancel"
+				},
+				{
+					"name": "nui-wizard-complete"
+				},
+				{
+					"name": "nui-wizard-validation-error"
+				}
+			]
+		}
+	]
 }

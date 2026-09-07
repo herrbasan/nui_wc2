@@ -335,6 +335,7 @@ const navigationData = [
 			{ label: 'App Window', href: '#page=addons/app-window' },
 			{ label: 'Code Editor', href: '#page=addons/code-editor' },
 			{ label: 'Context Menu', href: '#page=addons/context-menu' },
+			{ label: 'File Tree', href: '#page=addons/file-tree' },
 			{ label: 'Graph', href: '#page=addons/graph' },
 			{ label: 'Lightbox', href: '#page=addons/lightbox' },
 			{ label: 'List', href: '#page=addons/list' },

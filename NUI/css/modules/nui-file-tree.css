@@ -1,0 +1,103 @@
+/**
+ * NUI File Tree - Addon Component Styles
+ * Lazy-loading file explorer tree (ARIA treeview)
+ */
+
+nui-file-tree {
+	display: block;
+	overflow: auto;
+}
+
+.nui-file-tree {
+	font-family: var(--system-ui);
+	font-size: var(--font-size-small);
+	padding: var(--nui-space-quarter) 0;
+	user-select: none;
+}
+
+.nui-file-tree-row {
+	display: flex;
+	align-items: center;
+	gap: var(--nui-space-quarter);
+	height: calc(var(--nui-space) * 1.75);
+	padding-right: var(--nui-space-half);
+	padding-left: calc(var(--nui-space-quarter) + var(--nft-level, 0) * var(--nui-space));
+	border-radius: var(--border-radius1);
+	color: var(--text-color);
+	cursor: pointer;
+	white-space: nowrap;
+	outline: none;
+}
+
+.nui-file-tree-row:hover {
+	background: var(--color-shade3);
+}
+
+.nui-file-tree-row:focus-visible {
+	outline: 2px solid var(--color-highlight);
+	outline-offset: -2px;
+}
+
+.nui-file-tree-row.nui-file-tree-selected,
+.nui-file-tree-row.nui-file-tree-selected:hover {
+	background: var(--color-highlight);
+	color: var(--color-white);
+}
+
+.nui-file-tree-caret {
+	width: var(--icon-size);
+	height: var(--icon-size);
+	flex-shrink: 0;
+	transition: transform 0.15s ease;
+	opacity: 0.7;
+}
+
+/* Files get a span spacer instead of an icon — no visibility hack needed */
+span.nui-file-tree-caret {
+	opacity: 0;
+}
+
+.nui-file-tree-row.nui-file-tree-open > .nui-file-tree-caret {
+	transform: rotate(90deg);
+}
+
+.nui-file-tree-row.nui-file-tree-loading > .nui-file-tree-caret {
+	animation: nui-file-tree-pulse 0.8s ease-in-out infinite;
+}
+
+@keyframes nui-file-tree-pulse {
+	0%, 100% { opacity: 0.3; }
+	50% { opacity: 1; }
+}
+
+.nui-file-tree-icon {
+	width: var(--icon-size);
+	height: var(--icon-size);
+	flex-shrink: 0;
+	opacity: 0.85;
+}
+
+.nui-file-tree-name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.nui-file-tree-group {
+	/* indentation handled per-row via --nft-level */
+}
+
+.nui-file-tree-note {
+	padding: var(--nui-space-quarter) var(--nui-space-half);
+	color: var(--text-color-dim);
+	font-style: italic;
+}
+
+.nui-file-tree-note.nui-file-tree-error {
+	color: var(--text-color-dim);
+	font-style: normal;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.nui-file-tree-caret { transition: none; }
+	.nui-file-tree-row.nui-file-tree-loading > .nui-file-tree-caret { animation: none; }
+}
