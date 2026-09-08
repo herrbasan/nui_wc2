@@ -91,6 +91,15 @@ class NuiMediaPlayer extends HTMLElement {
 			media.volume = 1; 
 		}, 1);
 
+		// State declarations MUST precede player_observer / readyState checks:
+		// start() (via readyState >= 3) and the observer callback both call
+		// update()/hideControls(), which read these bindings — declaring them
+		// later caused TDZ ReferenceErrors on cached media. (2026-09-06)
+		let volume_timeout, widget_timeout, stageclick_timeout, control_timeout;
+		let timeline_drag = false, volume_drag = false, isOver = false, muteTouchEnd = false;
+		let widget_x = 0, last_widget_x = 0;
+		let last_volume_proz = -1, last_time = -1;
+
 		let player_observer;
 		if (typeof IntersectionObserver !== 'undefined') {
 			player_observer = new IntersectionObserver((e) => { 
@@ -121,11 +130,6 @@ class NuiMediaPlayer extends HTMLElement {
 			const seconds = totalSeconds % 60;
 			return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 		}
-
-		let volume_timeout, widget_timeout, stageclick_timeout, control_timeout;
-		let timeline_drag = false, volume_drag = false, isOver = false, muteTouchEnd = false;
-		let widget_x = 0, last_widget_x = 0;
-		let last_volume_proz = -1, last_time = -1;
 
 		function _event(tgt, evt, fnc, options) {
 			registeredEvents.push({ target: tgt, event: evt, fnc: fnc });
