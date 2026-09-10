@@ -1,0 +1,25 @@
+<div class="page-md-blocks">
+	<header>
+		<h1>MD-Blocks</h1>
+		<p class="lead">An experimental probe: rendering an MD-Blocks document through <code>nui-markdown</code>.</p>
+	</header>
+
+	<section>
+		<h2>What this is</h2>
+		<p><strong>MD-Blocks</strong> is an enhanced Markdown authoring format — a spec, not a tool. Structure (sections, blocks, columns, named data) rides in invisible HTML comments and YAML frontmatter, while the content stays pure CommonMark. Each root-level <code>---</code> starts a new section, which doubles as the unit for a slideshow renderer.</p>
+		<p>The spec lives at <code>github.com/herrbasan/md-blocks</code>. This library is the intended consumer: a <code>nui-blocks</code> renderer component that <code>nui-markdown</code> grows into.</p>
+
+		<div class="demo-callout">
+			<p><strong>Current state.</strong> Directive support has not landed yet — a structure-aware renderer is still to come. For now the document renders as ordinary Markdown: HTML comments are removed (as in every renderer, so the <code>mb:</code> directives are simply gone), and each section separator renders as a horizontal rule. Two pieces are already live and were the reason to build this page: the YAML frontmatter renders as a <em>collapsed</em> metadata disclosure by default, and images are now sized to their container instead of overflowing it.</p>
+		</div>
+	</section>
+
+	<section>
+		<h2>The document</h2>
+		<p>The sample below is a real MD-Blocks file — <code>Playground/pages/experiments/md-blocks-demo.md</code>. It exercises the full authoring surface: YAML frontmatter, <code>---</code> section separators, <code>mb:section</code>, <code>mb:block</code>, media blocks, <code>mb:columns</code> / <code>mb:col</code>, a gallery, and <code>mb:var</code> in both forms.</p>
+
+		<div class="demo-chrome">
+			<nui-markdown src="pages/experiments/md-blocks-demo.md"></nui-markdown>
+		</div>
+	</section>
+</div>

@@ -720,11 +720,11 @@ nui.components.banner.hideAll();
   <script type="text/markdown"># Hello **world**</script>
 </nui-markdown>
 ```
-| Attribute | `src`, `frontmatter="show|strip"` (default `show`; `false` disables) |
+| Attribute | `src`, `frontmatter="collapsed|show|open|strip"` (default `collapsed`; `false` disables) |
 | Property | `.metadata` → parsed YAML frontmatter object (or `null`); `.frontmatterMode` programmatic override — wins over the `frontmatter` attribute |
 | Streaming | `.beginStream()`, `.appendChunk(text)`, `.endStream()` |
 
-**Frontmatter:** a leading `---`-fenced YAML block renders as a metadata card by default (`frontmatter="show"`); `frontmatter="strip"` removes it; programmatic `.frontmatterMode = 'strip'` overrides the attribute. The parsed object is always exposed as `.metadata`. Utils: `nui.util.parseYaml`, `nui.util.parseFrontmatter`, `nui.util.renderFrontmatter`, and `markdownToHtml(md, { frontmatter })`.
+**Frontmatter:** a leading `---`-fenced YAML block renders as a metadata card — by default (`frontmatter="collapsed"`) inside a closed, subtle `<details>` so it does not intrude on the body; `frontmatter="open"` (alias `show`) renders it always visible; `frontmatter="strip"` removes it. Programmatic `.frontmatterMode = 'open'` overrides the attribute. The parsed object is always exposed as `.metadata`. Utils: `nui.util.parseYaml`, `nui.util.parseFrontmatter`, `nui.util.renderFrontmatter`, and `markdownToHtml(md, { frontmatter })`.
 
 📖 **Full docs:** [`documentation/components/markdown.md`](documentation/components/markdown.md)
 

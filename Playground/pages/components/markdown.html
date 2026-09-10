@@ -243,7 +243,7 @@ mdRenderer.endStream();
 
 	<section>
 		<h2>YAML Frontmatter</h2>
-		<p>A leading <code>---</code>-fenced YAML block is parsed and rendered as a metadata card by default. Use <code>frontmatter="strip"</code> to remove it entirely, or <code>frontmatter="false"</code> to leave it untouched (legacy rendering). The parsed object is exposed on the element as <code>.metadata</code>.</p>
+		<p>A leading <code>---</code>-fenced YAML block is parsed and rendered as a metadata card inside a closed, subtle disclosure by default. Use <code>frontmatter="open"</code> to render it always visible, <code>frontmatter="strip"</code> to remove it entirely, or <code>frontmatter="false"</code> to leave it untouched (legacy rendering). The parsed object is exposed on the element as <code>.metadata</code>.</p>
 
 		<nui-code>
 			<script type="example" data-lang="yaml">
@@ -268,7 +268,7 @@ summary: "A one-line summary rendered as a distinct field."
 			</script>
 		</nui-code>
 
-		<h3>Default — rendered card</h3>
+		<h3>Default — collapsed card</h3>
 		<div class="demo-area">
 			<nui-markdown>
 				<script type="text/markdown">
@@ -288,6 +288,22 @@ summary: "A short post demonstrating YAML frontmatter rendering."
 # Example Post
 
 Body content appears below the metadata card.
+				</script>
+			</nui-markdown>
+		</div>
+
+		<h3>Always visible — <code>frontmatter="open"</code></h3>
+		<div class="demo-area">
+			<nui-markdown frontmatter="open">
+				<script type="text/markdown">
+---
+title: "Visible Post"
+tags: [ai, markdown]
+---
+
+# Always Visible
+
+The <code>open</code> mode (alias of <code>show</code>) keeps the metadata card expanded.
 				</script>
 			</nui-markdown>
 		</div>

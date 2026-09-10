@@ -42,6 +42,9 @@ The built-in parser supports:
 - Blockquotes
 - Horizontal rules
 - Images
+- HTML comments (removed, as in every other Markdown renderer)
+
+**Comments:** an HTML comment is dropped from the output, matching GitHub, VS Code and Obsidian, where comments are invisible. This also means structured-comment formats — MD-Blocks directives such as `<!-- mb:block -->` — never reach the page: a structure-aware renderer consumes them from the source before calling the converter. A comment inside fenced or inline code is content and stays literal. An unterminated `<!--` is left visible rather than swallowing the rest of the document.
 
 **List notes:** Blank lines between items (loose lists) keep items in a single list. Indent a marker under an item to nest a sub-list. This holds for the streaming API too — chunks that split a list across `\n\n` boundaries are held in the live region until the list ends, so numbering never restarts mid-list.
 
@@ -74,17 +77,21 @@ summary: "A one-line summary rendered as a distinct field."
 Body text follows the metadata card.
 ```
 
-**Rendering modes** (attribute `frontmatter`, default `show`):
+**Rendering modes** (attribute `frontmatter`, default `collapsed`):
 
 | Value | Behavior |
 |-------|----------|
-| `show` | Render the frontmatter as a styled metadata card above the body. |
+| `collapsed` | **Default.** Render the metadata card inside a closed, subtle `<details>` disclosure, so it does not intrude on the body. |
+| `show` / `open` | Render the metadata card above the body, always visible. |
 | `strip` | Remove the frontmatter entirely; only the body renders. |
 | `false` | Disable handling; the block renders as-is (legacy horizontal-rule behavior). |
 
 ```html
-<!-- Renders a metadata card -->
+<!-- Default: metadata card inside a closed disclosure -->
 <nui-markdown src="post.md"></nui-markdown>
+
+<!-- Always visible -->
+<nui-markdown src="post.md" frontmatter="open"></nui-markdown>
 
 <!-- Strips the frontmatter -->
 <nui-markdown src="post.md" frontmatter="strip"></nui-markdown>
@@ -100,10 +107,10 @@ console.log(md.metadata); // e.g. { title: '...', tags: ['ai', 'nietzsche'], aut
 **Programmatic mode override:** the `frontmatterMode` property takes precedence over the `frontmatter` attribute when both are set (programmatic wins on duplication).
 
 ```javascript
-md.frontmatterMode = 'strip'; // overrides frontmatter="show" attribute
+md.frontmatterMode = 'open'; // overrides frontmatter="collapsed" attribute
 ```
 
-**Streaming note:** frontmatter handling applies to static and `src`-based rendering. The streaming API (`beginStream`/`appendChunk`/`endStream`) is intended for incremental LLM output and does not strip or render frontmatter.
+**Streaming note:** frontmatter handling applies to static and `src`-based rendering. The streaming API (`beginStream`/`appendChunk`/`endStream`) does not parse frontmatter: streamed text has no beginning, so a leading `---` is treated as a horizontal rule rather than the start of a metadata block. A `frontmatter` mode cannot be set while streaming.
 
 **Supported frontmatter YAML subset:** nested maps, sequences of scalars, sequences of maps, quoted scalars, numbers, booleans, `null`/`~`, inline flow sequences (`[a, b]`), and `#` comments. Non-string keys and complex YAML types (anchors, multi-document, block scalars) are not supported.
 

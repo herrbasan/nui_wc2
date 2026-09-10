@@ -132,6 +132,18 @@
 	text-box: trim-both !important;
 }
 
+/* Text-box trim is a typographic refinement for lines of text: it trims a line
+   box's leading edge using the FONT's metrics. A block whose first line holds a
+   replaced element (an image, video, canvas…) has no text metrics to trim
+   against, so the trim collapses the line box to a single text line while the
+   media keeps its own height — the media then overlaps whatever follows it
+   (three 448px gallery images inside a 64px list). Those blocks opt out.
+   The longhand is required: the `text-box` shorthand with an edge-only value
+   resolves to `trim-both` here, which collapses the box further still. */
+:root[data-text-box-trim="true"] :has(> :is(img, picture, svg, video, iframe, canvas, object, embed)) {
+	text-box-trim: none !important;
+}
+
 nui-page:focus,
 .content-page:focus {
 	outline: none;
@@ -4933,6 +4945,30 @@ opacity: 0;
 }
 
 /* ################################# nui-markdown FRONTMATTER */
+/* Images in rendered Markdown are block-level media, like `p img` and `figure img`
+   above — extended to every container, because an image inside a list item matched
+   no rule and stayed `display: inline`. An inline replaced element is laid out in a
+   line box, which makes its parent's height depend on font metrics rather than the
+   image: measured, three 448px gallery images sat in a 933px list with the first
+   item 24px tall and its image painted 431px above it. `display: block` removes the
+   line box, so the container is sized by the media.
+
+   Spacing follows the house rule for block-level flow content — bottom-only, one
+   `--nui-space`, as on `p` and `figure`. An image that is a paragraph's only content
+   is the exception: it already gets that spacing from the paragraph's own bottom
+   margin, so a margin of its own would double the gap. That mirrors `figure`, which
+   carries the spacing while the `figure img` inside it carries none. */
+nui-markdown img {
+	display: block;
+	max-width: 100%;
+	height: auto;
+	margin-bottom: var(--nui-space);
+}
+
+nui-markdown p > img {
+	margin-bottom: 0;
+}
+
 /* Metadata card rendered from YAML frontmatter by nui-markdown / markdownToHtml */
 .nui-md-frontmatter {
 	display: grid;
@@ -4943,6 +4979,32 @@ opacity: 0;
 	border: solid var(--border-thickness) var(--border-shade2);
 	border-left: 4px solid var(--color-highlight);
 	border-radius: var(--border-radius1);
+}
+/* Collapsed frontmatter (the default): the metadata card sits inside a closed
+   <details>. The summary is deliberately quiet — small, dim, no fill — so the
+   disclosure does not intrude on the document's own rendering. */
+.nui-md-frontmatter-details {
+	margin: 0 0 var(--nui-space-double);
+}
+.nui-md-frontmatter-details > summary {
+	display: inline-block;
+	padding: 0 var(--nui-space-half);
+	color: var(--text-color-dim);
+	font-size: var(--font-size-small);
+	border: solid var(--border-thickness) var(--border-shade1);
+	border-radius: var(--border-radius2);
+	cursor: pointer;
+	user-select: none;
+}
+.nui-md-frontmatter-details > summary:hover {
+	color: var(--text-color);
+	border-color: var(--border-shade2);
+}
+.nui-md-frontmatter-details[open] > summary {
+	margin-bottom: var(--nui-space-half);
+}
+.nui-md-frontmatter-details > .nui-md-frontmatter {
+	margin-bottom: 0;
 }
 .nui-md-frontmatter-field {
 	display: grid;

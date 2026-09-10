@@ -6232,10 +6232,16 @@ function parseYaml(src) {
 }
 
 // Extract leading YAML frontmatter (a "---" fenced block at the very top of the
-// document). Returns null when there is none.
+// document). Returns null when there is none. The block closes at the FIRST "---"
+// line after the opener, as every other frontmatter parser does — so an empty
+// block (`---\n---`) is a block, and a following "---" is body content.
+// Tolerant of the three things a real file does to those leading bytes: CRLF line
+// endings (a file fetched via `src` is verbatim, while the HTML parser hands inline
+// content over as LF), a UTF-8 BOM (PowerShell's Out-File and some editors write
+// one), and the empty block itself, which is valid YAML with a null document.
 function parseFrontmatter(md) {
 	if (typeof md !== 'string') return null;
-	const m = md.match(/^---[ \t]*\n([\s\S]*?)\n---[ \t]*(?:\n|$)/);
+	const m = md.match(/^(?:\uFEFF)?---[ \t]*\r?\n(?:---[ \t]*(?:\r?\n|$)|([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$))/);
 	if (!m) return null;
 	return {
 		raw: m[0],
@@ -6273,9 +6279,15 @@ function renderFrontmatterValue(v) {
 	return fmEscape(v);
 }
 
-// Render parsed frontmatter as a metadata card. Returns null when there is
-// nothing to show.
-function renderFrontmatter(data) {
+// Recognized `frontmatter` modes. 'collapsed' is the default — the metadata card
+// renders inside a closed <details> so it does not intrude on the document.
+// 'show' / 'open' render the card visible, 'strip' removes it. Any value not in
+// this set (including false / 'false') disables frontmatter handling entirely.
+const FRONTMATTER_MODES = new Set(['collapsed', 'show', 'open', 'strip']);
+
+// Render parsed frontmatter as a metadata card. Pass { collapsed: true } to wrap
+// the card in a closed disclosure. Returns null when there is nothing to show.
+function renderFrontmatter(data, options) {
 	if (!data || typeof data !== 'object' || Array.isArray(data)) return null;
 	const rows = Object.entries(data).map(([k, v]) => {
 		if (v === null || v === undefined || (Array.isArray(v) && v.length === 0)) return '';
@@ -6286,22 +6298,29 @@ function renderFrontmatter(data) {
 		return `<div class="nui-md-frontmatter-field">${dt}<dd>${renderFrontmatterValue(v)}</dd></div>`;
 	}).filter(Boolean).join('');
 	if (!rows) return null;
-	return `<dl class="nui-md-frontmatter" aria-label="Document metadata">${rows}</dl>`;
+	const card = `<dl class="nui-md-frontmatter" aria-label="Document metadata">${rows}</dl>`;
+	if (options && options.collapsed) {
+		return `<details class="nui-md-frontmatter-details"><summary>Metadata</summary>${card}</details>`;
+	}
+	return card;
 }
 
 function markdownToHtml(md, options) {
 	options = options || {};
 	if (typeof md !== 'string' || !md.trim()) return '';
 
-	// YAML frontmatter handling: 'show' renders a metadata card, 'strip' removes
-	// it, anything else (false / 'false' / omitted-with-undefined) disables it.
-	// Default 'show'.
-	const fmMode = options.frontmatter !== undefined ? options.frontmatter : 'show';
+	// YAML frontmatter handling. Recognized modes live in FRONTMATTER_MODES;
+	// 'collapsed' (the default) hides the metadata card behind a closed
+	// disclosure, 'show' / 'open' render it visible, 'strip' removes it. Any
+	// other value (false / 'false' / garbage) disables handling — the block then
+	// renders as-is, the legacy horizontal-rule behavior.
+	const fmMode = options.frontmatter !== undefined ? options.frontmatter : 'collapsed';
 	let fmHtml = '';
-	if (fmMode === 'show' || fmMode === 'strip') {
+	if (FRONTMATTER_MODES.has(fmMode)) {
 		const fm = parseFrontmatter(md);
 		if (fm) {
-			if (fmMode === 'show') fmHtml = renderFrontmatter(fm.data) || '';
+			if (fmMode === 'collapsed') fmHtml = renderFrontmatter(fm.data, { collapsed: true }) || '';
+			else if (fmMode !== 'strip') fmHtml = renderFrontmatter(fm.data) || '';
 			md = fm.content;
 		}
 	}
@@ -6324,6 +6343,15 @@ function markdownToHtml(md, options) {
 		inlineCode.push({ token, code });
 		return token;
 	});
+
+	// HTML comments are invisible in every other Markdown renderer, so they are
+	// dropped here too — including MD-Blocks directives (`<!-- mb:block -->`), which a
+	// structure-aware renderer consumes from the source before it reaches this
+	// converter. Fenced and inline code were tokenized above, so a comment shown as
+	// an example stays literal. Comments are matched in their escaped form because
+	// escaping has already run; an unterminated `<!--` is left visible rather than
+	// swallowing the rest of the document.
+	html = html.replace(/&lt;!--[\s\S]*?--&gt;/g, '');
 
 	// Simple tables
 	html = html.replace(/^[ \t]*\|(.+)\|\n[ \t]*\|([-:| ]+)\|\n((?:[ \t]*\|.+\|\n?)*)/gm, (match, header, sep, body) => {
@@ -6371,21 +6399,32 @@ function markdownToHtml(md, options) {
 		const scheme = trimmed.match(/^([a-z][a-z0-9+.-]*):/i);
 		return (scheme && !/^(https?|mailto)$/i.test(scheme[1])) ? null : trimmed;
 	};
+	// Generated markup and URL attribute values are held as tokens so the emphasis
+	// passes below cannot reach into them: an underscore in a filename is not
+	// emphasis. A whole <img> is held — alt text is literal per CommonMark — while a
+	// link keeps its text inline, so emphasis inside link text still applies.
+	const heldMarkup = [];
+	const hold = (markup) => {
+		const token = `\uE200${heldMarkup.length}\uE201`;
+		heldMarkup.push({ token, markup });
+		return token;
+	};
 	html = html.replace(/!\[([^\]]+)\]\(([^)]+)\)/g, (m, alt, src) => {
 		const url = safeUrl(src);
 		if (!url) return alt;
 		// App-level origin allow-list (setMarkdownImagePolicy): an image whose
 		// source the app does not trust renders as its alt text, never as a request.
 		if (typeof markdownImagePolicy === 'function' && !markdownImagePolicy(url)) return alt;
-		return `<img src="${url}" alt="${alt}">`;
+		return hold(`<img src="${url}" alt="${alt}">`);
 	});
 	html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (m, text, href) => {
 		const url = safeUrl(href);
-		return url ? `<a href="${url}">${text}</a>` : text;
+		return url ? `<a href="${hold(url)}">${text}</a>` : text;
 	});
 	html = html.replace(/(\*\*|__)(.*?)\1/g, '<strong>$2</strong>');
 	html = html.replace(/(\*|_)(.*?)\1/g, '<em>$2</em>');
 	html = html.replace(/~~(.*?)~~/g, '<s>$1</s>');
+	html = heldMarkup.reduce((result, h) => result.replace(h.token, () => h.markup), html);
 	html = codeBlocks.reduce((result, { token, lang, code }) => {
 		const safeCode = code.replace(/<\/script/gi, '<\\/script');
 		return result.replace(token, `<nui-code><script type="example"${lang ? ` data-lang="${lang}"` : ''}>${safeCode}</script></nui-code>`);
@@ -6406,6 +6445,12 @@ util.parseYaml = parseYaml;
 util.parseFrontmatter = parseFrontmatter;
 util.renderFrontmatter = renderFrontmatter;
 
+// Streaming renders text that has no beginning — the first chunk of an LLM reply is
+// not line 1 of an authored document, so a leading `---` there is a divider, not
+// frontmatter. Parsing it would delete everything up to the next `---`. Streaming
+// therefore never parses frontmatter.
+const STREAM_OPTIONS = { frontmatter: false };
+
 class NuiMarkdown extends HTMLElement {
 	constructor() {
 		super();
@@ -6420,15 +6465,15 @@ class NuiMarkdown extends HTMLElement {
 	get metadata() { return this._metadata; }
 	set metadata(v) { this._metadata = v; }
 
-	// Programmatic frontmatter mode: 'show' | 'strip' | 'false'.
-	// When set, takes precedence over the `frontmatter` attribute.
+	// Programmatic frontmatter mode: 'collapsed' (default) | 'show' | 'open' |
+	// 'strip' | 'false'. When set, takes precedence over the `frontmatter` attribute.
 	get frontmatterMode() { return this._frontmatterMode; }
 	set frontmatterMode(v) { this._frontmatterMode = v; }
 
 	_renderMode() {
 		if (this._frontmatterMode !== undefined) return this._frontmatterMode;
 		const attr = this.getAttribute('frontmatter');
-		return (attr === 'strip' || attr === 'show' || attr === 'false') ? attr : 'show';
+		return FRONTMATTER_MODES.has(attr) ? attr : 'collapsed';
 	}
 
 	async connectedCallback() {
@@ -6462,7 +6507,7 @@ class NuiMarkdown extends HTMLElement {
 		if (!rawText) return;
 
 		const mode = this._renderMode();
-		const fm = (mode === 'show' || mode === 'strip') ? parseFrontmatter(rawText) : null;
+		const fm = FRONTMATTER_MODES.has(mode) ? parseFrontmatter(rawText) : null;
 		this._metadata = fm ? fm.data : null;
 		this.innerHTML = markdownToHtml(rawText, { frontmatter: mode });
 		this._processed = true; // Mark as processed so re-attach is free
@@ -6522,7 +6567,7 @@ class NuiMarkdown extends HTMLElement {
 		if (forceDrain) {
 			if (this._activeBuffer) {
 				const drainDiv = document.createElement('div');
-				drainDiv.innerHTML = markdownToHtml(this._activeBuffer);
+				drainDiv.innerHTML = markdownToHtml(this._activeBuffer, STREAM_OPTIONS);
 				while (drainDiv.firstChild) {
 					this._stableContainer.appendChild(drainDiv.firstChild);
 				}
@@ -6565,7 +6610,7 @@ class NuiMarkdown extends HTMLElement {
 				this._activeBuffer = this._activeBuffer.substring(boundary + 2);
 
 				const tempDiv = document.createElement('div');
-				tempDiv.innerHTML = markdownToHtml(block);
+				tempDiv.innerHTML = markdownToHtml(block, STREAM_OPTIONS);
 				while (tempDiv.firstChild) {
 					this._stableContainer.appendChild(tempDiv.firstChild);
 				}
@@ -6574,7 +6619,7 @@ class NuiMarkdown extends HTMLElement {
 			}
 		}
 
-		this._tempContainer.innerHTML = markdownToHtml(this._activeBuffer);
+		this._tempContainer.innerHTML = markdownToHtml(this._activeBuffer, STREAM_OPTIONS);
 	}
 }
 

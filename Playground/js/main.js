@@ -350,7 +350,8 @@ const navigationData = [
 		icon: 'settings',
 		items: [
 			{ label: 'Dashboard', href: '#feature=dashboard' },
-			{ label: 'HTML Standards', href: '#page=experiments/html-standards' }
+			{ label: 'HTML Standards', href: '#page=experiments/html-standards' },
+			{ label: 'MD-Blocks', href: '#page=experiments/md-blocks' }
 		]
 	}
 ];
