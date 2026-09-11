@@ -582,7 +582,15 @@ class NuiFileTree extends HTMLElement {
 		if (typeof this._filter === 'string') {
 			const q = this._filter.trim().toLowerCase();
 			if (!q) return entries;
-			return entries.filter(e => entryMatches(e, q));
+			// `entryMatches` can only recurse into `entry.children`, which a provider-mode
+			// entry does not have until it is expanded — so a directory could only ever
+			// match by its own name, and searching for a file inside `docs/` filtered
+			// `docs/` itself out, making the match unreachable rather than merely hidden.
+			// A dir with no loaded children therefore always passes: we cannot know
+			// whether it contains a match, and expansion is what reveals the answer.
+			// A dir WITH children is judged exactly as before, so static trees and
+			// already-expanded provider dirs keep their precise behaviour.
+			return entries.filter(e => entryMatches(e, q) || (e.kind === 'dir' && !Array.isArray(e.children)));
 		}
 		return entries.filter(e => this._filter(e));
 	}
