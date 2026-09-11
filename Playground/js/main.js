@@ -8,6 +8,7 @@ import '../../NUI/lib/modules/nui-lightbox.js';
 import '../../NUI/lib/modules/nui-code-editor.js';
 import '../../NUI/lib/modules/nui-media-player.js';
 import '../../NUI/lib/modules/nui-wizard.js';
+import '../../NUI/lib/modules/nui-slides.js';
 import '../../NUI/lib/modules/nui-debug.js';
 //import { createMonitor } from '../../NUI/lib/modules/nui-monitor.js';
 
@@ -342,6 +343,7 @@ const navigationData = [
 			{ label: 'Media Player', href: '#page=addons/media-player' },
 			{ label: 'Menu', href: '#page=addons/menu' },
 			{ label: 'Rich-Text', href: '#page=addons/rich-text' },
+			{ label: 'Slides', href: '#page=addons/slides' },
 			{ label: 'Wizard', href: '#page=addons/wizard' }
 		]
 	},

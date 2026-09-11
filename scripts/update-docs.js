@@ -75,20 +75,28 @@ function extractPageData(htmlPath) {
 		console.warn(`[update-docs] Missing '@type' in ${relativePath}`);
 	}
 	
-	// Check for separate matching .md file
+	// Check for separate matching .md file or documentation pointer
 	const mdPath = htmlPath.replace(/\.html$/, '.md');
 	let llmGuide = null;
-	const docPathMatch = html.match(/<nui-markdown[^>]*src="([^"]+)"[^>]*>/);
+	const docPathMatch = html.match(/<nui-details[^>]*src="([^"]+)"[^>]*>/) ||
+		html.match(/<nui-markdown[^>]*id="llm-guide"[^>]*src="([^"]+)"[^>]*>/) ||
+		html.match(/<nui-markdown[^>]*src="(\.\.\/documentation\/[^"]+)"[^>]*>/);
 	
 	let docPath = null;
 	if (docPathMatch) {
 		const relSrc = docPathMatch[1]; // e.g. "../documentation/components/accordion.md"
-		const absoluteHtmlDir = path.dirname(htmlPath);
-		const absoluteDocLoc = path.resolve(absoluteHtmlDir, relSrc);
-		
-		// Ensure it points to the NUI root /documentation folder so the path in JSON is relative to root
+		const playgroundDir = path.join(__dirname, '..', 'Playground');
 		const repoRoot = path.join(__dirname, '..');
-		docPath = path.relative(repoRoot, absoluteDocLoc).replace(/\\/g, '/');
+		// relSrc in HTML fragments is relative to Playground/index.html
+		let absoluteDocLoc = path.resolve(playgroundDir, relSrc);
+		if (!fs.existsSync(absoluteDocLoc)) {
+			// Fallback: check relative to htmlPath
+			absoluteDocLoc = path.resolve(path.dirname(htmlPath), relSrc);
+		}
+		
+		if (fs.existsSync(absoluteDocLoc)) {
+			docPath = path.relative(repoRoot, absoluteDocLoc).replace(/\\/g, '/');
+		}
 	}
 
 	if (!docPath) {

@@ -10,7 +10,7 @@
 		<p>The spec lives at <code>github.com/herrbasan/md-blocks</code>. This library is the intended consumer: a <code>nui-blocks</code> renderer component that <code>nui-markdown</code> grows into.</p>
 
 		<div class="demo-callout">
-			<p><strong>Current state.</strong> Directive support has not landed yet — a structure-aware renderer is still to come. For now the document renders as ordinary Markdown: HTML comments are removed (as in every renderer, so the <code>mb:</code> directives are simply gone), and each section separator renders as a horizontal rule. Two pieces are already live and were the reason to build this page: the YAML frontmatter renders as a <em>collapsed</em> metadata disclosure by default, and images are now sized to their container instead of overflowing it.</p>
+			<p><strong>Current state.</strong> Directive support is now active in <code>nui-markdown</code>. The document renders as structured MD-Blocks: sections separated by <code>---</code>, <code>mb:block</code> containers, <code>mb:columns</code>/<code>mb:col</code> grids, media blocks with figure/figcaption, repeating chrome slots, and <code>mb:var</code> data cards. YAML frontmatter renders as a collapsed metadata disclosure by default.</p>
 		</div>
 	</section>
 

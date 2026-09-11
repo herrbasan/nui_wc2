@@ -34,10 +34,14 @@ const MOUNT_TIMEOUT_MS = 5000;
 const DEFAULT_BASE = [1280, 720];
 
 class NuiSlides extends HTMLElement {
-	static observedAttributes = ['base', 'zoom'];
+	static observedAttributes = ['base', 'toolbar', 'controls'];
 
-	attributeChangedCallback() {
-		if (this._mounted) this._fit();
+	attributeChangedCallback(name) {
+		if (name === 'base' && this._mounted) this._fit();
+		if ((name === 'toolbar' || name === 'controls') && this._mounted) {
+			if (this.hasAttribute('toolbar') || this.hasAttribute('controls')) this._buildToolbar();
+			else if (this._toolbar) { this._toolbar.remove(); this._toolbar = null; }
+		}
 	}
 
 	// The canvas: a logical size the slide is composed in. `base="1280x720"` or a bare
@@ -54,42 +58,31 @@ class NuiSlides extends HTMLElement {
 		return [w, h];
 	}
 
-	_zoom() {
-		const raw = this.getAttribute('zoom');
-		if (raw === null || raw.trim() === '') return 1;
-		const zoom = Number(raw);
-		if (!Number.isFinite(zoom) || zoom <= 0) {
-			throw new Error('[nui-slides] zoom="' + raw + '" is not a scale factor — use a positive number.');
-		}
-		return zoom;
-	}
-
-	// Compose at canvas size, show at whatever fits. The deck is the only thing that
-	// needs measuring, and every slide scales with it — this is what makes fullscreen
+	// Compose at canvas size, show at whatever fits. The viewport box is the
+	// measure, and every slide scales with it — this is what makes fullscreen
 	// work without anything else changing: the box grows, the fit follows.
-	//
-	// The CONTENT box is the measure, not `clientWidth`: the deck reserves its padding
-	// for the frame's shadow, and fitting to the padded box would push the slide out
-	// into the padding and clip what the padding exists to protect.
 	_fit() {
+		const target = this._viewport || this;
 		const [w, h] = this._canvas();
-		const params = getComputedStyle(this);
+		const params = getComputedStyle(target);
 		const padX = parseFloat(params.paddingLeft) + parseFloat(params.paddingRight);
 		const padY = parseFloat(params.paddingTop) + parseFloat(params.paddingBottom);
-		const width = this.clientWidth - padX;
-		const height = this.clientHeight - padY;
+		const width = target.clientWidth - padX;
+		const height = target.clientHeight - padY;
 		if (!width || !height) return;   // not laid out (hidden or detached) — nothing to fit
-		const scale = Math.min(width / w, height / h) * this._zoom();
+		const scale = Math.min(width / w, height / h);
 		this.style.setProperty('--nui-slides-w', w + 'px');
 		this.style.setProperty('--nui-slides-h', h + 'px');
+		this.style.setProperty('--nui-slides-aspect', (w / h).toFixed(4));
 		this.style.setProperty('--nui-slides-scale', String(scale));
 	}
 
 	connectedCallback() {
 		if (this._mounted) {
 			// Re-attached: the deck is already built, so only the measurements restart.
+			this._viewport = this.querySelector(':scope > .nui-slides-viewport') || this;
 			this._resize = new ResizeObserver(() => this._fit());
-			this._resize.observe(this);
+			this._resize.observe(this._viewport);
 			this._fit();
 			return;
 		}
@@ -101,6 +94,21 @@ class NuiSlides extends HTMLElement {
 			throw new Error('[nui-slides] needs a <nui-markdown> child to present.');
 		}
 		this._md = md;
+		// Strip frontmatter from visual rendering — slide decks use metadata for titles and A11y,
+		// but the frontmatter disclosure must not appear on slide surfaces.
+		md.setAttribute('frontmatter', 'strip');
+		md.frontmatterMode = 'strip';
+
+		// In normal page flow, the slide surface is contained in a dedicated viewport box
+		// so external toolbars or controls sit cleanly outside the slide canvas.
+		let viewport = this.querySelector(':scope > .nui-slides-viewport');
+		if (!viewport) {
+			viewport = document.createElement('div');
+			viewport.className = 'nui-slides-viewport';
+			viewport.append(md);
+			this.prepend(viewport);
+		}
+		this._viewport = viewport;
 
 		// The content may be rendered already (inline markdown) or still in flight (a
 		// `src` fetch). Watch for it rather than polling, and give up loudly: a deck
@@ -123,6 +131,11 @@ class NuiSlides extends HTMLElement {
 		const mains = Array.from(this.querySelectorAll('.nui-blocks-main'));
 		const rendered = Array.from(this._md.children).filter((el) => el.tagName !== 'SCRIPT');
 		if (!mains.length && !rendered.length) return;   // not rendered yet
+
+		// Strip any frontmatter that might have rendered before nui-slides mounted
+		for (const el of this.querySelectorAll('.nui-md-frontmatter, .nui-md-frontmatter-details')) {
+			el.remove();
+		}
 
 		const sections = mains.length ? this._collect(mains) : this._synthesise();
 		if (!sections.length) {
@@ -156,12 +169,75 @@ class NuiSlides extends HTMLElement {
 		this.tabIndex = 0;
 		this._onKey = (e) => this._key(e);
 		this.addEventListener('keydown', this._onKey);
+
+		this._touchStartX = 0;
+		this._touchStartY = 0;
+		this._onTouchStart = (e) => {
+			if (!this._mounted) return;
+			if (e.target instanceof Element && e.target.closest(INTERACTIVE)) return;
+			const touch = e.touches[0];
+			if (!touch) return;
+			this._touchStartX = touch.clientX;
+			this._touchStartY = touch.clientY;
+		};
+		this._onTouchEnd = (e) => {
+			if (!this._mounted) return;
+			const touch = e.changedTouches[0];
+			if (!touch) return;
+			const deltaX = touch.clientX - this._touchStartX;
+			const deltaY = touch.clientY - this._touchStartY;
+			if (Math.abs(deltaX) > 40 && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
+				if (deltaX < 0) this.next();
+				else this.prev();
+			}
+		};
+		this.addEventListener('touchstart', this._onTouchStart, { passive: true });
+		this.addEventListener('touchend', this._onTouchEnd, { passive: true });
+
 		// The deck resizes when the window does, when it enters fullscreen, and when a
 		// layout around it changes — all the same event as far as the fit is concerned.
 		this._resize = new ResizeObserver(() => this._fit());
-		this._resize.observe(this);
+		this._resize.observe(this._viewport || this);
+
+		this._onMouseMove = (e) => {
+			if (!this._toolbar) return;
+			const isFs = document.fullscreenElement === this;
+			if (!isFs) {
+				this._toolbar.classList.remove('is-visible');
+				return;
+			}
+			const nearBottom = e.clientY >= window.innerHeight - 120;
+			if (nearBottom) {
+				this._toolbar.classList.add('is-visible');
+				clearTimeout(this._fsTimer);
+				this._fsTimer = setTimeout(() => {
+					if (document.fullscreenElement === this && this._toolbar && !this._toolbar.matches(':hover')) {
+						this._toolbar.classList.remove('is-visible');
+					}
+				}, 2500);
+			} else if (!this._toolbar.matches(':hover')) {
+				this._toolbar.classList.remove('is-visible');
+			}
+		};
+		this._onMouseLeave = () => {
+			if (document.fullscreenElement === this && this._toolbar) {
+				this._toolbar.classList.remove('is-visible');
+			}
+		};
+		this._onFullscreenChange = () => {
+			if (this._toolbar) {
+				this._toolbar.classList.remove('is-visible');
+				this._updateToolbar();
+			}
+			this._fit();
+		};
+		this.addEventListener('mousemove', this._onMouseMove);
+		this.addEventListener('mouseleave', this._onMouseLeave);
+		document.addEventListener('fullscreenchange', this._onFullscreenChange);
+
 		this._mounted = true;
 		this._fit();
+		this._buildToolbar();
 		this._show(0, { focus: false });
 		this.setAttribute('ready', '');
 	}
@@ -242,10 +318,83 @@ class NuiSlides extends HTMLElement {
 		this._current = target;
 		if (options.focus !== false) section.focus({ preventScroll: true });
 		this._reportOverflow(section);
+		this._updateToolbar();
 		this.dispatchEvent(new CustomEvent('nui-slide-change', {
 			detail: { index: target, count: this._sections.length, section }
 		}));
 		return target;
+	}
+
+	_buildToolbar() {
+		if (this._toolbar || (!this.hasAttribute('toolbar') && !this.hasAttribute('controls'))) return;
+		const nav = document.createElement('nav');
+		nav.className = 'nui-slides-toolbar';
+		nav.setAttribute('aria-label', 'Slide presentation controls');
+
+		const prevBtn = document.createElement('button');
+		prevBtn.type = 'button';
+		prevBtn.className = 'nui-slides-btn nui-slides-btn-prev';
+		prevBtn.setAttribute('aria-label', 'Previous slide');
+		prevBtn.title = 'Previous slide (Left Arrow)';
+		prevBtn.innerHTML = '<nui-icon name="chevron_right" style="transform: rotate(180deg)"></nui-icon>';
+		prevBtn.addEventListener('click', (e) => {
+			e.stopPropagation();
+			this.prev();
+		});
+
+		const counter = document.createElement('span');
+		counter.className = 'nui-slides-toolbar-counter';
+		counter.setAttribute('aria-live', 'polite');
+		counter.textContent = (this._current >= 0 ? this._current + 1 : 1) + ' / ' + (this._sections ? this._sections.length : 1);
+
+		const nextBtn = document.createElement('button');
+		nextBtn.type = 'button';
+		nextBtn.className = 'nui-slides-btn nui-slides-btn-next';
+		nextBtn.setAttribute('aria-label', 'Next slide');
+		nextBtn.title = 'Next slide (Right Arrow or Space)';
+		nextBtn.innerHTML = '<nui-icon name="chevron_right"></nui-icon>';
+		nextBtn.addEventListener('click', (e) => {
+			e.stopPropagation();
+			this.next();
+		});
+
+		const fsBtn = document.createElement('button');
+		fsBtn.type = 'button';
+		fsBtn.className = 'nui-slides-btn nui-slides-btn-fullscreen';
+		fsBtn.setAttribute('aria-label', 'Toggle fullscreen presentation');
+		fsBtn.title = 'Toggle fullscreen (F)';
+		fsBtn.innerHTML = '<nui-icon name="fullscreen"></nui-icon>';
+		fsBtn.addEventListener('click', (e) => {
+			e.stopPropagation();
+			this.toggleFullscreen();
+		});
+
+		nav.append(prevBtn, counter, nextBtn, fsBtn);
+		this.append(nav);
+		if (typeof customElements !== 'undefined' && customElements.upgrade) {
+			customElements.upgrade(nav);
+		}
+		this._toolbar = nav;
+		this._tbPrev = prevBtn;
+		this._tbNext = nextBtn;
+		this._tbFs = fsBtn;
+		this._tbCounter = counter;
+		this._updateToolbar();
+	}
+
+	_updateToolbar() {
+		if (!this._toolbar || !this._sections) return;
+		const total = this._sections.length;
+		const cur = this._current;
+		if (this._tbCounter) this._tbCounter.textContent = (cur + 1) + ' / ' + total;
+		if (this._tbPrev) this._tbPrev.disabled = cur <= 0;
+		if (this._tbNext) this._tbNext.disabled = cur >= total - 1;
+		if (this._tbFs) {
+			const isFs = document.fullscreenElement === this;
+			const icon = this._tbFs.querySelector('nui-icon');
+			if (icon) icon.setAttribute('name', isFs ? 'close' : 'fullscreen');
+			this._tbFs.title = isFs ? 'Exit fullscreen (F or Esc)' : 'Toggle fullscreen (F)';
+		}
 	}
 
 	// A slide that overflows cannot be scrolled — that is the point — so the renderer
@@ -268,15 +417,19 @@ class NuiSlides extends HTMLElement {
 	next() { return this._show(this._current + 1); }
 	prev() { return this._show(this._current - 1); }
 
+	toggleFullscreen() {
+		if (!document.fullscreenEnabled) return;
+		if (document.fullscreenElement === this) return document.exitFullscreen();
+		return this.requestFullscreen();
+	}
+
 	_key(e) {
 		if (!this._mounted || e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) return;
 		if (e.target instanceof Element && e.target.closest(INTERACTIVE)) return;
 
 		if (e.key === 'f' || e.key === 'F') {
-			if (!document.fullscreenEnabled) return;
 			e.preventDefault();
-			if (document.fullscreenElement) document.exitFullscreen();
-			else this.requestFullscreen();
+			this.toggleFullscreen();
 			return;
 		}
 
@@ -291,6 +444,13 @@ class NuiSlides extends HTMLElement {
 		this._stopWatching();
 		if (this._resize) { this._resize.disconnect(); this._resize = null; }
 		if (this._onKey) { this.removeEventListener('keydown', this._onKey); this._onKey = null; }
+		if (this._onTouchStart) { this.removeEventListener('touchstart', this._onTouchStart); this._onTouchStart = null; }
+		if (this._onTouchEnd) { this.removeEventListener('touchend', this._onTouchEnd); this._onTouchEnd = null; }
+		if (this._onMouseMove) { this.removeEventListener('mousemove', this._onMouseMove); this._onMouseMove = null; }
+		if (this._onMouseLeave) { this.removeEventListener('mouseleave', this._onMouseLeave); this._onMouseLeave = null; }
+		if (this._onFullscreenChange) { document.removeEventListener('fullscreenchange', this._onFullscreenChange); this._onFullscreenChange = null; }
+		if (this._fsTimer) { clearTimeout(this._fsTimer); this._fsTimer = null; }
+		if (this._toolbar) { this._toolbar.remove(); this._toolbar = null; }
 		// The rendered deck is left in place: a re-attach reuses it rather than cloning
 		// chrome and numbering the slides a second time.
 	}
@@ -303,7 +463,8 @@ if (typeof nui !== 'undefined' && nui) {
 	nui.components.slides = {
 		show: (i, el) => (el || document.querySelector('nui-slides')).show(i),
 		next: (el) => (el || document.querySelector('nui-slides')).next(),
-		prev: (el) => (el || document.querySelector('nui-slides')).prev()
+		prev: (el) => (el || document.querySelector('nui-slides')).prev(),
+		toggleFullscreen: (el) => (el || document.querySelector('nui-slides')).toggleFullscreen()
 	};
 }
 

@@ -116,12 +116,16 @@ md.frontmatterMode = 'open'; // overrides frontmatter="collapsed" attribute
 
 ### MD-Blocks structure
 
-The converter understands **MD-Blocks** ([spec](https://github.com/herrbasan/md-blocks)) out of the box, with nothing to enable. MD-Blocks is a superset of CommonMark: structure rides in HTML comments, the content stays plain Markdown, and a document that uses none of it renders exactly as before.
+The converter understands **MD-Blocks** ([spec](https://github.com/herrbasan/md-blocks), v1.3) out of the box, with nothing to enable. MD-Blocks is a superset of CommonMark: structure rides in HTML comments, the content stays plain Markdown, and a document that uses none of it renders exactly as before.
 
 ```md
 ---
 title: A document
 ---
+
+<!-- mb:block repeat=header -->
+**Deck Title**
+<!-- mb:/block -->
 
 Plain Markdown is content.
 
@@ -137,26 +141,35 @@ Left.
 <!-- mb:col preset=card -->
 Right.
 <!-- mb:/columns -->
+
+<!-- mb:block repeat=footer -->
+*Confidential — 2026*
+<!-- mb:/block -->
 ```
 
 | Construct | Renders as |
 |-----------|------------|
-| Root-level `---` | The next **section**. A break is internal structure and is *never drawn* — it does not become an `<hr>`. |
+| `<!-- mb:main id= preset= -->` | Starts a new **main** chrome scope (`<main class="nui-blocks-main">`). A document with no `mb:main` has one implicit main. `mb:main` is a **break**, not a container: it ends where the next one begins or at end-of-document (there is no closing `mb:/main`). An opening marker annotates the implicit main. |
+| Root-level `---` | The next **section** (`<section class="nui-blocks-section">`). A break is internal structure and is *never drawn* — it does not become an `<hr>`. |
 | `<!-- mb:section id= preset= -->` | Attributes for the section it appears in. |
 | `<!-- mb:block -->` … `<!-- mb:/block -->` | `<div class="nui-blocks-block">`. |
+| `<!-- mb:block repeat=header\|footer -->` | **Repeating chrome template.** Extracted from sections and emitted once per main scope into `<header class="nui-blocks-chrome nui-blocks-chrome-header">` or `<footer class="nui-blocks-chrome nui-blocks-chrome-footer">`. A section holding only chrome templates is not emitted as a blank surface. Profile renderers (like `nui-slides`) clone chrome onto each surface. |
 | `<!-- mb:columns -->` / `mb:col` / `mb:/columns` | `<div class="nui-blocks-columns">` grid. Column count comes from the number of `col` markers; `weights` sets the ratio. Stacks in source order on narrow screens. |
 | `<!-- mb:var name= value= -->` | **Surfaced as data.** Rendered as a `<dl class="nui-blocks-var">` data card at the position it was authored: the name in monospace, a `value=` scalar beside it, and a fenced `json`/`text` payload pretty-printed through `<nui-code>` (highlighted and copyable). A collection renderer reads `section.vars` and emits nothing here. |
-| Media block | A block whose **first node** is an image, image list, or media link becomes `<figure>` + `<figcaption>`. Everything after the media is the caption. `kind` is inferred from the extension. |
+| Media block | A block whose **first node** is an image (including empty alt text `![](...)`), image list, or media link becomes `<figure>` + `<figcaption>`. Everything after the media is the caption. `kind` is inferred from the extension. |
 | `icon=` attribute | `preset=image:icon` with `icon=<path>` injects a decorative badge from the directive, so generic previews show clean prose with no stray image line. |
 
 `id` becomes an anchor target, `preset` a `nui-preset-*` class, and `label` is editor-only and never rendered. A preset is `family[:modifier[:variant]]` — the family sets the semantic element and class, each further segment adds a `nui-variant-*` / `nui-size-*` class, and a renderer that does not know a segment drops it rather than failing.
 
+**Chrome scopes and surfaces:** A document is one or more mains. Chrome (headers, footers) is authored once on the main and emitted on `<main>`. Surface renderers like `nui-slides` (in `NUI/lib/modules/nui-slides.js`) turn each section into a distinct slide surface and repeat the chrome onto every slide.
+
 **Scope.** Only the rendering half of the spec is implemented. The editor contract — §6.1 chunking, §6.2 `kind` stamping, §7 validation, §8 round-trip — is deliberately out of scope; a validator or editor owns those.
 
-**Two consequences worth knowing:**
+**Consequences worth knowing:**
 
-1. A root-level `---` can no longer be a horizontal rule, exactly as the spec's §9 records. A document that has no `mb:` directives may prefer a discriminator (plain docs keep their rules) — not implemented.
-2. A directive inside fenced or inline code stays literal, since directives are recognised from the Markdown block structure and never by text replacement. Inside a `block` or `col`, `---` is an ordinary `<hr>`.
+1. A root-level `---` can no longer be a horizontal rule, exactly as the spec's §9 records. Inside a `block` or `col`, `---` is an ordinary `<hr>`.
+2. A directive inside fenced or inline code stays literal, since directives are recognised from the Markdown block structure and never by text replacement.
+3. Blank and comment-only regions are filtered out, so file-header comments or pure chrome blocks do not produce blank leading surfaces.
 
 ## Programmatic Usage
 

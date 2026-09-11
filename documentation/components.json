@@ -1,6 +1,6 @@
 {
 	"schemaVersion": 1,
-	"generated": "2026-09-07T04:58:13.234Z",
+	"generated": "2026-09-11T14:10:08.024Z",
 	"source": "Playground/pages/**",
 	"components": [
 		{
@@ -13,7 +13,8 @@
 			"innerElement": "<details> and <summary>",
 			"imports": null,
 			"page": "components/accordion",
-			"demoPath": "Playground/pages/components/accordion.html"
+			"demoPath": "Playground/pages/components/accordion.html",
+			"docPath": "documentation/components/accordion.md"
 		},
 		{
 			"@context": "nui",
@@ -25,7 +26,8 @@
 			"innerElement": "<header>",
 			"imports": null,
 			"page": "components/app-header",
-			"demoPath": "Playground/pages/components/app-header.html"
+			"demoPath": "Playground/pages/components/app-header.html",
+			"docPath": "documentation/components/app-header.md"
 		},
 		{
 			"@context": "nui",
@@ -37,7 +39,8 @@
 			"innerElement": null,
 			"imports": null,
 			"page": "components/app-layout",
-			"demoPath": "Playground/pages/components/app-layout.html"
+			"demoPath": "Playground/pages/components/app-layout.html",
+			"docPath": "documentation/components/app.md"
 		},
 		{
 			"@context": "nui",
@@ -49,7 +52,8 @@
 			"innerElement": null,
 			"imports": null,
 			"page": "components/badge",
-			"demoPath": "Playground/pages/components/badge.html"
+			"demoPath": "Playground/pages/components/badge.html",
+			"docPath": "documentation/components/badge.md"
 		},
 		{
 			"@context": "nui",
@@ -64,7 +68,8 @@
 			"innerElement": null,
 			"imports": null,
 			"page": "components/banner",
-			"demoPath": "Playground/pages/components/banner.html"
+			"demoPath": "Playground/pages/components/banner.html",
+			"docPath": "documentation/components/banner.md"
 		},
 		{
 			"@context": "nui",
@@ -78,7 +83,8 @@
 			"innerElement": "<button> or <a>",
 			"imports": null,
 			"page": "components/button",
-			"demoPath": "Playground/pages/components/button.html"
+			"demoPath": "Playground/pages/components/button.html",
+			"docPath": "documentation/components/button.md"
 		},
 		{
 			"@context": "nui",
@@ -90,7 +96,8 @@
 			"innerElement": null,
 			"imports": null,
 			"page": "components/card",
-			"demoPath": "Playground/pages/components/card.html"
+			"demoPath": "Playground/pages/components/card.html",
+			"docPath": "documentation/components/card.md"
 		},
 		{
 			"@context": "nui",
@@ -102,7 +109,8 @@
 			"innerElement": "<pre><code>",
 			"imports": null,
 			"page": "components/code",
-			"demoPath": "Playground/pages/components/code.html"
+			"demoPath": "Playground/pages/components/code.html",
+			"docPath": "documentation/components/code.md"
 		},
 		{
 			"@context": "nui",
@@ -114,7 +122,8 @@
 			"innerElement": "<details>",
 			"imports": null,
 			"page": "components/details",
-			"demoPath": "Playground/pages/components/details.html"
+			"demoPath": "Playground/pages/components/details.html",
+			"docPath": "documentation/components/details.md"
 		},
 		{
 			"@context": "nui",
@@ -130,7 +139,8 @@
 			"innerElement": "<dialog>",
 			"imports": null,
 			"page": "components/dialog",
-			"demoPath": "Playground/pages/components/dialog.html"
+			"demoPath": "Playground/pages/components/dialog.html",
+			"docPath": "documentation/components/dialog.md"
 		},
 		{
 			"@context": "nui",
@@ -144,7 +154,8 @@
 			"innerElement": null,
 			"imports": null,
 			"page": "components/dropzone",
-			"demoPath": "Playground/pages/components/dropzone.html"
+			"demoPath": "Playground/pages/components/dropzone.html",
+			"docPath": "documentation/components/dropzone.md"
 		},
 		{
 			"@context": "nui",
@@ -156,7 +167,8 @@
 			"innerElement": null,
 			"imports": null,
 			"page": "components/icon",
-			"demoPath": "Playground/pages/components/icon.html"
+			"demoPath": "Playground/pages/components/icon.html",
+			"docPath": "documentation/components/icon.md"
 		},
 		{
 			"@context": "nui",
@@ -172,7 +184,8 @@
 			"innerElement": "<input>, <textarea>",
 			"imports": null,
 			"page": "components/inputs",
-			"demoPath": "Playground/pages/components/inputs.html"
+			"demoPath": "Playground/pages/components/inputs.html",
+			"docPath": "documentation/components/input.md"
 		},
 		{
 			"@context": "nui",
@@ -184,7 +197,8 @@
 			"innerElement": null,
 			"imports": null,
 			"page": "components/layout",
-			"demoPath": "Playground/pages/components/layout.html"
+			"demoPath": "Playground/pages/components/layout.html",
+			"docPath": "documentation/components/layout.md"
 		},
 		{
 			"@context": "nui",
@@ -198,7 +212,8 @@
 			"innerElement": null,
 			"imports": null,
 			"page": "components/link-list",
-			"demoPath": "Playground/pages/components/link-list.html"
+			"demoPath": "Playground/pages/components/link-list.html",
+			"docPath": "documentation/components/link-list.md"
 		},
 		{
 			"@context": "nui",
@@ -210,7 +225,8 @@
 			"innerElement": "<script type=\"text/markdown\">",
 			"imports": null,
 			"page": "components/markdown",
-			"demoPath": "Playground/pages/components/markdown.html"
+			"demoPath": "Playground/pages/components/markdown.html",
+			"docPath": "documentation/components/markdown.md"
 		},
 		{
 			"@context": "nui",
@@ -226,7 +242,8 @@
 			"innerElement": "<dialog>",
 			"imports": null,
 			"page": "components/overlay",
-			"demoPath": "Playground/pages/components/overlay.html"
+			"demoPath": "Playground/pages/components/overlay.html",
+			"docPath": "documentation/components/overlay.md"
 		},
 		{
 			"@context": "nui",
@@ -238,7 +255,8 @@
 			"innerElement": null,
 			"imports": null,
 			"page": "components/progress",
-			"demoPath": "Playground/pages/components/progress.html"
+			"demoPath": "Playground/pages/components/progress.html",
+			"docPath": "documentation/components/progress.md"
 		},
 		{
 			"@context": "nui",
@@ -261,7 +279,8 @@
 			"innerElement": "<select>",
 			"imports": null,
 			"page": "components/select",
-			"demoPath": "Playground/pages/components/select.html"
+			"demoPath": "Playground/pages/components/select.html",
+			"docPath": "documentation/components/select.md"
 		},
 		{
 			"@context": "nui",
@@ -273,7 +292,8 @@
 			"innerElement": null,
 			"imports": null,
 			"page": "components/skip-links",
-			"demoPath": "Playground/pages/components/skip-links.html"
+			"demoPath": "Playground/pages/components/skip-links.html",
+			"docPath": "documentation/components/skip-links.md"
 		},
 		{
 			"@context": "nui",
@@ -287,7 +307,8 @@
 			"innerElement": "<input type=\"range\">",
 			"imports": null,
 			"page": "components/slider",
-			"demoPath": "Playground/pages/components/slider.html"
+			"demoPath": "Playground/pages/components/slider.html",
+			"docPath": "documentation/components/slider.md"
 		},
 		{
 			"@context": "nui",
@@ -302,7 +323,8 @@
 			"innerElement": null,
 			"imports": null,
 			"page": "components/sortable",
-			"demoPath": "Playground/pages/components/sortable.html"
+			"demoPath": "Playground/pages/components/sortable.html",
+			"docPath": "documentation/components/sortable.md"
 		},
 		{
 			"@context": "nui",
@@ -314,7 +336,8 @@
 			"innerElement": "<table>",
 			"imports": null,
 			"page": "components/table",
-			"demoPath": "Playground/pages/components/table.html"
+			"demoPath": "Playground/pages/components/table.html",
+			"docPath": "documentation/components/table.md"
 		},
 		{
 			"@context": "nui",
@@ -328,7 +351,8 @@
 			"innerElement": "<nav> with <button> tabs, <section> or <div> panels",
 			"imports": null,
 			"page": "components/tabs",
-			"demoPath": "Playground/pages/components/tabs.html"
+			"demoPath": "Playground/pages/components/tabs.html",
+			"docPath": "documentation/components/tabs.md"
 		},
 		{
 			"@context": "nui",
@@ -343,7 +367,8 @@
 			"innerElement": null,
 			"imports": null,
 			"page": "components/tag-input",
-			"demoPath": "Playground/pages/components/tag-input.html"
+			"demoPath": "Playground/pages/components/tag-input.html",
+			"docPath": "documentation/components/tag-input.md"
 		},
 		{
 			"@context": "nui",
@@ -355,7 +380,8 @@
 			"innerElement": null,
 			"imports": null,
 			"page": "components/tooltip",
-			"demoPath": "Playground/pages/components/tooltip.html"
+			"demoPath": "Playground/pages/components/tooltip.html",
+			"docPath": "documentation/components/tooltip.md"
 		}
 	],
 	"addons": [
@@ -371,7 +397,8 @@
 				"js": "NUI/lib/modules/nui-app-window.js"
 			},
 			"page": "addons/app-window",
-			"demoPath": "Playground/pages/addons/app-window.html"
+			"demoPath": "Playground/pages/addons/app-window.html",
+			"docPath": "documentation/addons/app-window.md"
 		},
 		{
 			"@context": "nui",
@@ -388,7 +415,8 @@
 				"css": "NUI/css/modules/nui-code-editor.css"
 			},
 			"page": "addons/code-editor",
-			"demoPath": "Playground/pages/addons/code-editor.html"
+			"demoPath": "Playground/pages/addons/code-editor.html",
+			"docPath": "documentation/addons/code-editor.md"
 		},
 		{
 			"@context": "nui",
@@ -403,7 +431,8 @@
 				"css": "NUI/css/modules/nui-context-menu.css"
 			},
 			"page": "addons/context-menu",
-			"demoPath": "Playground/pages/addons/context-menu.html"
+			"demoPath": "Playground/pages/addons/context-menu.html",
+			"docPath": "documentation/addons/context-menu.md"
 		},
 		{
 			"@context": "nui",
@@ -423,7 +452,8 @@
 				"css": "NUI/css/modules/nui-file-tree.css"
 			},
 			"page": "addons/file-tree",
-			"demoPath": "Playground/pages/addons/file-tree.html"
+			"demoPath": "Playground/pages/addons/file-tree.html",
+			"docPath": "documentation/addons/file-tree.md"
 		},
 		{
 			"@context": "nui",
@@ -438,7 +468,8 @@
 				"css": "NUI/css/modules/nui-lightbox.css"
 			},
 			"page": "addons/lightbox",
-			"demoPath": "Playground/pages/addons/lightbox.html"
+			"demoPath": "Playground/pages/addons/lightbox.html",
+			"docPath": "documentation/addons/lightbox.md"
 		},
 		{
 			"@context": "nui",
@@ -457,7 +488,8 @@
 				"css": "NUI/css/modules/nui-list.css"
 			},
 			"page": "addons/list",
-			"demoPath": "Playground/pages/addons/list.html"
+			"demoPath": "Playground/pages/addons/list.html",
+			"docPath": "documentation/addons/list.md"
 		},
 		{
 			"@context": "nui",
@@ -472,7 +504,8 @@
 				"css": "NUI/css/modules/nui-media-player.css"
 			},
 			"page": "addons/media-player",
-			"demoPath": "Playground/pages/addons/media-player.html"
+			"demoPath": "Playground/pages/addons/media-player.html",
+			"docPath": "documentation/addons/media-player.md"
 		},
 		{
 			"@context": "nui",
@@ -487,7 +520,8 @@
 				"css": "NUI/css/modules/nui-menu.css"
 			},
 			"page": "addons/menu",
-			"demoPath": "Playground/pages/addons/menu.html"
+			"demoPath": "Playground/pages/addons/menu.html",
+			"docPath": "documentation/addons/menu.md"
 		},
 		{
 			"@context": "nui",
@@ -505,7 +539,27 @@
 				"css": "NUI/css/modules/nui-rich-text.css"
 			},
 			"page": "addons/rich-text",
-			"demoPath": "Playground/pages/addons/rich-text.html"
+			"demoPath": "Playground/pages/addons/rich-text.html",
+			"docPath": "documentation/addons/rich-text.md"
+		},
+		{
+			"@context": "nui",
+			"@type": "Component",
+			"name": "nui-slides",
+			"group": "presentation",
+			"description": "Presentation profile renderer for MD-Blocks documents with discrete surfaces, fixed canvas scaling, repeat chrome, and keyboard navigation.",
+			"events": [
+				"nui-slide-change",
+				"nui-slides-error"
+			],
+			"innerElement": "<nui-markdown>",
+			"imports": {
+				"js": "NUI/lib/modules/nui-slides.js",
+				"css": "NUI/css/modules/nui-slides.css"
+			},
+			"page": "addons/slides",
+			"demoPath": "Playground/pages/addons/slides.html",
+			"docPath": "documentation/addons/slides.md"
 		},
 		{
 			"@context": "nui",
@@ -526,7 +580,8 @@
 				"css": "NUI/css/modules/nui-wizard.css"
 			},
 			"page": "addons/wizard",
-			"demoPath": "Playground/pages/addons/wizard.html"
+			"demoPath": "Playground/pages/addons/wizard.html",
+			"docPath": "documentation/addons/wizard.md"
 		}
 	],
 	"reference": [
@@ -536,7 +591,7 @@
 			"name": "accessibility",
 			"group": "documentation",
 			"description": "DOM-first accessibility philosophy: semantic HTML foundation, ARIA auto-enhancement, roving tabindex, focus management.",
-			"docPath": null,
+			"docPath": "documentation/guides/accessibility.md",
 			"page": "documentation/accessibility",
 			"llmGuide": null
 		},
@@ -546,7 +601,7 @@
 			"name": "api-structure",
 			"group": "documentation",
 			"description": "Three-tier API namespace design: root (lifecycle), components (factory APIs), utilities (helpers).",
-			"docPath": null,
+			"docPath": "documentation/guides/api-structure.md",
 			"page": "documentation/api-structure",
 			"llmGuide": null
 		},
@@ -556,7 +611,7 @@
 			"name": "architecture-patterns",
 			"group": "documentation",
 			"description": "Application architecture patterns: centralized, fragment-based, and hybrid routing with nui-page layout engine.",
-			"docPath": null,
+			"docPath": "documentation/guides/architecture-patterns.md",
 			"page": "documentation/architecture-patterns",
 			"llmGuide": null
 		},
@@ -576,7 +631,7 @@
 			"name": "declarative-actions",
 			"group": "documentation",
 			"description": "Event delegation pattern using data-action attribute for CSP-safe, decoupled HTML-to-JS communication.",
-			"docPath": null,
+			"docPath": "documentation/guides/declarative-actions.md",
 			"page": "documentation/declarative-actions",
 			"llmGuide": null
 		},
@@ -586,7 +641,7 @@
 			"name": "getting-started",
 			"group": "documentation",
 			"description": "Setup, layout modes, SPA wiring, and the base shell structure.",
-			"docPath": null,
+			"docPath": "documentation/guides/getting-started.md",
 			"page": "documentation/getting-started",
 			"llmGuide": null
 		},
@@ -596,7 +651,7 @@
 			"name": "introduction",
 			"group": "documentation",
 			"description": "NUI philosophy: browser-native UI toolkit, semantic HTML foundation, progressive enhancement, two usage patterns.",
-			"docPath": null,
+			"docPath": "documentation/guides/introduction.md",
 			"page": "documentation/introduction",
 			"llmGuide": null
 		},
@@ -606,7 +661,7 @@
 			"name": "utilities",
 			"group": "documentation",
 			"description": "Utility functions: createElement, storage, enableDrag, array helpers, environment detection.",
-			"docPath": null,
+			"docPath": "documentation/guides/utilities.md",
 			"page": "documentation/utilities",
 			"llmGuide": null
 		}
@@ -1025,6 +1080,17 @@
 				},
 				{
 					"name": "nui-rich-text-image"
+				}
+			]
+		},
+		{
+			"component": "nui-slides",
+			"events": [
+				{
+					"name": "nui-slide-change"
+				},
+				{
+					"name": "nui-slides-error"
 				}
 			]
 		},

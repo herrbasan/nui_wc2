@@ -2990,6 +2990,21 @@ nui.registerPage('addons/wizard', {
 	}
 });
 
+nui.registerPage('addons/slides', {
+	html: 'addons/slides.html',
+	init(element, params, nui) {
+		const deck = element.querySelector('#demo-deck');
+		if (!deck) return;
+
+		element.addEventListener('nui-action', (e) => {
+			const { name } = e.detail;
+			if (name === 'slides-prev') deck.prev();
+			else if (name === 'slides-next') deck.next();
+			else if (name === 'slides-fullscreen') deck.toggleFullscreen();
+		});
+	}
+});
+
 // ── Documentation ──
 
 nui.registerPage('documentation/cheatsheet', {

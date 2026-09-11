@@ -1,0 +1,233 @@
+<div class="page-slides">
+
+<script type="application/ld+json">
+{
+  "@context": "nui",
+  "@type": "Component",
+  "name": "nui-slides",
+  "group": "presentation",
+  "description": "Presentation profile renderer for MD-Blocks documents with discrete surfaces, fixed canvas scaling, repeat chrome, and keyboard navigation.",
+  "events": [
+    "nui-slide-change",
+    "nui-slides-error"
+  ],
+  "innerElement": "<nui-markdown>",
+  "imports": {
+    "js": "NUI/lib/modules/nui-slides.js",
+    "css": "NUI/css/modules/nui-slides.css"
+  }
+}
+</script>
+
+<nui-details summary="LLM Guide - nui-slides" src="../documentation/addons/slides.md" lazy>
+</nui-details>
+
+	<header>
+		<h1>Slides</h1>
+		<p class="lead">Presentation profile for MD-Blocks documents, rendering each section as a scaled canvas surface.</p>
+	</header>
+
+	<section>
+		<h2>Live Presentation Deck</h2>
+		<p>The slide deck below is placed directly in the normal page flow. It includes an integrated toolbar for non-fullscreen navigation, swipe gesture support on touchscreens, and auto-scales cleanly to any width.</p>
+
+		<nui-slides id="demo-deck" toolbar base="1280x720">
+			<nui-markdown src="pages/addons/slides-demo.md"></nui-markdown>
+		</nui-slides>
+	</section>
+
+	<section>
+		<h2>Declarative Usage</h2>
+		<p>Wrap any <code>&lt;nui-markdown&gt;</code> element in a <code>&lt;nui-slides&gt;</code> container. Sections delimited by <code>---</code> become individual slides. Add the optional <code>toolbar</code> attribute to render a floating navigation bar in non-fullscreen mode.</p>
+
+		<nui-code>
+			<script type="example" data-lang="html">
+<!-- Import addon JS and CSS -->
+<link rel="stylesheet" href="NUI/css/modules/nui-slides.css">
+<script type="module" src="NUI/lib/modules/nui-slides.js"><\/script>
+
+<!-- Deck directly in document flow with toolbar -->
+<nui-slides toolbar base="1280x720">
+    <nui-markdown src="presentation.md"></nui-markdown>
+</nui-slides>
+			</script>
+		</nui-code>
+	</section>
+
+	<section>
+		<h2>Repeating Chrome &amp; MD-Blocks</h2>
+		<p>Chrome blocks (headers and footers) are defined once on the document's main scope using <code>repeat=header</code> or <code>repeat=footer</code>. <code>nui-slides</code> automatically clones them onto each slide in that scope, while keeping slide numbers dynamically computed.</p>
+
+		<nui-code>
+			<script type="example" data-lang="markdown">
+<!-- mb:block repeat=header -->
+**Architecture Deck** &bull; Confidential
+<!-- mb:/block -->
+
+# Title Slide
+
+Introduction to our architecture.
+
+---
+
+# Architecture Overview
+
+<!-- mb:columns weights=[1,1] -->
+<!-- mb:col -->
+Left Column Content.
+<!-- mb:col -->
+Right Column Content.
+<!-- mb:/columns -->
+
+<!-- mb:block repeat=footer -->
+*Presented by the Engineering Team*
+<!-- mb:/block -->
+			</script>
+		</nui-code>
+	</section>
+
+	<section>
+		<h2>Keyboard Controls</h2>
+		<p>When focus is within the deck, the following keyboard navigation keys are active:</p>
+
+		<table class="nui-table">
+			<thead>
+				<tr>
+					<th>Key</th>
+					<th>Action</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><code>ArrowRight</code>, <code>ArrowDown</code>, <code>PageDown</code>, <code>Space</code></td>
+					<td>Advance to next slide</td>
+				</tr>
+				<tr>
+					<td><code>ArrowLeft</code>, <code>ArrowUp</code>, <code>PageUp</code></td>
+					<td>Return to previous slide</td>
+				</tr>
+				<tr>
+					<td><code>Home</code> / <code>End</code></td>
+					<td>Jump to first / last slide</td>
+				</tr>
+				<tr>
+					<td><code>f</code> / <code>F</code></td>
+					<td>Toggle fullscreen presentation mode</td>
+				</tr>
+			</tbody>
+		</table>
+	</section>
+
+	<section>
+		<h2>Component API</h2>
+
+		<h3>Attributes</h3>
+		<table class="nui-table nui-table--api">
+			<thead>
+				<tr>
+					<th>Attribute</th>
+					<th>Type</th>
+					<th>Default</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><code>base</code></td>
+					<td>string</td>
+					<td><code>"1280x720"</code></td>
+					<td>Logical canvas size (<code>"1280x720"</code>, <code>"1024x768"</code>, or width <code>"1600"</code>). In page flow, the component automatically sets its aspect ratio to match.</td>
+				</tr>
+				<tr>
+					<td><code>toolbar</code></td>
+					<td>boolean</td>
+					<td>_none_</td>
+					<td>When present, provides a floating bottom control bar for non-fullscreen mode with Previous, Next, slide counter, and Fullscreen toggle. Automatically hidden in fullscreen.</td>
+				</tr>
+				<tr>
+					<td><code>height</code></td>
+					<td>string</td>
+					<td>_none_</td>
+					<td>Set to <code>"fill"</code> to fill 100% of an explicit parent container height, or <code>"viewport"</code> for standalone <code>100dvh</code> kiosk display. Omit for natural page flow (responsive 16:9).</td>
+				</tr>
+			</tbody>
+		</table>
+
+		<h3>Methods &amp; Properties</h3>
+		<table class="nui-table nui-table--api">
+			<thead>
+				<tr>
+					<th>Member</th>
+					<th>Type</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><code>show(index)</code></td>
+					<td>Method</td>
+					<td>Navigates to the slide at the specified 0-based index.</td>
+				</tr>
+				<tr>
+					<td><code>next()</code></td>
+					<td>Method</td>
+					<td>Advances to the next slide.</td>
+				</tr>
+				<tr>
+					<td><code>prev()</code></td>
+					<td>Method</td>
+					<td>Returns to the previous slide.</td>
+				</tr>
+				<tr>
+					<td><code>current</code></td>
+					<td>Property (get)</td>
+					<td>Current active 0-based slide index.</td>
+				</tr>
+				<tr>
+					<td><code>count</code></td>
+					<td>Property (get)</td>
+					<td>Total number of slides in the deck.</td>
+				</tr>
+				<tr>
+					<td><code>nui.components.slides.show(i, el?)</code></td>
+					<td>Factory</td>
+					<td>Programmatically show slide <code>i</code> on a deck.</td>
+				</tr>
+				<tr>
+					<td><code>nui.components.slides.next(el?)</code></td>
+					<td>Factory</td>
+					<td>Programmatically advance to next slide.</td>
+				</tr>
+				<tr>
+					<td><code>nui.components.slides.prev(el?)</code></td>
+					<td>Factory</td>
+					<td>Programmatically go to previous slide.</td>
+				</tr>
+			</tbody>
+		</table>
+
+		<h3>Events</h3>
+		<table class="nui-table nui-table--api">
+			<thead>
+				<tr>
+					<th>Event</th>
+					<th>Detail</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><code>nui-slide-change</code></td>
+					<td><code>{ index, count, section }</code></td>
+					<td>Fires whenever the active slide changes.</td>
+				</tr>
+				<tr>
+					<td><code>nui-slides-error</code></td>
+					<td><code>{ message }</code></td>
+					<td>Fires if the presentation deck fails to mount or parse markdown content.</td>
+				</tr>
+			</tbody>
+		</table>
+	</section>
+
+</div>

@@ -18,46 +18,189 @@
    Theme variables only; no nui-* component is styled. */
 
 nui-slides {
-	display: block;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
 	position: relative;
 	box-sizing: border-box;
-	height: 100dvh;
-	overflow: hidden;
-	/* Side padding keeps the canvas — and the frame's shadow — off the window edges.
-	   Padding, not margin: the fit measures the CONTENT box, so the slide scales to
-	   the inset area and everything it draws stays inside the deck, which clips. */
-	padding-inline: var(--nui-space-double);
+	width: 100%;
 	/* Defaults keep the deck sane before the module has measured anything. */
 	--nui-slides-w: 1280px;
 	--nui-slides-h: 720px;
 	--nui-slides-scale: 1;
 }
 
-/* The frame belongs to the SLIDE — the 16:9 canvas — not to the deck, which is only
-   the surface the slide is fitted into and may be a very different shape. It cannot
-   live on the slide element either: slides are scaled with a transform, so their
-   border and shadow would scale too (a hairline becoming a slab on a large screen).
-   So it is a separate box drawn at the canvas's rendered bounds — a pseudo-element
-   needs no DOM and cannot fall out of step with the slide it frames.
-   border-box is load-bearing: without it the border is added to the canvas width, the
-   frame grows past a canvas that already fills the deck, and the deck clips its right
-   edge — which looks exactly like a broken border. */
-nui-slides::after {
-	content: '';
+/* The slide viewport houses the canvas and slides in normal page flow */
+.nui-slides-viewport {
+	display: block;
+	position: relative;
 	box-sizing: border-box;
-	position: absolute;
-	inset-block-start: 50%;
-	inset-inline-start: 50%;
-	width: calc(var(--nui-slides-w) * var(--nui-slides-scale));
-	height: calc(var(--nui-slides-h) * var(--nui-slides-scale));
-	transform: translate(-50%, -50%);
+	width: 100%;
+	aspect-ratio: var(--nui-slides-aspect, 16 / 9);
+	max-height: 85vh;
+	overflow: hidden;
+	background: light-dark(#ffffff, #000000);
+	color: var(--text-color);
 	border: solid var(--border-thickness) var(--border-shade2);
-	box-shadow: 0 0.25rem 1rem light-dark(rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.55));
-	pointer-events: none;
+	border-radius: var(--border-radius1);
+	box-shadow: 0 0.25rem 1rem light-dark(rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.45));
 }
+
 nui-slides[height="fill"] {
 	height: 100%;
 }
+nui-slides[height="fill"] .nui-slides-viewport {
+	flex: 1 1 auto;
+	height: auto;
+	max-height: none;
+	aspect-ratio: auto;
+}
+
+nui-slides[height="viewport"] {
+	height: 100dvh;
+}
+nui-slides[height="viewport"] .nui-slides-viewport {
+	flex: 1 1 auto;
+	height: 100%;
+	max-height: none;
+	aspect-ratio: auto;
+	border-radius: 0;
+	border: none;
+	box-shadow: none;
+	background: light-dark(#ffffff, #000000);
+}
+
+:fullscreen nui-slides,
+nui-slides:fullscreen {
+	width: 100vw;
+	height: 100vh;
+	max-height: none;
+	aspect-ratio: auto;
+	border-radius: 0;
+	border: none;
+	box-shadow: none;
+	background: light-dark(#ffffff, #000000);
+	color: var(--text-color);
+	padding: 0;
+	margin: 0;
+	display: block;
+}
+
+:fullscreen .nui-slides-viewport,
+nui-slides:fullscreen .nui-slides-viewport {
+	width: 100vw;
+	height: 100vh;
+	max-height: none;
+	aspect-ratio: auto;
+	border-radius: 0;
+	border: none;
+	box-shadow: none;
+	background: light-dark(#ffffff, #000000);
+	color: var(--text-color);
+}
+
+/* Built-in optional toolbar (active when `toolbar` attribute is present) */
+/* In normal flow: sits OUTSIDE the slide container, below the viewport */
+.nui-slides-toolbar {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--nui-space-half);
+	padding: var(--nui-space-quarter) var(--nui-space);
+	margin-top: var(--nui-space);
+	background: var(--color-shade2);
+	border: solid var(--border-thickness) var(--border-shade2);
+	border-radius: 9999px;
+	box-shadow: 0 4px 14px light-dark(rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.4));
+	z-index: 10;
+	user-select: none;
+	transition: opacity 250ms ease, transform 250ms ease, background 160ms ease;
+}
+
+/* In fullscreen mode: floats at bottom like video controls, reveals when cursor is at bottom */
+:fullscreen .nui-slides-toolbar,
+nui-slides:fullscreen .nui-slides-toolbar {
+	position: absolute;
+	inset-block-end: var(--nui-space-double);
+	inset-inline-start: 50%;
+	transform: translateX(-50%);
+	margin-top: 0;
+	z-index: 100;
+	background: light-dark(rgba(255, 255, 255, 0.92), rgba(28, 28, 30, 0.92));
+	backdrop-filter: blur(12px);
+	-webkit-backdrop-filter: blur(12px);
+	border: solid var(--border-thickness) var(--border-shade2);
+	box-shadow: 0 6px 24px light-dark(rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.6));
+	opacity: 0;
+	pointer-events: none;
+}
+
+/* Reveal when cursor is near bottom or hovering toolbar */
+:fullscreen .nui-slides-toolbar.is-visible,
+nui-slides:fullscreen .nui-slides-toolbar.is-visible,
+:fullscreen .nui-slides-toolbar:hover,
+nui-slides:fullscreen .nui-slides-toolbar:hover {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.nui-slides-toolbar button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	background: transparent;
+	border: none;
+	color: var(--text-color);
+	font-size: 1.15rem;
+	line-height: 1;
+	width: 2.25rem;
+	height: 2.25rem;
+	border-radius: 50%;
+	cursor: pointer;
+	padding: 0;
+	transition: background 120ms ease, color 120ms ease, transform 100ms ease;
+}
+
+.nui-slides-toolbar button:hover:not(:disabled) {
+	background: var(--color-shade3);
+	color: var(--color-highlight);
+	transform: scale(1.08);
+}
+
+.nui-slides-toolbar button:active:not(:disabled) {
+	transform: scale(0.95);
+}
+
+.nui-slides-toolbar button:disabled {
+	opacity: 0.3;
+	cursor: not-allowed;
+}
+
+.nui-slides-toolbar button:focus-visible {
+	outline: 2px solid var(--color-highlight);
+	outline-offset: 1px;
+}
+
+.nui-slides-toolbar button nui-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.25rem;
+	height: 1.25rem;
+	font-size: 1.25rem;
+	pointer-events: none;
+}
+
+.nui-slides-toolbar .nui-slides-toolbar-counter {
+	font-size: var(--font-size-small);
+	font-variant-numeric: tabular-nums;
+	font-weight: 500;
+	color: var(--text-color-dim);
+	padding-inline: var(--nui-space-half);
+	white-space: nowrap;
+	min-width: 3rem;
+	text-align: center;
+}
+
 /* A focus ring on the deck is for the keyboard, never for a click or a slide advance. */
 nui-slides:focus {
 	outline: none;
@@ -92,6 +235,8 @@ nui-slides .nui-blocks-section {
 	margin: 0;
 	padding: var(--nui-space-double);
 	overflow: hidden;
+	background: light-dark(#ffffff, #000000);
+	color: var(--text-color);
 	opacity: 0;
 }
 nui-slides .nui-blocks-section[data-current] {
