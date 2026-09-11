@@ -289,11 +289,26 @@ function contextMenu(items, options = {}) {
 		menu._boundContextMenu = handleContextMenu;
 
 		document.addEventListener('keydown', menu._boundKeyHandler);
-		document.addEventListener('click', menu._boundClickOutside);
 		document.addEventListener('contextmenu', menu._boundContextMenu);
+
+		// The click-outside listener must NOT be attached during the click that opened the
+		// menu. A listener added to `document` while an event is still bubbling fires when
+		// dispatch reaches `document`, so it catches the opening click itself, finds the
+		// target outside the dropdown, and hides the menu instantly — the menu is never
+		// usable when opened from a click handler. Deferring past the current dispatch is
+		// the only reliable escape: `queueMicrotask` runs inside the dispatch's checkpoint
+		// and would still fire. Guarded on `isOpen` so a menu closed before the timer runs
+		// leaves no listener behind.
+		clearTimeout(menu._clickOutsideTimer);
+		menu._clickOutsideTimer = setTimeout(() => {
+			menu._clickOutsideTimer = null;
+			if (menu.isOpen) document.addEventListener('click', menu._boundClickOutside);
+		}, 0);
 	}
 
 	function removeEventListeners() {
+		clearTimeout(menu._clickOutsideTimer);
+		menu._clickOutsideTimer = null;
 		if (menu._boundKeyHandler) {
 			document.removeEventListener('keydown', menu._boundKeyHandler);
 		}
