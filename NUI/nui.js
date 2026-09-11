@@ -6826,6 +6826,30 @@ function markdownToHtml(md, options) {
 	options = options || {};
 	if (typeof md !== 'string' || !md.trim()) return '';
 
+	// Document base (issue #38) is consumed deep inside markdownCore, several
+	// renderer frames below this function. Rendering is synchronous, so a
+	// document-scoped variable set around the call threads it down without
+	// polluting every signature in the MD-Blocks chain. Restored in finally —
+	// an exception mid-render must not leak one document's base into the next.
+	const prevBase = _mdDocBase;
+	_mdDocBase = options.base || null;
+	let out;
+	try {
+		out = _markdownToHtmlInner(md, options);
+	} finally {
+		_mdDocBase = prevBase;
+	}
+	return out;
+}
+
+// Rendered-document base for relative media destinations (issue #38). Set by
+// markdownToHtml for the duration of one synchronous render; null everywhere
+// else. markdownCore reads it — see the comment above.
+let _mdDocBase = null;
+
+function _markdownToHtmlInner(md, options) {
+	if (typeof md !== 'string' || !md.trim()) return '';
+
 	// YAML frontmatter handling. Recognized modes live in FRONTMATTER_MODES;
 	// 'collapsed' (the default) hides the metadata card behind a closed
 	// disclosure, 'show' / 'open' render it visible, 'strip' removes it. Any
@@ -6941,23 +6965,14 @@ function markdownCore(md) {
 		// Document base (issue #38): a document rendered from a URL has relative
 		// destinations resolve against that URL — the same rule every real
 		// viewer (GitHub, VS Code, Obsidian) applies. Resolved BEFORE the app
-		// rewrite/policy hooks so they see a canonical absolute URL.
-		if (options.base && !/^[a-z][a-z0-9+.-]*:/i.test(url) && !url.startsWith('/') && !url.startsWith('#')) {
+		// rewrite/policy hooks so they see a canonical absolute URL. The base
+		// is the document-scoped _mdDocBase set by markdownToHtml — this leaf
+		// renderer sits several frames below it with no options in scope.
+		if (_mdDocBase && !/^[a-z][a-z0-9+.-]*:/i.test(url) && !url.startsWith('/') && !url.startsWith('#')) {
 			try {
-				url = new URL(url, options.base).href;
+				url = new URL(url, _mdDocBase).href;
 			} catch (e) {
-				console.warn(`[NuiMarkdown] Cannot resolve '${url}' against base '${options.base}' — left as authored`);
-			}
-		}
-		// Document base (issue #38): a document rendered from a URL has relative
-		// destinations resolve against that URL — the same rule every real
-		// viewer (GitHub, VS Code, Obsidian) applies. Resolved BEFORE the app
-		// rewrite/policy hooks so they see a canonical absolute URL.
-		if (options.base && !/^[a-z][a-z0-9+.-]*:/i.test(url) && !url.startsWith('/') && !url.startsWith('#')) {
-			try {
-				url = new URL(url, options.base).href;
-			} catch (e) {
-				console.warn(`[NuiMarkdown] Cannot resolve '${url}' against base '${options.base}' — left as authored`);
+				console.warn(`[NuiMarkdown] Cannot resolve '${url}' against base '${_mdDocBase}' — left as authored`);
 			}
 		}
 		// App-level rewrite hook (setMarkdownImageRewrite): fn(url) → rewritten
