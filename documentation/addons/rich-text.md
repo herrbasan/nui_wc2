@@ -35,7 +35,21 @@ The toolbar is auto-generated but can be customized. All editing operations use 
 
 ### Attributes
 
-None
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `fill` | boolean | `false` | Fill mode: the component claims the free space of its parent and the editor scrolls internally, leaving the toolbar fixed. Without it the component sizes to its content. |
+
+**Fill mode.** Put `<nui-rich-text fill>` inside a sized container and the toolbar stays put while the editor scrolls:
+
+```html
+<div id="editor-pane"><!-- any sized box -->
+    <nui-rich-text fill placeholder="Write…"></nui-rich-text>
+</div>
+```
+
+`fill` sets `flex: 1; min-height: 0` through the host → container → editor chain. The `min-height: 0` is the part worth not reimplementing by hand: a flex item defaults to `min-height: auto`, so content makes the box grow instead of scroll, and the toolbar rides away with it. If the parent is a flex container the component claims its free space; if not, give the parent an explicit height.
+
+This exists so hosts never need to style the component's internal classes. Before the attribute, filling a pane required three rules on `.nui-rich-text-container` and `.nui-rich-text-editor`.
 
 ### Class Variants
 

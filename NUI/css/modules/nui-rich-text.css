@@ -5,6 +5,38 @@ nui-rich-text {
     width: 100%;
 }
 
+/* Fill mode — `<nui-rich-text fill>` inside a sized container gives a fixed toolbar and
+   an internally scrolling editor, so the host never has to style internal classes.
+   `min-height: 0` at every level is load-bearing and is why this cannot be left to
+   consumers: a flex item defaults to `min-height: auto`, so content pushes the box
+   taller instead of scrolling, and the toolbar rides away with it. `flex: 1` on the
+   host lets the component claim the free space of a flex parent; a host that is not a
+   flex container can size it explicitly instead. */
+nui-rich-text[fill] {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+nui-rich-text[fill] > .nui-rich-text-container {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* The toolbar keeps its natural height and stays put; only the editor scrolls. */
+nui-rich-text[fill] > .nui-rich-text-container > .nui-rich-text-toolbar {
+    flex: 0 0 auto;
+}
+
+nui-rich-text[fill] .nui-rich-text-editor {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+}
+
 .nui-rich-text-container {
     display: flex;
     flex-direction: column;
