@@ -4963,7 +4963,17 @@ opacity: 0;
 }
 }
 
-/* ################################# nui-markdown FRONTMATTER */
+/* ################################# nui-markdown */
+/* The host is a container, so it has to be a block box. Left off, the custom element
+   stays `display: inline`, and an inline box ignores `max-width` and does not engage
+   `nui-page > *` padding — rendered Markdown sat flush against the container edge at
+   full width, which is exactly what `nui-page` exists to prevent. The addon hosts
+   already declare this (`nui-rich-text`, `nui-file-tree`); core hosts were uneven. */
+nui-markdown {
+	display: block;
+	width: 100%;
+}
+
 /* Images in rendered Markdown are block-level media, like `p img` and `figure img`
    above — extended to every container, because an image inside a list item matched
    no rule and stayed `display: inline`. An inline replaced element is laid out in a
@@ -5366,8 +5376,16 @@ nui-markdown p > img {
 
 /* Gallery: image sequence or grid inside a media figure */
 .nui-blocks-media img {
-	cursor: pointer;
 	transition: opacity 0.15s ease;
+}
+/* A gallery image is only clickable when the lightbox addon is loaded — nui-markdown
+   checks for it at click time. Gating the cursor on a root class the addon sets keeps
+   CSS from promising an affordance the page does not have: the pointer appears the
+   moment the addon registers and never before. The class is live, so an addon that
+   loads after render still upgrades every existing gallery. */
+:root.nui-lightbox-available .nui-blocks-media img,
+:root.nui-lightbox-available .nui-blocks-gallery > :is(ul, ol) > li {
+	cursor: pointer;
 }
 .nui-blocks-media img:hover {
 	opacity: 0.92;
@@ -5387,10 +5405,11 @@ nui-markdown p > img {
 	border-radius: var(--border-radius1);
 	border: solid var(--border-thickness) var(--border-shade1);
 	background: light-dark(var(--color-shade1), var(--color-shade2));
-	cursor: pointer;
 	transition: transform 0.15s ease, border-color 0.15s ease;
 }
-.nui-blocks-gallery > :is(ul, ol) > li:hover {
+/* The hover lift belongs to the same affordance as the pointer cursor: a tile that
+   lifts on hover but does nothing on click reads as broken. Gate both together. */
+:root.nui-lightbox-available .nui-blocks-gallery > :is(ul, ol) > li:hover {
 	border-color: var(--color-highlight);
 	transform: translateY(-2px);
 }

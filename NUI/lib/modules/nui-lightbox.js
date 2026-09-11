@@ -352,6 +352,11 @@ customElements.define('nui-lightbox', NuiLightbox);
 // Expose programmatic API to global NUI scope if applicable
 if (nui) {
     nui.components = nui.components || {};
+    // Announce availability on the root so CSS can gate lightbox affordances (the
+    // pointer cursor on gallery images) on the addon actually being present. A class
+    // is deliberate rather than a style flag: it is live, so an addon imported after
+    // render still upgrades galleries already on the page.
+    document.documentElement.classList.add('nui-lightbox-available');
     nui.components.lightbox = {
         show(items, index = 0) {
             let lb = document.querySelector('nui-lightbox#nui-global-lightbox');

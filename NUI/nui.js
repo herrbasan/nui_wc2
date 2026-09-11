@@ -1155,6 +1155,20 @@ registerComponent('nui-code', (element) => {
 	delete element._nui_code_ready;
 });
 
+// Load a module stylesheet once, addressed by its NUI-relative path. Keyed with an
+// explicit attribute rather than a `href$=` suffix match: a suffix selector would
+// treat `css/modules/nui-list.css` and `css/modules/day/nui-list.css` as the same
+// file, and the browser already dedupes the fetch — the guard is only here to keep
+// the head free of duplicate nodes.
+function ensureStylesheet(relPath) {
+	if (document.head.querySelector(`link[data-nui-module="${relPath}"]`)) return;
+	const link = document.createElement('link');
+	link.rel = 'stylesheet';
+	link.href = `${nuiBasePath}/${relPath}`;
+	link.dataset.nuiModule = relPath;
+	document.head.appendChild(link);
+}
+
 function setupCodeBlock(element, pre, codeBlock, rawText) {
 	const existingCopyButton = element.el('.nui-code-copy');
 	if (existingCopyButton) existingCopyButton.remove();
@@ -1183,6 +1197,11 @@ function setupCodeBlock(element, pre, codeBlock, rawText) {
 
 	import('./lib/modules/nui-syntax-highlight.js').then(module => {
 		if (!element.isConnected) return;
+
+		// The spans this module emits are coloured by a stylesheet of its own, which
+		// nothing loaded: highlighting markup appeared with zero colours, looking
+		// exactly like the component was not used at all. Load the pair together.
+		ensureStylesheet('css/modules/nui-syntax-highlight.css');
 
 		let lang = codeBlock.getAttribute('data-lang');
 
@@ -5886,15 +5905,7 @@ export const nui = {
 
 				try {
 					// Inject CSS
-					if (map.css) {
-						const cssHref = `${nuiBasePath}/${map.css}`;
-						if (!document.querySelector(`link[href$="${map.css}"]`)) {
-							const link = document.createElement('link');
-							link.rel = 'stylesheet';
-							link.href = cssHref;
-							document.head.appendChild(link);
-						}
-					}
+					if (map.css) ensureStylesheet(map.css);
 
 					// Dynamic import JS
 					const jsPath = `${nuiBasePath}/${map.js}`;
@@ -6982,6 +6993,9 @@ class NuiMarkdown extends HTMLElement {
 					}));
 					const idx = imgs.indexOf(img);
 					nui.components.lightbox.show(items, idx >= 0 ? idx : 0);
+				} else if (!this._lightboxWarned) {
+					this._lightboxWarned = true;
+					console.warn('[NUI] <nui-markdown> gallery image clicked, but the lightbox addon is not loaded. Import NUI/lib/modules/nui-lightbox.js (and its CSS) to enable full-size viewing. The pointer cursor is withheld until it is present.');
 				}
 			});
 		}
@@ -6999,6 +7013,41 @@ class NuiMarkdown extends HTMLElement {
 		const lines = blockText.split('\n');
 		const lastLine = lines[lines.length - 1].trim();
 		return /^(?:-|\*|\d+\.)\s/.test(lastLine);
+	}
+
+	// Streaming sees a document under construction, so a structural container can be
+	// open with no close yet. Draining a partial `mb:block` / `mb:columns` emits a
+	// container no later chunk can join, because every chunk is parsed as its OWN
+	// document by parseBlocks — a `col` outside its `columns` is a no-op, so the
+	// columns can never form. The layout is only knowable once the close arrives.
+	//
+	// An unterminated `<!--` needs the same hold for a different reason: only complete
+	// comments are stripped, so half a directive would otherwise leak as visible text.
+	//
+	// Returns the index from which the buffer must not yet be drained, or -1.
+	_streamHoldIndex(text) {
+		let hold = -1;
+		const openers = [];
+		const STRUCT = /<!--\s*mb:(\/?)(block|columns)\b[^>]*?-->/g;
+		let m;
+		while ((m = STRUCT.exec(text)) !== null) {
+			if (m[1] === '/') {
+				// Truncate at the match: it closes that opener and everything nested in
+				// it (nesting is invalid anyway, so the stack is flat by construction).
+				for (let i = openers.length - 1; i >= 0; i--) {
+					if (openers[i].kind === m[2]) { openers.length = i; break; }
+				}
+			} else {
+				openers.push({ kind: m[2], at: m.index });
+			}
+		}
+		if (openers.length) hold = openers[0].at;
+
+		const lastOpen = text.lastIndexOf('<!--');
+		if (lastOpen !== -1 && text.indexOf('-->', lastOpen) === -1) {
+			hold = hold === -1 ? lastOpen : Math.min(hold, lastOpen);
+		}
+		return hold;
 	}
 
 	beginStream() {
@@ -7058,10 +7107,15 @@ class NuiMarkdown extends HTMLElement {
 
 			let boundary = -1;
 			let searchIndex = 0;
+			const holdFrom = this._streamHoldIndex(this._activeBuffer);
 
 			while (true) {
 				const nextIndex = this._activeBuffer.indexOf('\n\n', searchIndex);
 				if (nextIndex === -1) break;
+
+				// Refuse any boundary that would drain into an unclosed container or an
+				// unfinished comment: the buffer is held from there until it closes.
+				if (holdFrom !== -1 && nextIndex + 2 > holdFrom) break;
 
 				const blockSoFar = this._activeBuffer.substring(0, nextIndex);
 				if (this._isInsideCodeBlock(blockSoFar)) {
