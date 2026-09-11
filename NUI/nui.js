@@ -6711,9 +6711,26 @@ function mbRenderBlock(block) {
 	}
 
 	if (iconDest) {
+		// The icon <img> is emitted here, outside markdownCore — the app-level
+		// rewrite/policy hooks (which canonicalize /storage/... to the app's
+		// same-origin proxy path and gate trust) never see it otherwise, and
+		// the raw destination 404s wherever only a path prefix is routed
+		// (nui_wc2#33). Same treatment an inline markdown image gets.
+		let iconUrl = iconDest;
+		if (_mdDocBase && !/^[a-z][a-z0-9+.-]*:/i.test(iconUrl) && !iconUrl.startsWith('/') && !iconUrl.startsWith('#')) {
+			try { iconUrl = new URL(iconUrl, _mdDocBase).href; } catch (e) { /* unparsable base — leave as authored */ }
+		}
+		if (typeof markdownImageRewrite === 'function') {
+			const rewritten = markdownImageRewrite(iconUrl);
+			if (typeof rewritten === 'string' && rewritten.length > 0) iconUrl = rewritten;
+		}
+		if (typeof markdownImagePolicy === 'function' && !markdownImagePolicy(iconUrl)) {
+			console.warn(`[nui-markdown] refused icon destination (policy): ${iconUrl}`);
+			return '';
+		}
 		const open = mbOpenTag('figure', 'nui-blocks-block', block.attrs, 'nui-blocks-media nui-blocks-image');
 		const alt = fmEscape(block.attrs.alt || '');
-		return `${open}><img src="${fmEscape(iconDest)}" alt="${alt}" loading="lazy"><figcaption>${mbRenderNodes(block.nodes)}</figcaption></figure>`;
+		return `${open}><img src="${fmEscape(iconUrl)}" alt="${alt}" loading="lazy"><figcaption>${mbRenderNodes(block.nodes)}</figcaption></figure>`;
 	}
 
 	let tag = 'div';
