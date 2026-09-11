@@ -6938,6 +6938,28 @@ function markdownCore(md) {
 	html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (m, alt, src) => {
 		let url = safeUrl(src);
 		if (!url) return alt;
+		// Document base (issue #38): a document rendered from a URL has relative
+		// destinations resolve against that URL — the same rule every real
+		// viewer (GitHub, VS Code, Obsidian) applies. Resolved BEFORE the app
+		// rewrite/policy hooks so they see a canonical absolute URL.
+		if (options.base && !/^[a-z][a-z0-9+.-]*:/i.test(url) && !url.startsWith('/') && !url.startsWith('#')) {
+			try {
+				url = new URL(url, options.base).href;
+			} catch (e) {
+				console.warn(`[NuiMarkdown] Cannot resolve '${url}' against base '${options.base}' — left as authored`);
+			}
+		}
+		// Document base (issue #38): a document rendered from a URL has relative
+		// destinations resolve against that URL — the same rule every real
+		// viewer (GitHub, VS Code, Obsidian) applies. Resolved BEFORE the app
+		// rewrite/policy hooks so they see a canonical absolute URL.
+		if (options.base && !/^[a-z][a-z0-9+.-]*:/i.test(url) && !url.startsWith('/') && !url.startsWith('#')) {
+			try {
+				url = new URL(url, options.base).href;
+			} catch (e) {
+				console.warn(`[NuiMarkdown] Cannot resolve '${url}' against base '${options.base}' — left as authored`);
+			}
+		}
 		// App-level rewrite hook (setMarkdownImageRewrite): fn(url) → rewritten
 		// url or null. Applied before the policy check so a canonicalized URL
 		// (e.g. host-aliased storage origin → same-origin proxy path) is what
@@ -7009,6 +7031,15 @@ class NuiMarkdown extends HTMLElement {
 	get frontmatterMode() { return this._frontmatterMode; }
 	set frontmatterMode(v) { this._frontmatterMode = v; }
 
+	// Document base URL (issue #38): relative image destinations in the content
+	// resolve against it, exactly as a viewer opening the file from disk would.
+	// In src mode the src URL is the base automatically; a `base` attribute or
+	// property overrides it. No base (e.g. streamed chat messages, inline
+	// content with no source) leaves relative destinations untouched — a chat
+	// message is not a file and has no location.
+	get base() { return this._base !== undefined ? this._base : this.getAttribute('base') || (this.getAttribute('src') ? new URL(this.getAttribute('src'), location.href).href : null); }
+	set base(v) { this._base = v; }
+
 	_renderMode() {
 		if (this._frontmatterMode !== undefined) return this._frontmatterMode;
 		const attr = this.getAttribute('frontmatter');
@@ -7048,7 +7079,7 @@ class NuiMarkdown extends HTMLElement {
 		const mode = this._renderMode();
 		const fm = FRONTMATTER_MODES.has(mode) ? parseFrontmatter(rawText) : null;
 		this._metadata = fm ? fm.data : null;
-		this.innerHTML = markdownToHtml(rawText, { frontmatter: mode });
+		this.innerHTML = markdownToHtml(rawText, { frontmatter: mode, base: this.base });
 		this._processed = true; // Mark as processed so re-attach is free
 
 		if (!this._lightboxBound) {
