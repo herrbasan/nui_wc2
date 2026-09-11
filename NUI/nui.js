@@ -6849,8 +6849,16 @@ function markdownCore(md) {
 		return token;
 	};
 	html = html.replace(/!\[([^\]]+)\]\(([^)]+)\)/g, (m, alt, src) => {
-		const url = safeUrl(src);
+		let url = safeUrl(src);
 		if (!url) return alt;
+		// App-level rewrite hook (setMarkdownImageRewrite): fn(url) → rewritten
+		// url or null. Applied before the policy check so a canonicalized URL
+		// (e.g. host-aliased storage origin → same-origin proxy path) is what
+		// gets trusted and requested.
+		if (typeof markdownImageRewrite === 'function') {
+			const rewritten = markdownImageRewrite(url);
+			if (typeof rewritten === 'string' && rewritten.length > 0) url = rewritten;
+		}
 		// App-level origin allow-list (setMarkdownImagePolicy): an image whose
 		// source the app does not trust renders as its alt text, never as a request.
 		if (typeof markdownImagePolicy === 'function' && !markdownImagePolicy(url)) return alt;
@@ -6877,6 +6885,11 @@ function markdownCore(md) {
 // boolean. Null = allow everything safeUrl passes (previous behavior).
 let markdownImagePolicy = null;
 util.setMarkdownImagePolicy = (fn) => { markdownImagePolicy = (typeof fn === 'function') ? fn : null; };
+// App-level markdown image rewrite: fn(url) → rewritten url or null. Runs
+// before the policy check; lets the app canonicalize host aliases (e.g. all
+// known spellings of a storage origin → one same-origin proxy path).
+let markdownImageRewrite = null;
+util.setMarkdownImageRewrite = (fn) => { markdownImageRewrite = (typeof fn === 'function') ? fn : null; };
 
 // Add to util for global access
 util.markdownToHtml = markdownToHtml;
