@@ -1,0 +1,176 @@
+/* nui-slides — presentation profile for MD-Blocks documents (nui-blocks renderer).
+   One section = one surface = one slide. The document's chrome is authored once on
+   the main and cloned onto each slide by nui-slides.js, so a deck shows it on every
+   slide while the source mentions it once. Slide numbers are derived chrome, added
+   per slide by the same module.
+
+   A slide is a surface, not a scroll position: the deck shows exactly one at a time
+   and swaps between them. Nothing scrolls, which is what makes a slide a slide — a
+   deck that can be scrolled is a page.
+
+   A slide is also a CANVAS, not a stretchy box. Content is laid out at a fixed
+   logical size (16:9 by default) and the whole canvas is scaled to fit the deck, so
+   a slide keeps its proportions and its composition at every window size — the thing
+   that separates a deck from a web page that happens to be full-screen. The module
+   writes the canvas size and the fitted scale as custom properties on the host;
+   `base` and `zoom` are the authoring knobs for them.
+
+   Theme variables only; no nui-* component is styled. */
+
+nui-slides {
+	display: block;
+	position: relative;
+	box-sizing: border-box;
+	height: 100dvh;
+	overflow: hidden;
+	/* Side padding keeps the canvas — and the frame's shadow — off the window edges.
+	   Padding, not margin: the fit measures the CONTENT box, so the slide scales to
+	   the inset area and everything it draws stays inside the deck, which clips. */
+	padding-inline: var(--nui-space-double);
+	/* Defaults keep the deck sane before the module has measured anything. */
+	--nui-slides-w: 1280px;
+	--nui-slides-h: 720px;
+	--nui-slides-scale: 1;
+}
+
+/* The frame belongs to the SLIDE — the 16:9 canvas — not to the deck, which is only
+   the surface the slide is fitted into and may be a very different shape. It cannot
+   live on the slide element either: slides are scaled with a transform, so their
+   border and shadow would scale too (a hairline becoming a slab on a large screen).
+   So it is a separate box drawn at the canvas's rendered bounds — a pseudo-element
+   needs no DOM and cannot fall out of step with the slide it frames.
+   border-box is load-bearing: without it the border is added to the canvas width, the
+   frame grows past a canvas that already fills the deck, and the deck clips its right
+   edge — which looks exactly like a broken border. */
+nui-slides::after {
+	content: '';
+	box-sizing: border-box;
+	position: absolute;
+	inset-block-start: 50%;
+	inset-inline-start: 50%;
+	width: calc(var(--nui-slides-w) * var(--nui-slides-scale));
+	height: calc(var(--nui-slides-h) * var(--nui-slides-scale));
+	transform: translate(-50%, -50%);
+	border: solid var(--border-thickness) var(--border-shade2);
+	box-shadow: 0 0.25rem 1rem light-dark(rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.55));
+	pointer-events: none;
+}
+nui-slides[height="fill"] {
+	height: 100%;
+}
+/* A focus ring on the deck is for the keyboard, never for a click or a slide advance. */
+nui-slides:focus {
+	outline: none;
+}
+nui-slides:focus-visible {
+	outline: 2px solid var(--color-highlight);
+	outline-offset: -2px;
+}
+
+/* An unknown element defaults to an inline box; the rendered markdown and each main
+   hold block-level regions, so they are declared block and otherwise left alone.
+   They stay unpositioned on purpose, so every slide measures against the deck. */
+nui-slides nui-markdown,
+nui-slides .nui-blocks-main {
+	display: block;
+}
+
+/* A section is a slide: a fixed canvas, centred in the deck and scaled as one piece,
+   with the chrome pinned to the top and bottom edges and the content between them.
+   All slides occupy the same box; only the current one is shown, and `inert` (set by
+   the module) keeps the others out of the tab order and away from assistive tech. */
+nui-slides .nui-blocks-section {
+	box-sizing: border-box;
+	position: absolute;
+	inset-block-start: 50%;
+	inset-inline-start: 50%;
+	width: var(--nui-slides-w);
+	height: var(--nui-slides-h);
+	transform: translate(-50%, -50%) scale(var(--nui-slides-scale));
+	display: flex;
+	flex-direction: column;
+	margin: 0;
+	padding: var(--nui-space-double);
+	overflow: hidden;
+	opacity: 0;
+}
+nui-slides .nui-blocks-section[data-current] {
+	opacity: 1;
+}
+/* Focus is moved to the slide on every advance, so it is focused almost all the time —
+   and a ring around a whole slide reads as a rendering fault, not as an affordance.
+   The deck carries the focus indicator; a slide is not a control. */
+nui-slides .nui-blocks-section:focus,
+nui-slides .nui-blocks-section:focus-visible {
+	outline: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+	nui-slides .nui-blocks-section {
+		transition: opacity 160ms ease-out;
+	}
+	nui-slides .nui-blocks-section[data-current] {
+		@starting-style {
+			opacity: 0;
+		}
+	}
+}
+nui-slides .nui-blocks-section > * {
+	flex: 0 0 auto;
+}
+nui-slides .nui-blocks-section > .nui-blocks-chrome-footer {
+	margin-top: auto;
+}
+nui-slides .nui-blocks-section > :last-child {
+	margin-bottom: 0;
+}
+
+/* Content that does not fit cannot be scrolled to, so the deck marks the slide and
+   says so in the console rather than cropping in silence. The mark stays subtle on
+   purpose: a clipped slide may be on screen in front of an audience, and the console
+   line — not a border — is where the severity belongs. */
+nui-slides .nui-blocks-section[data-overflow] {
+	outline: 1px dashed var(--border-shade4);
+	outline-offset: calc(-1 * var(--nui-space-half));
+}
+
+/* Derived chrome: each slide carries its own number, so nothing has to be kept in
+   step between slides. Hidden from assistive tech — the slide's own label already
+   says "n of m". */
+nui-slides .nui-slides-counter {
+	position: absolute;
+	inset-block-end: var(--nui-space-half);
+	inset-inline-end: var(--nui-space);
+	color: var(--text-color-dim);
+	font-size: var(--font-size-small);
+	font-variant-numeric: tabular-nums;
+	pointer-events: none;
+}
+
+@media print {
+	nui-slides {
+		height: auto;
+		overflow: visible;
+		padding-inline: 0;
+	}
+	/* A printed page is its own canvas — nothing to fit, nothing to frame. */
+	nui-slides::after {
+		content: none;
+	}
+	/* A printed page is its own canvas — the screen scaling does not apply. */
+	nui-slides .nui-blocks-section {
+		position: static;
+		inset: auto;
+		width: auto;
+		height: auto;
+		transform: none;
+		opacity: 1;
+		overflow: visible;
+		break-after: page;
+	}
+	nui-slides .nui-blocks-section:last-child {
+		break-after: auto;
+	}
+	nui-slides .nui-slides-counter {
+		display: none;
+	}
+}

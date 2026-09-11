@@ -6332,7 +6332,7 @@ function renderFrontmatter(data, options) {
 
 const MB_DIRECTIVE_RE = /^<!--\s*mb:(\/?)([a-z]+)((?:\s[^>]*?)?)\s*-->[ \t]*$/;
 const MB_ATTR_RE = /([a-z][a-z0-9_-]*)=("[^"]*"|\[[^\]]*\]|\{[^}]*\}|[^\s]+)/g;
-const MB_STRUCTURAL = new Set(['section', 'block', 'columns', 'col', 'var']);
+const MB_STRUCTURAL = new Set(['main', 'section', 'block', 'columns', 'col', 'var']);
 const MB_IMAGE_EXT_RE = /\.(png|jpe?g|gif|webp|avif|svg|bmp)$/i;
 const MB_VIDEO_EXT_RE = /\.(mp4|webm|mov|m4v|ogv)$/i;
 const MB_AUDIO_EXT_RE = /\.(mp3|wav|ogg|oga|m4a|flac)$/i;
@@ -6385,10 +6385,15 @@ function mbIsThematicBreak(line) {
 // the run — the §6.1 chunking rule, so two parsers agree on boundaries.
 function parseBlocks(src) {
 	const lines = String(src).replace(/\r\n/g, '\n').split('\n');
-	const doc = { sections: [] };
-
+	// A document is one or more MAINS. A main is the chrome scope: the unit a
+	// renderer fragments into surfaces (slides, printed pages, one scrolling
+	// region) and the only place `repeat` chrome attaches. A document with no
+	// `mb:main` has exactly one implicit main, so plain documents need nothing.
+	const doc = { mains: [] };
+	let main = { attrs: {}, sections: [] };
+	doc.mains.push(main);
 	let section = { attrs: {}, vars: [], nodes: [], buf: [] };
-	doc.sections.push(section);
+	main.sections.push(section);
 	let block = null, columns = null, col = null;
 	let fence = null, varFence = null, expectVar = null;
 	let prevBlank = true;
@@ -6396,10 +6401,14 @@ function parseBlocks(src) {
 	// Innermost open container wins. A block is always the innermost when open — it
 	// can sit at section level or inside a column — so it must be tested first, or a
 	// block opened inside a column would have its content land in the column instead.
+	// Plain Markdown that carries no content — blank lines, or HTML comments only
+	// (which every renderer drops, per the format's comment rule). A scope holding
+	// nothing but a comment is empty, so a file-header comment never becomes a region.
+	const blankMd = (lines) => lines.join('\n').replace(/<!--[\s\S]*?-->/g, '').trim() === '';
 	const container = () => block || col || section;
 	const flush = (c) => {
 		if (!c || !c.buf.length) return;
-		if (c.buf.join('\n').trim()) c.nodes.push({ type: 'md', lines: c.buf.slice() });
+		if (!blankMd(c.buf)) c.nodes.push({ type: 'md', lines: c.buf.slice() });
 		c.buf.length = 0;
 	};
 	const push = (node) => { container().nodes.push(node); };
@@ -6441,7 +6450,31 @@ function parseBlocks(src) {
 		if (dm && MB_STRUCTURAL.has(dm[2])) {
 			const attrs = mbParseAttrs(dm[3]);
 			const closing = dm[1] === '/';
-			if (dm[2] === 'section') {
+			if (dm[2] === 'main') {
+				// A main is a chrome scope, and the marker is a BREAK, not a container: it
+				// ends where the next one begins, or at the end of the document. So there is
+				// no closing form, and writing one is an authoring error worth saying out
+				// loud rather than quietly ending a scope the author never ended.
+				if (closing) {
+					console.warn('[nui-markdown] mb:/main is not a closing form — a main ends where the ' +
+						'next mb:main begins, or at the end of the document. The marker was ignored.');
+				} else {
+					flush(container());
+					const empty = !section.nodes.length && !section.buf.length &&
+						!Object.keys(section.attrs).length && !section.vars.length &&
+						main.sections.length === 1 && !Object.keys(main.attrs).length;
+					if (empty) {
+						// A document that opens with a marker annotates its implicit main rather
+						// than leaving an empty scope in front of it.
+						main.attrs = attrs;
+					} else {
+						main = { attrs, sections: [] };
+						doc.mains.push(main);
+						section = { attrs: {}, vars: [], nodes: [], buf: [] };
+						main.sections.push(section);
+					}
+				}
+			} else if (dm[2] === 'section') {
 				// Annotates the section it appears in. First one wins.
 				if (!Object.keys(section.attrs).length) section.attrs = attrs;
 			} else if (dm[2] === 'var') {
@@ -6506,7 +6539,7 @@ function parseBlocks(src) {
 		if (!block && !columns && prevBlank && mbIsThematicBreak(line)) {
 			flush(section);
 			section = { attrs: {}, vars: [], nodes: [], buf: [] };
-			doc.sections.push(section);
+			main.sections.push(section);
 			prevBlank = true;
 			continue;
 		}
@@ -6519,7 +6552,7 @@ function parseBlocks(src) {
 	closeCol();
 	if (columns) { const c = columns; columns = null; flush(c); push(c); }
 	if (block) { const b = block; block = null; flush(b); push(b); }
-	doc.sections.forEach((s) => flush(s));
+	doc.mains.forEach((m) => m.sections.forEach((s) => flush(s)));
 	return doc;
 }
 
@@ -6730,22 +6763,63 @@ function mbRenderColumns(columns) {
 	return `${open} data-cols="${count}"${style}>${lead ? lead + '\n' : ''}${cells}</div>`;
 }
 
+function mbRenderSection(s) {
+	const open = mbOpenTag('section', 'nui-blocks-section', s.attrs);
+	return `${open}>${mbRenderNodes(s.nodes)}</section>`;
+}
+
+function mbSectionHasContent(s) {
+	return !!(Object.keys(s.attrs).length || s.vars.length ||
+		s.nodes.some((n) => n.type !== 'md' || n.lines.join('\n').replace(/<!--[\s\S]*?-->/g, '').trim()));
+}
+
+function mbMainHasContent(m) {
+	return m.sections.some(mbSectionHasContent);
+}
+
+function mbRenderMain(main) {
+	// Chrome is authored once per MAIN and emitted once — on the scope, not on every
+	// region inside it. Repeating it across surfaces (each slide, each printed page) is
+	// the renderer profile's job, because a scope is not the same thing as a surface.
+	const chrome = { header: [], footer: [] };
+	const hadContent = main.sections.map(mbSectionHasContent);
+	for (const s of main.sections) {
+		s.nodes = s.nodes.filter((n) => {
+			const slot = n.type === 'block' && n.attrs ? n.attrs.repeat : null;
+			if (slot === 'header' || slot === 'footer') { chrome[slot].push(n); return false; }
+			return true;
+		});
+	}
+	// Chrome is not content: a region that held nothing but chrome templates is not a
+	// surface, or the canonical "chrome at the top of the main" placement would put a
+	// blank slide in front of every deck. A region that was empty in the source is a
+	// deliberate empty section and is preserved (§4.1).
+	const sections = main.sections.filter((s, i) => mbSectionHasContent(s) || !hadContent[i]);
+
+	const slot = (name) => chrome[name].length
+		? `<${name} class="nui-blocks-chrome nui-blocks-chrome-${name}">${chrome[name].map(mbRenderBlock).join('\n')}</${name}>`
+		: '';
+	const open = mbOpenTag('main', 'nui-blocks-main', main.attrs);
+	return `${open}>${slot('header')}${sections.map(mbRenderSection).join('\n')}${slot('footer')}</main>`;
+}
+
 function renderBlocks(doc) {
+	const mains = doc.mains.filter(mbMainHasContent);
+
 	// A document with no structure renders exactly as plain Markdown — no wrapper,
 	// unchanged from the previous behaviour. Structure appears only when the source
 	// asks for it. The section's markdown was already flushed into its nodes, so read
 	// those rather than the emptied buffer.
-	const structured = doc.sections.length > 1 || doc.sections.some((s) =>
-		Object.keys(s.attrs).length || s.vars.length || s.nodes.some((n) => n.type !== 'md'));
+	const only = mains.length === 1 ? mains[0] : null;
+	const structured = mains.length > 1 || (only && (Object.keys(only.attrs).length ||
+		only.sections.length > 1 || only.sections.some((s) =>
+			Object.keys(s.attrs).length || s.vars.length || s.nodes.some((n) => n.type !== 'md'))));
 	if (!structured) {
-		const only = doc.sections[0].nodes;
-		return markdownCore(only.map((n) => n.lines.join('\n')).join('\n\n'));
+		const nodes = only ? only.sections[0].nodes : [];
+		return markdownCore(nodes.map((n) => n.lines.join('\n')).join('\n\n'));
 	}
 
-	return doc.sections.map((s) => {
-		const open = mbOpenTag('section', 'nui-blocks-section', s.attrs);
-		return `${open}>${mbRenderNodes(s.nodes)}</section>`;
-	}).join('\n');
+	return mains.map(mbRenderMain).join('\n');
 }
 
 function markdownToHtml(md, options) {
@@ -6853,13 +6927,15 @@ function markdownCore(md) {
 	// passes below cannot reach into them: an underscore in a filename is not
 	// emphasis. A whole <img> is held — alt text is literal per CommonMark — while a
 	// link keeps its text inline, so emphasis inside link text still applies.
+	// Alt text may be EMPTY (`![](...)`) — a decorative image is legal Markdown and
+	// legal media for an MD-Blocks block, so the alt group is `*`, not `+`.
 	const heldMarkup = [];
 	const hold = (markup) => {
 		const token = `\uE200${heldMarkup.length}\uE201`;
 		heldMarkup.push({ token, markup });
 		return token;
 	};
-	html = html.replace(/!\[([^\]]+)\]\(([^)]+)\)/g, (m, alt, src) => {
+	html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (m, alt, src) => {
 		let url = safeUrl(src);
 		if (!url) return alt;
 		// App-level rewrite hook (setMarkdownImageRewrite): fn(url) → rewritten

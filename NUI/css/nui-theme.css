@@ -5086,6 +5086,34 @@ nui-markdown p > img {
 	.nui-blocks-columns { grid-template-columns: 1fr !important; }
 }
 
+/* Chrome: authored as `repeat=header|footer` blocks and emitted once per MAIN —
+   the chrome scope, not the surface. `.nui-blocks-chrome` is the strip as authored;
+   a surface view (nui-slides) clones it onto each surface so it repeats where the
+   medium needs it. The FIRST block in a slot establishes the strip's extent; every
+   further block overlays within it, stacking in source order — later siblings paint
+   above earlier ones. A plate + content pair (image first, text second) is the
+   intended overlay shape; two content blocks collide by design. */
+.nui-blocks-main {
+	display: block;
+}
+.nui-blocks-chrome {
+	position: relative;
+	display: block;
+}
+.nui-blocks-chrome > * {
+	margin: 0;
+}
+.nui-blocks-chrome > * + * {
+	position: absolute;
+	inset: 0;
+}
+.nui-blocks-chrome-header {
+	margin-bottom: var(--nui-space);
+}
+.nui-blocks-chrome-footer {
+	margin-top: var(--nui-space);
+}
+
 /* Media block: a block whose FIRST node is the media; everything after is caption.
    The media carries no trailing margin of its own — the figure spaces the whole unit
    and the caption spaces itself — so the house bottom-only rhythm is not doubled. */
