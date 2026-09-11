@@ -94,18 +94,22 @@ export function highlight(code, lang, forceEscape = false) {
 		// Function calls
 		html = html.replace(/\b([a-z_$][\w$]*)(?=\s*\()/g, (m) => wrap(m, 'function'));
 	} else if (lang === 'json') {
+		// Every rule captures the whitespace it matched and re-emits it verbatim. The
+		// earlier form consumed `\s*` and emitted a literal space instead, which
+		// collapsed pretty-printed JSON onto one line — a highlighter must never reflow
+		// the text it is decorating: `"b": [\n    2` became `"b": [2`.
 		// Keys (property names in quotes before colon)
-		html = html.replace(/("(?:[^"\\]|\\.)*?")\s*:/g, (m, p1) => wrap(p1, 'prop') + ':');
+		html = html.replace(/("(?:[^"\\]|\\.)*?")(\s*):/g, (m, p1, ws) => wrap(p1, 'prop') + ws + ':');
 		// String values (after colon or in arrays, brackets)
-		html = html.replace(/:\s*("(?:[^"\\]|\\.)*?")/g, (m, p1) => ': ' + wrap(p1, 'string'));
-		html = html.replace(/\[\s*("(?:[^"\\]|\\.)*?")/g, (m, p1) => '[' + wrap(p1, 'string'));
-		html = html.replace(/,\s*("(?:[^"\\]|\\.)*?")/g, (m, p1) => ', ' + wrap(p1, 'string'));
+		html = html.replace(/(:\s*)("(?:[^"\\]|\\.)*?")/g, (m, ws, p1) => ws + wrap(p1, 'string'));
+		html = html.replace(/(\[\s*)("(?:[^"\\]|\\.)*?")/g, (m, ws, p1) => ws + wrap(p1, 'string'));
+		html = html.replace(/(,\s*)("(?:[^"\\]|\\.)*?")/g, (m, ws, p1) => ws + wrap(p1, 'string'));
 		// Boolean and null literals
 		html = html.replace(/\b(true|false|null)\b/g, (m) => wrap(m, 'literal'));
 		// Numbers (including negative, floats, scientific notation)
-		html = html.replace(/:\s*(-?\d+\.?\d*(?:[eE][+-]?\d+)?)/g, (m, p1) => ': ' + wrap(p1, 'number'));
-		html = html.replace(/\[\s*(-?\d+\.?\d*(?:[eE][+-]?\d+)?)/g, (m, p1) => '[' + wrap(p1, 'number'));
-		html = html.replace(/,\s*(-?\d+\.?\d*(?:[eE][+-]?\d+)?)/g, (m, p1) => ', ' + wrap(p1, 'number'));
+		html = html.replace(/(:\s*)(-?\d+\.?\d*(?:[eE][+-]?\d+)?)/g, (m, ws, p1) => ws + wrap(p1, 'number'));
+		html = html.replace(/(\[\s*)(-?\d+\.?\d*(?:[eE][+-]?\d+)?)/g, (m, ws, p1) => ws + wrap(p1, 'number'));
+		html = html.replace(/(,\s*)(-?\d+\.?\d*(?:[eE][+-]?\d+)?)/g, (m, ws, p1) => ws + wrap(p1, 'number'));
 	}
 	
 	// Replace all tokens with actual HTML. 
