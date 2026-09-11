@@ -316,6 +316,10 @@ footer h1 {
 	font-size: var(--font-size-base);
 }
 
+h1, h2, h3, h4, h5, h6 {
+	margin-top: 0;
+}
+
 h1 {
 	color: var(--color-highlight);
 	font-size: var(--font-size-xlarge);
@@ -328,6 +332,7 @@ h2 {
 	color: var(--color-highlight);
 	font-size: var(--font-size-large);
 	line-height: 1.8rem;
+	margin-bottom: var(--nui-space);
 	font-weight: 300;
 }
 
@@ -336,22 +341,26 @@ h3 {
 	font-size: var(--font-size-medium);
 	line-height: 2rem;
 	color: var(--color-text);
+	margin-bottom: var(--nui-space);
 }
 
 h4 {
 	font-weight: 600;
 	font-size: var(--font-size-medium);
 	line-height: 1.5rem;
+	margin-bottom: var(--nui-space);
 }
 
 h5 {
 	font-weight: 600;
 	font-size: var(--font-size-base);
+	margin-bottom: var(--nui-space);
 }
 
 h6 {
 	font-weight: 600;
 	font-size: var(--font-size-small);
+	margin-bottom: var(--nui-space);
 }
 
 hr {
@@ -3941,6 +3950,16 @@ table {
 	border-collapse: collapse;
 	background-color: light-dark(var(--color-shade1), var(--color-shade2));
 	color: var(--color-text);
+	/* A table was the one block-level flow element carrying no bottom rhythm, so one
+	   sitting in a Markdown run butted straight against the next heading while every
+	   sibling (p, h*, ul, ol, figure, blockquote) had a gap. Prose rhythm, not block
+	   rhythm: a table inside an `mb:block` gets the heavier spacing from the block. */
+	margin: 0 0 var(--nui-space);
+}
+
+/* `nui-table` spaces itself; an inner margin would open a gap inside its scroll area. */
+nui-table table {
+	margin-bottom: 0;
 }
 
 th,
@@ -5005,6 +5024,607 @@ nui-markdown p > img {
 }
 .nui-md-frontmatter-details > .nui-md-frontmatter {
 	margin-bottom: 0;
+}
+
+/* ################################# MD-Blocks structure */
+/* Rendered by markdownToHtml from the MD-Blocks format (github.com/herrbasan/md-blocks).
+   A root-level --- starts the next section and is never drawn — sections are the
+   internal structure of a document, not chrome — so a page still reads as continuous
+   flow. Structure appears only when the source asks for it; a plain Markdown
+   document gets none of these wrappers. */
+.nui-blocks-section,
+.nui-blocks-block {
+	display: block;
+	margin-bottom: var(--nui-space-double);
+}
+.nui-blocks-section:last-child,
+.nui-blocks-block:last-child,
+.nui-blocks-columns:last-child {
+	margin-bottom: 0;
+}
+
+/* Columns: the count comes from the number of `col` markers and is carried on
+   data-cols; authored `weights` arrive as an inline grid-template-columns, which
+   naturally wins. Source order is reading order, so a narrow screen stacks in that
+   same order rather than reordering. */
+.nui-blocks-columns {
+	display: grid;
+	gap: var(--nui-space);
+	margin-bottom: var(--nui-space-double);
+	align-items: start;
+}
+.nui-blocks-columns[data-cols="2"] { grid-template-columns: repeat(2, 1fr); }
+.nui-blocks-columns[data-cols="3"] { grid-template-columns: repeat(3, 1fr); }
+.nui-blocks-columns[data-cols="4"] { grid-template-columns: repeat(4, 1fr); }
+.nui-blocks-columns[data-cols="5"] { grid-template-columns: repeat(5, 1fr); }
+.nui-blocks-columns[data-cols="6"] { grid-template-columns: repeat(6, 1fr); }
+.nui-blocks-col {
+	/* A grid item defaults to min-content width, which lets media overflow it. */
+	min-width: 0;
+}
+.nui-blocks-col > :first-child,
+.nui-blocks-block > :first-child,
+.nui-blocks-section > :first-child {
+	margin-top: 0;
+}
+.nui-blocks-col > :last-child,
+.nui-blocks-block > :last-child,
+.nui-blocks-section > :last-child {
+	margin-bottom: 0;
+}
+@media (max-width: 40rem) {
+	.nui-blocks-columns { grid-template-columns: 1fr !important; }
+}
+
+/* Media block: a block whose FIRST node is the media; everything after is caption.
+   The media carries no trailing margin of its own — the figure spaces the whole unit
+   and the caption spaces itself — so the house bottom-only rhythm is not doubled. */
+.nui-blocks-media {
+	margin: 0 0 var(--nui-space-double);
+}
+.nui-blocks-media > :is(p, ul, ol) {
+	margin-block-end: 0;
+}
+.nui-blocks-media figcaption {
+	background: transparent;
+	padding: 0;
+	margin-top: var(--nui-space-half);
+	color: var(--text-color-dim);
+	font-size: var(--font-size-small);
+}
+.nui-blocks-media figcaption > :last-child {
+	margin-block-end: 0;
+}
+
+/* Presets map a semantic name to treatment. The label word in a note or warning is
+   authored in the Markdown and is never injected here, so the message survives
+   losing its styling. An unknown preset is valid syntax that renders plain. */
+.nui-preset-lead {
+	font-size: var(--font-size-medium);
+}
+.nui-preset-lead p:first-of-type {
+	font-size: 1.25rem;
+	line-height: 1.6;
+	color: var(--text-color);
+}
+.nui-preset-note,
+.nui-preset-warning {
+	padding: var(--nui-space);
+	border-left: 4px solid var(--color-highlight);
+	background: light-dark(var(--color-shade2), var(--color-shade1));
+	border-radius: var(--border-radius1);
+}
+/* A card is a surface that has to work on the page AND inside a contrasting region
+   (a `dark` section, a column). A fixed shade cannot do both: `--color-base` is pure
+   white in light mode, so a card inside a shaded section became a white slab whose
+   inherited near-white text was unreadable. A translucent overlay of the text
+   colour instead tints whatever surface is behind it, so the card lifts from its
+   container by the same amount everywhere. */
+.nui-preset-card {
+	padding: var(--nui-space);
+	border: solid var(--border-thickness) var(--border-shade2);
+	border-radius: var(--border-radius1);
+	background: color-mix(in srgb, var(--text-color) 5%, transparent);
+}
+.nui-preset-card.nui-variant-warning,
+.nui-preset-card.nui-variant-note,
+.nui-preset-card.nui-variant-accent {
+	border-left: 4px solid var(--color-highlight);
+	background: color-mix(in srgb, var(--text-color) 8%, transparent);
+}
+.nui-preset-card.nui-variant-good {
+	border-top: 3px solid var(--color-highlight);
+	background: color-mix(in srgb, var(--text-color) 6%, transparent);
+}
+.nui-preset-card.nui-variant-danger {
+	border-top: 3px solid var(--color-shade6);
+	background: color-mix(in srgb, var(--text-color) 6%, transparent);
+	opacity: 0.9;
+}
+
+/* Stat card variant: large numeric KPI with label */
+.nui-preset-card.nui-variant-stat {
+	text-align: center;
+	padding: var(--nui-space-double) var(--nui-space);
+}
+.nui-preset-card.nui-variant-stat :is(h1, h2, h3) {
+	font-size: 2.75rem;
+	font-weight: 800;
+	letter-spacing: -0.03em;
+	color: var(--color-highlight);
+	margin: 0 0 var(--nui-space-half);
+	line-height: 1;
+}
+.nui-preset-card.nui-variant-stat strong {
+	display: block;
+	font-size: var(--font-size-medium);
+	color: var(--text-color);
+	margin-bottom: var(--nui-space-quarter);
+}
+.nui-preset-card.nui-variant-stat p {
+	margin: 0;
+	font-size: var(--font-size-small);
+	color: var(--text-color-dim);
+}
+
+/* Quote card variant: editorial epigraph */
+.nui-preset-card.nui-variant-quote {
+	border-left: 4px solid var(--color-highlight);
+	background: color-mix(in srgb, var(--text-color) 6%, transparent);
+	font-style: italic;
+	padding: var(--nui-space-double);
+}
+.nui-preset-card.nui-variant-quote blockquote {
+	border: none;
+	padding: 0;
+	margin: 0;
+	font-size: 1.15rem;
+	line-height: 1.6;
+	color: var(--text-color);
+}
+
+/* Stepper list variant: connected numbered timeline */
+.nui-variant-steps ol {
+	list-style: none;
+	counter-reset: step-counter;
+	padding-left: var(--nui-space-double);
+	position: relative;
+	margin: var(--nui-space) 0;
+}
+.nui-variant-steps ol::before {
+	content: '';
+	position: absolute;
+	top: var(--nui-space);
+	bottom: var(--nui-space);
+	left: 0.9rem;
+	width: 2px;
+	background: var(--border-shade2);
+}
+.nui-variant-steps ol > li {
+	counter-increment: step-counter;
+	position: relative;
+	padding-left: var(--nui-space-double);
+	margin-bottom: var(--nui-space-double);
+}
+.nui-variant-steps ol > li:last-child {
+	margin-bottom: 0;
+}
+.nui-variant-steps ol > li::before {
+	content: counter(step-counter);
+	position: absolute;
+	left: -0.35rem;
+	top: 0;
+	width: 1.75rem;
+	height: 1.75rem;
+	background: var(--color-highlight);
+	color: var(--color-base);
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: bold;
+	font-size: var(--font-size-small);
+	line-height: 1;
+	box-shadow: 0 0 0 4px var(--color-base);
+}
+
+.nui-preset-cta {
+	font-size: var(--font-size-medium);
+}
+.nui-preset-cta a,
+.nui-variant-cta a {
+	display: inline-flex;
+	align-items: center;
+	padding: var(--nui-space-half) var(--nui-space);
+	background: var(--color-highlight);
+	color: var(--color-base);
+	border-radius: var(--border-radius1);
+	text-decoration: none;
+	font-weight: bold;
+}
+/* `band` is a section that occupies a DIFFERENT SURFACE from the page — one step
+   away in each scheme, not a black panel: slightly darker in light, slightly lighter
+   in dark. Named for the shape (a full-width banded region), so the renderer is free
+   to retune the surface per scheme without the name becoming a lie. Text stays the
+   normal text colour in both, so anything nested inside (a card, a table, a caption)
+   inherits a readable colour instead of the band's inverted one. */
+.nui-preset-band {
+	padding: var(--nui-space);
+	background: light-dark(var(--color-shade3), var(--color-shade2));
+	color: var(--text-color);
+	border: solid var(--border-thickness) light-dark(var(--border-shade1), var(--border-shade2));
+	border-radius: var(--border-radius1);
+}
+
+/* Table presets */
+.nui-preset-table.nui-variant-clean table,
+.nui-preset-table.nui-variant-plain table {
+	background: transparent;
+	border: none;
+}
+.nui-preset-table.nui-variant-clean th,
+.nui-preset-table.nui-variant-plain th {
+	background: transparent;
+	border: none;
+	border-bottom: 2px solid var(--border-shade3);
+	color: var(--text-color);
+	font-weight: 600;
+	padding-left: 0;
+}
+.nui-preset-table.nui-variant-clean td,
+.nui-preset-table.nui-variant-plain td {
+	background: transparent;
+	border: none;
+	border-bottom: 1px solid var(--border-shade2);
+	padding-left: 0;
+}
+.nui-preset-table.nui-variant-clean tr:last-child td,
+.nui-preset-table.nui-variant-plain tr:last-child td {
+	border-bottom: none;
+}
+
+/* Specs variant: metadata / key-value sheet (header hidden, left col muted label) */
+.nui-preset-table.nui-variant-specs table {
+	background: transparent;
+	border: none;
+}
+.nui-preset-table.nui-variant-specs thead {
+	display: none;
+}
+.nui-preset-table.nui-variant-specs td {
+	background: transparent;
+	border: none;
+	border-bottom: 1px solid var(--border-shade2);
+	padding: var(--nui-space-half) 0;
+}
+.nui-preset-table.nui-variant-specs td:first-child {
+	width: 35%;
+	color: var(--text-color-dim);
+	font-weight: 600;
+}
+.nui-preset-table.nui-variant-specs tr:last-child td {
+	border-bottom: none;
+}
+
+/* Fit table variant: columns sized strictly by data cells, headers clip with ellipsis & tooltip */
+.nui-preset-table.nui-variant-fit table {
+	table-layout: auto;
+	width: 100%;
+}
+.nui-preset-table.nui-variant-fit th {
+	max-width: 0;
+	position: relative;
+}
+.nui-table-th-clip {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	max-width: 100%;
+	min-width: 0;
+	cursor: default;
+}
+.nui-table-th-clip:focus {
+	outline: 2px solid var(--color-highlight);
+	outline-offset: 1px;
+}
+
+/* Var: named section data, surfaced by nui-markdown because it is a general display
+   renderer. Vars are data, not prose (spec §4.4), so the marker is deliberate — a
+   tinted card with a rule on the left and a monospace name — rather than plain text
+   a reader might mistake for content. A collection renderer reads the tree and never
+   emits this element. */
+.nui-blocks-var {
+	display: grid;
+	grid-template-columns: minmax(6rem, max-content) 1fr;
+	gap: var(--nui-space);
+	align-items: baseline;
+	margin: 0 0 var(--nui-space-double);
+	padding: var(--nui-space-half) var(--nui-space);
+	border-left: 3px solid var(--border-shade3);
+	border-radius: var(--border-radius1);
+	background: color-mix(in srgb, var(--text-color) 4%, transparent);
+}
+.nui-blocks-var dt {
+	font-family: monospace;
+	font-size: var(--font-size-small);
+	color: var(--text-color-dim);
+}
+.nui-blocks-var dd {
+	margin: 0;
+	font-size: var(--font-size-small);
+}
+.nui-blocks-var nui-code {
+	display: block;
+	margin: 0;
+}
+.nui-blocks-var nui-code pre {
+	margin: 0;
+}
+.nui-blocks-var .nui-blocks-var-value {
+	font-size: var(--font-size-small);
+}
+
+/* Gallery: image sequence or grid inside a media figure */
+.nui-blocks-media img {
+	cursor: pointer;
+	transition: opacity 0.15s ease;
+}
+.nui-blocks-media img:hover {
+	opacity: 0.92;
+}
+.nui-blocks-gallery > :is(ul, ol) {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	gap: var(--nui-space);
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+.nui-blocks-gallery > :is(ul, ol) > li {
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+	border-radius: var(--border-radius1);
+	border: solid var(--border-thickness) var(--border-shade1);
+	background: light-dark(var(--color-shade1), var(--color-shade2));
+	cursor: pointer;
+	transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.nui-blocks-gallery > :is(ul, ol) > li:hover {
+	border-color: var(--color-highlight);
+	transform: translateY(-2px);
+}
+.nui-blocks-gallery > :is(ul, ol) img {
+	width: 100%;
+	height: 100%;
+	aspect-ratio: 4/3;
+	object-fit: cover;
+	display: block;
+}
+
+/* Gallery variant: featured (lead image prominent, remaining in sub-grid) */
+.nui-blocks-gallery.nui-variant-featured > :is(ul, ol) {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+	gap: var(--nui-space);
+}
+.nui-blocks-gallery.nui-variant-featured > :is(ul, ol) > li:first-child {
+	grid-column: 1 / -1;
+}
+.nui-blocks-gallery.nui-variant-featured > :is(ul, ol) > li:first-child img {
+	aspect-ratio: 21/9;
+	max-height: 50vh;
+}
+
+/* Gallery variant: mosaic (asymmetric editorial layout) */
+.nui-blocks-gallery.nui-variant-mosaic > :is(ul, ol) {
+	display: grid;
+	grid-template-columns: 1.4fr 1fr;
+	grid-template-rows: 1fr 1fr;
+	gap: var(--nui-space);
+	height: 26rem;
+}
+.nui-blocks-gallery.nui-variant-mosaic > :is(ul, ol) > li:first-child {
+	grid-row: 1 / span 2;
+}
+.nui-blocks-gallery.nui-variant-mosaic > :is(ul, ol) img {
+	width: 100%;
+	height: 100%;
+	aspect-ratio: auto;
+	object-fit: cover;
+	display: block;
+}
+@media (max-width: 40rem) {
+	.nui-blocks-gallery.nui-variant-mosaic > :is(ul, ol) {
+		grid-template-columns: 1fr;
+		height: auto;
+	}
+	.nui-blocks-gallery.nui-variant-mosaic > :is(ul, ol) > li:first-child {
+		grid-row: auto;
+	}
+}
+
+/* Gallery variant: row (single horizontal row, evenly divided, no scrollbar) */
+.nui-blocks-gallery.nui-variant-row > :is(ul, ol) {
+	display: flex;
+	gap: var(--nui-space);
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+.nui-blocks-gallery.nui-variant-row > :is(ul, ol) > li {
+	flex: 1 1 0;
+	min-width: 0;
+}
+.nui-blocks-gallery.nui-variant-row > :is(ul, ol) img {
+	width: 100%;
+	height: 100%;
+	aspect-ratio: 16/10;
+	object-fit: cover;
+	display: block;
+}
+@media (max-width: 35rem) {
+	.nui-blocks-gallery.nui-variant-row > :is(ul, ol) {
+		flex-wrap: wrap;
+	}
+	.nui-blocks-gallery.nui-variant-row > :is(ul, ol) > li {
+		flex: 1 1 calc(50% - var(--nui-space-half));
+	}
+}
+
+/* Gallery variant: masonry (multi-column vertical flow) */
+.nui-blocks-gallery.nui-variant-masonry > :is(ul, ol) {
+	display: block;
+	column-count: 3;
+	column-gap: var(--nui-space);
+}
+@media (max-width: 45rem) {
+	.nui-blocks-gallery.nui-variant-masonry > :is(ul, ol) { column-count: 2; }
+}
+@media (max-width: 25rem) {
+	.nui-blocks-gallery.nui-variant-masonry > :is(ul, ol) { column-count: 1; }
+}
+.nui-blocks-gallery.nui-variant-masonry > :is(ul, ol) > li {
+	break-inside: avoid;
+	margin-bottom: var(--nui-space);
+}
+.nui-blocks-gallery.nui-variant-masonry > :is(ul, ol) img {
+	width: 100%;
+	height: auto;
+	aspect-ratio: auto;
+	display: block;
+}
+
+/* Image variants: hero and contain */
+.nui-blocks-media.nui-variant-hero img,
+.nui-preset-hero img {
+	width: 100%;
+	height: auto;
+	aspect-ratio: 21 / 9;
+	max-height: 22rem;
+	object-fit: cover;
+	object-position: var(--mb-focal, center);
+	border-radius: var(--border-radius1);
+	display: block;
+}
+.nui-blocks-media.nui-variant-bleed.nui-variant-hero img,
+.nui-blocks-media.nui-variant-bleed.nui-preset-hero img {
+	border-radius: 0;
+	max-height: 20rem;
+}
+.nui-blocks-media.nui-variant-contain img,
+.nui-preset-contain img {
+	object-fit: contain;
+}
+
+/* Image variant: icon (decorative badge beside the block body, sourced from the
+   `icon=` attribute so the directive carries the asset instead of the prose) */
+.nui-blocks-media.nui-variant-icon {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--nui-space);
+	margin-bottom: var(--nui-space);
+}
+.nui-blocks-media.nui-variant-icon > :first-child {
+	flex: 0 0 auto;
+	margin: 0;
+}
+.nui-blocks-media.nui-variant-icon img {
+	width: 2.25rem;
+	height: 2.25rem;
+	object-fit: cover;
+	border-radius: var(--border-radius1);
+	display: block;
+}
+.nui-blocks-media.nui-variant-icon figcaption {
+	flex: 1 1 0;
+	min-width: 0;
+	background: transparent;
+	padding: 0;
+	margin-top: 0;
+	color: var(--text-color);
+	font-size: var(--font-size-base);
+	line-height: 1.6;
+}
+.nui-blocks-media.nui-variant-icon figcaption > :first-child {
+	margin-top: 0;
+}
+
+/* Inline icons inside headings */
+nui-markdown :is(h1, h2, h3, h4, h5, h6) img {
+	display: inline-block;
+	height: 1.1em;
+	width: auto;
+	vertical-align: -0.15em;
+	margin-right: 0.35em;
+	object-fit: contain;
+	border-radius: var(--border-radius1);
+	margin-bottom: 0;
+}
+
+/* Image wrap variants: float left or right with text wrapping */
+.nui-blocks-media:is(.nui-variant-left, .nui-variant-right)::after {
+	content: "";
+	display: table;
+	clear: both;
+}
+.nui-blocks-media.nui-variant-left > :first-child {
+	float: left;
+	width: clamp(14rem, 40%, 22rem);
+	margin-right: var(--nui-space);
+	margin-bottom: var(--nui-space);
+	margin-top: 0;
+}
+.nui-blocks-media.nui-variant-right > :first-child {
+	float: right;
+	width: clamp(14rem, 40%, 22rem);
+	margin-left: var(--nui-space);
+	margin-bottom: var(--nui-space);
+	margin-top: 0;
+}
+.nui-blocks-media.nui-size-small:is(.nui-variant-left, .nui-variant-right) > :first-child {
+	width: clamp(8rem, 25%, 12rem);
+}
+.nui-blocks-media:is(.nui-variant-left, .nui-variant-right) > :first-child img {
+	width: 100%;
+	height: auto;
+	border-radius: var(--border-radius1);
+	display: block;
+}
+.nui-blocks-media:is(.nui-variant-left, .nui-variant-right) figcaption {
+	background: transparent;
+	padding: 0;
+	margin-top: 0;
+	color: var(--text-color);
+	font-size: var(--font-size-base);
+	line-height: 1.6;
+}
+@media (max-width: 40rem) {
+	.nui-blocks-media:is(.nui-variant-left, .nui-variant-right) > :first-child {
+		float: none;
+		width: 100%;
+		margin: 0 0 var(--nui-space);
+	}
+}
+
+/* Bleed variant: expands flush to the edge of the container, cancelling side padding */
+.nui-variant-bleed {
+	margin-inline: calc(-1 * var(--nui-space));
+	width: calc(100% + (2 * var(--nui-space)));
+	max-width: none;
+	border-radius: 0 !important;
+	box-sizing: border-box;
+}
+.nui-blocks-media.nui-variant-bleed > :first-child img,
+.nui-blocks-media.nui-variant-bleed img {
+	border-radius: 0;
+	width: 100%;
+}
+.nui-blocks-media.nui-variant-bleed figcaption {
+	padding-inline: var(--nui-space);
+}
+.nui-blocks-section.nui-variant-bleed {
+	padding-inline: var(--nui-space);
 }
 .nui-md-frontmatter-field {
 	display: grid;

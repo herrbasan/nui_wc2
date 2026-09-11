@@ -6305,6 +6305,438 @@ function renderFrontmatter(data, options) {
 	return card;
 }
 
+// ---------------------------------------------------------------------------
+// MD-Blocks structure  (format spec: github.com/herrbasan/md-blocks)
+//
+// A document is a sequence of sections separated by root-level thematic breaks.
+// Structure rides in HTML comments and the content stays plain CommonMark, so a
+// document with no directives renders exactly as it always did. A section break
+// is not drawn: it is internal structure, not content. Only the RENDERING half of
+// the spec lives here — the editor contract (§6.1 chunking, §6.2 kind stamping,
+// §7 validation, §8 round-trip) is a separate concern and is not implemented.
+//
+// This runs on the SOURCE, before markdown conversion, because directives are
+// recognised from the Markdown block structure and never by text replacement.
+// Fenced code is tracked so a directive shown as an example stays literal.
+
+const MB_DIRECTIVE_RE = /^<!--\s*mb:(\/?)([a-z]+)((?:\s[^>]*?)?)\s*-->[ \t]*$/;
+const MB_ATTR_RE = /([a-z][a-z0-9_-]*)=("[^"]*"|\[[^\]]*\]|\{[^}]*\}|[^\s]+)/g;
+const MB_STRUCTURAL = new Set(['section', 'block', 'columns', 'col', 'var']);
+const MB_IMAGE_EXT_RE = /\.(png|jpe?g|gif|webp|avif|svg|bmp)$/i;
+const MB_VIDEO_EXT_RE = /\.(mp4|webm|mov|m4v|ogv)$/i;
+const MB_AUDIO_EXT_RE = /\.(mp3|wav|ogg|oga|m4a|flac)$/i;
+const MB_EXT_RE = /\.(png|jpe?g|gif|webp|avif|svg|bmp|mp4|webm|mov|m4v|ogv|mp3|wav|ogg|oga|m4a|flac|pdf|zip)$/i;
+
+// Identifier-safe preset/kind name — presets are identifiers in the format; this
+// keeps a malformed one from escaping into a class attribute.
+function mbIdent(value) {
+	return String(value == null ? '' : value).toLowerCase().replace(/[^a-z0-9_-]/g, '');
+}
+
+function mbKindFromDest(dest) {
+	if (MB_VIDEO_EXT_RE.test(dest)) return 'video';
+	if (MB_AUDIO_EXT_RE.test(dest)) return 'audio';
+	if (MB_IMAGE_EXT_RE.test(dest)) return 'image';
+	return 'file';
+}
+
+// `key=value`, one form only, on the opening line. A value starting with ", [ or {
+// is strict JSON; malformed JSON stays as authored text rather than being
+// reinterpreted as a string (the validator reports it).
+function mbParseAttrs(text) {
+	const attrs = {};
+	MB_ATTR_RE.lastIndex = 0;
+	let m;
+	while ((m = MB_ATTR_RE.exec(text || '')) !== null) {
+		let value = m[2];
+		const c = value[0];
+		if (c === '"' || c === '[' || c === '{') {
+			try { value = JSON.parse(value); } catch { /* keep authored text */ }
+		}
+		attrs[m[1]] = value;
+	}
+	return attrs;
+}
+
+function mbFenceAt(line) {
+	const m = String(line).match(/^[ \t]*(`{3,}|~{3,})(.*)$/);
+	if (!m) return null;
+	if (m[1][0] === '`' && m[2].includes('`')) return null;
+	return { char: m[1][0], len: m[1].length, info: m[2].trim() };
+}
+
+function mbIsThematicBreak(line) {
+	return /^[ \t]*(-{3,}|\*{3,}|_{3,})[ \t]*$/.test(line);
+}
+
+// Source -> tree. Containers hold `nodes` (rendered children) and `buf` (markdown
+// accumulated since the last structural marker). A structural directive flushes
+// the run — the §6.1 chunking rule, so two parsers agree on boundaries.
+function parseBlocks(src) {
+	const lines = String(src).replace(/\r\n/g, '\n').split('\n');
+	const doc = { sections: [] };
+
+	let section = { attrs: {}, vars: [], nodes: [], buf: [] };
+	doc.sections.push(section);
+	let block = null, columns = null, col = null;
+	let fence = null, varFence = null, expectVar = null;
+	let prevBlank = true;
+
+	// Innermost open container wins. A block is always the innermost when open — it
+	// can sit at section level or inside a column — so it must be tested first, or a
+	// block opened inside a column would have its content land in the column instead.
+	const container = () => block || col || section;
+	const flush = (c) => {
+		if (!c || !c.buf.length) return;
+		if (c.buf.join('\n').trim()) c.nodes.push({ type: 'md', lines: c.buf.slice() });
+		c.buf.length = 0;
+	};
+	const push = (node) => { container().nodes.push(node); };
+	const closeCol = () => {
+		if (!col) return;
+		flush(col);
+		if (columns) columns.cols.push(col);
+		col = null;
+	};
+
+	for (const line of lines) {
+		// A var's fenced payload is one lexical unit with its marker.
+		if (varFence) {
+			const f = mbFenceAt(line);
+			if (f && f.char === varFence.char && f.len >= varFence.len) {
+				const raw = varFence.body.join('\n');
+				let value = raw;
+				if (varFence.info === 'json') {
+					try { value = JSON.parse(raw || 'null'); } catch { value = raw; }
+				}
+				varFence.node.value = value;
+				varFence.node.fenced = varFence.info;
+				varFence = null;
+			} else {
+				varFence.body.push(line);
+			}
+			continue;
+		}
+
+		if (fence) {
+			container().buf.push(line);
+			const f = mbFenceAt(line);
+			if (f && f.char === fence.char && f.len >= fence.len) fence = null;
+			prevBlank = false;
+			continue;
+		}
+
+		const dm = line.match(MB_DIRECTIVE_RE);
+		if (dm && MB_STRUCTURAL.has(dm[2])) {
+			const attrs = mbParseAttrs(dm[3]);
+			const closing = dm[1] === '/';
+			if (dm[2] === 'section') {
+				// Annotates the section it appears in. First one wins.
+				if (!Object.keys(section.attrs).length) section.attrs = attrs;
+			} else if (dm[2] === 'var') {
+				flush(section);
+				const node = { type: 'var', name: attrs.name, value: attrs.value };
+				section.vars.push(node);
+				// Also a node in the flow, so a DISPLAY renderer can show it at the position
+				// it was authored. A collection renderer reads `section.vars` and ignores
+				// the node; the node is the reference, so a later fence payload lands on it.
+				section.nodes.push(node);
+				if (attrs.name && attrs.value === undefined) expectVar = node;
+			} else if (dm[2] === 'block') {
+				if (closing) {
+					if (block) { const b = block; block = null; flush(b); push(b); }
+				} else {
+					if (block) { const b = block; block = null; flush(b); push(b); }
+					flush(container());
+					block = { type: 'block', attrs, nodes: [], buf: [] };
+				}
+			} else if (dm[2] === 'col') {
+				if (columns) {
+					closeCol();
+					col = { type: 'col', attrs, nodes: [], buf: [] };
+				}
+			} else if (dm[2] === 'columns') {
+				if (closing) {
+					closeCol();
+					if (columns) { const c = columns; columns = null; flush(c); push(c); }
+				} else {
+					if (columns) { closeCol(); const c = columns; columns = null; flush(c); push(c); }
+					flush(container());
+					columns = { type: 'columns', attrs, cols: [], nodes: [], buf: [] };
+				}
+			}
+			prevBlank = true;   // a directive is not a paragraph line
+			continue;
+		}
+
+		// A valueless var waits only for its payload fence; blank lines are legal between.
+		if (expectVar) {
+			if (line.trim() === '') continue;
+			const vf = mbFenceAt(line);
+			if (vf && (vf.info === 'json' || vf.info === 'text')) {
+				varFence = { char: vf.char, len: vf.len, info: vf.info, body: [], node: expectVar };
+				expectVar = null;
+				continue;
+			}
+			expectVar = null;
+		}
+
+		const opened = mbFenceAt(line);
+		if (opened) {
+			fence = { char: opened.char, len: opened.len };
+			container().buf.push(line);
+			prevBlank = false;
+			continue;
+		}
+
+		// A root-level thematic break starts the next section. It counts only when a
+		// blank line precedes it — otherwise CommonMark reads it as a setext H2 and it
+		// is content. A section break is structure and is never drawn.
+		if (!block && !columns && prevBlank && mbIsThematicBreak(line)) {
+			flush(section);
+			section = { attrs: {}, vars: [], nodes: [], buf: [] };
+			doc.sections.push(section);
+			prevBlank = true;
+			continue;
+		}
+
+		container().buf.push(line);
+		prevBlank = line.trim() === '';
+	}
+
+	// Unterminated structure at EOF: keep every node rather than dropping content.
+	closeCol();
+	if (columns) { const c = columns; columns = null; flush(c); push(c); }
+	if (block) { const b = block; block = null; flush(b); push(b); }
+	doc.sections.forEach((s) => flush(s));
+	return doc;
+}
+
+// Media is recognised only when the FIRST node of a block is the media itself;
+// everything after it is the caption. `kind` is inferred when hand-authored and
+// authoritative when stamped by an editor (§6.2).
+function mbDetectMedia(block) {
+	const nodes = block.nodes;
+	const first = nodes[0];
+	if (!first || first.type !== 'md') return null;
+	const lines = first.lines.slice();
+	let start = 0;
+	while (start < lines.length && !lines[start].trim()) start++;
+	const head = (lines[start] || '').trim();
+
+	const IMG = /^!\[([^\]]*)\]\(([^)\s]+)\)$/;
+	const ITEM = /^[-*+]\s+!\[([^\]]*)\]\(([^)\s]+)\)$/;
+	const LINKED = /^\[!\[([^\]]*)\]\(([^)\s]+)\)\]\(([^)\s]+)\)$/;
+	const LINK = /^\[([^\]]+)\]\(([^)\s]+)\)$/;
+
+	let kind = null, consumed = 0, isList = false;
+	if (LINKED.test(head)) {
+		kind = mbKindFromDest(head.match(LINKED)[3]);
+		consumed = start + 1;
+	} else if (IMG.test(head)) {
+		kind = 'image';
+		consumed = start + 1;
+	} else if (ITEM.test(head)) {
+		let j = start;
+		while (j < lines.length && (!lines[j].trim() || ITEM.test(lines[j].trim()))) j++;
+		if (j > start) { kind = 'image'; consumed = j; isList = true; }
+	} else if (LINK.test(head) && MB_EXT_RE.test(head.match(LINK)[2])) {
+		kind = mbKindFromDest(head.match(LINK)[2]);
+		consumed = start + 1;
+	}
+	if (!kind) return null;
+
+	// A stamped kind is authoritative — never silently reclassified.
+	if (block.attrs.kind) kind = mbIdent(block.attrs.kind);
+
+	const rest = lines.slice(consumed);
+	const captions = [];
+	if (rest.join('\n').trim()) captions.push({ type: 'md', lines: rest });
+	for (let i = 1; i < nodes.length; i++) captions.push(nodes[i]);
+
+	return {
+		kind,
+		isList,
+		mediaHtml: markdownCore(lines.slice(start, consumed).join('\n')),
+		captionHtml: mbRenderNodes(captions),
+	};
+}
+
+function mbRenderNode(node) {
+	if (!node) return '';
+	if (node.type === 'md') return markdownCore(node.lines.join('\n'));
+	if (node.type === 'block') return mbRenderBlock(node);
+	if (node.type === 'columns') return mbRenderColumns(node);
+	if (node.type === 'var') return mbRenderVar(node);
+	return '';
+}
+
+// A var is data, never prose (spec §4.4) — but nui-markdown is a general DISPLAY
+// renderer, so it shows what is there. Dropping it would make this renderer lossier
+// than a generic preview, which cannot see the directive at all and quietly renders
+// the fenced payload as an ordinary code block. Showing it is parity; the name is
+// the one thing the generic renderer lost, so the name is the addition.
+//
+// A fenced payload goes through `nui-code`, so it is highlighted and copyable. A
+// `value=` scalar stays inline — a copy button beside `12` is noise, not affordance.
+function mbRenderVar(node) {
+	if (!node || !node.name) return '';
+	let body = '';
+	if (node.fenced === 'json' || node.fenced === 'text') {
+		const lang = node.fenced === 'json' ? 'json' : 'text';
+		const text = typeof node.value === 'string' ? node.value : JSON.stringify(node.value, null, 2);
+		body = `<nui-code><pre><code data-lang="${lang}">${fmEscape(text)}</code></pre></nui-code>`;
+	} else if (node.value !== undefined && node.value !== null) {
+		body = `<span class="nui-blocks-var-value">${fmEscape(String(node.value))}</span>`;
+	}
+	return `<dl class="nui-blocks-var" data-var="${fmEscape(node.name)}"><dt>${fmEscape(node.name)}</dt><dd>${body}</dd></dl>`;
+}
+
+function mbRenderNodes(nodes) {
+	return (nodes || []).map(mbRenderNode).filter(Boolean).join('\n');
+}
+
+// Parse colon-delimited preset token: `family[:modifier[:variant]]`.
+function mbParsePreset(value) {
+	if (!value) return null;
+	const parts = String(value).trim().toLowerCase().split(':').map(mbIdent).filter(Boolean);
+	if (!parts.length) return null;
+	return {
+		family: parts[0],
+		modifier: parts[1] || null,
+		variant: parts[2] || null,
+		parts
+	};
+}
+
+// `id` becomes an anchor target, `preset` produces semantic classes. `label` is editor-only
+// and is never rendered.
+function mbOpenTag(tag, base, attrs, extra, extraAttrs) {
+	const cls = [base];
+	if (extra) cls.push(extra);
+	const p = mbParsePreset(attrs && attrs.preset);
+	if (p) {
+		cls.push('nui-preset-' + p.family);
+		if (p.modifier) cls.push('nui-variant-' + p.modifier);
+		if (p.variant) {
+			cls.push('nui-variant-' + p.variant);
+			if (p.variant === 'small' || p.variant === 'large') cls.push('nui-size-' + p.variant);
+		}
+	}
+	const id = attrs && attrs.id ? ` id="${fmEscape(attrs.id)}"` : '';
+	const x = extraAttrs ? ` ${extraAttrs}` : '';
+	return `<${tag} class="${cls.join(' ')}"${id}${x}`;
+}
+
+// A media destination is a relative path or an http(s) URL. Everything else is
+// refused per the spec's trust boundary (§8): executable schemes, protocol-relative
+// URLs, drive paths. Document input is a boundary, so a refusal is reported rather
+// than silently rendered — and the asset simply does not appear.
+function mbSafeDest(dest) {
+	const d = String(dest == null ? '' : dest).trim();
+	if (!d) return null;
+	if (/^https?:\/\//i.test(d)) return d;
+	if (/^[a-z][a-z0-9+.-]*:/i.test(d)) {
+		console.warn(`[nui-markdown] refused media destination (scheme not allowed): ${d}`);
+		return null;
+	}
+	if (d.startsWith('//') || /^[a-z]:[\\/]/i.test(d)) {
+		console.warn(`[nui-markdown] refused media destination (absolute path): ${d}`);
+		return null;
+	}
+	return d;
+}
+
+function mbRenderBlock(block) {
+	const media = mbDetectMedia(block);
+	const p = mbParsePreset(block.attrs && block.attrs.preset);
+
+	// `icon=` carries an asset reference in the directive rather than in the body, so
+	// generic previews show clean prose with no stray image line. The preset decides
+	// how the icon is presented; the attribute is only meaningful alongside it.
+	const iconDest = p && p.family === 'image' && p.modifier === 'icon'
+		? mbSafeDest(block.attrs && block.attrs.icon)
+		: null;
+
+	if (media) {
+		const extra = ['nui-blocks-media', `nui-blocks-${media.kind}`];
+		if (media.isList || (p && p.family === 'gallery')) extra.push('nui-blocks-gallery');
+		const open = mbOpenTag('figure', 'nui-blocks-block', block.attrs, extra.join(' '));
+		const caption = media.captionHtml ? `<figcaption>${media.captionHtml}</figcaption>` : '';
+		return `${open}>${media.mediaHtml}${caption}</figure>`;
+	}
+
+	if (iconDest) {
+		const open = mbOpenTag('figure', 'nui-blocks-block', block.attrs, 'nui-blocks-media nui-blocks-image');
+		const alt = fmEscape(block.attrs.alt || '');
+		return `${open}><img src="${fmEscape(iconDest)}" alt="${alt}" loading="lazy"><figcaption>${mbRenderNodes(block.nodes)}</figcaption></figure>`;
+	}
+
+	let tag = 'div';
+	let extraAttrs = '';
+	if (p) {
+		if (p.family === 'card') {
+			if (p.modifier === 'note' || p.modifier === 'warning') {
+				tag = 'aside';
+				extraAttrs = 'role="note"';
+			} else {
+				tag = 'article';
+			}
+		} else if (p.family === 'note' || p.family === 'warning') {
+			tag = 'aside';
+			extraAttrs = 'role="note"';
+		} else if (p.family === 'link' || p.family === 'cta') {
+			tag = 'nav';
+		}
+	}
+
+	let content = mbRenderNodes(block.nodes);
+	if (p && (p.modifier === 'fit' || p.variant === 'fit')) {
+		content = content.replace(/(<table[^>]*>\s*<thead>\s*<tr>)([\s\S]*?)(<\/tr>\s*<\/thead>)/i, (match, openTr, ths, closeTr) => {
+			const newThs = ths.replace(/<th>([^<]+)<\/th>/g, (m, text) => {
+				const cleanText = text.trim();
+				return `<th class="nui-table-th-fit"><div class="nui-table-th-clip" tabindex="0">${cleanText}</div><nui-tooltip position="top">${cleanText}</nui-tooltip></th>`;
+			});
+			return `${openTr}${newThs}${closeTr}`;
+		});
+	}
+
+	const open = mbOpenTag(tag, 'nui-blocks-block', block.attrs, null, extraAttrs);
+	return `${open}>${content}</${tag}>`;
+}
+
+function mbRenderColumns(columns) {
+	const count = columns.cols.length;
+	const weights = Array.isArray(columns.attrs.weights) ? columns.attrs.weights : null;
+	const valid = weights && weights.length === count && weights.every((w) => typeof w === 'number' && w > 0);
+	const style = valid ? ` style="grid-template-columns:${weights.map((w) => w + 'fr').join(' ')}"` : '';
+	const open = mbOpenTag('div', 'nui-blocks-columns', columns.attrs);
+	const cells = columns.cols.map((c) => {
+		const cellOpen = mbOpenTag('div', 'nui-blocks-col', c.attrs);
+		return `${cellOpen}>${mbRenderNodes(c.nodes)}</div>`;
+	}).join('\n');
+	const lead = mbRenderNodes(columns.nodes);
+	return `${open} data-cols="${count}"${style}>${lead ? lead + '\n' : ''}${cells}</div>`;
+}
+
+function renderBlocks(doc) {
+	// A document with no structure renders exactly as plain Markdown — no wrapper,
+	// unchanged from the previous behaviour. Structure appears only when the source
+	// asks for it. The section's markdown was already flushed into its nodes, so read
+	// those rather than the emptied buffer.
+	const structured = doc.sections.length > 1 || doc.sections.some((s) =>
+		Object.keys(s.attrs).length || s.vars.length || s.nodes.some((n) => n.type !== 'md'));
+	if (!structured) {
+		const only = doc.sections[0].nodes;
+		return markdownCore(only.map((n) => n.lines.join('\n')).join('\n\n'));
+	}
+
+	return doc.sections.map((s) => {
+		const open = mbOpenTag('section', 'nui-blocks-section', s.attrs);
+		return `${open}>${mbRenderNodes(s.nodes)}</section>`;
+	}).join('\n');
+}
+
 function markdownToHtml(md, options) {
 	options = options || {};
 	if (typeof md !== 'string' || !md.trim()) return '';
@@ -6324,7 +6756,14 @@ function markdownToHtml(md, options) {
 			md = fm.content;
 		}
 	}
-	
+
+	return fmHtml + renderBlocks(parseBlocks(md));
+}
+
+// Markdown -> HTML for a plain CommonMark leaf. Structure (MD-Blocks sections,
+// blocks, columns) is handled above this; by the time text reaches here it is
+// content only.
+function markdownCore(md) {
 	let html = md.trim().replace(/\r\n/g, '\n');
 	const codeBlocks = [];
 	html = html.replace(/^[ \t]*```(\w+)?\n([\s\S]*?)\n[ \t]*```/gm, (match, lang, code) => {
@@ -6431,7 +6870,7 @@ function markdownToHtml(md, options) {
 	}, html);
 	html = inlineCode.reduce((result, { token, code }) => result.replace(token, `<code>${code}</code>`), html);
 
-	return fmHtml + html;
+	return html;
 }
 
 // App-level markdown image policy (issue #32, LLM-Gateway-Chat): fn(url) →
@@ -6511,6 +6950,28 @@ class NuiMarkdown extends HTMLElement {
 		this._metadata = fm ? fm.data : null;
 		this.innerHTML = markdownToHtml(rawText, { frontmatter: mode });
 		this._processed = true; // Mark as processed so re-attach is free
+
+		if (!this._lightboxBound) {
+			this._lightboxBound = true;
+			this.addEventListener('click', (e) => {
+				const img = e.target.closest('img');
+				if (!img) return;
+				const media = img.closest('.nui-blocks-media, .nui-blocks-gallery');
+				if (!media) return;
+				// A decorative icon badge is not a gallery item — no lightbox for it.
+				if (media.classList.contains('nui-variant-icon')) return;
+				if (nui && nui.components && nui.components.lightbox) {
+					const imgs = Array.from(media.querySelectorAll('img'));
+					const items = imgs.map((i) => ({
+						src: i.getAttribute('src'),
+						alt: i.getAttribute('alt') || '',
+						title: i.getAttribute('alt') || ''
+					}));
+					const idx = imgs.indexOf(img);
+					nui.components.lightbox.show(items, idx >= 0 ? idx : 0);
+				}
+			});
+		}
 	}
 
 	_isInsideCodeBlock(text) {

@@ -114,6 +114,50 @@ md.frontmatterMode = 'open'; // overrides frontmatter="collapsed" attribute
 
 **Supported frontmatter YAML subset:** nested maps, sequences of scalars, sequences of maps, quoted scalars, numbers, booleans, `null`/`~`, inline flow sequences (`[a, b]`), and `#` comments. Non-string keys and complex YAML types (anchors, multi-document, block scalars) are not supported.
 
+### MD-Blocks structure
+
+The converter understands **MD-Blocks** ([spec](https://github.com/herrbasan/md-blocks)) out of the box, with nothing to enable. MD-Blocks is a superset of CommonMark: structure rides in HTML comments, the content stays plain Markdown, and a document that uses none of it renders exactly as before.
+
+```md
+---
+title: A document
+---
+
+Plain Markdown is content.
+
+<!-- mb:block preset=note -->
+A note. The label word is authored here, never injected.
+<!-- mb:/block -->
+
+---
+
+<!-- mb:columns weights=[2,1] -->
+<!-- mb:col -->
+Left.
+<!-- mb:col preset=card -->
+Right.
+<!-- mb:/columns -->
+```
+
+| Construct | Renders as |
+|-----------|------------|
+| Root-level `---` | The next **section**. A break is internal structure and is *never drawn* — it does not become an `<hr>`. |
+| `<!-- mb:section id= preset= -->` | Attributes for the section it appears in. |
+| `<!-- mb:block -->` … `<!-- mb:/block -->` | `<div class="nui-blocks-block">`. |
+| `<!-- mb:columns -->` / `mb:col` / `mb:/columns` | `<div class="nui-blocks-columns">` grid. Column count comes from the number of `col` markers; `weights` sets the ratio. Stacks in source order on narrow screens. |
+| `<!-- mb:var name= value= -->` | **Surfaced as data.** Rendered as a `<dl class="nui-blocks-var">` data card at the position it was authored: the name in monospace, a `value=` scalar beside it, and a fenced `json`/`text` payload pretty-printed through `<nui-code>` (highlighted and copyable). A collection renderer reads `section.vars` and emits nothing here. |
+| Media block | A block whose **first node** is an image, image list, or media link becomes `<figure>` + `<figcaption>`. Everything after the media is the caption. `kind` is inferred from the extension. |
+| `icon=` attribute | `preset=image:icon` with `icon=<path>` injects a decorative badge from the directive, so generic previews show clean prose with no stray image line. |
+
+`id` becomes an anchor target, `preset` a `nui-preset-*` class, and `label` is editor-only and never rendered. A preset is `family[:modifier[:variant]]` — the family sets the semantic element and class, each further segment adds a `nui-variant-*` / `nui-size-*` class, and a renderer that does not know a segment drops it rather than failing.
+
+**Scope.** Only the rendering half of the spec is implemented. The editor contract — §6.1 chunking, §6.2 `kind` stamping, §7 validation, §8 round-trip — is deliberately out of scope; a validator or editor owns those.
+
+**Two consequences worth knowing:**
+
+1. A root-level `---` can no longer be a horizontal rule, exactly as the spec's §9 records. A document that has no `mb:` directives may prefer a discriminator (plain docs keep their rules) — not implemented.
+2. A directive inside fenced or inline code stays literal, since directives are recognised from the Markdown block structure and never by text replacement. Inside a `block` or `col`, `---` is an ordinary `<hr>`.
+
 ## Programmatic Usage
 
 ### Dynamic Assignment
