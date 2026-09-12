@@ -3,6 +3,7 @@
 // Generated on 2026-05-20
 
 import { nui } from '../../NUI/nui.js';
+import { initBlocksEditor } from './blocks-editor.js';
 
 // ── Home ──
 
@@ -1156,25 +1157,27 @@ nui.registerPage('components/select', {
 		
 					// loadOptions handles showLoading/hideLoading automatically
 					const { data, error } = await asyncSelect.loadOptions(async () => {
-						// Simulate 1.5s API delay
+						// Simulate 1.5s API delay, then map the API's own shape to the
+						// { value, label } contract — loadOptions hands this array straight
+						// to setItems(), which rejects items without a `value`.
 						await new Promise(resolve => setTimeout(resolve, 1500));
-						return [
+						const rows = [
 							{ id: 'model-a', name: 'Model Alpha' },
 							{ id: 'model-b', name: 'Model Beta' },
 							{ id: 'model-g', name: 'Model Gamma' },
 							{ id: 'model-d', name: 'Model Delta' }
 						];
+						return rows.map(r => ({ value: r.id, label: r.name }));
 					});
 		
 					if (error) {
 						alert('Failed to load: ' + error.message);
-					} else {
-						// Populate with data (loadOptions already enabled and cleared loading)
-						asyncSelect.setItems([
-							{ value: '', label: 'Select a model...' },
-							...data.map(m => ({ value: m.id, label: m.name }))
-						]);
 					}
+					// loadOptions already replaced the options with the returned array, and the
+					// prompt comes from the select's own `placeholder` attribute — so there is no
+					// prompt row to inject here. Injecting { value: '', label: 'Select a model...' }
+					// put the prompt text in the list as an ordinary selectable row, where it is
+					// indistinguishable from a real none-choice.
 					updateAsyncDisplay();
 				});
 			}
@@ -3274,4 +3277,12 @@ nui.registerPage('experiments/html-standards', {
 		                            draw();
 	}
 });
+
+nui.registerPage('experiments/blocks-editor', {
+	html: 'experiments/blocks-editor.html',
+	init(element, params, nui) {
+		initBlocksEditor(element, params, nui);
+	}
+});
+
 

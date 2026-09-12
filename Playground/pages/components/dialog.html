@@ -151,7 +151,7 @@ main.innerHTML = `
 			<nui-input-group>
 				<label>Role</label>
 				<nui-select>
-					<select>
+					<select required>
 						<option value="" disabled selected>Select a role...</option>
 						<option value="admin">Administrator</option>
 						<option value="editor">Editor</option>
@@ -507,7 +507,6 @@ if (dialog.isOpen()) { ... }
 			<label>Default Model</label>
 			<nui-select id="page-dialog-select" searchable>
 				<select>
-					<option value="" disabled selected>Select a model...</option>
 					<option value="gpt-4">GPT-4</option>
 					<option value="gpt-3.5">GPT-3.5</option>
 					<option value="claude">Claude</option>

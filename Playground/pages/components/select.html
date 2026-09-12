@@ -32,7 +32,7 @@
 
 <section>
 	<h2>Declarative Usage (Default)</h2>
-	<p>A simple dropdown for selecting a single option. The prompt shown when nothing is selected comes from the <code>placeholder</code> attribute or a disabled blank option. You can toggle its state declaratively using <code>data-action="select-open"</code> or <code>select-close</code>.</p>
+	<p>A simple dropdown for selecting a single option. With no blank option the browser selects the first one, so the select always has a value — that is the default. To offer "nothing chosen" you add a blank option, and which kind you add decides whether it can be returned to: an <strong>enabled</strong> blank (<code>&lt;option value=""&gt;— None —&lt;/option&gt;</code>) is a real, re-selectable choice — the way back; a <strong>disabled</strong> blank is a one-way prompt that is correct only on a <code>required</code> field. The <em>None-State Model</em> section of the guide above has the full rule. You can toggle its state declaratively using <code>data-action="select-open"</code> or <code>select-close</code>.</p>
 
 	<h3>Try It</h3>
 	<div class="demo-area">
@@ -43,7 +43,6 @@
 			<label>Choose a Fruit</label>
 			<nui-select id="basic-select">
 				<select name="fruit">
-					<option value="" disabled selected>Select a fruit...</option>
 					<option value="apple">Apple</option>
 					<option value="banana">Banana</option>
 					<option value="cherry">Cherry</option>
@@ -62,13 +61,63 @@
 	<label>Choose a Fruit</label>
 	<nui-select id="basic-select">
 		<select name="fruit">
-			<option value="" disabled selected>Select a fruit...</option>
 			<option value="apple">Apple</option>
 			<option value="banana">Banana</option>
 			<option value="cherry">Cherry</option>
 		</select>
 	</nui-select>
 </nui-input-group>
+		</script>
+	</nui-code>
+</section>
+
+<section>
+	<h2>Compact Row (2rem Controls)</h2>
+	<p>The compact size is one height shared by every control. Put <code>size="small"</code> on a
+		<code>&lt;nui-form-row&gt;</code> and its children — selects, inputs, tag inputs and buttons — all
+		resolve to the same <code>2rem</code>, so they sit on one line. The row is where this has to be
+		declared: <code>nui-button</code> has no size vocabulary (2rem <em>is</em> its base height), so a
+		per-control <code>size="small"</code> could never bring an input, a select and a button into
+		agreement. Standalone, <code>size="small"</code> works on <code>nui-select</code> and
+		<code>nui-input</code> directly.</p>
+
+	<h3>Try It</h3>
+	<div class="demo-area">
+		<nui-form-row size="small">
+			<nui-select searchable aria-label="Filter by language">
+				<select multiple>
+					<option value="js" selected>JavaScript</option>
+					<option value="ts" selected>TypeScript</option>
+					<option value="py">Python</option>
+					<option value="go">Go</option>
+					<option value="rust">Rust</option>
+				</select>
+			</nui-select>
+			<nui-input>
+				<input type="text" placeholder="Filter...">
+			</nui-input>
+			<nui-button variant="primary">
+				<button type="button">Apply</button>
+			</nui-button>
+		</nui-form-row>
+	</div>
+
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-form-row size="small">
+	<nui-select searchable>
+		<select multiple>
+			<option value="js" selected>JavaScript</option>
+			<option value="ts" selected>TypeScript</option>
+		</select>
+	</nui-select>
+	<nui-input><input type="text" placeholder="Filter..."></nui-input>
+	<nui-button variant="primary"><button type="button">Apply</button></nui-button>
+</nui-form-row>
+
+<!-- Standalone compact controls -->
+<nui-select size="small">…</nui-select>
+<nui-input size="small"><input type="text"></nui-input>
 		</script>
 	</nui-code>
 </section>
@@ -83,7 +132,6 @@
 			<label>Country</label>
 			<nui-select searchable>
 				<select name="country">
-					<option value="" disabled selected>Select a country...</option>
 					<option value="no">Norway</option>
 					<option value="se">Sweden</option>
 					<option value="dk">Denmark</option>
@@ -103,7 +151,6 @@
 		<script type="example" data-lang="html">
 <nui-select searchable>
 	<select name="country">
-		<option value="" disabled selected>Select a country...</option>
 		<option value="no">Norway</option>
 		<option value="se">Sweden</option>
 		<option value="dk">Denmark</option>
@@ -208,7 +255,6 @@
 			<label>Car Brand & Model</label>
 			<nui-select searchable>
 				<select name="vehicle">
-					<option value="" disabled selected>Select a car...</option>
 					<optgroup label="German">
 						<option value="audi-a4">Audi A4</option>
 						<option value="bmw-3">BMW 3 Series</option>
@@ -227,7 +273,6 @@
 		<script type="example" data-lang="html">
 <nui-select searchable>
 	<select name="vehicle">
-		<option value="" disabled selected>Select a car...</option>
 		<optgroup label="German">
 			<option value="audi-a4">Audi A4</option>
 			<option value="bmw-3">BMW 3 Series</option>
@@ -251,7 +296,7 @@
 			<label>API Demo Select</label>
 			<nui-select id="api-demo-select" searchable>
 				<select name="api-demo">
-					<option value="" disabled selected>Select an item...</option>
+					<option value="">— None —</option>
 					<option value="opt1">Option 1</option>
 					<option value="opt2">Option 2</option>
 					<option value="opt3">Option 3</option>
@@ -335,9 +380,8 @@ select.syncOptions();  // Use after modifying native <select> options
 	<div class="demo-chrome">
 		<nui-input-group>
 			<label>Select with Async Data</label>
-			<nui-select id="async-demo-select" searchable>
+			<nui-select id="async-demo-select" searchable placeholder="Select a model...">
 				<select name="async-demo">
-					<option value="" disabled selected>Select an item...</option>
 				</select>
 			</nui-select>
 		</nui-input-group>
@@ -364,17 +408,14 @@ select.addEventListener('nui-change', (e) => {
 });
 
 // Simple one-liner using loadOptions():
-// The async function handles loading state automatically
+// Shows "Loading..." and disables while pending, then enables and fires
+// nui-options-loaded (or nui-options-error). The returned array REPLACES the options.
+// The prompt is the `placeholder` attribute — NOT an option — so nothing is injected
+// into the list. A synthetic { value: '', label: 'Select...' } item would render as an
+// ordinary selectable row, indistinguishable from a real none-choice.
 const { data, error } = await select.loadOptions(async () => {
-	// Shows "Loading..." and disables while pending
-	// Reverts to original state on success or error
 	return await fetchModelsFromAPI();
 });
-
-if (data) {
-	// Options are already populated and select is enabled
-	select.setItems([{ value: '', label: 'Select...' }, ...data]);
-}
 
 // Manual approach (for more control):
 select.showLoading(); // Shows "Loading..." and disables
@@ -442,7 +483,6 @@ console.log('Is disabled:', select.isDisabled());
 			<label>Event Demo</label>
 			<nui-select id="event-demo" searchable>
 				<select name="event-test">
-					<option value="" disabled selected>Choose something...</option>
 					<option value="a">Choice A</option>
 					<option value="b">Choice B</option>
 					<option value="c">Choice C</option>
@@ -552,7 +592,7 @@ select.addEventListener('nui-items-replace', (e) => {
 
 <section>
 	<h2>Validation (Required)</h2>
-	<p>Use the <code>required</code> attribute on the native select for form validation.</p>
+	<p>Use the <code>required</code> attribute on the native select for form validation. This is the one place the one-way prompt idiom is correct: the field <em>must</em> be filled, so "nothing chosen" is not a valid answer and there is deliberately no way back to the prompt. Error styling is never raised by a state sync — it appears on <strong>blur</strong> (the user engaged the field and left it), on <strong>form submit</strong> via native constraint validation, or when <code>validate()</code> is called, which also dispatches <code>nui-validate</code> with <code>{ valid, message }</code>. An untouched required select never renders as an error.</p>
 
 	<h3>Try It</h3>
 	<div class="demo-area">
@@ -609,7 +649,6 @@ document.getElementById('demo-form').addEventListener('submit', (e) => {
 			<label>Mobile Optimized (Forced)</label>
 			<nui-select mobile-sheet searchable>
 				<select>
-					<option value="" disabled selected>Select an option...</option>
 					<option value="1">Option 1</option>
 					<option value="2">Option 2</option>
 					<option value="3">Option 3</option>
@@ -625,7 +664,6 @@ document.getElementById('demo-form').addEventListener('submit', (e) => {
 <!-- Force bottom sheet on all viewports -->
 <nui-select mobile-sheet searchable>
 	<select>
-		<option value="" disabled selected>Select...</option>
 		<option value="1">Option 1</option>
 	</select>
 </nui-select>
@@ -664,12 +702,12 @@ document.getElementById('demo-form').addEventListener('submit', (e) => {
 			<tr>
 				<td><code>getValue()</code></td>
 				<td><code>string | string[]</code></td>
-				<td>Get current value(s)</td>
+				<td>Get current value(s). Mirrors native <code>select.value</code>, so <code>''</code> means either "nothing chosen" or the enabled blank none-choice — use <code>hasValue()</code> to tell them apart.</td>
 			</tr>
 			<tr>
 				<td><code>setValue(value)</code></td>
 				<td><code>void</code></td>
-				<td>Set value(s) - string for single, array for multi</td>
+				<td>Set value(s) — string for single, array for multi. <code>null</code>/<code>undefined</code>/<code>''</code> behave like <code>clear()</code>. Throws <code>RangeError</code> for an unknown or disabled value.</td>
 			</tr>
 			<tr>
 				<td><code>getSelected()</code></td>
@@ -687,14 +725,19 @@ document.getElementById('demo-form').addEventListener('submit', (e) => {
 				<td>Unselect a value (multi-select only)</td>
 			</tr>
 			<tr>
+				<td><code>hasValue()</code></td>
+				<td><code>boolean</code></td>
+				<td>Whether a real option carries the selection. <code>getValue()</code> returns <code>''</code> for both the disabled prompt and an enabled blank none-choice — this separates them.</td>
+			</tr>
+			<tr>
 				<td><code>clear()</code></td>
 				<td><code>void</code></td>
-				<td>Clear all selections</td>
+				<td>Return to the "nothing chosen" state: the enabled blank none-choice, else the disabled prompt, else the first selectable option. Never leaves <code>selectedIndex</code> at <code>-1</code>. Multi-select empties the selection.</td>
 			</tr>
 			<tr>
 				<td><code>addItem(value, label?, opts?)</code></td>
 				<td><code>boolean</code></td>
-				<td>Add a new option. Returns false if value exists.</td>
+				<td>Add a new option. Returns false if value exists. Throws <code>TypeError</code> when <code>value</code> is missing.</td>
 			</tr>
 			<tr>
 				<td><code>removeItem(value)</code></td>
@@ -704,7 +747,7 @@ document.getElementById('demo-form').addEventListener('submit', (e) => {
 			<tr>
 				<td><code>setItems(items)</code></td>
 				<td><code>void</code></td>
-				<td>Replace all options</td>
+				<td>Replace all options. Items are <code>{ value, label }</code> or a plain string — an object without <code>value</code> throws <code>TypeError</code>.</td>
 			</tr>
 			<tr>
 				<td><code>getItems()</code></td>
@@ -764,7 +807,7 @@ document.getElementById('demo-form').addEventListener('submit', (e) => {
 			<tr>
 				<td><code>validate()</code></td>
 				<td><code>boolean</code></td>
-				<td>Validate the select</td>
+				<td>Run validation, toggle <code>is-invalid</code>, dispatch <code>nui-validate</code>. Also applied automatically on blur and on native form validation.</td>
 			</tr>
 			<tr>
 				<td><code>syncOptions()</code></td>

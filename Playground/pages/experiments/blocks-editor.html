@@ -1,0 +1,127 @@
+<div class="page-blocks-editor">
+	<header class="editor-page-header">
+		<div>
+			<h1>Blocks Editor</h1>
+			<p class="lead">A visual MD-Blocks editor for Webpages, Documents, and Slideshows.</p>
+		</div>
+		<div class="editor-header-controls">
+			<div class="editor-control-group nui-select-group">
+				<label for="editor-target-mode">Target:</label>
+				<nui-select id="editor-target-mode" size="small">
+					<select>
+						<option value="web" selected>Webpage / CMS</option>
+						<option value="document">Document (Print)</option>
+						<option value="slides">Slideshow (Deck)</option>
+					</select>
+				</nui-select>
+			</div>
+
+			<div class="editor-control-group">
+				<nui-button-container variant="segmented" id="editor-view-switcher">
+					<nui-button state="active" data-view="canvas"><button type="button">Editor</button></nui-button>
+					<nui-button data-view="preview"><button type="button">Live Preview</button></nui-button>
+					<nui-button data-view="raw"><button type="button">Raw Markdown</button></nui-button>
+					<nui-button data-view="split"><button type="button">Split View</button></nui-button>
+				</nui-button-container>
+			</div>
+
+			<div class="editor-actions">
+				<nui-button variant="outline" id="btn-load-sample">
+					<button type="button">Load Sample</button>
+				</nui-button>
+				<nui-button variant="primary" id="btn-copy-md">
+					<button type="button">Copy Markdown</button>
+				</nui-button>
+			</div>
+		</div>
+	</header>
+
+	<!-- Main Editor Layout -->
+	<div class="editor-workspace" data-active-view="canvas">
+		<!-- Visual Canvas Pane -->
+		<div class="editor-canvas-pane" id="pane-canvas">
+			<!-- Frontmatter Bar -->
+			<div class="editor-card editor-frontmatter-card">
+				<div class="editor-card-header">
+					<div class="editor-card-title">
+						<nui-icon name="description"></nui-icon>
+						<span>Document Metadata (Frontmatter)</span>
+					</div>
+				<nui-button variant="ghost" id="btn-edit-frontmatter">
+						<button type="button">Edit Meta</button>
+					</nui-button>
+				</div>
+				<div class="editor-frontmatter-summary" id="frontmatter-summary">
+					<span class="meta-item"><strong>Title:</strong> <span data-meta-title>Untitled Document</span></span>
+				</div>
+			</div>
+
+			<!-- Slides / Deck Chrome Panel (Hidden in Webpage mode) -->
+			<div class="editor-card editor-chrome-card" id="editor-chrome-panel" style="display: none;">
+				<div class="editor-card-header">
+					<div class="editor-card-title">
+						<nui-icon name="view_carousel"></nui-icon>
+						<span>Repeating Deck Chrome (<code>repeat=header|footer</code>)</span>
+					</div>
+				</div>
+				<div class="editor-chrome-body">
+					<div class="chrome-slot" data-slot="header">
+						<div class="chrome-slot-label">Header Chrome:</div>
+						<input type="text" class="nui-native-input" id="chrome-header-input" placeholder="e.g. Acme Corp · Quarterly Review">
+					</div>
+					<div class="chrome-slot" data-slot="footer">
+						<div class="chrome-slot-label">Footer Chrome:</div>
+						<input type="text" class="nui-native-input" id="chrome-footer-input" placeholder="e.g. Confidential · 2026">
+					</div>
+				</div>
+			</div>
+
+			<!-- Top Add Section Strip -->
+			<div class="editor-add-strip">
+				<button type="button" class="add-icon-btn" id="btn-add-section-top" title="Add Section at Top">
+					<nui-icon name="add_circle"></nui-icon>
+				</button>
+			</div>
+
+			<!-- Sections Container -->
+			<div class="editor-sections-container" id="editor-sections-container">
+				<!-- Dynamically rendered sections go here -->
+			</div>
+
+			<!-- Bottom Add Section Strip -->
+			<div class="editor-add-strip">
+				<button type="button" class="add-icon-btn" id="btn-add-section-bottom" title="Add Section">
+					<nui-icon name="add_circle"></nui-icon>
+				</button>
+			</div>
+		</div>
+
+		<!-- Live Preview Pane -->
+		<div class="editor-preview-pane" id="pane-preview" style="display: none;">
+			<div class="editor-panel-box live-preview-panel">
+				<div class="panel-header">
+					<h3>Live Output Preview</h3>
+					<span class="preview-badge" id="preview-mode-badge">Webpage View</span>
+				</div>
+				<div class="panel-content demo-chrome">
+					<nui-markdown id="live-markdown-preview" frontmatter="collapsed"></nui-markdown>
+				</div>
+			</div>
+		</div>
+
+		<!-- Raw Markdown Pane -->
+		<div class="editor-raw-pane" id="pane-raw" style="display: none;">
+			<div class="editor-panel-box raw-md-panel">
+				<div class="panel-header">
+					<h3>MD-Blocks Source</h3>
+					<nui-button variant="outline" size="small" id="btn-sync-raw-to-visual">
+						<button type="button">Apply to Visual</button>
+					</nui-button>
+				</div>
+				<div class="panel-content">
+					<textarea id="raw-markdown-editor" class="raw-md-textarea" spellcheck="false"></textarea>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
