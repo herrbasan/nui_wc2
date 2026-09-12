@@ -653,25 +653,38 @@ export interface NuiSelectElement extends HTMLElement {
 	getValue(): string | string[];
 	/** 
 	 * Set value(s) programmatically
-	 * @param value - Single value, array (multi), or null/empty to clear
+	 * @param value - Single value, array (multi), or null/empty to clear (which re-selects the
+	 *   none-choice / prompt / first selectable option — a single select is never left unselected)
+	 * @throws RangeError when no option has that value, or when the option is disabled
 	 */
 	setValue(value: string | string[] | null | undefined): void;
+	/**
+	 * Whether a real option currently carries the selection.
+	 * `getValue()` returns '' both for the disabled prompt and for an enabled blank
+	 * none-choice; this separates them (an enabled blank IS a value).
+	 */
+	hasValue(): boolean;
 	/** Get detailed info about selected options */
 	getSelected(): NuiSelectSelected[];
 	/** Select a specific value (adds to selection in multi-select) */
 	select(value: string): void;
 	/** Unselect a specific value (multi-select only) */
 	unselect(value: string): void;
-	/** Clear all selections */
+	/**
+	 * Return to the "nothing chosen" representation: the enabled blank none-choice, else the
+	 * disabled prompt, else the first selectable option (native form reset). Never leaves
+	 * `selectedIndex` at -1. Multi-select empties the selection.
+	 */
 	clear(): void;
 
 	// Options Management
 	/** 
 	 * Add a new option
-	 * @param value - Option value
+	 * @param value - Option value (required)
 	 * @param label - Display label (defaults to value)
 	 * @param options - Additional options
 	 * @returns true if added, false if value already exists
+	 * @throws TypeError when `value` is missing
 	 */
 	addItem(value: string, label?: string, options?: NuiSelectAddOptions): boolean;
 	/** 

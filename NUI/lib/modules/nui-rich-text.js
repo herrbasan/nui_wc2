@@ -18,8 +18,13 @@ class NuiRichText extends HTMLElement {
     connectedCallback() {
         if (this.hasAttribute('data-initialized')) return;
         this.setAttribute('data-initialized', 'true');
-        this._value = this.innerHTML.trim();
-        this.innerHTML = '';
+        const slotted = this.innerHTML.trim();
+        if (slotted) {
+            this._value = slotted;
+            this.innerHTML = '';
+        } else if (this._value) {
+            this.innerHTML = '';
+        }
 
         this._render();
         this._attachEvents();

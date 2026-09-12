@@ -2408,6 +2408,22 @@ nui-form-row {
 	align-items: stretch;
 }
 
+/* Compact row — one declaration sizes EVERY child: inputs, selects, tag inputs and
+   buttons all resolve this variable. Per-child `size="small"` cannot line a row up on
+   its own, because nui-button has no size vocabulary (2rem is its base height) while
+   inputs and selects default to 2.5rem, so the button is only reachable from here. */
+nui-form-row[size="small"] {
+	--nui-form-row-height: var(--nui-space-double, 2rem);
+}
+
+/* The global bare-input rule below sets min-height: 2.5rem, which would hold a compact
+   row's children at 40px regardless of the variable. Reset it for the row's own inputs
+   (a bare <input> child, and the inner <input> of a nui-input). */
+nui-form-row[size="small"]>input,
+nui-form-row[size="small"]>nui-input input[type] {
+	min-height: 0;
+}
+
 nui-form-row>* {
 	min-height: var(--nui-form-row-height);
 	box-sizing: border-box;
@@ -2445,6 +2461,21 @@ nui-input {
 	filter: drop-shadow(0 0 0.15rem light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.2)));
 	transition: background-color 0.15s, border-color 0.15s, filter 0.3s;
 	border-radius: var(--border-radius1);
+}
+
+/* Compact input — `size="small"` (2rem), the counterpart of nui-select[size="small"]
+   so a compact control trio shares one height. Height comes from the variable rather
+   than a literal: the host, its inner <input> (height: 100%) and nui-form-row's child
+   rules all resolve the same number. Typography matches the compact select. */
+nui-input[size="small"] {
+	--nui-form-row-height: var(--nui-space-double, 2rem);
+	font-size: var(--font-size-small);
+}
+
+/* The global bare-input rule further down pins min-height to 2.5rem, so the inner
+   <input> (height: 100%) could not shrink and overflowed its 2rem host by 4px. */
+nui-input[size="small"] input[type] {
+	min-height: 0;
 }
 
 nui-input:hover:not(:has(input:disabled)) {
@@ -2669,6 +2700,49 @@ nui-select select {
 	overflow: hidden;
 }
 
+/* Compact select — `size="small"` (2rem), for dense toolbars and card headers.
+   The host is a flex container and the control stays block-level (`display: flex`
+   from the base rule) so it fills the host box exactly. An inline-level control
+   sits on the text baseline instead and drifts ~2px out of the host box, which
+   misaligns it against adjacent controls sharing a centred flex row.
+   Height comes from `--nui-form-row-height`, NOT a hard-coded height: the control
+   box AND the popup's `top` offset both derive from that variable, so overriding it
+   here keeps the dropdown attached to the button. A literal height leaves the popup
+   positioned for a 2.5rem control and it floats ~8px below a 2rem one. */
+nui-select[size="small"] {
+	display: inline-flex;
+	width: auto;
+	min-width: unset;
+	--nui-form-row-height: var(--nui-space-double, 2rem);
+	vertical-align: middle;
+	box-sizing: border-box;
+}
+
+nui-select[size="small"] .nui-select-control {
+	padding: 0 var(--nui-space-half);
+	font-size: var(--font-size-small, 0.9rem);
+	line-height: 1.2;
+	border-radius: var(--border-radius1);
+	border: solid var(--border-thickness) var(--border-shade2);
+	filter: none;
+	box-sizing: border-box;
+}
+
+nui-select[size="small"] .nui-select-value {
+	font-size: var(--font-size-small, 0.9rem);
+	line-height: 1.2;
+}
+
+nui-select[size="small"] .nui-select-arrow {
+	width: 1rem;
+	height: 1rem;
+	flex-shrink: 0;
+}
+
+nui-select[size="small"] .nui-select-popup {
+	border-radius: 0 0 var(--border-radius1) var(--border-radius1);
+}
+
 .nui-select-control:hover:not(:disabled) {
 	background-color: light-dark(var(--color-shade2), var(--color-shade4));
 	border: solid var(--border-thickness) light-dark(var(--color-shade5), var(--color-shade5));
@@ -2748,8 +2822,12 @@ nui-select.is-loading .nui-select-value {
 	display: none;
 }
 
+/* `align-items: center` is load-bearing: with the default `stretch`, `height: auto`
+   on the chip stretches it to the full row box, so every tag renders at the control
+   height and a compact select clips it. Centred, the chip is sized deliberately. */
 .nui-select-preview-tags {
 	display: flex;
+	align-items: center;
 	gap: var(--nui-space-quarter);
 	white-space: nowrap;
 	height: 100%;
@@ -2758,13 +2836,27 @@ nui-select.is-loading .nui-select-value {
 	padding-bottom: 0.2rem;
 }
 
+/* Chips take most of the control height — an inset of ~0.75rem in a 2.5rem control,
+   proportionally less in the compact 2rem variant. Deriving the height from the
+   control instead of pinning a pixel value keeps both variants consistent, and the
+   chip only needs horizontal padding because the height is explicit.
+   Flat by design: border + background, no drop-shadow (see the `nui-select .nui-tag`
+   rule below, which also covers the removable chips in the popup). */
 .nui-select-preview-tags .nui-tag {
-	height: auto;
-	font-size: var(--font-size-xsmall);
-	padding: 0.7rem;
+	height: calc(var(--nui-form-row-height) - 0.75rem);
+	box-sizing: border-box;
+	font-size: var(--font-size-small);
+	padding: 0 var(--nui-space-half);
 	background: var(--color-shade2);
+	border: solid var(--border-thickness) var(--border-shade3);
 	border-radius: var(--border-radius1);
 	color: var(--color-text);
+}
+
+/* Flat tags everywhere inside a select — the base .nui-tag carries a drop-shadow that
+   reads as noise at this size. */
+nui-select .nui-tag {
+	filter: none;
 }
 
 .nui-select-preview-fade {
@@ -2804,40 +2896,40 @@ nui-select.is-open .nui-select-arrow {
 	transform: rotate(180deg);
 }
 
-/* Popup */
+/* Popup — TOP LAYER (native Popover API).
+   No z-index and no absolute placement: the top layer paints above all page content, and
+   no ancestor's `overflow: hidden` or transform can clip or displace it — whereas an
+   absolutely positioned popup is clipped by the first clipping ancestor, and `position:
+   fixed` is displaced by the first transformed one. The component sets left/top/width/
+   max-height from the control's viewport rect (see nui-select in nui.js). */
 .nui-select-popup {
-	display: none;
-	position: absolute;
-	z-index: 1000;
-	top: calc(var(--nui-form-row-height) - 2px);
-	left: 0;
-	right: 0;
+	position: fixed;
+	inset: auto;
+	z-index: auto;
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
 	min-width: 10rem;
 	background: light-dark(var(--color-white), var(--color-shade2));
 	border: solid var(--border-thickness) var(--color-shade3);
 	border-radius: 0 0 var(--border-radius2) var(--border-radius2);
 	box-shadow: var(--shadow-large);
-	margin-top: 2px;
 	flex-direction: column;
 	max-height: 400px;
 	overflow: hidden;
 	filter: drop-shadow(0 0 0.5rem light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.4)));
 }
 
-nui-select.is-open {
-	z-index: 1001;
-}
-
-nui-select.is-open .nui-select-popup {
+/* Visibility is gated by the popover state, never by an author rule: the UA stylesheet
+   hides a closed popover, and an author `display: none` would keep it hidden even when
+   open. The `hidden` attribute is no longer used on this element for the same reason. */
+.nui-select-popup:popover-open {
 	display: flex;
 	border: solid var(--border-thickness) light-dark(var(--color-shade5), var(--color-shade4));
 }
 
+/* The flip position is computed in JS; this only changes decoration and reading order. */
 nui-select.is-above .nui-select-popup {
-	top: auto;
-	bottom: 100%;
-	margin-top: 0;
-	margin-bottom: 2px;
 	border-radius: var(--border-radius2) var(--border-radius2) 0 0;
 	flex-direction: column-reverse;
 }
@@ -2890,12 +2982,23 @@ nui-select.is-above .nui-select-search {
 	box-sizing: border-box;
 }
 
+/* The popup is a fixed-max-height flex column, so exactly one child may be flexible:
+   the option list. Left shrinkable, the chrome rows absorb the squeeze instead — a
+   long list crushed the tags row to 27px of box around 54px of content, and
+   `overflow: hidden` sliced every chip in half. */
+.nui-select-popup-tags,
+.nui-select-search {
+	flex: 0 0 auto;
+}
+
 .nui-select-popup-tags {
 	border-bottom: solid var(--border-thickness) var(--color-shade4);
 	background-color: var(--color-shade3);
 	max-height: 160px;
 	height: auto;
-	overflow-y: hidden;
+	/* Scroll rather than clip: a multi-row tag set beyond max-height was silently
+	   sliced off, with no way to reach the hidden tags. */
+	overflow-y: auto;
 	overflow-x: hidden;
 	padding: 0.4rem;
 }
@@ -2903,7 +3006,6 @@ nui-select.is-above .nui-select-search {
 .nui-select-popup-tags nui-tag-input {
 	margin: 0;
 	padding: 0;
-	height: 100%;
 }
 
 /* When reversed, tags should have top border instead of bottom */
@@ -2922,7 +3024,8 @@ nui-select.is-above .nui-select-popup-tags {
 
 /* Options List */
 .nui-select-options {
-	flex: 1;
+	flex: 1 1 auto;
+	min-height: 0;
 	overflow-y: auto;
 }
 

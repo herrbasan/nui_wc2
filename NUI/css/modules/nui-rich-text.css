@@ -74,10 +74,13 @@ nui-rich-text[fill] .nui-rich-text-editor {
     border-radius: var(--border-radius1, 4px) var(--border-radius1, 4px) 0 0;
 }
 
+/* Toolbar controls sit on the NUI standard control height (2rem) — the same height as
+   every nui-button elsewhere. A taller format select or a squeezed icon button makes
+   the row read as two mismatched tracks. */
 .nui-rich-text-toolbar nui-select {
-    --nui-form-row-height: 34px;
-    min-width: 130px;
-    width: 140px;
+    --nui-form-row-height: var(--nui-space-double, 2rem);
+    min-width: 8rem;
+    width: 8.75rem;
     margin: 0;
 }
 
@@ -86,9 +89,9 @@ nui-rich-text[fill] .nui-rich-text-editor {
 }
 
 .nui-rich-text-toolbar nui-button button {
-    min-width: unset;
-    min-height: unset;
-    padding: var(--nui-space-third, 0.3rem) var(--nui-space-third, 0.3rem);
+    min-width: var(--nui-space-double, 2rem);
+    min-height: var(--nui-space-double, 2rem);
+    padding: 0;
     display: flex;
     align-items: center;
     justify-content: center;

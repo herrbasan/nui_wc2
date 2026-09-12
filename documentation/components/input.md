@@ -40,6 +40,7 @@ Wraps `<input>` (of any text-like type) or `<textarea>`.
 | Attribute / Property | Applies To | Description |
 |----------------------|------------|-------------|
 | `clearable` *(Attr)* | `<nui-input>` | Adds an "X" button that appears when the input has content. Clicking it clears the field and focuses the input. |
+| `size` *(Attr)* | `<nui-input>` | `"small"` gives the compact 2rem control — the counterpart of `nui-select[size="small"]` and the base height of `nui-button`, so a compact control row lines up. Omit for the standard 2.5rem form control. |
 | `auto-resize` *(Attr)*| `<nui-textarea>`| Automatically grows the height of the textarea as the user types, up to `max-rows`. |
 | `min-rows` *(Attr)* | `<nui-textarea>` | Minimum number of text lines to display when `auto-resize` is enabled. |
 | `max-rows` *(Attr)* | `<nui-textarea>` | Maximum number of lines before the textarea becomes scrollable (when `auto-resize` is enabled). |

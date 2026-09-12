@@ -270,9 +270,11 @@ If you MUST apply CSS (spacing on your own wrappers, very rare theming), use ONL
 <nui-input placeholder="Name"></nui-input>
 ```
 
-| Attributes | `type`, `clearable`, `auto-resize`, `show-count`, `min-rows`, `max-rows` |
+| Attributes | `type`, `size` (`"small"` = compact 2rem), `clearable`, `auto-resize`, `show-count`, `min-rows`, `max-rows` |
 | Events | `nui-input`, `nui-change`, `nui-clear` (CustomEvent, bubbles) |
 | Methods | `.validate()`, `.clear()`, `.focus()` |
+
+⚠️ **Compact rows:** `<nui-form-row size="small">` puts every child — select, input, tag-input AND button — on 2rem. Declare it on the row, not per control: `nui-button` has no `size` vocabulary (2rem is its base height) while `nui-input`/`nui-select` default to 2.5rem, so per-control `size="small"` can never align a row.
 
 📖 **Full docs:** [`documentation/components/input.md`](documentation/components/input.md)
 
@@ -302,9 +304,15 @@ If you MUST apply CSS (spacing on your own wrappers, very rare theming), use ONL
 </nui-select>
 ```
 
-| Attributes | `searchable`, `mobile-sheet`, `placeholder` |
-| Events | `nui-change`, `nui-select`, `nui-open`, `nui-close`, `nui-clear` |
-| Methods | `.open()`, `.close()`, `.setValue(v)`, `.getValue()`, `.clear()`, `.setItems(arr)`, `.addItem(v,l)`, `.removeItem(v)`, `.enable()`, `.disable()`, `.loadOptions(asyncFn)` |
+| Attributes | `searchable`, `mobile-sheet`, `placeholder`, `size` (`"small"` = compact 2rem toolbar variant, host narrows to content) |
+| Events | `nui-change`, `nui-select`, `nui-open`, `nui-close`, `nui-clear`, `nui-validate` (`{valid, message}`, from `validate()` only) |
+
+ℹ️ **The dropdown is a top-layer popover** (`popover="manual"`, `position: fixed`, viewport-anchored, re-placed on scroll/resize) — so no ancestor's `overflow: hidden` can clip it and no ancestor's `transform` can displace it. Never add `display`/`overflow`/`hidden` rules to `.nui-select-popup`, and delete any consumer workaround that forced `overflow: visible` on a dialog/tabpanel/card to let a dropdown escape. Requires the Popover API (Chrome 114+, Safari 17+, Firefox 125+).
+| Methods | `.open()`, `.close()`, `.setValue(v)`, `.getValue()`, `.hasValue()`, `.clear()`, `.setItems(arr)`, `.addItem(v,l)`, `.removeItem(v)`, `.enable()`, `.disable()`, `.loadOptions(asyncFn)` |
+
+⚠️ **None-state — a single select has no "nothing selected".** `getValue()` returns `''` both for the disabled prompt and for an enabled blank none-choice; `.hasValue()` separates them (an *enabled* blank IS a value). The user's way back to "none" is an **enabled** `<option value="">— None —</option>`; a `disabled` blank is a one-way prompt (native: leave it, never return). `clear()` / `setValue(null)` select the none-choice, else the prompt, else the **first** option — never `selectedIndex = -1` (that state has no UI way back and does not survive a browser reset).
+
+⚠️ **Fail loud, not silent:** `setValue(v)` **throws RangeError** for an unknown or disabled value (it used to silently re-select the first option — a typo persisted the wrong value), and `setItems()` / `addItem()` **throw TypeError** on an item with no `value`. `.loadOptions()` feeds its result straight to `setItems()`, so map your API shape to `{ value, label }` inside the async function — `{ id, name }` objects used to create options whose value was the literal `"undefined"`.
 
 ⚠️ **Populating options: ALWAYS use the programmatic API** — `.setItems()` / `.addItem()`. They are synchronous, dispatch events, and integrate with `.getValue()`/`.setValue()`. Writing `<option>` elements into the inner `<select>` directly is only a tolerated fallback (a MutationObserver rebuilds the dropdown, but no events fire); in older NUI copies it silently does nothing visible. When verifying state, read what the component RENDERS (`.getItems()`, visible rows), not the slotted DOM.
 

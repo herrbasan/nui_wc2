@@ -3130,8 +3130,17 @@ registerComponent('nui-select', (element) => {
 	// 3. Generic fallback
 	// A real option with value="" (NOT disabled) is a legitimate, selectable value.
 	const explicitPlaceholderOpt = select.querySelector('option[value=""][disabled]');
-	const placeholder = element.getAttribute('placeholder') ||
+	let placeholder = element.getAttribute('placeholder') ||
 		explicitPlaceholderOpt?.textContent || 'Select...';
+
+	// A disabled blank option is the ONE-WAY prompt idiom: the user may leave it but can
+	// never return. That is coherent only for a field that must be filled, so flag the
+	// markup when it points the other way. A select that starts in a none-state it
+	// cannot return to is the modelling error this catches — the page that inspired it
+	// was a plain optional picker that opened unselected and stayed unreachable for good.
+	if (config.debug !== false && !isMulti && !select.required && explicitPlaceholderOpt) {
+		console.warn(`[NUI] <nui-select> starts at a one-way prompt ("${explicitPlaceholderOpt.textContent.trim()}") but the inner <select> is not \`required\`, so once an option is picked the prompt is unreachable. Either make it a mandatory choice (add \`required\`, validated by validate()/submit) or give the none-state a real option — <option value="">— None —</option> — which the user can re-select.`);
+	}
 
 	// Extract label from parent nui-input-group or element attributes
 	const label = element.getAttribute('label') || 
@@ -3179,8 +3188,37 @@ registerComponent('nui-select', (element) => {
 	}
 	dom.create('span', { class: 'nui-select-arrow', target: control });
 
-	// Build popup
-	const popup = dom.create('div', { class: 'nui-select-popup', attrs: { hidden: '' }, target: element });
+	// ##### POPUP — TOP LAYER
+	// The dropdown must not be clipped by its ancestors, and "give it a high z-index" cannot
+	// achieve that: `overflow: hidden` on an ancestor clips a descendant regardless of
+	// z-index, because z-index only orders painting. `position: fixed` is not a fix either —
+	// it escapes only while NO ancestor establishes a containing block, and any transform,
+	// filter, backdrop-filter or `contain` does. (NUI's own sidebar carries a transform, and
+	// app shells wrap content in `overflow: hidden`.) The top layer escapes both: a top-layer
+	// element is outside every ancestor's clip and containing block and paints above all page
+	// content, with no z-index bookkeeping. This is structural, not situational — every shell
+	// has a clipping wrapper and consumer cards/dialogs add more, because border-radius forces
+	// overflow clipping.
+	// `popover="manual"` deliberately declines the UA's light dismiss: the component's own
+	// outside-click handling and close-on-pick stay authoritative.
+	const popup = dom.create('div', {
+		class: 'nui-select-popup',
+		attrs: { popover: 'manual' },
+		target: element
+	});
+
+	// Fail loud rather than degrade into a clipped dropdown. Popover API: Chrome/Edge 114+,
+	// Safari 17+, Firefox 125+.
+	if (typeof popup.showPopover !== 'function') {
+		throw new Error('[NUI] <nui-select> requires the Popover API to place its dropdown in the top layer, where no ancestor can clip it. This browser does not implement it.');
+	}
+
+	const showPopup = () => {
+		if (!popup.matches(':popover-open')) popup.showPopover();
+	};
+	const hidePopup = () => {
+		if (popup.matches(':popover-open')) popup.hidePopover();
+	};
 
 	// Tags section for multi-select
 	let tagInput = null;
@@ -3222,18 +3260,21 @@ registerComponent('nui-select', (element) => {
 		if (dims.height != null) element.style.height = typeof dims.height === 'number' ? dims.height + 'px' : dims.height;
 	};
 
-	// Programmatic popup sizing/offset. The popup is positioned relative to its
-	// containing block (the nearest positioned ancestor). By default that is the
-	// <nui-select> itself (position: relative) so left:0/right:0 match the select.
-	// Set left/right (or position the select static) to extend the popup beyond
-	// the select — e.g. to make the dropdown span a full-width container.
+	// Programmatic popup sizing/offset. The popup is viewport-anchored to the control, so
+	// these are recorded rather than written inline: placement is recomputed on open, on
+	// scroll and on resize, and a raw inline value would be stale geometry one move later.
+	// left/right keep their select-relative meaning — `popup-right: 2rem` puts the popup's
+	// right edge 2rem inside the control's right edge.
+	const pinned = { width: null, height: null, minWidth: null, maxHeight: null, left: null, right: null };
+
 	const setPopup = (dims = {}) => {
 		const map = { width: 'width', height: 'height', minWidth: 'minWidth', maxHeight: 'maxHeight', left: 'left', right: 'right' };
 		Object.entries(map).forEach(([key, prop]) => {
 			const v = dims[key];
 			if (v == null) return;
-			popup.style[prop] = typeof v === 'number' ? v + 'px' : v;
+			pinned[prop] = typeof v === 'number' ? v + 'px' : v;
 		});
+		if (isOpen) positionPopup();
 	};
 
 	// Declarative attribute support:
@@ -3253,8 +3294,55 @@ registerComponent('nui-select', (element) => {
 	};
 	Object.entries(popupAttrMap).forEach(([attr, prop]) => {
 		const v = element.getAttribute(attr);
-		if (v) popup.style[prop] = v;
+		if (v) pinned[prop] = v;
 	});
+
+	// ##### POPUP PLACEMENT
+	// Anchor the top-layer popup to the control's viewport rect. The gap matches the
+	// 2px overlap the control's bottom border used to provide.
+	const POPUP_GAP = 2;
+	const positionPopup = () => {
+		if (!isOpen) return;
+		const rect = control.getBoundingClientRect();
+		const leftInset = pinned.left ?? '0px';
+		const rightInset = pinned.right ?? '0px';
+		const spaceBelow = window.innerHeight - rect.bottom - POPUP_GAP;
+		const spaceAbove = rect.top - POPUP_GAP;
+		// Flip above only when there is meaningfully more room there.
+		const goAbove = spaceBelow < 300 && spaceAbove > spaceBelow;
+
+		element.classList.toggle('is-above', goAbove);
+		element.classList.toggle('is-below', !goAbove);
+
+		popup.style.left = `calc(${rect.left}px + ${leftInset})`;
+		popup.style.width = pinned.width ?? `calc(${rect.width}px - ${leftInset} - ${rightInset})`;
+
+		// A top-layer element escapes ancestor clipping but not the viewport, so clamp the
+		// height to the room that actually exists; the option list scrolls inside it.
+		if (pinned.maxHeight == null) {
+			popup.style.maxHeight = `${Math.max(96, Math.min(400, goAbove ? spaceAbove : spaceBelow))}px`;
+		}
+
+		if (goAbove) {
+			popup.style.top = 'auto';
+			popup.style.bottom = `${window.innerHeight - rect.top + POPUP_GAP}px`;
+		} else {
+			popup.style.bottom = 'auto';
+			popup.style.top = `${rect.bottom + POPUP_GAP}px`;
+		}
+	};
+
+	// Scrolling in ANY ancestor moves the control under the popup, so listen in the capture
+	// phase — a listener on window alone misses a scrolled container.
+	const onViewportMove = () => positionPopup();
+	const trackViewport = () => {
+		window.addEventListener('scroll', onViewportMove, { capture: true, passive: true });
+		window.addEventListener('resize', onViewportMove);
+	};
+	const untrackViewport = () => {
+		window.removeEventListener('scroll', onViewportMove, { capture: true });
+		window.removeEventListener('resize', onViewportMove);
+	};
 
 	// ##### PRIVATE FUNCTIONS
 
@@ -3288,6 +3376,25 @@ registerComponent('nui-select', (element) => {
 		});
 		syncState(false); // Don't dispatch change event during initial build
 	};
+
+	// ##### THE NONE-STATE MODEL (mirrors native <select>)
+	// A native single-value select has no intrinsic "nothing selected" state: per the
+	// HTML spec, when no option carries selectedness the browser selects the first
+	// non-disabled option, and `selectedIndex` is -1 only when NO option can be
+	// selected at all. "Nothing chosen" is therefore expressed by an OPTION, which is
+	// exactly what makes it re-selectable — the user picks the none-row like any other.
+	//   • enabled blank option   → a real value of "", presented as a none-choice and
+	//                              re-selectable by the user. This is the way back.
+	//   • disabled blank option  → the one-way prompt idiom. Native: the user may leave
+	//                              it but never return; it carries no value.
+	// The component never invents a third state (`selectedIndex = -1` on a populated
+	// single select): a user cannot reach it from the list and cannot leave it.
+	const findNoneOption = () =>
+		Array.from(select.options).find(o => o.value === '' && !o.disabled);
+	const findPlaceholderOption = () =>
+		Array.from(select.options).find(o => o.value === '' && o.disabled);
+	const findFirstSelectable = () =>
+		Array.from(select.options).find(o => !o.disabled);
 
 	// Sync visual state with native select
 	const syncState = (dispatchChange = true) => {
@@ -3328,8 +3435,11 @@ registerComponent('nui-select', (element) => {
 			valueDisplay.classList.toggle('is-placeholder', !sel);
 		}
 
-		element.classList.toggle('is-invalid', !select.validity.valid);
-		
+		// Never RAISE `is-invalid` from a state sync — an untouched required select would
+		// render as an error before the user has done anything (a red underline on page
+		// load). validate() raises it; any change that makes the control valid clears it.
+		if (select.validity.valid) element.classList.remove('is-invalid');
+
 		if (dispatchChange) {
 			element.dispatchEvent(new CustomEvent('nui-change', { 
 				bubbles: true, 
@@ -3401,16 +3511,14 @@ registerComponent('nui-select', (element) => {
 		isOpen = true;
 		openSelects.add(element);
 		element.classList.add('is-open');
-		popup.hidden = false;
+		showPopup();
+		trackViewport();
 
 		// Reset scroll position
 		list.scrollTop = 0;
 
-		// Position above/below
-		const rect = control.getBoundingClientRect();
-		const below = window.innerHeight - rect.bottom;
-		element.classList.toggle('is-above', below < 300 && rect.top > below);
-		element.classList.toggle('is-below', !(below < 300 && rect.top > below));
+		// Place above/below and clamp to the viewport — only meaningful once shown
+		positionPopup();
 
 		// Make options focusable
 		const options = getVisibleOptions();
@@ -3506,7 +3614,8 @@ registerComponent('nui-select', (element) => {
 		isOpen = false;
 		openSelects.delete(element);
 		element.classList.remove('is-open', 'is-above', 'is-below');
-		popup.hidden = true;
+		untrackViewport();
+		hidePopup();
 
 		// Clear focus state
 		clearFocus();
@@ -3525,12 +3634,32 @@ registerComponent('nui-select', (element) => {
 		if (isMulti) {
 			// For multi-select, accept array or single value
 			const values = Array.isArray(value) ? value : value ? [value] : [];
+			const known = new Set(Array.from(select.options).map(o => o.value));
+			const unknown = values.filter(v => !known.has(v));
+			if (unknown.length) {
+				throw new RangeError(`[NUI] <nui-select> setValue() — no option with value(s) ${unknown.map(v => JSON.stringify(v)).join(', ')}. Available: ${[...known].map(v => JSON.stringify(v)).join(', ') || '(none)'}`);
+			}
 			Array.from(select.options).forEach(opt => {
 				opt.selected = values.includes(opt.value);
 			});
 		} else {
-			// For single select, find matching option
+			// null / undefined / '' all mean "no value" — route through clear() so the
+			// result is a real none-state (the none-option or the prompt), not a dangling
+			// selection.
+			if (value == null || value === '') {
+				clear();
+				return;
+			}
 			const targetOpt = Array.from(select.options).find(o => o.value === value);
+			// Fail loud. An unknown value used to deselect everything, and the browser's
+			// reset algorithm then re-selected the FIRST option — so a typo silently
+			// persisted the wrong value with no error anywhere.
+			if (!targetOpt) {
+				throw new RangeError(`[NUI] <nui-select> setValue(${JSON.stringify(value)}) — no option with that value. Available: ${Array.from(select.options).map(o => JSON.stringify(o.value)).join(', ') || '(none)'}`);
+			}
+			if (targetOpt.disabled) {
+				throw new RangeError(`[NUI] <nui-select> setValue(${JSON.stringify(value)}) — that option is disabled and cannot be selected.`);
+			}
 			Array.from(select.options).forEach(o => o.selected = (o === targetOpt));
 		}
 		select.dispatchEvent(new Event('change', { bubbles: true }));
@@ -3580,8 +3709,22 @@ registerComponent('nui-select', (element) => {
 		if (isMulti) {
 			Array.from(select.options).forEach(o => o.selected = false);
 		} else {
-			// "No selection" is distinct from "selected the empty-value option".
-			select.selectedIndex = -1;
+			// Return to the "nothing chosen" representation, which is always an option —
+			// never `selectedIndex = -1`. A -1 single-value select shows the placeholder
+			// with no user-reachable way out, and the browser re-selects the first option
+			// on any later reset, so the state is not even stable. Preference:
+			// enabled blank (the real, re-selectable none-choice), then the disabled blank
+			// prompt, then the first selectable option (a native form reset).
+			const none = findNoneOption() || findPlaceholderOption();
+			const target = none || findFirstSelectable();
+			if (target) {
+				if (!none) {
+					console.warn(`[NUI] <nui-select> clear(): the list has no none-option, so the first selectable option ("${target.textContent.trim()}") is selected instead. Add an enabled blank option — <option value="">— None —</option> — if this select needs a none-state.`);
+				}
+				Array.from(select.options).forEach(o => o.selected = (o === target));
+			}
+			// Nothing selectable exists (empty list, or every option disabled) — the
+			// selection stays empty, exactly as a native select behaves.
 		}
 		select.dispatchEvent(new Event('change', { bubbles: true }));
 		syncState();
@@ -3591,6 +3734,9 @@ registerComponent('nui-select', (element) => {
 	// ##### OPTIONS MANAGEMENT
 
 	const addItem = (value, label, options = {}) => {
+		if (value === undefined || value === null) {
+			throw new TypeError('[NUI] <nui-select> addItem(value, label) — `value` is required.');
+		}
 		const existing = Array.from(select.options).find(o => o.value === value);
 		if (existing) return false;
 
@@ -3637,6 +3783,16 @@ registerComponent('nui-select', (element) => {
 		return true;
 	};
 
+	// setItems() is a data API: items are `{ value, label }` or a plain string.
+	// A domain object ({ id, name }) used to produce options whose value was the literal
+	// string "undefined" and whose label was empty — silently, so the select merely looked
+	// unloaded. Fail loud instead.
+	const assertItemShape = (item) => {
+		if (typeof item === 'string') return;
+		if (item.value !== undefined && item.value !== null) return;
+		throw new TypeError(`[NUI] <nui-select> setItems() — item ${JSON.stringify(item)} has no \`value\`. Expected { value, label } or a plain string.`);
+	};
+
 	const setItems = (items) => {
 		// Replace all options verbatim — no placeholder special-casing.
 		// An explicit <option value="" disabled> in markup is preserved via markup,
@@ -3646,6 +3802,7 @@ registerComponent('nui-select', (element) => {
 
 			// Add new items
 			items.forEach(item => {
+				assertItemShape(item);
 				if (typeof item === 'string') {
 					const opt = document.createElement('option');
 					opt.value = item;
@@ -3655,6 +3812,7 @@ registerComponent('nui-select', (element) => {
 					const group = document.createElement('optgroup');
 					group.label = item.group;
 					item.options?.forEach(sub => {
+						assertItemShape(sub);
 						const opt = document.createElement('option');
 						opt.value = sub.value || sub;
 						opt.textContent = sub.label || sub.value || sub;
@@ -3708,13 +3866,11 @@ registerComponent('nui-select', (element) => {
 	// ##### ASYNC LOADING SUPPORT
 
 	let isLoading = false;
-	let savedPlaceholder = null;
 
 	// Show loading state - displays loading text and disables
 	const showLoading = (loadingText = 'Loading...') => {
 		if (isLoading) return;
 		isLoading = true;
-		savedPlaceholder = placeholder; // Always save the actual placeholder, not current display
 		disable();
 		if (valueDisplay) {
 			valueDisplay.textContent = loadingText;
@@ -3724,16 +3880,21 @@ registerComponent('nui-select', (element) => {
 		element.dispatchEvent(new CustomEvent('nui-loading', { bubbles: true }));
 	};
 
-	// Hide loading state - enables and restores placeholder
+	// Hide loading state - enables and re-renders from the real selection state.
+	// `newPlaceholder` permanently replaces the prompt text (the `placeholder`
+	// attribute equivalent), it does not just repaint once.
+	// The display is owned by syncState(): writing placeholder text directly here
+	// stomped the value that had just been selected — loadOptions populates the options
+	// and then called hideLoading, so the control showed "Select a model..." while
+	// `value` was already `model-a`.
 	const hideLoading = (newPlaceholder) => {
 		if (!isLoading) return;
 		isLoading = false;
 		enable();
-		if (valueDisplay) {
-			valueDisplay.textContent = newPlaceholder || savedPlaceholder || placeholder;
-			valueDisplay.classList.remove('is-loading');
-		}
+		if (newPlaceholder) placeholder = newPlaceholder;
+		if (valueDisplay) valueDisplay.classList.remove('is-loading');
 		element.classList.remove('is-loading');
+		syncState(false);
 		element.dispatchEvent(new CustomEvent('nui-loaded', { bubbles: true }));
 	};
 
@@ -4043,6 +4204,36 @@ registerComponent('nui-select', (element) => {
 	}
 	buildOptions();
 
+	// ##### VALIDATION UI
+	// Policy — the archived select plan, and what nui-input already does: the error class
+	// is raised by USER INTERACTION or an explicit validate(), never by a state sync.
+	// It used to be toggled from syncState, which runs during the initial build, so a
+	// `required` select was painted as an error the moment it was upgraded — before the
+	// user could possibly have done anything. That made `required` unusable without
+	// consumer workarounds (suppressing the class, or hand-rolling validation instead).
+	const applyValidationUi = () => {
+		// Only a select that declares a rule can be invalid; a plain select keeps its
+		// neutral styling however it is used. Custom validity is the exception — an app
+		// that calls setCustomValidity() should call validate() explicitly.
+		if (!select.required) return;
+		element.classList.toggle('is-invalid', !select.validity.valid);
+	};
+
+	// Blur — native :user-invalid semantics: the user engaged the control, then left it.
+	// Focus moving INTO the popup is not departure (option rows and the search field are
+	// inside this element), so only a target outside the component counts.
+	element.addEventListener('focusout', (e) => {
+		if (e.relatedTarget && element.contains(e.relatedTarget)) return;
+		applyValidationUi();
+	});
+
+	// Form submit, and any native checkValidity() — the browser runs constraint
+	// validation and fires `invalid` on the inner select. Surfacing that here means the
+	// plain form path works with no app code at all.
+	select.addEventListener('invalid', () => {
+		if (select.required) element.classList.add('is-invalid');
+	});
+
 	// ##### DOM OBSERVER (external population support)
 	// The intuitive consumer path — writing <option> elements into the inner
 	// <select> directly — must work. The dropdown renders from the select's
@@ -4070,6 +4261,10 @@ registerComponent('nui-select', (element) => {
 	element.validate = () => {
 		const valid = select.checkValidity();
 		element.classList.toggle('is-invalid', !valid);
+		element.dispatchEvent(new CustomEvent('nui-validate', {
+			bubbles: true,
+			detail: { valid, message: select.validationMessage }
+		}));
 		return valid;
 	};
 
@@ -4080,6 +4275,10 @@ registerComponent('nui-select', (element) => {
 	element.select = selectValue;
 	element.unselect = unselectValue;
 	element.clear = clear;
+	// `getValue()` mirrors native `select.value`: it returns '' both when nothing is
+	// chosen and when a blank none-option is chosen. `hasValue()` separates the two —
+	// true only when a real option carries the selection (an enabled blank is real).
+	element.hasValue = () => Array.from(select.selectedOptions).some(o => !(o.value === '' && o.disabled));
 
 	// Options management
 	element.addItem = addItem;
@@ -4111,6 +4310,7 @@ registerComponent('nui-select', (element) => {
 	// Cleanup function
 	return () => {
 		openSelects.delete(element);
+		untrackViewport();
 		document.removeEventListener('click', onOutsideClick);
 		domObserver.disconnect();
 	};
@@ -6384,12 +6584,19 @@ function mbIsThematicBreak(line) {
 // accumulated since the last structural marker). A structural directive flushes
 // the run — the §6.1 chunking rule, so two parsers agree on boundaries.
 function parseBlocks(src) {
-	const lines = String(src).replace(/\r\n/g, '\n').split('\n');
+	let frontmatter = null;
+	let body = String(src || '');
+	const fm = parseFrontmatter(body);
+	if (fm && fm.data) {
+		frontmatter = fm.data;
+		body = fm.content;
+	}
+	const lines = body.replace(/\r\n/g, '\n').split('\n');
 	// A document is one or more MAINS. A main is the chrome scope: the unit a
 	// renderer fragments into surfaces (slides, printed pages, one scrolling
 	// region) and the only place `repeat` chrome attaches. A document with no
 	// `mb:main` has exactly one implicit main, so plain documents need nothing.
-	const doc = { mains: [] };
+	const doc = { frontmatter, mains: [] };
 	let main = { attrs: {}, sections: [] };
 	doc.mains.push(main);
 	let section = { attrs: {}, vars: [], nodes: [], buf: [] };
@@ -6554,6 +6761,98 @@ function parseBlocks(src) {
 	if (block) { const b = block; block = null; flush(b); push(b); }
 	doc.mains.forEach((m) => m.sections.forEach((s) => flush(s)));
 	return doc;
+}
+
+function mbFormatAttrs(attrs) {
+	if (!attrs) return '';
+	const parts = [];
+	for (const [k, v] of Object.entries(attrs)) {
+		if (v === undefined || v === null) continue;
+		if (typeof v === 'boolean' || typeof v === 'number') {
+			parts.push(`${k}=${v}`);
+		} else if (Array.isArray(v) || (typeof v === 'object' && v !== null)) {
+			parts.push(`${k}=${JSON.stringify(v)}`);
+		} else {
+			const s = String(v);
+			if (/^[a-z0-9_:.-]+$/i.test(s)) {
+				parts.push(`${k}=${s}`);
+			} else {
+				parts.push(`${k}=${JSON.stringify(s)}`);
+			}
+		}
+	}
+	return parts.length ? ' ' + parts.join(' ') : '';
+}
+
+function serializeNode(node) {
+	if (!node) return '';
+	if (node.type === 'md') {
+		return (node.lines || []).join('\n');
+	}
+	if (node.type === 'var') {
+		const attrStr = mbFormatAttrs({ name: node.name, value: node.fenced ? undefined : node.value });
+		let out = `<!-- mb:var${attrStr} -->`;
+		if (node.fenced && node.value !== undefined) {
+			const lang = node.fenced === 'json' ? 'json' : 'text';
+			const text = typeof node.value === 'string' ? node.value : JSON.stringify(node.value, null, 2);
+			out += `\n\`\`\`${lang}\n${text}\n\`\`\``;
+		}
+		return out;
+	}
+	if (node.type === 'block') {
+		const attrStr = mbFormatAttrs(node.attrs);
+		const inner = (node.nodes || []).map(serializeNode).filter(Boolean).join('\n\n');
+		return `<!-- mb:block${attrStr} -->\n${inner}\n<!-- mb:/block -->`;
+	}
+	if (node.type === 'columns') {
+		const attrStr = mbFormatAttrs(node.attrs);
+		const colStrs = (node.cols || []).map((c) => {
+			const cAttrs = mbFormatAttrs(c.attrs);
+			const cInner = (c.nodes || []).map(serializeNode).filter(Boolean).join('\n\n');
+			return `<!-- mb:col${cAttrs} -->\n${cInner}`;
+		}).join('\n');
+		return `<!-- mb:columns${attrStr} -->\n${colStrs}\n<!-- mb:/columns -->`;
+	}
+	return '';
+}
+
+function serializeBlocks(doc) {
+	if (!doc) return '';
+	const parts = [];
+	if (doc.frontmatter && typeof doc.frontmatter === 'object' && Object.keys(doc.frontmatter).length > 0) {
+		parts.push('---');
+		for (const [k, v] of Object.entries(doc.frontmatter)) {
+			if (typeof v === 'object' && v !== null) {
+				parts.push(`${k}: ${JSON.stringify(v)}`);
+			} else {
+				parts.push(`${k}: ${v}`);
+			}
+		}
+		parts.push('---\n');
+	}
+
+	const mains = doc.mains || [];
+	mains.forEach((main, mIdx) => {
+		const hasMainAttrs = main.attrs && Object.keys(main.attrs).length > 0;
+		if (hasMainAttrs || mains.length > 1) {
+			parts.push(`<!-- mb:main${mbFormatAttrs(main.attrs)} -->\n`);
+		}
+
+		(main.sections || []).forEach((sec, sIdx) => {
+			if (sIdx > 0) {
+				parts.push('\n---\n');
+			}
+			if (sec.attrs && Object.keys(sec.attrs).length > 0) {
+				parts.push(`<!-- mb:section${mbFormatAttrs(sec.attrs)} -->\n`);
+			}
+			const secBody = (sec.nodes || []).map(serializeNode).filter(Boolean).join('\n\n');
+			if (secBody) {
+				parts.push(secBody);
+			}
+		});
+	});
+
+	return parts.join('\n').trim() + '\n';
 }
 
 // Media is recognised only when the FIRST node of a block is the media itself;
@@ -7037,6 +7336,8 @@ util.markdownToHtml = markdownToHtml;
 util.parseYaml = parseYaml;
 util.parseFrontmatter = parseFrontmatter;
 util.renderFrontmatter = renderFrontmatter;
+util.parseBlocks = parseBlocks;
+util.serializeBlocks = serializeBlocks;
 
 // Streaming renders text that has no beginning — the first chunk of an LLM reply is
 // not line 1 of an authored document, so a leading `---` there is a divider, not
