@@ -6711,9 +6711,26 @@ function mbRenderBlock(block) {
 	}
 
 	if (iconDest) {
+		// The icon <img> is emitted here, outside markdownCore — the app-level
+		// rewrite/policy hooks (which canonicalize /storage/... to the app's
+		// same-origin proxy path and gate trust) never see it otherwise, and
+		// the raw destination 404s wherever only a path prefix is routed
+		// (nui_wc2#33). Same treatment an inline markdown image gets.
+		let iconUrl = iconDest;
+		if (_mdDocBase && !/^[a-z][a-z0-9+.-]*:/i.test(iconUrl) && !iconUrl.startsWith('/') && !iconUrl.startsWith('#')) {
+			try { iconUrl = new URL(iconUrl, _mdDocBase).href; } catch (e) { /* unparsable base — leave as authored */ }
+		}
+		if (typeof markdownImageRewrite === 'function') {
+			const rewritten = markdownImageRewrite(iconUrl);
+			if (typeof rewritten === 'string' && rewritten.length > 0) iconUrl = rewritten;
+		}
+		if (typeof markdownImagePolicy === 'function' && !markdownImagePolicy(iconUrl)) {
+			console.warn(`[nui-markdown] refused icon destination (policy): ${iconUrl}`);
+			return '';
+		}
 		const open = mbOpenTag('figure', 'nui-blocks-block', block.attrs, 'nui-blocks-media nui-blocks-image');
 		const alt = fmEscape(block.attrs.alt || '');
-		return `${open}><img src="${fmEscape(iconDest)}" alt="${alt}" loading="lazy"><figcaption>${mbRenderNodes(block.nodes)}</figcaption></figure>`;
+		return `${open}><img src="${fmEscape(iconUrl)}" alt="${alt}" loading="lazy"><figcaption>${mbRenderNodes(block.nodes)}</figcaption></figure>`;
 	}
 
 	let tag = 'div';
@@ -6824,6 +6841,30 @@ function renderBlocks(doc) {
 
 function markdownToHtml(md, options) {
 	options = options || {};
+	if (typeof md !== 'string' || !md.trim()) return '';
+
+	// Document base (issue #38) is consumed deep inside markdownCore, several
+	// renderer frames below this function. Rendering is synchronous, so a
+	// document-scoped variable set around the call threads it down without
+	// polluting every signature in the MD-Blocks chain. Restored in finally —
+	// an exception mid-render must not leak one document's base into the next.
+	const prevBase = _mdDocBase;
+	_mdDocBase = options.base || null;
+	let out;
+	try {
+		out = _markdownToHtmlInner(md, options);
+	} finally {
+		_mdDocBase = prevBase;
+	}
+	return out;
+}
+
+// Rendered-document base for relative media destinations (issue #38). Set by
+// markdownToHtml for the duration of one synchronous render; null everywhere
+// else. markdownCore reads it — see the comment above.
+let _mdDocBase = null;
+
+function _markdownToHtmlInner(md, options) {
 	if (typeof md !== 'string' || !md.trim()) return '';
 
 	// YAML frontmatter handling. Recognized modes live in FRONTMATTER_MODES;
@@ -6938,6 +6979,19 @@ function markdownCore(md) {
 	html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (m, alt, src) => {
 		let url = safeUrl(src);
 		if (!url) return alt;
+		// Document base (issue #38): a document rendered from a URL has relative
+		// destinations resolve against that URL — the same rule every real
+		// viewer (GitHub, VS Code, Obsidian) applies. Resolved BEFORE the app
+		// rewrite/policy hooks so they see a canonical absolute URL. The base
+		// is the document-scoped _mdDocBase set by markdownToHtml — this leaf
+		// renderer sits several frames below it with no options in scope.
+		if (_mdDocBase && !/^[a-z][a-z0-9+.-]*:/i.test(url) && !url.startsWith('/') && !url.startsWith('#')) {
+			try {
+				url = new URL(url, _mdDocBase).href;
+			} catch (e) {
+				console.warn(`[NuiMarkdown] Cannot resolve '${url}' against base '${_mdDocBase}' — left as authored`);
+			}
+		}
 		// App-level rewrite hook (setMarkdownImageRewrite): fn(url) → rewritten
 		// url or null. Applied before the policy check so a canonicalized URL
 		// (e.g. host-aliased storage origin → same-origin proxy path) is what
@@ -7009,6 +7063,15 @@ class NuiMarkdown extends HTMLElement {
 	get frontmatterMode() { return this._frontmatterMode; }
 	set frontmatterMode(v) { this._frontmatterMode = v; }
 
+	// Document base URL (issue #38): relative image destinations in the content
+	// resolve against it, exactly as a viewer opening the file from disk would.
+	// In src mode the src URL is the base automatically; a `base` attribute or
+	// property overrides it. No base (e.g. streamed chat messages, inline
+	// content with no source) leaves relative destinations untouched — a chat
+	// message is not a file and has no location.
+	get base() { return this._base !== undefined ? this._base : this.getAttribute('base') || (this.getAttribute('src') ? new URL(this.getAttribute('src'), location.href).href : null); }
+	set base(v) { this._base = v; }
+
 	_renderMode() {
 		if (this._frontmatterMode !== undefined) return this._frontmatterMode;
 		const attr = this.getAttribute('frontmatter');
@@ -7048,7 +7111,7 @@ class NuiMarkdown extends HTMLElement {
 		const mode = this._renderMode();
 		const fm = FRONTMATTER_MODES.has(mode) ? parseFrontmatter(rawText) : null;
 		this._metadata = fm ? fm.data : null;
-		this.innerHTML = markdownToHtml(rawText, { frontmatter: mode });
+		this.innerHTML = markdownToHtml(rawText, { frontmatter: mode, base: this.base });
 		this._processed = true; // Mark as processed so re-attach is free
 
 		if (!this._lightboxBound) {
