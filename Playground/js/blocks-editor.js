@@ -46,7 +46,21 @@ export function initBlocksEditor(element, params, nui) {
 							nodes: [
 								{
 									type: 'block',
-									attrs: { id: 'block-1', preset: 'lead' },
+									attrs: { id: 'block-1', preset: 'image:hero' },
+									nodes: [
+										{
+											type: 'md',
+											lines: [
+												'![NUI artwork — plate 1](images/nui_1.webp)',
+												'',
+												'A media block holds one image or many — click a thumbnail to make it the lead.'
+											]
+										}
+									]
+								},
+								{
+									type: 'block',
+									attrs: { id: 'block-2', preset: 'lead' },
 									nodes: [
 										{
 											type: 'md',
@@ -245,8 +259,8 @@ export function initBlocksEditor(element, params, nui) {
 			});
 
 			// Reorder / Delete buttons using NUI icon buttons
-			controlsGroup.appendChild(createNuiIconButton('arrow_upward', 'Move Up', () => moveSection(sIdx, -1)));
-			controlsGroup.appendChild(createNuiIconButton('arrow_downward', 'Move Down', () => moveSection(sIdx, 1)));
+			controlsGroup.appendChild(createNuiIconButton('chevron_right', 'Move Up', () => moveSection(sIdx, -1), 'icon-rotate-up'));
+			controlsGroup.appendChild(createNuiIconButton('chevron_right', 'Move Down', () => moveSection(sIdx, 1), 'icon-rotate-down'));
 			controlsGroup.appendChild(createNuiIconButton('close', 'Delete Section', () => deleteSection(sIdx)));
 
 			header.appendChild(titleGroup);
@@ -258,7 +272,7 @@ export function initBlocksEditor(element, params, nui) {
 			contentBody.className = 'section-content-body';
 
 			// Top Add Block Strip
-			contentBody.appendChild(createAddStrip(() => openInsertBlockPalette(sec, 0)));
+			contentBody.appendChild(addStripTop(() => openInsertBlockPalette(sec, 0)));
 
 			// Render Nodes
 			const nodesContainer = document.createElement('div');
@@ -274,7 +288,7 @@ export function initBlocksEditor(element, params, nui) {
 				nodesContainer.appendChild(nodeEl);
 
 				// Add strip after each block
-				nodesContainer.appendChild(createAddStrip(() => openInsertBlockPalette(sec, nIdx + 1)));
+				nodesContainer.appendChild(addStripBottom(() => openInsertBlockPalette(sec, nIdx + 1)));
 			});
 
 			contentBody.appendChild(nodesContainer);
@@ -282,7 +296,7 @@ export function initBlocksEditor(element, params, nui) {
 			sectionsContainer.appendChild(secEl);
 
 			// Add strip between sections
-			sectionsContainer.appendChild(createAddStrip(() => addSection(sIdx + 1), 'section-divider'));
+			sectionsContainer.appendChild(addStripBottom(() => addSection(sIdx + 1), 'section-divider'));
 		});
 	}
 
@@ -303,12 +317,20 @@ export function initBlocksEditor(element, params, nui) {
 			return nodeCard;
 		}
 
-		// Leaf Block
+		// Leaf Block — an image or image list at the head makes it a media block
+		if (isMediaBlock(node)) {
+			nodeCard.classList.add('editor-media-card');
+			renderMediaBlockNode(nodeCard, node, parentContainer, nodeIdx);
+			return nodeCard;
+		}
+
 		renderLeafBlockNode(nodeCard, node, parentContainer, nodeIdx);
 		return nodeCard;
 	}
 
-	function renderLeafBlockNode(nodeCard, node, parentContainer, nodeIdx) {
+	// Shared by every block card. `presets` is the option table for the preset
+	// select; `onToggleRaw` is omitted for blocks with no raw mode.
+	function buildBlockHeader(node, parentContainer, nodeIdx, presets, onToggleRaw) {
 		const header = document.createElement('div');
 		header.className = 'block-card-header';
 
@@ -319,21 +341,19 @@ export function initBlocksEditor(element, params, nui) {
 			<span class="block-idx-badge">${nodeIdx + 1}</span>
 		`;
 
-		// NUI Select for Block Preset
 		const presetSelectWrap = document.createElement('nui-select');
 		presetSelectWrap.setAttribute('size', 'small');
 		const currentPreset = node.attrs?.preset || '';
-		const nativeBlockSelect = document.createElement('select');
-		nativeBlockSelect.innerHTML = `
-			<option value="">Standard Prose</option>
-			<option value="card:note" ${currentPreset === 'card:note' ? 'selected' : ''}>Card: Note</option>
-			<option value="card:warning" ${currentPreset === 'card:warning' ? 'selected' : ''}>Card: Warning</option>
-			<option value="card:stat" ${currentPreset === 'card:stat' ? 'selected' : ''}>Card: Stat</option>
-			<option value="image:hero" ${currentPreset === 'image:hero' ? 'selected' : ''}>Media: Hero</option>
-			<option value="image:icon" ${currentPreset === 'image:icon' ? 'selected' : ''}>Media: Icon</option>
-			<option value="link:cta" ${currentPreset === 'link:cta' ? 'selected' : ''}>Link: CTA</option>
-		`;
-		presetSelectWrap.appendChild(nativeBlockSelect);
+		// A preset this table doesn't know (e.g. `image:hero:bleed`) must still show
+		// as itself — silently displaying the first option would misreport the block.
+		const options = presets.some(p => p.value === currentPreset)
+			? presets
+			: [{ value: currentPreset, label: currentPreset }, ...presets];
+		const nativeSelect = document.createElement('select');
+		nativeSelect.innerHTML = options.map(({ value, label }) =>
+			`<option value="${value}" ${currentPreset === value ? 'selected' : ''}>${label}</option>`
+		).join('');
+		presetSelectWrap.appendChild(nativeSelect);
 		left.appendChild(presetSelectWrap);
 		customElements.upgrade(presetSelectWrap);
 
@@ -347,10 +367,287 @@ export function initBlocksEditor(element, params, nui) {
 
 		const right = document.createElement('div');
 		right.className = 'block-header-right';
+		if (onToggleRaw) right.appendChild(createNuiIconButton('code', 'Toggle Code / WYSIWYG', onToggleRaw));
+		right.appendChild(createNuiIconButton('chevron_right', 'Move Up', () => moveNode(parentContainer, nodeIdx, -1), 'icon-rotate-up'));
+		right.appendChild(createNuiIconButton('chevron_right', 'Move Down', () => moveNode(parentContainer, nodeIdx, 1), 'icon-rotate-down'));
+		right.appendChild(createNuiIconButton('close', 'Delete', () => deleteNode(parentContainer, nodeIdx)));
 
+		header.appendChild(left);
+		header.appendChild(right);
+		return header;
+	}
+
+	// A media block's body is not prose: it is an image set with a lead image and
+	// a caption. `images[0]` is the lead — the prominent plate in a gallery preset,
+	// the figure in a single-image one. The markdown is still the only state.
+	function renderMediaBlockNode(nodeCard, node, parentContainer, nodeIdx) {
+		let { images, caption: captionLines } = parseMediaBlock(getBlockText(node).split('\n'));
+		let isRawMode = false;
+
+		const body = document.createElement('div');
+		body.className = 'block-card-body media-block-body';
+
+		// Preview of the lead image, with the two ways an image gets in.
+		const preview = document.createElement('div');
+		preview.className = 'media-preview';
+
+		const frame = document.createElement('div');
+		frame.className = 'media-frame';
+
+		const controls = document.createElement('div');
+		controls.className = 'media-controls';
+
+		const fileInput = document.createElement('input');
+		fileInput.type = 'file';
+		fileInput.accept = 'image/*';
+		fileInput.multiple = true;
+		fileInput.style.display = 'none';
+		fileInput.addEventListener('change', () => {
+			for (const file of fileInput.files) {
+				addImage({ src: URL.createObjectURL(file), alt: file.name, local: true });
+			}
+			fileInput.value = '';
+		});
+		controls.appendChild(fileInput);
+		controls.appendChild(createNuiIconButton('upload', 'Upload from disk', () => fileInput.click()));
+		controls.appendChild(createNuiIconButton('folder', 'Choose from the media library', () => openMediaLibrary()));
+
+		preview.appendChild(frame);
+		preview.appendChild(controls);
+		body.appendChild(preview);
+
+		// The block's image set, lead first. Click a thumb to promote it, × to drop it.
+		const strip = document.createElement('ul');
+		strip.className = 'media-thumbs';
+		body.appendChild(strip);
+
+		// Everything after the images is the caption.
+		const captionBlock = document.createElement('div');
+		captionBlock.className = 'media-caption';
+		const richTextEl = document.createElement('nui-rich-text');
+		const rawTextArea = document.createElement('textarea');
+		rawTextArea.className = 'block-raw-textarea';
+		rawTextArea.spellcheck = false;
+		rawTextArea.style.display = 'none';
+		captionBlock.appendChild(richTextEl);
+		captionBlock.appendChild(rawTextArea);
+		body.appendChild(captionBlock);
+
+		nodeCard.appendChild(buildBlockHeader(node, parentContainer, nodeIdx, MEDIA_PRESETS, toggleRaw));
+		nodeCard.appendChild(body);
+
+		richTextEl.setMarkdown(captionLines.join('\n'));
+		rawTextArea.value = serializeMediaLines(images, captionLines).join('\n');
+		paint();
+
+		richTextEl.addEventListener('nui-change', (e) => {
+			if (e.target !== richTextEl) return;
+			if (isRawMode) return;
+			captionLines = (richTextEl.markdown || richTextEl.getMarkdown?.() || '').split('\n');
+			commit({ repaint: false });
+		});
+
+		// In raw mode the whole block is the source of truth, so media state is
+		// re-derived from the text. The preview refreshes when raw mode is left.
+		rawTextArea.addEventListener('input', () => {
+			if (!isRawMode) return;
+			const parsed = parseMediaBlock(rawTextArea.value.split('\n'));
+			images = parsed.images;
+			captionLines = parsed.caption;
+			commit({ repaint: false });
+		});
+
+		function toggleRaw() {
+			isRawMode = !isRawMode;
+			if (isRawMode) {
+				richTextEl.style.display = 'none';
+				rawTextArea.style.display = 'block';
+				rawTextArea.value = serializeMediaLines(images, captionLines).join('\n');
+				return;
+			}
+			rawTextArea.style.display = 'none';
+			richTextEl.style.display = 'block';
+			const parsed = parseMediaBlock(rawTextArea.value.split('\n'));
+			images = parsed.images;
+			captionLines = parsed.caption;
+			richTextEl.setMarkdown(captionLines.join('\n'));
+			paint();
+		}
+
+		function commit({ repaint = true } = {}) {
+			setBlockText(node, serializeMediaLines(images, captionLines).join('\n'));
+			if (repaint) paint();
+			syncToOutputs();
+		}
+
+		function addImage(image) {
+			if (image.local) {
+				console.warn(`Media block: "${image.alt}" is an object URL — the Playground mock has no upload storage, so no path can be persisted for it.`);
+				nui.components.banner.show({
+					content: 'Uploaded images are session-only here — the markdown path will not survive a reload.',
+					priority: 'alert',
+					autoClose: 5000
+				});
+			}
+			images.push(image);
+			commit();
+		}
+
+		function paint() {
+			const lead = images[0];
+			frame.innerHTML = lead
+				? `<img src="${escapeHtml(lead.src)}" alt="${escapeHtml(lead.alt)}">`
+				: `<div class="media-empty"><nui-icon name="image"></nui-icon><span>No image yet</span></div>`;
+
+			strip.innerHTML = '';
+			images.forEach((im, i) => {
+				const li = document.createElement('li');
+				li.className = 'media-thumb' + (i === 0 ? ' selected' : '') + (im.local ? ' local' : '');
+				li.title = i === 0 ? 'Lead image' : 'Make this the lead image';
+
+				const handle = document.createElement('span');
+				handle.className = 'handle';
+				handle.textContent = String(i + 1);
+
+				const pic = document.createElement('img');
+				pic.src = libThumb(im.src);
+				pic.alt = '';
+				pic.loading = 'lazy';
+
+				li.append(handle, pic);
+
+				const remove = document.createElement('button');
+				remove.type = 'button';
+				remove.className = 'thumb-remove';
+				remove.title = 'Remove image';
+				remove.setAttribute('aria-label', 'Remove image');
+				remove.innerHTML = '<nui-icon name="close"></nui-icon>';
+				remove.addEventListener('click', (e) => {
+					e.stopPropagation();
+					images.splice(i, 1);
+					commit();
+				});
+				li.appendChild(remove);
+
+				if (i > 0) {
+					li.addEventListener('click', () => {
+						images = [images.splice(i, 1)[0], ...images];
+						commit();
+					});
+				}
+				strip.appendChild(li);
+			});
+
+			const addTile = document.createElement('li');
+			addTile.className = 'media-thumb add-tile';
+			addTile.title = 'Add an image';
+			addTile.innerHTML = '<nui-icon name="add"></nui-icon>';
+			addTile.addEventListener('click', () => openMediaLibrary());
+			strip.appendChild(addTile);
+		}
+
+		async function openMediaLibrary() {
+			const container = document.createElement('div');
+			container.className = 'media-library';
+			container.style.cssText = 'flex: 1; min-height: 0; display: flex; flex-direction: column;';
+
+			const wrapper = document.createElement('div');
+			wrapper.style.cssText = 'flex: 1; min-height: 0; position: relative;';
+
+			const listEl = document.createElement('nui-list');
+			listEl.style.cssText = 'flex: 1; height: 100%;';
+			wrapper.appendChild(listEl);
+			container.appendChild(wrapper);
+
+			let selected = [];
+
+			// Nothing to add until something is picked.
+			const syncAddButton = () => {
+				const add = dialog.querySelector('.nui-list-footer-right button');
+				if (add) add.disabled = selected.length === 0;
+			};
+
+			// No dialog buttons: nui-list owns the footer (count + Clear + Add), as in
+			// the CMS this is modelled on. The header supplies search and sort.
+			const { dialog, result } = await nui.components.dialog.page(
+				'Insert Block',
+				container,
+				{ contentScroll: false }
+			);
+			dialog.style.cssText = '--space-page-maxwidth: 720px;';
+
+			const addSelection = () => {
+				if (!selected.length) return;
+				dialog.close();
+				for (const entry of selected) addImage({ src: entry.src, alt: entry.label });
+			};
+
+			// The dialog has to finish layout before the list can measure a row, or the
+			// list collapses to a zero-height container and renders nothing.
+			customElements.whenDefined('nui-list').then(() => setTimeout(() => {
+				listEl.loadData({
+					data: MEDIA_LIBRARY,
+					render: renderLibraryRow,
+					multiple: true,
+					search: [{ prop: 'id' }, { prop: 'label' }, { prop: 'src' }],
+					sort: [
+						{ label: 'Plate (A-Z)', prop: 'id' },
+						{ label: 'Plate (Z-A)', prop: 'id', dir: 'desc' },
+						{ label: 'Name', prop: 'label' }
+					],
+					footer: {
+						buttons_left: [
+							{ label: 'Clear', type: 'outline', fnc: () => listEl.setSelection([]) }
+						],
+						buttons_right: [
+							{ label: 'Add', type: 'primary', fnc: addSelection }
+						]
+					},
+					events: (ev) => {
+						if (ev.type !== 'selection') return;
+						selected = (listEl.getSelection(true) || []).map(item => item.data);
+						syncAddButton();
+					}
+				});
+				syncAddButton();
+			}, 10));
+
+			await result;
+		}
+
+		function renderLibraryRow(item) {
+			// Four columns, in the order nui-list's image-item variant expects:
+			// id | thumbnail | name + path | variant list.
+			const el = document.createElement('div');
+			el.className = 'nui-list-image-item';
+			el.innerHTML = `
+				<div>${escapeHtml(item.id)}</div>
+				<div class="image-cell"><img alt=""></div>
+				<div>
+					<div class="media-library-label">${escapeHtml(item.label)}</div>
+					<div class="media-library-meta">${escapeHtml(item.src)}</div>
+				</div>
+				<div>${escapeHtml(item.variants)}</div>
+			`;
+
+			// nui-list calls `update` when it binds a row to a data index, so off-screen
+			// rows never request a bitmap. The variant fades the thumb in via `.loaded`.
+			const img = el.querySelector('img');
+			el.update = () => {
+				img.classList.remove('loaded');
+				img.onload = () => img.classList.add('loaded');
+				img.src = item.thumb;
+				if (img.complete) img.classList.add('loaded');
+			};
+			return el;
+		}
+	}
+
+	function renderLeafBlockNode(nodeCard, node, parentContainer, nodeIdx) {
 		// Toggle raw markdown / rich text mode
 		let isRawMode = false;
-		const toggleBtn = createNuiIconButton('code', 'Toggle Code / WYSIWYG', () => {
+
+		nodeCard.appendChild(buildBlockHeader(node, parentContainer, nodeIdx, LEAF_PRESETS, () => {
 			isRawMode = !isRawMode;
 			if (isRawMode) {
 				richTextEl.style.display = 'none';
@@ -361,16 +658,7 @@ export function initBlocksEditor(element, params, nui) {
 				richTextEl.style.display = 'block';
 				richTextEl.setMarkdown(getBlockText(node));
 			}
-		});
-		right.appendChild(toggleBtn);
-
-		right.appendChild(createNuiIconButton('arrow_upward', 'Move Up', () => moveNode(parentContainer, nodeIdx, -1)));
-		right.appendChild(createNuiIconButton('arrow_downward', 'Move Down', () => moveNode(parentContainer, nodeIdx, 1)));
-		right.appendChild(createNuiIconButton('close', 'Delete', () => deleteNode(parentContainer, nodeIdx)));
-
-		header.appendChild(left);
-		header.appendChild(right);
-		nodeCard.appendChild(header);
+		}));
 
 		// Body editor (nui-rich-text + textarea fallback)
 		const body = document.createElement('div');
@@ -420,8 +708,8 @@ export function initBlocksEditor(element, params, nui) {
 
 		const right = document.createElement('div');
 		right.className = 'block-header-right';
-		right.appendChild(createNuiIconButton('arrow_upward', 'Move Up', () => moveNode(parentContainer, nodeIdx, -1)));
-		right.appendChild(createNuiIconButton('arrow_downward', 'Move Down', () => moveNode(parentContainer, nodeIdx, 1)));
+		right.appendChild(createNuiIconButton('chevron_right', 'Move Up', () => moveNode(parentContainer, nodeIdx, -1), 'icon-rotate-up'));
+		right.appendChild(createNuiIconButton('chevron_right', 'Move Down', () => moveNode(parentContainer, nodeIdx, 1), 'icon-rotate-down'));
 		right.appendChild(createNuiIconButton('close', 'Delete', () => deleteNode(parentContainer, nodeIdx)));
 
 		header.appendChild(left);
@@ -432,25 +720,20 @@ export function initBlocksEditor(element, params, nui) {
 		const colsRow = document.createElement('div');
 		colsRow.className = 'columns-flex-row';
 
-		(node.cols || []).forEach((col, cIdx) => {
+		(node.cols || []).forEach((col) => {
 			const colSlot = document.createElement('div');
 			colSlot.className = 'column-slot';
-
-			const colHeader = document.createElement('div');
-			colHeader.className = 'col-slot-header';
-			colHeader.textContent = `Column ${cIdx + 1}`;
-			colSlot.appendChild(colHeader);
 
 			const colNodes = document.createElement('div');
 			colNodes.className = 'col-nodes-list';
 
 			col.nodes = col.nodes || [];
-			colSlot.appendChild(createAddStrip(() => openInsertBlockPalette(col, 0, true)));
+			colSlot.appendChild(addStripTop(() => openInsertBlockPalette(col, 0, true)));
 
 			col.nodes.forEach((cNode, cnIdx) => {
 				const cEl = renderNode(cNode, col, cnIdx);
 				colNodes.appendChild(cEl);
-				colNodes.appendChild(createAddStrip(() => openInsertBlockPalette(col, cnIdx + 1, true)));
+				colNodes.appendChild(addStripBottom(() => openInsertBlockPalette(col, cnIdx + 1, true)));
 			});
 			colSlot.appendChild(colNodes);
 
@@ -514,6 +797,96 @@ export function initBlocksEditor(element, params, nui) {
 			node.nodes = [{ type: 'md', lines }];
 		}
 	}
+
+	// ── Media Blocks ──
+	// MD-Blocks defines a media block structurally, not by its preset: the block's
+	// first node is an image or an image list, and everything after the images is
+	// the caption. Detecting by that shape keeps the editor and the renderer in
+	// agreement — a block cannot look like prose here and render as a figure.
+	// A `preset=image:icon` block is NOT media: its asset lives in an `icon=`
+	// attribute so the prose stays clean for generic renderers.
+	const IMAGE_LINE_RE = /^!\[([^\]]*)\]\(\s*(\S+?)(?:\s+"[^"]*")?\s*\)$/;
+	const IMAGE_ITEM_RE = /^[-*]\s+!\[([^\]]*)\]\(\s*(\S+?)(?:\s+"[^"]*")?\s*\)$/;
+
+	function parseMediaBlock(lines) {
+		let i = 0;
+		while (i < lines.length && lines[i].trim() === '') i++;
+
+		const images = [];
+		const re = IMAGE_ITEM_RE.test(lines[i] ?? '') ? IMAGE_ITEM_RE : IMAGE_LINE_RE;
+		while (i < lines.length && re.test(lines[i])) {
+			const m = lines[i].match(re);
+			images.push({ alt: m[1], src: m[2] });
+			i++;
+		}
+		return { images, caption: lines.slice(i) };
+	}
+
+	function serializeMediaLines(images, captionLines) {
+		const line = (im) => `![${im.alt || ''}](${im.src})`;
+		const head = images.length === 1 ? [line(images[0])] : images.map(im => `- ${line(im)}`);
+		const caption = captionLines.slice();
+		while (caption.length && caption[0].trim() === '') caption.shift();
+		return caption.length ? [...head, '', ...caption] : head;
+	}
+
+	function isMediaBlock(node) {
+		return parseMediaBlock(getBlockText(node).split('\n')).images.length > 0;
+	}
+
+	// Mock media library. The Playground is served statically, so there is no way
+	// to list a folder — the set is derived from two naming rules instead of a
+	// 126-entry manifest. Renaming either folder breaks tiles loudly in the picker.
+	const MEDIA_LIBRARY = [
+		...Array.from({ length: 8 }, (_, i) => ({
+			id: `nui-${i + 1}`,
+			label: `NUI plate ${i + 1}`,
+			collection: 'NUI plates',
+			variants: 'webp',
+			src: `images/nui_${i + 1}.webp`,
+			thumb: `images/nui_${i + 1}.webp`
+		})),
+		...Array.from({ length: 118 }, (_, i) => {
+			const n = String(i + 1).padStart(3, '0');
+			return {
+				id: n,
+				label: `Plate ${n}`,
+				collection: 'Random Picts',
+				variants: '160p · 1080p',
+				src: `images/Random_Picts/1080p/${n}.webp`,
+				thumb: `images/Random_Picts/160p/${n}.webp`
+			};
+		})
+	];
+
+	// A block only stores the full-size path, so previews fall back to it. Library
+	// entries resolve to their 160p sibling — strip and picker stay cheap.
+	function libThumb(src) {
+		return MEDIA_LIBRARY.find(m => m.src === src)?.thumb ?? src;
+	}
+
+	// Presets are split by which block owns them: `image:icon` renders as prose
+	// with a decorative badge from its `icon=` attribute, so it is a leaf preset,
+	// not a media one.
+	const LEAF_PRESETS = [
+		{ value: '', label: 'Standard Prose' },
+		{ value: 'lead', label: 'Lead Paragraph' },
+		{ value: 'card:note', label: 'Card: Note' },
+		{ value: 'card:warning', label: 'Card: Warning' },
+		{ value: 'card:stat', label: 'Card: Stat' },
+		{ value: 'image:icon', label: 'Media: Icon' },
+		{ value: 'link:cta', label: 'Link: CTA' }
+	];
+
+	// Gallery presets come from the MD-Blocks demo document; the lead image is the
+	// prominent plate in every one of them, which is why the strip can promote.
+	const MEDIA_PRESETS = [
+		{ value: '', label: 'Media: Figure' },
+		{ value: 'image:hero', label: 'Media: Hero' },
+		{ value: 'gallery:featured', label: 'Gallery: Featured' },
+		{ value: 'gallery:row', label: 'Gallery: Row' },
+		{ value: 'gallery:mosaic', label: 'Gallery: Mosaic' }
+	];
 
 	function moveSection(index, direction) {
 		const main = currentDoc.mains?.[0];
@@ -830,7 +1203,7 @@ export function initBlocksEditor(element, params, nui) {
 		} catch {
 			nui.components.banner.show({
 				content: 'Failed to copy to clipboard',
-				priority: 'warning',
+				priority: 'alert',
 				autoClose: 3000
 			});
 		}
@@ -856,9 +1229,10 @@ export function initBlocksEditor(element, params, nui) {
 	});
 
 	// ── NUI Helpers ──
-	function createNuiIconButton(iconName, title, onClick) {
+	function createNuiIconButton(iconName, title, onClick, extraClass = '') {
 		const nuiBtn = document.createElement('nui-button');
 		nuiBtn.setAttribute('variant', 'icon');
+		if (extraClass) nuiBtn.classList.add(extraClass);
 		const btn = document.createElement('button');
 		btn.type = 'button';
 		btn.title = title;
@@ -873,11 +1247,23 @@ export function initBlocksEditor(element, params, nui) {
 		return nuiBtn;
 	}
 
-	function createAddStrip(onClick, extraClass = '') {
+	// Add strips are anchored to one edge of their container. The strip at the
+	// top of a list hangs off the block below it; every other strip hangs off the
+	// block above it. The edge is picked by which factory you call — there is no
+	// position string to get wrong.
+	function addStripTop(onClick, extraClass = '') {
+		return createAddStrip(onClick, 'add-top', extraClass);
+	}
+
+	function addStripBottom(onClick, extraClass = '') {
+		return createAddStrip(onClick, 'add-bottom', extraClass);
+	}
+
+	function createAddStrip(onClick, edge, extraClass = '') {
 		const strip = document.createElement('div');
-		strip.className = `editor-add-strip ${extraClass}`.trim();
+		strip.className = `editor-add-strip ${edge} ${extraClass}`.trim();
 		strip.innerHTML = `
-			<button type="button" class="add-icon-btn" title="Add Block">
+			<button type="button" class="add-icon-btn ${edge}" title="Add Block">
 				<nui-icon name="add_circle"></nui-icon>
 			</button>
 		`;
