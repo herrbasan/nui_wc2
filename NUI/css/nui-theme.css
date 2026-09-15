@@ -2790,12 +2790,19 @@ nui-select.is-loading .nui-select-value {
 	opacity: 0.7;
 }
 
-/* Value Display */
+/* Value Display — a flex ITEM, deliberately not a flex CONTAINER.
+   `text-overflow` applies to the block container that directly holds the inline
+   content. As `display: flex` the value text was wrapped in an anonymous flex item,
+   so the ellipsis never applied while `overflow: hidden` still clipped: the rule
+   read as truncation and behaved as a hard cut mid-glyph (issue #31). `min-width: 0`
+   is what lets the item shrink below its content — a flex item's automatic minimum
+   size is its content — so without it a long value widens the control instead of
+   truncating inside it. The parent control centres its items, so the box stays
+   content-height and needs no centring of its own. */
 .nui-select-value {
 	flex: 1;
-	display: flex;
-	align-items: center;
-	height: 100%;
+	min-width: 0;
+	display: block;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -5237,6 +5244,30 @@ nui-markdown p > img {
 	margin-block-end: 0;
 }
 
+/* A REFUSED media destination is reported, not silent. Rendering the alt text alone
+   made a policy refusal byte-identical to a mistyped path — three different
+   situations (forbidden destination, wrong filename, missing asset) collapsed into
+   one output with no way to tell them apart (issue #34). The marker keeps the alt
+   text visible, carries the refused destination and the reason for audit, and is
+   deliberately unstyled-looking: it must read as a deliberate refusal, not as an
+   image that failed to load. */
+.nui-md-media-rejected {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--nui-space-quarter);
+	padding: 0 var(--nui-space-half);
+	border: dashed var(--border-thickness) var(--border-shade3);
+	border-radius: var(--border-radius1);
+	color: var(--text-color-dim);
+	font-size: var(--font-size-small);
+	cursor: help;
+}
+.nui-md-media-rejected::before {
+	content: '\2298';
+	font-size: var(--font-size-medium);
+	line-height: 1;
+}
+
 /* Presets map a semantic name to treatment. The label word in a note or warning is
    authored in the Markdown and is never injected here, so the message survives
    losing its styling. An unknown preset is valid syntax that renders plain. */
@@ -5369,6 +5400,17 @@ nui-markdown p > img {
 	box-shadow: 0 0 0 4px var(--color-base);
 }
 
+/* A link/cta block is a row of ACTIONS, not a list of things: the family owns the
+   output element (a <nav>) and the links are its direct children, so the row's
+   spacing comes from the container rather than from list-item markers and
+   paragraph margins. */
+.nui-preset-link,
+.nui-preset-cta {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--nui-space-half);
+}
 .nui-preset-cta {
 	font-size: var(--font-size-medium);
 }

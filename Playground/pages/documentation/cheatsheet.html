@@ -56,6 +56,86 @@
 		<nui-button variant="ghost">Ghost</nui-button>
 	</div>
 	
+	<h3>Form Row</h3>
+	<p>Every form control in one row at a uniform height. The row declares the height; the children inherit it.</p>
+	<div class="demo-chrome">
+		<nui-form-row>
+			<nui-select>
+				<select name="cheatsheet-row-select">
+					<option value="apple">Apple</option>
+					<option value="banana">Banana</option>
+					<option value="cherry">Cherry</option>
+				</select>
+			</nui-select>
+			
+			<nui-input>
+				<input type="text" placeholder="Search...">
+			</nui-input>
+			
+			<nui-button><button type="button">Search</button></nui-button>
+			
+			<nui-button variant="icon">
+				<button type="button" aria-label="Settings">
+					<nui-icon name="settings"></nui-icon>
+				</button>
+			</nui-button>
+			
+			<nui-checkbox variant="switch">
+				<input type="checkbox" name="cheatsheet-row-toggle" checked>
+				<label>Toggle</label>
+			</nui-checkbox>
+			
+			<nui-checkbox>
+				<input type="checkbox" name="cheatsheet-row-check">
+				<label>Checkbox</label>
+			</nui-checkbox>
+			
+			<nui-slider>
+				<input type="range" min="0" max="100" value="50">
+			</nui-slider>
+		</nui-form-row>
+	</div>
+	
+	<h3>Form Row — Compact</h3>
+	<p><code>&lt;nui-form-row size="small"&gt;</code> drops the whole row to 2rem. Declare it on the row — never per control.</p>
+	<div class="demo-chrome">
+		<nui-form-row size="small">
+			<nui-select>
+				<select name="cheatsheet-row-select-small">
+					<option value="apple">Apple</option>
+					<option value="banana">Banana</option>
+					<option value="cherry">Cherry</option>
+				</select>
+			</nui-select>
+			
+			<nui-input>
+				<input type="text" placeholder="Search...">
+			</nui-input>
+			
+			<nui-button><button type="button">Search</button></nui-button>
+			
+			<nui-button variant="icon">
+				<button type="button" aria-label="Settings">
+					<nui-icon name="settings"></nui-icon>
+				</button>
+			</nui-button>
+			
+			<nui-checkbox variant="switch">
+				<input type="checkbox" name="cheatsheet-row-toggle-small" checked>
+				<label>Toggle</label>
+			</nui-checkbox>
+			
+			<nui-checkbox>
+				<input type="checkbox" name="cheatsheet-row-check-small">
+				<label>Checkbox</label>
+			</nui-checkbox>
+			
+			<nui-slider>
+				<input type="range" min="0" max="100" value="50">
+			</nui-slider>
+		</nui-form-row>
+	</div>
+	
 	<h3>Dialog Placements</h3>
 	<div class="demo-chrome">
 		<nui-button-container gap="1rem">

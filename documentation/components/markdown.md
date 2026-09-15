@@ -158,6 +158,8 @@ Right.
 | `<!-- mb:var name= value= -->` | **Surfaced as data.** Rendered as a `<dl class="nui-blocks-var">` data card at the position it was authored: the name in monospace, a `value=` scalar beside it, and a fenced `json`/`text` payload pretty-printed through `<nui-code>` (highlighted and copyable). A collection renderer reads `section.vars` and emits nothing here. |
 | Media block | A block whose **first node** is an image (including empty alt text `![](...)`), image list, or media link becomes `<figure>` + `<figcaption>`. Everything after the media is the caption. `kind` is inferred from the extension. |
 | `icon=` attribute | `preset=image:icon` with `icon=<path>` injects a decorative badge from the directive, so generic previews show clean prose with no stray image line. |
+| `preset=link` / `preset=link:cta` | An **action row**: the block is a `<nav>` and the links are its direct children (`<nav><a>…</a><a>…</a></nav>`). The Markdown list — or the single paragraph a lone link produces — is dropped, because the family owns the output element and the authored shape is not the output shape. Row spacing comes from the container's flex gap, so an action row is never announced as "list, 2 items". A block mixing prose with links is left as authored. |
+| Refused media destination | A destination the trust boundary (§8: executable schemes, protocol-relative URLs, drive paths — plus `null` from `setMarkdownImagePolicy`) refuses **never becomes a request**. It renders as `<span class="nui-md-media-rejected">` holding the alt text, with the destination and reason on `data-refused-destination` / `data-refused-reason` and a `title`, plus a console warning. This is §7's *"renderer warning, source reference retained"*: a refusal has to be distinguishable from a mistyped path, which renders as an ordinary `<img>` and fails as a broken image. |
 
 `id` becomes an anchor target, `preset` a `nui-preset-*` class, and `label` is editor-only and never rendered. A preset is `family[:modifier[:variant]]` — the family sets the semantic element and class, each further segment adds a `nui-variant-*` / `nui-size-*` class, and a renderer that does not know a segment drops it rather than failing.
 
@@ -189,6 +191,22 @@ nui.util.parseFrontmatter(md);   // { raw, data, content } | null
 nui.util.parseYaml(src);         // object
 nui.util.renderFrontmatter(data);// HTML string | null
 ```
+
+### Media Destinations and the App Boundary
+
+An app embedding rendered Markdown usually owns two questions the renderer cannot answer alone: *which origins are trusted*, and *how a host alias maps to a same-origin proxy path*. Both are app-level hooks, so they are set once and forgotten:
+
+```javascript
+// Rewrite: canonicalize every spelling of a storage origin to one proxy path.
+// Runs BEFORE the policy check, so the trusted URL is what gets requested.
+nui.util.setMarkdownImageRewrite((url) => url.replace(/^https:\/\/storage\./, '/storage/'));
+
+// Policy: fn(url) → boolean. False means "never request this".
+// null (unset) allows everything the trust boundary already passed.
+nui.util.setMarkdownImagePolicy((url) => url.startsWith('/storage/'));
+```
+
+The two hooks are independent, and their effects differ in kind: a **rewrite** changes where a permitted asset comes from, a **policy** refusal changes what the reader sees. A refused destination renders as `.nui-md-media-rejected` (see the table above) rather than silently degrading to alt text, so a document the app has gated can be audited from its own output instead of from the console.
 
 ### Streaming API for AI/LLM Applications
 

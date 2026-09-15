@@ -23,7 +23,7 @@ no block at all — it is chunked by one deterministic rule, identically in ever
 <!-- mb:/block -->
 
 <!-- mb:block id=hero preset=image:hero:bleed label="Hero plate" -->
-![NUI artwork — plate 1](images/nui_1.webp)
+![NUI artwork — plate 1](../../images/nui_1.webp)
 
 Everything after that first image is the block's caption, in ordinary Markdown.
 <!-- mb:/block -->
@@ -61,7 +61,7 @@ When renderers fail or encounter unknown presets, they degrade gracefully to pla
 Editorial layouts often wrap prose around a key illustration. The authored Markdown is simply an image followed by ordinary paragraphs — 100% valid CommonMark that degrades to a standard image-and-caption stack in raw viewers.
 
 <!-- mb:block id=story-left preset=image:left label="Image left text wrap" -->
-![NUI artwork — plate 5](images/nui_5.webp)
+![NUI artwork — plate 5](../../images/nui_5.webp)
 
 ### Editorial Wrap (Left)
 
@@ -71,7 +71,7 @@ In generic previews on GitHub or VS Code, this block renders as a clean plate fo
 <!-- mb:/block -->
 
 <!-- mb:block id=story-right preset=image:right label="Image right text wrap" -->
-![NUI artwork — plate 6](images/nui_6.webp)
+![NUI artwork — plate 6](../../images/nui_6.webp)
 
 ### Editorial Wrap (Right)
 
@@ -81,7 +81,7 @@ On narrow viewports and mobile screens, both variants automatically drop their f
 <!-- mb:/block -->
 
 <!-- mb:block id=story-small preset=image:left:small label="Compact thumbnail wrap" -->
-![NUI artwork — plate 7](images/nui_7.webp)
+![NUI artwork — plate 7](../../images/nui_7.webp)
 
 ### Compact Vignette (`image:left:small`)
 
@@ -94,24 +94,24 @@ Renderers that do not implement `:small` cleanly fall back to the standard `imag
 
 Icons belong to the directive, not the prose. With `preset=image:icon` the asset is referenced by an `icon=` attribute, so generic previews show clean headings and paragraphs — the entire directive vanishes instead of leaving a stray image line.
 
-<!-- mb:block id=feat-runtime preset=image:icon icon=images/icons/bolt.svg alt="Zero build overhead" label="Runtime feature" -->
+<!-- mb:block id=feat-runtime preset=image:icon icon=../../images/icons/bolt.svg alt="Zero build overhead" label="Runtime feature" -->
 ### Zero Build Overhead
 Native web components execute directly in modern browsers without compilation steps, bundlers, or toolchain dependencies.
 <!-- mb:/block -->
 
-<!-- mb:block id=feat-fallback preset=image:icon icon=images/icons/shield.svg alt="Graceful fallback" label="Graceful degradation" -->
+<!-- mb:block id=feat-fallback preset=image:icon icon=../../images/icons/shield.svg alt="Graceful fallback" label="Graceful degradation" -->
 ### Graceful Fallback Everywhere
 No renderer support is required. The directive disappears, the heading and paragraphs stay, and nothing in the document looks broken.
 <!-- mb:/block -->
 
 <!-- mb:columns id=icon-columns weights=[1,1] label="Icon cards" -->
 <!-- mb:col preset=card label="Blocks" -->
-<!-- mb:block preset=image:icon icon=images/icons/blocks.svg alt="Blocks" -->
+<!-- mb:block preset=image:icon icon=../../images/icons/blocks.svg alt="Blocks" -->
 ### Structure as blocks
 Sections, blocks and columns as movable units.
 <!-- mb:/block -->
 <!-- mb:col preset=card label="Columns" -->
-<!-- mb:block preset=image:icon icon=images/icons/columns.svg alt="Columns" -->
+<!-- mb:block preset=image:icon icon=../../images/icons/columns.svg alt="Columns" -->
 ### Parallel reading
 Side-by-side prose without decorative chrome.
 <!-- mb:/block -->
@@ -119,7 +119,7 @@ Side-by-side prose without decorative chrome.
 
 An image authored **directly inside a heading** also scales to the heading's font size — an inline affordance for enhanced document and slide renderers, at the cost of looking wrong in generic previews:
 
-### ![Blocks icon](images/icons/media.svg) Direct Heading Icon
+### ![Blocks icon](../../images/icons/media.svg) Direct Heading Icon
 
 Prefer the `icon=` attribute form above whenever the same document has to read well on GitHub.
 
@@ -145,7 +145,7 @@ never reordered by CSS alone.
 2. Something worth showing.
 3. Something worth keeping.
 
-![NUI artwork — plate 2](images/nui_2.webp)
+![NUI artwork — plate 2](../../images/nui_2.webp)
 
 <!-- mb:col preset=card label="The facts" -->
 ## At a glance
@@ -171,10 +171,10 @@ A block that starts with a list of images is a gallery — one movable unit. Cli
 ### 1. Responsive Grid (`preset=gallery`)
 
 <!-- mb:block id=gallery-grid kind=image preset=gallery label="Image grid" -->
-- ![NUI artwork — plate 3](images/nui_3.webp)
-- ![NUI artwork — plate 4](images/nui_4.webp)
-- ![NUI artwork — plate 5](images/nui_5.webp)
-- ![NUI artwork — plate 6](images/nui_6.webp)
+- ![NUI artwork — plate 3](../../images/nui_3.webp)
+- ![NUI artwork — plate 4](../../images/nui_4.webp)
+- ![NUI artwork — plate 5](../../images/nui_5.webp)
+- ![NUI artwork — plate 6](../../images/nui_6.webp)
 
 **Plate sequence.** Default gallery renders as a responsive auto-fit grid. Click to inspect in lightbox.
 <!-- mb:/block -->
@@ -182,10 +182,10 @@ A block that starts with a list of images is a gallery — one movable unit. Cli
 ### 2. Featured / Editorial (`preset=gallery:featured`)
 
 <!-- mb:block id=gallery-featured kind=image preset=gallery:featured label="Featured gallery" -->
-- ![NUI artwork — plate 1](images/nui_1.webp)
-- ![NUI artwork — plate 2](images/nui_2.webp)
-- ![NUI artwork — plate 7](images/nui_7.webp)
-- ![NUI artwork — plate 8](images/nui_8.webp)
+- ![NUI artwork — plate 1](../../images/nui_1.webp)
+- ![NUI artwork — plate 2](../../images/nui_2.webp)
+- ![NUI artwork — plate 7](../../images/nui_7.webp)
+- ![NUI artwork — plate 8](../../images/nui_8.webp)
 
 **Featured layout.** The first image is highlighted prominently as the lead plate, with companion shots grouped in a balanced sub-grid below.
 <!-- mb:/block -->
@@ -193,9 +193,9 @@ A block that starts with a list of images is a gallery — one movable unit. Cli
 ### 3. Even Row (`preset=gallery:row`)
 
 <!-- mb:block id=gallery-row kind=image preset=gallery:row label="Gallery row" -->
-- ![NUI artwork — plate 3](images/nui_3.webp)
-- ![NUI artwork — plate 4](images/nui_4.webp)
-- ![NUI artwork — plate 5](images/nui_5.webp)
+- ![NUI artwork — plate 3](../../images/nui_3.webp)
+- ![NUI artwork — plate 4](../../images/nui_4.webp)
+- ![NUI artwork — plate 5](../../images/nui_5.webp)
 
 **Contained banner row.** A single horizontal row that divides the full width equally without overflow or scrollbars.
 <!-- mb:/block -->
@@ -203,9 +203,9 @@ A block that starts with a list of images is a gallery — one movable unit. Cli
 ### 4. Editorial Mosaic (`preset=gallery:mosaic`)
 
 <!-- mb:block id=gallery-mosaic kind=image preset=gallery:mosaic label="Mosaic gallery" -->
-- ![NUI artwork — plate 6](images/nui_6.webp)
-- ![NUI artwork — plate 7](images/nui_7.webp)
-- ![NUI artwork — plate 8](images/nui_8.webp)
+- ![NUI artwork — plate 6](../../images/nui_6.webp)
+- ![NUI artwork — plate 7](../../images/nui_7.webp)
+- ![NUI artwork — plate 8](../../images/nui_8.webp)
 
 **Asymmetric mosaic.** Architectural layout featuring one tall lead image paired with two stacked companion plates.
 <!-- mb:/block -->

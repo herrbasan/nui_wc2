@@ -6971,23 +6971,39 @@ function mbOpenTag(tag, base, attrs, extra, extraAttrs) {
 	return `<${tag} class="${cls.join(' ')}"${id}${x}`;
 }
 
+// A refused media destination leaves a MARKER in the output, not just a line in the
+// console. Dropping the destination and rendering the alt text — which is what this
+// did — made "refused by policy" and "path is wrong" byte-identical in the rendered
+// document, so the one outcome that needs a decision looked exactly like the one
+// that needs a typo fixed, and neither could be told from a missing asset. The
+// reader of a document cannot open the console. Spec §7 asks for the opposite:
+// "renderer warning, source reference retained" — the alt text stays visible and
+// the refused destination stays recoverable from the marker itself.
+function mdRejectedMedia(reason, destination, alt) {
+	const text = String(alt == null ? '' : alt);
+	const dest = String(destination == null ? '' : destination);
+	console.warn(`[nui-markdown] refused media destination (${reason}): ${dest}`);
+	return `<span class="nui-md-media-rejected" role="img"`
+		+ ` aria-label="${fmEscape(text ? text + ' — media refused' : 'media refused')}"`
+		+ ` title="Refused (${fmEscape(reason)}): ${fmEscape(dest)}"`
+		+ ` data-refused-destination="${fmEscape(dest)}"`
+		+ ` data-refused-reason="${fmEscape(reason)}">${fmEscape(text)}</span>`;
+}
+
 // A media destination is a relative path or an http(s) URL. Everything else is
 // refused per the spec's trust boundary (§8): executable schemes, protocol-relative
-// URLs, drive paths. Document input is a boundary, so a refusal is reported rather
-// than silently rendered — and the asset simply does not appear.
+// URLs, drive paths. Document input is a boundary, so a refusal is REPORTED — the
+// caller turns `refused` into a marker the reader can see, because a console warning
+// is not a report to the person reading the document. Returns `{ dest }` when
+// permitted (a null `dest` means the attribute was absent), `{ refused }` with the
+// reason when not.
 function mbSafeDest(dest) {
 	const d = String(dest == null ? '' : dest).trim();
-	if (!d) return null;
-	if (/^https?:\/\//i.test(d)) return d;
-	if (/^[a-z][a-z0-9+.-]*:/i.test(d)) {
-		console.warn(`[nui-markdown] refused media destination (scheme not allowed): ${d}`);
-		return null;
-	}
-	if (d.startsWith('//') || /^[a-z]:[\\/]/i.test(d)) {
-		console.warn(`[nui-markdown] refused media destination (absolute path): ${d}`);
-		return null;
-	}
-	return d;
+	if (!d) return { dest: null };
+	if (/^https?:\/\//i.test(d)) return { dest: d };
+	if (/^[a-z][a-z0-9+.-]*:/i.test(d)) return { refused: 'scheme not allowed' };
+	if (d.startsWith('//') || /^[a-z]:[\\/]/i.test(d)) return { refused: 'absolute or protocol-relative path' };
+	return { dest: d };
 }
 
 function mbRenderBlock(block) {
@@ -6996,10 +7012,13 @@ function mbRenderBlock(block) {
 
 	// `icon=` carries an asset reference in the directive rather than in the body, so
 	// generic previews show clean prose with no stray image line. The preset decides
-	// how the icon is presented; the attribute is only meaningful alongside it.
-	const iconDest = p && p.family === 'image' && p.modifier === 'icon'
-		? mbSafeDest(block.attrs && block.attrs.icon)
-		: null;
+	// how the icon is presented; the attribute is only meaningful alongside it. A
+	// refused destination is not a reason to drop the block: the caption is content
+	// the directive asked to show, so the figure is still emitted around a marker.
+	const iconAttr = p && p.family === 'image' && p.modifier === 'icon'
+		? String((block.attrs && block.attrs.icon) || '').trim()
+		: '';
+	const icon = iconAttr ? mbSafeDest(iconAttr) : null;
 
 	if (media) {
 		const extra = ['nui-blocks-media', `nui-blocks-${media.kind}`];
@@ -7009,27 +7028,29 @@ function mbRenderBlock(block) {
 		return `${open}>${media.mediaHtml}${caption}</figure>`;
 	}
 
-	if (iconDest) {
+	if (iconAttr) {
 		// The icon <img> is emitted here, outside markdownCore — the app-level
 		// rewrite/policy hooks (which canonicalize /storage/... to the app's
 		// same-origin proxy path and gate trust) never see it otherwise, and
 		// the raw destination 404s wherever only a path prefix is routed
 		// (nui_wc2#33). Same treatment an inline markdown image gets.
-		let iconUrl = iconDest;
-		if (_mdDocBase && !/^[a-z][a-z0-9+.-]*:/i.test(iconUrl) && !iconUrl.startsWith('/') && !iconUrl.startsWith('#')) {
-			try { iconUrl = new URL(iconUrl, _mdDocBase).href; } catch (e) { /* unparsable base — leave as authored */ }
-		}
-		if (typeof markdownImageRewrite === 'function') {
-			const rewritten = markdownImageRewrite(iconUrl);
-			if (typeof rewritten === 'string' && rewritten.length > 0) iconUrl = rewritten;
-		}
-		if (typeof markdownImagePolicy === 'function' && !markdownImagePolicy(iconUrl)) {
-			console.warn(`[nui-markdown] refused icon destination (policy): ${iconUrl}`);
-			return '';
+		let iconUrl = icon.dest;
+		if (iconUrl) {
+			if (_mdDocBase && !/^[a-z][a-z0-9+.-]*:/i.test(iconUrl) && !iconUrl.startsWith('/') && !iconUrl.startsWith('#')) {
+				try { iconUrl = new URL(iconUrl, _mdDocBase).href; } catch (e) { /* unparsable base — leave as authored */ }
+			}
+			if (typeof markdownImageRewrite === 'function') {
+				const rewritten = markdownImageRewrite(iconUrl);
+				if (typeof rewritten === 'string' && rewritten.length > 0) iconUrl = rewritten;
+			}
+			if (typeof markdownImagePolicy === 'function' && !markdownImagePolicy(iconUrl)) iconUrl = null;
 		}
 		const open = mbOpenTag('figure', 'nui-blocks-block', block.attrs, 'nui-blocks-media nui-blocks-image');
-		const alt = fmEscape(block.attrs.alt || '');
-		return `${open}><img src="${fmEscape(iconUrl)}" alt="${alt}" loading="lazy"><figcaption>${mbRenderNodes(block.nodes)}</figcaption></figure>`;
+		const alt = block.attrs.alt || '';
+		const mediaHtml = iconUrl
+			? `<img src="${fmEscape(iconUrl)}" alt="${fmEscape(alt)}" loading="lazy">`
+			: mdRejectedMedia(icon.refused || 'destination not permitted', iconAttr, alt);
+		return `${open}>${mediaHtml}<figcaption>${mbRenderNodes(block.nodes)}</figcaption></figure>`;
 	}
 
 	let tag = 'div';
@@ -7051,6 +7072,7 @@ function mbRenderBlock(block) {
 	}
 
 	let content = mbRenderNodes(block.nodes);
+	if (p && (p.family === 'link' || p.family === 'cta')) content = mbActionList(content);
 	if (p && (p.modifier === 'fit' || p.variant === 'fit')) {
 		content = content.replace(/(<table[^>]*>\s*<thead>\s*<tr>)([\s\S]*?)(<\/tr>\s*<\/thead>)/i, (match, openTr, ths, closeTr) => {
 			const newThs = ths.replace(/<th>([^<]+)<\/th>/g, (m, text) => {
@@ -7063,6 +7085,34 @@ function mbRenderBlock(block) {
 
 	const open = mbOpenTag(tag, 'nui-blocks-block', block.attrs, null, extraAttrs);
 	return `${open}>${content}</${tag}>`;
+}
+
+// A `link` block is a set of ACTIONS, not a list of things. The authored Markdown is
+// a bullet list only because that is the shape a set of links takes in Markdown; the
+// family owns the output element (spec §5 — "the family sets the semantic element and
+// class", the authored shape is not the output shape). Left as a list, a
+// call-to-action row is announced as "list, 2 items / list item" — structure that
+// carries no meaning for an action row and reads as a document outline that is not
+// there. The list scaffolding is dropped so the links are direct children of the
+// block's <nav>; the container supplies the spacing instead.
+//
+// The single-link form is a paragraph rather than a list, so it is unwrapped too —
+// otherwise one action and two actions would lay out differently for no reason. Any
+// other shape (prose mixed with the links, a nested list) is left exactly as authored:
+// guessing at an unfamiliar structure is worse than showing it.
+function mbActionList(html) {
+	const trimmed = String(html).trim();
+	const list = trimmed.match(/^<(ul|ol)>([\s\S]*)<\/\1>$/);
+	if (list) {
+		const items = list[2].match(/<li>[\s\S]*?<\/li>/g);
+		// Only when the list holds nothing BUT list items — a nested list would not
+		// round-trip through the non-greedy item match, so it fails this test and is
+		// returned untouched.
+		if (!items || items.join('') !== list[2].trim()) return html;
+		return items.map((item) => item.replace(/^<li>([\s\S]*)<\/li>$/, '$1')).join('\n');
+	}
+	const para = trimmed.match(/^<p>([\s\S]*)<\/p>$/);
+	return para ? para[1] : html;
 }
 
 function mbRenderColumns(columns) {
@@ -7277,7 +7327,11 @@ function markdownCore(md) {
 	};
 	html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (m, alt, src) => {
 		let url = safeUrl(src);
-		if (!url) return alt;
+		// Both refusals below are MARKED in the output. Returning the alt text alone
+		// made a refused destination indistinguishable from a mistyped one (issue
+		// #34) — the rendered document has to say which happened, because that is the
+		// difference between "fix your path" and "the policy forbids this".
+		if (!url) return hold(mdRejectedMedia('scheme not allowed', src.trim(), alt));
 		// Document base (issue #38): a document rendered from a URL has relative
 		// destinations resolve against that URL — the same rule every real
 		// viewer (GitHub, VS Code, Obsidian) applies. Resolved BEFORE the app
@@ -7300,8 +7354,11 @@ function markdownCore(md) {
 			if (typeof rewritten === 'string' && rewritten.length > 0) url = rewritten;
 		}
 		// App-level origin allow-list (setMarkdownImagePolicy): an image whose
-		// source the app does not trust renders as its alt text, never as a request.
-		if (typeof markdownImagePolicy === 'function' && !markdownImagePolicy(url)) return alt;
+		// source the app does not trust is never requested — and the refusal is
+		// reported in the output rather than swallowed into alt text (issue #34).
+		if (typeof markdownImagePolicy === 'function' && !markdownImagePolicy(url)) {
+			return hold(mdRejectedMedia('destination not permitted', url, alt));
+		}
 		return hold(`<img src="${url}" alt="${alt}">`);
 	});
 	html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (m, text, href) => {

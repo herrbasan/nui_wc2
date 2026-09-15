@@ -353,8 +353,18 @@ nui.registerPage('components/dialog', {
 												</select>
 											</nui-select>
 										</nui-input-group>
-										<nui-field label="Notifications"><nui-toggle checked></nui-toggle></nui-field>
-										<nui-field label="Enable beta features"><nui-toggle></nui-toggle></nui-field>
+										<nui-input-group>
+											<label>Notifications</label>
+											<nui-checkbox variant="switch">
+												<input type="checkbox" name="notifications" checked>
+											</nui-checkbox>
+										</nui-input-group>
+										<nui-input-group>
+											<label>Beta features</label>
+											<nui-checkbox variant="switch">
+												<input type="checkbox" name="beta">
+											</nui-checkbox>
+										</nui-input-group>
 									</nui-form>
 								</section>
 		
@@ -381,8 +391,9 @@ nui.registerPage('components/dialog', {
 									const email = main.querySelector('input[type="email"]')?.value;
 									const role = main.querySelector('nui-select select')?.value;
 									const theme = main.querySelectorAll('nui-select select')[1]?.value;
-									const notifications = main.querySelector('nui-toggle')?.checked;
-									const beta = main.querySelectorAll('nui-toggle')[1]?.checked;
+									const switchOn = (name) => !!main.querySelector(`input[name="${name}"]`)?.checked;
+									const notifications = switchOn('notifications');
+									const beta = switchOn('beta');
 									const description = main.querySelector('nui-rich-text')?.value;
 		
 									valuesEl.textContent = JSON.stringify({

@@ -56,7 +56,7 @@ Every slide in this deck is composed inside an invariant $16:9$ canvas, scaled t
 <!-- mb:columns weights=[1,1] -->
 <!-- mb:col -->
 <!-- mb:block id=slide-plate preset=image:hero -->
-![NUI Concept 1](images/nui_1.webp)
+![NUI Concept 1](../../images/nui_1.webp)
 
 Media blocks automatically map to `<figure>` and `<figcaption>`.
 <!-- mb:/block -->
