@@ -187,7 +187,7 @@ inner.innerHTML = '<option value="us">United States</option>';
 | `searchable` | boolean | Enables real-time text-filtering of select options. |
 | `mobile-sheet` | boolean | Forces mobile bottom-sheet UI presentation instead of dropdowns. *(Automatically engaged on devices <= 640px wide).* |
 | `placeholder` | string | Prompt text shown when nothing is selected. Takes precedence over the disabled-blank-option idiom. Display text only — it is never a selectable row. See [the None-State Model](#the-none-state-model). |
-| `size` | string | `"small"` gives the compact 2rem control for toolbars and card headers, and narrows the host to its content instead of stretching to 100%. Omit for the full-height form control (`--nui-form-row-height`, 2.5rem). |
+| `size` | string | `"small"` gives the compact 2rem control for toolbars and card headers, and narrows the host to its content instead of stretching to 100%. Only the *height* is compact: the horizontal padding is the base control's (`var(--nui-space)`, which is also `button`'s), so a compact select and a compact button line their text up on the same inset rather than needing per-control tuning. Omit for the full-height form control (`--nui-form-row-height`, 2.5rem). |
 
 ## Programmatic Usage
 
