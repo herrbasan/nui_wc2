@@ -6952,12 +6952,22 @@ function mbParsePreset(value) {
 	};
 }
 
+// Families the renderer knows how to treat. Anything else renders plain — valid
+// syntax, but the degradation contract (spec §5: "visible renderer diagnostic")
+// requires the unknown token to be reported, so each one warns once per session.
+const MB_KNOWN_PRESET_FAMILIES = new Set(['card', 'image', 'gallery', 'link', 'list', 'table', 'page-break', 'band', 'cover', 'lead', 'note', 'warning', 'cta']);
+const mbUnknownPresetSeen = new Set();
+
 // `id` becomes an anchor target, `preset` produces semantic classes. `label` is editor-only
 // and is never rendered.
 function mbOpenTag(tag, base, attrs, extra, extraAttrs) {
 	const cls = [base];
 	if (extra) cls.push(extra);
 	const p = mbParsePreset(attrs && attrs.preset);
+	if (p && !MB_KNOWN_PRESET_FAMILIES.has(p.family) && !mbUnknownPresetSeen.has(p.parts.join(':'))) {
+		mbUnknownPresetSeen.add(p.parts.join(':'));
+		console.warn(`[nui-markdown] unknown preset "${p.parts.join(':')}" — content rendered plain (graceful degradation, spec §5).`);
+	}
 	if (p) {
 		cls.push('nui-preset-' + p.family);
 		if (p.modifier) cls.push('nui-variant-' + p.modifier);

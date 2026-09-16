@@ -5454,16 +5454,116 @@ nui-markdown p > img {
 }
 /* `band` is a section that occupies a DIFFERENT SURFACE from the page — one step
    away in each scheme, not a black panel: slightly darker in light, slightly lighter
-   in dark. Named for the shape (a full-width banded region), so the renderer is free
-   to retune the surface per scheme without the name becoming a lie. Text stays the
-   normal text colour in both, so anything nested inside (a card, a table, a caption)
-   inherits a readable colour instead of the band's inverted one. */
+   in dark. Named for the shape (a banded region), so the renderer is free to retune
+   the surface per scheme without the name becoming a lie. It renders FLAT — no
+   border, no radius: the background is flush with the content column's edges and the
+   content keeps the normal page padding, so a band is a surface, never a card.
+   Full-viewport bands are a site-level concern (a class on the site's stylesheet),
+   never part of the document. */
 .nui-preset-band {
 	padding: var(--nui-space);
 	background: light-dark(var(--color-shade3), var(--color-shade2));
 	color: var(--text-color);
-	border: solid var(--border-thickness) light-dark(var(--border-shade1), var(--border-shade2));
-	border-radius: var(--border-radius1);
+}
+
+/* `inverted` flips the band to the high-contrast counter-surface: the theme's text
+   colour as background, the page colour as text (spec §5.1 — "a fully inverted
+   theme in another [renderer]"). */
+.nui-preset-band.nui-variant-inverted {
+	background: var(--text-color);
+	color: var(--color-base);
+}
+
+/* `cover` — the section's media block IS the background (object-fit: cover); the
+   block's caption renders as overlay text at the bottom, with a scrim for legibility
+   over any image. The section's height is an ASPECT RATIO relative to the document's
+   width (variant tokens, never raw values — the profile owns what the tokens mean):
+   bare `cover` = 16:9, `cover:square` = 1:1, `cover:banner` = 16:5, `cover:strip` =
+   16:3. Width-relative ratios scale with the column and survive print, where a
+   viewport unit would be meaningless. List form fills with the lead image;
+   multi-item arrangements are placement variants (filmstrip et al). */
+.nui-blocks-section.nui-preset-cover {
+	display: grid;
+	overflow: hidden;
+	padding: 0;
+	max-width: 100%;
+}
+/* The ratio is a width-relative spacer: an in-flow pseudo whose padding-top is a
+   percentage of the section's WIDTH. Unlike the aspect-ratio property, this can
+   never feed back into the width (no horizontal scroll on narrow containers),
+   and a caption taller than the ratio simply grows the section instead of
+   clipping — the caption's own height is the natural floor. */
+.nui-blocks-section.nui-preset-cover::before {
+	content: '';
+	grid-area: 1 / 1;
+	padding-top: 56.25%; /* 16:9 wide */
+}
+.nui-blocks-section.nui-preset-cover.nui-variant-square::before { padding-top: 100%; }
+.nui-blocks-section.nui-preset-cover.nui-variant-banner::before { padding-top: 31.25%; }
+.nui-blocks-section.nui-preset-cover.nui-variant-strip::before { padding-top: 18.75%; }
+
+/* display:contents dissolves the figure box so the media and the caption become
+   grid children of the section itself: media absolutely fills cell 1/1, the
+   caption stacks above it in-flow at the bottom. The caption's own height is the
+   section's natural floor — no magic min-height, so ratios stay distinct at every
+   width and a tall caption grows the section instead of clipping. */
+.nui-blocks-section.nui-preset-cover > .nui-blocks-media {
+	display: contents;
+}
+.nui-blocks-section.nui-preset-cover > .nui-blocks-media > p,
+.nui-blocks-section.nui-preset-cover > .nui-blocks-media > ul {
+	grid-area: 1 / 1;
+	position: relative;
+	height: 100%;
+	margin: 0;
+	padding: 0;
+}
+.nui-blocks-section.nui-preset-cover > .nui-blocks-media > p > img {
+	position: absolute;
+	inset: 0;
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	border-radius: 0;
+}
+/* List form in a cover splits the section into an even row, every item filling
+   its share — the spec default for multiple items (static, no JS; slideshow
+   rotation is an enhanced-renderer concern, not spec law). A hairline gap keeps
+   the plates distinct without breaking the band. */
+.nui-blocks-section.nui-preset-cover > .nui-blocks-media > ul {
+	display: flex;
+	gap: 0.25rem;
+	list-style: none;
+}
+.nui-blocks-section.nui-preset-cover > .nui-blocks-media > ul > li {
+	flex: 1 1 0;
+	min-width: 0;
+	margin: 0;
+	position: relative;
+}
+.nui-blocks-section.nui-preset-cover > .nui-blocks-media > ul > li > p {
+	height: 100%;
+	margin: 0;
+}
+.nui-blocks-section.nui-preset-cover > .nui-blocks-media > ul > li img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	border-radius: 0;
+}
+.nui-blocks-section.nui-preset-cover > .nui-blocks-media figcaption {
+	grid-area: 1 / 1;
+	align-self: end;
+	position: relative;
+	z-index: 1;
+	padding: var(--nui-space);
+	background: linear-gradient(transparent, rgba(0, 0, 0, 0.55));
+	color: #fff;
+}
+.nui-blocks-section.nui-preset-cover > .nui-blocks-media figcaption > :last-child {
+	margin-bottom: 0;
 }
 
 /* Table presets */

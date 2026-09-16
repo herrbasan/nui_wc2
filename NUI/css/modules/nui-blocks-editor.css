@@ -232,6 +232,127 @@ nui-main > .content-page > .page-blocks-editor[breakout],
 	padding: var(--nui-space-quarter) var(--nui-space-half);
 	border-bottom: 1px solid var(--be-section-border);
 	gap: var(--nui-space-half);
+	position: relative;
+}
+
+/* Template chip — the section's current function (Hero / Band), derived from
+   its preset + content shape, never stored. */
+.page-blocks-editor .section-template-chip {
+	font-size: var(--font-size-xsmall);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--text-color-dim);
+	border: var(--border-thickness) solid var(--border-shade2);
+	border-radius: var(--border-radius1);
+	padding: 0 var(--nui-space-half);
+	white-space: nowrap;
+}
+
+/* Hero sections are identified by the header's template chip — no card accent.
+   (A colored border reads as a focus/error state, not as a template marker.) */
+
+/* Cover preview: the canvas media frame mirrors the section's cover options —
+   the image fills and crops like the rendered cover, with the same width-relative
+   aspect-ratio tokens the renderer uses (16:9 default, 1:1 / 16:5 / 16:3). */
+.page-blocks-editor .editor-media-card.editor-cover .media-frame {
+	padding: 0;
+	max-height: none;
+	height: auto;
+	aspect-ratio: 16 / 9;
+}
+.page-blocks-editor .editor-media-card.editor-cover.editor-cover-square .media-frame {
+	aspect-ratio: 1 / 1;
+}
+.page-blocks-editor .editor-media-card.editor-cover.editor-cover-banner .media-frame {
+	aspect-ratio: 16 / 5;
+}
+.page-blocks-editor .editor-media-card.editor-cover.editor-cover-strip .media-frame {
+	aspect-ratio: 16 / 3;
+}
+/* Cover preview: the canvas media frame mirrors the section's cover options —
+   the frame gets the width-relative ratio and the image simply fills it
+   (object-fit: cover). display: block matters: the base frame is a flex box,
+   and flex stretch makes the percentage height circular — a plain block
+   resolves it. */
+.page-blocks-editor .editor-media-card.editor-cover .media-frame {
+	display: block;
+}
+.page-blocks-editor .editor-media-card.editor-cover .media-frame img {
+	width: 100%;
+	height: 100%;
+	max-width: none;
+	max-height: none;
+	object-fit: cover;
+}
+
+/* Cover caption ghost: the caption overlays the frame's bottom (same scrim as
+   the renderer) so thin ratios honestly show how little image remains visible.
+   Read-only; the caption is edited in the field below. */
+.page-blocks-editor .editor-media-card .frame-caption {
+	display: none;
+}
+.page-blocks-editor .editor-media-card.editor-cover .frame-caption {
+	display: block;
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	z-index: 1;
+	padding: var(--nui-space-half) var(--nui-space);
+	background: linear-gradient(transparent, rgba(0, 0, 0, 0.55));
+	color: #fff;
+	pointer-events: none;
+	overflow: hidden;
+	max-height: 100%;
+}
+.page-blocks-editor .editor-media-card.editor-cover .frame-caption h1,
+.page-blocks-editor .editor-media-card.editor-cover .frame-caption h2,
+.page-blocks-editor .editor-media-card.editor-cover .frame-caption h3 {
+	font-size: 1.2rem;
+	margin: 0 0 var(--nui-space-quarter);
+}
+.page-blocks-editor .editor-media-card.editor-cover .frame-caption p {
+	margin: 0;
+	font-size: var(--font-size-small);
+}
+.page-blocks-editor .media-frame {
+	position: relative;
+}
+
+/* Section options popover (gear icon). The template decides which rows exist. */
+.page-blocks-editor .section-opts-popover {
+	position: absolute;
+	top: 100%;
+	right: var(--nui-space-half);
+	z-index: 60;
+	min-width: 260px;
+	display: flex;
+	flex-direction: column;
+	gap: var(--nui-space-half);
+	padding: var(--nui-space-half) var(--nui-space);
+	background: var(--color-base);
+	border: var(--border-thickness) solid var(--border-shade1);
+	border-radius: var(--border-radius1);
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.page-blocks-editor .section-opts-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--nui-space);
+	font-size: var(--font-size-small);
+}
+
+.page-blocks-editor .section-opts-row label {
+	color: var(--text-color);
+}
+
+.page-blocks-editor .section-opts-row input[type="checkbox"] {
+	width: 1rem;
+	height: 1rem;
+	accent-color: var(--color-highlight);
+	cursor: pointer;
 }
 
 .page-blocks-editor .section-title-group {

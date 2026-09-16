@@ -41,23 +41,31 @@ export function initBlocksEditor(element, params, nui) {
 					attrs: {},
 					sections: [
 						{
-							attrs: { id: 'sec-1', label: 'Section 1' },
+							attrs: { id: 'sec-1', label: 'Hero', preset: 'cover' },
 							vars: [],
 							nodes: [
 								{
 									type: 'block',
-									attrs: { id: 'block-1', preset: 'image:hero' },
+									attrs: { id: 'block-1' },
 									nodes: [
 										{
 											type: 'md',
 											lines: [
 												'![NUI artwork — plate 1](images/nui_1.webp)',
 												'',
-												'A media block holds one image or many — click a thumbnail to make it the lead.'
+												'# Welcome to NUI Blocks',
+												'',
+												'A visual editor for **MD-Blocks** documents.'
 											]
 										}
 									]
-								},
+								}
+							]
+						},
+						{
+							attrs: { id: 'sec-2', label: 'Section 2', preset: 'band' },
+							vars: [],
+							nodes: [
 								{
 									type: 'block',
 									attrs: { id: 'block-2', preset: 'lead' },
@@ -65,10 +73,9 @@ export function initBlocksEditor(element, params, nui) {
 										{
 											type: 'md',
 											lines: [
-												'# Welcome to NUI Blocks',
+												'## Sections and blocks',
 												'',
-												'This is an interactive visual editor built for **MD-Blocks**.',
-												'Sections turn into page regions or slides, while blocks structure content.'
+												'Sections group content — a section can wear a colored **band** or become a **hero** with a media background. Blocks are the movable units inside.'
 											]
 										}
 									]
@@ -211,8 +218,9 @@ export function initBlocksEditor(element, params, nui) {
 		updateChromeFromDoc();
 
 		main.sections.forEach((sec, sIdx) => {
+			const hero = isHeroSection(sec);
 			const secEl = document.createElement('div');
-			secEl.className = 'editor-section-card';
+			secEl.className = 'editor-section-card' + (hero ? ' section-hero' : '');
 			secEl.dataset.sectionIndex = sIdx;
 
 			// Header
@@ -227,6 +235,15 @@ export function initBlocksEditor(element, params, nui) {
 				<input type="text" class="section-label-input" value="${escapeHtml(sec.attrs?.label || 'Section ' + (sIdx + 1))}" placeholder="Section Title">
 			`;
 
+			// Template chip — the section's current function, derived from its state
+			// (never stored separately; the preset + content shape ARE the template).
+			const chip = document.createElement('span');
+			chip.className = 'section-template-chip';
+			const chipText = hero ? 'Hero' : (String(sec.attrs?.preset || '').startsWith('band') ? 'Band' : '');
+			chip.textContent = chipText;
+			chip.style.display = chipText ? '' : 'none';
+			titleGroup.appendChild(chip);
+
 			const labelInput = titleGroup.querySelector('.section-label-input');
 			labelInput.addEventListener('change', (e) => {
 				sec.attrs = sec.attrs || {};
@@ -237,26 +254,9 @@ export function initBlocksEditor(element, params, nui) {
 			const controlsGroup = document.createElement('div');
 			controlsGroup.className = 'section-controls-group';
 
-			// NUI Select for Surface Preset
-			const presetSelectWrap = document.createElement('nui-select');
-			presetSelectWrap.setAttribute('size', 'small');
-			const nativeSecSelect = document.createElement('select');
-			nativeSecSelect.innerHTML = `
-				<option value="">Default Surface</option>
-				<option value="band" ${sec.attrs?.preset === 'band' ? 'selected' : ''}>Band</option>
-				<option value="cover" ${sec.attrs?.preset === 'cover' ? 'selected' : ''}>Cover</option>
-			`;
-			presetSelectWrap.appendChild(nativeSecSelect);
-			controlsGroup.appendChild(presetSelectWrap);
-			customElements.upgrade(presetSelectWrap);
-
-			presetSelectWrap.addEventListener('nui-change', (e) => {
-				const val = e.detail?.values?.[0] ?? '';
-				sec.attrs = sec.attrs || {};
-				if (val) sec.attrs.preset = val;
-				else delete sec.attrs.preset;
-				syncToOutputs();
-			});
+			// Section options live in a gear popover, not a permanent dropdown — the
+			// template decides which options exist.
+			controlsGroup.appendChild(createNuiIconButton('settings', 'Section options', () => toggleSectionOptions(sec, header, chip)));
 
 			// Reorder / Delete buttons using NUI icon buttons
 			controlsGroup.appendChild(createNuiIconButton('chevron_right', 'Move Up', () => moveSection(sIdx, -1), 'icon-rotate-up'));
@@ -271,8 +271,11 @@ export function initBlocksEditor(element, params, nui) {
 			const contentBody = document.createElement('div');
 			contentBody.className = 'section-content-body';
 
-			// Top Add Block Strip
-			contentBody.appendChild(addStripTop(() => openInsertBlockPalette(sec, 0)));
+			// A hero section holds exactly one media block (template rule), so it gets
+			// no add-block strips — the media card is the whole section.
+			if (!hero) {
+				contentBody.appendChild(addStripTop(() => openInsertBlockPalette(sec, 0)));
+			}
 
 			// Render Nodes
 			const nodesContainer = document.createElement('div');
@@ -288,15 +291,18 @@ export function initBlocksEditor(element, params, nui) {
 				nodesContainer.appendChild(nodeEl);
 
 				// Add strip after each block
-				nodesContainer.appendChild(addStripBottom(() => openInsertBlockPalette(sec, nIdx + 1)));
+				if (!hero) {
+					nodesContainer.appendChild(addStripBottom(() => openInsertBlockPalette(sec, nIdx + 1)));
+				}
 			});
 
 			contentBody.appendChild(nodesContainer);
 			secEl.appendChild(contentBody);
 			sectionsContainer.appendChild(secEl);
+			applyCoverPreview(secEl, sec);
 
 			// Add strip between sections
-			sectionsContainer.appendChild(addStripBottom(() => addSection(sIdx + 1), 'section-divider'));
+			sectionsContainer.appendChild(addStripBottom(() => openSectionTemplateDialog(sIdx + 1), 'section-divider'));
 		});
 	}
 
@@ -394,6 +400,13 @@ export function initBlocksEditor(element, params, nui) {
 		const frame = document.createElement('div');
 		frame.className = 'media-frame';
 
+		// In cover sections the caption renders as an OVERLAY inside the ratio area
+		// (a strip is mostly caption, not image). The canvas mirrors that with a
+		// read-only ghost so the frame is an honest preview of the rendered cover.
+		const frameCaption = document.createElement('div');
+		frameCaption.className = 'frame-caption';
+		frame.appendChild(frameCaption);
+
 		const controls = document.createElement('div');
 		controls.className = 'media-controls';
 
@@ -433,7 +446,7 @@ export function initBlocksEditor(element, params, nui) {
 		captionBlock.appendChild(rawTextArea);
 		body.appendChild(captionBlock);
 
-		nodeCard.appendChild(buildBlockHeader(node, parentContainer, nodeIdx, MEDIA_PRESETS, toggleRaw));
+		nodeCard.appendChild(buildBlockHeader(node, parentContainer, nodeIdx, inHeroContext(parentContainer) ? HERO_MEDIA_PRESETS : MEDIA_PRESETS, toggleRaw));
 		nodeCard.appendChild(body);
 
 		richTextEl.setMarkdown(captionLines.join('\n'));
@@ -498,6 +511,9 @@ export function initBlocksEditor(element, params, nui) {
 			frame.innerHTML = lead
 				? `<img src="${escapeHtml(lead.src)}" alt="${escapeHtml(lead.alt)}">`
 				: `<div class="media-empty"><nui-icon name="image"></nui-icon><span>No image yet</span></div>`;
+			frame.appendChild(frameCaption);
+			const captionMd = captionLines.join('\n').trim();
+			frameCaption.innerHTML = captionMd ? util.markdownToHtml(captionMd) : '';
 
 			strip.innerHTML = '';
 			images.forEach((im, i) => {
@@ -888,6 +904,16 @@ export function initBlocksEditor(element, params, nui) {
 		{ value: 'gallery:mosaic', label: 'Gallery: Mosaic' }
 	];
 
+	// Block option sets are scoped by the section template: in a hero, the media
+	// block's preset is the cover's ARRANGEMENT, nothing else. Auto = the spec
+	// default (a single item fills; a list renders as an even row). Row pins it.
+	// (Slideshow rotation is an enhanced-renderer concern — no option here until
+	// a profile implements it.)
+	const HERO_MEDIA_PRESETS = [
+		{ value: '', label: 'Auto' },
+		{ value: 'gallery:row', label: 'Row (even split)' }
+	];
+
 	function moveSection(index, direction) {
 		const main = currentDoc.mains?.[0];
 		if (!main || !main.sections) return;
@@ -1092,22 +1118,225 @@ export function initBlocksEditor(element, params, nui) {
 		}
 	}
 
-	// ── Add Section ──
-	function addSection(insertAt) {
+	// Is this container a hero section? Sections carry `vars`; columns don't — the
+	// guard keeps a media block inside a column on the full palette.
+	function inHeroContext(container) {
+		return !!(container && Array.isArray(container.vars) && isHeroSection(container));
+	}
+
+	// ── Section Templates ──
+	// Templates are FUNCTIONS, not stored state (spec §5.1: composite editor palette
+	// entries expand into primitives; they are not vocabulary). The file only ever
+	// holds simple presets — the template is re-derived from preset + content shape
+	// on every render, so the UI can never disagree with the document.
+
+	// A section is a HERO when its preset family is `cover`, or when its whole
+	// content is exactly one media block (a contain-mode hero). A normal section
+	// that a user fills with a single media block IS a hero — same structure,
+	// same treatment.
+	function isHeroSection(sec) {
+		const family = String(sec.attrs?.preset || '').toLowerCase().split(':')[0];
+		if (family === 'cover') return true;
+		const content = (sec.nodes || []).filter(n => !(n.type === 'block' && (n.attrs?.repeat === 'header' || n.attrs?.repeat === 'footer')));
+		return content.length === 1 && content[0].type === 'block' && isMediaBlock(content[0]);
+	}
+
+	// Section options <-> preset token. The cover height is a NAMED aspect-ratio
+	// variant (square/wide/banner/strip), never a raw value — spec §3 bans style
+	// values on directives, and a width-relative ratio works in every profile.
+	function parseSecOpts(sec) {
+		const parts = String(sec.attrs?.preset || '').toLowerCase().split(':').filter(Boolean);
+		const family = parts[0] || '';
+		return {
+			placement: family === 'cover' ? 'cover' : 'contain',
+			ratio: family === 'cover' && ['square', 'banner', 'strip'].includes(parts[1]) ? parts[1] : 'wide',
+			band: family === 'band',
+			inverted: parts.includes('inverted')
+		};
+	}
+
+	function composePreset(opts) {
+		if (opts.placement === 'cover') {
+			return 'cover' + (opts.ratio && opts.ratio !== 'wide' ? ':' + opts.ratio : '');
+		}
+		if (opts.band) return 'band' + (opts.inverted ? ':inverted' : '');
+		return '';
+	}
+
+	// The canvas mirrors the section's cover options: a cover hero's media frame
+	// fills and crops like the rendered cover (same aspect-ratio tokens), a contain
+	// hero shows the image whole. Called on render and live from the options popover.
+	function applyCoverPreview(secEl, sec) {
+		if (!secEl) return;
+		const hero = isHeroSection(sec);
+		secEl.classList.toggle('section-hero', hero);
+		const card = secEl.querySelector('.editor-media-card');
+		if (!card) return;
+		const opts = parseSecOpts(sec);
+		const cover = hero && opts.placement === 'cover';
+		card.classList.toggle('editor-cover', cover);
+		card.classList.toggle('editor-cover-square', cover && opts.ratio === 'square');
+		card.classList.toggle('editor-cover-banner', cover && opts.ratio === 'banner');
+		card.classList.toggle('editor-cover-strip', cover && opts.ratio === 'strip');
+	}
+
+	// Gear popover: the section's options, shaped by its template.
+	function toggleSectionOptions(sec, header, chip) {
+		const existing = header.querySelector('.section-opts-popover');
+		if (existing) { existing.remove(); return; }
+		sectionsContainer.querySelectorAll('.section-opts-popover').forEach(p => p.remove());
+		const pop = buildSectionOptions(sec, chip, header);
+		header.appendChild(pop);
+		const onDocClick = (e) => {
+			if (!pop.contains(e.target)) {
+				pop.remove();
+				document.removeEventListener('click', onDocClick, true);
+			}
+		};
+		document.addEventListener('click', onDocClick, true);
+	}
+
+	function buildSectionOptions(sec, chip, header) {
+		const hero = isHeroSection(sec);
+		const opts = parseSecOpts(sec);
+		const pop = document.createElement('div');
+		pop.className = 'section-opts-popover';
+
+		const apply = () => {
+			sec.attrs = sec.attrs || {};
+			const preset = composePreset(opts);
+			if (preset) sec.attrs.preset = preset;
+			else delete sec.attrs.preset;
+			const chipText = isHeroSection(sec) ? 'Hero' : (preset.startsWith('band') ? 'Band' : '');
+			chip.textContent = chipText;
+			chip.style.display = chipText ? '' : 'none';
+			applyCoverPreview(header.closest('.editor-section-card'), sec);
+			syncToOutputs();
+		};
+
+		const mkRow = (labelText, control) => {
+			const row = document.createElement('div');
+			row.className = 'section-opts-row';
+			const lab = document.createElement('label');
+			lab.textContent = labelText;
+			row.appendChild(lab);
+			row.appendChild(control);
+			return row;
+		};
+
+		const mkCheck = (checked, onChange) => {
+			const input = document.createElement('input');
+			input.type = 'checkbox';
+			input.checked = checked;
+			input.addEventListener('change', () => onChange(input.checked));
+			return input;
+		};
+
+		const mkSelect = (options, current, onChange) => {
+			const wrap = document.createElement('nui-select');
+			wrap.setAttribute('size', 'small');
+			const sel = document.createElement('select');
+			sel.innerHTML = options.map(([v, l]) => `<option value="${v}" ${v === current ? 'selected' : ''}>${l}</option>`).join('');
+			wrap.appendChild(sel);
+			customElements.upgrade(wrap);
+			wrap.addEventListener('nui-change', (e) => onChange(e.detail?.values?.[0] ?? ''));
+			return wrap;
+		};
+
+		if (hero) {
+			const ratioRow = mkRow('Aspect ratio', mkSelect(
+				[['square', 'Square (1:1)'], ['wide', 'Wide (16:9)'], ['banner', 'Banner (16:5)'], ['strip', 'Strip (16:3)']],
+				opts.ratio,
+				(v) => { opts.ratio = v || 'wide'; apply(); }
+			));
+			const bandRow = mkRow('Band', mkCheck(opts.band, (c) => { opts.band = c; if (!c) opts.inverted = false; syncRows(); apply(); }));
+			const invRow = mkRow('Inverted', mkCheck(opts.inverted, (c) => { opts.inverted = c; apply(); }));
+
+			pop.appendChild(mkRow('Placement', mkSelect(
+				[['cover', 'Cover — media is the background'], ['contain', 'Contain — media shown whole']],
+				opts.placement,
+				(v) => { opts.placement = v || 'cover'; syncRows(); apply(); }
+			)));
+			pop.appendChild(ratioRow);
+			pop.appendChild(bandRow);
+			pop.appendChild(invRow);
+
+			function syncRows() {
+				ratioRow.style.display = opts.placement === 'cover' ? '' : 'none';
+				bandRow.style.display = opts.placement === 'contain' ? '' : 'none';
+				invRow.style.display = (opts.placement === 'contain' && opts.band) ? '' : 'none';
+			}
+			syncRows();
+		} else {
+			const bandRow = mkRow('Band (colored background)', mkCheck(opts.band, (c) => { opts.band = c; if (!c) opts.inverted = false; syncRows(); apply(); }));
+			const invRow = mkRow('Inverted (high contrast)', mkCheck(opts.inverted, (c) => { opts.inverted = c; apply(); }));
+			pop.appendChild(bandRow);
+			pop.appendChild(invRow);
+			function syncRows() { invRow.style.display = opts.band ? '' : 'none'; }
+			syncRows();
+		}
+		return pop;
+	}
+
+	// ── Add Section (template dialog) ──
+	async function openSectionTemplateDialog(insertAt) {
+		const dialogHtml = `
+			<div class="palette-grid">
+				<div class="palette-item" data-type="normal">
+					<div class="palette-icon"><nui-icon name="article"></nui-icon></div>
+					<div class="palette-text">
+						<strong>Normal Section</strong>
+						<span>Headings, text, media — any blocks. Optional colored band via section options.</span>
+					</div>
+				</div>
+				<div class="palette-item" data-type="hero">
+					<div class="palette-icon"><nui-icon name="image"></nui-icon></div>
+					<div class="palette-text">
+						<strong>Hero Section</strong>
+						<span>One media block as a visual feature — background media with overlay text.</span>
+					</div>
+				</div>
+			</div>
+		`;
+
+		const { dialog, main: dialogMain, result } = await nui.components.dialog.page(
+			'Add Section',
+			dialogHtml,
+			{
+				placement: 'center',
+				buttons: [
+					{ label: 'Cancel', value: 'cancel', type: 'outline' }
+				]
+			}
+		);
+
+		const scope = dialogMain || dialog;
+		scope.querySelectorAll('.palette-item').forEach(item => {
+			item.addEventListener('click', () => {
+				dialog.close();
+				dialog.remove();
+				addSection(insertAt, item.dataset.type);
+			});
+		});
+
+		await result;
+	}
+
+	function addSection(insertAt, template = 'normal') {
 		const main = currentDoc.mains?.[0];
 		if (!main) return;
 		main.sections = main.sections || [];
+		const hero = template === 'hero';
 		const newSec = {
-			attrs: { id: generateId('sec'), label: `Section ${main.sections.length + 1}` },
+			attrs: { id: generateId('sec'), label: hero ? 'Hero' : `Section ${main.sections.length + 1}` },
 			vars: [],
 			nodes: [
-				{
-					type: 'block',
-					attrs: { id: generateId('b') },
-					nodes: [{ type: 'md', lines: ['## New Section Heading', '', 'Add blocks or prose here.'] }]
-				}
+				hero
+					? { type: 'block', attrs: { id: generateId('b') }, nodes: [{ type: 'md', lines: ['![Hero image](images/nui_1.webp)', '', '## Hero Title', '', 'Supporting tagline or call to action.'] }] }
+					: { type: 'block', attrs: { id: generateId('b') }, nodes: [{ type: 'md', lines: ['## New Section Heading', '', 'Add blocks or prose here.'] }] }
 			]
 		};
+		if (hero) newSec.attrs.preset = 'cover';
 		if (typeof insertAt === 'number') {
 			main.sections.splice(insertAt, 0, newSec);
 		} else {
@@ -1117,8 +1346,8 @@ export function initBlocksEditor(element, params, nui) {
 		syncToOutputs();
 	}
 
-	btnAddSecTop?.addEventListener('click', () => addSection(0));
-	btnAddSecBottom?.addEventListener('click', () => addSection());
+	btnAddSecTop?.addEventListener('click', () => openSectionTemplateDialog(0));
+	btnAddSecBottom?.addEventListener('click', () => openSectionTemplateDialog());
 
 	// ── Two-Way Sync ──
 	function syncToOutputs() {
