@@ -1002,6 +1002,10 @@ function createList(element, options) {
 	
 	function cleanUp() {
 		log('CleanUp');
+		// Halt the rAF render loop BEFORE tearing down: it dereferences the
+		// fields nulled below on every frame, and the observer that would stop
+		// it is disconnected here — without this flag the loop crashes forever.
+		list.stop = true;
 		list.eventCallback({ type: 'list_cleanUp', value: 'cleanup' });
 		
 		for (let i = 0; i < list.registeredEvents.length; i++) {

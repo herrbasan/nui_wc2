@@ -86,6 +86,35 @@ select is not a fixed palette — it is the set of presets that are *meaningful 
   `HERO_MEDIA_PRESETS` vs `MEDIA_PRESETS` in `renderMediaBlockNode`; the cover's list form
   is `display: flex` + `flex: 1 1 0` per item in `nui-theme.css`.
 
+## Block type vs block style (settled 2026-09-18)
+
+The block preset dropdown conflated two operations: **restyling** (same content, new
+presentation — cheap, reversible) and **retyping** (the content's shape must change —
+prose → `link:cta` wants a single link, prose → media wants an image). Retyping via
+dropdown authored invalid states the RTE cannot honor (a CTA containing three
+paragraphs, an icon block with no icon).
+
+- **Shape is fixed at creation.** The insert palette picks the block's TYPE (Prose,
+  Media Figure, Link/CTA…). The type never changes afterwards; there is no conversion
+  dropdown.
+- **Style is mutable within shape.** The block header select offers only presets whose
+  authored shape (spec §5.1 "Authored Markdown Shape" column) matches the block type.
+  Prose: Standard / Lead / Card: Note / Card: Warning / Card: Stat (+ `image:icon`,
+  below). Link block: CTA / Download. Media already works this way (own preset list).
+- **Layout vs styling is ontology, not preference:** directives (`columns`/`col`) are
+  structure — where content sits; `preset` is an attribute — what content claims to be.
+  Palette gets groups: **Content / Layout / Data**. The columns card carries no style
+  select. The tree is exactly two levels: section → styling blocks + layout blocks;
+  a col holds styling blocks only (spec §4.3), a block holds Markdown only (§4.2).
+- **Style reveals the attribute editor it needs.** `image:icon` stays a prose style
+  (its body IS prose); selecting it reveals an icon picker for the `icon=`/`alt=`
+  block asset attributes (§4.2) — currently unauthorable except via raw mode.
+- **Parked:** "turn selection into block" (RTE split gesture). The manual cut /
+  new-block path is good enough; the selection→source-line mapping machinery isn't
+  worth the maintenance. RTE-internal range styling rejected: no nested blocks
+  (spec §4.2 forbids them); styling a range would mean wrapping it in its own
+  sibling block, which manual copy already covers.
+
 ## `cover` — the spec fix
 
 The word `cover` exists in spec §5.1 as a section modifier with **no definition, no decision-log

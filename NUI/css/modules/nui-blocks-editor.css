@@ -897,3 +897,73 @@ nui-main > .content-page > .page-blocks-editor[breakout],
 	font-size: var(--font-size-xsmall);
 	color: var(--text-color-dim);
 }
+
+/* Palette groups — the palette chooses a block's TYPE (fixed at creation),
+   grouped by ontology: Content / Layout / Data. */
+.palette-group + .palette-group {
+	margin-top: var(--nui-space);
+}
+
+.palette-group-label {
+	font-size: var(--font-size-xsmall);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--text-color-dim);
+	margin-top: var(--nui-space-half);
+}
+
+.palette-group .palette-grid {
+	margin-top: var(--nui-space-quarter);
+}
+
+/* "Style:" label — the select is a property of the block, not its type.
+   The type is fixed at creation and visible from the body editor. */
+.page-blocks-editor .block-style-label {
+	font-size: var(--font-size-xsmall);
+	color: var(--text-color-dim);
+	white-space: nowrap;
+}
+
+/* Icon badge row (preset=image:icon): the icon is a block attribute (§4.2),
+   edited beside the prose, never inside the RTE. */
+.page-blocks-editor .icon-badge-row {
+	display: flex;
+	align-items: center;
+	gap: var(--nui-space-half);
+	padding: var(--nui-space-quarter) var(--nui-space-half);
+	background: var(--be-well-bg);
+	border-bottom: 1px solid var(--be-well-border);
+}
+
+.page-blocks-editor .icon-badge-thumb {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+	width: 2rem;
+	height: 2rem;
+	overflow: hidden;
+	border: 1px solid var(--be-well-border);
+	border-radius: var(--border-radius1);
+	background: var(--be-block-body-bg);
+	color: var(--text-color-dim);
+}
+
+.page-blocks-editor .icon-badge-thumb img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+/* Link block: the body is exactly one Markdown link — two fields, no RTE. */
+.page-blocks-editor .link-block-body {
+	display: flex;
+	gap: var(--nui-space-half);
+}
+
+/* Prose RTE: no image insertion. An image line at the top of a block body
+   structurally retypes it as media (§4.2) — images live in media blocks or
+   in the icon= attribute, never inline in prose. */
+.page-blocks-editor .block-card-body nui-rich-text nui-button[data-command="insertImage"] {
+	display: none;
+}
