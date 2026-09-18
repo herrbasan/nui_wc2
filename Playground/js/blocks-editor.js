@@ -782,6 +782,10 @@ export function initBlocksEditor(element, params, nui) {
 		nodeCard.appendChild(colsRow);
 	}
 
+	// A var is a NAMED SET of key-value pairs, serialized as one fenced json
+	// object (spec §4.4). The editor writes only that form — scalar `value=`
+	// and text-fence vars stay legal for hand authors and get a raw fallback
+	// editor here, so their bytes survive untouched.
 	function renderVarNode(nodeCard, node, parentContainer, nodeIdx) {
 		const header = document.createElement('div');
 		header.className = 'block-card-header var-header';
@@ -791,8 +795,18 @@ export function initBlocksEditor(element, params, nui) {
 		left.innerHTML = `
 			<span class="drag-handle"><nui-icon name="drag_indicator"></nui-icon></span>
 			<span class="block-idx-badge">V</span>
-			<strong>${escapeHtml(node.name || 'unnamed')}</strong>
 		`;
+
+		const nameInput = document.createElement('input');
+		nameInput.type = 'text';
+		nameInput.className = 'nui-native-input var-name-input';
+		nameInput.placeholder = 'name';
+		nameInput.value = node.name || '';
+		nameInput.addEventListener('input', () => {
+			node.name = nameInput.value;
+			syncToOutputs();
+		});
+		left.appendChild(nameInput);
 
 		const right = document.createElement('div');
 		right.className = 'block-header-right';
@@ -804,17 +818,121 @@ export function initBlocksEditor(element, params, nui) {
 
 		const body = document.createElement('div');
 		body.className = 'block-card-body';
-		const input = document.createElement('input');
-		input.type = 'text';
-		input.className = 'nui-native-input';
-		input.value = node.value !== undefined ? (typeof node.value === 'object' ? JSON.stringify(node.value) : node.value) : '';
-		input.placeholder = 'Value';
-		input.addEventListener('input', (e) => {
-			node.value = e.target.value;
-			syncToOutputs();
-		});
-		body.appendChild(input);
 		nodeCard.appendChild(body);
+
+		const isObject = node.value === undefined ||
+			(node.value !== null && typeof node.value === 'object' && !Array.isArray(node.value));
+		if (isObject) renderPairEditor();
+		else renderRawFallback();
+
+		// Pairs are edited in place — only adding/removing a pair rebuilds rows,
+		// so typing never loses focus. The node is only touched on commit: a
+		// rendered-but-unedited var keeps its authored serialization.
+		function renderPairEditor() {
+			const wrap = document.createElement('div');
+			wrap.className = 'var-pairs';
+
+			const commit = () => {
+				const obj = {};
+				wrap.querySelectorAll('.var-pair').forEach(row => {
+					const key = row.querySelector('.var-key').value.trim();
+					if (!key) return;
+					obj[key] = parseVarValue(row.querySelector('.var-value').value);
+				});
+				node.fenced = 'json';
+				node.value = obj;
+				syncToOutputs();
+			};
+
+			const mkRow = (key, val) => {
+				const row = document.createElement('div');
+				row.className = 'var-pair';
+
+				const keyInput = document.createElement('input');
+				keyInput.type = 'text';
+				keyInput.className = 'nui-native-input var-key';
+				keyInput.placeholder = 'key';
+				keyInput.value = key;
+
+				const valInput = document.createElement('input');
+				valInput.type = 'text';
+				valInput.className = 'nui-native-input var-value';
+				valInput.placeholder = 'value (string, 12, true, null, [..], {..})';
+				valInput.value = typeof val === 'string' ? val : JSON.stringify(val);
+
+				keyInput.addEventListener('input', commit);
+				valInput.addEventListener('input', commit);
+
+				const remove = createNuiIconButton('close', 'Remove pair', () => {
+					row.remove();
+					commit();
+				});
+
+				row.appendChild(keyInput);
+				row.appendChild(valInput);
+				row.appendChild(remove);
+				return row;
+			};
+
+			for (const [k, v] of Object.entries(node.value || {})) {
+				wrap.appendChild(mkRow(k, v));
+			}
+
+			const addBtn = document.createElement('nui-button');
+			addBtn.setAttribute('variant', 'outline');
+			addBtn.setAttribute('size', 'small');
+			const addInner = document.createElement('button');
+			addInner.type = 'button';
+			addInner.textContent = 'Add pair';
+			addBtn.appendChild(addInner);
+			customElements.upgrade(addBtn);
+			addBtn.addEventListener('click', () => {
+				const row = mkRow('', '');
+				wrap.insertBefore(row, addBtn);
+				row.querySelector('.var-key').focus();
+			});
+			wrap.appendChild(addBtn);
+
+			body.appendChild(wrap);
+		}
+
+		// Scalars, arrays and text payloads keep their authored form. JSON is
+		// committed only while it parses — a json fence must never hold invalid
+		// JSON (spec §4.4/§7); an unparsable draft is marked, not written.
+		function renderRawFallback() {
+			const area = document.createElement('textarea');
+			area.className = 'block-raw-textarea var-raw';
+			area.spellcheck = false;
+			area.value = node.fenced === 'text' || typeof node.value === 'string'
+				? String(node.value ?? '')
+				: JSON.stringify(node.value);
+			area.title = node.fenced === 'text'
+				? 'Text payload'
+				: 'JSON payload — applied when it parses';
+			area.addEventListener('input', () => {
+				if (node.fenced === 'text') {
+					node.value = area.value;
+					syncToOutputs();
+					return;
+				}
+				try {
+					node.value = JSON.parse(area.value);
+					area.classList.remove('invalid');
+					syncToOutputs();
+				} catch {
+					area.classList.add('invalid');
+				}
+			});
+			body.appendChild(area);
+		}
+
+		// Pair values are typed: "12"/"true"/"null"/JSON parse as themselves,
+		// anything else stays a string.
+		function parseVarValue(str) {
+			const s = str.trim();
+			if (!s) return '';
+			try { return JSON.parse(s); } catch { return str; }
+		}
 	}
 
 	// ── Node & Section Manipulations ──
@@ -1296,10 +1414,12 @@ export function initBlocksEditor(element, params, nui) {
 				]
 			};
 		} else if (type === 'var') {
+			// Canonical form: name + fenced json object of key-value pairs.
 			newNode = {
 				type: 'var',
-				name: 'myVar',
-				value: 'Sample value'
+				name: 'settings',
+				fenced: 'json',
+				value: { enabled: true }
 			};
 		}
 

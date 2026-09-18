@@ -115,6 +115,21 @@ paragraphs, an icon block with no icon).
   (spec §4.2 forbids them); styling a range would mean wrapping it in its own
   sibling block, which manual copy already covers.
 
+## Vars are named key-value sets (settled 2026-09-18)
+
+The var block has one canonical form in the editor: **name + key-value pair rows,
+serialized as a single fenced json object** (the spec §4.4 `slideshow` example).
+Two var forms (`value=` scalar vs fenced payload) made no sense as authoring UI.
+
+- Pair values are typed: `12`, `true`, `null`, `[..]`, `{..}` parse as themselves;
+  anything else stays a string.
+- **No spec change** — fenced json is already §4.4-legal. Scalar `value=` and
+  `text` fences remain valid for hand authors; in the editor they get a raw
+  fallback editor (JSON commits only while it parses; invalid drafts are marked
+  with `--palette-alert`, never written). Rendered-but-unedited legacy vars keep
+  their authored serialization — verified byte-identical through a full re-save.
+- The node is only touched on commit (§6.4: no reflow of unedited content).
+
 ## `cover` — the spec fix
 
 The word `cover` exists in spec §5.1 as a section modifier with **no definition, no decision-log

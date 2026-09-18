@@ -5865,10 +5865,18 @@ nui-markdown p > img {
 
 /* `inverted` flips the band to the high-contrast counter-surface: the theme's text
    colour as background, the page colour as text (spec §5.1 — "a fully inverted
-   theme in another [renderer]"). */
+   theme in another [renderer]"). The flip must reach INSIDE the band: content rules
+   (`.nui-preset-lead p`, headings, links) resolve `var(--text-color)` and friends
+   against the cascade, so the variables are redefined on the band and every
+   descendant follows. The background is the one declaration that can no longer
+   read `--text-color` (the element redefines it — a self-reference would collapse
+   surface and text to the same colour), so it mirrors the :root literal. */
 .nui-preset-band.nui-variant-inverted {
-	background: var(--text-color);
+	background: light-dark(rgb(30, 30, 30), rgb(230, 230, 230)); /* = :root --text-color */
 	color: var(--color-base);
+	--text-color: var(--color-base);
+	--color-contrast: var(--color-base);
+	--color-text-dim: var(--color-shade5);
 }
 
 /* `cover` — the section's media block IS the background (object-fit: cover); the

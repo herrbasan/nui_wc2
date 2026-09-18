@@ -967,3 +967,39 @@ nui-main > .content-page > .page-blocks-editor[breakout],
 .page-blocks-editor .block-card-body nui-rich-text nui-button[data-command="insertImage"] {
 	display: none;
 }
+
+/* Var block: a named set of key-value pairs, serialized as one fenced json
+   object. The name lives in the header; pairs are key | value | remove rows. */
+.page-blocks-editor .var-name-input {
+	flex: 0 1 auto;
+	max-width: 12rem;
+	font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
+.page-blocks-editor .var-pairs {
+	display: flex;
+	flex-direction: column;
+	gap: var(--nui-space-quarter);
+}
+
+.page-blocks-editor .var-pair {
+	display: grid;
+	grid-template-columns: minmax(6rem, 10rem) 1fr auto;
+	gap: var(--nui-space-quarter);
+	align-items: center;
+}
+
+.page-blocks-editor .var-pair .var-key {
+	font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
+.page-blocks-editor .var-pairs > nui-button {
+	align-self: flex-start;
+	margin-top: var(--nui-space-quarter);
+}
+
+/* Raw JSON fallback (legacy scalar/array payloads): an unparsable draft is
+   marked, not written — a json fence must never hold invalid JSON. */
+.page-blocks-editor .var-raw.invalid {
+	border-color: var(--palette-alert);
+}
