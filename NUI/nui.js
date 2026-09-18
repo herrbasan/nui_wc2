@@ -4642,6 +4642,127 @@ registerComponent('nui-sortable-item', (element) => {
 	element.setAttribute('role', 'listitem');
 });
 
+// ################################# ANCHORED OVERLAY PLACEMENT
+// One implementation of "put this box next to that element, inside the viewport", shared
+// by every top-layer component that hangs off a trigger (nui-tooltip, nui-popover).
+//
+// Both live in the top layer, which is what makes this simple: a top-layer element sits
+// outside every ancestor's clip AND outside every ancestor's containing block, so it can
+// be positioned in plain viewport coordinates with nothing to compensate for. The reason
+// `position: fixed` alone does not work — any transformed or filtered ancestor becomes
+// the containing block — does not apply once the element is in the top layer.
+//
+// `placement` names a side, or is 'auto' — then the side with room wins. Every result is
+// clamped into the viewport with `padding` px of margin, so a placement that cannot fit
+// degrades to the nearest visible position instead of rendering off-screen.
+//
+// Past `centerThreshold` (a fraction of the viewport width) the box stops being anchored
+// at all and is centred in the viewport instead. A panel that broad cannot hang off a
+// trigger in any useful sense: anchored, it would be clamped against a viewport edge with
+// its arrow aimed across the screen at something it is nowhere near. Centred, it is what
+// it has looked like all along — a non-modal dialog — and the arrow is dropped because
+// there is nothing for it to point at. `centerThreshold: null` disables the rule; that is
+// why the tooltip never centres, even on a phone where its 320px cap is most of the width.
+//
+// The arrow is only *aimed*, never drawn: the offset is published as --arrow-left /
+// --arrow-top for the component's own CSS to consume, and a component without an arrow
+// simply ignores them.
+function placeAnchored(element, anchor, { placement = 'auto', offset = 8, padding = 8, centerThreshold = null, bounds = null } = {}) {
+	const rect = anchor.getBoundingClientRect();
+	const box = element.getBoundingClientRect();
+
+	// `bounds` is the region the box is allowed to occupy, defaulting to the viewport. A
+	// caller narrows it to a page container so that "clamped" and "centred" mean clamped
+	// and centred in the content area rather than across the whole screen — centring over a
+	// sidebar is centring on the screen, not on the page the box belongs to. Coordinates
+	// stay viewport-relative either way: the box is in the top layer, so `bounds` moves the
+	// frame, not the coordinate system.
+	//
+	// A frame with no box of its own (`display: contents`, a detached node) cannot bound
+	// anything. Treating that as no frame is not a silent fallback — it is the removal of a
+	// frame that does not exist; without it, every coordinate would collapse onto the
+	// padding and pin the box into a corner.
+	const frame = (bounds && bounds.width > 0 && bounds.height > 0)
+		? bounds
+		: { top: 0, left: 0, right: window.innerWidth, bottom: window.innerHeight, width: window.innerWidth, height: window.innerHeight };
+
+	let pos = placement;
+
+	const isHorizontallyCentered = pos !== 'center' && centerThreshold !== null && box.width >= frame.width * centerThreshold;
+
+	if (pos === 'center') {
+		const centerTop = Math.max(frame.top + padding, frame.top + (frame.height - box.height) / 2);
+		const centerLeft = Math.max(frame.left + padding, frame.left + (frame.width - box.width) / 2);
+		element.style.top = `${centerTop}px`;
+		element.style.left = `${centerLeft}px`;
+		element.style.margin = '0';
+		element.setAttribute('data-placement', 'center');
+		element.style.removeProperty('--arrow-left');
+		element.style.removeProperty('--arrow-top');
+		return pos;
+	}
+
+	if (pos === 'auto') {
+		const spaceTop = rect.top - frame.top;
+		const spaceBottom = frame.bottom - rect.bottom;
+		const spaceLeft = rect.left - frame.left;
+		const spaceRight = frame.right - rect.right;
+
+		if (spaceTop >= box.height + offset) {
+			pos = 'top';
+		} else if (spaceBottom >= box.height + offset) {
+			pos = 'bottom';
+		} else if (spaceRight >= box.width + offset && !isHorizontallyCentered) {
+			pos = 'right';
+		} else if (spaceLeft >= box.width + offset && !isHorizontallyCentered) {
+			pos = 'left';
+		} else {
+			pos = spaceTop >= spaceBottom ? 'top' : 'bottom';
+		}
+	}
+
+	let top, left;
+	if (pos === 'top') {
+		top = rect.top - box.height - offset;
+		left = isHorizontallyCentered
+			? frame.left + (frame.width - box.width) / 2
+			: rect.left + (rect.width / 2) - (box.width / 2);
+	} else if (pos === 'bottom') {
+		top = rect.bottom + offset;
+		left = isHorizontallyCentered
+			? frame.left + (frame.width - box.width) / 2
+			: rect.left + (rect.width / 2) - (box.width / 2);
+	} else if (pos === 'left') {
+		top = rect.top + (rect.height / 2) - (box.height / 2);
+		left = rect.left - box.width - offset;
+	} else {
+		top = rect.top + (rect.height / 2) - (box.height / 2);
+		left = rect.right + offset;
+	}
+
+	top = Math.max(frame.top + padding, Math.min(top, frame.bottom - box.height - padding));
+	left = Math.max(frame.left + padding, Math.min(left, frame.right - box.width - padding));
+
+	element.style.top = `${top}px`;
+	element.style.left = `${left}px`;
+	element.style.margin = '0';
+	element.setAttribute('data-placement', pos);
+
+	if (pos === 'top' || pos === 'bottom') {
+		let arrowLeft = (rect.left + rect.width / 2) - left;
+		arrowLeft = Math.max(16, Math.min(arrowLeft, box.width - 16));
+		element.style.setProperty('--arrow-left', `${arrowLeft}px`);
+		element.style.removeProperty('--arrow-top');
+	} else {
+		let arrowTop = (rect.top + rect.height / 2) - top;
+		arrowTop = Math.max(16, Math.min(arrowTop, box.height - 16));
+		element.style.setProperty('--arrow-top', `${arrowTop}px`);
+		element.style.removeProperty('--arrow-left');
+	}
+
+	return pos;
+}
+
 registerComponent('nui-tooltip', (element) => {
 	const targetParam = element.getAttribute('for');
 	let target = targetParam ? document.getElementById(targetParam) : element.previousElementSibling;
@@ -4654,68 +4775,11 @@ registerComponent('nui-tooltip', (element) => {
 
 	element.setAttribute('popover', 'manual');
 
-	const positionTip = () => {
-		const rect = target.getBoundingClientRect();
-		const tipRect = element.getBoundingClientRect();
-		let pos = element.getAttribute('position') || 'auto';
-		const offset = parseInt(element.getAttribute('offset') || '16', 10);
-
-		if (pos === 'auto') {
-			const spaceTop = rect.top;
-			const spaceBottom = window.innerHeight - rect.bottom;
-			const spaceLeft = rect.left;
-			const spaceRight = window.innerWidth - rect.right;
-
-			if (spaceTop >= tipRect.height + offset) {
-				pos = 'top';
-			} else if (spaceBottom >= tipRect.height + offset) {
-				pos = 'bottom';
-			} else if (spaceRight >= tipRect.width + offset) {
-				pos = 'right';
-			} else if (spaceLeft >= tipRect.width + offset) {
-				pos = 'left';
-			} else {
-				pos = spaceTop >= spaceBottom ? 'top' : 'bottom';
-			}
-		}
-
-		element.setAttribute('data-placement', pos);
-
-		let top, left;
-		if (pos === 'top') {
-			top = rect.top - tipRect.height - offset;
-			left = rect.left + (rect.width / 2) - (tipRect.width / 2);
-		} else if (pos === 'bottom') {
-			top = rect.bottom + offset;
-			left = rect.left + (rect.width / 2) - (tipRect.width / 2);
-		} else if (pos === 'left') {
-			top = rect.top + (rect.height / 2) - (tipRect.height / 2);
-			left = rect.left - tipRect.width - offset;
-		} else if (pos === 'right') {
-			top = rect.top + (rect.height / 2) - (tipRect.height / 2);
-			left = rect.right + offset;
-		}
-
-		const padding = 8;
-		top = Math.max(padding, Math.min(top, window.innerHeight - tipRect.height - padding));
-		left = Math.max(padding, Math.min(left, window.innerWidth - tipRect.width - padding));
-
-		element.style.top = `${top}px`;
-		element.style.left = `${left}px`;
-		element.style.margin = '0';
-
-		if (pos === 'top' || pos === 'bottom') {
-			let arrowLeft = (rect.left + rect.width / 2) - left;
-			arrowLeft = Math.max(16, Math.min(arrowLeft, tipRect.width - 16));
-			element.style.setProperty('--arrow-left', `${arrowLeft}px`);
-			element.style.removeProperty('--arrow-top');
-		} else {
-			let arrowTop = (rect.top + rect.height / 2) - top;
-			arrowTop = Math.max(16, Math.min(arrowTop, tipRect.height - 16));
-			element.style.setProperty('--arrow-top', `${arrowTop}px`);
-			element.style.removeProperty('--arrow-left');
-		}
-	};
+	// Tooltips are the one caller that keeps its arrow bit larger than the panel default.
+	const positionTip = () => placeAnchored(element, target, {
+		placement: element.getAttribute('position') || 'auto',
+		offset: parseInt(element.getAttribute('offset') || '16', 10)
+	});
 
 	let hideTimeout;
 
@@ -4758,6 +4822,274 @@ registerComponent('nui-tooltip', (element) => {
 		element.removeEventListener('mouseenter', show);
 		element.removeEventListener('mouseleave', hide);
 		window.removeEventListener('scroll', hideOnScroll, { capture: true });
+	};
+});
+
+// ################################# nui-popover COMPONENT
+//
+// A non-modal dialog anchored to a trigger — the gear-panel shape: a small form that
+// hangs off the control it belongs to, and lets you keep working with the page around
+// it. That shape is what separates it from its two neighbours, and it is the whole
+// reason this is a component of its own rather than a mode on either:
+//
+//   nui-tooltip  — non-interactive help text, hover/focus, no dialog role
+//   nui-popover  — interactive content, click-triggered, role="dialog"
+//   nui-dialog   — modal and screen-placed: blocks the page, no anchoring
+//
+// The *name* is the mechanism, not the role. `popover="auto"` is what supplies light
+// dismiss, Escape and focus return, so the component owns no dismissal logic at all —
+// the consumer's content decides its own role. A popover is a dialog when you say it is.
+//
+// The trigger is wired as the platform's own invoker (`popovertarget`) rather than with
+// a click handler, and that is deliberate: the UA knows which click caused a light
+// dismiss, so clicking an open panel's trigger hides it and does NOT immediately reopen
+// it. A hand-rolled `toggle()` on click cannot see that — it observes the popover as
+// already closed and reopens it, and the panel becomes impossible to close.
+
+// The frame the panel is sized and centred in — see placeAnchored. The page shell's
+// content region rather than the viewport, so a panel centres on the page it belongs to;
+// these are the landmarks the banner factory already treats as the content area. A
+// document with no shell falls through to <body>, which measures as the viewport.
+const POPOVER_FRAME_SELECTORS = ['nui-content', 'nui-main'];
+// Past this fraction of the frame's width the panel centres instead of anchoring — the
+// rule lives in placeAnchored, which is where the geometry is.
+const POPOVER_CENTER_THRESHOLD = 0.6;
+const POPOVER_MAX_WIDTH = 0.8;
+const POPOVER_MAX_HEIGHT = 0.8;
+
+const SUPPORTS_ANCHOR_POSITIONING = typeof CSS !== 'undefined'
+	&& typeof CSS.supports === 'function'
+	&& CSS.supports('position-anchor', '--a')
+	&& CSS.supports('position-area', 'bottom');
+
+registerComponent('nui-popover', (element) => {
+	if (element._popoverInitialized) return;
+	element._popoverInitialized = true;
+
+	const forAttr = element.getAttribute('for');
+	const trigger = forAttr ? document.getElementById(forAttr) : element.previousElementSibling;
+
+	if (!trigger) {
+		throw new Error('[NUI] <nui-popover> has no trigger. Point it at one with `for="<id>"`, or place it directly after the element that opens it.');
+	}
+
+	// `popovertarget` is honoured only on the platform's own invoker elements, so the
+	// element that carries it has to be a real control. A <nui-button> wrapping its
+	// <button> is the normal case; without the button this would silently never open.
+	const invoker = trigger.matches('button, input[type="button"], input[type="submit"]')
+		? trigger
+		: trigger.el('button, input[type="button"], input[type="submit"]');
+
+	if (!invoker) {
+		throw new Error(`[NUI] <nui-popover> found no <button> to use as its invoker inside <${trigger.tagName.toLowerCase()}>. Declare the inner button explicitly — it is what carries popovertarget.`);
+	}
+
+	if (typeof element.showPopover !== 'function') {
+		throw new Error('[NUI] <nui-popover> requires the Popover API, which puts the panel in the top layer where no ancestor can clip it (Chrome 114+, Safari 17+, Firefox 125+). This browser does not implement it.');
+	}
+
+	if (!element.id) element.id = 'nui-popover-' + Math.random().toString(36).slice(2, 11);
+	if (!element.hasAttribute('role')) element.setAttribute('role', 'dialog');
+	element.setAttribute('popover', 'auto');
+
+	invoker.setAttribute('popovertarget', element.id);
+	invoker.setAttribute('aria-haspopup', 'dialog');
+	invoker.setAttribute('aria-expanded', 'false');
+
+	// A dialog with no name is announced as "dialog" and nothing else.
+	if (!a11y.hasLabel(element)) {
+		a11y.warn('popover-label', '[NUI] <nui-popover> is a role="dialog" with no accessible name. Add aria-label or aria-labelledby so it is announced by what it is.', element);
+	}
+
+	// `container="<selector>"` overrides the search. An unresolvable frame is an error and
+	// not a quiet return to the viewport: silently sizing a panel against something other
+	// than what was asked for is exactly the kind of default that hides a typo forever.
+	const frameFor = () => {
+		const selector = element.getAttribute('container');
+		if (selector) {
+			const explicit = document.el(selector);
+			if (!explicit) {
+				throw new Error(`[NUI] <nui-popover> container="${selector}" matched no element. The panel cannot be sized against a frame that does not exist.`);
+			}
+			return explicit;
+		}
+		return POPOVER_FRAME_SELECTORS.map((s) => trigger.closest(s)).find(Boolean) || document.body;
+	};
+
+	const placeOptions = () => ({
+		placement: element.getAttribute('placement') || 'auto',
+		offset: parseInt(element.getAttribute('offset') || '8', 10),
+		centerThreshold: POPOVER_CENTER_THRESHOLD
+	});
+
+	let detachObserver = null;
+	const anchorId = `--nui-anchor-${element.id.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
+
+	const place = () => {
+		const frame = frameFor().getBoundingClientRect();
+		element.style.maxWidth = `${Math.round(frame.width * POPOVER_MAX_WIDTH)}px`;
+		element.style.setProperty('--popover-max-height', `${Math.round(frame.height * POPOVER_MAX_HEIGHT)}px`);
+
+		const offset = parseInt(element.getAttribute('offset') || '8', 10);
+		element.style.setProperty('--popover-offset', `${offset}px`);
+
+		const placementAttr = element.getAttribute('placement') || 'auto';
+		const box = element.getBoundingClientRect();
+		const isExplicitCenter = placementAttr === 'center';
+		const isWide = !isExplicitCenter && box.width > 0 && box.width >= frame.width * POPOVER_CENTER_THRESHOLD;
+
+		if (isExplicitCenter) {
+			element.style.removeProperty('position-anchor');
+			element.style.removeProperty('position-area');
+			element.style.removeProperty('--arrow-left');
+			element.style.removeProperty('--arrow-top');
+			element.setAttribute('data-placement', 'center');
+			placeAnchored(element, invoker, { ...placeOptions(), bounds: frame, placement: 'center' });
+			return;
+		}
+
+		if (SUPPORTS_ANCHOR_POSITIONING) {
+			// Native CSS Anchor Positioning:
+			// Hand off tethering to the browser's compositor thread (0 JS during scroll, 0 lag).
+			element.style.removeProperty('top');
+			element.style.removeProperty('left');
+			element.style.removeProperty('margin');
+
+			invoker.style.setProperty('anchor-name', anchorId);
+			element.style.setProperty('position-anchor', anchorId);
+
+			let pos = placementAttr;
+			const tRect = invoker.getBoundingClientRect();
+			if (pos === 'auto' || isWide) {
+				const spaceTop = tRect.top - frame.top;
+				const spaceBottom = frame.bottom - tRect.bottom;
+				const spaceLeft = tRect.left - frame.left;
+				const spaceRight = frame.right - tRect.right;
+				if (spaceBottom >= box.height + offset) {
+					pos = 'bottom';
+				} else if (spaceTop >= box.height + offset) {
+					pos = 'top';
+				} else if (!isWide && spaceRight >= box.width + offset) {
+					pos = 'right';
+				} else if (!isWide && spaceLeft >= box.width + offset) {
+					pos = 'left';
+				} else {
+					pos = spaceBottom >= spaceTop ? 'bottom' : 'top';
+				}
+			}
+
+			element.setAttribute('data-placement', pos);
+
+			if (isWide) {
+				// Horizontally centered across the content frame, but anchored vertically
+				// to the invoker element with the arrow pointing to the invoker.
+				const centerLeft = Math.max(frame.left + 8, Math.min(frame.left + (frame.width - box.width) / 2, frame.right - box.width - 8));
+				element.style.setProperty('position-area', `${pos} span-all`);
+				element.style.setProperty('justify-self', 'start');
+				element.style.left = `${centerLeft}px`;
+				element.style.margin = pos === 'bottom' ? `${offset}px 0 0 0` : `0 0 ${offset}px 0`;
+
+				let arrowLeft = (tRect.left + tRect.width / 2) - centerLeft;
+				arrowLeft = Math.max(16, Math.min(arrowLeft, box.width - 16));
+				element.style.setProperty('--arrow-left', `${arrowLeft}px`);
+				element.style.removeProperty('--arrow-top');
+			} else {
+				element.style.removeProperty('justify-self');
+				element.style.removeProperty('left');
+				element.style.removeProperty('position-try-fallbacks');
+				element.style.setProperty('position-area', pos);
+
+				// Position arrow once on open; because invoker and popover move rigidly together
+				// via native anchoring during scroll, the relative arrow offset remains constant.
+				const pRect = element.getBoundingClientRect();
+				if (pos === 'top' || pos === 'bottom') {
+					let arrowLeft = (tRect.left + tRect.width / 2) - pRect.left;
+					arrowLeft = Math.max(16, Math.min(arrowLeft, pRect.width - 16));
+					element.style.setProperty('--arrow-left', `${arrowLeft}px`);
+					element.style.removeProperty('--arrow-top');
+				} else {
+					let arrowTop = (tRect.top + tRect.height / 2) - pRect.top;
+					arrowTop = Math.max(16, Math.min(arrowTop, pRect.height - 16));
+					element.style.setProperty('--arrow-top', `${arrowTop}px`);
+					element.style.removeProperty('--arrow-left');
+				}
+			}
+		} else {
+			// Fallback for browsers lacking CSS Anchor Positioning
+			const pos = placeAnchored(element, invoker, { ...placeOptions(), bounds: frame });
+			if (pos === 'center') placeAnchored(element, invoker, { ...placeOptions(), bounds: frame });
+		}
+	};
+
+	const startTracking = () => {
+		if (detachObserver) detachObserver.disconnect();
+		let hadIntersection = false;
+		detachObserver = new IntersectionObserver((entries) => {
+			for (const entry of entries) {
+				if (entry.isIntersecting) {
+					hadIntersection = true;
+				} else if (hadIntersection && element.matches(':popover-open')) {
+					// As soon as the trigger scrolls off-screen / out of the container,
+					// dismiss the popover rather than stranding an orphan bubble.
+					element.hide();
+				}
+			}
+		}, { threshold: 0 });
+		detachObserver.observe(invoker);
+
+		if (!SUPPORTS_ANCHOR_POSITIONING) {
+			// For legacy browsers, dismiss on background scroll to eliminate
+			// main-thread layout thrashing and lagging.
+			const onFallbackScroll = () => {
+				if (element.matches(':popover-open')) element.hide();
+			};
+			window.addEventListener('scroll', onFallbackScroll, { passive: true, capture: true, once: true });
+		}
+	};
+
+	const stopTracking = () => {
+		if (detachObserver) {
+			detachObserver.disconnect();
+			detachObserver = null;
+		}
+		if (SUPPORTS_ANCHOR_POSITIONING) {
+			invoker.style.removeProperty('anchor-name');
+			element.style.removeProperty('position-anchor');
+		}
+	};
+
+	// One listener drives everything, and it is the platform's own toggle event — it fires
+	// for every path in and out (invoker click, light dismiss, Escape, programmatic).
+	// Nothing in this component gets to decide what "open" means.
+	const onToggle = (e) => {
+		const open = e.newState === 'open';
+		invoker.setAttribute('aria-expanded', open ? 'true' : 'false');
+		if (open) {
+			place();
+			startTracking();
+		} else {
+			stopTracking();
+		}
+		element.dispatchEvent(new CustomEvent(`nui-popover-${open ? 'open' : 'close'}`, { bubbles: true }));
+	};
+
+	const onResize = () => { if (element.matches(':popover-open')) place(); };
+
+	element.addEventListener('toggle', onToggle);
+	window.addEventListener('resize', onResize, { passive: true });
+
+	element.show = () => { if (!element.matches(':popover-open')) element.showPopover(); };
+	element.hide = () => { if (element.matches(':popover-open')) element.hidePopover(); };
+	element.toggle = () => element.matches(':popover-open') ? element.hide() : element.show();
+	element.isOpen = () => element.matches(':popover-open');
+
+	return () => {
+		stopTracking();
+		element.removeEventListener('toggle', onToggle);
+		window.removeEventListener('resize', onResize);
+		invoker.removeAttribute('popovertarget');
+		invoker.removeAttribute('aria-haspopup');
+		invoker.removeAttribute('aria-expanded');
 	};
 });
 

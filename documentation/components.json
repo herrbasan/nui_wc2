@@ -1,6 +1,6 @@
 {
 	"schemaVersion": 1,
-	"generated": "2026-09-11T14:10:08.024Z",
+	"generated": "2026-09-18T12:50:09.882Z",
 	"source": "Playground/pages/**",
 	"components": [
 		{
@@ -244,6 +244,22 @@
 			"page": "components/overlay",
 			"demoPath": "Playground/pages/components/overlay.html",
 			"docPath": "documentation/components/overlay.md"
+		},
+		{
+			"@context": "nui",
+			"@type": "Component",
+			"name": "nui-popover",
+			"group": "overlays",
+			"description": "Non-modal dialog anchored to a trigger, built on the native Popover API for top-layer rendering, light dismiss and Escape.",
+			"events": [
+				"nui-popover-open",
+				"nui-popover-close"
+			],
+			"innerElement": null,
+			"imports": null,
+			"page": "components/popover",
+			"demoPath": "Playground/pages/components/popover.html",
+			"docPath": "documentation/components/popover.md"
 		},
 		{
 			"@context": "nui",
@@ -957,6 +973,17 @@
 				},
 				{
 					"name": "nui-overlay-cancel"
+				}
+			]
+		},
+		{
+			"component": "nui-popover",
+			"events": [
+				{
+					"name": "nui-popover-open"
+				},
+				{
+					"name": "nui-popover-close"
 				}
 			]
 		},

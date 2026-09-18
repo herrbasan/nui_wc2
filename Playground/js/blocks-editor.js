@@ -254,9 +254,13 @@ export function initBlocksEditor(element, params, nui) {
 			const controlsGroup = document.createElement('div');
 			controlsGroup.className = 'section-controls-group';
 
-			// Section options live in a gear popover, not a permanent dropdown — the
-			// template decides which options exist.
-			controlsGroup.appendChild(createNuiIconButton('settings', 'Section options', () => toggleSectionOptions(sec, header, chip)));
+			// Section options live behind the gear, not as permanent dropdowns — the
+			// template decides which options exist. The gear carries an id because the panel
+			// is wired to it by `for`, and the platform does the toggling.
+			const optsTriggerId = `section-opts-trigger-${sIdx}`;
+			const gearBtn = createNuiIconButton('settings', 'Section options');
+			gearBtn.id = optsTriggerId;
+			controlsGroup.appendChild(gearBtn);
 
 			// Reorder / Delete buttons using NUI icon buttons
 			controlsGroup.appendChild(createNuiIconButton('chevron_right', 'Move Up', () => moveSection(sIdx, -1), 'icon-rotate-up'));
@@ -300,6 +304,9 @@ export function initBlocksEditor(element, params, nui) {
 			secEl.appendChild(contentBody);
 			sectionsContainer.appendChild(secEl);
 			applyCoverPreview(secEl, sec);
+
+			// Only now is the gear reachable by id, which is how the panel finds its trigger.
+			buildSectionOptions(sec, chip, header, optsTriggerId);
 
 			// Add strip between sections
 			sectionsContainer.appendChild(addStripBottom(() => openSectionTemplateDialog(sIdx + 1), 'section-divider'));
@@ -1180,27 +1187,23 @@ export function initBlocksEditor(element, params, nui) {
 		card.classList.toggle('editor-cover-strip', cover && opts.ratio === 'strip');
 	}
 
-	// Gear popover: the section's options, shaped by its template.
-	function toggleSectionOptions(sec, header, chip) {
-		const existing = header.querySelector('.section-opts-popover');
-		if (existing) { existing.remove(); return; }
-		sectionsContainer.querySelectorAll('.section-opts-popover').forEach(p => p.remove());
-		const pop = buildSectionOptions(sec, chip, header);
-		header.appendChild(pop);
-		const onDocClick = (e) => {
-			if (!pop.contains(e.target)) {
-				pop.remove();
-				document.removeEventListener('click', onDocClick, true);
-			}
-		};
-		document.addEventListener('click', onDocClick, true);
-	}
-
-	function buildSectionOptions(sec, chip, header) {
+	// Section options live in a nui-popover bubble anchored to the gear — the tooltip's
+	// surface, holding controls. The bubble sits in the top layer, so the section card's
+	// `overflow: hidden` cannot clip it, and outside-click and Escape dismissal are the
+	// platform's rather than ours. Built once per section, after the section is in the
+	// document: the panel resolves its trigger by id at upgrade time. The gear is the
+	// trigger, so nothing here toggles anything.
+	function buildSectionOptions(sec, chip, header, triggerId) {
 		const hero = isHeroSection(sec);
 		const opts = parseSecOpts(sec);
-		const pop = document.createElement('div');
-		pop.className = 'section-opts-popover';
+		const pop = document.createElement('nui-popover');
+		pop.setAttribute('for', triggerId);
+		pop.setAttribute('aria-label', 'Section options');
+		// Pinned below the gear rather than left on `auto`: auto prefers `top` whenever
+		// there is room, which is the right call for a tooltip but wrong for a menu that
+		// belongs to a section header. The placement is still clamped into the viewport,
+		// so a section near the bottom of the screen keeps the panel on-screen.
+		pop.setAttribute('placement', 'bottom');
 
 		const apply = () => {
 			sec.attrs = sec.attrs || {};
@@ -1232,14 +1235,17 @@ export function initBlocksEditor(element, params, nui) {
 			return input;
 		};
 
+		// Items are declared here but applied after the panel is in the document: the
+		// select builds its state in connectedCallback, so setItems() does not exist on a
+		// detached element. Writing the slotted <select> instead would work, but that is
+		// the documented fallback rather than the entry API.
+		const pendingSelects = [];
 		const mkSelect = (options, current, onChange) => {
 			const wrap = document.createElement('nui-select');
 			wrap.setAttribute('size', 'small');
-			const sel = document.createElement('select');
-			sel.innerHTML = options.map(([v, l]) => `<option value="${v}" ${v === current ? 'selected' : ''}>${l}</option>`).join('');
-			wrap.appendChild(sel);
+			wrap.appendChild(document.createElement('select'));
 			customElements.upgrade(wrap);
-			wrap.addEventListener('nui-change', (e) => onChange(e.detail?.values?.[0] ?? ''));
+			pendingSelects.push({ wrap, options, current, onChange });
 			return wrap;
 		};
 
@@ -1275,6 +1281,15 @@ export function initBlocksEditor(element, params, nui) {
 			function syncRows() { invRow.style.display = opts.band ? '' : 'none'; }
 			syncRows();
 		}
+
+		header.appendChild(pop);
+
+		pendingSelects.forEach(({ wrap, options, current, onChange }) => {
+			wrap.setItems(options.map(([value, label]) => ({ value, label })));
+			if (current) wrap.setValue(current);
+			wrap.addEventListener('nui-change', (e) => onChange(e.detail?.values?.[0] ?? ''));
+		});
+
 		return pop;
 	}
 
@@ -1469,10 +1484,14 @@ export function initBlocksEditor(element, params, nui) {
 		btn.innerHTML = `<nui-icon name="${iconName}"></nui-icon>`;
 		nuiBtn.appendChild(btn);
 		customElements.upgrade(nuiBtn);
-		nuiBtn.addEventListener('click', (e) => {
-			e.stopPropagation();
-			onClick();
-		});
+		// Optional: a button that carries a `popovertarget` is toggled by the platform, and
+		// adding a click handler as well would fight it.
+		if (onClick) {
+			nuiBtn.addEventListener('click', (e) => {
+				e.stopPropagation();
+				onClick();
+			});
+		}
 		return nuiBtn;
 	}
 

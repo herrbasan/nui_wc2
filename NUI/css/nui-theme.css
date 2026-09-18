@@ -2736,9 +2736,6 @@ nui-select[size="small"] .nui-select-control {
 	padding: 0 var(--nui-space);
 	font-size: var(--font-size-small, 0.9rem);
 	line-height: 1.2;
-	border-radius: var(--border-radius1);
-	border: solid var(--border-thickness) var(--border-shade2);
-	filter: none;
 	box-sizing: border-box;
 }
 
@@ -5005,20 +5002,27 @@ nui-card[layout="flip"] .nui-card-back {
 	transform: rotateY(180deg);
 }
 
-/* ################################# nui-tooltip COMPONENT */
-nui-tooltip {
---tooltip-bg: light-dark(var(--color-shade8), var(--color-shade4));
---tooltip-text: light-dark(var(--color-base), var(--text-color));
+/* ################################# OVERLAY BUBBLE (nui-tooltip + nui-popover) */
+/* Two surfaces, two behaviours: the tooltip shows non-interactive help on hover, the
+   popover holds interactive content on click. They share the bubble geometry, radius,
+   shadow pattern and animation, but NOT the surface: the tooltip is a caption and keeps
+   the inverted dark bubble in both themes, while the popover is a panel of controls and
+   follows the document's color scheme (light gray in light mode, dark in dark mode) so
+   the form controls inside it render in their normal contrast. Position is written
+   inline by the component (placeAnchored) in viewport coordinates, so nothing here
+   needs to know where the box ended up. */
+nui-tooltip, nui-popover {
+--bubble-bg: light-dark(var(--color-shade8), var(--color-shade4));
+--bubble-text: light-dark(var(--color-base), var(--text-color));
 
 position: fixed;
-background-color: var(--tooltip-bg);
-color: var(--tooltip-text);
+background-color: var(--bubble-bg);
+color: var(--bubble-text);
 padding: var(--nui-space);
 border-radius: var(--border-radius2);
 box-shadow: 0 4px 12px var(--shadow-color);
 z-index: 9999;
 border: none;
-max-width: 320px;
 word-wrap: break-word;
 overflow: visible;
 
@@ -5031,71 +5035,464 @@ transition: opacity 0.2s allow-discrete;
 opacity: 0;
 }
 
-/* Rich content integration */
-nui-tooltip strong, nui-tooltip b, nui-tooltip .title {
+/* Size is the one thing the two components do NOT share. A tooltip is a caption and stays
+   narrow; a popover is a panel and takes most of the frame it lives in, which is what lets
+   it hold a real form. Past its cap the popover centres itself instead of anchoring (see
+   placeAnchored) — and at that size it can also be taller than the frame, so the centred
+   form scrolls. `overflow: visible` on the bubble exists for the arrow, and the centred
+   form has no arrow, which is what makes that scroll safe.
+
+   The popover's own numbers here are only what holds before the component has measured its
+   frame, and in a document with no page shell. The component writes the real cap inline,
+   because a percentage on a top-layer element resolves against the viewport — the exact
+   thing the frame exists to avoid. */
+nui-tooltip {
+max-width: 320px;
+}
+
+nui-popover {
+--bubble-text: var(--text-color);
+--accent-strip: 0.2rem;
+padding: var(--nui-space-double);
+max-width: 80vw;
+/* NOTE: light-dark() is written directly on declarations rather than routed through
+   popover-scoped custom properties — a shorter chain to read and debug. Controls with
+   background transitions animate a theme flip over ~150ms; that is a blend, not a bug. */
+background-color: light-dark(var(--color-shade2), rgb(34, 34, 34));
+border: 1px solid light-dark(rgba(0, 0, 0, 0.12), rgba(255, 255, 255, 0.12));
+box-shadow: 0 8px 28px light-dark(rgba(0, 0, 0, 0.28), rgba(0, 0, 0, 0.55)), 0 2px 8px light-dark(rgba(0, 0, 0, 0.16), rgba(0, 0, 0, 0.35));
+}
+
+@supports (position-anchor: --test) and (position-area: bottom) {
+nui-popover {
+	inset: auto;
+}
+
+nui-popover[data-placement="bottom"] {
+	position-area: bottom;
+	margin: var(--popover-offset, 8px) 0 0 0;
+}
+
+nui-popover[data-placement="top"] {
+	position-area: top;
+	margin: 0 0 var(--popover-offset, 8px) 0;
+}
+
+nui-popover[data-placement="left"] {
+	position-area: left;
+	margin: 0 var(--popover-offset, 8px) 0 0;
+}
+
+nui-popover[data-placement="right"] {
+	position-area: right;
+	margin: 0 0 0 var(--popover-offset, 8px);
+}
+
+nui-popover[data-placement="center"] {
+	position-area: none;
+	position-anchor: none;
+	inset: 0;
+	margin: auto;
+}
+}
+
+nui-popover[data-placement="center"] {
+max-height: var(--popover-max-height, 80vh);
+overflow: auto;
+}
+
+/* Centred panels have no trigger side, so neither an arrow nor an accent strip */
+nui-popover[data-placement="center"]::before,
+nui-popover[data-placement="center"]::after {
+display: none;
+}
+
+/* Content conventions inside the bubble */
+nui-tooltip strong, nui-tooltip b, nui-tooltip .title,
+nui-popover strong, nui-popover b, nui-popover .title {
 display: block;
 margin-bottom: var(--nui-space-quarter);
 font-size: var(--font-size-base);
 font-weight: 600;
 }
 
-nui-tooltip p {
+nui-tooltip p, nui-popover p {
 margin: 0 0 var(--nui-space-half) 0;
 }
 
-nui-tooltip p:last-child {
+nui-tooltip p:last-child, nui-popover p:last-child {
 margin-bottom: 0;
 }
 
-nui-tooltip nui-button {
+nui-tooltip nui-button, nui-popover nui-button {
 margin-top: var(--nui-space-quarter);
-/* Ensure buttons inside tooltips fit visually */
+/* Ensure buttons inside a bubble read against its darker surface */
 --button-bg-color: var(--color-base);
 --button-text-color: var(--color-contrast);
 }
 
-/* Arrow Pointer */
-nui-tooltip::after {
+/* Ensure form controls sit correctly on the panel's surface in both themes — white
+   controls on the light-gray panel in light mode, recessed dark wells on the dark
+   panel in dark mode. The light-dark() pairs are direct declarations on purpose
+   (see the NOTE on nui-popover). */
+nui-popover label {
+color: var(--bubble-text);
+}
+
+/* Text inputs, number inputs, textareas */
+nui-popover nui-input {
+background: light-dark(var(--color-white), rgba(0, 0, 0, 0.25));
+border: 1px solid light-dark(var(--border-shade2), rgba(255, 255, 255, 0.12));
+border-radius: var(--border-radius1);
+box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+nui-popover nui-input input,
+nui-popover nui-input textarea {
+color: var(--bubble-text);
+}
+
+nui-popover nui-input input::placeholder,
+nui-popover nui-input textarea::placeholder {
+color: light-dark(var(--color-shade5), rgba(255, 255, 255, 0.45));
+}
+
+nui-popover nui-input:hover {
+border-color: light-dark(var(--color-shade5), rgba(255, 255, 255, 0.2));
+}
+
+nui-popover nui-input:has(input:focus),
+nui-popover nui-input:has(input:focus-visible) {
+border-color: var(--color-highlight);
+box-shadow: 0 0 0 1px var(--color-highlight);
+}
+
+/* Multiline text (nui-textarea carries its own drop-shadow filter — killed here) */
+nui-popover nui-textarea textarea {
+background: light-dark(var(--color-white), rgba(0, 0, 0, 0.25));
+border: 1px solid light-dark(var(--border-shade2), rgba(255, 255, 255, 0.12));
+color: var(--bubble-text);
+box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+filter: none;
+}
+
+nui-popover nui-textarea textarea::placeholder {
+color: light-dark(var(--color-shade5), rgba(255, 255, 255, 0.45));
+}
+
+nui-popover nui-textarea textarea:hover:not(:disabled) {
+background: light-dark(var(--color-shade1), rgba(0, 0, 0, 0.35));
+border-color: light-dark(var(--color-shade5), rgba(255, 255, 255, 0.2));
+}
+
+nui-popover nui-textarea textarea:focus {
+background: light-dark(var(--color-shade1), rgba(0, 0, 0, 0.35));
+border-color: var(--color-highlight);
+color: var(--bubble-text);
+}
+
+/* Select controls */
+nui-popover nui-select .nui-select-control {
+background: light-dark(var(--color-white), rgba(0, 0, 0, 0.25));
+border: 1px solid light-dark(var(--border-shade2), rgba(255, 255, 255, 0.12));
+color: var(--bubble-text);
+box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+nui-popover nui-select .nui-select-arrow {
+color: var(--bubble-text);
+opacity: 0.7;
+}
+
+nui-popover nui-select .nui-select-control:hover:not(:disabled) {
+background: light-dark(var(--color-shade1), rgba(0, 0, 0, 0.35));
+border-color: light-dark(var(--color-shade5), rgba(255, 255, 255, 0.2));
+}
+
+/* Checkboxes */
+nui-popover nui-checkbox .nui-check-box {
+background: light-dark(var(--color-white), rgba(0, 0, 0, 0.25));
+border: 2px solid light-dark(var(--color-shade4), rgba(255, 255, 255, 0.3));
+}
+
+nui-popover nui-checkbox:hover .nui-check-box {
+border-color: light-dark(var(--color-shade5), rgba(255, 255, 255, 0.5));
+}
+
+nui-popover nui-checkbox input:checked ~ .nui-check-box {
+background: var(--color-highlight);
+border-color: var(--color-highlight);
+}
+
+nui-popover nui-checkbox label {
+color: var(--bubble-text);
+}
+
+/* Switch Variant */
+nui-popover nui-checkbox[variant="switch"] .nui-check-box {
+background: light-dark(rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.35));
+border-color: light-dark(var(--color-shade4), rgba(255, 255, 255, 0.3));
+}
+
+nui-popover nui-checkbox[variant="switch"] .nui-check-box::before {
+background: light-dark(rgb(255, 255, 255), rgba(255, 255, 255, 0.85));
+}
+
+nui-popover nui-checkbox[variant="switch"] input:checked ~ .nui-check-box {
+background: var(--color-highlight);
+border-color: var(--color-highlight);
+}
+
+nui-popover nui-checkbox[variant="switch"] input:checked ~ .nui-check-box::before {
+background: #fff;
+}
+
+/* Tag Inputs */
+nui-popover nui-tag-input {
+background: light-dark(var(--color-white), rgba(0, 0, 0, 0.25));
+border: 1px solid light-dark(var(--border-shade2), rgba(255, 255, 255, 0.12));
+color: var(--bubble-text);
+box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+nui-popover nui-tag-input .nui-tag-input-field {
+color: var(--bubble-text);
+}
+
+nui-popover nui-tag-input .nui-tag-input-field::placeholder {
+color: light-dark(var(--color-shade5), rgba(255, 255, 255, 0.45));
+}
+
+nui-popover .nui-tag {
+background: light-dark(var(--color-shade2), rgba(255, 255, 255, 0.12));
+border: 1px solid light-dark(var(--color-shade3), rgba(255, 255, 255, 0.2));
+color: var(--bubble-text);
+filter: none;
+}
+
+nui-popover .nui-tag-text {
+color: var(--bubble-text);
+}
+
+nui-popover .nui-tag-remove {
+color: var(--bubble-text);
+opacity: 0.7;
+}
+
+nui-popover .nui-tag-remove:hover {
+opacity: 1;
+}
+
+/* Radio buttons inside bubble */
+nui-popover nui-radio label {
+color: var(--bubble-text);
+}
+
+nui-popover nui-radio .nui-radio-circle {
+border-color: light-dark(var(--color-shade4), rgba(255, 255, 255, 0.3));
+background: light-dark(var(--color-white), rgba(0, 0, 0, 0.25));
+}
+
+/* Details & Tables inside bubble */
+nui-popover nui-details summary {
+color: var(--bubble-text);
+}
+
+nui-popover nui-table {
+color: var(--bubble-text);
+}
+
+nui-popover nui-table table {
+border-color: light-dark(var(--border-shade2), rgba(255, 255, 255, 0.12));
+background: transparent;
+}
+
+nui-popover nui-table th {
+background: light-dark(var(--color-shade3), rgba(0, 0, 0, 0.35));
+color: var(--bubble-text);
+border-color: light-dark(var(--border-shade2), rgba(255, 255, 255, 0.12));
+}
+
+nui-popover nui-table td {
+border-color: light-dark(var(--border-shade1), rgba(255, 255, 255, 0.08));
+color: var(--bubble-text);
+background: transparent;
+}
+
+/* Sliders */
+nui-popover nui-slider .nui-slider-track::before {
+background: light-dark(rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.35));
+}
+
+nui-popover nui-slider .nui-slider-thumb {
+background: var(--color-white);
+border-color: var(--color-highlight);
+}
+
+/* Buttons inside bubble */
+nui-popover nui-button[variant="ghost"] button {
+color: var(--bubble-text);
+}
+
+nui-popover nui-button[variant="outline"] button {
+color: var(--bubble-text);
+border-color: light-dark(var(--color-shade5), rgba(255, 255, 255, 0.2));
+background: transparent;
+}
+
+nui-popover nui-button[variant="outline"]:hover button {
+background: light-dark(var(--color-shade1), rgba(0, 0, 0, 0.35));
+}
+
+/* Arrow Pointer — aims at the anchor from whichever side the box landed on. The
+   offset comes from placeAnchored, so the arrow follows a clamped box instead of
+   drifting to a fixed corner. */
+nui-tooltip::after, nui-popover::after {
 content: '';
 position: absolute;
 width: 12px;
 height: 12px;
-background-color: var(--tooltip-bg);
+background-color: var(--bubble-bg);
 border-radius: 2px;
 pointer-events: none;
 z-index: -1;
 }
 
-nui-tooltip[data-placement="top"]::after {
+/* Popover accent: the side facing the trigger carries a highlight strip (the
+   ::before) that IS the panel's border on that side, in the same color as the arrow.
+   The arrow is a clip-path triangle drawn without rotation (a clip-path is applied
+   in the element's local box BEFORE transform, so clipping a rotated square cuts a
+   diagonal through the diamond — that is the bug this avoids). The strip overlays
+   the triangle's base, so the arrow reads as emerging from behind it with no gap. */
+nui-popover::before {
+content: '';
+position: absolute;
+background-color: var(--color-highlight);
+pointer-events: none;
+z-index: 1;
+}
+
+nui-popover::after {
+background-color: var(--color-highlight);
+border-radius: 0;
+}
+
+nui-tooltip[data-placement="top"]::after, nui-popover[data-placement="top"]::after {
 bottom: -5px;
 left: var(--arrow-left, 50%);
 transform: translateX(-50%) rotate(45deg);
 }
 
-nui-tooltip[data-placement="bottom"]::after {
+nui-popover[data-placement="top"] {
+border-bottom: none;
+border-bottom-left-radius: 0;
+border-bottom-right-radius: 0;
+}
+
+nui-popover[data-placement="top"]::after {
+bottom: -7px;
+width: 14px;
+height: 7px;
+clip-path: polygon(0 0, 100% 0, 50% 100%);
+transform: translateX(-50%);
+}
+
+nui-popover[data-placement="top"]::before {
+bottom: 0;
+left: 0;
+right: 0;
+height: var(--accent-strip);
+}
+
+nui-tooltip[data-placement="bottom"]::after, nui-popover[data-placement="bottom"]::after {
 top: -5px;
 left: var(--arrow-left, 50%);
 transform: translateX(-50%) rotate(45deg);
 }
 
-nui-tooltip[data-placement="left"]::after {
+nui-popover[data-placement="bottom"] {
+border-top: none;
+border-top-left-radius: 0;
+border-top-right-radius: 0;
+}
+
+nui-popover[data-placement="bottom"]::after {
+top: -7px;
+width: 14px;
+height: 7px;
+clip-path: polygon(50% 0, 0 100%, 100% 100%);
+transform: translateX(-50%);
+}
+
+nui-popover[data-placement="bottom"]::before {
+top: 0;
+left: 0;
+right: 0;
+height: var(--accent-strip);
+}
+
+nui-tooltip[data-placement="left"]::after, nui-popover[data-placement="left"]::after {
 right: -5px;
 top: var(--arrow-top, 50%);
 transform: translateY(-50%) rotate(45deg);
 }
 
-nui-tooltip[data-placement="right"]::after {
+nui-popover[data-placement="left"] {
+border-right: none;
+border-top-right-radius: 0;
+border-bottom-right-radius: 0;
+}
+
+nui-popover[data-placement="left"]::after {
+right: -7px;
+width: 7px;
+height: 14px;
+clip-path: polygon(0 0, 100% 50%, 0 100%);
+transform: translateY(-50%);
+}
+
+nui-popover[data-placement="left"]::before {
+right: 0;
+top: 0;
+bottom: 0;
+width: var(--accent-strip);
+}
+
+nui-tooltip[data-placement="right"]::after, nui-popover[data-placement="right"]::after {
 left: -5px;
 top: var(--arrow-top, 50%);
 transform: translateY(-50%) rotate(45deg);
 }
 
-nui-tooltip:popover-open {
+nui-popover[data-placement="right"] {
+border-left: none;
+border-top-left-radius: 0;
+border-bottom-left-radius: 0;
+}
+
+nui-popover[data-placement="right"]::after {
+left: -7px;
+width: 7px;
+height: 14px;
+clip-path: polygon(0 50%, 100% 0, 100% 100%);
+transform: translateY(-50%);
+}
+
+nui-popover[data-placement="right"]::before {
+left: 0;
+top: 0;
+bottom: 0;
+width: var(--accent-strip);
+}
+
+nui-tooltip:popover-open,
+nui-popover:popover-open {
 opacity: 1;
 }
 
 @starting-style {
-nui-tooltip:popover-open {
+nui-tooltip:popover-open,
+nui-popover:popover-open {
 opacity: 0;
 }
 }

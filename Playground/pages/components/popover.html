@@ -1,0 +1,316 @@
+<div class="page-popover">
+
+<script type="application/ld+json">
+{
+  "@context": "nui",
+  "@type": "Component",
+  "name": "nui-popover",
+  "group": "overlays",
+  "description": "Non-modal dialog anchored to a trigger, built on the native Popover API for top-layer rendering, light dismiss and Escape.",
+  "events": [
+    "nui-popover-open",
+    "nui-popover-close"
+  ],
+  "innerElement": null,
+  "imports": null
+}
+</script>
+
+<nui-details summary="LLM Guide - nui-popover" src="../documentation/components/popover.md" lazy>
+
+</nui-details>
+
+    <header>
+        <h1>Popover Component</h1>
+        <p class="lead">A non-modal dialog anchored to a trigger — interactive content that no ancestor can clip.</p>
+    </header>
+
+    <section>
+        <h2>Basic Usage</h2>
+        <p>The trigger is the element immediately before the popover. The panel is a real dialog: it carries <code>role="dialog"</code> and the trigger gets <code>aria-haspopup="dialog"</code> plus a managed <code>aria-expanded</code>.</p>
+        <p>The panel below contains a <code>nui-select</code>, which opens its own popup. That combination is the interesting case: the platform light-dismisses an open popover when a click lands outside it, and "outside" is judged by DOM ancestry — so an inner dropdown that is a DOM descendant of the panel is <em>nested</em> and leaves the panel open.</p>
+        <h3>Try It</h3>
+        <p>Open the panel, then open the select inside it and pick an option. The panel must stay open.</p>
+        <div class="demo-area">
+            <div class="demo-flex-center">
+                <nui-button variant="icon">
+                    <button type="button" aria-label="Section options"><nui-icon name="settings"></nui-icon></button>
+                </nui-button>
+                <nui-popover aria-label="Section options">
+                    <nui-form-row size="small">
+                        <label for="popover-ratio">Aspect ratio</label>
+                        <nui-select size="small"><select id="popover-ratio"></select></nui-select>
+                    </nui-form-row>
+                    <nui-form-row size="small">
+                        <label for="popover-inverted">Inverted</label>
+                        <nui-checkbox><input type="checkbox" id="popover-inverted"></nui-checkbox>
+                    </nui-form-row>
+                </nui-popover>
+            </div>
+        </div>
+
+        <nui-code>
+            <script type="example" data-lang="html">
+                <nui-button variant="icon">
+                    <button type="button" aria-label="Section options"><nui-icon name="settings"></nui-icon></button>
+                </nui-button>
+                <nui-popover aria-label="Section options">
+                    <nui-form-row size="small">
+                        <label for="popover-ratio">Aspect ratio</label>
+                        <nui-select size="small"><select id="popover-ratio"></select></nui-select>
+                    </nui-form-row>
+                </nui-popover>
+            </script>
+        </nui-code>
+    </section>
+
+    <section>
+        <h2>Explicit Target</h2>
+        <p>When the DOM structure prevents adjacency, point the popover at its trigger with <code>for</code>. The element carrying the popover must be a real <code>&lt;button&gt;</code> — the component wires it as the platform's own invoker rather than with a click listener.</p>
+        <h3>Try It</h3>
+        <div class="demo-area">
+            <div class="demo-flex-center">
+                <nui-button id="detached-trigger"><button type="button">Detached trigger</button></nui-button>
+                <span>The popover that follows is not its sibling.</span>
+            </div>
+            <nui-popover for="detached-trigger" placement="bottom" aria-label="Detached panel">
+                <p>I am not the trigger's sibling, but <code>for</code> found it anyway.</p>
+            </nui-popover>
+        </div>
+
+        <nui-code>
+            <script type="example" data-lang="html">
+                <nui-button id="my-trigger"><button type="button">Open</button></nui-button>
+                <nui-popover for="my-trigger" aria-label="Panel">...</nui-popover>
+            </script>
+        </nui-code>
+    </section>
+
+    <section>
+        <h2>Placement</h2>
+        <p><code>placement</code> accepts a side or <code>auto</code>, which picks whichever side has room. Every result is clamped into the viewport, so a panel that cannot fit degrades to the nearest visible position instead of rendering off-screen.</p>
+        <h3>Try It</h3>
+        <div class="demo-area">
+            <div class="demo-actions">
+                <nui-button>
+                    <button type="button">Auto</button>
+                </nui-button>
+                <nui-popover aria-label="Auto placement panel">
+                    <p>Placed automatically — whichever side has room.</p>
+                </nui-popover>
+
+                <nui-button>
+                    <button type="button">Right</button>
+                </nui-button>
+                <nui-popover placement="right" aria-label="Right placement panel">
+                    <p>Pinned to the right of the trigger.</p>
+                </nui-popover>
+
+                <nui-button>
+                    <button type="button">Top</button>
+                </nui-button>
+                <nui-popover placement="top" aria-label="Top placement panel">
+                    <p>Pinned above the trigger.</p>
+                </nui-popover>
+            </div>
+        </div>
+
+        <nui-code>
+            <script type="example" data-lang="html">
+                <nui-button><button type="button">Top</button></nui-button>
+                <nui-popover placement="top" aria-label="Top placement panel">
+                    <p>Pinned above the trigger.</p>
+                </nui-popover>
+            </script>
+        </nui-code>
+    </section>
+
+    <section>
+        <h2>Programmatic Control &amp; Events</h2>
+        <p>The component exposes <code>show()</code>, <code>hide()</code>, <code>toggle()</code> and <code>isOpen()</code>. Both events fire for <em>every</em> path in and out — invoker click, light dismiss, Escape, or a programmatic call — because they are emitted from the platform's own <code>toggle</code> event.</p>
+        <h3>Try It</h3>
+        <div class="demo-area">
+            <div class="demo-flex-center">
+                <nui-button>
+                    <button type="button">Panel</button>
+                </nui-button>
+                <nui-popover aria-label="Programmatic panel">
+                    <p>Opened or closed from code, or by any other path.</p>
+                </nui-popover>
+            </div>
+            <div class="demo-actions">
+                <nui-button variant="outline" data-popover-call="show"><button type="button">show()</button></nui-button>
+                <nui-button variant="outline" data-popover-call="hide"><button type="button">hide()</button></nui-button>
+                <nui-button variant="outline" data-popover-call="toggle"><button type="button">toggle()</button></nui-button>
+            </div>
+            <div class="demo-result" data-popover-log>Waiting for an event…</div>
+        </div>
+
+        <nui-code>
+            <script type="example" data-lang="javascript">
+                const panel = document.querySelector('nui-popover');
+                panel.show();
+                panel.hide();
+                panel.toggle();
+                panel.isOpen();
+
+                panel.addEventListener('nui-popover-close', () => console.log('closed'));
+            </script>
+        </nui-code>
+    </section>
+
+    <section>
+        <h2>Wide Panels Centre Horizontally</h2>
+        <p>A popover may be up to <code>80vw</code> wide, so it can hold a real form rather than a couple of rows. Past <strong>60% of the content frame's width</strong>, the bubble body centres horizontally across the frame rather than being pushed off-screen with the trigger, but <strong>remains firmly anchored vertically</strong> to its button with the pointer arrow aimed directly at the control.</p>
+        <h3>Try It</h3>
+        <div class="demo-area">
+            <div class="demo-flex-center">
+                <nui-button><button type="button">Wide panel</button></nui-button>
+                <nui-popover aria-label="Wide panel">
+                    <p>This paragraph is long enough to push the bubble past the threshold. The bubble body is horizontally centred across the content frame, while the arrow points directly at the button that opened it.</p>
+                    <nui-form-row size="small">
+                        <label for="wide-ratio">Aspect ratio</label>
+                        <nui-select size="small"><select id="wide-ratio"></select></nui-select>
+                        <label for="wide-inverted">Inverted</label>
+                        <nui-checkbox><input type="checkbox" id="wide-inverted"></nui-checkbox>
+                    </nui-form-row>
+                </nui-popover>
+            </div>
+        </div>
+
+        <nui-code>
+            <script type="example" data-lang="html">
+                <nui-button><button type="button">Wide panel</button></nui-button>
+                <nui-popover aria-label="Wide panel">
+                    <!-- Wide content: the bubble centres horizontally, arrow aims at button -->
+                </nui-popover>
+            </script>
+        </nui-code>
+    </section>
+
+    <section>
+        <h2>Complex Content: Tabbed Controls (Worst-Case Stress Test)</h2>
+        <p>A comprehensive stress-test verifying how the dark island handles nested navigation, form controls, sliders, switches, badges, and progress across both light and dark themes.</p>
+        <h3>Try It</h3>
+        <div class="demo-area">
+            <div class="demo-flex-center">
+                <nui-button variant="primary">
+                    <button type="button" id="complex-popover-trigger">Open Complex Panel</button>
+                </nui-button>
+                <nui-popover for="complex-popover-trigger" aria-label="Inspector Panel" placement="bottom">
+                    <div style="width: 400px;">
+                        <nui-tabs>
+                            <nav>
+                                <button>Inputs</button>
+                                <button>Selection</button>
+                                <button>Structure</button>
+                                <button>Actions</button>
+                            </nav>
+                            <!-- Tab 1: Inputs -->
+                            <div style="display: flex; flex-direction: column; gap: var(--nui-space-half); padding-top: var(--nui-space);">
+                                <nui-form-row size="small">
+                                    <label for="tc-name">Project name</label>
+                                    <nui-input><input type="text" id="tc-name" value="NUI Redesign"></nui-input>
+                                </nui-form-row>
+                                <nui-form-row size="small">
+                                    <label for="tc-port">Port number</label>
+                                    <nui-input><input type="number" id="tc-port" value="3000"></nui-input>
+                                </nui-form-row>
+                                <nui-form-row size="small">
+                                    <label for="tc-secret">API Key</label>
+                                    <nui-input><input type="password" id="tc-secret" value="secret_token_123"></nui-input>
+                                </nui-form-row>
+                                <div>
+                                    <label for="tc-notes" style="display: block; margin-bottom: var(--nui-space-quarter);">Description</label>
+                                    <nui-textarea auto-resize min-rows="2" max-rows="6"><textarea id="tc-notes" placeholder="Optional description..."></textarea></nui-textarea>
+                                </div>
+                            </div>
+                            <!-- Tab 2: Selection -->
+                            <div style="display: flex; flex-direction: column; gap: var(--nui-space-half); padding-top: var(--nui-space);">
+                                <nui-form-row size="small">
+                                    <label for="tc-framework">Framework</label>
+                                    <nui-select size="small" id="tc-framework">
+                                        <select>
+                                            <option value="vanilla" selected>Vanilla JS</option>
+                                            <option value="webc">Web Components</option>
+                                            <option value="custom">Custom Element</option>
+                                        </select>
+                                    </nui-select>
+                                </nui-form-row>
+                                <div>
+                                    <label style="display: block; margin-bottom: var(--nui-space-quarter);">Tags</label>
+                                    <nui-tag-input name="demo-pop-tags" editable placeholder="Add tag...">
+                                        <input type="hidden" name="demo-pop-tags" value="v3.0">
+                                        <input type="hidden" name="demo-pop-tags" value="core">
+                                    </nui-tag-input>
+                                </div>
+                                <nui-form-row size="small">
+                                    <label for="tc-speed">Speed (ms)</label>
+                                    <nui-slider><input type="range" id="tc-speed" min="0" max="100" value="75"></nui-slider>
+                                </nui-form-row>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: var(--nui-space-quarter);">
+                                    <label for="tc-telemetry">Telemetry</label>
+                                    <nui-checkbox variant="switch"><input type="checkbox" id="tc-telemetry" checked><label for="tc-telemetry">Enabled</label></nui-checkbox>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <label for="tc-debug">Debug overlay</label>
+                                    <nui-checkbox><input type="checkbox" id="tc-debug"><label for="tc-debug">Show overlay</label></nui-checkbox>
+                                </div>
+                                <div style="display: flex; gap: var(--nui-space); align-items: center; margin-top: var(--nui-space-quarter);">
+                                    <label>Mode:</label>
+                                    <nui-radio><input type="radio" name="pop-mode" value="auto" checked><label>Auto</label></nui-radio>
+                                    <nui-radio><input type="radio" name="pop-mode" value="manual"><label>Manual</label></nui-radio>
+                                </div>
+                            </div>
+                            <!-- Tab 3: Structure -->
+                            <div style="display: flex; flex-direction: column; gap: var(--nui-space-half); padding-top: var(--nui-space);">
+                                <nui-details summary="Environment details">
+                                    <p style="margin: var(--nui-space-quarter) 0;">Running inside isolated top-layer DOM with hardware-accelerated compositor anchoring.</p>
+                                </nui-details>
+                                <nui-table>
+                                    <table>
+                                        <thead>
+                                            <tr><th>Property</th><th>Setting</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr><td>Tether</td><td>CSS Anchor</td></tr>
+                                            <tr><td>Scheme</td><td>Dark Island</td></tr>
+                                            <tr><td>Deviation</td><td>0 px</td></tr>
+                                        </tbody>
+                                    </table>
+                                </nui-table>
+                                <div style="display: flex; gap: var(--nui-space-quarter); align-items: center; margin-top: var(--nui-space-quarter);">
+                                    <nui-badge variant="success">Active</nui-badge>
+                                    <nui-badge variant="primary">Stable</nui-badge>
+                                    <nui-badge variant="warning">Preview</nui-badge>
+                                </div>
+                            </div>
+                            <!-- Tab 4: Actions -->
+                            <div style="display: flex; flex-direction: column; gap: var(--nui-space-half); padding-top: var(--nui-space);">
+                                <div>
+                                    <label style="display: block; margin-bottom: var(--nui-space-quarter);">Deployment progress</label>
+                                    <nui-progress value="72" max="100"></nui-progress>
+                                </div>
+                                <p style="font-size: var(--font-size-xsmall); opacity: 0.7; margin: var(--nui-space-quarter) 0;">Confirm changes across all 4 tab panes before saving.</p>
+                                <div style="display: flex; justify-content: flex-end; gap: var(--nui-space-half); margin-top: var(--nui-space-half);">
+                                    <nui-button variant="danger"><button type="button">Discard</button></nui-button>
+                                    <nui-button variant="ghost"><button type="button">Cancel</button></nui-button>
+                                    <nui-button variant="primary"><button type="button">Apply</button></nui-button>
+                                </div>
+                            </div>
+                        </nui-tabs>
+                    </div>
+                </nui-popover>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <h2>Popover, Tooltip or Dialog?</h2>
+        <div class="demo-callout">
+            <p><strong>Pick by interaction, not by looks.</strong> <code>nui-tooltip</code> is non-interactive help on hover — it must not contain focusable content. <code>nui-dialog</code> is modal and screen-placed: it makes the page behind it inert and cannot anchor. <code>nui-popover</code> is the anchored, interactive, non-blocking one.</p>
+            <p>Note that the panel needs an accessible name. Give it <code>aria-label</code> or <code>aria-labelledby</code>; a nameless <code>role="dialog"</code> is announced as "dialog" and nothing else, and the component logs a warning.</p>
+        </div>
+    </section>
+
+</div>

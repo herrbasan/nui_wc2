@@ -97,5 +97,5 @@ tooltip.togglePopover?.(false);
 
 **Avoid tooltips for:**
 - Critical information the user must read (use inline text or a callout)
-- Interactive forms or complex content (use a dialog or popover instead)
+- Interactive forms or complex content — a tooltip must not contain focusable content, so anything you click belongs in [`nui-popover`](popover.md) (anchored, non-modal) or [`nui-dialog`](dialog.md) (modal)
 - Touch-only interfaces (hover doesn't exist on touch; use press-and-hold or inline text)

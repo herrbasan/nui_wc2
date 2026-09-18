@@ -319,24 +319,10 @@ nui-main > .content-page > .page-blocks-editor[breakout],
 	position: relative;
 }
 
-/* Section options popover (gear icon). The template decides which rows exist. */
-.page-blocks-editor .section-opts-popover {
-	position: absolute;
-	top: 100%;
-	right: var(--nui-space-half);
-	z-index: 60;
-	min-width: 260px;
-	display: flex;
-	flex-direction: column;
-	gap: var(--nui-space-half);
-	padding: var(--nui-space-half) var(--nui-space);
-	background: var(--color-base);
-	border: var(--border-thickness) solid var(--border-shade1);
-	border-radius: var(--border-radius1);
-	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
-}
-
-.page-blocks-editor .section-opts-row {
+/* Section options rows (behind the gear, inside the nui-popover bubble). Only the rows
+   are styled here — the bubble's dark surface, radius, shadow and arrow belong to the
+   component, and these rows inherit its text colour rather than the page's. */
+.page-blocks-editor nui-popover .section-opts-row {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
@@ -344,8 +330,8 @@ nui-main > .content-page > .page-blocks-editor[breakout],
 	font-size: var(--font-size-small);
 }
 
-.page-blocks-editor .section-opts-row label {
-	color: var(--text-color);
+.page-blocks-editor nui-popover .section-opts-row + .section-opts-row {
+	margin-top: var(--nui-space-half);
 }
 
 .page-blocks-editor .section-opts-row input[type="checkbox"] {
@@ -429,8 +415,7 @@ nui-main > .content-page > .page-blocks-editor[breakout],
 	transition: opacity 0.15s;
 }
 
-/* Header NUI Selects: quiet text at rest without button chrome, reveals on hover */
-.page-blocks-editor .section-card-header nui-select .nui-select-control,
+/* Block Header Preset Select: quiet text at rest without button chrome, reveals on hover */
 .page-blocks-editor .block-card-header nui-select .nui-select-control {
 	background: transparent;
 	border: 1px solid transparent;
@@ -440,9 +425,6 @@ nui-main > .content-page > .page-blocks-editor[breakout],
 	transition: opacity 0.15s, background 0.15s, border-color 0.15s;
 }
 
-.page-blocks-editor .section-card-header nui-select:hover .nui-select-control,
-.page-blocks-editor .section-card-header nui-select:focus-within .nui-select-control,
-.page-blocks-editor .section-card-header nui-select.is-open .nui-select-control,
 .page-blocks-editor .block-card-header nui-select:hover .nui-select-control,
 .page-blocks-editor .block-card-header nui-select:focus-within .nui-select-control,
 .page-blocks-editor .block-card-header nui-select.is-open .nui-select-control {
@@ -451,13 +433,11 @@ nui-main > .content-page > .page-blocks-editor[breakout],
 	opacity: 1;
 }
 
-.page-blocks-editor .section-card-header nui-select .nui-select-arrow,
 .page-blocks-editor .block-card-header nui-select .nui-select-arrow {
 	opacity: 0.45;
 	transition: opacity 0.15s;
 }
 
-.page-blocks-editor .section-card-header nui-select:hover .nui-select-arrow,
 .page-blocks-editor .block-card-header nui-select:hover .nui-select-arrow {
 	opacity: 1;
 }

@@ -321,6 +321,7 @@ const navigationData = [
 				label: 'Overlays & Feedback',
 				items: [
 					{ label: 'Dialog', href: '#page=components/dialog' },
+					{ label: 'Popover', href: '#page=components/popover' },
 					{ label: 'Overlay', href: '#page=components/overlay' },
 					{ label: 'Banner', href: '#page=components/banner' },
 					{ label: 'Progress', href: '#page=components/progress' },

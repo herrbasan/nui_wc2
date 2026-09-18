@@ -1557,6 +1557,31 @@ nui.registerPage('components/tooltip', {
 	}
 });
 
+nui.registerPage('components/popover', {
+	html: 'components/popover.html',
+	init(element, params, nui) {
+		const panel = element.querySelector('nui-popover');
+		const log = element.querySelector('[data-popover-log]');
+
+		element.querySelectorAll('nui-popover nui-select').forEach((sel) => sel.setItems([
+			{ value: 'square', label: 'Square (1:1)' },
+			{ value: 'wide', label: 'Wide (16:9)' },
+			{ value: 'banner', label: 'Banner (16:5)' },
+			{ value: 'strip', label: 'Strip (16:3)' }
+		]));
+
+		// Both events fire for every path in and out — invoker click, light dismiss,
+		// Escape, or one of the buttons below — because the component emits them from the
+		// platform's own `toggle` event rather than from its own show/hide calls.
+		panel.addEventListener('nui-popover-open', () => { log.textContent = 'nui-popover-open'; });
+		panel.addEventListener('nui-popover-close', () => { log.textContent = 'nui-popover-close'; });
+
+		element.querySelectorAll('[data-popover-call]').forEach((btn) => {
+			btn.addEventListener('click', () => panel[btn.dataset.popoverCall]());
+		});
+	}
+});
+
 // ── Addons ──
 
 nui.registerPage('addons/app-window', {

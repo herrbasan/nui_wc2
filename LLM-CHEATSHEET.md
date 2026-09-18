@@ -738,7 +738,36 @@ nui.components.banner.hideAll();
 
 📖 **Full docs:** [`documentation/components/markdown.md`](documentation/components/markdown.md)
 
+### nui-popover
+
+A **non-modal dialog anchored to its trigger** — the gear-panel shape: interactive content that hangs off the control it belongs to, and no ancestor's `overflow: hidden` can clip it. Its own dropdowns (`nui-select`, `nui-tag-input`) must stay **inside** the element in the DOM: the platform light-dismisses an `auto` popover when a click lands outside it, and DOM ancestry is what makes a nested popup count as inside.
+
+```html
+<nui-button variant="icon">
+	<button type="button" aria-label="Section options"><nui-icon name="settings"></nui-icon></button>
+</nui-button>
+<nui-popover aria-label="Section options">
+	<nui-form-row size="small">
+		<label for="ratio">Aspect ratio</label>
+		<nui-select size="small"><select id="ratio"></select></nui-select>
+	</nui-form-row>
+</nui-popover>
+```
+| Attributes | `for` (trigger ID; defaults to previous sibling), `placement="top|bottom|left|right|auto|center"`, `offset`, `container` (selector naming the frame), `aria-label`/`aria-labelledby` |
+| Sizing | the frame is the page **content region** (`nui-content`/`nui-main`), not the viewport — so it centres on the page, not over the sidebar. Capped at **80% of the frame**; past **60% of its width** it centres in the frame, drops the arrow and caps to 80% of the frame's height with a scroll. `placement="center"` forces it; `container="<sel>"` names the frame and **throws** if it matches nothing |
+| Sets on itself | `role="dialog"`, `popover="auto"` — never write these yourself |
+| Trigger | must be, or contain, a real `<button>`: it is wired via `popovertarget`, and the component **throws** without one |
+| API | `.show()`, `.hide()`, `.toggle()`, `.isOpen()` |
+| Events | `nui-popover-open`, `nui-popover-close` (bubble; fire for every path in and out) |
+| Manages | `aria-haspopup="dialog"` + `aria-expanded` on the invoker |
+
+⚠️ **Pick by interaction, not by looks.** `nui-tooltip` = non-interactive help on hover (must not contain focusable content). `nui-dialog` = modal and screen-placed (page behind it is inert, no anchoring). `nui-popover` = anchored, interactive, non-blocking.
+
+📖 **Full docs:** [`documentation/components/popover.md`](documentation/components/popover.md)
+
 ### nui-tooltip
+
+Hover/focus help text only — **non-interactive by contract**. For a panel of controls, use `nui-popover`.
 
 ```html
 <button id="btn1">Hover me</button>
