@@ -544,8 +544,9 @@ If you MUST apply CSS (spacing on your own wrappers, very rare theming), use ONL
 <nui-details summary="Changelog" src="/docs/changelog.md" lazy></nui-details>
 ```
 | Attributes | `summary="Title"`, `src="/path.md"`, `lazy` (defer fetch until opened) |
-| Content types | `.md` → nui-markdown, `.html` → innerHTML, other → text |
-| Caching | Content fetched once, reused on subsequent opens |
+| Content types *(src only)* | `.md` → nui-markdown, `.html` → innerHTML, other → text |
+| Caching *(src only)* | Content fetched once, reused on subsequent opens |
+| Static content | No `src` → children become the body of a closed `<details>`, opened on click. `lazy` is ignored. For a *set* of collapsible sections use `nui-accordion` instead. |
 
 📖 **Full docs:** [`documentation/components/details.md`](documentation/components/details.md)
 
