@@ -3753,6 +3753,7 @@ nui-tabs[fill] [role="tabpanel"] nui-rich-text .nui-rich-text-editor {
 nui-accordion {
 	display: block;
 	width: 100%;
+	box-sizing: border-box; /* Include border in width calculation */
 	border: solid var(--border-thickness) var(--border-shade2);
 	border-radius: var(--border-radius2);
 	overflow: hidden;
