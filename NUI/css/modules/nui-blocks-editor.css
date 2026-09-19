@@ -253,29 +253,34 @@ nui-main > .content-page > .page-blocks-editor[breakout],
 
 /* Cover preview: the canvas media frame mirrors the section's cover options —
    the image fills and crops like the rendered cover, with the same width-relative
-   aspect-ratio tokens the renderer uses (16:9 default, 1:1 / 16:5 / 16:3). */
+   aspect-ratio tokens the renderer uses (16:9 default, 1:1 / 16:5 / 16:3).
+   The media row has a FIXED height, so the frame can't be width-relative
+   itself: it is the largest box of the cover's ratio that fits the preview's
+   bounding (container-query units), centered — a letterboxed but ratio-true
+   representation of what will be rendered, caption ghost included. */
 .page-blocks-editor .editor-media-card.editor-cover .media-frame {
+	display: block;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
 	padding: 0;
-	max-height: none;
 	height: auto;
+	max-height: none;
 	aspect-ratio: 16 / 9;
+	width: min(100cqw, 100cqh * 16 / 9);
 }
 .page-blocks-editor .editor-media-card.editor-cover.editor-cover-square .media-frame {
 	aspect-ratio: 1 / 1;
+	width: min(100cqw, 100cqh);
 }
 .page-blocks-editor .editor-media-card.editor-cover.editor-cover-banner .media-frame {
 	aspect-ratio: 16 / 5;
+	width: min(100cqw, 100cqh * 16 / 5);
 }
 .page-blocks-editor .editor-media-card.editor-cover.editor-cover-strip .media-frame {
 	aspect-ratio: 16 / 3;
-}
-/* Cover preview: the canvas media frame mirrors the section's cover options —
-   the frame gets the width-relative ratio and the image simply fills it
-   (object-fit: cover). display: block matters: the base frame is a flex box,
-   and flex stretch makes the percentage height circular — a plain block
-   resolves it. */
-.page-blocks-editor .editor-media-card.editor-cover .media-frame {
-	display: block;
+	width: min(100cqw, 100cqh * 16 / 3);
 }
 .page-blocks-editor .editor-media-card.editor-cover .media-frame img {
 	width: 100%;
@@ -569,17 +574,33 @@ nui-main > .content-page > .page-blocks-editor[breakout],
 	border-color: var(--color-highlight);
 }
 
-/* Media block — image set + caption. Every strip carries `add-top`/`add-bottom`
-   (see above); media strips are `.media-thumb`. The picker dialog renders outside
-   `.page-blocks-editor`, so its rules are namespaced but unscoped. */
+/* Media block — image set + caption. Compact row: the preview takes the width,
+   the thumbnails stack in a vertical rail beside it (width is plentiful in the
+   editor canvas, height is not). The rail is a nui-sortable: drag order IS the
+   image order, the first item is the lead. Tiles follow the old n000b blocks
+   editor: [index cell | image], no chrome padding. The picker dialog renders
+   outside `.page-blocks-editor`, so its rules are namespaced but unscoped. */
 .page-blocks-editor .media-block-body {
 	display: flex;
 	flex-direction: column;
 	gap: var(--nui-space-half);
 }
 
+.page-blocks-editor .media-body-row {
+	display: flex;
+	gap: var(--nui-space-half);
+	/* 10rem floor, no ceiling: when the thumb rail needs more room than the
+	   preview, the row grows with it (no scrollbars in the rail). */
+	min-height: 10rem;
+}
+
 .page-blocks-editor .media-preview {
+	flex: 1 1 auto;
+	min-width: 0;
 	position: relative;
+	/* Size container: the cover frame sizes itself from these cqw/cqh — the
+	   largest box of the cover's aspect ratio that fits this bounding. */
+	container-type: size;
 	background: var(--be-well-bg);
 	border: 1px solid var(--be-well-border);
 	border-radius: var(--border-radius1);
@@ -590,14 +611,14 @@ nui-main > .content-page > .page-blocks-editor[breakout],
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	min-height: 6rem;
-	max-height: 20rem;
+	height: 100%;
+	min-height: 0;
 }
 
 .page-blocks-editor .media-frame img {
 	display: block;
 	max-width: 100%;
-	max-height: 20rem;
+	max-height: 100%;
 	object-fit: contain;
 }
 
@@ -619,28 +640,48 @@ nui-main > .content-page > .page-blocks-editor[breakout],
 	gap: var(--nui-space-quarter);
 }
 
-.page-blocks-editor .media-thumbs {
-	display: flex;
-	flex-wrap: wrap;
-	gap: var(--nui-space-quarter);
-	list-style: none;
-	margin: 0;
-	padding: 0;
+.page-blocks-editor .media-side {
+	flex: 0 0 40%;
+	min-width: 0;
 }
 
-.page-blocks-editor .media-thumb {
-	position: relative;
-	flex: 0 0 auto;
-	width: 4rem;
-	height: 3rem;
-	overflow: hidden;
-	cursor: pointer;
-	background: var(--be-well-bg);
+.page-blocks-editor nui-sortable.media-thumbs {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(4.5rem, 1fr));
+	align-content: flex-start;
+	gap: var(--nui-space-quarter);
+	padding: var(--nui-space-quarter);
+	/* Deepest surface in the block: the rail is a recessed strip so the
+	   elevated tiles (border + shadow) actually read against it. */
+	background: var(--be-block-body-bg);
 	border: 1px solid var(--be-well-border);
 	border-radius: var(--border-radius1);
 }
 
+/* nui-sortable-item overrides — the theme default is a padded list row; a
+   tile here is [index cell | image], edge to edge, at a fixed 16:9 ratio.
+   Grid tracks (not flex grow) size the tiles, so a partially filled last row
+   keeps the same tile size as the rows above it. The tile is an elevated
+   plate on the recessed rail: defined border, drop shadow, image area darker
+   than the rail it sits on (n000b contrast grammar: shading, not strokes). */
+.page-blocks-editor nui-sortable-item.media-thumb {
+	position: relative;
+	aspect-ratio: 16 / 9;
+	align-items: stretch;
+	gap: 0;
+	padding: 0;
+	overflow: hidden;
+	background: var(--be-block-body-bg);
+	/* Border + number tab share one color logic: the full header shade at
+	   50% opacity unselected, 70% selected (no highlight color, no shade
+	   mixing — the alpha does the state differentiation). */
+	border: thin solid color-mix(in srgb, var(--be-block-header-bg) 50%, transparent);
+	box-shadow: 0 1px 3px var(--shadow-color);
+}
+
 .page-blocks-editor .media-thumb img {
+	flex: 1 1 auto;
+	min-width: 0;
 	display: block;
 	width: 100%;
 	height: 100%;
@@ -648,61 +689,45 @@ nui-main > .content-page > .page-blocks-editor[breakout],
 }
 
 .page-blocks-editor .media-thumb.selected {
-	border-color: var(--color-highlight);
+	border-color: color-mix(in srgb, var(--be-block-header-bg) 70%, transparent);
+}
+
+.page-blocks-editor .media-thumb.selected .handle {
+	background: color-mix(in srgb, var(--be-block-header-bg) 70%, transparent);
+}
+
+/* The theme's keyboard-drag state scales the item up (scale(1.02)); on a tiny
+   16:9 tile that growth is pure visual noise, and the tile already lifts via
+   the dragged state's shadow. */
+.page-blocks-editor nui-sortable-item.media-thumb[data-keyboard-drag="true"] {
+	transform: none;
 }
 
 .page-blocks-editor .media-thumb .handle {
-	position: absolute;
-	top: 0;
-	left: 0;
-	z-index: 1;
-	padding: 0 0.2rem;
-	background: var(--be-block-body-bg);
-	color: var(--text-color-dim);
+	flex: 0 0 1.25rem;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: color-mix(in srgb, var(--be-block-header-bg) 50%, transparent);
+	color: var(--be-chrome-text);
 	font-size: var(--font-size-xsmall);
-	line-height: 1.3;
 }
 
-.page-blocks-editor .media-thumb .thumb-remove {
-	/* NUI's global control rule pins every button to a 2rem minimum. Inside a
-	   4×3rem tile that box covers the tile's centre, so the promote click landed
-	   on the ✕ and deleted the image. The tile stays the large target; only this
-	   corner affordance drops below the theme minimum. */
-	--icon-size: 1rem;
-	position: absolute;
-	top: 0;
-	right: 0;
-	z-index: 2;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 1.25rem;
-	height: 1.25rem;
-	min-width: 0;
-	min-height: 0;
-	padding: 0;
-	background: none;
-	border: none;
-	color: var(--text-color-dim);
-	cursor: pointer;
-	line-height: 1;
-}
+/* Small viewports: the 60/40 row gets too cramped — stack the rail below the
+   preview instead. Same breakpoint as the split-view collapse above. */
+@media (max-width: 1100px) {
+	.page-blocks-editor .media-body-row {
+		flex-direction: column;
+		height: auto;
+	}
 
-.page-blocks-editor .media-thumb .thumb-remove:hover {
-	color: var(--color-highlight);
-}
+	.page-blocks-editor .media-preview {
+		flex: 0 0 10rem;
+	}
 
-.page-blocks-editor .media-thumb.add-tile {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	border-style: dashed;
-	color: var(--text-color-dim);
-}
-
-.page-blocks-editor .media-thumb.add-tile:hover {
-	color: var(--color-highlight);
-	border-color: var(--color-highlight);
+	.page-blocks-editor .media-side {
+		flex: 0 0 auto;
+	}
 }
 
 /* Media library picker. Rows use nui-list's own image-item variant (index |

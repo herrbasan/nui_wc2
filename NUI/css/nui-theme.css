@@ -4767,6 +4767,9 @@ nui-sortable-item {
 	touch-action: none; /* Required for pointer events panning */
 	will-change: transform;
 	transition: background 0.2s;
+	/* The drag state pins the measured border-box size as inline width/height;
+	   under content-box that ADDS border+padding on top — dragged items grew. */
+	box-sizing: border-box;
 }
 
 nui-sortable-item:hover {
@@ -5970,6 +5973,97 @@ nui-markdown p > img {
 }
 .nui-blocks-section.nui-preset-cover > .nui-blocks-media figcaption > :last-child {
 	margin-bottom: 0;
+}
+
+/* Slideshow state (gallery:slideshow, or any multi-plate cover gallery in the
+   enhanced renderer): the even-row spec layout becomes a crossfading
+   single-plate stage. Rotation is layered on by the renderer
+   (enhanced-renderer concern, not spec law) — these rules key on the
+   JS-added .nui-slideshow state class, so without enhancement the list keeps
+   its static row layout (graceful degradation, not plates nobody can
+   advance). The active item stays in flow, so in a plain figure the stage's
+   height is the active plate's natural height; in a cover section the ul is
+   already the ratio-filling grid child. The second selector in each rule
+   keeps pace with the cover section's specificity. */
+.nui-blocks-gallery.nui-slideshow {
+	position: relative;
+}
+.nui-blocks-gallery.nui-slideshow > :is(ul, ol),
+.nui-blocks-section .nui-blocks-gallery.nui-slideshow > :is(ul, ol) {
+	display: block;
+	position: relative;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	gap: 0;
+}
+.nui-blocks-gallery.nui-slideshow > :is(ul, ol) > li,
+.nui-blocks-section .nui-blocks-gallery.nui-slideshow > :is(ul, ol) > li {
+	position: absolute;
+	inset: 0;
+	margin: 0;
+	opacity: 0;
+	transition: opacity 0.6s ease;
+}
+.nui-blocks-gallery.nui-slideshow > :is(ul, ol) > li.active,
+.nui-blocks-section .nui-blocks-gallery.nui-slideshow > :is(ul, ol) > li.active {
+	position: relative;
+	opacity: 1;
+	z-index: 1;
+}
+/* In a cover the ratio box owns the height — the active plate must stay OUT
+   of flow (absolute like the inactive ones). A relative active plate would
+   push its natural height into the grid row and silently drop the section's
+   aspect ratio (a strip read as tall as the image happened to be). */
+.nui-blocks-section.nui-preset-cover .nui-blocks-gallery.nui-slideshow > :is(ul, ol) > li.active {
+	position: absolute;
+	inset: 0;
+	height: 100%;
+}
+
+/* Pause/play: quiet until approached — full contrast on hover/focus, never
+   louder than the plates. */
+.nui-slideshow-toggle {
+	position: absolute;
+	right: var(--nui-space-half);
+	bottom: var(--nui-space-half);
+	z-index: 2;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	height: 2rem;
+	min-width: 0;
+	min-height: 0;
+	padding: 0;
+	border: none;
+	border-radius: 50%;
+	background: rgba(0, 0, 0, 0.45);
+	color: #fff;
+	cursor: pointer;
+	opacity: 0.4;
+	transition: opacity 0.2s;
+}
+.nui-slideshow-toggle:hover,
+.nui-slideshow-toggle:focus-visible {
+	opacity: 1;
+}
+/* In a cover section the figure is display:contents, so the toggle lands in
+   the section's grid directly — park it in the media cell's corner. */
+.nui-blocks-section.nui-preset-cover > .nui-blocks-media > .nui-slideshow-toggle {
+	position: relative;
+	right: auto;
+	bottom: auto;
+	grid-area: 1 / 1;
+	align-self: end;
+	justify-self: end;
+	margin: var(--nui-space-half);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.nui-blocks-gallery.nui-slideshow > :is(ul, ol) > li {
+		transition: none;
+	}
 }
 
 /* Table presets */

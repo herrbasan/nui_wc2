@@ -4352,103 +4352,121 @@ registerComponent('nui-sortable', (element) => {
 		});
 	};
 
-	const onPointerDown = (e) => {
-		if (e.button !== 0) return;
-		
-		const item = e.target.closest('nui-sortable-item');
-		if (!item || !element.contains(item)) return;
-		
-		// Ignore if clicking an interactive element (unless it specifically IS the drag handle)
-		const interactive = e.target.closest('button, a, input, select, textarea, [data-action]');
-		if (interactive && !interactive.closest('.drag-handle')) {
-			return;
-		}
-		
-		// If the item specifies a drag handle, ensure we clicked it
-		if (item.querySelector('.drag-handle') && !e.target.closest('.drag-handle')) {
-			return;
-		}
-		
-		e.preventDefault();
+	// Drag threshold: pointerdown alone is a CLICK, not a drag. Entering the
+	// drag state (placeholder, absolute positioning, shadow) disturbs the item
+	// visually — a fractional-position shift was visible even on plain clicks —
+	// and fires a meaningless change event for a zero-length drag. Nothing
+	// happens until the pointer has moved DRAG_THRESHOLD px.
+	const DRAG_THRESHOLD = 4;
+	let candidate = null;
+
+	const startDrag = (item) => {
 		dragItem = item;
-		pointerId = e.pointerId;
-		startX = e.clientX;
-		startY = e.clientY;
 		dragOrigRect = dragItem.getBoundingClientRect();
-		
+
 		const containerRect = element.getBoundingClientRect();
 		const itemTop = dragOrigRect.top - containerRect.top - element.clientTop + element.scrollTop;
 		const itemLeft = dragOrigRect.left - containerRect.left - element.clientLeft + element.scrollLeft;
 		const itemWidth = dragOrigRect.width;
 		const itemHeight = dragOrigRect.height;
 
-		element.setPointerCapture(pointerId);
-		
 		const placeholder = document.createElement('div');
 		placeholder.className = 'nui-sortable-placeholder';
 		placeholder.style.width = `${itemWidth}px`;
 		placeholder.style.height = `${itemHeight}px`;
 		element.insertBefore(placeholder, dragItem);
-		
+
 		dragItem.classList.add('nui-sortable-dragged');
 		dragItem.style.top = `${itemTop}px`;
 		dragItem.style.left = `${itemLeft}px`;
 		dragItem.style.width = `${itemWidth}px`;
 		dragItem.style.height = `${itemHeight}px`;
 		dragItem.style.transform = `translate(0px, 0px)`;
-		
+
 		dragItem.dataset.isDragging = "true";
 	};
 
+	const onPointerDown = (e) => {
+		if (e.button !== 0) return;
+
+		const item = e.target.closest('nui-sortable-item');
+		if (!item || !element.contains(item)) return;
+
+		// Ignore if clicking an interactive element (unless it specifically IS the drag handle)
+		const interactive = e.target.closest('button, a, input, select, textarea, [data-action]');
+		if (interactive && !interactive.closest('.drag-handle')) {
+			return;
+		}
+
+		// If the item specifies a drag handle, ensure we clicked it
+		if (item.querySelector('.drag-handle') && !e.target.closest('.drag-handle')) {
+			return;
+		}
+
+		e.preventDefault();
+		candidate = item;
+		pointerId = e.pointerId;
+		startX = e.clientX;
+		startY = e.clientY;
+		element.setPointerCapture(pointerId);
+	};
+
 	const onPointerMove = (e) => {
-		if (!dragItem || e.pointerId !== pointerId) return;
-		
+		if (pointerId === null || e.pointerId !== pointerId) return;
+
+		if (!dragItem) {
+			if (!candidate) return;
+			if (Math.hypot(e.clientX - startX, e.clientY - startY) < DRAG_THRESHOLD) return;
+			startDrag(candidate);
+			candidate = null;
+		}
+
 		const currentX = e.clientX - startX;
 		const currentY = e.clientY - startY;
 		dragItem.style.transform = `translate(${currentX}px, ${currentY}px)`;
-		
+
 		const placeholder = element.querySelector('.nui-sortable-placeholder');
-		const items = Array.from(element.children).filter(c => 
+		const items = Array.from(element.children).filter(c =>
 			c !== dragItem && (c.tagName === 'NUI-SORTABLE-ITEM' || c === placeholder)
 		);
-		
+
 		const containerRect = element.getBoundingClientRect();
 		const scrollLeft = element.scrollLeft;
 		const scrollTop = element.scrollTop;
 		const clientLeft = element.clientLeft;
 		const clientTop = element.clientTop;
-		
+
 		let targetObj = null;
 		for (const item of items) {
 			if (item === placeholder) continue;
-			
+
 			const left = containerRect.left + clientLeft + item.offsetLeft - scrollLeft;
 			const top = containerRect.top + clientTop + item.offsetTop - scrollTop;
 			const right = left + item.offsetWidth;
 			const bottom = top + item.offsetHeight;
-			
+
 			if (e.clientX >= left && e.clientX <= right &&
 				e.clientY >= top && e.clientY <= bottom) {
 				targetObj = item;
 				break;
 			}
 		}
-		
+
 		if (targetObj) {
 			const currentIndex = items.indexOf(placeholder);
 			const targetIndex = items.indexOf(targetObj);
-			
+
 			const rects = new Map();
 			items.forEach(i => {
 				if (i !== placeholder) rects.set(i, i.getBoundingClientRect());
 			});
-			
+
 			if (currentIndex < targetIndex) {
 				element.insertBefore(placeholder, targetObj.nextSibling);
 			} else {
 				element.insertBefore(placeholder, targetObj);
 			}
-			
+
 			items.forEach(i => {
 				const oldRect = rects.get(i);
 				if (oldRect) animateFlip(i, oldRect);
@@ -4457,16 +4475,22 @@ registerComponent('nui-sortable', (element) => {
 	};
 
 	const onPointerUp = (e) => {
-		if (!dragItem || e.pointerId !== pointerId) return;
-		
+		if (pointerId === null || e.pointerId !== pointerId) return;
+
 		element.releasePointerCapture(pointerId);
-		
+		pointerId = null;
+		candidate = null;
+
+		// Never entered the drag state → this was a click, not a drop. No
+		// reorder happened, so no change event either.
+		if (!dragItem) return;
+
 		const placeholder = element.querySelector('.nui-sortable-placeholder');
 		if (placeholder) {
 			element.insertBefore(dragItem, placeholder);
 			placeholder.remove();
 		}
-		
+
 		dragItem.classList.remove('nui-sortable-dragged');
 		dragItem.style.transform = '';
 		dragItem.style.top = '';
@@ -4475,8 +4499,7 @@ registerComponent('nui-sortable', (element) => {
 		dragItem.style.height = '';
 		delete dragItem.dataset.isDragging;
 		dragItem = null;
-		pointerId = null;
-		
+
 		const newOrder = Array.from(element.querySelectorAll('nui-sortable-item'))
 			.map(item => item.dataset.id || item.textContent.trim());
 		element.dispatchEvent(new CustomEvent('nui-sortable-change', {
@@ -7295,6 +7318,117 @@ function mbParsePreset(value) {
 // syntax, but the degradation contract (spec §5: "visible renderer diagnostic")
 // requires the unknown token to be reported, so each one warns once per session.
 const MB_KNOWN_PRESET_FAMILIES = new Set(['card', 'image', 'gallery', 'link', 'list', 'table', 'page-break', 'band', 'cover', 'lead', 'note', 'warning', 'cta']);
+
+// ── Slideshow enhancement (gallery:slideshow) ──
+// A gallery figure marked `preset=gallery:slideshow` cycles its plates one at
+// a time (crossfade, 5s default, `slide-duration` on <nui-markdown> overrides).
+// Spec-law layout stays the even row — rotation is an enhanced-renderer
+// concern layered on top, so non-enhancing renderers degrade gracefully.
+// Pause rules (WCAG 2.2.2.2 — auto-updating content needs a pause): a quiet
+// toggle button, plus auto-pause on hover, focus-within, and offscreen;
+// prefers-reduced-motion never auto-advances.
+const MB_SLIDESHOW_DEFAULT_MS = 5000;
+
+function mbEnhanceSlideshows(root, duration) {
+	const ms = Number(duration) > 0 ? Number(duration) : MB_SLIDESHOW_DEFAULT_MS;
+	const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+	const cleanups = [];
+	// Two paths into a show: the explicit `gallery:slideshow` modifier anywhere,
+	// and the DEFAULT for a multi-plate gallery in a cover section — `gallery:row`
+	// is the explicit opt back into the static even row.
+	const SELECTOR = '.nui-blocks-gallery.nui-variant-slideshow, .nui-blocks-section.nui-preset-cover .nui-blocks-gallery:not(.nui-variant-row)';
+	root.querySelectorAll(SELECTOR).forEach((fig) => {
+		const list = fig.querySelector(':scope > ul, :scope > ol');
+		if (!list) return;
+		const items = Array.from(list.querySelectorAll(':scope > li'));
+		if (items.length < 2) return; // a single plate is static, not a show
+
+		// The stacked stage styling keys on this JS-added class, never on the
+		// preset variant: without the enhancement layer the markup must keep the
+		// static row layout (graceful degradation, not plates nobody can advance).
+		fig.classList.add('nui-slideshow');
+
+		let idx = 0;
+		let timer = null;
+		let manualPaused = false;
+		let hoverPaused = false;
+		let offscreen = false;
+
+		// In a cover section the figure is display:contents — it generates NO
+		// box, so it can never intersect and mouseenter never fires on it. The
+		// pause sensors need the nearest ancestor that actually has a box.
+		const box = fig.getClientRects().length ? fig : fig.parentElement;
+
+		const show = (i) => {
+			idx = i;
+			items.forEach((li, n) => {
+				const on = n === idx;
+				li.classList.toggle('active', on);
+				li.setAttribute('aria-hidden', on ? 'false' : 'true');
+			});
+		};
+		const advance = () => show((idx + 1) % items.length);
+
+		const btn = document.createElement('button');
+		btn.type = 'button';
+		btn.className = 'nui-slideshow-toggle';
+		const icon = document.createElement('nui-icon');
+		icon.setAttribute('name', 'pause');
+		btn.appendChild(icon);
+
+		const sync = () => {
+			const shouldRun = !manualPaused && !hoverPaused && !offscreen && !reduceMotion;
+			if (shouldRun && timer === null) timer = setInterval(advance, ms);
+			if (!shouldRun && timer !== null) { clearInterval(timer); timer = null; }
+			btn.setAttribute('aria-pressed', String(manualPaused));
+			btn.setAttribute('aria-label', manualPaused ? 'Play slideshow' : 'Pause slideshow');
+			icon.setAttribute('name', manualPaused ? 'play' : 'pause');
+		};
+
+		btn.addEventListener('click', (e) => {
+			e.stopPropagation();
+			manualPaused = !manualPaused;
+			sync();
+		});
+		fig.appendChild(btn);
+
+		box.addEventListener('mouseenter', () => { hoverPaused = true; sync(); });
+		box.addEventListener('mouseleave', () => { hoverPaused = false; sync(); });
+		box.addEventListener('focusin', () => { hoverPaused = true; sync(); });
+		box.addEventListener('focusout', () => { hoverPaused = false; sync(); });
+
+		let observer = null;
+		if ('IntersectionObserver' in window) {
+			observer = new IntersectionObserver((entries) => {
+				offscreen = !entries[0].isIntersecting;
+				sync();
+			});
+			observer.observe(box);
+		}
+
+		show(0);
+		sync();
+
+		cleanups.push(() => {
+			if (timer !== null) clearInterval(timer);
+			if (observer) observer.disconnect();
+		});
+	});
+	return cleanups;
+}
+
+// Public, self-managing entry point: consumers who inject markdownToHtml output
+// directly (bypassing <nui-markdown>'s render path) call this after injection.
+// Previous timers/observers on the same root are cleaned up first — safe to
+// call on every re-render without leaking.
+util.enhanceSlideshows = (root, duration) => {
+	if (root._slideshowCleanups) {
+		root._slideshowCleanups.forEach((fn) => fn());
+	}
+	root._slideshowCleanups = mbEnhanceSlideshows(root, duration);
+};
+
+
 const mbUnknownPresetSeen = new Set();
 
 // `id` becomes an anchor target, `preset` produces semantic classes. `label` is editor-only
@@ -7820,6 +7954,7 @@ class NuiMarkdown extends HTMLElement {
 		this._metadata = fm ? fm.data : null;
 		this.innerHTML = markdownToHtml(rawText, { frontmatter: mode, base: this.base });
 		this._processed = true; // Mark as processed so re-attach is free
+		util.enhanceSlideshows(this, this.getAttribute('slide-duration'));
 
 		if (!this._lightboxBound) {
 			this._lightboxBound = true;

@@ -448,12 +448,25 @@ export function initBlocksEditor(element, params, nui) {
 
 		preview.appendChild(frame);
 		preview.appendChild(controls);
-		body.appendChild(preview);
 
-		// The block's image set, lead first. Click a thumb to promote it, × to drop it.
-		const strip = document.createElement('ul');
+		// Compact row: the preview takes the width, the thumbnails stack in a
+		// vertical rail beside it. Width is the plentiful axis in the editor
+		// canvas, height the scarce one.
+		const row = document.createElement('div');
+		row.className = 'media-body-row';
+		row.appendChild(preview);
+
+		// The block's image set, lead first. The rail is a nui-sortable: drag
+		// order IS the image order, and the first item is the lead. Adding
+		// happens through the preview's upload/browse buttons.
+		const side = document.createElement('div');
+		side.className = 'media-side';
+		const strip = document.createElement('nui-sortable');
 		strip.className = 'media-thumbs';
-		body.appendChild(strip);
+		side.appendChild(strip);
+
+		row.appendChild(side);
+		body.appendChild(row);
 
 		// Everything after the images is the caption.
 		const captionBlock = document.createElement('div');
@@ -479,6 +492,61 @@ export function initBlocksEditor(element, params, nui) {
 			if (isRawMode) return;
 			captionLines = (richTextEl.markdown || richTextEl.getMarkdown?.() || '').split('\n');
 			commit({ repaint: false });
+		});
+
+		// A completed drag (pointer or keyboard) carries the new order in the
+		// DOM. Each tile knows the index it was painted with, so the permutation
+		// is a plain lookup — no id bookkeeping on the image objects. The event
+		// also fires for a plain click (a zero-length drag); the identity
+		// permutation is not a reorder and must not repaint — a repaint would
+		// reset the frame's click-preview back to the lead.
+		strip.addEventListener('nui-sortable-change', () => {
+			const order = Array.from(strip.querySelectorAll('nui-sortable-item')).map(item => Number(item.dataset.idx));
+			if (order.every((v, i) => v === i)) return;
+			images = order.map(i => images[i]);
+			commit();
+		});
+
+		// Removal is drag-out: the sortable always lands the tile back in the
+		// rail on an outside drop, so the removal decision lives here — a
+		// pointerup beyond the rail's bounds drops the image from the set. The
+		// keyboard equivalent is Delete/Backspace on a focused tile.
+		let dragOutImage = null;
+		let downAt = null;
+		strip.addEventListener('pointerdown', (e) => {
+			const item = e.target.closest('nui-sortable-item');
+			dragOutImage = item ? images[Number(item.dataset.idx)] : null;
+			downAt = item ? { x: e.clientX, y: e.clientY } : null;
+		});
+		strip.addEventListener('pointerup', (e) => {
+			const down = downAt;
+			downAt = null;
+			if (!dragOutImage) return;
+			const r = strip.getBoundingClientRect();
+			const outside = e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
+			const img = dragOutImage;
+			dragOutImage = null;
+			if (!outside) {
+				// A pointerup (nearly) where the pointerdown was is a click — the
+				// component suppresses the real click event by preventDefaulting
+				// pointerdown. Click previews the tile in the frame; the order and
+				// the lead stay untouched (the frame returns to the lead on the
+				// next commit).
+				if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 5) showInFrame(img);
+				return;
+			}
+			const i = images.indexOf(img);
+			if (i === -1) return;
+			images.splice(i, 1);
+			commit();
+		});
+		strip.addEventListener('keydown', (e) => {
+			if (e.key !== 'Delete' && e.key !== 'Backspace') return;
+			const item = e.target.closest('nui-sortable-item');
+			if (!item) return;
+			e.preventDefault();
+			images.splice(Number(item.dataset.idx), 1);
+			commit();
 		});
 
 		// In raw mode the whole block is the source of truth, so media state is
@@ -527,6 +595,16 @@ export function initBlocksEditor(element, params, nui) {
 			commit();
 		}
 
+		function showInFrame(image) {
+			frame.innerHTML = `<img src="${escapeHtml(image.src)}" alt="${escapeHtml(image.alt)}">`;
+			frame.appendChild(frameCaption);
+			// Selection follows the frame: the clicked tile's number cell lights
+			// up. The next commit repaints and selection returns to the lead.
+			strip.querySelectorAll('.media-thumb.selected').forEach(t => t.classList.remove('selected'));
+			const tile = strip.querySelectorAll('nui-sortable-item.media-thumb')[images.indexOf(image)];
+			if (tile) tile.classList.add('selected');
+		}
+
 		function paint() {
 			const lead = images[0];
 			frame.innerHTML = lead
@@ -538,9 +616,10 @@ export function initBlocksEditor(element, params, nui) {
 
 			strip.innerHTML = '';
 			images.forEach((im, i) => {
-				const li = document.createElement('li');
+				const li = document.createElement('nui-sortable-item');
 				li.className = 'media-thumb' + (i === 0 ? ' selected' : '') + (im.local ? ' local' : '');
-				li.title = i === 0 ? 'Lead image' : 'Make this the lead image';
+				li.dataset.idx = i;
+				li.title = (i === 0 ? 'Lead image. ' : '') + 'Drag to reorder — the first image is the lead. Drag out of the rail to remove. Click to preview.';
 
 				const handle = document.createElement('span');
 				handle.className = 'handle';
@@ -553,34 +632,8 @@ export function initBlocksEditor(element, params, nui) {
 
 				li.append(handle, pic);
 
-				const remove = document.createElement('button');
-				remove.type = 'button';
-				remove.className = 'thumb-remove';
-				remove.title = 'Remove image';
-				remove.setAttribute('aria-label', 'Remove image');
-				remove.innerHTML = '<nui-icon name="close"></nui-icon>';
-				remove.addEventListener('click', (e) => {
-					e.stopPropagation();
-					images.splice(i, 1);
-					commit();
-				});
-				li.appendChild(remove);
-
-				if (i > 0) {
-					li.addEventListener('click', () => {
-						images = [images.splice(i, 1)[0], ...images];
-						commit();
-					});
-				}
 				strip.appendChild(li);
 			});
-
-			const addTile = document.createElement('li');
-			addTile.className = 'media-thumb add-tile';
-			addTile.title = 'Add an image';
-			addTile.innerHTML = '<nui-icon name="add"></nui-icon>';
-			addTile.addEventListener('click', () => pickImages());
-			strip.appendChild(addTile);
 		}
 
 		async function pickImages() {
@@ -1184,13 +1237,12 @@ export function initBlocksEditor(element, params, nui) {
 	];
 
 	// Block option sets are scoped by the section template: in a hero, the media
-	// block's preset is the cover's ARRANGEMENT, nothing else. Auto = the spec
-	// default (a single item fills; a list renders as an even row). Row pins it.
-	// (Slideshow rotation is an enhanced-renderer concern — no option here until
-	// a profile implements it.)
+	// block's preset is the cover's ARRANGEMENT, nothing else. Auto = the
+	// enhanced-renderer's default: a single plate fills, multiple plates ROTATE
+	// (slideshow, 5s crossfade, pausable). Row pins the static even split.
 	const HERO_MEDIA_PRESETS = [
 		{ value: '', label: 'Auto' },
-		{ value: 'gallery:row', label: 'Row (even split)' }
+		{ value: 'gallery:row', label: 'Row (static, even split)' }
 	];
 
 	function moveSection(index, direction) {
@@ -1685,6 +1737,7 @@ export function initBlocksEditor(element, params, nui) {
 			if (livePreview) {
 				const html = util.markdownToHtml(md);
 				livePreview.innerHTML = html;
+				util.enhanceSlideshows?.(livePreview);
 			}
 		} finally {
 			isSyncing = false;
