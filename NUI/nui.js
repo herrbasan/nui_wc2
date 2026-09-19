@@ -2264,10 +2264,7 @@ registerComponent('nui-accordion', (element) => {
 
 registerComponent('nui-details', (element) => {
 	const src = element.getAttribute('src');
-	if (!src) return; // No src — children render as-is, no lazy loading needed
-
 	const summaryText = element.getAttribute('summary') || '';
-	const isLazy = element.hasAttribute('lazy');
 
 	// Build the details structure
 	const detailsEl = document.createElement('details');
@@ -2278,8 +2275,18 @@ registerComponent('nui-details', (element) => {
 		summaryEl.appendChild(strong);
 	}
 	detailsEl.appendChild(summaryEl);
+
+	// No src — the existing children ARE the body. They must be moved before the
+	// built <details> is appended, or the append would move <details> into itself.
+	if (!src) {
+		while (element.firstChild) detailsEl.appendChild(element.firstChild);
+		element.appendChild(detailsEl);
+		return;
+	}
+
 	element.appendChild(detailsEl);
 
+	const isLazy = element.hasAttribute('lazy');
 	let loaded = false;
 
 	function loadContent() {

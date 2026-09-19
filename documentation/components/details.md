@@ -12,7 +12,7 @@ The native `<details>` element is semantically correct and accessible out of the
 
 ### Static Content
 
-Without a `src` attribute, children render normally:
+Without a `src` attribute, the component still builds the `<details>`/`<summary>` shell: `summary` becomes the summary text and the existing children are moved into it as the body. The section starts **closed** and opens on click, exactly like a hand-written `<details>`.
 
 ```html
 <nui-details summary="System Requirements">
@@ -22,6 +22,8 @@ Without a `src` attribute, children render normally:
 	</ul>
 </nui-details>
 ```
+
+For a *set* of collapsible sections with boxed styling and animated expand/collapse, use `<nui-accordion>` instead — see `accordion.md`.
 
 ### Load from URL (Immediate)
 
@@ -49,9 +51,34 @@ Content is **cached** after the first fetch — subsequent opens are instant.
 |-----------|------|---------|-------------|
 | `summary` | string | — | Text for the `<summary>` element. Wrapped in `<strong>`. |
 | `src` | URL | — | URL to fetch content from. `.md` files render via `<nui-markdown>`. `.html` files are injected as HTML. Other types render as plain text. |
-| `lazy` | boolean | `false` | When present, content is only fetched when the details are first opened. Cached thereafter. |
+| `lazy` | boolean | `false` | When present, content is only fetched when the details are first opened. Cached thereafter. Ignored when there is no `src`. |
 
 ## DOM Structure
+
+Static content:
+
+```html
+<nui-details summary="System Requirements">
+	<ul>
+		<li>Node.js 18+</li>
+	</ul>
+</nui-details>
+```
+
+…upgrades to:
+
+```html
+<nui-details summary="System Requirements">
+	<details>
+		<summary><strong>System Requirements</strong></summary>
+		<ul>
+			<li>Node.js 18+</li>
+		</ul>
+	</details>
+</nui-details>
+```
+
+Remote content:
 
 ```html
 <nui-details summary="Title" src="/path/to/content.md">
