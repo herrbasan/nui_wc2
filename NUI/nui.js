@@ -3798,14 +3798,18 @@ registerComponent('nui-select', (element) => {
 		return true;
 	};
 
-	// setItems() is a data API: items are `{ value, label }` or a plain string.
+	// setItems() is a data API: leaf items are `{ value, label }` or a plain string, and a
+	// `{ group, options }` container (NuiSelectGroup) wraps leaves into an <optgroup>.
 	// A domain object ({ id, name }) used to produce options whose value was the literal
 	// string "undefined" and whose label was empty — silently, so the select merely looked
-	// unloaded. Fail loud instead.
+	// unloaded. Fail loud on LEAF items instead — never on a container: asserting every
+	// top-level item unconditionally made every grouped setItems() throw, which killed the
+	// whole select rather than one option (LLM-Gateway-Chat model list, 2026-09-20).
 	const assertItemShape = (item) => {
 		if (typeof item === 'string') return;
+		if (item.group !== undefined) return; // container — each of its options is asserted below
 		if (item.value !== undefined && item.value !== null) return;
-		throw new TypeError(`[NUI] <nui-select> setItems() — item ${JSON.stringify(item)} has no \`value\`. Expected { value, label } or a plain string.`);
+		throw new TypeError(`[NUI] <nui-select> setItems() — item ${JSON.stringify(item)} has no \`value\`. Expected { value, label }, a plain string, or { group, options }.`);
 	};
 
 	const setItems = (items) => {
