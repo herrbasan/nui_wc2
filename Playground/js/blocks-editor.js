@@ -254,13 +254,13 @@ export function initBlocksEditor(element, params, nui) {
 			const controlsGroup = document.createElement('div');
 			controlsGroup.className = 'section-controls-group';
 
-			// Section options live behind the gear, not as permanent dropdowns — the
-			// template decides which options exist. The gear carries an id because the panel
+			// Section options live behind the pen, not as permanent dropdowns — the
+			// template decides which options exist. The pen carries an id because the panel
 			// is wired to it by `for`, and the platform does the toggling.
 			const optsTriggerId = `section-opts-trigger-${sIdx}`;
-			const gearBtn = createNuiIconButton('settings', 'Section options');
-			gearBtn.id = optsTriggerId;
-			controlsGroup.appendChild(gearBtn);
+			const optsBtn = createNuiIconButton('edit', 'Section options');
+			optsBtn.id = optsTriggerId;
+			controlsGroup.appendChild(optsBtn);
 
 			// Reorder / Delete buttons using NUI icon buttons
 			controlsGroup.appendChild(createNuiIconButton('chevron_right', 'Move Up', () => moveSection(sIdx, -1), 'icon-rotate-up'));
@@ -343,6 +343,14 @@ export function initBlocksEditor(element, params, nui) {
 		if (bType === 'link') {
 			nodeCard.classList.add('editor-link-card');
 			renderLinkBlockNode(nodeCard, node, parentContainer, nodeIdx);
+			return nodeCard;
+		}
+
+		// Table = prose-shaped body editor (the RTE roundtrips pipe tables and
+		// has row/column context ops), but its own style list.
+		if (bType === 'table') {
+			nodeCard.classList.add('editor-table-card');
+			renderLeafBlockNode(nodeCard, node, parentContainer, nodeIdx, TABLE_PRESETS);
 			return nodeCard;
 		}
 
@@ -642,11 +650,11 @@ export function initBlocksEditor(element, params, nui) {
 	}
 }
 
-	function renderLeafBlockNode(nodeCard, node, parentContainer, nodeIdx) {
+	function renderLeafBlockNode(nodeCard, node, parentContainer, nodeIdx, presets = LEAF_PRESETS) {
 		// Toggle raw markdown / rich text mode
 		let isRawMode = false;
 
-		nodeCard.appendChild(buildBlockHeader(node, parentContainer, nodeIdx, LEAF_PRESETS, () => {
+		nodeCard.appendChild(buildBlockHeader(node, parentContainer, nodeIdx, presets, () => {
 			isRawMode = !isRawMode;
 			if (isRawMode) {
 				richTextEl.style.display = 'none';
@@ -816,6 +824,37 @@ export function initBlocksEditor(element, params, nui) {
 			const colSlot = document.createElement('div');
 			colSlot.className = 'column-slot';
 
+			// Slot style — the col's own preset (mb:col preset=), same select
+			// pattern as the block header, unknown tokens shown as themselves.
+			const styleRow = document.createElement('div');
+			styleRow.className = 'col-style-row';
+			const styleLab = document.createElement('span');
+			styleLab.className = 'block-style-label';
+			styleLab.textContent = 'Style:';
+			styleRow.appendChild(styleLab);
+
+			const colSelectWrap = document.createElement('nui-select');
+			colSelectWrap.setAttribute('size', 'small');
+			const colPreset = col.attrs?.preset || '';
+			const colOptions = COL_PRESETS.some(p => p.value === colPreset)
+				? COL_PRESETS
+				: [{ value: colPreset, label: colPreset }, ...COL_PRESETS];
+			const colNative = document.createElement('select');
+			colNative.innerHTML = colOptions.map(({ value, label }) =>
+				`<option value="${value}" ${colPreset === value ? 'selected' : ''}>${label}</option>`
+			).join('');
+			colSelectWrap.appendChild(colNative);
+			customElements.upgrade(colSelectWrap);
+			colSelectWrap.addEventListener('nui-change', (e) => {
+				const val = e.detail?.values?.[0] ?? '';
+				col.attrs = col.attrs || {};
+				if (val) col.attrs.preset = val;
+				else delete col.attrs.preset;
+				syncToOutputs();
+			});
+			styleRow.appendChild(colSelectWrap);
+			colSlot.appendChild(styleRow);
+
 			const colNodes = document.createElement('div');
 			colNodes.className = 'col-nodes-list';
 
@@ -953,6 +992,21 @@ export function initBlocksEditor(element, params, nui) {
 		// committed only while it parses — a json fence must never hold invalid
 		// JSON (spec §4.4/§7); an unparsable draft is marked, not written.
 		function renderRawFallback() {
+			// A scalar from a plain value= attribute (no fence) is a one-line
+			// affair — the prose-height textarea swallows the card for `12`.
+			if (!node.fenced && (node.value === null || typeof node.value !== 'object')) {
+				const input = document.createElement('input');
+				input.type = 'text';
+				input.className = 'nui-native-input var-scalar-input';
+				input.value = String(node.value ?? '');
+				input.placeholder = 'value (string, 12, true, null)';
+				input.addEventListener('input', () => {
+					node.value = parseVarValue(input.value);
+					syncToOutputs();
+				});
+				body.appendChild(input);
+				return;
+			}
 			const area = document.createElement('textarea');
 			area.className = 'block-raw-textarea var-raw';
 			area.spellcheck = false;
@@ -1066,11 +1120,24 @@ export function initBlocksEditor(element, params, nui) {
 		return `[${t || u}](${u})`;
 	}
 
+	// A table block's body is a pipe table: a header row followed by a
+	// delimiter row. Same derivation style as link/media — the format's own
+	// definition (§4.2), no new attribute.
+	const TABLE_DELIM_RE = /^\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)*\|\s*$/;
+
+	function isTableBody(text) {
+		const lines = String(text || '').split('\n').filter(l => l.trim());
+		return lines.length >= 2 && lines[0].trim().startsWith('|') && TABLE_DELIM_RE.test(lines[1].trim());
+	}
+
 	function blockType(node) {
 		if (node._type) return node._type;
 		const family = String(node.attrs?.preset || '').toLowerCase().split(':')[0];
-		if (family === 'link' && parseLinkBody(getBlockText(node))) node._type = 'link';
+		const text = getBlockText(node);
+		if (family === 'link' && parseLinkBody(text)) node._type = 'link';
+		else if (family === 'table' && isTableBody(text)) node._type = 'table';
 		else if (isMediaBlock(node)) node._type = 'media';
+		else if (isTableBody(text)) node._type = 'table';
 		else node._type = 'prose';
 		return node._type;
 	}
@@ -1216,6 +1283,10 @@ export function initBlocksEditor(element, params, nui) {
 		{ value: 'card:note', label: 'Card: Note' },
 		{ value: 'card:warning', label: 'Card: Warning' },
 		{ value: 'card:stat', label: 'Card: Stat' },
+		{ value: 'card:quote', label: 'Card: Quote' },
+		{ value: 'card:good', label: 'Card: Good' },
+		{ value: 'card:danger', label: 'Card: Danger' },
+		{ value: 'list:steps', label: 'List: Steps' },
 		{ value: 'image:icon', label: 'Icon Badge' }
 	];
 
@@ -1226,14 +1297,43 @@ export function initBlocksEditor(element, params, nui) {
 		{ value: 'link:download', label: 'Link: Download' }
 	];
 
+	// Table blocks: the body is one pipe table; the style is the table's
+	// presentation (renderer variants in nui-theme.css). '' is the default
+	// full spreadsheet grid. `fit` only exists as clean:fit — column sizing by
+	// data cells is a clean-table concern.
+	const TABLE_PRESETS = [
+		{ value: '', label: 'Table: Default Grid' },
+		{ value: 'table:clean', label: 'Table: Clean' },
+		{ value: 'table:clean:fit', label: 'Table: Clean + Data-fit' },
+		{ value: 'table:specs', label: 'Table: Spec Sheet' }
+	];
+
+	// Column slots carry their own treatment (`mb:col preset=`): the stat metrics
+	// row in the demo doc is col presets, not card blocks inside plain cols.
+	const COL_PRESETS = [
+		{ value: '', label: 'Plain' },
+		{ value: 'card', label: 'Card' },
+		{ value: 'card:stat', label: 'Card: Stat' },
+		{ value: 'card:good', label: 'Card: Good' },
+		{ value: 'card:danger', label: 'Card: Danger' }
+	];
+
 	// Gallery presets come from the MD-Blocks demo document; the lead image is the
 	// prominent plate in every one of them, which is why the strip can promote.
+	// The float presets wrap subsequent prose around the figure (magazine-style);
+	// slideshow is the rotating multi-plate treatment (auto in cover sections).
 	const MEDIA_PRESETS = [
 		{ value: '', label: 'Media: Figure' },
+		{ value: 'image:left', label: 'Media: Float Left' },
+		{ value: 'image:right', label: 'Media: Float Right' },
+		{ value: 'image:left:small', label: 'Media: Float Left (Small)' },
 		{ value: 'image:hero', label: 'Media: Hero' },
+		{ value: 'image:hero:bleed', label: 'Media: Hero (Bleed)' },
+		{ value: 'gallery', label: 'Gallery: Grid' },
 		{ value: 'gallery:featured', label: 'Gallery: Featured' },
 		{ value: 'gallery:row', label: 'Gallery: Row' },
-		{ value: 'gallery:mosaic', label: 'Gallery: Mosaic' }
+		{ value: 'gallery:mosaic', label: 'Gallery: Mosaic' },
+		{ value: 'gallery:slideshow', label: 'Gallery: Slideshow' }
 	];
 
 	// Block option sets are scoped by the section template: in a hero, the media
@@ -1338,6 +1438,13 @@ export function initBlocksEditor(element, params, nui) {
 							<span>Button-style link — text + URL</span>
 						</div>
 					</div>
+					<div class="palette-item" data-type="table">
+						<div class="palette-icon"><nui-icon name="table_view"></nui-icon></div>
+						<div class="palette-text">
+							<strong>Table</strong>
+							<span>Pipe table with presentation styles</span>
+						</div>
+					</div>
 				</div>
 			</div>
 			${!isInsideColumn ? `
@@ -1440,6 +1547,18 @@ export function initBlocksEditor(element, params, nui) {
 				attrs: { id: generateId('b'), preset: 'link:cta' },
 				nodes: [{ type: 'md', lines: ['[Call to action](https://)'] }]
 			};
+		} else if (type === 'table') {
+			newNode = {
+				type: 'block',
+				_type: 'table',
+				attrs: { id: generateId('b') },
+				nodes: [{ type: 'md', lines: [
+					'| Name | Value | Note |',
+					'|---|---|---|',
+					'| First | 1 | Edit me |',
+					'| Second | 2 | Edit me |'
+				] }]
+			};
 		} else if (type === 'columns-two') {
 			newNode = {
 				type: 'columns',
@@ -1519,6 +1638,7 @@ export function initBlocksEditor(element, params, nui) {
 			placement: family === 'cover' ? 'cover' : 'contain',
 			ratio: family === 'cover' && ['square', 'banner', 'strip'].includes(parts[1]) ? parts[1] : 'wide',
 			band: family === 'band',
+			bleed: parts.includes('bleed'),
 			inverted: parts.includes('inverted')
 		};
 	}
@@ -1527,7 +1647,7 @@ export function initBlocksEditor(element, params, nui) {
 		if (opts.placement === 'cover') {
 			return 'cover' + (opts.ratio && opts.ratio !== 'wide' ? ':' + opts.ratio : '');
 		}
-		if (opts.band) return 'band' + (opts.inverted ? ':inverted' : '');
+		if (opts.band) return 'band' + (opts.bleed ? ':bleed' : '') + (opts.inverted ? ':inverted' : '');
 		return '';
 	}
 
@@ -1616,7 +1736,8 @@ export function initBlocksEditor(element, params, nui) {
 				opts.ratio,
 				(v) => { opts.ratio = v || 'wide'; apply(); }
 			));
-			const bandRow = mkRow('Band', mkCheck(opts.band, (c) => { opts.band = c; if (!c) opts.inverted = false; syncRows(); apply(); }));
+			const bandRow = mkRow('Band', mkCheck(opts.band, (c) => { opts.band = c; if (!c) { opts.inverted = false; opts.bleed = false; } syncRows(); apply(); }));
+			const bleedRow = mkRow('Bleed (edge-to-edge)', mkCheck(opts.bleed, (c) => { opts.bleed = c; apply(); }));
 			const invRow = mkRow('Inverted', mkCheck(opts.inverted, (c) => { opts.inverted = c; apply(); }));
 
 			pop.appendChild(mkRow('Placement', mkSelect(
@@ -1626,20 +1747,27 @@ export function initBlocksEditor(element, params, nui) {
 			)));
 			pop.appendChild(ratioRow);
 			pop.appendChild(bandRow);
+			pop.appendChild(bleedRow);
 			pop.appendChild(invRow);
 
 			function syncRows() {
 				ratioRow.style.display = opts.placement === 'cover' ? '' : 'none';
 				bandRow.style.display = opts.placement === 'contain' ? '' : 'none';
+				bleedRow.style.display = (opts.placement === 'contain' && opts.band) ? '' : 'none';
 				invRow.style.display = (opts.placement === 'contain' && opts.band) ? '' : 'none';
 			}
 			syncRows();
 		} else {
-			const bandRow = mkRow('Band (colored background)', mkCheck(opts.band, (c) => { opts.band = c; if (!c) opts.inverted = false; syncRows(); apply(); }));
+			const bandRow = mkRow('Band (colored background)', mkCheck(opts.band, (c) => { opts.band = c; if (!c) { opts.inverted = false; opts.bleed = false; } syncRows(); apply(); }));
+			const bleedRow = mkRow('Bleed (edge-to-edge)', mkCheck(opts.bleed, (c) => { opts.bleed = c; apply(); }));
 			const invRow = mkRow('Inverted (high contrast)', mkCheck(opts.inverted, (c) => { opts.inverted = c; apply(); }));
 			pop.appendChild(bandRow);
+			pop.appendChild(bleedRow);
 			pop.appendChild(invRow);
-			function syncRows() { invRow.style.display = opts.band ? '' : 'none'; }
+			function syncRows() {
+				bleedRow.style.display = opts.band ? '' : 'none';
+				invRow.style.display = opts.band ? '' : 'none';
+			}
 			syncRows();
 		}
 
@@ -1819,7 +1947,13 @@ export function initBlocksEditor(element, params, nui) {
 		try {
 			const res = await fetch('pages/experiments/md-blocks-demo.md');
 			if (res.ok) {
-				const text = await res.text();
+				let text = await res.text();
+				// The demo md is written for the md-blocks demo PAGE (served from
+				// pages/experiments/), so its media paths carry a ../../ prefix.
+				// The editor canvas and live preview resolve against Playground/
+				// index.html — same base the faux media library uses. Rebase on
+				// load; every media path in the file is uniformly prefixed.
+				text = text.replaceAll('../../images/', 'images/');
 				currentDoc = normalizeDoc(util.parseBlocks(text));
 				renderVisualEditor();
 				syncToOutputs();

@@ -983,7 +983,15 @@ registerComponent('nui-app', (element) => {
 
 		// Add nui-ready after first responsive state update (whether or not there are sidebars)
 		if (!element.classList.contains('nui-ready')) {
-			requestAnimationFrame(() => element.classList.add('nui-ready'));
+			if (document.hidden) {
+				// rAF never fires in hidden/background tabs, and the anti-FOUC
+				// rule (nui-app:not(.nui-ready) { display: none }) would keep the
+				// whole app invisible until focus. Timers still run (throttled);
+				// the frame wait only suppresses transitions, moot with no paint.
+				setTimeout(() => element.classList.add('nui-ready'), 0);
+			} else {
+				requestAnimationFrame(() => element.classList.add('nui-ready'));
+			}
 		}
 	}
 
@@ -5821,20 +5829,30 @@ function createRouter(container, options = {}) {
 
 			void element.offsetHeight;
 
-			requestAnimationFrame(() => {
+			const showPage = () => {
+				// Only focus content on navigation, not on initial page load
+				if (!isInitialLoad) {
+					showElement(element, params);
+				} else {
+					element.inert = false;
+					element.show?.(params);
+					element.classList.add('nui-page-active');
+					isInitialLoad = false;
+				}
+				handleDeepLink(element, params);
+			};
+
+			if (document.hidden) {
+				// rAF callbacks never fire in hidden/background tabs — the page
+				// would stay invisible until focus. The double-frame wait only
+				// exists to let a paint happen first; hidden tabs paint nothing,
+				// so schedule on a timer instead (throttled, but they do run).
+				setTimeout(showPage, 0);
+			} else {
 				requestAnimationFrame(() => {
-					// Only focus content on navigation, not on initial page load
-					if (!isInitialLoad) {
-						showElement(element, params);
-					} else {
-						element.inert = false;
-						element.show?.(params);
-						element.classList.add('nui-page-active');
-						isInitialLoad = false;
-					}
-					handleDeepLink(element, params);
+					requestAnimationFrame(showPage);
 				});
-			});
+			}
 
 			currentElement = element;
 			currentRoute = { type, id, params, element };

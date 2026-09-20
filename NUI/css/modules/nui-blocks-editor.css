@@ -186,6 +186,10 @@ nui-main > .content-page > .page-blocks-editor[breakout],
 	transition: all 0.15s;
 }
 
+.page-blocks-editor .editor-add-strip .add-icon-btn nui-icon {
+	padding: var(--nui-space-quarter);
+}
+
 .page-blocks-editor .editor-add-strip .add-icon-btn:hover {
 	color: var(--color-highlight);
 	opacity: 1;
@@ -202,8 +206,7 @@ nui-main > .content-page > .page-blocks-editor[breakout],
 }
 
 .page-blocks-editor .editor-add-strip.section-divider {
-	margin: var(--nui-space) 0;
-	height: 2rem;
+	
 }
 
 .page-blocks-editor .editor-add-strip.section-divider::before {
@@ -634,18 +637,42 @@ nui-main > .content-page > .page-blocks-editor[breakout],
 
 .page-blocks-editor .media-controls {
 	position: absolute;
-	top: var(--nui-space-quarter);
-	right: var(--nui-space-quarter);
+	top: var(--nui-space-half);
+	right: var(--nui-space-half);
 	display: flex;
 	gap: var(--nui-space-quarter);
+}
+
+/* The controls float over an arbitrary image, where theme surface colors
+   guarantee nothing. Fixed overlay grammar (same logic as the cover caption
+   scrim): dark translucent chip, faint light border, white icon — readable on
+   any image, in light or dark theme. */
+.page-blocks-editor .media-controls nui-button[variant="icon"] button {
+	background: rgb(40 40 40 / 0.8);
+	border: 1px solid rgb(255 255 255 / 0.2);
+	border-radius: var(--border-radius1);
+	color: #fff;
+}
+
+.page-blocks-editor .media-controls nui-button[variant="icon"] button:hover {
+	background: rgb(70 70 70 / 0.85);
+	color: #fff;
+	fill: #fff;
 }
 
 .page-blocks-editor .media-side {
 	flex: 0 0 40%;
 	min-width: 0;
+	/* Flex column so the rail stretches to the row's full height instead of
+	   shrinking to its content — the recessed strip should read as one
+	   surface beside the preview, not a floating patch. */
+	display: flex;
+	flex-direction: column;
 }
 
 .page-blocks-editor nui-sortable.media-thumbs {
+	flex: 1 1 auto;
+	min-height: 0;
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(4.5rem, 1fr));
 	align-content: flex-start;
@@ -812,6 +839,20 @@ nui-main > .content-page > .page-blocks-editor[breakout],
 	gap: var(--nui-space-quarter);
 }
 
+/* Column slot style row — the slot's own preset (mb:col preset=). Compact,
+   right in the slot's top edge; the select stretches to the slot's width. */
+.page-blocks-editor .col-style-row {
+	display: flex;
+	align-items: center;
+	gap: var(--nui-space-quarter);
+	padding: 0 var(--nui-space-quarter);
+}
+
+.page-blocks-editor .col-style-row nui-select {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
 /* Right Side Pane: Raw MD and Live Preview */
 .page-blocks-editor .editor-side-pane {
 	position: sticky;
@@ -871,10 +912,11 @@ nui-main > .content-page > .page-blocks-editor[breakout],
 	outline: none;
 }
 
+/* Full height, no inner scroller: the preview is a read-along mirror of the
+   canvas, so it grows with the document and the page scrolls — a nested
+   scroll region would only trap the wheel mid-document. */
 .page-blocks-editor .live-preview-panel .panel-content {
 	padding: var(--nui-space);
-	max-height: 42rem;
-	overflow-y: auto;
 	background: var(--color-base);
 }
 
@@ -1027,4 +1069,10 @@ nui-main > .content-page > .page-blocks-editor[breakout],
    marked, not written — a json fence must never hold invalid JSON. */
 .page-blocks-editor .var-raw.invalid {
 	border-color: var(--palette-alert);
+}
+
+/* Scalar var (plain value= attribute, no fence): one line, monospace — the
+   JSON fallback textarea would dwarf a value like `12`. */
+.page-blocks-editor .var-scalar-input {
+	font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
 }

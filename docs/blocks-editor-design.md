@@ -36,8 +36,8 @@ No preset dropdown.
 
 | Template | File writes | Content rule | Options |
 |---|---|---|---|
-| **Normal** | nothing, or `preset=band`(+`:inverted`) | any blocks | band checkbox, inverted (visible when band on) |
-| **Hero** | `preset=cover` (+`:square`/`:banner`/`:strip`), or band variant in contain mode | **exactly one media block** (editor rule) | placement (cover/contain), aspect ratio (wide 16:9 default / square 1:1 / banner 16:5 / strip 16:3; cover only), band+inverted (contain only) |
+| **Normal** | nothing, or `preset=band`(+`:bleed`/`:inverted`) | any blocks | band checkbox, bleed + inverted (visible when band on) |
+| **Hero** | `preset=cover` (+`:square`/`:banner`/`:strip`), or band variant in contain mode | **exactly one media block** (editor rule) | placement (cover/contain), aspect ratio (wide 16:9 default / square 1:1 / banner 16:5 / strip 16:3; cover only), band+bleed+inverted (contain only) |
 
 - **Template recognition is structural, never stored**: hero = `cover` preset family OR a
   section whose whole content is one media block. A normal section filled with a single
@@ -95,17 +95,24 @@ dropdown authored invalid states the RTE cannot honor (a CTA containing three
 paragraphs, an icon block with no icon).
 
 - **Shape is fixed at creation.** The insert palette picks the block's TYPE (Prose,
-  Media Figure, Link/CTA…). The type never changes afterwards; there is no conversion
+  Media Figure, Link/CTA, Table…). The type never changes afterwards; there is no conversion
   dropdown.
 - **Style is mutable within shape.** The block header select offers only presets whose
   authored shape (spec §5.1 "Authored Markdown Shape" column) matches the block type.
-  Prose: Standard / Lead / Card: Note / Card: Warning / Card: Stat (+ `image:icon`,
-  below). Link block: CTA / Download. Media already works this way (own preset list).
+  Prose: Standard / Lead / Card: Note / Warning / Stat / Quote / Good / Danger /
+  List: Steps (+ `image:icon`, below). Link block: CTA / Download. Media: Figure /
+  Floats / Hero(+Bleed) / Galleries (Grid, Featured, Row, Mosaic, Slideshow).
+  Table (added 2026-09-19): Default Grid / Clean / Clean+Fit / Specs — the body is one
+  pipe table, edited in the RTE (it roundtrips tables and has row/column context ops);
+  a dedicated grid designer was rejected (cells carry inline markdown → mini-RTE per cell).
 - **Layout vs styling is ontology, not preference:** directives (`columns`/`col`) are
   structure — where content sits; `preset` is an attribute — what content claims to be.
-  Palette gets groups: **Content / Layout / Data**. The columns card carries no style
-  select. The tree is exactly two levels: section → styling blocks + layout blocks;
+  Palette gets groups: **Content / Layout / Data**. The tree is exactly two levels:
+  section → styling blocks + layout blocks;
   a col holds styling blocks only (spec §4.3), a block holds Markdown only (§4.2).
+- **Column slots carry their own style** (added 2026-09-19): `mb:col preset=` — Plain /
+  Card / Card: Stat / Card: Good / Card: Danger, via a compact select at the slot's top
+  edge. The demo doc's stat metrics row is col presets, not blocks inside plain cols.
 - **Style reveals the attribute editor it needs.** `image:icon` stays a prose style
   (its body IS prose); selecting it reveals an icon picker for the `icon=`/`alt=`
   block asset attributes (§4.2) — currently unauthorable except via raw mode.
