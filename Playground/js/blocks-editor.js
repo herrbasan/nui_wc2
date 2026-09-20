@@ -347,6 +347,12 @@ export function initBlocksEditor(element, params, nui) {
 			return nodeCard;
 		}
 
+		if (bType === 'player') {
+			nodeCard.classList.add('editor-player-card');
+			renderPlayerBlockNode(nodeCard, node, parentContainer, nodeIdx);
+			return nodeCard;
+		}
+
 		if (bType === 'link') {
 			nodeCard.classList.add('editor-link-card');
 			renderLinkBlockNode(nodeCard, node, parentContainer, nodeIdx);
@@ -651,10 +657,277 @@ export function initBlocksEditor(element, params, nui) {
 		}
 
 		async function pickImages() {
-		const entries = await openMediaLibrary({ multiple: true });
-		for (const entry of entries) addImage({ src: entry.src, alt: entry.label });
+			const entries = await openMediaLibrary({ multiple: true, filterType: 'image' });
+			for (const entry of entries) addImage({ src: entry.src, alt: entry.label });
+		}
 	}
-}
+
+	// ── Media Player Block Node (preset=player) ──
+	// Works like the media/image block, but for audio and video media:
+	// - Shows a live preview player in the preview pane
+	// - Sortable list of items in the side rail (with drag reorder and drag-out remove)
+	// - Clicking a track in the list switches the preview player
+	// - Upload / Media library picker to add audio and video files
+	function renderPlayerBlockNode(nodeCard, node, parentContainer, nodeIdx) {
+		let { tracks, caption: captionLines } = parsePlayerBlock(getBlockText(node).split('\n'));
+		let isRawMode = false;
+		let currentTrackIdx = 0;
+
+		const body = document.createElement('div');
+		body.className = 'block-card-body media-block-body player-block-body';
+
+		const preview = document.createElement('div');
+		preview.className = 'media-preview player-preview';
+
+		const frame = document.createElement('div');
+		frame.className = 'media-frame player-frame';
+
+		preview.appendChild(frame);
+
+		const row = document.createElement('div');
+		row.className = 'media-body-row player-body-row';
+		row.appendChild(preview);
+
+		const side = document.createElement('div');
+		side.className = 'media-side player-side';
+
+		const strip = document.createElement('nui-sortable');
+		strip.className = 'player-track-list';
+		side.appendChild(strip);
+
+		// Actions beneath tracklist: Browse library & Upload
+		const fileInput = document.createElement('input');
+		fileInput.type = 'file';
+		fileInput.accept = 'audio/*,video/*';
+		fileInput.multiple = true;
+		fileInput.style.display = 'none';
+		fileInput.addEventListener('change', () => {
+			for (const file of fileInput.files) {
+				addTrack({
+					src: URL.createObjectURL(file),
+					title: file.name,
+					poster: '',
+					local: true
+				});
+			}
+			fileInput.value = '';
+		});
+
+		const sideActions = document.createElement('div');
+		sideActions.className = 'player-side-actions';
+		sideActions.appendChild(fileInput);
+
+		const browseBtn = document.createElement('nui-button');
+		browseBtn.setAttribute('variant', 'outline');
+		browseBtn.setAttribute('size', 'small');
+		browseBtn.className = 'btn-player-browse';
+		browseBtn.innerHTML = '<button type="button"><nui-icon name="folder"></nui-icon>Browse</button>';
+		browseBtn.addEventListener('click', (e) => {
+			e.stopPropagation();
+			pickTracks();
+		});
+
+		const uploadBtn = document.createElement('nui-button');
+		uploadBtn.setAttribute('variant', 'outline');
+		uploadBtn.setAttribute('size', 'small');
+		uploadBtn.className = 'btn-player-upload';
+		uploadBtn.innerHTML = '<button type="button"><nui-icon name="upload"></nui-icon>Upload</button>';
+		uploadBtn.addEventListener('click', (e) => {
+			e.stopPropagation();
+			fileInput.click();
+		});
+
+		sideActions.appendChild(browseBtn);
+		sideActions.appendChild(uploadBtn);
+		side.appendChild(sideActions);
+
+		row.appendChild(side);
+		body.appendChild(row);
+
+		const captionBlock = document.createElement('div');
+		captionBlock.className = 'media-caption';
+		const richTextEl = document.createElement('nui-rich-text');
+		const rawTextArea = document.createElement('textarea');
+		rawTextArea.className = 'block-raw-textarea';
+		rawTextArea.spellcheck = false;
+		rawTextArea.style.display = 'none';
+		captionBlock.appendChild(richTextEl);
+		captionBlock.appendChild(rawTextArea);
+		body.appendChild(captionBlock);
+
+		nodeCard.appendChild(buildBlockHeader(node, parentContainer, nodeIdx, PLAYER_PRESETS, toggleRaw));
+		nodeCard.appendChild(body);
+
+		richTextEl.setMarkdown(captionLines.join('\n'));
+		rawTextArea.value = serializePlayerLines(tracks, captionLines).join('\n');
+		paint();
+
+		richTextEl.addEventListener('nui-change', (e) => {
+			if (e.target !== richTextEl) return;
+			if (isRawMode) return;
+			captionLines = (richTextEl.markdown || richTextEl.getMarkdown?.() || '').split('\n');
+			commit({ repaint: false });
+		});
+
+		strip.addEventListener('nui-sortable-change', () => {
+			const order = Array.from(strip.querySelectorAll('nui-sortable-item')).map(item => Number(item.dataset.idx));
+			if (order.every((v, i) => v === i)) return;
+			const currentTrack = tracks[currentTrackIdx];
+			tracks = order.map(i => tracks[i]);
+			currentTrackIdx = Math.max(0, tracks.indexOf(currentTrack));
+			commit();
+		});
+
+		let dragOutTrack = null;
+		let downAt = null;
+		strip.addEventListener('pointerdown', (e) => {
+			const item = e.target.closest('nui-sortable-item');
+			dragOutTrack = item ? tracks[Number(item.dataset.idx)] : null;
+			downAt = item ? { x: e.clientX, y: e.clientY } : null;
+		});
+		strip.addEventListener('pointerup', (e) => {
+			const down = downAt;
+			downAt = null;
+			if (!dragOutTrack) return;
+			const r = strip.getBoundingClientRect();
+			const outside = e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
+			const track = dragOutTrack;
+			dragOutTrack = null;
+			if (!outside) {
+				if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 5) {
+					currentTrackIdx = tracks.indexOf(track);
+					showInFrame(track);
+				}
+				return;
+			}
+			const i = tracks.indexOf(track);
+			if (i === -1) return;
+			tracks.splice(i, 1);
+			if (currentTrackIdx >= tracks.length) currentTrackIdx = Math.max(0, tracks.length - 1);
+			commit();
+		});
+		strip.addEventListener('keydown', (e) => {
+			if (e.key !== 'Delete' && e.key !== 'Backspace') return;
+			const item = e.target.closest('nui-sortable-item');
+			if (!item) return;
+			e.preventDefault();
+			const idx = Number(item.dataset.idx);
+			tracks.splice(idx, 1);
+			if (currentTrackIdx >= tracks.length) currentTrackIdx = Math.max(0, tracks.length - 1);
+			commit();
+		});
+
+		rawTextArea.addEventListener('input', () => {
+			if (!isRawMode) return;
+			const parsed = parsePlayerBlock(rawTextArea.value.split('\n'));
+			tracks = parsed.tracks;
+			captionLines = parsed.caption;
+			commit({ repaint: false });
+		});
+
+		function toggleRaw() {
+			isRawMode = !isRawMode;
+			if (isRawMode) {
+				richTextEl.style.display = 'none';
+				rawTextArea.style.display = 'block';
+				rawTextArea.value = serializePlayerLines(tracks, captionLines).join('\n');
+				return;
+			}
+			rawTextArea.style.display = 'none';
+			richTextEl.style.display = 'block';
+			const parsed = parsePlayerBlock(rawTextArea.value.split('\n'));
+			tracks = parsed.tracks;
+			captionLines = parsed.caption;
+			richTextEl.setMarkdown(captionLines.join('\n'));
+			paint();
+		}
+
+		function syncKind() {
+			if (!node.attrs) node.attrs = {};
+			const cur = tracks[0];
+			if (cur) {
+				const ext = (cur.src.split('?')[0].split('#')[0].split('.').pop() || '').toLowerCase();
+				if (['mp3', 'wav', 'ogg', 'm4a', 'flac'].includes(ext)) node.attrs.kind = 'audio';
+				else if (['mp4', 'webm', 'mov', 'm4v', 'ogv'].includes(ext)) node.attrs.kind = 'video';
+			}
+		}
+
+		function commit({ repaint = true } = {}) {
+			syncKind();
+			setBlockText(node, serializePlayerLines(tracks, captionLines).join('\n'));
+			if (repaint) paint();
+			syncToOutputs();
+		}
+
+		function addTrack(track) {
+			if (track.local) {
+				console.warn(`Media player block: "${track.title}" is an object URL — session only.`);
+				nui.components.banner.show({
+					content: 'Uploaded media is session-only here — will not survive reload.',
+					priority: 'alert',
+					autoClose: 5000
+				});
+			}
+			tracks.push(track);
+			currentTrackIdx = tracks.length - 1;
+			commit();
+		}
+
+		function showInFrame(track) {
+			const ext = (track.src.split('?')[0].split('#')[0].split('.').pop() || '').toLowerCase();
+			const isVideo = ['mp4', 'webm', 'mov', 'm4v', 'ogv'].includes(ext);
+			const tag = isVideo ? 'video' : 'audio';
+			const posterAttr = isVideo && track.poster ? ` poster="${escapeHtml(track.poster)}"` : '';
+
+			frame.innerHTML = `<nui-media-player type="${tag}"><${tag} controls playsinline preload="metadata" src="${escapeHtml(track.src)}"${posterAttr}></${tag}></nui-media-player>`;
+
+			strip.querySelectorAll('.player-track-item.selected').forEach(t => t.classList.remove('selected'));
+			const activeItem = strip.querySelectorAll('nui-sortable-item.player-track-item')[tracks.indexOf(track)];
+			if (activeItem) activeItem.classList.add('selected');
+		}
+
+		function paint() {
+			const activeTrack = tracks[currentTrackIdx] || tracks[0];
+			if (activeTrack) {
+				showInFrame(activeTrack);
+			} else {
+				frame.innerHTML = `<div class="media-empty"><nui-icon name="smart_display"></nui-icon><span>No media track yet</span></div>`;
+			}
+
+			strip.innerHTML = '';
+			tracks.forEach((track, i) => {
+				const ext = (track.src.split('?')[0].split('#')[0].split('.').pop() || '').toLowerCase();
+				const isVideo = ['mp4', 'webm', 'mov', 'm4v', 'ogv'].includes(ext);
+				const iconName = isVideo ? 'smart_display' : 'music_note';
+
+				const item = document.createElement('nui-sortable-item');
+				item.className = 'player-track-item' + (i === currentTrackIdx ? ' selected' : '');
+				item.dataset.idx = i;
+				item.title = 'Drag to reorder. Drag out of the list to remove. Click to preview.';
+
+				const handle = document.createElement('span');
+				handle.className = 'handle';
+				handle.textContent = String(i + 1);
+
+				const icon = document.createElement('nui-icon');
+				icon.setAttribute('name', iconName);
+
+				const title = document.createElement('span');
+				title.className = 'track-title';
+				title.textContent = track.title || track.src;
+
+				item.append(handle, icon, title);
+				strip.appendChild(item);
+			});
+		}
+
+		async function pickTracks() {
+			const entries = await openMediaLibrary({ multiple: true, filterType: 'player' });
+			for (const entry of entries) {
+				addTrack({ src: entry.src, title: entry.label, poster: '' });
+			}
+		}
+	}
 
 	function renderLeafBlockNode(nodeCard, node, parentContainer, nodeIdx, presets = LEAF_PRESETS) {
 		// Toggle raw markdown / rich text mode
@@ -1111,6 +1384,67 @@ export function initBlocksEditor(element, params, nui) {
 		return parseMediaBlock(getBlockText(node).split('\n')).images.length > 0;
 	}
 
+	// ── Player Blocks (preset=player) ──
+	// A media player block holds one or more audio/video links (optionally with
+	// poster for video) followed by a caption. In single form it's [Title](url) or
+	// [![Poster](poster)](video.mp4); in list form it's a list of links.
+	const PLAYER_EXT_RE = /\.(mp4|webm|mov|m4v|ogv|mp3|wav|ogg|oga|m4a|flac)$/i;
+	const PLAYER_LINK_RE = /^\[([^\]]+)\]\(([^)\s]+)\)$/;
+	const PLAYER_POSTER_RE = /^\[!\[([^\]]*)\]\(([^)\s]+)\)\]\(([^)\s]+)\)$/;
+	const PLAYER_LIST_LINK_RE = /^[-*+]\s+\[([^\]]+)\]\(([^)\s]+)\)$/;
+	const PLAYER_LIST_POSTER_RE = /^[-*+]\s+\[!\[([^\]]*)\]\(([^)\s]+)\)\]\(([^)\s]+)\)$/;
+
+	function parsePlayerBlock(lines) {
+		let i = 0;
+		while (i < lines.length && lines[i].trim() === '') i++;
+
+		const tracks = [];
+		const head = lines[i] || '';
+
+		if (PLAYER_POSTER_RE.test(head)) {
+			const m = head.match(PLAYER_POSTER_RE);
+			tracks.push({ title: m[1], poster: m[2], src: m[3] });
+			i++;
+		} else if (PLAYER_LINK_RE.test(head)) {
+			const m = head.match(PLAYER_LINK_RE);
+			tracks.push({ title: m[1], poster: '', src: m[2] });
+			i++;
+		} else {
+			while (i < lines.length) {
+				const line = lines[i].trim();
+				if (!line) { i++; continue; }
+				const mp = line.match(PLAYER_LIST_POSTER_RE);
+				const ml = line.match(PLAYER_LIST_LINK_RE);
+				if (mp) {
+					tracks.push({ title: mp[1], poster: mp[2], src: mp[3] });
+					i++;
+				} else if (ml) {
+					tracks.push({ title: ml[1], poster: '', src: ml[2] });
+					i++;
+				} else {
+					break;
+				}
+			}
+		}
+
+		return { tracks, caption: lines.slice(i) };
+	}
+
+	function serializePlayerLines(tracks, captionLines) {
+		const formatTrack = (t) => {
+			if (t.poster) return `[![${t.title || ''}](${t.poster})](${t.src})`;
+			return `[${t.title || t.src}](${t.src})`;
+		};
+
+		const head = tracks.length === 1
+			? [formatTrack(tracks[0])]
+			: tracks.map(t => `- ${formatTrack(t)}`);
+
+		const caption = captionLines.slice();
+		while (caption.length && caption[0].trim() === '') caption.shift();
+		return caption.length ? [...head, '', ...caption] : head;
+	}
+
 	// ── Block types (fixed at creation) ──
 	// The type is chosen in the insert palette and never changes in the UI —
 	// there is no type conversion, because the types have incompatible body
@@ -1143,15 +1477,24 @@ export function initBlocksEditor(element, params, nui) {
 		return lines.length >= 2 && lines[0].trim().startsWith('|') && TABLE_DELIM_RE.test(lines[1].trim());
 	}
 
+	function isPlayerBlock(node) {
+		const preset = String(node.attrs?.preset || '').toLowerCase();
+		if (preset !== 'player') return false;
+		return parsePlayerBlock(getBlockText(node).split('\n')).tracks.length > 0;
+	}
+
 	function blockType(node) {
 		if (node._type) return node._type;
-		const family = String(node.attrs?.preset || '').toLowerCase().split(':')[0];
-		const text = getBlockText(node);
-		if (family === 'link' && parseLinkBody(text)) node._type = 'link';
-		else if (family === 'table' && isTableBody(text)) node._type = 'table';
-		else if (isMediaBlock(node)) node._type = 'media';
-		else if (isTableBody(text)) node._type = 'table';
-		else node._type = 'prose';
+		if (isPlayerBlock(node)) node._type = 'player';
+		else {
+			const family = String(node.attrs?.preset || '').toLowerCase().split(':')[0];
+			const text = getBlockText(node);
+			if (family === 'link' && parseLinkBody(text)) node._type = 'link';
+			else if (family === 'table' && isTableBody(text)) node._type = 'table';
+			else if (isMediaBlock(node)) node._type = 'media';
+			else if (isTableBody(text)) node._type = 'table';
+			else node._type = 'prose';
+		}
 		return node._type;
 	}
 
@@ -1626,9 +1969,9 @@ export function initBlocksEditor(element, params, nui) {
 		} else if (type === 'media-player') {
 			newNode = {
 				type: 'block',
-				_type: 'link',
+				_type: 'player',
 				attrs: { id: generateId('b'), kind: 'video', preset: 'player' },
-				nodes: [{ type: 'md', lines: ['[Video title](https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4)'] }]
+				nodes: [{ type: 'md', lines: ['[Flower Bloom (Clip)](https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4)'] }]
 			};
 		} else if (type === 'link-cta') {
 			newNode = {
@@ -1956,6 +2299,7 @@ export function initBlocksEditor(element, params, nui) {
 				const html = util.markdownToHtml(md);
 				livePreview.innerHTML = html;
 				util.enhanceSlideshows?.(livePreview);
+				util.enhancePlayers?.(livePreview);
 			}
 		} finally {
 			isSyncing = false;

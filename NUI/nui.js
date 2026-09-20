@@ -7022,9 +7022,10 @@ function mbIdent(value) {
 }
 
 function mbKindFromDest(dest) {
-	if (MB_VIDEO_EXT_RE.test(dest)) return 'video';
-	if (MB_AUDIO_EXT_RE.test(dest)) return 'audio';
-	if (MB_IMAGE_EXT_RE.test(dest)) return 'image';
+	const clean = String(dest || '').split('?')[0].split('#')[0];
+	if (MB_VIDEO_EXT_RE.test(clean)) return 'video';
+	if (MB_AUDIO_EXT_RE.test(clean)) return 'audio';
+	if (MB_IMAGE_EXT_RE.test(clean)) return 'image';
 	return 'file';
 }
 
@@ -7344,13 +7345,13 @@ function mbDetectMedia(block) {
 	while (start < lines.length && !lines[start].trim()) start++;
 	const head = (lines[start] || '').trim();
 
-	const IMG = /^!\[([^\]]*)\]\(([^)\s]+)\)$/;
-	const ITEM = /^[-*+]\s+!\[([^\]]*)\]\(([^)\s]+)\)$/;
-	const LINKED = /^\[!\[([^\]]*)\]\(([^)\s]+)\)\]\(([^)\s]+)\)$/;
-	const LINK = /^\[([^\]]+)\]\(([^)\s]+)\)$/;
+	const IMG = /^!\[([^\]]*)\]\(\s*(\S+?)(?:\s+["'][^"']*["'])?\s*\)$/;
+	const ITEM = /^[-*+]\s+!\[([^\]]*)\]\(\s*(\S+?)(?:\s+["'][^"']*["'])?\s*\)$/;
+	const LINKED = /^\[!\[([^\]]*)\]\(\s*(\S+?)(?:\s+["'][^"']*["'])?\s*\)\]\(\s*(\S+?)(?:\s+["'][^"']*["'])?\s*\)$/;
+	const LINK = /^\[([^\]]+)\]\(\s*(\S+?)(?:\s+["'][^"']*["'])?\s*\)$/;
 	// The two link shapes in LIST form — one media link per item, nothing else.
-	const LINK_ITEM = /^[-*+]\s+\[([^\]]+)\]\(([^)\s]+)\)$/;
-	const LINKED_ITEM = /^[-*+]\s+\[!\[([^\]]*)\]\(([^)\s]+)\)\]\(([^)\s]+)\)$/;
+	const LINK_ITEM = /^(?:[-*+]|\d+\.)\s+\[([^\]]+)\]\(\s*(\S+?)(?:\s+["'][^"']*["'])?\s*\)$/;
+	const LINKED_ITEM = /^(?:[-*+]|\d+\.)\s+\[!\[([^\]]*)\]\(\s*(\S+?)(?:\s+["'][^"']*["'])?\s*\)\]\(\s*(\S+?)(?:\s+["'][^"']*["'])?\s*\)$/;
 
 	let kind = null, consumed = 0, isList = false;
 	let items = null;   // link-class only: [{ dest, text, poster }] in authored order
@@ -7366,12 +7367,12 @@ function mbDetectMedia(block) {
 		let j = start;
 		while (j < lines.length && (!lines[j].trim() || ITEM.test(lines[j].trim()))) j++;
 		if (j > start) { kind = 'image'; consumed = j; isList = true; }
-	} else if (LINK.test(head) && MB_EXT_RE.test(head.match(LINK)[2])) {
+	} else if (LINK.test(head) && MB_EXT_RE.test(head.match(LINK)[2].split('?')[0].split('#')[0])) {
 		const m = head.match(LINK);
 		kind = mbKindFromDest(m[2]);
 		items = [{ dest: m[2], text: m[1], poster: null }];
 		consumed = start + 1;
-	} else if (LINKED_ITEM.test(head) || (LINK_ITEM.test(head) && MB_EXT_RE.test(head.match(LINK_ITEM)[2]))) {
+	} else if (LINKED_ITEM.test(head) || (LINK_ITEM.test(head) && MB_EXT_RE.test(head.match(LINK_ITEM)[2].split('?')[0].split('#')[0]))) {
 		// Flat list of media links — one leaf in list form (§4.2), kind from the
 		// first item. The authored form is preserved: a one-item list stays a list.
 		let j = start;
@@ -7382,7 +7383,7 @@ function mbDetectMedia(block) {
 			const lp = t.match(LINKED_ITEM);
 			const li = t.match(LINK_ITEM);
 			if (lp) items.push({ dest: lp[3], text: lp[1], poster: lp[2] });
-			else if (li && MB_EXT_RE.test(li[2])) items.push({ dest: li[2], text: li[1], poster: null });
+			else if (li && MB_EXT_RE.test(li[2].split('?')[0].split('#')[0])) items.push({ dest: li[2], text: li[1], poster: null });
 			else break;
 			j++;
 		}
