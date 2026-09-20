@@ -710,9 +710,12 @@ nui-main > .content-page > .page-blocks-editor[breakout],
    keeps the same tile size as the rows above it. The tile is an elevated
    plate on the recessed rail: defined border, drop shadow, image area darker
    than the rail it sits on (n000b contrast grammar: shading, not strokes). */
-.page-blocks-editor nui-sortable-item.media-thumb {
+.page-blocks-editor nui-sortable-item.media-thumb,
+.page-blocks-editor nui-sortable[data-layout="grid"] nui-sortable-item.media-thumb {
 	position: relative;
 	aspect-ratio: 16 / 9;
+	display: flex;
+	flex-direction: row;
 	align-items: stretch;
 	gap: 0;
 	padding: 0;
