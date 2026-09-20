@@ -4372,6 +4372,66 @@ registerComponent('nui-sortable', (element) => {
 	const DRAG_THRESHOLD = 4;
 	let candidate = null;
 
+	// Auto-scroll during drag: when the pointer enters the top/bottom edge zone
+	// of the scroll parent, the parent scrolls in that direction — faster the
+	// closer the pointer gets to the edge. A rAF loop drives it so scrolling
+	// continues with a stationary pointer; placement is re-evaluated each tick
+	// because the content moves under it. The dragged item's transform
+	// compensates the accumulated scroll to stay glued to the pointer.
+	const AUTOSCROLL_ZONE = 80;
+	const AUTOSCROLL_MAX = 18;
+	let scrollParent = null;
+	let startScrollTop = 0;
+	let startScrollLeft = 0;
+	let lastClientX = 0;
+	let lastClientY = 0;
+	let autoScrollDir = 0;
+	let autoScrollFrame = null;
+
+	const docScroller = () => document.scrollingElement || document.documentElement;
+
+	const findScrollParent = () => {
+		let el = element.parentElement;
+		while (el) {
+			const oy = getComputedStyle(el).overflowY;
+			if ((oy === 'auto' || oy === 'scroll') && el.scrollHeight > el.clientHeight + 1) return el;
+			el = el.parentElement;
+		}
+		return docScroller();
+	};
+
+	const scrollParentRect = () =>
+		scrollParent === docScroller()
+			? { top: 0, bottom: window.innerHeight }
+			: scrollParent.getBoundingClientRect();
+
+	const updateAutoScrollDir = () => {
+		autoScrollDir = 0;
+		if (!scrollParent) return;
+		const rect = scrollParentRect();
+		if (lastClientY - rect.top < AUTOSCROLL_ZONE) autoScrollDir = -1;
+		else if (rect.bottom - lastClientY < AUTOSCROLL_ZONE) autoScrollDir = 1;
+	};
+
+	const updateDragTransform = () => {
+		const dx = lastClientX - startX + (scrollParent ? scrollParent.scrollLeft - startScrollLeft : 0);
+		const dy = lastClientY - startY + (scrollParent ? scrollParent.scrollTop - startScrollTop : 0);
+		dragItem.style.transform = `translate(${dx}px, ${dy}px)`;
+	};
+
+	const autoScrollTick = () => {
+		if (!dragItem) { autoScrollFrame = null; return; }
+		if (autoScrollDir !== 0 && scrollParent) {
+			const rect = scrollParentRect();
+			const dist = autoScrollDir < 0 ? lastClientY - rect.top : rect.bottom - lastClientY;
+			const speed = Math.max(1, Math.ceil(AUTOSCROLL_MAX * (1 - Math.max(0, dist) / AUTOSCROLL_ZONE)));
+			scrollParent.scrollTop += autoScrollDir * speed;
+			updateDragTransform();
+			updatePlacement(lastClientX, lastClientY);
+		}
+		autoScrollFrame = requestAnimationFrame(autoScrollTick);
+	};
+
 	const startDrag = (item) => {
 		dragItem = item;
 		dragOrigRect = dragItem.getBoundingClientRect();
@@ -4396,6 +4456,13 @@ registerComponent('nui-sortable', (element) => {
 		dragItem.style.transform = `translate(0px, 0px)`;
 
 		dragItem.dataset.isDragging = "true";
+
+		scrollParent = findScrollParent();
+		startScrollTop = scrollParent.scrollTop;
+		startScrollLeft = scrollParent.scrollLeft;
+		lastClientX = startX;
+		lastClientY = startY;
+		autoScrollFrame = requestAnimationFrame(autoScrollTick);
 	};
 
 	const onPointerDown = (e) => {
@@ -4403,6 +4470,11 @@ registerComponent('nui-sortable', (element) => {
 
 		const item = e.target.closest('nui-sortable-item');
 		if (!item || !element.contains(item)) return;
+
+		// Nested sortables: only the INNERMOST sortable owns the gesture. An
+		// item of an inner list is also a descendant of every outer list, so
+		// without this both would capture the same pointer.
+		if (item.closest('nui-sortable') !== element) return;
 
 		// Ignore if clicking an interactive element (unless it specifically IS the drag handle)
 		const interactive = e.target.closest('button, a, input, select, textarea, [data-action]');
@@ -4433,10 +4505,14 @@ registerComponent('nui-sortable', (element) => {
 			candidate = null;
 		}
 
-		const currentX = e.clientX - startX;
-		const currentY = e.clientY - startY;
-		dragItem.style.transform = `translate(${currentX}px, ${currentY}px)`;
+		lastClientX = e.clientX;
+		lastClientY = e.clientY;
+		updateAutoScrollDir();
+		updateDragTransform();
+		updatePlacement(e.clientX, e.clientY);
+	};
 
+	const updatePlacement = (clientX, clientY) => {
 		const placeholder = element.querySelector('.nui-sortable-placeholder');
 		const items = Array.from(element.children).filter(c =>
 			c !== dragItem && (c.tagName === 'NUI-SORTABLE-ITEM' || c === placeholder)
@@ -4457,26 +4533,37 @@ registerComponent('nui-sortable', (element) => {
 			const right = left + item.offsetWidth;
 			const bottom = top + item.offsetHeight;
 
-			if (e.clientX >= left && e.clientX <= right &&
-				e.clientY >= top && e.clientY <= bottom) {
+			if (clientX >= left && clientX <= right &&
+				clientY >= top && clientY <= bottom) {
 				targetObj = item;
 				break;
 			}
 		}
 
 		if (targetObj) {
-			const currentIndex = items.indexOf(placeholder);
-			const targetIndex = items.indexOf(targetObj);
-
 			const rects = new Map();
 			items.forEach(i => {
 				if (i !== placeholder) rects.set(i, i.getBoundingClientRect());
 			});
 
-			if (currentIndex < targetIndex) {
-				element.insertBefore(placeholder, targetObj.nextSibling);
-			} else {
+			// Insertion side by item MIDPOINT, never by where the placeholder
+			// currently sits. The placeholder is in flow, so moving it shifts
+			// every item below — comparing against the placeholder's own index
+			// feeds that shift back into the next hit-test and the placeholder
+			// ping-pongs between neighbours. The midpoint decision depends only
+			// on pointer and target geometry and converges instead.
+			const targetRect = rects.get(targetObj);
+			// Grid/horizontal lists decide on X (same-row neighbours share a
+			// midline); vertical lists on Y.
+			const horizontal = element.dataset.layout === 'horizontal' || element.dataset.layout === 'grid';
+			const before = horizontal
+				? clientX < targetRect.left + targetRect.width / 2
+				: clientY < targetRect.top + targetRect.height / 2;
+
+			if (before) {
 				element.insertBefore(placeholder, targetObj);
+			} else {
+				element.insertBefore(placeholder, targetObj.nextSibling);
 			}
 
 			items.forEach(i => {
@@ -4492,6 +4579,9 @@ registerComponent('nui-sortable', (element) => {
 		element.releasePointerCapture(pointerId);
 		pointerId = null;
 		candidate = null;
+		if (autoScrollFrame) { cancelAnimationFrame(autoScrollFrame); autoScrollFrame = null; }
+		autoScrollDir = 0;
+		scrollParent = null;
 
 		// Never entered the drag state → this was a click, not a drop. No
 		// reorder happened, so no change event either.
@@ -4512,7 +4602,8 @@ registerComponent('nui-sortable', (element) => {
 		delete dragItem.dataset.isDragging;
 		dragItem = null;
 
-		const newOrder = Array.from(element.querySelectorAll('nui-sortable-item'))
+		const newOrder = Array.from(element.children)
+			.filter(c => c.tagName === 'NUI-SORTABLE-ITEM')
 			.map(item => item.dataset.id || item.textContent.trim());
 		element.dispatchEvent(new CustomEvent('nui-sortable-change', {
 			bubbles: true,
@@ -4527,14 +4618,14 @@ registerComponent('nui-sortable', (element) => {
 	
 	element.addEventListener('nui-action-sortable-item-delete', (e) => {
 		const item = e.target.closest('nui-sortable-item');
-		if (item && element.contains(item)) {
-			const items = Array.from(element.querySelectorAll('nui-sortable-item'));
+		if (item && element.contains(item) && item.closest('nui-sortable') === element) {
+			const items = Array.from(element.children).filter(c => c.tagName === 'NUI-SORTABLE-ITEM');
 			const rects = new Map();
 			items.forEach(i => rects.set(i, i.getBoundingClientRect()));
 			
 			item.remove();
 			
-			const remainingItems = Array.from(element.querySelectorAll('nui-sortable-item'));
+			const remainingItems = Array.from(element.children).filter(c => c.tagName === 'NUI-SORTABLE-ITEM');
 			remainingItems.forEach(i => {
 				const oldRect = rects.get(i);
 				if (oldRect) animateFlip(i, oldRect);
@@ -4570,8 +4661,10 @@ registerComponent('nui-sortable', (element) => {
 	element.addEventListener('keydown', (e) => {
 		const targetItem = e.target.closest('nui-sortable-item');
 		if (!targetItem || !element.contains(targetItem)) return;
+		// Same nested-sortables boundary as the pointer path.
+		if (targetItem.closest('nui-sortable') !== element) return;
 
-		const items = Array.from(element.querySelectorAll('nui-sortable-item'));
+		const items = Array.from(element.children).filter(c => c.tagName === 'NUI-SORTABLE-ITEM');
 		const currentIndex = items.indexOf(targetItem);
 		if (currentIndex === -1) return;
 
@@ -4611,7 +4704,7 @@ registerComponent('nui-sortable', (element) => {
 					element.insertBefore(targetItem, items[origIndex].nextSibling);
 				}
 				
-				Array.from(element.querySelectorAll('nui-sortable-item')).forEach(i => {
+				Array.from(element.children).filter(c => c.tagName === 'NUI-SORTABLE-ITEM').forEach(i => {
 					const oldRect = rects.get(i);
 					if (oldRect) animateFlip(i, oldRect);
 				});
@@ -4657,7 +4750,7 @@ registerComponent('nui-sortable', (element) => {
 	});
 
 	const observer = new MutationObserver((mutations) => {
-		const items = Array.from(element.querySelectorAll('nui-sortable-item'));
+		const items = Array.from(element.children).filter(c => c.tagName === 'NUI-SORTABLE-ITEM');
 		let hasFocusable = false;
 		items.forEach(i => {
 			if (i.getAttribute('tabindex') === '0') hasFocusable = true;

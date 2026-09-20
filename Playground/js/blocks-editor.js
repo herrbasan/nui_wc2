@@ -208,6 +208,14 @@ export function initBlocksEditor(element, params, nui) {
 		}
 	});
 
+	// Sections reorder by drag — the container is a nui-sortable in the page
+	// markup; on commit the DOM order is mirrored into the data (commitSortOrder).
+	// Block lists and column contents get the same wiring at render time.
+	sectionsContainer.addEventListener('nui-sortable-change', () => {
+		const main = currentDoc.mains?.[0];
+		if (main) commitSortOrder(sectionsContainer, main, 'sections');
+	});
+
 	// ── Render Sections Canvas ──
 	function renderVisualEditor() {
 		sectionsContainer.innerHTML = '';
@@ -219,9 +227,9 @@ export function initBlocksEditor(element, params, nui) {
 
 		main.sections.forEach((sec, sIdx) => {
 			const hero = isHeroSection(sec);
-			const secEl = document.createElement('div');
+			const secEl = document.createElement('nui-sortable-item');
 			secEl.className = 'editor-section-card' + (hero ? ' section-hero' : '');
-			secEl.dataset.sectionIndex = sIdx;
+			secEl.dataset.nodeIndex = sIdx;
 
 			// Header
 			const header = document.createElement('div');
@@ -262,9 +270,6 @@ export function initBlocksEditor(element, params, nui) {
 			optsBtn.id = optsTriggerId;
 			controlsGroup.appendChild(optsBtn);
 
-			// Reorder / Delete buttons using NUI icon buttons
-			controlsGroup.appendChild(createNuiIconButton('chevron_right', 'Move Up', () => moveSection(sIdx, -1), 'icon-rotate-up'));
-			controlsGroup.appendChild(createNuiIconButton('chevron_right', 'Move Down', () => moveSection(sIdx, 1), 'icon-rotate-down'));
 			controlsGroup.appendChild(createNuiIconButton('close', 'Delete Section', () => deleteSection(sIdx)));
 
 			header.appendChild(titleGroup);
@@ -281,9 +286,10 @@ export function initBlocksEditor(element, params, nui) {
 				contentBody.appendChild(addStripTop(() => openInsertBlockPalette(sec, 0)));
 			}
 
-			// Render Nodes
-			const nodesContainer = document.createElement('div');
+			// Render Nodes — the list is a nui-sortable: drag order IS node order.
+			const nodesContainer = document.createElement('nui-sortable');
 			nodesContainer.className = 'section-nodes-list';
+			nodesContainer.addEventListener('nui-sortable-change', () => commitSortOrder(nodesContainer, sec, 'nodes'));
 
 			(sec.nodes || []).forEach((node, nIdx) => {
 				// Skip repeat blocks in the visual section list (handled in Chrome panel)
@@ -315,8 +321,9 @@ export function initBlocksEditor(element, params, nui) {
 
 	// ── Render Node (Leaf Block, Columns, Var) ──
 	function renderNode(node, parentContainer, nodeIdx) {
-		const nodeCard = document.createElement('div');
+		const nodeCard = document.createElement('nui-sortable-item');
 		nodeCard.className = 'editor-block-card';
+		nodeCard.dataset.nodeIndex = nodeIdx;
 
 		if (node.type === 'columns') {
 			nodeCard.classList.add('editor-columns-card');
@@ -403,8 +410,6 @@ export function initBlocksEditor(element, params, nui) {
 		const right = document.createElement('div');
 		right.className = 'block-header-right';
 		if (onToggleRaw) right.appendChild(createNuiIconButton('code', 'Toggle Code / WYSIWYG', onToggleRaw));
-		right.appendChild(createNuiIconButton('chevron_right', 'Move Up', () => moveNode(parentContainer, nodeIdx, -1), 'icon-rotate-up'));
-		right.appendChild(createNuiIconButton('chevron_right', 'Move Down', () => moveNode(parentContainer, nodeIdx, 1), 'icon-rotate-down'));
 		right.appendChild(createNuiIconButton('close', 'Delete', () => deleteNode(parentContainer, nodeIdx)));
 
 		header.appendChild(left);
@@ -471,6 +476,7 @@ export function initBlocksEditor(element, params, nui) {
 		side.className = 'media-side';
 		const strip = document.createElement('nui-sortable');
 		strip.className = 'media-thumbs';
+		strip.setAttribute('data-layout', 'grid');
 		side.appendChild(strip);
 
 		row.appendChild(side);
@@ -808,8 +814,6 @@ export function initBlocksEditor(element, params, nui) {
 
 		const right = document.createElement('div');
 		right.className = 'block-header-right';
-		right.appendChild(createNuiIconButton('chevron_right', 'Move Up', () => moveNode(parentContainer, nodeIdx, -1), 'icon-rotate-up'));
-		right.appendChild(createNuiIconButton('chevron_right', 'Move Down', () => moveNode(parentContainer, nodeIdx, 1), 'icon-rotate-down'));
 		right.appendChild(createNuiIconButton('close', 'Delete', () => deleteNode(parentContainer, nodeIdx)));
 
 		header.appendChild(left);
@@ -855,8 +859,9 @@ export function initBlocksEditor(element, params, nui) {
 			styleRow.appendChild(colSelectWrap);
 			colSlot.appendChild(styleRow);
 
-			const colNodes = document.createElement('div');
+			const colNodes = document.createElement('nui-sortable');
 			colNodes.className = 'col-nodes-list';
+			colNodes.addEventListener('nui-sortable-change', () => commitSortOrder(colNodes, col, 'nodes'));
 
 			col.nodes = col.nodes || [];
 			colSlot.appendChild(addStripTop(() => openInsertBlockPalette(col, 0, true)));
@@ -1345,13 +1350,21 @@ export function initBlocksEditor(element, params, nui) {
 		{ value: 'gallery:row', label: 'Row (static, even split)' }
 	];
 
-	function moveSection(index, direction) {
-		const main = currentDoc.mains?.[0];
-		if (!main || !main.sections) return;
-		const targetIdx = index + direction;
-		if (targetIdx < 0 || targetIdx >= main.sections.length) return;
-		const [sec] = main.sections.splice(index, 1);
-		main.sections.splice(targetIdx, 0, sec);
+	// Drag-reorder commit: the sortable already arranged the DOM; mirror that
+	// order into the data and re-render (the add-strips between cards are
+	// positional, so they rebuild). Nodes not rendered as items (repeat chrome
+	// blocks) keep their original slots. No-op drags (dropped where started)
+	// skip the rebuild.
+	function commitSortOrder(listEl, holder, prop) {
+		const domOrder = [...listEl.querySelectorAll(':scope > nui-sortable-item')].map(el => Number(el.dataset.nodeIndex));
+		if (domOrder.length < 2) return;
+		const arr = holder[prop];
+		const moved = new Set(domOrder);
+		const movedNodes = domOrder.map(i => arr[i]);
+		let k = 0;
+		const next = arr.map((n, i) => moved.has(i) ? movedNodes[k++] : n);
+		if (next.every((n, i) => n === arr[i])) return;
+		holder[prop] = next;
 		renderVisualEditor();
 		syncToOutputs();
 	}
@@ -1364,17 +1377,6 @@ export function initBlocksEditor(element, params, nui) {
 		} else {
 			main.sections.splice(index, 1);
 		}
-		renderVisualEditor();
-		syncToOutputs();
-	}
-
-	function moveNode(container, index, direction) {
-		const nodes = container.nodes;
-		if (!nodes) return;
-		const targetIdx = index + direction;
-		if (targetIdx < 0 || targetIdx >= nodes.length) return;
-		const [n] = nodes.splice(index, 1);
-		nodes.splice(targetIdx, 0, n);
 		renderVisualEditor();
 		syncToOutputs();
 	}

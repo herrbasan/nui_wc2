@@ -505,6 +505,25 @@ nui-main > .content-page > .page-blocks-editor[breakout],
 	overflow: hidden;
 }
 
+/* Editor cards double as nui-sortable-items (drag reorder via the header's
+   drag handle — core restricts the gesture to the handle, so editing text or
+   using selects inside a card never starts a drag). Strip the theme's
+   list-row chrome: the card classes own surface, radius and padding. */
+.page-blocks-editor nui-sortable-item.editor-section-card,
+.page-blocks-editor nui-sortable-item.editor-block-card {
+	display: block;
+	padding: 0;
+	gap: 0;
+}
+
+/* Keyboard drag on a full card: the tint is the state signal, the scale is
+   noise (same call as the media thumb rail). */
+.page-blocks-editor nui-sortable-item.editor-section-card[data-keyboard-drag="true"],
+.page-blocks-editor nui-sortable-item.editor-block-card[data-keyboard-drag="true"] {
+	background: var(--color-highlight);
+	transform: none;
+}
+
 .page-blocks-editor .block-card-header {
 	display: flex;
 	justify-content: space-between;

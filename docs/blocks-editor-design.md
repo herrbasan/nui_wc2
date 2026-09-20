@@ -137,6 +137,26 @@ Two var forms (`value=` scalar vs fenced payload) made no sense as authoring UI.
   their authored serialization — verified byte-identical through a full re-save.
 - The node is only touched on commit (§6.4: no reflow of unedited content).
 
+## Reorder is drag, not buttons (settled 2026-09-20)
+
+Move up/down arrow buttons are gone. Every list level is a `nui-sortable`:
+the sections container (markup), each section's block list, and each column
+slot's block list (created at render). Cards are `nui-sortable-item`s with a
+`data-node-index`; the drag handle in each card header is the only gesture
+initiator (core rule — editing inside cards never starts a drag).
+
+- Commit is one handler (`commitSortOrder`): on `nui-sortable-change` it reads
+  the DOM order, mirrors it into the data array, re-renders (the add-strips
+  between cards are positional), and syncs. Nodes not rendered as items
+  (repeat chrome blocks) keep their original slots; no-op drops skip the rebuild.
+- No cross-container drag: arrows never had it either, and nested drag is the
+  confusing case. Moving a block across sections is delete + re-add.
+- Nested sortables (blocks inside a column slot inside the sections list)
+  required a core fix: the innermost sortable owns the gesture
+  (`item.closest('nui-sortable') !== element` guard in nui-sortable).
+- Core sortable also gained midpoint insertion (the placeholder ping-ponged
+  between neighbours on large cards) and X-axis decisions for grid layouts.
+
 ## `cover` — the spec fix
 
 The word `cover` exists in spec §5.1 as a section modifier with **no definition, no decision-log

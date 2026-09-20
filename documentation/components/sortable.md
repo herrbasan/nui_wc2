@@ -8,6 +8,15 @@ The component handles the complexity of drag interactions including touch, mouse
 
 Drag handles (using `nui-icon name="drag_indicator"`) provide a clear affordance for initiating drag operations. The `data-id` attribute on items ensures stable identity during reordering.
 
+## Behavior Rules
+
+- **Handle-only drag.** If an item contains a `.drag-handle`, only pointerdown on the handle starts a drag; clicks elsewhere in the item (text, inputs, selects) never do. Items without a handle drag from anywhere non-interactive.
+- **Drag threshold.** A pointer must move ~4px before the drag state engages, so plain clicks never fire reorder events.
+- **Midpoint insertion.** The drop position is decided by the pointer's position relative to the hovered item's midpoint — Y for vertical lists, X for `horizontal`/`grid` layouts. (Not by the placeholder's current index: the placeholder is in flow, so index-relative decisions feed layout shifts back into the hit-test and oscillate.)
+- **Nesting.** Sortables may nest (e.g. items inside an item's own list). The innermost `nui-sortable` owning the item under the pointer owns the gesture; outer lists ignore it. Item lists are direct-children-scoped, so outer lists never see inner items in events or `getItems()`.
+- **Auto-scroll.** During a pointer drag, hovering within ~80px of the scroll parent's top/bottom edge scrolls it in that direction, speed ramping linearly with proximity (up to ~18px/frame at the edge). Scrolling continues with a stationary pointer (rAF-driven), placement re-evaluates each tick, and the dragged item stays glued to the pointer. The scroll parent is the nearest scrollable ancestor, falling back to the document.
+- **Keyboard.** Space/Enter grabs and drops, arrow keys move, Escape cancels and restores the original position. Grab/drop/move are announced via `a11y.announce`.
+
 ## Usage Patterns
 
 ### Basic Sortable List
