@@ -337,3 +337,48 @@ and its fence are a single lexical unit: nothing may be inserted between them.
 
 This is the section's second var. Names must be unique within a section, but the same name in
 another section would be a completely different var.
+
+---
+
+# Video & Audio — Inline Playback
+
+A block whose first node is a link to a media file is a link-class media block. With **no
+preset** it renders as the reference the author wrote — exactly what a generic preview shows.
+`preset=player` asks for inline playback instead: a single video or audio link becomes a
+player, a list of links becomes a playlist, and a linked image becomes the video's poster.
+
+### Video with poster (`preset=player`)
+
+<!-- mb:block id=demo-video kind=video preset=player label="Video with poster" -->
+[![NUI artwork — plate 8](../../images/nui_8.webp)](https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4)
+
+**MDN flower clip.** The linked image is the player's poster; this paragraph is the caption.
+<!-- mb:/block -->
+
+### Audio (`preset=player`)
+
+<!-- mb:block id=demo-audio kind=audio preset=player label="Single audio track" -->
+[MDN sample — T-Rex roar](https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3)
+
+A single audio link renders as an inline player with its caption below.
+<!-- mb:/block -->
+
+### Playlist (list form)
+
+<!-- mb:block id=demo-playlist kind=audio preset=player label="Audio playlist" -->
+- [T-Rex roar](https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3)
+- [Herrbasan — Play 11](https://herrbasan.com/files/Misc/herrbasan_Play_11.mp3)
+- [Herrbasan — Brattle](https://herrbasan.com/files/Misc/herrbasan_Brattle.mp3)
+
+A flat list of media links is one block in list form — the player loads the first track and
+the list switches it.
+<!-- mb:/block -->
+
+### The default stays a reference
+
+<!-- mb:block id=demo-film-link kind=video label="Plain media link" -->
+[Watch the flower video](https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4)
+
+No preset — the block renders as the link the author wrote, byte-identical to what GitHub or
+VS Code show.
+<!-- mb:/block -->

@@ -789,6 +789,14 @@ export function initBlocksEditor(element, params, nui) {
 
 		const commit = () => {
 			setBlockText(node, serializeLinkBody(textInput.value, urlInput.value));
+			if (node.attrs?.preset === 'player') {
+				const ext = (urlInput.value.split('?')[0].split('#')[0].split('.').pop() || '').toLowerCase();
+				if (['mp3', 'wav', 'ogg', 'm4a', 'aac', 'flac'].includes(ext)) {
+					node.attrs.kind = 'audio';
+				} else if (['mp4', 'webm', 'ogv', 'mov', 'm4v', 'mkv'].includes(ext)) {
+					node.attrs.kind = 'video';
+				}
+			}
 			syncToOutputs();
 		};
 		textInput.addEventListener('input', commit);
@@ -1150,12 +1158,65 @@ export function initBlocksEditor(element, params, nui) {
 	// Mock media library. The Playground is served statically, so there is no way
 	// to list a folder — the set is derived from two naming rules instead of a
 	// 126-entry manifest. Renaming either folder breaks tiles loudly in the picker.
+	const AUDIO_ICON_THUMB = `data:image/svg+xml;utf8,${encodeURIComponent(`
+		<svg xmlns="http://www.w3.org/2000/svg" width="160" height="90" viewBox="0 0 160 90" fill="none">
+			<rect width="160" height="90" rx="4" fill="#242830"/>
+			<circle cx="80" cy="45" r="24" fill="#1e2229"/>
+			<path d="M78 35v14.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V40h6V35h-8z" fill="#4a9eff"/>
+		</svg>
+	`)}`;
+
+	const VIDEO_ICON_THUMB = `data:image/svg+xml;utf8,${encodeURIComponent(`
+		<svg xmlns="http://www.w3.org/2000/svg" width="160" height="90" viewBox="0 0 160 90" fill="none">
+			<rect width="160" height="90" rx="4" fill="#242830"/>
+			<circle cx="80" cy="45" r="24" fill="#1e2229"/>
+			<path d="M74 37l16 8-16 8V37z" fill="#3dd68c"/>
+		</svg>
+	`)}`;
+
 	const MEDIA_LIBRARY = [
+		{
+			id: 'video-flower',
+			label: 'Flower Bloom (Clip)',
+			collection: 'Sample Videos',
+			variants: 'mp4 · 1080p',
+			type: 'video',
+			src: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
+			thumb: VIDEO_ICON_THUMB
+		},
+		{
+			id: 'audio-play-11',
+			label: 'Herrbasan — Play 11',
+			collection: 'Sample Music',
+			variants: 'mp3 · 320k',
+			type: 'audio',
+			src: 'https://herrbasan.com/files/Misc/herrbasan_Play_11.mp3',
+			thumb: AUDIO_ICON_THUMB
+		},
+		{
+			id: 'audio-brattle',
+			label: 'Herrbasan — Brattle',
+			collection: 'Sample Music',
+			variants: 'mp3 · 320k',
+			type: 'audio',
+			src: 'https://herrbasan.com/files/Misc/herrbasan_Brattle.mp3',
+			thumb: AUDIO_ICON_THUMB
+		},
+		{
+			id: 'audio-t-rex',
+			label: 'T-Rex Roar (Effect)',
+			collection: 'Sound Effects',
+			variants: 'mp3 · FX',
+			type: 'audio',
+			src: 'https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3',
+			thumb: AUDIO_ICON_THUMB
+		},
 		...Array.from({ length: 8 }, (_, i) => ({
 			id: `nui-${i + 1}`,
 			label: `NUI plate ${i + 1}`,
 			collection: 'NUI plates',
 			variants: 'webp',
+			type: 'image',
 			src: `images/nui_${i + 1}.webp`,
 			thumb: `images/nui_${i + 1}.webp`
 		})),
@@ -1166,6 +1227,7 @@ export function initBlocksEditor(element, params, nui) {
 				label: `Plate ${n}`,
 				collection: 'Random Picts',
 				variants: '160p · 1080p',
+				type: 'image',
 				src: `images/Random_Picts/1080p/${n}.webp`,
 				thumb: `images/Random_Picts/160p/${n}.webp`
 			};
@@ -1181,7 +1243,7 @@ export function initBlocksEditor(element, params, nui) {
 	// Shared media library picker. Returns the picked entries ([{ src, label }])
 	// or [] when cancelled. `multiple` switches the list between set picking
 	// (media blocks) and single picking (the icon badge).
-	async function openMediaLibrary({ multiple = true } = {}) {
+	async function openMediaLibrary({ multiple = true, filterType = null } = {}) {
 		const container = document.createElement('div');
 		container.className = 'media-library';
 		container.style.cssText = 'flex: 1; min-height: 0; display: flex; flex-direction: column;';
@@ -1199,8 +1261,10 @@ export function initBlocksEditor(element, params, nui) {
 
 		// No dialog buttons: nui-list owns the footer (count + Clear + Add), as in
 		// the CMS this is modelled on. The header supplies search and sort.
+		const title = filterType === 'player' ? (multiple ? 'Insert Audio / Video' : 'Choose Media Track')
+			: multiple ? 'Insert Media' : 'Choose Icon';
 		const { dialog, result } = await nui.components.dialog.page(
-			multiple ? 'Insert Media' : 'Choose Icon',
+			title,
 			container,
 			{ contentScroll: false }
 		);
@@ -1218,11 +1282,17 @@ export function initBlocksEditor(element, params, nui) {
 			dialog.close();
 		};
 
+		const libraryData = filterType === 'player'
+			? MEDIA_LIBRARY.filter(m => m.type === 'audio' || m.type === 'video')
+			: filterType === 'image'
+			? MEDIA_LIBRARY.filter(m => m.type !== 'audio' && m.type !== 'video')
+			: MEDIA_LIBRARY;
+
 		// The dialog has to finish layout before the list can measure a row, or the
 		// list collapses to a zero-height container and renders nothing.
 		customElements.whenDefined('nui-list').then(() => setTimeout(() => {
 			listEl.loadData({
-				data: MEDIA_LIBRARY,
+				data: libraryData,
 				render: renderLibraryRow,
 				multiple,
 				search: [{ prop: 'id' }, { prop: 'label' }, { prop: 'src' }],
@@ -1300,6 +1370,10 @@ export function initBlocksEditor(element, params, nui) {
 	const LINK_PRESETS = [
 		{ value: 'link:cta', label: 'Link: CTA' },
 		{ value: 'link:download', label: 'Link: Download' }
+	];
+
+	const PLAYER_PRESETS = [
+		{ value: 'player', label: 'Player: Auto' }
 	];
 
 	// Table blocks: the body is one pipe table; the style is the table's
@@ -1433,6 +1507,13 @@ export function initBlocksEditor(element, params, nui) {
 							<span>Image(s) with an optional caption</span>
 						</div>
 					</div>
+					<div class="palette-item" data-type="media-player">
+						<div class="palette-icon"><nui-icon name="play"></nui-icon></div>
+						<div class="palette-text">
+							<strong>Media Player</strong>
+							<span>Video or audio inline player (preset=player)</span>
+						</div>
+					</div>
 					<div class="palette-item" data-type="link-cta">
 						<div class="palette-icon"><nui-icon name="link"></nui-icon></div>
 						<div class="palette-text">
@@ -1541,6 +1622,13 @@ export function initBlocksEditor(element, params, nui) {
 				_type: 'media',
 				attrs: { id: generateId('b') },
 				nodes: [{ type: 'md', lines: ['![Alt text](images/nui_1.webp)', '', 'Figure caption text.'] }]
+			};
+		} else if (type === 'media-player') {
+			newNode = {
+				type: 'block',
+				_type: 'link',
+				attrs: { id: generateId('b'), kind: 'video', preset: 'player' },
+				nodes: [{ type: 'md', lines: ['[Video title](https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4)'] }]
 			};
 		} else if (type === 'link-cta') {
 			newNode = {

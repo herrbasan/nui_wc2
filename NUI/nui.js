@@ -7348,10 +7348,16 @@ function mbDetectMedia(block) {
 	const ITEM = /^[-*+]\s+!\[([^\]]*)\]\(([^)\s]+)\)$/;
 	const LINKED = /^\[!\[([^\]]*)\]\(([^)\s]+)\)\]\(([^)\s]+)\)$/;
 	const LINK = /^\[([^\]]+)\]\(([^)\s]+)\)$/;
+	// The two link shapes in LIST form — one media link per item, nothing else.
+	const LINK_ITEM = /^[-*+]\s+\[([^\]]+)\]\(([^)\s]+)\)$/;
+	const LINKED_ITEM = /^[-*+]\s+\[!\[([^\]]*)\]\(([^)\s]+)\)\]\(([^)\s]+)\)$/;
 
 	let kind = null, consumed = 0, isList = false;
+	let items = null;   // link-class only: [{ dest, text, poster }] in authored order
 	if (LINKED.test(head)) {
-		kind = mbKindFromDest(head.match(LINKED)[3]);
+		const m = head.match(LINKED);
+		kind = mbKindFromDest(m[3]);
+		items = [{ dest: m[3], text: m[1], poster: m[2] }];
 		consumed = start + 1;
 	} else if (IMG.test(head)) {
 		kind = 'image';
@@ -7361,11 +7367,31 @@ function mbDetectMedia(block) {
 		while (j < lines.length && (!lines[j].trim() || ITEM.test(lines[j].trim()))) j++;
 		if (j > start) { kind = 'image'; consumed = j; isList = true; }
 	} else if (LINK.test(head) && MB_EXT_RE.test(head.match(LINK)[2])) {
-		kind = mbKindFromDest(head.match(LINK)[2]);
+		const m = head.match(LINK);
+		kind = mbKindFromDest(m[2]);
+		items = [{ dest: m[2], text: m[1], poster: null }];
 		consumed = start + 1;
+	} else if (LINKED_ITEM.test(head) || (LINK_ITEM.test(head) && MB_EXT_RE.test(head.match(LINK_ITEM)[2]))) {
+		// Flat list of media links — one leaf in list form (§4.2), kind from the
+		// first item. The authored form is preserved: a one-item list stays a list.
+		let j = start;
+		items = [];
+		while (j < lines.length) {
+			const t = lines[j].trim();
+			if (!t) { j++; continue; }
+			const lp = t.match(LINKED_ITEM);
+			const li = t.match(LINK_ITEM);
+			if (lp) items.push({ dest: lp[3], text: lp[1], poster: lp[2] });
+			else if (li && MB_EXT_RE.test(li[2])) items.push({ dest: li[2], text: li[1], poster: null });
+			else break;
+			j++;
+		}
+		if (items.length) { kind = mbKindFromDest(items[0].dest); consumed = j; isList = true; }
+		else items = null;
 	}
 	if (!kind) return null;
 
+	const inferred = kind;
 	// A stamped kind is authoritative — never silently reclassified.
 	if (block.attrs.kind) kind = mbIdent(block.attrs.kind);
 
@@ -7376,7 +7402,9 @@ function mbDetectMedia(block) {
 
 	return {
 		kind,
+		inferred,
 		isList,
+		items,
 		mediaHtml: markdownCore(lines.slice(start, consumed).join('\n')),
 		captionHtml: mbRenderNodes(captions),
 	};
@@ -7432,7 +7460,7 @@ function mbParsePreset(value) {
 // Families the renderer knows how to treat. Anything else renders plain — valid
 // syntax, but the degradation contract (spec §5: "visible renderer diagnostic")
 // requires the unknown token to be reported, so each one warns once per session.
-const MB_KNOWN_PRESET_FAMILIES = new Set(['card', 'image', 'gallery', 'link', 'list', 'table', 'page-break', 'band', 'cover', 'lead', 'note', 'warning', 'cta']);
+const MB_KNOWN_PRESET_FAMILIES = new Set(['card', 'image', 'gallery', 'link', 'list', 'table', 'page-break', 'band', 'cover', 'lead', 'note', 'warning', 'cta', 'player']);
 
 // ── Slideshow enhancement (gallery:slideshow) ──
 // A gallery figure marked `preset=gallery:slideshow` cycles its plates one at
@@ -7543,6 +7571,56 @@ util.enhanceSlideshows = (root, duration) => {
 	root._slideshowCleanups = mbEnhanceSlideshows(root, duration);
 };
 
+// Playlist wiring for preset=player list form (spec §5.1): the authored flat list
+// of media links becomes ONE player with a track list. Clicking a track loads it
+// into the block's player and plays it; clicking the ACTIVE track toggles
+// play/pause. The inner media element is part of the emitted markup —
+// nui-media-player (when the addon is loaded) wraps it without replacing it — so
+// this works identically before and after the upgrade.
+function mbEnhancePlayers(root) {
+	const cleanups = [];
+	root.querySelectorAll('.nui-blocks-player .nui-blocks-playlist').forEach((list) => {
+		const fig = list.closest('figure');
+		const media = fig && fig.querySelector('video, audio');
+		if (!media) return;
+		const onClick = (e) => {
+			const btn = e.target.closest('button[data-src]');
+			if (!btn) return;
+			const wasActive = btn.classList.contains('active');
+			list.querySelectorAll('.nui-blocks-track.active').forEach((b) => b.classList.remove('active'));
+			btn.classList.add('active');
+			if (wasActive) {
+				if (media.paused) playTracked(); else media.pause();
+				return;
+			}
+			if (media.getAttribute('src') !== btn.dataset.src) media.src = btn.dataset.src;
+			if (media.tagName === 'VIDEO') {
+				if (btn.dataset.poster) media.poster = btn.dataset.poster;
+				else media.removeAttribute('poster');
+			}
+			playTracked();
+		};
+		// play() returns a promise that rejects on autoplay policy or a failed
+		// source (ORB block, 404). That is boundary variance — absorbed, but
+		// never silently: the trace stays in the console.
+		const playTracked = () => {
+			const p = media.play();
+			if (p && p.catch) p.catch((err) => {
+				console.warn(`[nui-markdown] playlist track could not be played: ${media.currentSrc || media.src} (${err.name}: ${err.message})`);
+			});
+		};
+		list.addEventListener('click', onClick);
+		cleanups.push(() => list.removeEventListener('click', onClick));
+	});
+	return cleanups;
+}
+
+// Public, self-managing entry point, same contract as util.enhanceSlideshows:
+// consumers who inject markdownToHtml output directly call this after injection.
+util.enhancePlayers = (root) => {
+	if (root._playerCleanups) root._playerCleanups.forEach((fn) => fn());
+	root._playerCleanups = mbEnhancePlayers(root);
+};
 
 const mbUnknownPresetSeen = new Set();
 
@@ -7604,6 +7682,78 @@ function mbSafeDest(dest) {
 	return { dest: d };
 }
 
+// One pipeline for every media destination the renderer writes into a src/poster
+// attribute: the §8 trust boundary, the document base, then the app-level
+// rewrite/policy hooks (which canonicalize /storage/... to the app's same-origin
+// proxy path and gate trust — nui_wc2#33). A refusal is a visible marker, never
+// a silently dropped attribute (see mdRejectedMedia). Returns `{ url }` (null
+// when the attribute was absent) or `{ rejected }` with the marker HTML.
+function mbMediaUrl(rawDest, alt) {
+	const verdict = mbSafeDest(rawDest);
+	if (verdict.refused) return { rejected: mdRejectedMedia(verdict.refused, rawDest, alt) };
+	let url = verdict.dest;
+	if (!url) return { url: null };
+	if (_mdDocBase && !/^[a-z][a-z0-9+.-]*:/i.test(url) && !url.startsWith('/') && !url.startsWith('#')) {
+		try { url = new URL(url, _mdDocBase).href; } catch (e) { /* unparsable base — leave as authored */ }
+	}
+	if (typeof markdownImageRewrite === 'function') {
+		const rewritten = markdownImageRewrite(url);
+		if (typeof rewritten === 'string' && rewritten.length > 0) url = rewritten;
+	}
+	if (typeof markdownImagePolicy === 'function' && !markdownImagePolicy(url)) {
+		return { rejected: mdRejectedMedia('destination not permitted', rawDest, alt) };
+	}
+	return { url };
+}
+
+// preset=player — the deliberate embed (spec §5.1): a link-class media block
+// renders as inline playback instead of the reference the author wrote. The
+// carrying element is profile territory: <nui-media-player> wraps a native
+// <video|audio controls>, so the output IS the spec's mapped element even when
+// the player addon is absent, and the house player upgrades it in place when
+// present. Returns null when player is inapplicable — the caller then renders
+// the plain reference, which is the spec's fallback, not an error state.
+function mbRenderPlayer(block, media, openTag) {
+	const stamped = block.attrs && block.attrs.kind ? mbIdent(block.attrs.kind) : null;
+	if (stamped && stamped !== media.inferred) {
+		console.warn(`[nui-markdown] preset=player: stamped kind "${stamped}" disagrees with the destination's "${media.inferred}" — rendered plain, stamp preserved (spec §7).`);
+		return null;
+	}
+	if (media.kind !== 'video' && media.kind !== 'audio') {
+		console.warn(`[nui-markdown] preset=player on a non-playable destination (kind=${media.kind}) — rendered as the authored link (spec §7).`);
+		return null;
+	}
+	const items = media.items || [];
+	if (!items.length) return null;
+
+	const tag = media.kind === 'video' ? 'video' : 'audio';
+	const caption = media.captionHtml ? `<figcaption>${media.captionHtml}</figcaption>` : '';
+
+	const renderMediaEl = (item) => {
+		const url = mbMediaUrl(item.dest, item.text);
+		if (url.rejected) return url.rejected;
+		const poster = tag === 'video' && item.poster ? mbMediaUrl(item.poster, '') : null;
+		const posterAttr = poster && poster.url ? ` poster="${fmEscape(poster.url)}"` : '';
+		const label = item.text ? ` aria-label="${fmEscape(item.text)}"` : '';
+		return `<nui-media-player type="${tag}"><${tag} controls playsinline preload="metadata" src="${fmEscape(url.url)}"${posterAttr}${label}></${tag}></nui-media-player>`;
+	};
+
+	if (!media.isList) {
+		return `${openTag}>${renderMediaEl(items[0])}${caption}</figure>`;
+	}
+
+	// Playlist: one player + the track list. Rows are buttons carrying their
+	// destination; util.enhancePlayers wires them to the player after injection.
+	const tracks = items.map((item, i) => {
+		const url = mbMediaUrl(item.dest, item.text);
+		if (url.rejected) return `<li>${url.rejected}</li>`;
+		const poster = tag === 'video' && item.poster ? (mbMediaUrl(item.poster, '').url || '') : '';
+		const iconName = tag === 'video' ? 'smart_display' : 'music_note';
+		return `<li><button type="button" class="nui-blocks-track${i === 0 ? ' active' : ''}" data-src="${fmEscape(url.url)}"${poster ? ` data-poster="${fmEscape(poster)}"` : ''}><nui-icon name="${iconName}"></nui-icon><span class="nui-blocks-track-title">${fmEscape(item.text || item.dest)}</span></button></li>`;
+	}).join('');
+	return `${openTag}>${renderMediaEl(items[0])}<ol class="nui-blocks-playlist">${tracks}</ol>${caption}</figure>`;
+}
+
 function mbRenderBlock(block) {
 	const media = mbDetectMedia(block);
 	const p = mbParsePreset(block.attrs && block.attrs.preset);
@@ -7616,38 +7766,37 @@ function mbRenderBlock(block) {
 	const iconAttr = p && p.family === 'image' && p.modifier === 'icon'
 		? String((block.attrs && block.attrs.icon) || '').trim()
 		: '';
-	const icon = iconAttr ? mbSafeDest(iconAttr) : null;
 
 	if (media) {
+		const playerWanted = p && p.family === 'player';
 		const extra = ['nui-blocks-media', `nui-blocks-${media.kind}`];
-		if (media.isList || (p && p.family === 'gallery')) extra.push('nui-blocks-gallery');
+		// A player list is a PLAYLIST, not a gallery — the gallery class brings
+		// image-grid treatment that has no meaning for a track list.
+		if (!playerWanted && (media.isList || (p && p.family === 'gallery'))) extra.push('nui-blocks-gallery');
+		if (playerWanted) extra.push('nui-blocks-player');
 		const open = mbOpenTag('figure', 'nui-blocks-block', block.attrs, extra.join(' '));
+		if (playerWanted) {
+			const player = mbRenderPlayer(block, media, open);
+			// null = inapplicable (warned inside) — fall through to the plain
+			// reference rendering, which IS the spec's fallback (§7).
+			if (player) return player;
+		}
 		const caption = media.captionHtml ? `<figcaption>${media.captionHtml}</figcaption>` : '';
 		return `${open}>${media.mediaHtml}${caption}</figure>`;
 	}
 
 	if (iconAttr) {
-		// The icon <img> is emitted here, outside markdownCore — the app-level
-		// rewrite/policy hooks (which canonicalize /storage/... to the app's
-		// same-origin proxy path and gate trust) never see it otherwise, and
-		// the raw destination 404s wherever only a path prefix is routed
+		// The icon <img> is emitted here, outside markdownCore — run it through the
+		// same destination pipeline (trust boundary, document base, app hooks) that
+		// player sources get, so the app-level rewrite/policy never sees a raw
+		// destination that would 404 wherever only a path prefix is routed
 		// (nui_wc2#33). Same treatment an inline markdown image gets.
-		let iconUrl = icon.dest;
-		if (iconUrl) {
-			if (_mdDocBase && !/^[a-z][a-z0-9+.-]*:/i.test(iconUrl) && !iconUrl.startsWith('/') && !iconUrl.startsWith('#')) {
-				try { iconUrl = new URL(iconUrl, _mdDocBase).href; } catch (e) { /* unparsable base — leave as authored */ }
-			}
-			if (typeof markdownImageRewrite === 'function') {
-				const rewritten = markdownImageRewrite(iconUrl);
-				if (typeof rewritten === 'string' && rewritten.length > 0) iconUrl = rewritten;
-			}
-			if (typeof markdownImagePolicy === 'function' && !markdownImagePolicy(iconUrl)) iconUrl = null;
-		}
+		const resolved = mbMediaUrl(iconAttr, block.attrs.alt || '');
 		const open = mbOpenTag('figure', 'nui-blocks-block', block.attrs, 'nui-blocks-media nui-blocks-image');
 		const alt = block.attrs.alt || '';
-		const mediaHtml = iconUrl
-			? `<img src="${fmEscape(iconUrl)}" alt="${fmEscape(alt)}" loading="lazy">`
-			: mdRejectedMedia(icon.refused || 'destination not permitted', iconAttr, alt);
+		const mediaHtml = resolved.url
+			? `<img src="${fmEscape(resolved.url)}" alt="${fmEscape(alt)}" loading="lazy">`
+			: resolved.rejected;
 		return `${open}>${mediaHtml}<figcaption>${mbRenderNodes(block.nodes)}</figcaption></figure>`;
 	}
 
@@ -8070,6 +8219,7 @@ class NuiMarkdown extends HTMLElement {
 		this.innerHTML = markdownToHtml(rawText, { frontmatter: mode, base: this.base });
 		this._processed = true; // Mark as processed so re-attach is free
 		util.enhanceSlideshows(this, this.getAttribute('slide-duration'));
+		util.enhancePlayers(this);
 
 		if (!this._lightboxBound) {
 			this._lightboxBound = true;

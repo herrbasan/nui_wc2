@@ -5695,6 +5695,99 @@ nui-markdown p > img {
 	line-height: 1;
 }
 
+/* preset=player — inline playback of a link-class media block (spec §5.1). The
+   markup is <nui-media-player> wrapping a native <video|audio controls>: without
+   the addon the native element IS the spec's mapped output, with it the house
+   player upgrades in place. The figure owns the width; the player fills it. */
+.nui-blocks-player {
+	margin: var(--nui-space) 0;
+	border: solid var(--border-thickness) var(--border-shade2);
+	border-radius: var(--border-radius2);
+	background: light-dark(var(--color-shade2), var(--color-shade2));
+	overflow: hidden;
+}
+.nui-blocks-player nui-media-player {
+	display: block;
+	box-shadow: none;
+	border-radius: 0;
+	background-color: transparent;
+}
+.nui-blocks-player nui-media-player[type="audio"] {
+	margin-bottom: 0;
+}
+.nui-blocks-player nui-media-player:not(.init) > video,
+.nui-blocks-player nui-media-player:not(.init) > audio {
+	width: 100%;
+	display: block;
+}
+.nui-blocks-player figcaption {
+	padding: var(--nui-space-half) var(--nui-space);
+	font-size: var(--font-size-small);
+	color: var(--text-color-dim);
+	border-top: solid var(--border-thickness) var(--border-shade1);
+	background: light-dark(var(--color-shade1), var(--color-shade1));
+}
+
+/* Playlist (player on a link LIST, §5.1): integrated flush into the player card.
+   Rows are clean, borderless list rows with subtle separators and hover. */
+.nui-blocks-playlist {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	border-top: solid var(--border-thickness) var(--border-shade2);
+	background: light-dark(var(--color-shade2), var(--color-shade2));
+	counter-reset: mb-track;
+}
+.nui-blocks-playlist > li {
+	counter-increment: mb-track;
+}
+.nui-blocks-playlist > li + li {
+	margin-top: 0;
+	border-top: solid var(--border-thickness) var(--border-shade1);
+}
+.nui-blocks-playlist .nui-blocks-track {
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+	gap: var(--nui-space-half);
+	width: 100%;
+	padding: var(--nui-space-half) var(--nui-space);
+	border: none;
+	border-radius: 0;
+	background: transparent;
+	color: var(--text-color);
+	font: inherit;
+	font-size: var(--font-size-small);
+	text-align: left;
+	cursor: pointer;
+	transition: background 0.15s ease, color 0.15s ease;
+}
+.nui-blocks-playlist .nui-blocks-track nui-icon {
+	flex: none;
+	width: 1.25rem;
+	height: 1.25rem;
+	color: var(--text-color-dim);
+	transition: color 0.15s ease;
+}
+.nui-blocks-playlist .nui-blocks-track-title {
+	flex: 1;
+	text-align: left;
+}
+.nui-blocks-playlist .nui-blocks-track:hover {
+	background: light-dark(var(--color-shade3), var(--color-shade3));
+}
+.nui-blocks-playlist .nui-blocks-track:hover nui-icon {
+	color: var(--text-color);
+}
+.nui-blocks-playlist .nui-blocks-track.active {
+	background: light-dark(var(--color-shade4), var(--color-shade4));
+	color: var(--text-color);
+	font-weight: 600;
+}
+.nui-blocks-playlist .nui-blocks-track.active nui-icon {
+	color: var(--text-color);
+}
+
 /* Presets map a semantic name to treatment. The label word in a note or warning is
    authored in the Markdown and is never injected here, so the message survives
    losing its styling. An unknown preset is valid syntax that renders plain. */

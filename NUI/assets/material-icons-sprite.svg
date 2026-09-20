@@ -24,9 +24,6 @@
 <ns0:rect xmlns:ns0="http://www.w3.org/2000/svg" height="3" width="2" x="11" y="14" fill="currentColor" />
 <ns0:rect xmlns:ns0="http://www.w3.org/2000/svg" height="2" width="2" x="11" y="10" fill="currentColor" />
   </symbol>
-  <symbol id="archive" viewBox="0 0 24 24">
-<path d="M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27zM12 17.5L6.5 12H10v-2h4v2h3.5L12 17.5zM5.12 5l.81-1h12l.94 1H5.12z" fill="currentColor" />
-  </symbol>
   <symbol id="arrow" viewBox="0 0 24 24">
 <ns0:path xmlns:ns0="http://www.w3.org/2000/svg" d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6-6-6z" fill="currentColor" />
   </symbol>
@@ -42,9 +39,6 @@
   </symbol>
   <symbol id="attach_money" viewBox="0 0 24 24">
 <ns0:path xmlns:ns0="http://www.w3.org/2000/svg" d="M441-120v-86q-53-12-91.5-46T293-348l74-30q15 48 44.5 73t77.5 25q41 0 69.5-18.5T587-356q0-35-22-55.5T463-458q-86-27-118-64.5T313-614q0-65 42-101t86-41v-84h80v84q50 8 82.5 36.5T651-650l-74 32q-12-32-34-48t-60-16q-44 0-67 19.5T393-614q0 33 30 52t104 40q69 20 104.5 63.5T667-358q0 71-42 108t-104 46v84h-80Z" transform="translate(-0.0,24.0) scale(0.025,0.025)" fill="currentColor" />
-  </symbol>
-  <symbol id="auto_stories" viewBox="0 0 24 24">
-<path d="M19 1l-5 5v11l5-4.5V1zM1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5V6c-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6zm22 13.5V6c-.6-.45-1.25-.75-2-1v13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5v2c1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5v-1.1z" fill="currentColor" />
   </symbol>
   <symbol id="brightness" viewBox="0 0 24 24">
 <ns0:path xmlns:ns0="http://www.w3.org/2000/svg" d="M20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69zm-2 5.79V18h-3.52L12 20.48 9.52 18H6v-3.52L3.52 12 6 9.52V6h3.52L12 3.52 14.48 6H18v3.52L20.48 12 18 14.48zM12 6.5v11c3.03 0 5.5-2.47 5.5-5.5S15.03 6.5 12 6.5z" fill="currentColor" />
@@ -114,24 +108,6 @@
   </symbol>
   <symbol id="folder" viewBox="0 0 24 24">
 <ns0:path xmlns:ns0="http://www.w3.org/2000/svg" d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" fill="currentColor" />
-  </symbol>
-  <symbol id="folder_open" viewBox="0 0 24 24">
-<path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z" fill="currentColor" />
-  </symbol>
-  <symbol id="chevron_right" viewBox="0 0 24 24">
-<path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6-6-6z" fill="currentColor" />
-  </symbol>
-  <symbol id="code" viewBox="0 0 24 24">
-<path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z" fill="currentColor" />
-  </symbol>
-  <symbol id="description" viewBox="0 0 24 24">
-<path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" fill="currentColor" />
-  </symbol>
-  <symbol id="unfold_less" viewBox="0 0 24 24">
-<path d="M7.41 18.59L8.83 20 12 16.83 15.17 20l1.41-1.41L12 14l-4.59 4.59zm9.18-13.18L15.17 4 12 7.17 8.83 4 7.41 5.41 12 10l4.59-4.59z" fill="currentColor" />
-  </symbol>
-  <symbol id="unfold_more" viewBox="0 0 24 24">
-<path d="M12 5.83L15.17 9l1.41-1.41L12 3 7.41 7.59 8.83 9 12 5.83zm0 12.34L8.83 15l-1.41 1.41L12 21l4.59-4.59L15.17 15 12 18.17z" fill="currentColor" />
   </symbol>
   <symbol id="format_bold" viewBox="0 0 24 24">
 <ns0:path xmlns:ns0="http://www.w3.org/2000/svg" d="M272-200v-560h221q65 0 120 40t55 111q0 51-23 78.5T602-491q25 11 55.5 41t30.5 90q0 89-65 124.5T501-200H272Zm121-112h104q48 0 58.5-24.5T566-372q0-11-10.5-35.5T494-432H393v120Zm0-228h93q33 0 48-17t15-38q0-24-17-39t-44-15h-95v109Z" transform="translate(-0.0,24.0) scale(0.025,0.025)" fill="currentColor" />
@@ -232,9 +208,6 @@
   <symbol id="menu" viewBox="0 0 24 24">
 <ns0:path xmlns:ns0="http://www.w3.org/2000/svg" d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" fill="currentColor" />
   </symbol>
-  <symbol id="mic" viewBox="0 0 24 24">
-<path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z" fill="currentColor" />
-  </symbol>
   <symbol id="monitor" viewBox="0 0 24 24">
 <ns0:path xmlns:ns0="http://www.w3.org/2000/svg" d="M240-120v-80l40-40H160q-33 0-56.5-23.5T80-320v-440q0-33 23.5-56.5T160-840h640q33 0 56.5 23.5T880-760v440q0 33-23.5 56.5T800-240H680l40 40v80H240Zm-80-200h640v-440H160v440Zm0 0v-440 440Z" transform="translate(-0.0,24.0) scale(0.025,0.025)" fill="currentColor" />
   </symbol>
@@ -243,6 +216,9 @@
   </symbol>
   <symbol id="mouse" viewBox="0 0 24 24">
 <ns0:path xmlns:ns0="http://www.w3.org/2000/svg" d="M480-80q-116 0-198-82t-82-198v-240q0-116 82-198t198-82q116 0 198 82t82 198v240q0 116-82 198T480-80Zm40-520h160q0-72-45.5-127T520-796v196Zm-240 0h160v-196q-69 14-114.5 69T280-600Zm200 440q83 0 141.5-58.5T680-360v-160H280v160q0 83 58.5 141.5T480-160Zm0-360Zm40-80Zm-80 0Zm40 80Z" transform="translate(-0.0,24.0) scale(0.025,0.025)" fill="currentColor" />
+  </symbol>
+  <symbol id="music_note" viewBox="0 0 24 24">
+<ns0:path xmlns:ns0="http://www.w3.org/2000/svg" d="M400-120q-66 0-113-47t-47-113q0-66 47-113t113-47q23 0 42.5 5.5T480-418v-422h240v160H560v400q0 66-47 113t-113 47Z" transform="translate(-0.0,24.0) scale(0.025,0.025)" fill="currentColor" />
   </symbol>
   <symbol id="my_location" viewBox="0 0 24 24">
 <ns0:path xmlns:ns0="http://www.w3.org/2000/svg" d="M440-42v-80q-125-14-214.5-103.5T122-440H42v-80h80q14-125 103.5-214.5T440-838v-80h80v80q125 14 214.5 103.5T838-520h80v80h-80q-14 125-103.5 214.5T520-122v80h-80Zm40-158q116 0 198-82t82-198q0-116-82-198t-198-82q-116 0-198 82t-82 198q0 116 82 198t198 82Zm0-120q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 66-47 113t-113 47Zm0-80q33 0 56.5-23.5T560-480q0-33-23.5-56.5T480-560q-33 0-56.5 23.5T400-480q0 33 23.5 56.5T480-400Zm0-80Z" transform="translate(-0.0,24.0) scale(0.025,0.025)" fill="currentColor" />

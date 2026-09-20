@@ -169,8 +169,28 @@ nui-media-player .info {
 	pointer-events: none;
 }
 
-nui-media-player .info.loading {
+nui-media-player .info.loading,
+nui-media-player .info.failed {
 	opacity: 1;
+}
+
+nui-media-player .info.failed {
+	color: var(--color-danger, #e05252);
+}
+
+nui-media-player .info.failed nui-icon {
+	color: var(--color-danger, #e05252);
+}
+
+nui-media-player[type="audio"].failed .playpause .icon-play,
+nui-media-player[type="audio"].failed .playpause .icon-pause {
+	opacity: 0 !important;
+	transform: scale(0) !important;
+}
+
+nui-media-player[type="audio"] .info {
+	left: calc(2rem - 1.1rem);
+	top: calc(50% - 1.1rem);
 }
 
 nui-media-player .info nui-icon {

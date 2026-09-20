@@ -144,8 +144,23 @@ class NuiMediaPlayer extends HTMLElement {
 		function mediaInfo(e) {
 			element.dispatchEvent(new CustomEvent('nui-media-event', { detail: { type: e.type, originalEvent: e }, bubbles: true }));
 			if (e.type === 'durationchange') updateDuration();
-			if (e.type === 'waiting') info.classList.add('loading');
-			if (e.type === 'canplay' || e.type === 'playing' || e.type === 'canplaythrough') info.classList.remove('loading');
+			if (e.type === 'waiting') {
+				element.classList.remove('failed');
+				info.classList.remove('failed');
+				info.innerHTML = '<nui-icon name="sync"></nui-icon>';
+				info.classList.add('loading');
+			}
+			if (e.type === 'canplay' || e.type === 'playing' || e.type === 'canplaythrough') {
+				element.classList.remove('failed');
+				info.classList.remove('loading', 'failed');
+			}
+			if (e.type === 'error') {
+				info.classList.remove('loading');
+				info.innerHTML = '<nui-icon name="warning"></nui-icon>';
+				info.classList.add('failed');
+				element.classList.add('failed');
+				element.classList.remove('playing');
+			}
 		}
 
 		function start() {
@@ -198,7 +213,11 @@ class NuiMediaPlayer extends HTMLElement {
 			if (element.hasAttribute('autoplay')) media.play();
 			
 			update();
-			hideControls(0);
+			if (media_type === 'video') {
+				showControls();
+			} else {
+				hideControls(0);
+			}
 		}
 
 		function volumeEvents(e) {
@@ -303,6 +322,10 @@ class NuiMediaPlayer extends HTMLElement {
 
 		function hideControls(n = 1) {
 			clearTimeout(control_timeout);
+			// Do not auto-hide controls on video before playback has ever started
+			if (media_type === 'video' && media.currentTime === 0 && media.paused) {
+				return;
+			}
 			control_timeout = setTimeout(() => {
 				if (!media.paused) {
 					element.classList.remove('controls-show');
