@@ -12,6 +12,13 @@ Execution plan: `docs/wysiwyg-editor-implementation-plan.md` (2026-09-21 — int
   writing documents. (Settled 2026-09-19.)
 - **md-blocks is the model.** Same parse/serialize core as the blocks editor. Layout blocks
   (sections, columns) contain content blocks; the tree is exactly the spec tree.
+- **Ships as an NUI addon, never core** (user, 2026-09-21). The editor is its own JS
+  module + its own CSS file — core `nui.js` stays untouched except generic format-level
+  capabilities the renderer already owns. **Custom styling is a requirement:** every
+  style lives in the addon's separate CSS file so a host can restyle or replace it; JS
+  injects no styles.
+- **Fidelity target (user, 2026-09-21):** the canvas looks as much like the *target
+  rendering* as possible — the selected profile's real output, not an editor theme.
 - Order of work: blocks editor quirks first. Shared infrastructure (see `nui-table-editor`)
   can start anytime — both editors consume it.
 
@@ -22,6 +29,10 @@ Execution plan: `docs/wysiwyg-editor-implementation-plan.md` (2026-09-21 — int
 - **Hover/focus materializes structure.** Section frames and block frames appear on hover,
   each with **floating contextual UI scoped to the hovered level** — section UI (template,
   profile-relevant options) is not block UI (style select, drag, delete) is not cell UI.
+- **Least visual clutter (user, 2026-09-21).** Controls live exclusively in hovering,
+  context-sensitive dialogs — nothing persistent, nothing competing with the document.
+  A block gets a subtle **highlight on hover** so its bounds are legible before any
+  control appears; sections get the outer frame, the block highlight nests inside it.
 - **UX patterns borrowed from Blok** (blokeditor.com research, 2026-09-21):
   - Slash menu: `/` turns the current block into a filter input; grouped palette with
     markdown-alias hints (`#`, `##`, ` ``` `, `---`).

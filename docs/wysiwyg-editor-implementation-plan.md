@@ -64,13 +64,17 @@ round-trips.
 
 Render the document with `markdownToHtml` — the same pipeline that renders the shipped
 product — never a parallel editor-flavored renderer. Two renderers = fidelity drift =
-the death of WYSIWYG honesty.
+the death of WYSIWYG honesty. **The canvas must look as much like the target rendering
+as possible** (user, 2026-09-21): the selected profile's real output, with the host's
+theme styles — not an editor skin.
 
 **Required infrastructure:** an opt-in **source map** in the `mbRender*` helpers:
 when `options.sourceMap` is set, every rendered section / block / column node carries
 `data-mb-path="m0/s1/n2"` (main/section/node index path; column children extend it).
 Production rendering (no option) stays byte-identical. The editing layer maps any DOM
-target back to its tree node via `target.closest('[data-mb-path]')`.
+target back to its tree node via `target.closest('[data-mb-path]')`. This render option
+is the **only core touchpoint** — a generic format-level capability of the existing
+renderer. All editor functionality lives in the addon (§4.4), never in core.
 
 ### 4.2 Model-first mutations (architecture law)
 
@@ -89,8 +93,11 @@ Never scrape the DOM back into the model. `serializeBlocks` remains the only wri
 
 ### 4.3 Doc-model ops (shared, pure, testable)
 
-Extract/author a pure ops module consumed by both editors (proposed home: `util.*`
-in `NUI/nui.js`, beside `parseBlocks`/`serializeBlocks`):
+A pure ops module consumed by both editors. Home: **inside the addon package** (a
+sibling module beside `nui-doc-editor.js`, e.g. `NUI/lib/modules/doc-model.js`), not
+core — the editor's functionality is an addon concern (user, 2026-09-21). Core already
+provides `util.parseBlocks`/`util.serializeBlocks`; that format layer is the only core
+dependency.
 
 ```
 insertSection(doc, index, template)      deleteSection(doc, path)
@@ -103,18 +110,33 @@ setSectionPreset(doc, path, preset)      setBlockText(doc, path, markdownLines)
 Each returns a new/updated doc; none touches the DOM. The blocks editor migrates onto
 these later (convergence is desirable, not a phase-1 requirement).
 
-### 4.4 Where it lives
+### 4.4 Where it lives — an addon from day one (user, 2026-09-21)
 
-Playground app first (same shape as the blocks editor): `Playground/js/doc-editor.js` +
-demo page + nav entry, with all reusable logic in pure functions. Graduation to a real
-addon (`NUI/lib/modules/nui-doc-editor.js` + CSS + `documentation/addons/`) happens when
-the interaction model is proven — a rename-and-move, not a rewrite, *because* the logic
-is already pure.
+The functionality is **planned as an NUI addon, not as part of the core**:
+
+- `NUI/lib/modules/nui-doc-editor.js` — element + editing layer (thin class over pure
+  functions, NUI component pattern).
+- `NUI/css/modules/nui-doc-editor.css` — **every** editor style, in this separate file.
+- `documentation/addons/doc-editor.md` — API + styling-hooks contract.
+- Playground hosts only a demo page consuming the addon, exactly like every other
+  addon demo (explicit JS import + CSS link; auto-load in dev).
+
+**Custom styling is a shipped feature, not an accident:** the addon's chrome (hover
+frames, floating dialogs, grips, toolbar) is styled exclusively by that CSS file — JS
+injects no styles, class hooks are stable and documented, and a host can override or
+wholesale replace the file to theme the editor. The *document* itself renders with the
+host's theme/profile styles (that's what makes the canvas match the target rendering);
+only the *chrome* belongs to the addon's CSS.
 
 ### 4.5 Hover framing (the visual contract)
 
-- No chrome at rest. `:hover` / `:focus-within` on `[data-mb-path]` reveals a level
-  outline (section = outer, block = inner) via CSS only.
+- **Least visual clutter is the law (user, 2026-09-21).** Controls live exclusively in
+  hovering, context-sensitive dialogs/popovers — nothing persistent, nothing that
+  competes with the document.
+- **Block bounds on hover:** a hovered block gets a subtle highlight (a surface shift,
+  not a heavy outline) so its bounds are legible before any control appears. Sections
+  get the outer frame; the block highlight nests inside it.
+- `:hover` / `:focus-within` on `[data-mb-path]` drives all of this via CSS only.
 - Floating UI is **level-scoped**: exactly one floating cluster visible at a time, for
   the deepest hovered level. Section UI never competes with block UI.
 - All chrome is absolutely positioned overlay — zero layout shift on hover.
@@ -194,16 +216,18 @@ Each phase ends demo-able and passes its acceptance slice before the next starts
   keyboard-complete (every mouse op reachable by keyboard), docs page
   (`documentation/`), demo content that IS a real document (Blok demo trick).
 
-## 8. Files (Playground phase)
+## 8. Files
 
 | Action | Path |
 |---|---|
-| modify | `NUI/nui.js` — `options.sourceMap` in `mbRender*`; doc-model ops on `util` |
-| create | `Playground/js/doc-editor.js` — app (thin) + editing-layer controllers |
-| create | `Playground/css/` additions in `main.css` or a scoped module CSS — hover frames + floating UI |
-| create | demo page HTML sibling to the blocks editor's page, wired identically |
+| modify | `NUI/nui.js` — **only** the generic `options.sourceMap` render option in the `mbRender*` helpers (no editor code in core) |
+| create | `NUI/lib/modules/nui-doc-editor.js` — the addon: element, editing layer |
+| create | `NUI/lib/modules/doc-model.js` — pure doc-tree ops (§4.3), importable by the blocks editor too |
+| create | `NUI/css/modules/nui-doc-editor.css` — ALL editor chrome styles, host-replaceable |
+| create | `documentation/addons/doc-editor.md` — API + styling hooks contract |
+| create | `Playground/pages/addons/doc-editor.html` — demo page consuming the addon |
 | modify | `Playground/js/main.js` (nav), `Playground/js/page-init.js` (`nui.registerPage`) |
-| create | `documentation/` entry once graduated to an addon |
+| run | `node scripts/update-docs.js` |
 
 ## 9. Acceptance criteria (headline set; each phase adds its own)
 
