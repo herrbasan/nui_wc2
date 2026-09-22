@@ -1,0 +1,102 @@
+<div class="page-table-editor">
+
+<script type="application/ld+json">
+{
+  "@context": "nui",
+  "@type": "Component",
+  "name": "nui-table-editor",
+  "group": "addons",
+  "description": "Progressive enhancement for native tables providing in-cell editing, row/column grips, edge add buttons, alignment, and keyboard navigation.",
+  "events": ["nui-change"],
+  "innerElement": "table",
+  "imports": {
+    "js": "NUI/lib/modules/nui-table-editor.js",
+    "css": "NUI/css/modules/nui-table-editor.css"
+  }
+}
+</script>
+
+	<header>
+		<h1>Table Editor</h1>
+		<p class="lead">Unfinished and abandoned — preserved as a failed attempt, for reference only.</p>
+	</header>
+
+	<div class="demo-callout">
+		<strong>Status: abandoned (2026-09-22).</strong> One-shot generated first attempt at an
+		<code>nui-table-editor</code> addon. Parts of the mechanics work, but the interaction feel
+		failed review — generating a whole interactive component in a single pass doesn't work.
+		Do not build on this code. The plan docs (<code>docs/table-editor-implementation-plan.md</code>)
+		remain the resume point; any future attempt proceeds slice by slice with user feel-checks
+		between steps.
+	</div>
+
+	<section>
+		<h2>Interactive Table Showcase</h2>
+		<p>Hover rows or columns to reveal drag grips and context menus. Click any cell to type directly, navigate with <kbd>Tab</kbd> or <kbd>Enter</kbd>, and format columns with the floating toolbar.</p>
+
+		<div class="demo-area">
+			<nui-table-editor id="demo-table-main">
+				<table class="nui-table">
+					<thead>
+						<tr>
+							<th data-align="left">Item</th>
+							<th data-align="left">Category</th>
+							<th data-align="center">In Stock</th>
+							<th data-align="right">Unit Price</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td data-align="left">Mechanical Keyboard</td>
+							<td data-align="left">Hardware</td>
+							<td data-align="center">Yes</td>
+							<td data-align="right">$129.99</td>
+						</tr>
+						<tr>
+							<td data-align="left">USB-C Monitor Cable</td>
+							<td data-align="left">Accessories</td>
+							<td data-align="center">Yes</td>
+							<td data-align="right">$19.50</td>
+						</tr>
+						<tr>
+							<td data-align="left">Desk Mat XL</td>
+							<td data-align="left">Office</td>
+							<td data-align="center">No</td>
+							<td data-align="right">$24.00</td>
+						</tr>
+					</tbody>
+				</table>
+			</nui-table-editor>
+		</div>
+
+		<h3>Live GFM Pipe-Table Export</h3>
+		<p>Proves round-trip fidelity: DOM table serialized live into standard GitHub Flavored Markdown on every change.</p>
+		<pre class="demo-result" style="padding: var(--nui-space); background: var(--color-shade1); border: var(--border-thickness) solid var(--border-shade2); border-radius: var(--border-radius1); overflow-x: auto;"><code id="gfm-export-output"></code></pre>
+
+		<p class="demo-result" id="table-log" style="font-size: var(--font-size-small); color: var(--color-text-dim);">Last action: None</p>
+	</section>
+
+	<section>
+		<h2>From-Scratch Grid (2x2)</h2>
+		<p>Test growing the grid from an empty start, pasting TSV rows from spreadsheets, or toggling the header row.</p>
+
+		<div class="demo-area">
+			<nui-table-editor id="demo-table-secondary">
+				<table class="nui-table">
+					<thead>
+						<tr>
+							<th>Column 1</th>
+							<th>Column 2</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>Data A</td>
+							<td>Data B</td>
+						</tr>
+					</tbody>
+				</table>
+			</nui-table-editor>
+		</div>
+	</section>
+</div>

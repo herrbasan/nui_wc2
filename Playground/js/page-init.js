@@ -3044,6 +3044,102 @@ nui.registerPage('addons/slides', {
 	}
 });
 
+nui.registerPage('experiments/table-editor', {
+	html: 'experiments/table-editor.html',
+	async init(element, params, nui) {
+		// Dynamically load CSS and JS if not already loaded
+		if (!customElements.get('nui-table-editor')) {
+			const link = document.createElement('link');
+			link.rel = 'stylesheet';
+			link.href = '../NUI/css/modules/nui-table-editor.css';
+			document.head.appendChild(link);
+
+			await import('../../NUI/lib/modules/nui-table-editor.js');
+		}
+
+		const mainEditor = element.querySelector('#demo-table-main');
+		const exportOutput = element.querySelector('#gfm-export-output');
+		const logOutput = element.querySelector('#table-log');
+
+		function tableToGfm(table) {
+			if (!table) return '';
+			const rows = Array.from(table.rows);
+			if (rows.length === 0) return '';
+
+			const hasThead = table.tHead && table.tHead.rows.length > 0;
+			const headerRow = hasThead ? table.tHead.rows[0] : rows[0];
+			const dataRows = hasThead
+				? (table.tBodies[0] ? Array.from(table.tBodies[0].rows) : rows.slice(1))
+				: rows.slice(1);
+
+			const colCount = Math.max(...rows.map(r => r.cells.length));
+			if (colCount === 0) return '';
+
+			function formatCell(cell) {
+				if (!cell) return '';
+				return cell.textContent.trim().replace(/\|/g, '\\|');
+			}
+
+			// Build header
+			const headers = [];
+			for (let c = 0; c < colCount; c++) {
+				headers.push(formatCell(headerRow.cells[c]));
+			}
+
+			// Build separators based on data-align
+			const separators = [];
+			for (let c = 0; c < colCount; c++) {
+				const cell = headerRow.cells[c];
+				const align = cell ? cell.getAttribute('data-align') : null;
+				if (align === 'center') {
+					separators.push(':---:');
+				} else if (align === 'right') {
+					separators.push('---:');
+				} else {
+					separators.push(':---');
+				}
+			}
+
+			let gfm = '';
+			if (!hasThead) {
+				gfm += '<!-- table: no thead (row 1 used as header) -->\n';
+			}
+			gfm += `| ${headers.join(' | ')} |\n`;
+			gfm += `| ${separators.join(' | ')} |\n`;
+
+			for (const row of dataRows) {
+				const cells = [];
+				for (let c = 0; c < colCount; c++) {
+					cells.push(formatCell(row.cells[c]));
+				}
+				gfm += `| ${cells.join(' | ')} |\n`;
+			}
+
+			return gfm.trim();
+		}
+
+		function updateExport() {
+			const table = mainEditor ? mainEditor.querySelector('table') : null;
+			if (exportOutput && table) {
+				exportOutput.textContent = tableToGfm(table);
+			}
+		}
+
+		element.addEventListener('nui-change', (e) => {
+			if (e.target.closest('#demo-table-main')) {
+				updateExport();
+			}
+			if (logOutput) {
+				const opType = e.detail?.type || 'change';
+				logOutput.textContent = `Last action: ${opType} at ${new Date().toLocaleTimeString()}`;
+			}
+		});
+
+		// Initial export rendering
+		updateExport();
+	}
+});
+
 // ── Documentation ──
 
 nui.registerPage('documentation/cheatsheet', {

@@ -1,0 +1,418 @@
+/* =============================================================================
+   NUI TABLE EDITOR ADDON
+   Progressive enhancement for native tables.
+   Zero permanent framing at rest; context-sensitive controls on hover/focus.
+   ============================================================================= */
+
+nui-table-editor {
+	display: block;
+	position: relative;
+	width: 100%;
+	margin-block-end: var(--nui-space);
+}
+
+/* Alignment attributes (CSP-safe, serializable) */
+th[data-align="left"],
+td[data-align="left"] {
+	text-align: left;
+}
+
+th[data-align="center"],
+td[data-align="center"] {
+	text-align: center;
+}
+
+th[data-align="right"],
+td[data-align="right"] {
+	text-align: right;
+}
+
+/* Cell selection highlight */
+th[data-selected="true"],
+td[data-selected="true"] {
+	background-color: light-dark(var(--color-shade2), var(--color-shade3)) !important;
+	outline: var(--border-thickness) solid var(--color-highlight);
+	outline-offset: -1px;
+}
+
+/* Active editing cell outline */
+[data-nui-table-editor] td:focus,
+[data-nui-table-editor] th:focus,
+nui-table-editor td:focus,
+nui-table-editor th:focus {
+	outline: var(--border-thickness) solid var(--color-highlight);
+	outline-offset: -1px;
+}
+
+/* Chrome container: hosts overlay grips, toolbar, and menus */
+.nui-table-editor-chrome {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	overflow: visible;
+	z-index: 20;
+}
+
+/* Column Grips container & items */
+.nui-table-editor-col-grip {
+	position: absolute;
+	top: 0;
+	transform: translate(-50%, -50%);
+	height: 28px;
+	min-width: 36px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: grab;
+	pointer-events: auto;
+	opacity: 0;
+	transition: opacity 0.15s ease;
+	z-index: 22;
+}
+
+.nui-table-editor-col-grip .grip-pill {
+	width: 24px;
+	height: 5px;
+	border-radius: 999px;
+	background: var(--color-shade4);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+	box-shadow: 0 1px 3px var(--shadow-color);
+}
+
+.nui-table-editor-col-grip .grip-icon {
+	display: none;
+	width: 14px;
+	height: 14px;
+	color: var(--color-text);
+}
+
+.nui-table-editor-col-grip.is-visible {
+	opacity: 1;
+}
+
+.nui-table-editor-col-grip:hover .grip-pill,
+.nui-table-editor-col-grip.is-active .grip-pill {
+	width: 30px;
+	height: 18px;
+	background: var(--color-shade1);
+	border: var(--border-thickness) solid var(--border-shade3);
+	border-radius: var(--border-radius1);
+}
+
+.nui-table-editor-col-grip:hover .grip-icon,
+.nui-table-editor-col-grip.is-active .grip-icon {
+	display: block;
+}
+
+.nui-table-editor-col-grip:active {
+	cursor: grabbing;
+}
+
+/* Row Grips container & items */
+.nui-table-editor-row-grip {
+	position: absolute;
+	left: 0;
+	transform: translate(-50%, -50%);
+	width: 28px;
+	min-height: 36px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: grab;
+	pointer-events: auto;
+	opacity: 0;
+	transition: opacity 0.15s ease;
+	z-index: 22;
+}
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: grab;
+	pointer-events: auto;
+	opacity: 0;
+	transition: opacity 0.15s ease;
+	z-index: 22;
+}
+
+.nui-table-editor-row-grip .grip-pill {
+	width: 5px;
+	height: 24px;
+	border-radius: 999px;
+	background: var(--color-shade4);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+	box-shadow: 0 1px 3px var(--shadow-color);
+}
+
+.nui-table-editor-row-grip .grip-icon {
+	display: none;
+	width: 14px;
+	height: 14px;
+	color: var(--color-text);
+}
+
+.nui-table-editor-row-grip.is-visible {
+	opacity: 1;
+}
+
+.nui-table-editor-row-grip:hover .grip-pill,
+.nui-table-editor-row-grip.is-active .grip-pill {
+	width: 18px;
+	height: 30px;
+	background: var(--color-shade1);
+	border: var(--border-thickness) solid var(--border-shade3);
+	border-radius: var(--border-radius1);
+}
+
+.nui-table-editor-row-grip:hover .grip-icon,
+.nui-table-editor-row-grip.is-active .grip-icon {
+	display: block;
+}
+
+.nui-table-editor-row-grip:active {
+	cursor: grabbing;
+}
+
+/* Edge Add Strips (full-edge hit area like Blok) */
+.nui-table-editor-add-row-strip {
+	position: absolute;
+	height: 28px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	pointer-events: auto;
+	opacity: 0;
+	transition: opacity 0.15s ease;
+	z-index: 21;
+}
+
+.nui-table-editor-add-row-strip.is-visible {
+	opacity: 1;
+}
+
+.nui-table-editor-add-row-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--nui-space-eighth);
+	height: 22px;
+	padding: 0 var(--nui-space-half);
+	background: var(--color-shade1);
+	border: var(--border-thickness) solid var(--border-shade2);
+	border-radius: 999px;
+	color: var(--color-text-dim);
+	font-size: var(--font-size-xsmall);
+	cursor: pointer;
+	box-shadow: 0 2px 5px var(--shadow-color);
+	transition: all 0.12s ease;
+}
+
+.nui-table-editor-add-row-btn:hover {
+	background: var(--color-shade2);
+	border-color: var(--color-highlight);
+	color: var(--color-highlight);
+}
+
+.nui-table-editor-add-row-btn nui-icon {
+	width: 14px;
+	height: 14px;
+}
+
+.nui-table-editor-add-col-strip {
+	position: absolute;
+	width: 28px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	pointer-events: auto;
+	opacity: 0;
+	transition: opacity 0.15s ease;
+	z-index: 21;
+}
+
+.nui-table-editor-add-col-strip.is-visible {
+	opacity: 1;
+}
+
+.nui-table-editor-add-col-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 22px;
+	height: 32px;
+	background: var(--color-shade1);
+	border: var(--border-thickness) solid var(--border-shade2);
+	border-radius: 999px;
+	color: var(--color-text-dim);
+	cursor: pointer;
+	box-shadow: 0 2px 5px var(--shadow-color);
+	transition: all 0.12s ease;
+}
+
+.nui-table-editor-add-col-btn:hover {
+	background: var(--color-shade2);
+	border-color: var(--color-highlight);
+	color: var(--color-highlight);
+}
+
+.nui-table-editor-add-col-btn nui-icon {
+	width: 14px;
+	height: 14px;
+}
+
+.nui-table-editor-add-row.is-visible,
+.nui-table-editor-add-col.is-visible {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+/* Floating cell toolbar */
+.nui-table-editor-toolbar {
+	position: absolute;
+	display: flex;
+	align-items: center;
+	gap: var(--nui-space-eighth);
+	padding: var(--nui-space-eighth) var(--nui-space-quarter);
+	background: var(--color-shade1);
+	border: var(--border-thickness) solid var(--border-shade3);
+	border-radius: var(--border-radius2);
+	box-shadow: 0 4px 12px var(--shadow-color);
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.15s ease, transform 0.15s ease;
+	transform: translate(-50%, -100%);
+	margin-top: calc(-1 * var(--nui-space-quarter));
+	z-index: 25;
+	user-select: none;
+}
+
+.nui-table-editor-toolbar.is-visible {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.nui-table-editor-toolbar button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.75rem;
+	height: 1.75rem;
+	padding: 0;
+	border: none;
+	background: transparent;
+	color: var(--color-text);
+	border-radius: var(--border-radius1);
+	cursor: pointer;
+	transition: background-color 0.1s ease, color 0.1s ease;
+}
+
+.nui-table-editor-toolbar button:hover {
+	background: var(--color-shade3);
+}
+
+.nui-table-editor-toolbar button.is-active {
+	background: var(--color-shade4);
+	color: var(--color-highlight);
+}
+
+.nui-table-editor-toolbar button nui-icon {
+	width: 1rem;
+	height: 1rem;
+	pointer-events: none;
+}
+
+.nui-table-editor-toolbar .nui-table-editor-separator {
+	width: 1px;
+	height: 1rem;
+	background: var(--border-shade2);
+	margin: 0 var(--nui-space-eighth);
+}
+
+/* Grip popover menu */
+.nui-table-editor-menu {
+	position: absolute;
+	display: flex;
+	flex-direction: column;
+	background: var(--color-shade1);
+	border: var(--border-thickness) solid var(--border-shade3);
+	border-radius: var(--border-radius2);
+	box-shadow: 0 6px 16px var(--shadow-color);
+	padding: var(--nui-space-quarter);
+	z-index: 30;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.12s ease;
+	min-width: 10.5rem;
+	user-select: none;
+}
+
+.nui-table-editor-menu.is-visible {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.nui-table-editor-menu-item {
+	display: flex;
+	align-items: center;
+	gap: var(--nui-space-half);
+	padding: var(--nui-space-half) var(--nui-space-half);
+	border: none;
+	background: transparent;
+	color: var(--color-text);
+	font-size: var(--font-size-small);
+	border-radius: var(--border-radius1);
+	cursor: pointer;
+	text-align: left;
+	width: 100%;
+	transition: background-color 0.1s ease;
+}
+
+.nui-table-editor-menu-item:hover {
+	background: var(--color-shade3);
+}
+
+.nui-table-editor-menu-item nui-icon {
+	width: 1rem;
+	height: 1rem;
+	pointer-events: none;
+}
+
+.nui-table-editor-menu-item.is-danger {
+	color: var(--palette-alert);
+}
+
+.nui-table-editor-menu-item.is-danger:hover {
+	background: light-dark(rgba(229, 62, 62, 0.1), rgba(229, 62, 62, 0.2));
+}
+
+.nui-table-editor-menu .nui-table-editor-separator {
+	height: 1px;
+	background: var(--border-shade2);
+	margin: var(--nui-space-quarter) 0;
+}
+
+/* Drag drop indicator lines */
+.nui-table-editor-drop-line-row {
+	position: absolute;
+	height: 2px;
+	background: var(--color-highlight);
+	left: 0;
+	right: 0;
+	pointer-events: none;
+	z-index: 28;
+}
+
+.nui-table-editor-drop-line-col {
+	position: absolute;
+	width: 2px;
+	background: var(--color-highlight);
+	top: 0;
+	bottom: 0;
+	pointer-events: none;
+	z-index: 28;
+}
