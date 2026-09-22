@@ -3604,8 +3604,9 @@ nui-tag-input .nui-tag-input-field {
 	min-width: 8rem;
 	width: auto;
 	min-height: unset;
-	height: auto;
-	align-self: stretch;
+	height: 1.5rem;
+	line-height: 1.5rem;
+	align-self: center;
 	padding: 0 var(--nui-space-half);
 	background: transparent;
 	border: none;
@@ -3614,7 +3615,6 @@ nui-tag-input .nui-tag-input-field {
 	box-shadow: none;
 	font: inherit;
 	font-size: var(--font-size-small);
-	line-height: normal;
 	color: var(--color-text);
 	margin: 0;
 	display: inline-block;
