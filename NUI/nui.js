@@ -4659,6 +4659,19 @@ registerComponent('nui-sortable', (element) => {
 	};
 
 	element.addEventListener('keydown', (e) => {
+		// Space and Enter are the drag's grab/drop keys — and they are also how a text
+		// field is typed in. This handler claimed both from anywhere inside a sortable
+		// item, so every input, textarea and rich-text editor nested in one lost its
+		// space bar. Measured on the blocks editor: 8 of 8 fields inside items had the
+		// key suppressed, while the same key in a field outside an item went through.
+		//
+		// The pointer path above already declines to start a drag from an interactive
+		// element; the keyboard path has to decline the same keys for the same reason.
+		// The `.drag-handle` exception is kept so a space pressed on the handle still
+		// grabs, which is what the pointer path does too.
+		const interactive = e.target.closest('button, a, input, select, textarea, [contenteditable], [data-action]');
+		if (interactive && !interactive.closest('.drag-handle')) return;
+
 		const targetItem = e.target.closest('nui-sortable-item');
 		if (!targetItem || !element.contains(targetItem)) return;
 		// Same nested-sortables boundary as the pointer path.
