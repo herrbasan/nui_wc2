@@ -56,7 +56,7 @@ round-trips.
 | `nui-slides` | `NUI/lib/modules/nui-slides.js` | The slides profile of the same tree. |
 | Blocks editor app | `Playground/js/blocks-editor.js` (~2400 lines) | Settled patterns to port: section templates (normal/hero), style select scoped by shape, grouped palette (Content/Layout/Data), link block editor, media library integration, raw mode. |
 | RTE inline machinery | `NUI/lib/modules/nui-rich-text.js` | Inline formatting + history patterns for prose editing. |
-| `nui-table-editor` | `docs/table-editor-implementation-plan.md` | Tables inside the document. Built first, consumed here. |
+| `nui-table-editor` | `docs/table-editor-decisions.md` | Tables inside the document. Built first, consumed here. |
 
 ## 4. Architecture
 

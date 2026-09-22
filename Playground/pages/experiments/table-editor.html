@@ -4,14 +4,14 @@
 {
   "@context": "nui",
   "@type": "Component",
-  "name": "nui-table-editor",
-  "group": "addons",
-  "description": "Progressive enhancement for native tables providing in-cell editing, row/column grips, edge add buttons, alignment, and keyboard navigation.",
+  "name": "dropped-table-editor",
+  "group": "experiments",
+  "description": "ABANDONED one-shot attempt at a table editor. Reference only — do not use.",
   "events": ["nui-change"],
   "innerElement": "table",
   "imports": {
-    "js": "NUI/lib/modules/nui-table-editor.js",
-    "css": "NUI/css/modules/nui-table-editor.css"
+    "js": "Playground/js/dropped-table-editor.js",
+    "css": "Playground/css/dropped-table-editor.css"
   }
 }
 </script>
@@ -22,12 +22,13 @@
 	</header>
 
 	<div class="demo-callout">
-		<strong>Status: abandoned (2026-09-22).</strong> One-shot generated first attempt at an
-		<code>nui-table-editor</code> addon. Parts of the mechanics work, but the interaction feel
+		<strong>Status: abandoned (2026-09-22).</strong> One-shot generated first attempt at a
+		table editor addon. Parts of the mechanics work, but the interaction feel
 		failed review — generating a whole interactive component in a single pass doesn't work.
-		Do not build on this code. The plan docs (<code>docs/table-editor-implementation-plan.md</code>)
-		remain the resume point; any future attempt proceeds slice by slice with user feel-checks
-		between steps.
+		Do not build on this code. Renamed to <code>dropped-table-editor</code> to free the
+		<code>nui-table-editor</code> namespace for the fresh component. The decision log
+		(<code>docs/table-editor-decisions.md</code>) remains the resume point; any future attempt
+		proceeds slice by slice with user feel-checks between steps.
 	</div>
 
 	<section>
@@ -35,7 +36,7 @@
 		<p>Hover rows or columns to reveal drag grips and context menus. Click any cell to type directly, navigate with <kbd>Tab</kbd> or <kbd>Enter</kbd>, and format columns with the floating toolbar.</p>
 
 		<div class="demo-area">
-			<nui-table-editor id="demo-table-main">
+			<dropped-table-editor id="demo-table-main">
 				<table class="nui-table">
 					<thead>
 						<tr>
@@ -66,7 +67,7 @@
 						</tr>
 					</tbody>
 				</table>
-			</nui-table-editor>
+			</dropped-table-editor>
 		</div>
 
 		<h3>Live GFM Pipe-Table Export</h3>
@@ -81,7 +82,7 @@
 		<p>Test growing the grid from an empty start, pasting TSV rows from spreadsheets, or toggling the header row.</p>
 
 		<div class="demo-area">
-			<nui-table-editor id="demo-table-secondary">
+			<dropped-table-editor id="demo-table-secondary">
 				<table class="nui-table">
 					<thead>
 						<tr>
@@ -96,7 +97,7 @@
 						</tr>
 					</tbody>
 				</table>
-			</nui-table-editor>
+			</dropped-table-editor>
 		</div>
 	</section>
 </div>

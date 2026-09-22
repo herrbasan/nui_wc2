@@ -139,11 +139,13 @@ background paint. No merge, no resize — even their "spreadsheet-grade" claim i
 **Consequence:** Tier 1 needs zero spec changes. The editor is buildable now;
 each Tier 2 spec candidate is decided when a real document proves it.
 
-**Implementation:** planned in `docs/table-editor-implementation-plan.md` (2026-09-21).
-Architecture: pure function `setupTableEditor(table)` + thin `<nui-table-editor>`
-wrapper, so the RTE enhances tables in place (no wrapper in its saved HTML) while
-standalone/doc-editor contexts use the element. Coding delegated to Gemini per user
-direction; same component serves the standalone demo, the RTE, and later this editor.
+**Implementation:** decisions live in `docs/table-editor-decisions.md` (converted from a
+prescriptive plan to a decision log 2026-09-22 after the one-shot generation attempt
+failed UX review and was parked as an abandoned experiment). Settled: pure function
+`setupTableEditor(table)` + thin `<nui-table-editor>` wrapper — the RTE enhances tables
+in place (no wrapper in its saved HTML), standalone/doc-editor contexts use the element.
+Work proceeds one slice at a time with user feel-checks; same component serves the
+standalone demo, the RTE, and later this editor.
 
 ### OPEN questions
 

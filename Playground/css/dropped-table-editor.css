@@ -4,48 +4,49 @@
    Zero permanent framing at rest; context-sensitive controls on hover/focus.
    ============================================================================= */
 
-nui-table-editor {
+dropped-table-editor {
 	display: block;
 	position: relative;
 	width: 100%;
 	margin-block-end: var(--nui-space);
 }
 
-/* Alignment attributes (CSP-safe, serializable) */
-th[data-align="left"],
-td[data-align="left"] {
+/* Alignment attributes (CSP-safe, serializable) — scoped: this is a dropped
+   experiment, its rules must never leak onto other components' tables. */
+dropped-table-editor th[data-align="left"],
+dropped-table-editor td[data-align="left"] {
 	text-align: left;
 }
 
-th[data-align="center"],
-td[data-align="center"] {
+dropped-table-editor th[data-align="center"],
+dropped-table-editor td[data-align="center"] {
 	text-align: center;
 }
 
-th[data-align="right"],
-td[data-align="right"] {
+dropped-table-editor th[data-align="right"],
+dropped-table-editor td[data-align="right"] {
 	text-align: right;
 }
 
 /* Cell selection highlight */
-th[data-selected="true"],
-td[data-selected="true"] {
+dropped-table-editor th[data-selected="true"],
+dropped-table-editor td[data-selected="true"] {
 	background-color: light-dark(var(--color-shade2), var(--color-shade3)) !important;
 	outline: var(--border-thickness) solid var(--color-highlight);
 	outline-offset: -1px;
 }
 
 /* Active editing cell outline */
-[data-nui-table-editor] td:focus,
-[data-nui-table-editor] th:focus,
-nui-table-editor td:focus,
-nui-table-editor th:focus {
+[data-dropped-table-editor] td:focus,
+[data-dropped-table-editor] th:focus,
+dropped-table-editor td:focus,
+dropped-table-editor th:focus {
 	outline: var(--border-thickness) solid var(--color-highlight);
 	outline-offset: -1px;
 }
 
 /* Chrome container: hosts overlay grips, toolbar, and menus */
-.nui-table-editor-chrome {
+.dropped-table-editor-chrome {
 	position: absolute;
 	inset: 0;
 	pointer-events: none;
@@ -54,7 +55,7 @@ nui-table-editor th:focus {
 }
 
 /* Column Grips container & items */
-.nui-table-editor-col-grip {
+.dropped-table-editor-col-grip {
 	position: absolute;
 	top: 0;
 	transform: translate(-50%, -50%);
@@ -70,7 +71,7 @@ nui-table-editor th:focus {
 	z-index: 22;
 }
 
-.nui-table-editor-col-grip .grip-pill {
+.dropped-table-editor-col-grip .grip-pill {
 	width: 24px;
 	height: 5px;
 	border-radius: 999px;
@@ -82,19 +83,19 @@ nui-table-editor th:focus {
 	box-shadow: 0 1px 3px var(--shadow-color);
 }
 
-.nui-table-editor-col-grip .grip-icon {
+.dropped-table-editor-col-grip .grip-icon {
 	display: none;
 	width: 14px;
 	height: 14px;
 	color: var(--color-text);
 }
 
-.nui-table-editor-col-grip.is-visible {
+.dropped-table-editor-col-grip.is-visible {
 	opacity: 1;
 }
 
-.nui-table-editor-col-grip:hover .grip-pill,
-.nui-table-editor-col-grip.is-active .grip-pill {
+.dropped-table-editor-col-grip:hover .grip-pill,
+.dropped-table-editor-col-grip.is-active .grip-pill {
 	width: 30px;
 	height: 18px;
 	background: var(--color-shade1);
@@ -102,17 +103,17 @@ nui-table-editor th:focus {
 	border-radius: var(--border-radius1);
 }
 
-.nui-table-editor-col-grip:hover .grip-icon,
-.nui-table-editor-col-grip.is-active .grip-icon {
+.dropped-table-editor-col-grip:hover .grip-icon,
+.dropped-table-editor-col-grip.is-active .grip-icon {
 	display: block;
 }
 
-.nui-table-editor-col-grip:active {
+.dropped-table-editor-col-grip:active {
 	cursor: grabbing;
 }
 
 /* Row Grips container & items */
-.nui-table-editor-row-grip {
+.dropped-table-editor-row-grip {
 	position: absolute;
 	left: 0;
 	transform: translate(-50%, -50%);
@@ -137,7 +138,7 @@ nui-table-editor th:focus {
 	z-index: 22;
 }
 
-.nui-table-editor-row-grip .grip-pill {
+.dropped-table-editor-row-grip .grip-pill {
 	width: 5px;
 	height: 24px;
 	border-radius: 999px;
@@ -149,19 +150,19 @@ nui-table-editor th:focus {
 	box-shadow: 0 1px 3px var(--shadow-color);
 }
 
-.nui-table-editor-row-grip .grip-icon {
+.dropped-table-editor-row-grip .grip-icon {
 	display: none;
 	width: 14px;
 	height: 14px;
 	color: var(--color-text);
 }
 
-.nui-table-editor-row-grip.is-visible {
+.dropped-table-editor-row-grip.is-visible {
 	opacity: 1;
 }
 
-.nui-table-editor-row-grip:hover .grip-pill,
-.nui-table-editor-row-grip.is-active .grip-pill {
+.dropped-table-editor-row-grip:hover .grip-pill,
+.dropped-table-editor-row-grip.is-active .grip-pill {
 	width: 18px;
 	height: 30px;
 	background: var(--color-shade1);
@@ -169,17 +170,17 @@ nui-table-editor th:focus {
 	border-radius: var(--border-radius1);
 }
 
-.nui-table-editor-row-grip:hover .grip-icon,
-.nui-table-editor-row-grip.is-active .grip-icon {
+.dropped-table-editor-row-grip:hover .grip-icon,
+.dropped-table-editor-row-grip.is-active .grip-icon {
 	display: block;
 }
 
-.nui-table-editor-row-grip:active {
+.dropped-table-editor-row-grip:active {
 	cursor: grabbing;
 }
 
 /* Edge Add Strips (full-edge hit area like Blok) */
-.nui-table-editor-add-row-strip {
+.dropped-table-editor-add-row-strip {
 	position: absolute;
 	height: 28px;
 	display: flex;
@@ -191,11 +192,11 @@ nui-table-editor th:focus {
 	z-index: 21;
 }
 
-.nui-table-editor-add-row-strip.is-visible {
+.dropped-table-editor-add-row-strip.is-visible {
 	opacity: 1;
 }
 
-.nui-table-editor-add-row-btn {
+.dropped-table-editor-add-row-btn {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -212,18 +213,18 @@ nui-table-editor th:focus {
 	transition: all 0.12s ease;
 }
 
-.nui-table-editor-add-row-btn:hover {
+.dropped-table-editor-add-row-btn:hover {
 	background: var(--color-shade2);
 	border-color: var(--color-highlight);
 	color: var(--color-highlight);
 }
 
-.nui-table-editor-add-row-btn nui-icon {
+.dropped-table-editor-add-row-btn nui-icon {
 	width: 14px;
 	height: 14px;
 }
 
-.nui-table-editor-add-col-strip {
+.dropped-table-editor-add-col-strip {
 	position: absolute;
 	width: 28px;
 	display: flex;
@@ -235,11 +236,11 @@ nui-table-editor th:focus {
 	z-index: 21;
 }
 
-.nui-table-editor-add-col-strip.is-visible {
+.dropped-table-editor-add-col-strip.is-visible {
 	opacity: 1;
 }
 
-.nui-table-editor-add-col-btn {
+.dropped-table-editor-add-col-btn {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -254,25 +255,25 @@ nui-table-editor th:focus {
 	transition: all 0.12s ease;
 }
 
-.nui-table-editor-add-col-btn:hover {
+.dropped-table-editor-add-col-btn:hover {
 	background: var(--color-shade2);
 	border-color: var(--color-highlight);
 	color: var(--color-highlight);
 }
 
-.nui-table-editor-add-col-btn nui-icon {
+.dropped-table-editor-add-col-btn nui-icon {
 	width: 14px;
 	height: 14px;
 }
 
-.nui-table-editor-add-row.is-visible,
-.nui-table-editor-add-col.is-visible {
+.dropped-table-editor-add-row.is-visible,
+.dropped-table-editor-add-col.is-visible {
 	opacity: 1;
 	pointer-events: auto;
 }
 
 /* Floating cell toolbar */
-.nui-table-editor-toolbar {
+.dropped-table-editor-toolbar {
 	position: absolute;
 	display: flex;
 	align-items: center;
@@ -291,12 +292,12 @@ nui-table-editor th:focus {
 	user-select: none;
 }
 
-.nui-table-editor-toolbar.is-visible {
+.dropped-table-editor-toolbar.is-visible {
 	opacity: 1;
 	pointer-events: auto;
 }
 
-.nui-table-editor-toolbar button {
+.dropped-table-editor-toolbar button {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -311,22 +312,22 @@ nui-table-editor th:focus {
 	transition: background-color 0.1s ease, color 0.1s ease;
 }
 
-.nui-table-editor-toolbar button:hover {
+.dropped-table-editor-toolbar button:hover {
 	background: var(--color-shade3);
 }
 
-.nui-table-editor-toolbar button.is-active {
+.dropped-table-editor-toolbar button.is-active {
 	background: var(--color-shade4);
 	color: var(--color-highlight);
 }
 
-.nui-table-editor-toolbar button nui-icon {
+.dropped-table-editor-toolbar button nui-icon {
 	width: 1rem;
 	height: 1rem;
 	pointer-events: none;
 }
 
-.nui-table-editor-toolbar .nui-table-editor-separator {
+.dropped-table-editor-toolbar .dropped-table-editor-separator {
 	width: 1px;
 	height: 1rem;
 	background: var(--border-shade2);
@@ -334,7 +335,7 @@ nui-table-editor th:focus {
 }
 
 /* Grip popover menu */
-.nui-table-editor-menu {
+.dropped-table-editor-menu {
 	position: absolute;
 	display: flex;
 	flex-direction: column;
@@ -351,12 +352,12 @@ nui-table-editor th:focus {
 	user-select: none;
 }
 
-.nui-table-editor-menu.is-visible {
+.dropped-table-editor-menu.is-visible {
 	opacity: 1;
 	pointer-events: auto;
 }
 
-.nui-table-editor-menu-item {
+.dropped-table-editor-menu-item {
 	display: flex;
 	align-items: center;
 	gap: var(--nui-space-half);
@@ -372,32 +373,32 @@ nui-table-editor th:focus {
 	transition: background-color 0.1s ease;
 }
 
-.nui-table-editor-menu-item:hover {
+.dropped-table-editor-menu-item:hover {
 	background: var(--color-shade3);
 }
 
-.nui-table-editor-menu-item nui-icon {
+.dropped-table-editor-menu-item nui-icon {
 	width: 1rem;
 	height: 1rem;
 	pointer-events: none;
 }
 
-.nui-table-editor-menu-item.is-danger {
+.dropped-table-editor-menu-item.is-danger {
 	color: var(--palette-alert);
 }
 
-.nui-table-editor-menu-item.is-danger:hover {
+.dropped-table-editor-menu-item.is-danger:hover {
 	background: light-dark(rgba(229, 62, 62, 0.1), rgba(229, 62, 62, 0.2));
 }
 
-.nui-table-editor-menu .nui-table-editor-separator {
+.dropped-table-editor-menu .dropped-table-editor-separator {
 	height: 1px;
 	background: var(--border-shade2);
 	margin: var(--nui-space-quarter) 0;
 }
 
 /* Drag drop indicator lines */
-.nui-table-editor-drop-line-row {
+.dropped-table-editor-drop-line-row {
 	position: absolute;
 	height: 2px;
 	background: var(--color-highlight);
@@ -407,7 +408,7 @@ nui-table-editor th:focus {
 	z-index: 28;
 }
 
-.nui-table-editor-drop-line-col {
+.dropped-table-editor-drop-line-col {
 	position: absolute;
 	width: 2px;
 	background: var(--color-highlight);

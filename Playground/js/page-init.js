@@ -3048,13 +3048,13 @@ nui.registerPage('experiments/table-editor', {
 	html: 'experiments/table-editor.html',
 	async init(element, params, nui) {
 		// Dynamically load CSS and JS if not already loaded
-		if (!customElements.get('nui-table-editor')) {
+		if (!customElements.get('dropped-table-editor')) {
 			const link = document.createElement('link');
 			link.rel = 'stylesheet';
-			link.href = '../NUI/css/modules/nui-table-editor.css';
+			link.href = 'css/dropped-table-editor.css';
 			document.head.appendChild(link);
 
-			await import('../../NUI/lib/modules/nui-table-editor.js');
+			await import('./dropped-table-editor.js');
 		}
 
 		const mainEditor = element.querySelector('#demo-table-main');

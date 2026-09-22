@@ -96,12 +96,12 @@ function setupTableEditor(table, options = {}) {
 	}
 	initCells();
 
-	table.setAttribute('data-nui-table-editor', '');
+	table.setAttribute('data-dropped-table-editor', '');
 
 	// Determine overlay container (MUST be outside contenteditable to prevent serializing chrome into saved HTML)
 	let overlayContainer = options.overlayContainer;
 	if (!overlayContainer) {
-		const hostEditor = table.closest('nui-table-editor');
+		const hostEditor = table.closest('dropped-table-editor');
 		const richTextContainer = table.closest('.nui-rich-text-container');
 		if (hostEditor) {
 			overlayContainer = hostEditor;
@@ -121,23 +121,23 @@ function setupTableEditor(table, options = {}) {
 
 	// Build Chrome UI
 	const chrome = document.createElement('div');
-	chrome.className = 'nui-table-editor-chrome';
+	chrome.className = 'dropped-table-editor-chrome';
 	chrome.setAttribute('aria-hidden', 'true');
 
 	// Multi-grip groups
 	const colGripsGroup = document.createElement('div');
-	colGripsGroup.className = 'nui-table-editor-col-grips';
+	colGripsGroup.className = 'dropped-table-editor-col-grips';
 	chrome.appendChild(colGripsGroup);
 
 	const rowGripsGroup = document.createElement('div');
-	rowGripsGroup.className = 'nui-table-editor-row-grips';
+	rowGripsGroup.className = 'dropped-table-editor-row-grips';
 	chrome.appendChild(rowGripsGroup);
 
 	// Edge Add Row Strip
 	const addRowStrip = document.createElement('div');
-	addRowStrip.className = 'nui-table-editor-add-row-strip';
+	addRowStrip.className = 'dropped-table-editor-add-row-strip';
 	addRowStrip.innerHTML = `
-		<button type="button" class="nui-table-editor-add-row-btn" title="Add row">
+		<button type="button" class="dropped-table-editor-add-row-btn" title="Add row">
 			<nui-icon name="add"></nui-icon>
 			<span>Row</span>
 		</button>
@@ -146,9 +146,9 @@ function setupTableEditor(table, options = {}) {
 
 	// Edge Add Column Strip
 	const addColStrip = document.createElement('div');
-	addColStrip.className = 'nui-table-editor-add-col-strip';
+	addColStrip.className = 'dropped-table-editor-add-col-strip';
 	addColStrip.innerHTML = `
-		<button type="button" class="nui-table-editor-add-col-btn" title="Add column">
+		<button type="button" class="dropped-table-editor-add-col-btn" title="Add column">
 			<nui-icon name="add"></nui-icon>
 		</button>
 	`;
@@ -156,14 +156,14 @@ function setupTableEditor(table, options = {}) {
 
 	// Floating Toolbar
 	const toolbar = document.createElement('div');
-	toolbar.className = 'nui-table-editor-toolbar';
+	toolbar.className = 'dropped-table-editor-toolbar';
 	toolbar.setAttribute('role', 'toolbar');
 	toolbar.setAttribute('aria-label', 'Table actions');
 	toolbar.innerHTML = `
 		<button type="button" data-action="toggle-header" title="Toggle header row">
 			<nui-icon name="table_rows"></nui-icon>
 		</button>
-		<div class="nui-table-editor-separator"></div>
+		<div class="dropped-table-editor-separator"></div>
 		<button type="button" data-action="align-left" title="Align left">
 			<nui-icon name="format_image_left"></nui-icon>
 		</button>
@@ -173,7 +173,7 @@ function setupTableEditor(table, options = {}) {
 		<button type="button" data-action="align-right" title="Align right">
 			<nui-icon name="format_image_right"></nui-icon>
 		</button>
-		<div class="nui-table-editor-separator"></div>
+		<div class="dropped-table-editor-separator"></div>
 		<button type="button" data-action="delete-table" title="Delete table">
 			<nui-icon name="delete"></nui-icon>
 		</button>
@@ -182,18 +182,18 @@ function setupTableEditor(table, options = {}) {
 
 	// Context Menu Popover
 	const menu = document.createElement('div');
-	menu.className = 'nui-table-editor-menu';
+	menu.className = 'dropped-table-editor-menu';
 	menu.setAttribute('role', 'menu');
 	chrome.appendChild(menu);
 
 	// Drop Indicator Lines
 	const dropLineRow = document.createElement('div');
-	dropLineRow.className = 'nui-table-editor-drop-line-row';
+	dropLineRow.className = 'dropped-table-editor-drop-line-row';
 	dropLineRow.style.display = 'none';
 	chrome.appendChild(dropLineRow);
 
 	const dropLineCol = document.createElement('div');
-	dropLineCol.className = 'nui-table-editor-drop-line-col';
+	dropLineCol.className = 'dropped-table-editor-drop-line-col';
 	dropLineCol.style.display = 'none';
 	chrome.appendChild(dropLineCol);
 
@@ -211,7 +211,7 @@ function setupTableEditor(table, options = {}) {
 
 	// Prevent focus loss when clicking toolbar/menu buttons or grips
 	chrome.addEventListener('mousedown', (e) => {
-		const btn = e.target.closest('button, .nui-table-editor-menu-item, .nui-table-editor-row-grip, .nui-table-editor-col-grip');
+		const btn = e.target.closest('button, .dropped-table-editor-menu-item, .dropped-table-editor-row-grip, .dropped-table-editor-col-grip');
 		if (btn) {
 			e.preventDefault();
 		}
@@ -264,7 +264,7 @@ function setupTableEditor(table, options = {}) {
 		// Add needed col grips
 		while (existingColGrips.length < colCount) {
 			const grip = document.createElement('div');
-			grip.className = 'nui-table-editor-col-grip';
+			grip.className = 'dropped-table-editor-col-grip';
 			grip.title = 'Drag to move column, click for menu';
 			grip.innerHTML = '<div class="grip-pill"><nui-icon class="grip-icon" name="drag_indicator"></nui-icon></div>';
 			colGripsGroup.appendChild(grip);
@@ -294,7 +294,7 @@ function setupTableEditor(table, options = {}) {
 		// Add needed row grips
 		while (existingRowGrips.length < rowCount) {
 			const grip = document.createElement('div');
-			grip.className = 'nui-table-editor-row-grip';
+			grip.className = 'dropped-table-editor-row-grip';
 			grip.title = 'Drag to move row, click for menu';
 			grip.innerHTML = '<div class="grip-pill"><nui-icon class="grip-icon" name="drag_indicator"></nui-icon></div>';
 			rowGripsGroup.appendChild(grip);
@@ -365,8 +365,8 @@ function setupTableEditor(table, options = {}) {
 		refreshGripsAndStrips();
 		addRowStrip.classList.add('is-visible');
 		addColStrip.classList.add('is-visible');
-		colGripsGroup.querySelectorAll('.nui-table-editor-col-grip').forEach(g => g.classList.add('is-visible'));
-		rowGripsGroup.querySelectorAll('.nui-table-editor-row-grip').forEach(g => g.classList.add('is-visible'));
+		colGripsGroup.querySelectorAll('.dropped-table-editor-col-grip').forEach(g => g.classList.add('is-visible'));
+		rowGripsGroup.querySelectorAll('.dropped-table-editor-row-grip').forEach(g => g.classList.add('is-visible'));
 	}
 
 	function scheduleHideControls() {
@@ -375,11 +375,11 @@ function setupTableEditor(table, options = {}) {
 		hoverGraceTimer = setTimeout(() => {
 			addRowStrip.classList.remove('is-visible');
 			addColStrip.classList.remove('is-visible');
-			colGripsGroup.querySelectorAll('.nui-table-editor-col-grip').forEach(g => {
+			colGripsGroup.querySelectorAll('.dropped-table-editor-col-grip').forEach(g => {
 				g.classList.remove('is-visible');
 				g.classList.remove('is-active');
 			});
-			rowGripsGroup.querySelectorAll('.nui-table-editor-row-grip').forEach(g => {
+			rowGripsGroup.querySelectorAll('.dropped-table-editor-row-grip').forEach(g => {
 				g.classList.remove('is-visible');
 				g.classList.remove('is-active');
 			});
@@ -597,16 +597,16 @@ function setupTableEditor(table, options = {}) {
 
 	function showRowMenu(rowIndex, anchorElem) {
 		menu.innerHTML = `
-			<button type="button" class="nui-table-editor-menu-item" data-action="insert-row-above">
+			<button type="button" class="dropped-table-editor-menu-item" data-action="insert-row-above">
 				<nui-icon name="add_row_above"></nui-icon>
 				<span>Insert row above</span>
 			</button>
-			<button type="button" class="nui-table-editor-menu-item" data-action="insert-row-below">
+			<button type="button" class="dropped-table-editor-menu-item" data-action="insert-row-below">
 				<nui-icon name="add_row_below"></nui-icon>
 				<span>Insert row below</span>
 			</button>
-			<div class="nui-table-editor-separator"></div>
-			<button type="button" class="nui-table-editor-menu-item is-danger" data-action="delete-row">
+			<div class="dropped-table-editor-separator"></div>
+			<button type="button" class="dropped-table-editor-menu-item is-danger" data-action="delete-row">
 				<nui-icon name="playlist_remove"></nui-icon>
 				<span>Delete row</span>
 			</button>
@@ -621,16 +621,16 @@ function setupTableEditor(table, options = {}) {
 
 	function showColMenu(colIndex, anchorElem) {
 		menu.innerHTML = `
-			<button type="button" class="nui-table-editor-menu-item" data-action="insert-col-left">
+			<button type="button" class="dropped-table-editor-menu-item" data-action="insert-col-left">
 				<nui-icon name="add_column_left"></nui-icon>
 				<span>Insert column left</span>
 			</button>
-			<button type="button" class="nui-table-editor-menu-item" data-action="insert-col-right">
+			<button type="button" class="dropped-table-editor-menu-item" data-action="insert-col-right">
 				<nui-icon name="add_column_right"></nui-icon>
 				<span>Insert column right</span>
 			</button>
-			<div class="nui-table-editor-separator"></div>
-			<button type="button" class="nui-table-editor-menu-item is-danger" data-action="delete-col">
+			<div class="dropped-table-editor-separator"></div>
+			<button type="button" class="dropped-table-editor-menu-item is-danger" data-action="delete-col">
 				<nui-icon name="variable_remove"></nui-icon>
 				<span>Delete column</span>
 			</button>
@@ -645,7 +645,7 @@ function setupTableEditor(table, options = {}) {
 
 	// Handle menu action clicks
 	menu.addEventListener('click', (e) => {
-		const item = e.target.closest('.nui-table-editor-menu-item');
+		const item = e.target.closest('.dropped-table-editor-menu-item');
 		if (!item || !menuTarget) return;
 		const action = item.getAttribute('data-action');
 
@@ -686,7 +686,7 @@ function setupTableEditor(table, options = {}) {
 
 	// Handle row grips clicks & drag
 	rowGripsGroup.addEventListener('click', (e) => {
-		const grip = e.target.closest('.nui-table-editor-row-grip');
+		const grip = e.target.closest('.dropped-table-editor-row-grip');
 		if (grip && grip.dataset.rowIndex) {
 			const r = parseInt(grip.dataset.rowIndex, 10);
 			clearSelection();
@@ -703,7 +703,7 @@ function setupTableEditor(table, options = {}) {
 	});
 
 	rowGripsGroup.addEventListener('pointerdown', (e) => {
-		const grip = e.target.closest('.nui-table-editor-row-grip');
+		const grip = e.target.closest('.dropped-table-editor-row-grip');
 		if (!grip || e.button !== 0 || !grip.dataset.rowIndex) return;
 		e.preventDefault();
 		hideMenu();
@@ -765,7 +765,7 @@ function setupTableEditor(table, options = {}) {
 
 	// Handle col grips clicks & drag
 	colGripsGroup.addEventListener('click', (e) => {
-		const grip = e.target.closest('.nui-table-editor-col-grip');
+		const grip = e.target.closest('.dropped-table-editor-col-grip');
 		if (grip && grip.dataset.colIndex) {
 			const c = parseInt(grip.dataset.colIndex, 10);
 			clearSelection();
@@ -782,7 +782,7 @@ function setupTableEditor(table, options = {}) {
 	});
 
 	colGripsGroup.addEventListener('pointerdown', (e) => {
-		const grip = e.target.closest('.nui-table-editor-col-grip');
+		const grip = e.target.closest('.dropped-table-editor-col-grip');
 		if (!grip || e.button !== 0 || !grip.dataset.colIndex) return;
 		e.preventDefault();
 		hideMenu();
@@ -1133,7 +1133,7 @@ function setupTableEditor(table, options = {}) {
 			c.removeAttribute('data-selected');
 		});
 
-		table.removeAttribute('data-nui-table-editor');
+		table.removeAttribute('data-dropped-table-editor');
 		delete table._nuiTableEditorController;
 
 		chrome.remove();
@@ -1154,7 +1154,7 @@ function setupTableEditor(table, options = {}) {
 }
 
 /**
- * Custom Element wrapper for nui-table-editor.
+ * Custom Element wrapper for dropped-table-editor.
  * Enhances inner <table> or creates a default 3x3 table.
  */
 class NuiTableEditor extends HTMLElement {
@@ -1187,8 +1187,8 @@ class NuiTableEditor extends HTMLElement {
 	}
 }
 
-if (typeof customElements !== 'undefined' && !customElements.get('nui-table-editor')) {
-	customElements.define('nui-table-editor', NuiTableEditor);
+if (typeof customElements !== 'undefined' && !customElements.get('dropped-table-editor')) {
+	customElements.define('dropped-table-editor', NuiTableEditor);
 }
 
 export { NuiTableEditor, setupTableEditor, createDefaultTable };
