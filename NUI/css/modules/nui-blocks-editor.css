@@ -1341,6 +1341,18 @@ nui-main > .content-page > .page-blocks-editor[breakout],
 	color: var(--color-highlight, #3b82f6);
 }
 
+.fm-editor-dialog .fm-col-rename-inp {
+	font-size: var(--font-size-xsmall);
+	font-weight: 600;
+	font-family: inherit;
+	color: var(--text-color);
+	background: var(--color-shade1);
+	border: 1px solid var(--color-highlight, #3b82f6);
+	border-radius: var(--border-radius1);
+	padding: 0.1rem 0.3rem;
+	width: 6rem;
+}
+
 .fm-editor-dialog .fm-col-del {
 	background: none;
 	border: none;
@@ -1356,9 +1368,7 @@ nui-main > .content-page > .page-blocks-editor[breakout],
 }
 
 .fm-editor-dialog .fm-col-actions-header {
-	flex: 0 0 auto;
-	display: flex;
-	align-items: center;
+	flex: 0 0 2rem;
 }
 
 .fm-editor-dialog .fm-table-rows {
@@ -1383,15 +1393,34 @@ nui-main > .content-page > .page-blocks-editor[breakout],
 }
 
 .fm-editor-dialog .fm-table-cell-actions {
-	flex: 0 0 auto;
+	flex: 0 0 2rem;
 	display: flex;
-	align-items: center;
+	justify-content: center;
 }
 
 .fm-editor-dialog .fm-table-footer {
-	padding-top: var(--nui-space-quarter);
+	padding-top: var(--nui-space-half);
 	display: flex;
-	justify-content: flex-start;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--nui-space-half);
+	flex-wrap: wrap;
+}
+
+.fm-editor-dialog .fm-add-prop-group {
+	display: flex;
+	align-items: center;
+	gap: var(--nui-space-quarter);
+	margin-left: auto;
+}
+
+.fm-editor-dialog .fm-add-prop-group nui-input {
+	width: 12rem;
+}
+
+.fm-editor-dialog .fm-add-prop-group input {
+	padding: 0.25rem 0.5rem;
+	font-size: var(--font-size-xsmall);
 }
 
 /* Add Field Strip at Bottom */

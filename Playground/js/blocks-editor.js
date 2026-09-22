@@ -340,27 +340,67 @@ export function initBlocksEditor(element, params, nui) {
 					<span class="fm-col-title" title="Click to rename property">${fmHumanize(k)}</span>
 					<button type="button" class="fm-col-del" title="Remove property '${k}'" aria-label="Remove property ${k}">×</button>
 				`;
-				col.querySelector('.fm-col-title').addEventListener('click', () => {
-					const newName = prompt(`Rename property '${k}' to:`, k);
-					if (!newName || newName.trim() === '' || newName.trim() === k) return;
-					const nk = newName.trim();
-					if (keys.includes(nk)) {
-						alert(`Property '${nk}' already exists.`);
-						return;
-					}
-					const current = collectCurrentEntries();
-					const idx = keys.indexOf(k);
-					if (idx !== -1) keys[idx] = nk;
-					current.forEach((item) => {
-						if (k in item) {
-							item[nk] = item[k];
-							delete item[k];
+				// Inline rename on click
+				const titleSpan = col.querySelector('.fm-col-title');
+				titleSpan.addEventListener('click', () => {
+					const inp = document.createElement('input');
+					inp.type = 'text';
+					inp.value = k;
+					inp.className = 'fm-col-rename-inp';
+					titleSpan.replaceWith(inp);
+					inp.focus();
+					inp.select();
+
+					const commitRename = () => {
+						const nk = inp.value.trim();
+						if (!nk || nk === k) {
+							inp.replaceWith(titleSpan);
+							return;
+						}
+						if (keys.includes(nk)) {
+							nui.components.banner.show({
+								content: `Property '${nk}' already exists.`,
+								priority: 'warning',
+								autoClose: 3000
+							});
+							inp.replaceWith(titleSpan);
+							return;
+						}
+						const current = collectCurrentEntries();
+						const idx = keys.indexOf(k);
+						if (idx !== -1) keys[idx] = nk;
+						current.forEach((item) => {
+							if (k in item) {
+								item[nk] = item[k];
+								delete item[k];
+							}
+						});
+						renderTable(current);
+					};
+
+					inp.addEventListener('blur', commitRename, { once: true });
+					inp.addEventListener('keydown', (e) => {
+						if (e.key === 'Enter') {
+							e.preventDefault();
+							inp.removeEventListener('blur', commitRename);
+							commitRename();
+						} else if (e.key === 'Escape') {
+							inp.removeEventListener('blur', commitRename);
+							inp.replaceWith(titleSpan);
 						}
 					});
-					renderTable(current);
 				});
+
+				// Delete column
 				col.querySelector('.fm-col-del').addEventListener('click', () => {
-					if (keys.length <= 1) return;
+					if (keys.length <= 1) {
+						nui.components.banner.show({
+							content: 'Cannot remove the only property column.',
+							priority: 'warning',
+							autoClose: 2500
+						});
+						return;
+					}
 					const current = collectCurrentEntries();
 					keys = keys.filter((key) => key !== k);
 					current.forEach((item) => { delete item[k]; });
@@ -369,28 +409,9 @@ export function initBlocksEditor(element, params, nui) {
 				headRow.appendChild(col);
 			});
 
-			// Add property button in header row
-			const addCol = document.createElement('div');
-			addCol.className = 'fm-col-actions-header';
-			addCol.innerHTML = `
-				<nui-button variant="outline" size="small"><button type="button" aria-label="Add property to all items" title="Add property column"><nui-icon name="add"></nui-icon>Property</button></nui-button>
-			`;
-			addCol.querySelector('button').addEventListener('click', () => {
-				const newProp = prompt('Add new property to all items (e.g. avatar, bio):');
-				if (!newProp || !newProp.trim()) return;
-				const nk = newProp.trim();
-				if (keys.includes(nk)) {
-					alert(`Property '${nk}' already exists.`);
-					return;
-				}
-				const current = collectCurrentEntries();
-				keys.push(nk);
-				current.forEach((item) => {
-					if (!(nk in item)) item[nk] = '';
-				});
-				renderTable(current);
-			});
-			headRow.appendChild(addCol);
+			const colActions = document.createElement('div');
+			colActions.className = 'fm-col-actions-header';
+			headRow.appendChild(colActions);
 
 			table.appendChild(headRow);
 
@@ -429,9 +450,10 @@ export function initBlocksEditor(element, params, nui) {
 			list.forEach((e) => addRow(e && typeof e === 'object' ? e : {}));
 			table.appendChild(rowsContainer);
 
-			// Footer with Add Item button
+			// Footer with Add Item and Add Property
 			const footer = document.createElement('div');
 			footer.className = 'fm-table-footer';
+
 			const addBtn = document.createElement('nui-button');
 			addBtn.setAttribute('variant', 'outline');
 			addBtn.setAttribute('size', 'small');
@@ -440,6 +462,41 @@ export function initBlocksEditor(element, params, nui) {
 				addRow({});
 			});
 			footer.appendChild(addBtn);
+
+			const addPropGroup = document.createElement('div');
+			addPropGroup.className = 'fm-add-prop-group';
+			addPropGroup.innerHTML = `
+				<nui-input><input type="text" placeholder="Add property (e.g. bio)" data-new-prop-input></nui-input>
+				<nui-button variant="outline" size="small"><button type="button"><nui-icon name="add"></nui-icon>Add Property</button></nui-button>
+			`;
+			const propInput = addPropGroup.querySelector('input');
+			const propBtn = addPropGroup.querySelector('button');
+			const handleAddProp = () => {
+				const nk = propInput.value.trim();
+				if (!nk) return;
+				if (keys.includes(nk)) {
+					nui.components.banner.show({
+						content: `Property '${nk}' already exists.`,
+						priority: 'warning',
+						autoClose: 3000
+					});
+					return;
+				}
+				const current = collectCurrentEntries();
+				keys.push(nk);
+				current.forEach((item) => {
+					if (!(nk in item)) item[nk] = '';
+				});
+				renderTable(current);
+			};
+			propBtn.addEventListener('click', handleAddProp);
+			propInput.addEventListener('keydown', (e) => {
+				if (e.key === 'Enter') {
+					e.preventDefault();
+					handleAddProp();
+				}
+			});
+			footer.appendChild(addPropGroup);
 			table.appendChild(footer);
 
 			wrap.appendChild(table);
