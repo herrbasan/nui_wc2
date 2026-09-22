@@ -3598,19 +3598,33 @@ nui-tag-input:focus-within {
 }
 
 /* Text input for adding tags (editable mode) */
-.nui-tag-input-field {
+nui-tag-input input[type="text"].nui-tag-input-field,
+nui-tag-input .nui-tag-input-field {
 	flex: 1 1 10rem;
 	min-width: 8rem;
-	padding: 0.25rem var(--nui-space-quarter);
+	width: auto;
+	min-height: unset;
+	height: calc(var(--nui-form-row-height, 2.5rem) - 0.85rem);
+	padding: 0 var(--nui-space-quarter);
 	background: transparent;
 	border: none;
+	border-bottom: none;
 	outline: none;
 	box-shadow: none;
 	font: inherit;
 	font-size: var(--font-size-small);
 	color: var(--color-text);
 	margin: 0;
+	display: inline-block;
 	box-sizing: border-box;
+}
+
+nui-tag-input input[type="text"].nui-tag-input-field:focus {
+	border: none;
+	border-bottom: none;
+	outline: none;
+	box-shadow: none;
+	background: transparent;
 }
 
 .nui-tag-input-field::placeholder {
@@ -3618,6 +3632,7 @@ nui-tag-input:focus-within {
 }
 
 /* When empty, input fills the container */
+nui-tag-input:not(.has-tags) input[type="text"].nui-tag-input-field,
 nui-tag-input:not(.has-tags) .nui-tag-input-field {
 	flex: 1 1 100%;
 	width: 100%;
