@@ -2933,16 +2933,15 @@ registerComponent('nui-tag-input', (element) => {
 	container.addEventListener('blur', () => { activeIdx = -1; updateHighlight(); });
 
 	if (isEditable) {
-		// Use nui-input wrapper for consistent styling
-		nuiInput = dom.create('nui-input', { class: 'nui-tag-input-wrapper', target: element });
 		input = dom.create('input', {
+			class: 'nui-tag-input-field',
 			attrs: { type: 'text', placeholder, autocomplete: 'off' },
-			target: nuiInput
+			target: element
 		});
 		input.addEventListener('keydown', e => {
-			if (e.key === 'Enter') {
+			if (e.key === 'Enter' || e.key === ',') {
 				e.preventDefault();
-				const val = input.value.trim();
+				const val = input.value.trim().replace(/^,|,$/g, '');
 				if (val && element.addTag(val)) input.value = '';
 			} else if (e.key === 'Backspace' && !input.value && tags.length) {
 				e.preventDefault();
@@ -2958,7 +2957,21 @@ registerComponent('nui-tag-input', (element) => {
 				container.focus();
 			}
 		});
+		input.addEventListener('paste', e => {
+			const pasteText = (e.clipboardData || window.clipboardData)?.getData('text');
+			if (pasteText && (pasteText.includes(',') || pasteText.includes('\n'))) {
+				e.preventDefault();
+				const items = pasteText.split(/[,\n]+/).map(s => s.trim()).filter(Boolean);
+				items.forEach(t => element.addTag(t));
+			}
+		});
 	}
+
+	element.addEventListener('click', (e) => {
+		if (input && !e.target.closest('.nui-tag')) {
+			input.focus();
+		}
+	});
 
 	const dispatch = (name, detail) => element.dispatchEvent(new CustomEvent(name, { bubbles: true, detail }));
 
