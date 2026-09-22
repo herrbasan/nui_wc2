@@ -1,6 +1,6 @@
 {
 	"schemaVersion": 1,
-	"generated": "2026-09-22T15:50:45.616Z",
+	"generated": "2026-09-22T16:45:33.246Z",
 	"source": "Playground/pages/**",
 	"components": [
 		{
@@ -470,6 +470,24 @@
 			"page": "addons/file-tree",
 			"demoPath": "Playground/pages/addons/file-tree.html",
 			"docPath": "documentation/addons/file-tree.md"
+		},
+		{
+			"@context": "nui",
+			"@type": "Component",
+			"name": "nui-graph",
+			"group": "data",
+			"description": "Low-power canvas sparkline for high-frequency telemetry and live time-series. Direct canvas blits, HiDPI subpixel rendering, on-demand rAF painting that suspends on a hidden tab.",
+			"events": [
+				"nui-graph-scrub"
+			],
+			"innerElement": "<canvas>",
+			"imports": {
+				"js": "NUI/lib/modules/nui-graph.js",
+				"css": "NUI/css/modules/nui-graph.css"
+			},
+			"page": "addons/graph",
+			"demoPath": "Playground/pages/addons/graph.html",
+			"docPath": "documentation/addons/graph.md"
 		},
 		{
 			"@context": "nui",
@@ -1082,6 +1100,14 @@
 				},
 				{
 					"name": "nui-tree-error"
+				}
+			]
+		},
+		{
+			"component": "nui-graph",
+			"events": [
+				{
+					"name": "nui-graph-scrub"
 				}
 			]
 		},

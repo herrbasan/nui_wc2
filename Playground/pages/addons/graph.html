@@ -5,6 +5,22 @@ NUI PLAYGROUND PAGE: nui-graph Addon
 -->
 <div class="page-graph">
 
+<script type="application/ld+json">
+{
+  "@context": "nui",
+  "@type": "Component",
+  "name": "nui-graph",
+  "group": "data",
+  "description": "Low-power canvas sparkline for high-frequency telemetry and live time-series. Direct canvas blits, HiDPI subpixel rendering, on-demand rAF painting that suspends on a hidden tab.",
+  "events": ["nui-graph-scrub"],
+  "innerElement": "<canvas>",
+  "imports": {
+    "js": "NUI/lib/modules/nui-graph.js",
+    "css": "NUI/css/modules/nui-graph.css"
+  }
+}
+</script>
+
     <!-- LLM Guide - Lazy documentation -->
     <nui-details summary="LLM Guide - nui-graph" src="../documentation/addons/graph.md" lazy>
     </nui-details>

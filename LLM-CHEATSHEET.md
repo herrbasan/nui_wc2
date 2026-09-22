@@ -827,6 +827,9 @@ Hover/focus help text only — **non-interactive by contract**. For a panel of c
 | nui-context-menu | `NUI/lib/modules/nui-context-menu.js` | `NUI/css/modules/nui-context-menu.css` |
 | nui-rich-text | `NUI/lib/modules/nui-rich-text.js` | `NUI/css/modules/nui-rich-text.css` |
 | nui-app-window | `NUI/lib/modules/nui-app-window.js` | `NUI/css/modules/nui-app-window.css` |
+| nui-file-tree | `NUI/lib/modules/nui-file-tree.js` | `NUI/css/modules/nui-file-tree.css` |
+| nui-slides | `NUI/lib/modules/nui-slides.js` | `NUI/css/modules/nui-slides.css` |
+| nui-graph | `NUI/lib/modules/nui-graph.js` | `NUI/css/modules/nui-graph.css` |
 
 ```html
 <!-- Example: nui-list -->
@@ -834,7 +837,7 @@ Hover/focus help text only — **non-interactive by contract**. For a panel of c
 <script type="module" src="NUI/lib/modules/nui-list.js"></script>
 ```
 
-📖 **Addon docs:** [`documentation/addons/`](documentation/addons/) — list.md, lightbox.md, code-editor.md, media-player.md, wizard.md, menu.md, context-menu.md, rich-text.md, app-window.md
+📖 **Addon docs:** [`documentation/addons/`](documentation/addons/) — list.md, lightbox.md, code-editor.md, media-player.md, wizard.md, menu.md, context-menu.md, rich-text.md, app-window.md, file-tree.md, slides.md, graph.md
 
 ---
 
