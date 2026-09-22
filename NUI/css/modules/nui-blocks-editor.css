@@ -714,12 +714,17 @@ nui-main > .content-page > .page-blocks-editor[breakout],
 	border-color: var(--color-highlight);
 }
 
-/* Media block — image set + caption. Compact row: the preview takes the width,
-   the thumbnails stack in a vertical rail beside it (width is plentiful in the
-   editor canvas, height is not). The rail is a nui-sortable: drag order IS the
-   image order, the first item is the lead. Tiles follow the old n000b blocks
-   editor: [index cell | image], no chrome padding. The picker dialog renders
-   outside `.page-blocks-editor`, so its rules are namespaced but unscoped. */
+/* Media block — image set + caption. Single column: the preview above, the thumbnail
+   rail below. It was authored as preview-beside-rail on the reasoning that width is the
+   plentiful axis in the canvas and height the scarce one — true only while the canvas
+   could not be dragged narrow. A breakpoint cannot see the pane (the canvas width is the
+   user's, the viewport is not), and container queries would fix the axis but not the
+   premise: at 320px there is no room for a side rail at any measurement. So it stacks at
+   every width, and the rail's `flex: 0 0 40%` goes with the row it belonged to.
+   The rail is a nui-sortable: drag order IS the image order, the first item is the lead.
+   Tiles follow the old n000b blocks editor: [index cell | image], no chrome padding. The
+   picker dialog renders outside `.page-blocks-editor`, so its rules are namespaced but
+   unscoped. */
 .page-blocks-editor .media-block-body {
 	display: flex;
 	flex-direction: column;
@@ -728,14 +733,22 @@ nui-main > .content-page > .page-blocks-editor[breakout],
 
 .page-blocks-editor .media-body-row {
 	display: flex;
+	flex-direction: column;
 	gap: var(--nui-space-half);
-	/* 10rem floor, no ceiling: when the thumb rail needs more room than the
-	   preview, the row grows with it (no scrollbars in the rail). */
-	min-height: 10rem;
 }
 
 .page-blocks-editor .media-preview {
-	flex: 1 1 auto;
+	/* Size containment means this box has NO intrinsic height, so something has to give
+	   it one. In the row layout that was the flex stretch against the row's height;
+	   stacked, it comes from a ratio with a floor and a ceiling — the ceiling because the
+	   16:9 ratio against a wide canvas would otherwise make the card taller than the
+	   canvas is worth: at ~780px wide the ratio alone gives ~440px, well past the point
+	   where the preview is telling you anything the thumbnail does not. */
+	flex: none;
+	width: 100%;
+	aspect-ratio: 16 / 9;
+	min-height: 10rem;
+	max-height: 15rem;
 	min-width: 0;
 	position: relative;
 	/* Size container: the cover frame sizes itself from these cqw/cqh — the
@@ -798,11 +811,8 @@ nui-main > .content-page > .page-blocks-editor[breakout],
 }
 
 .page-blocks-editor .media-side {
-	flex: 0 0 40%;
+	flex: none;
 	min-width: 0;
-	/* Flex column so the rail stretches to the row's full height instead of
-	   shrinking to its content — the recessed strip should read as one
-	   surface beside the preview, not a floating patch. */
 	display: flex;
 	flex-direction: column;
 }

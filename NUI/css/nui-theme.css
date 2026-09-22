@@ -5509,6 +5509,15 @@ opacity: 0;
 nui-markdown {
 	display: block;
 	width: 100%;
+	/* A query CONTAINER, which is what lets the document's own responsive rules below
+	   measure the space they are actually in. Viewport queries became the wrong axis as
+	   soon as a document could be shown inside something narrower than the window: the
+	   editor's preview column is resizable, so a 320px pane in a 1600px window never
+	   triggered `@media (max-width: 40rem)` and floated media plus 3-column galleries
+	   stayed at their widest. Named, so a nested container cannot silently capture the
+	   queries. `inline-size` containment does not affect block size, so the surface still
+	   grows to its content. */
+	container: doc / inline-size;
 }
 
 /* Images in rendered Markdown are block-level media, like `p img` and `figure img`
@@ -5619,7 +5628,7 @@ nui-markdown p > img {
 .nui-blocks-section > :last-child {
 	margin-bottom: 0;
 }
-@media (max-width: 40rem) {
+@container doc (max-width: 40rem) {
 	.nui-blocks-columns { grid-template-columns: 1fr !important; }
 }
 
@@ -6345,7 +6354,7 @@ nui-markdown p > img {
 	object-fit: cover;
 	display: block;
 }
-@media (max-width: 40rem) {
+@container doc (max-width: 40rem) {
 	.nui-blocks-gallery.nui-variant-mosaic > :is(ul, ol) {
 		grid-template-columns: 1fr;
 		height: auto;
@@ -6374,7 +6383,7 @@ nui-markdown p > img {
 	object-fit: cover;
 	display: block;
 }
-@media (max-width: 35rem) {
+@container doc (max-width: 35rem) {
 	.nui-blocks-gallery.nui-variant-row > :is(ul, ol) {
 		flex-wrap: wrap;
 	}
@@ -6389,10 +6398,10 @@ nui-markdown p > img {
 	column-count: 3;
 	column-gap: var(--nui-space);
 }
-@media (max-width: 45rem) {
+@container doc (max-width: 45rem) {
 	.nui-blocks-gallery.nui-variant-masonry > :is(ul, ol) { column-count: 2; }
 }
-@media (max-width: 25rem) {
+@container doc (max-width: 25rem) {
 	.nui-blocks-gallery.nui-variant-masonry > :is(ul, ol) { column-count: 1; }
 }
 .nui-blocks-gallery.nui-variant-masonry > :is(ul, ol) > li {
@@ -6510,7 +6519,7 @@ nui-markdown :is(h1, h2, h3, h4, h5, h6) img {
 	font-size: var(--font-size-base);
 	line-height: 1.6;
 }
-@media (max-width: 40rem) {
+@container doc (max-width: 40rem) {
 	.nui-blocks-media:is(.nui-variant-left, .nui-variant-right) > :first-child {
 		float: none;
 		width: 100%;

@@ -2337,7 +2337,7 @@ export function initBlocksEditor(element, params, nui) {
 			}
 			const layout = win.document.createElement('style');
 			layout.textContent = 'body{margin:0;background:var(--color-base,#fff)}'
-				+ '#preview-root{padding:var(--nui-space,1rem)}';
+				+ '#preview-root{padding:var(--nui-space,1rem);container:doc / inline-size}';
 			win.document.head.appendChild(layout);
 
 			previewWindow = win;
