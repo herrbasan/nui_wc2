@@ -174,8 +174,10 @@ the block; choosing a layout block wraps.
 
 - **Chrome (repeat header/footer)** is a document-level property band, not a section
   block — inherited from blocks-editor design (it filters chrome out of the canvas).
-- **Source mode:** full raw Markdown view (like blocks editor's raw mode) — this editor
-  targets LLM-authored documents; source must always be one click away and byte-faithful.
+- **Source mode:** full raw Markdown view — this editor targets LLM-authored documents;
+  source must always be one click away and byte-faithful. Note: the blocks editor's own raw
+  mode was removed 2026-09-22 (it was never functional), so there is no longer a working
+  example to copy from there.
 - **`main` is invisible** (the file). Multi-main documents: render and preserve bytes
   verbatim; do not edit (blocks-editor law).
 - **Unknown/unsupported structure** renders as the product renders it and is preserved

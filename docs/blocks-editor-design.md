@@ -23,10 +23,13 @@ Spec reference: md-blocks v1.3 (locked), `D:\Work\_GIT\md-blocks\md-blocks-spec.
   (preserve bytes verbatim, don't edit).
 - Chrome (`repeat=header|footer` blocks) is a **document-level property**, shown in a
   document-level UI band, not inside section cards. (Currently written into `sections[0].nodes`
-  and filtered out of the canvas — to be fixed.)
-- Web / print / slides = the same tree, different **profile**. The Target selector must switch
-  the preview profile, not just a badge (currently cosmetic — `currentMode` only toggles
-  the chrome panel).
+  and filtered out of the canvas — to be fixed.) **Updated 2026-09-22:** the band is now
+  unreachable — the Target selector was its only trigger and that selector was removed. The
+  band's markup and its editing code are intact and parked, not deleted.
+- Web / print / slides = the same tree, different **profile**. This needs a new vehicle: the
+  Target selector that was meant to carry it was removed 2026-09-22, having never been wired to
+  anything but the chrome band's visibility and a preview badge. Profile switching is therefore
+  unassigned now, not merely unfinished.
 
 ## Section templates (= functions; spec §5.1: "composite palette entries are templates")
 
@@ -198,8 +201,10 @@ it gets the meaning above instead of deletion:
    with no diagnostic). Spec §5 requires a visible renderer diagnostic. Small fix.
 4. **Var rendering** — `mb:var` currently renders as a visible `dl.nui-blocks-var` card
    mid-document (spec-allowed for display renderers). Is that the right look in a document?
-5. **Validation (§7) absent** — raw-pane parse failure is console.error + silent no-op;
-   no diagnostics UI anywhere.
+5. **Validation (§7) absent** — a parse failure is console.error + silent no-op; no
+   diagnostics UI anywhere. (It was reachable through the raw pane; that pane was removed
+   2026-09-22, so the failure path now has no entry point at all — worth knowing before
+   designing the diagnostics.)
 6. **Editor placement** — md-blocks Agents.md: the editor is meant to be a **nui addon**
    (peer of nui-slides), not Playground-only (`Playground/js/blocks-editor.js`, ~1290 lines).
    Move to `NUI/lib/modules/nui-blocks-editor.js` when the architecture settles.

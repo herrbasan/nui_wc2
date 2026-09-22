@@ -174,6 +174,25 @@ Right.
 2. A directive inside fenced or inline code stays literal, since directives are recognised from the Markdown block structure and never by text replacement.
 3. Blank and comment-only regions are filtered out, so file-header comments or pure chrome blocks do not produce blank leading surfaces.
 
+## Responsive Behaviour
+
+The host is a **query container** named `doc` (`container: doc / inline-size`), and the
+MD-Blocks responsive rules are written against it rather than against the viewport. A
+full-bleed section, a floated media block (`preset=image:left|right`), a mosaic or row
+gallery and a multi-column grid all collapse according to **the width of the surface the
+document is rendered into**, not the width of the window.
+
+That matters anywhere a document lands in something narrower than the window: a CMS
+column, a sidebar, an editor's resizable preview pane. Against the viewport those places
+got the desktop layout at every width, since a viewport query cannot see a container.
+
+- Nothing to configure when you use the element — the container is the host itself, so
+  putting the `nui-markdown` in a narrow element is enough to get the narrow layout.
+- **If you render the output yourself** — calling `util.markdownToHtml` and injecting the
+  HTML, the way `util.enhancePlayers` is documented for — you are outside the container and
+  will get the widest layout. Put `container: doc / inline-size` on your own wrapper to
+  opt in.
+
 ## Programmatic Usage
 
 ### Dynamic Assignment

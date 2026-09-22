@@ -328,6 +328,9 @@ Implements **Keyboard Reordering** with live feedback:
 - **Announcements**: Every move is announced via `a11y.announce` (e.g., "Moved to position 3 of 10").
 - **Dropping**: `Space` or `Enter` to commit the new position.
 - **Cancelling**: `Escape` to return to the original position.
+- **Interactive elements keep their keys**: `Space` and `Enter` are only claimed when the
+  focused element is not itself interactive. A text field, button or rich-text editor inside
+  a sortable item keeps both — the drag never hijacks typing.
 
 ### nui-dialog & nui-overlay
 Built on the **Native `<dialog>` Element**:
