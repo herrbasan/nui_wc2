@@ -1,0 +1,9 @@
+feat(blocks-editor): overhaul frontmatter metadata editor
+
+- add block-style serializeYaml and flow-map support in NUI util
+- add structured YAML frontmatter editor with type-aware widgets
+- support all YAML shapes: strings, multiline, dates, numbers, booleans, tags, maps, list of objects
+- add interactive property schema management for object lists (add, remove, rename)
+- add segmented [Structured | Raw YAML] switcher with full-height raw editor
+- add non-destructive capture-phase validation on Save to prevent losing edits
+- add Load Blog Post demo with real-world production frontmatter sample

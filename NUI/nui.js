@@ -6845,6 +6845,7 @@ function parseYaml(src) {
 			if (!inner) return [];
 			return inner.split(',').map((p) => parseScalar(p.trim()));
 		}
+		if (s === '{}') return {};
 		if (/^-?\d+$/.test(s)) return parseInt(s, 10);
 		if (/^-?\d*\.\d+$/.test(s)) return parseFloat(s);
 		return s;
@@ -6930,6 +6931,75 @@ function parseYaml(src) {
 	i = nextMeaningful();
 	if (i >= lines.length) return {};
 	return parseBlock(indentOf(lines[i]));
+}
+
+// Serialize a frontmatter object back to block-style YAML — the inverse of
+// parseYaml for every shape parseYaml produces: nested maps, sequences of
+// scalars, sequences of maps, quoted scalars, numbers, booleans, null, and
+// empty collections. Scalars are quoted only when a plain emission would
+// re-parse as something else: leading indicator characters, ": " or " #"
+// inside the value, reserved words, numeric lookalikes, or surrounding
+// whitespace. JSON.stringify IS YAML's double-quoted style for the escapes
+// parseScalar understands (\", \\, \n, \r, \t).
+function fmNeedsQuote(s) {
+	return s === ''
+		|| /^\s|\s$/.test(s)
+		|| /^[-?:,\[\]{}#&*!|>'"%@`]/.test(s)
+		|| /:\s|\s#/.test(s)
+		|| /^(null|~|true|false)$/i.test(s)
+		|| /^-?\d+$/.test(s)
+		|| /^-?\d*\.\d+$/.test(s);
+}
+
+function fmSerializeScalar(v) {
+	if (v === null || v === undefined) return 'null';
+	if (typeof v === 'boolean' || typeof v === 'number') return String(v);
+	const s = String(v);
+	return fmNeedsQuote(s) ? JSON.stringify(s) : s;
+}
+
+function serializeYaml(obj) {
+	const lines = [];
+	// keyPrefix carries the already-indented "key:" (or "-") the value hangs
+	// off; ind is the indentation of that line, so nested content lands at
+	// ind + 2 — deeper than the line its parseValue call measures against.
+	const writeValue = (keyPrefix, v, ind) => {
+		if (Array.isArray(v)) {
+			if (v.length === 0) { lines.push(`${keyPrefix} []`); return; }
+			lines.push(keyPrefix);
+			writeSeq(v, ind + 2);
+		} else if (v !== null && typeof v === 'object') {
+			if (Object.keys(v).length === 0) { lines.push(`${keyPrefix} {}`); return; }
+			lines.push(keyPrefix);
+			writeMap(v, ind + 2);
+		} else {
+			lines.push(`${keyPrefix} ${fmSerializeScalar(v)}`);
+		}
+	};
+	// writeValue/writeMap/writeSeq recurse into each other; all calls happen
+	// after the consts below are initialized, so the TDZ never bites.
+	const writeMap = (map, ind) => {
+		const pad = ' '.repeat(ind);
+		for (const [k, v] of Object.entries(map)) writeValue(`${pad}${k}:`, v, ind);
+	};
+	const writeSeq = (arr, ind) => {
+		const pad = ' '.repeat(ind);
+		for (const item of arr) {
+			if (item !== null && typeof item === 'object' && !Array.isArray(item) && Object.keys(item).length > 0) {
+				// Sequence of maps: first key rides the dash line, siblings at
+				// dash-indent + 2 — exactly what parseSeqItem's sibling loop expects.
+				const [[k0, v0], ...rest] = Object.entries(item);
+				writeValue(`${pad}- ${k0}:`, v0, ind + 2);
+				for (const [k, v] of rest) writeValue(`${pad}  ${k}:`, v, ind + 2);
+			} else {
+				writeValue(`${pad}-`, item, ind);
+			}
+		}
+	};
+	if (Array.isArray(obj)) writeSeq(obj, 0);
+	else if (obj !== null && typeof obj === 'object') writeMap(obj, 0);
+	else lines.push(fmSerializeScalar(obj));
+	return lines.join('\n');
 }
 
 // Extract leading YAML frontmatter (a "---" fenced block at the very top of the
@@ -7312,13 +7382,7 @@ function serializeBlocks(doc) {
 	const parts = [];
 	if (doc.frontmatter && typeof doc.frontmatter === 'object' && Object.keys(doc.frontmatter).length > 0) {
 		parts.push('---');
-		for (const [k, v] of Object.entries(doc.frontmatter)) {
-			if (typeof v === 'object' && v !== null) {
-				parts.push(`${k}: ${JSON.stringify(v)}`);
-			} else {
-				parts.push(`${k}: ${v}`);
-			}
-		}
+		parts.push(serializeYaml(doc.frontmatter));
 		parts.push('---\n');
 	}
 
@@ -8152,6 +8216,7 @@ util.setMarkdownImageRewrite = (fn) => { markdownImageRewrite = (typeof fn === '
 // Add to util for global access
 util.markdownToHtml = markdownToHtml;
 util.parseYaml = parseYaml;
+util.serializeYaml = serializeYaml;
 util.parseFrontmatter = parseFrontmatter;
 util.renderFrontmatter = renderFrontmatter;
 util.parseBlocks = parseBlocks;

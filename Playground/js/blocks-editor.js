@@ -13,6 +13,7 @@ export function initBlocksEditor(element, params, nui) {
 	const btnAddSecTop = element.querySelector('#btn-add-section-top');
 	const btnAddSecBottom = element.querySelector('#btn-add-section-bottom');
 	const btnLoadSample = element.querySelector('#btn-load-sample');
+	const btnLoadBlog = element.querySelector('#btn-load-blog');
 	const btnCopyMd = element.querySelector('#btn-copy-md');
 	const previewSwitcher = element.querySelector('#editor-preview-switcher');
 	const paneCanvas = element.querySelector('#pane-canvas');
@@ -20,6 +21,7 @@ export function initBlocksEditor(element, params, nui) {
 	const livePreview = element.querySelector('#live-markdown-preview');
 	const btnEditFrontmatter = element.querySelector('#btn-edit-frontmatter');
 	const metaTitleDisplay = element.querySelector('[data-meta-title]');
+	const metaChips = element.querySelector('[data-meta-chips]');
 
 	// Current State
 	let currentDoc = createDefaultDoc();
@@ -159,25 +161,701 @@ export function initBlocksEditor(element, params, nui) {
 
 	// ── Frontmatter Management ──
 	function updateFrontmatterSummary() {
+		const fm = currentDoc.frontmatter || {};
 		if (metaTitleDisplay) {
-			metaTitleDisplay.textContent = currentDoc.frontmatter?.title || 'Untitled Document';
+			metaTitleDisplay.textContent = fm.title || 'Untitled Document';
+		}
+		if (metaChips) {
+			metaChips.innerHTML = '';
+			const chips = [];
+			if (fm.lang) chips.push(String(fm.lang));
+			if (Array.isArray(fm.authors) && fm.authors.length) {
+				chips.push(`${fm.authors.length} author${fm.authors.length === 1 ? '' : 's'}`);
+			}
+			if (Array.isArray(fm.tags) && fm.tags.length) chips.push(fm.tags.join(' · '));
+			if (fm.series) chips.push(`series: ${fm.series}`);
+			if (fm.modified) chips.push(`modified ${fm.modified}`);
+			for (const text of chips) {
+				const s = document.createElement('span');
+				s.className = 'meta-chip';
+				s.textContent = text;
+				metaChips.appendChild(s);
+			}
 		}
 	}
 
-	btnEditFrontmatter?.addEventListener('click', async () => {
-		const title = currentDoc.frontmatter?.title || '';
-		const res = await nui.components.dialog.prompt('Document Metadata', '', {
-			fields: [
-				{ id: 'title', label: 'Document Title', value: title }
+	// ── Frontmatter Editor ──
+	// Generic, shape-driven editor in a page-mode nui-dialog — works on ANY
+	// YAML frontmatter, no key-name assertions. Supported data shapes:
+	// - string → nui-input (date input for ISO YYYY-MM-DD, auto-resizing nui-textarea for multiline)
+	// - number → number input
+	// - boolean → nui-checkbox
+	// - null → text input writing null back when empty
+	// - list of scalars → nui-tag-input
+	// - single map (object) → interactive key-value map widget
+	// - list of maps (entries) → structured cards with key-value grid
+	// - deep/mixed fallback → mini YAML textarea
+	// - Raw YAML mode → full-fidelity YAML document editor with round-trip parsing
+
+	const FM_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+	const FM_LONG_TEXT = 80;
+
+	function fmHumanize(key) {
+		return String(key).replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+	}
+
+	function fmPopulate(scope) {
+		for (const host of scope.querySelectorAll('nui-select')) {
+			if (!host._fmItems) continue;
+			host.setItems(host._fmItems);
+			if (host._fmValue) host.setValue(host._fmValue);
+			delete host._fmItems;
+			delete host._fmValue;
+		}
+		for (const host of scope.querySelectorAll('nui-tag-input')) {
+			if (!host._fmTags) continue;
+			for (const t of host._fmTags) host.addTag(t);
+			delete host._fmTags;
+		}
+	}
+
+	function fmIconButton(icon, title, onClick) {
+		const host = document.createElement('nui-button');
+		host.setAttribute('variant', 'icon');
+		host.innerHTML = `<button type="button" title="${title}" aria-label="${title}"><nui-icon name="${icon}"></nui-icon></button>`;
+		host.addEventListener('click', (e) => {
+			e.stopPropagation();
+			onClick();
+		});
+		return host;
+	}
+
+	function fmInput(type, value, opts = {}) {
+		const host = document.createElement('nui-input');
+		host.dataset.kind = opts.kind || 'string';
+		const input = document.createElement('input');
+		input.type = type;
+		input.value = value ?? '';
+		if (opts.placeholder) input.placeholder = opts.placeholder;
+		if (opts.step) input.step = opts.step;
+		host.appendChild(input);
+		if (opts.nullWhenEmpty) host.dataset.nullWhenEmpty = '1';
+		return host;
+	}
+
+	function fmTextarea(value, opts = {}) {
+		const host = document.createElement('nui-textarea');
+		host.dataset.kind = opts.kind || 'string';
+		if (opts.autoResize) host.setAttribute('auto-resize', '');
+		const ta = document.createElement('textarea');
+		ta.rows = opts.rows || 3;
+		ta.value = value ?? '';
+		ta.spellcheck = false;
+		if (opts.mono) ta.className = 'fm-raw';
+		host.appendChild(ta);
+		return host;
+	}
+
+	function fmMapWidget(mapObj = {}) {
+		const wrap = document.createElement('div');
+		wrap.className = 'fm-map-container';
+		wrap.dataset.kind = 'map';
+
+		const rowsWrap = document.createElement('div');
+		rowsWrap.className = 'fm-map-rows';
+		wrap.appendChild(rowsWrap);
+
+		function addRow(k = '', v = '') {
+			const row = document.createElement('div');
+			row.className = 'fm-map-row';
+			row.innerHTML = `
+				<div class="fm-map-key"><nui-input><input type="text" placeholder="key" value="${k}" data-map-key></nui-input></div>
+				<div class="fm-map-val"><nui-input><input type="text" placeholder="value" value="${v ?? ''}" data-map-val></nui-input></div>
+			`;
+			row.appendChild(fmIconButton('close', 'Remove property', () => row.remove()));
+			rowsWrap.appendChild(row);
+		}
+
+		for (const [k, v] of Object.entries(mapObj)) {
+			addRow(k, typeof v === 'object' && v !== null ? JSON.stringify(v) : String(v ?? ''));
+		}
+
+		const addRowEl = document.createElement('div');
+		addRowEl.className = 'fm-map-add-row';
+		addRowEl.innerHTML = `
+			<div class="fm-map-key"><nui-input><input type="text" placeholder="new property" data-new-prop-k></nui-input></div>
+			<div class="fm-map-val"><nui-input><input type="text" placeholder="value" data-new-prop-v></nui-input></div>
+		`;
+		const addBtn = fmIconButton('add', 'Add property', () => {
+			const kInp = addRowEl.querySelector('[data-new-prop-k]');
+			const vInp = addRowEl.querySelector('[data-new-prop-v]');
+			const k = kInp.value.trim();
+			if (!k) return;
+			addRow(k, vInp.value);
+			kInp.value = '';
+			vInp.value = '';
+		});
+		addRowEl.appendChild(addBtn);
+		wrap.appendChild(addRowEl);
+
+		return wrap;
+	}
+
+	function fmEntriesWidget(entries = [], fieldKey = '') {
+		const wrap = document.createElement('div');
+		wrap.className = 'fm-entries';
+		wrap.dataset.kind = 'entries';
+
+		let keys = [...new Set(entries.flatMap((e) => Object.keys(e || {})))];
+		if (keys.length === 0) keys = ['name', 'role'];
+
+		const schemaBar = document.createElement('div');
+		schemaBar.className = 'fm-entries-schema';
+		wrap.appendChild(schemaBar);
+
+		const cardsContainer = document.createElement('div');
+		cardsContainer.className = 'fm-entries-cards';
+		cardsContainer.style.display = 'flex';
+		cardsContainer.style.flexDirection = 'column';
+		cardsContainer.style.gap = 'var(--nui-space-half)';
+		wrap.appendChild(cardsContainer);
+
+		function collectCurrentEntries() {
+			const list = [];
+			for (const card of cardsContainer.querySelectorAll('.fm-entry-card')) {
+				const item = {};
+				for (const inp of card.querySelectorAll('[data-entry-key]')) {
+					const k = inp.dataset.entryKey;
+					const v = inp.querySelector('input')?.value;
+					if (v !== undefined) item[k] = v;
+				}
+				list.push(item);
+			}
+			return list;
+		}
+
+		function renderSchema() {
+			schemaBar.innerHTML = `
+				<div class="fm-schema-inner">
+					<span class="fm-schema-label">Properties:</span>
+					<div class="fm-schema-pills"></div>
+					<div class="fm-schema-add">
+						<nui-input><input type="text" placeholder="Add property (e.g. bio)" data-new-schema-key></nui-input>
+						<nui-button variant="outline" size="small"><button type="button" aria-label="Add property"><nui-icon name="add"></nui-icon></button></nui-button>
+					</div>
+				</div>
+			`;
+			const pills = schemaBar.querySelector('.fm-schema-pills');
+			keys.forEach((k) => {
+				const pill = document.createElement('span');
+				pill.className = 'fm-schema-pill';
+				pill.innerHTML = `
+					<span class="fm-schema-key-name" title="Click to rename">${k}</span>
+					<button type="button" class="fm-schema-key-del" title="Remove property '${k}' from all items">×</button>
+				`;
+				pill.querySelector('.fm-schema-key-name').addEventListener('click', () => {
+					const newName = prompt(`Rename property '${k}' to:`, k);
+					if (!newName || newName.trim() === '' || newName.trim() === k) return;
+					const nk = newName.trim();
+					if (keys.includes(nk)) {
+						alert(`Property '${nk}' already exists.`);
+						return;
+					}
+					const current = collectCurrentEntries();
+					const idx = keys.indexOf(k);
+					if (idx !== -1) keys[idx] = nk;
+					current.forEach((item) => {
+						if (k in item) {
+							item[nk] = item[k];
+							delete item[k];
+						}
+					});
+					reRender(current);
+				});
+				pill.querySelector('.fm-schema-key-del').addEventListener('click', () => {
+					if (keys.length <= 1) return;
+					const current = collectCurrentEntries();
+					keys = keys.filter((key) => key !== k);
+					current.forEach((item) => { delete item[k]; });
+					reRender(current);
+				});
+				pills.appendChild(pill);
+			});
+
+			const addInput = schemaBar.querySelector('[data-new-schema-key]');
+			const addBtn = schemaBar.querySelector('.fm-schema-add nui-button button');
+			const handleAdd = () => {
+				const nk = addInput.value.trim();
+				if (!nk || keys.includes(nk)) return;
+				const current = collectCurrentEntries();
+				keys.push(nk);
+				current.forEach((item) => {
+					if (!(nk in item)) item[nk] = '';
+				});
+				reRender(current);
+			};
+			addBtn.addEventListener('click', handleAdd);
+			addInput.addEventListener('keydown', (e) => {
+				if (e.key === 'Enter') {
+					e.preventDefault();
+					handleAdd();
+				}
+			});
+		}
+
+		function addEntryCard(entry = {}, idx = 0) {
+			const card = document.createElement('div');
+			card.className = 'fm-entry-card';
+
+			const firstVal = Object.values(entry)[0] || '';
+			const titleSuffix = firstVal ? ` — ${firstVal}` : '';
+			const head = document.createElement('div');
+			head.className = 'fm-entry-header';
+			head.innerHTML = `<span>Item ${idx + 1}${titleSuffix}</span>`;
+			head.appendChild(fmIconButton('close', 'Remove entry', () => card.remove()));
+			card.appendChild(head);
+
+			const grid = document.createElement('div');
+			grid.className = 'fm-entry-grid';
+
+			const entryKeys = [...new Set([...keys, ...Object.keys(entry)])];
+			for (const k of entryKeys) {
+				const field = document.createElement('div');
+				field.className = 'fm-entry-field';
+				const lbl = document.createElement('label');
+				lbl.textContent = fmHumanize(k);
+				field.appendChild(lbl);
+
+				const inp = fmInput('text', entry[k] ?? '');
+				delete inp.dataset.kind;
+				inp.dataset.entryKey = k;
+				field.appendChild(inp);
+				grid.appendChild(field);
+			}
+			card.appendChild(grid);
+			cardsContainer.appendChild(card);
+		}
+
+		function reRender(list) {
+			cardsContainer.innerHTML = '';
+			renderSchema();
+			list.forEach((e, i) => addEntryCard(e && typeof e === 'object' ? e : {}, i));
+		}
+
+		reRender(entries.length ? entries : [{}]);
+
+		const addBtn = document.createElement('nui-button');
+		addBtn.setAttribute('variant', 'outline');
+		addBtn.setAttribute('size', 'small');
+		addBtn.innerHTML = '<button type="button"><nui-icon name="add"></nui-icon>Add Item</button>';
+		addBtn.addEventListener('click', () => {
+			addEntryCard({}, cardsContainer.children.length);
+		});
+		wrap.appendChild(addBtn);
+
+		return wrap;
+	}
+
+	function fmBuildField(key, value) {
+		const row = document.createElement('div');
+		row.className = 'fm-field';
+		row.dataset.key = key;
+
+		let widget;
+		let typeLabel = 'TEXT';
+		let kind = 'string';
+
+		if (typeof value === 'string' && FM_DATE_RE.test(value)) {
+			widget = fmInput('date', value);
+			typeLabel = 'DATE';
+			kind = 'date';
+		} else if (typeof value === 'string' && (value.includes('\n') || value.length > FM_LONG_TEXT)) {
+			widget = fmTextarea(value, { rows: 2, autoResize: true });
+			typeLabel = 'TEXT';
+			kind = 'multiline';
+		} else if (typeof value === 'string') {
+			widget = fmInput('text', value);
+			typeLabel = 'TEXT';
+			kind = 'string';
+		} else if (value === null || value === undefined) {
+			widget = fmInput('text', '', { placeholder: '(null / empty)', nullWhenEmpty: true });
+			typeLabel = 'NULL';
+			kind = 'string';
+		} else if (typeof value === 'number') {
+			widget = fmInput('number', value, { step: 'any' });
+			widget.dataset.kind = 'number';
+			typeLabel = 'NUMBER';
+			kind = 'number';
+		} else if (typeof value === 'boolean') {
+			widget = document.createElement('nui-checkbox');
+			widget.dataset.kind = 'boolean';
+			const cb = document.createElement('input');
+			cb.type = 'checkbox';
+			cb.checked = value;
+			const lb = document.createElement('label');
+			lb.textContent = value ? 'True' : 'False';
+			cb.addEventListener('change', () => { lb.textContent = cb.checked ? 'True' : 'False'; });
+			widget.append(cb, lb);
+			typeLabel = 'BOOL';
+			kind = 'boolean';
+		} else if (Array.isArray(value) && value.every((v) => v === null || typeof v !== 'object')) {
+			widget = document.createElement('nui-tag-input');
+			widget.dataset.kind = 'list';
+			widget.setAttribute('editable', '');
+			widget.setAttribute('placeholder', 'Add item…');
+			widget._fmTags = value.filter((v) => v !== null && v !== undefined).map(String);
+			typeLabel = 'TAGS';
+			kind = 'list';
+		} else if (Array.isArray(value) && value.every((v) => v !== null && typeof v === 'object' && !Array.isArray(v))) {
+			widget = fmEntriesWidget(value, key);
+			typeLabel = 'OBJECTS';
+			kind = 'entries';
+		} else if (typeof value === 'object' && !Array.isArray(value)) {
+			widget = fmMapWidget(value);
+			typeLabel = 'OBJECT';
+			kind = 'map';
+		} else {
+			widget = fmTextarea(util.serializeYaml(value), { kind: 'yaml', rows: 4, mono: true });
+			typeLabel = 'YAML';
+			kind = 'yaml';
+		}
+
+		widget.dataset.kind = kind;
+
+		const header = document.createElement('div');
+		header.className = 'fm-field-header';
+
+		const labelGroup = document.createElement('div');
+		labelGroup.className = 'fm-field-label-group';
+
+		const lbl = document.createElement('span');
+		lbl.className = 'fm-field-label';
+		lbl.textContent = fmHumanize(key);
+		labelGroup.appendChild(lbl);
+
+		if (fmHumanize(key).toLowerCase() !== key.toLowerCase()) {
+			const raw = document.createElement('span');
+			raw.className = 'fm-field-rawkey';
+			raw.textContent = key;
+			labelGroup.appendChild(raw);
+		}
+
+		const pill = document.createElement('span');
+		pill.className = 'fm-field-type-pill';
+		pill.textContent = typeLabel;
+		labelGroup.appendChild(pill);
+
+		header.appendChild(labelGroup);
+
+		const actions = document.createElement('div');
+		actions.className = 'fm-field-actions';
+		actions.appendChild(fmIconButton('close', 'Remove field', () => row.remove()));
+		header.appendChild(actions);
+
+		row.appendChild(header);
+
+		const body = document.createElement('div');
+		body.className = 'fm-field-body';
+		body.appendChild(widget);
+		row.appendChild(body);
+
+		return row;
+	}
+
+	function fmCollect(fieldsEl) {
+		const out = {};
+		for (const row of fieldsEl.querySelectorAll(':scope > .fm-field')) {
+			const key = row.dataset.key;
+			const w = row.querySelector('.fm-field-body > [data-kind]');
+			if (!w) continue;
+			switch (w.dataset.kind) {
+				case 'string': {
+					let v = w.querySelector('input')?.value ?? '';
+					if (w.dataset.nullWhenEmpty && v.trim() === '') v = null;
+					out[key] = v;
+					break;
+				}
+				case 'multiline': {
+					out[key] = w.querySelector('textarea')?.value ?? '';
+					break;
+				}
+				case 'date': {
+					out[key] = w.querySelector('input')?.value ?? '';
+					break;
+				}
+				case 'number': {
+					const v = w.querySelector('input')?.value ?? '';
+					out[key] = v.trim() === '' ? null : Number(v);
+					break;
+				}
+				case 'boolean': {
+					out[key] = w.querySelector('input')?.checked ?? false;
+					break;
+				}
+				case 'list': {
+					const inp = w.querySelector('input');
+					if (inp && inp.value.trim() && w.addTag) {
+						w.addTag(inp.value.trim());
+						inp.value = '';
+					}
+					out[key] = w.getValues ? w.getValues() : [];
+					break;
+				}
+				case 'map': {
+					const map = {};
+					for (const r of w.querySelectorAll('.fm-map-row')) {
+						const k = r.querySelector('[data-map-key]')?.value.trim();
+						const v = r.querySelector('[data-map-val]')?.value;
+						if (k) map[k] = v;
+					}
+					out[key] = map;
+					break;
+				}
+				case 'entries': {
+					const list = [];
+					for (const card of w.querySelectorAll('.fm-entry-card')) {
+						const entry = {};
+						for (const inp of card.querySelectorAll('[data-entry-key]')) {
+							const k = inp.dataset.entryKey;
+							const val = inp.querySelector('input')?.value;
+							if (val !== undefined && val !== '') {
+								entry[k] = val;
+							}
+						}
+						if (Object.keys(entry).length > 0) {
+							list.push(entry);
+						}
+					}
+					out[key] = list;
+					break;
+				}
+				case 'yaml': {
+					try {
+						out[key] = util.parseYaml(w.querySelector('textarea')?.value ?? '');
+					} catch {
+						out[key] = null;
+					}
+					break;
+				}
+			}
+		}
+		return out;
+	}
+
+	function fmIsMap(v) {
+		return v !== null && typeof v === 'object' && !Array.isArray(v);
+	}
+
+	async function openFrontmatterEditor({ rawYaml = null } = {}) {
+		let draft = rawYaml === null ? structuredClone(currentDoc.frontmatter || {}) : null;
+
+		const { dialog, main, result } = await nui.components.dialog.page('Document Metadata', '', {
+			buttons: [
+				{ label: 'Cancel', value: 'cancel', type: 'outline' },
+				{ label: 'Save', value: 'save', type: 'primary' }
 			]
 		});
-		if (res && res.title !== undefined) {
-			currentDoc.frontmatter = currentDoc.frontmatter || {};
-			currentDoc.frontmatter.title = res.title;
+		dialog.el('dialog').classList.add('fm-editor-dialog');
+
+		const container = document.createElement('div');
+		container.className = 'fm-editor';
+		container.innerHTML = `
+			<div class="fm-toolbar">
+				<nui-button-container variant="segmented">
+					<nui-button ${rawYaml === null ? 'state="active"' : ''} data-fm-mode="structured">
+						<button type="button">Structured</button>
+					</nui-button>
+					<nui-button ${rawYaml !== null ? 'state="active"' : ''} data-fm-mode="raw">
+						<button type="button">Raw YAML</button>
+					</nui-button>
+				</nui-button-container>
+			</div>
+			<div class="fm-fields"></div>
+			<div class="fm-add-row">
+				<div class="fm-add-key"><nui-input><input type="text" placeholder="New field name (e.g. category)" data-fm-new-key></nui-input></div>
+				<div class="fm-add-type"><nui-select data-fm-new-type><select></select></nui-select></div>
+				<nui-button variant="outline" size="small" data-fm-add><button type="button"><nui-icon name="add"></nui-icon>Add Field</button></nui-button>
+			</div>`;
+		main.appendChild(container);
+
+		const fieldsEl = container.querySelector('.fm-fields');
+		const addRowEl = container.querySelector('.fm-add-row');
+		const btnStructured = container.querySelector('[data-fm-mode="structured"]');
+		const btnRaw = container.querySelector('[data-fm-mode="raw"]');
+		const typeSelect = container.querySelector('[data-fm-new-type]');
+		typeSelect.setItems([
+			{ value: 'text', label: 'Text (Single line)' },
+			{ value: 'multiline', label: 'Long Text (Multiline)' },
+			{ value: 'date', label: 'Date (YYYY-MM-DD)' },
+			{ value: 'number', label: 'Number' },
+			{ value: 'boolean', label: 'Boolean (True / False)' },
+			{ value: 'list', label: 'List of Tags' },
+			{ value: 'map', label: 'Object (Key-Value)' },
+			{ value: 'entries', label: 'List of Objects' }
+		]);
+
+		let rawMode = rawYaml !== null;
+
+		const rawTextarea = () => fieldsEl.querySelector('.fm-raw');
+
+		function renderStructured() {
+			fieldsEl.innerHTML = '';
+			for (const [key, value] of Object.entries(draft)) {
+				fieldsEl.appendChild(fmBuildField(key, value));
+			}
+			fmPopulate(fieldsEl);
+		}
+
+		function renderRaw(yamlText) {
+			fieldsEl.innerHTML = '';
+			const rawWrap = document.createElement('div');
+			rawWrap.className = 'fm-raw-container';
+			rawWrap.appendChild(fmTextarea(yamlText ?? util.serializeYaml(draft), { mono: true }));
+			fieldsEl.appendChild(rawWrap);
+			rawTextarea().focus();
+		}
+
+		function setMode(mode) {
+			if (mode === 'raw') {
+				if (!rawMode) {
+					draft = fmCollect(fieldsEl);
+					rawMode = true;
+					btnStructured.removeAttribute('state');
+					btnRaw.setAttribute('state', 'active');
+					addRowEl.style.display = 'none';
+					renderRaw();
+				}
+			} else {
+				if (rawMode) {
+					const rawText = rawTextarea().value;
+					let parsed;
+					try {
+						parsed = util.parseYaml(rawText);
+					} catch (err) {
+						nui.components.banner.show({
+							content: `YAML parse error: ${err.message}`,
+							priority: 'alert',
+							autoClose: 4000
+						});
+						return;
+					}
+					if (!fmIsMap(parsed)) {
+						nui.components.banner.show({
+							content: 'Frontmatter must be a YAML map (key-value pairs) — staying in raw mode.',
+							priority: 'alert',
+							autoClose: 4000
+						});
+						return;
+					}
+					draft = parsed;
+					rawMode = false;
+					btnRaw.removeAttribute('state');
+					btnStructured.setAttribute('state', 'active');
+					addRowEl.style.display = '';
+					renderStructured();
+				}
+			}
+		}
+
+		btnStructured.addEventListener('click', () => setMode('structured'));
+		btnRaw.addEventListener('click', () => setMode('raw'));
+
+		container.querySelector('[data-fm-add]').addEventListener('click', () => {
+			if (rawMode) return;
+			const keyInput = container.querySelector('[data-fm-new-key]');
+			const key = keyInput.value.trim();
+			if (!key) return;
+			draft = fmCollect(fieldsEl);
+			if (key in draft) {
+				nui.components.banner.show({
+					content: `Field "${key}" already exists.`,
+					priority: 'warning',
+					autoClose: 3000
+				});
+				return;
+			}
+			const type = typeSelect.getValue();
+			if (type === 'date') {
+				const d = new Date();
+				draft[key] = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+			} else if (type === 'multiline') {
+				draft[key] = '';
+			} else if (type === 'number') {
+				draft[key] = 0;
+			} else if (type === 'boolean') {
+				draft[key] = false;
+			} else if (type === 'list') {
+				draft[key] = [];
+			} else if (type === 'map') {
+				draft[key] = {};
+			} else if (type === 'entries') {
+				draft[key] = [{ id: '', role: '' }];
+			} else {
+				draft[key] = '';
+			}
+			renderStructured();
+			keyInput.value = '';
+			const newField = fieldsEl.querySelector(`.fm-field[data-key="${key}"]`);
+			if (newField) newField.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+		});
+
+		if (rawMode) {
+			addRowEl.style.display = 'none';
+			renderRaw(rawYaml);
+		} else {
+			renderStructured();
+		}
+
+		// Validation on Save before dialog closes
+		const saveNativeBtn = dialog.querySelector('footer button[data-value="save"]') ||
+			[...dialog.querySelectorAll('footer button')].find((b) => b.textContent.trim() === 'Save');
+		if (saveNativeBtn) {
+			saveNativeBtn.addEventListener('click', (e) => {
+				if (rawMode) {
+					const rawText = rawTextarea().value;
+					let parsed;
+					try {
+						parsed = util.parseYaml(rawText);
+					} catch (err) {
+						e.stopImmediatePropagation();
+						nui.components.banner.show({
+							content: `YAML parse error: ${err.message}`,
+							priority: 'alert',
+							autoClose: 4000
+						});
+						return;
+					}
+					if (!fmIsMap(parsed)) {
+						e.stopImmediatePropagation();
+						nui.components.banner.show({
+							content: 'Frontmatter must be a YAML map — not saved.',
+							priority: 'alert',
+							autoClose: 4000
+						});
+						return;
+					}
+				}
+			}, true);
+		}
+
+		result.then((value) => {
+			if (value !== 'save') return;
+			let next;
+			if (rawMode) {
+				const rawText = rawTextarea().value;
+				const parsed = util.parseYaml(rawText);
+				if (!fmIsMap(parsed)) return;
+				next = parsed;
+			} else {
+				next = fmCollect(fieldsEl);
+			}
+			currentDoc.frontmatter = next;
 			updateFrontmatterSummary();
 			syncToOutputs();
-		}
-	});
+		});
+	}
+
+	btnEditFrontmatter?.addEventListener('click', () => openFrontmatterEditor());
 
 	// Sections reorder by drag — the container is a nui-sortable in the page
 	// markup; on commit the DOM order is mirrored into the data (commitSortOrder).
@@ -2565,30 +3243,39 @@ export function initBlocksEditor(element, params, nui) {
 		}
 	});
 
-	btnLoadSample?.addEventListener('click', async () => {
+	async function loadDocument(url, rebase = null) {
 		try {
-			const res = await fetch('pages/experiments/md-blocks-demo.md');
-			if (res.ok) {
-				let text = await res.text();
-				// The demo md is written for the md-blocks demo PAGE (served from
-				// pages/experiments/), so its media paths carry a ../../ prefix.
-				// The editor canvas and live preview resolve against Playground/
-				// index.html — same base the faux media library uses. Rebase on
-				// load; every media path in the file is uniformly prefixed.
-				text = text.replaceAll('../../images/', 'images/');
-				currentDoc = normalizeDoc(util.parseBlocks(text));
-				renderVisualEditor();
-				syncToOutputs();
-				nui.components.banner.show({
-					content: 'Sample document loaded successfully.',
-					priority: 'info',
-					autoClose: 3000
-				});
-			}
+			const res = await fetch(url);
+			if (!res.ok) throw new Error(`HTTP ${res.status}`);
+			let text = await res.text();
+			if (rebase) text = text.replaceAll(rebase[0], rebase[1]);
+			currentDoc = normalizeDoc(util.parseBlocks(text));
+			renderVisualEditor();
+			syncToOutputs();
+			nui.components.banner.show({
+				content: 'Document loaded successfully.',
+				priority: 'info',
+				autoClose: 3000
+			});
 		} catch (e) {
-			console.warn('Could not fetch sample document:', e);
+			console.warn('Could not fetch document:', e);
+			nui.components.banner.show({
+				content: 'Failed to load document.',
+				priority: 'alert',
+				autoClose: 3000
+			});
 		}
-	});
+	}
+
+	// The demo md is written for the md-blocks demo PAGE (served from
+	// pages/experiments/), so its media paths carry a ../../ prefix. The editor
+	// canvas and live preview resolve against Playground/index.html — same base
+	// the faux media library uses. Rebase on load; every media path in the file
+	// is uniformly prefixed. The blog post's paths are already base-relative.
+	btnLoadSample?.addEventListener('click', () =>
+		loadDocument('pages/experiments/md-blocks-demo.md', ['../../images/', 'images/']));
+	btnLoadBlog?.addEventListener('click', () =>
+		loadDocument('pages/experiments/blog-the-ghost-in-the-agent.md'));
 
 	// ── NUI Helpers ──
 	function createNuiIconButton(iconName, title, onClick, extraClass = '') {

@@ -1139,6 +1139,335 @@ nui-main > .content-page > .page-blocks-editor[breakout],
 	min-width: 0;
 }
 
+/* ── Frontmatter Summary Chips ──────────────────────────────────────────── */
+
+.page-blocks-editor .meta-chips {
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--nui-space-half);
+	margin-left: var(--nui-space-half);
+}
+
+.page-blocks-editor .meta-chip {
+	background: var(--be-well-bg);
+	border: 1px solid var(--be-well-border);
+	border-radius: var(--border-radius1);
+	padding: 1px var(--nui-space-half);
+	font-size: var(--font-size-xsmall);
+	color: var(--text-color-dim);
+}
+
+/* ── Frontmatter Editor Dialog ─────────────────────────────────────────────
+   Page-mode nui-dialog living on document.body. All controls are NUI
+   components. Layout, responsiveness, and visual hierarchy glue only. */
+
+.fm-editor-dialog {
+	width: min(760px, 94vw);
+	height: min(85vh, 760px);
+	max-height: 85vh;
+}
+
+.fm-editor-dialog .fm-editor {
+	display: flex;
+	flex-direction: column;
+	gap: var(--nui-space);
+	min-height: 100%;
+}
+
+.fm-editor-dialog .fm-toolbar {
+	display: flex;
+	justify-content: flex-start;
+	align-items: center;
+	padding-bottom: var(--nui-space-half);
+	border-bottom: var(--border-thickness) solid var(--border-shade2);
+}
+
+.fm-editor-dialog .fm-fields {
+	display: flex;
+	flex-direction: column;
+	gap: var(--nui-space-half);
+	flex: 1 0 auto;
+}
+
+/* Individual Field Row */
+.fm-editor-dialog .fm-field {
+	display: flex;
+	flex-direction: column;
+	gap: var(--nui-space-quarter);
+	background: var(--color-shade2);
+	border: var(--border-thickness) solid var(--border-shade2);
+	border-radius: var(--border-radius1);
+	padding: var(--nui-space-half) var(--nui-space);
+	transition: border-color 0.15s ease;
+}
+
+.fm-editor-dialog .fm-field:focus-within {
+	border-color: var(--border-shade3);
+}
+
+.fm-editor-dialog .fm-field-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--nui-space-half);
+}
+
+.fm-editor-dialog .fm-field-label-group {
+	display: flex;
+	align-items: baseline;
+	gap: var(--nui-space-half);
+	min-width: 0;
+	flex: 1 1 auto;
+}
+
+.fm-editor-dialog .fm-field-label {
+	font-size: var(--font-size-small);
+	font-weight: 600;
+	color: var(--text-color);
+}
+
+.fm-editor-dialog .fm-field-rawkey {
+	font-size: var(--font-size-xsmall);
+	font-family: monospace;
+	color: var(--text-color-dim);
+}
+
+.fm-editor-dialog .fm-field-type-pill {
+	font-size: 0.7rem;
+	padding: 0.1rem 0.4rem;
+	border-radius: var(--border-radius1);
+	background: var(--color-shade3);
+	color: var(--text-color-dim);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	font-weight: 500;
+}
+
+.fm-editor-dialog .fm-field-actions {
+	display: flex;
+	align-items: center;
+	gap: var(--nui-space-quarter);
+}
+
+.fm-editor-dialog .fm-field-body {
+	width: 100%;
+}
+
+.fm-editor-dialog .fm-field-body > nui-input,
+.fm-editor-dialog .fm-field-body > nui-textarea,
+.fm-editor-dialog .fm-field-body > nui-tag-input {
+	width: 100%;
+}
+
+/* Map / Key-Value Object */
+.fm-editor-dialog .fm-map-container {
+	display: flex;
+	flex-direction: column;
+	gap: var(--nui-space-quarter);
+	padding: var(--nui-space-half);
+	background: var(--color-shade1);
+	border: var(--border-thickness) solid var(--border-shade2);
+	border-radius: var(--border-radius1);
+}
+
+.fm-editor-dialog .fm-map-rows {
+	display: flex;
+	flex-direction: column;
+	gap: var(--nui-space-quarter);
+}
+
+.fm-editor-dialog .fm-map-row,
+.fm-editor-dialog .fm-map-add-row {
+	display: grid;
+	grid-template-columns: 10rem 1fr auto;
+	align-items: center;
+	gap: var(--nui-space-half);
+}
+
+.fm-editor-dialog .fm-map-add-row {
+	margin-top: var(--nui-space-quarter);
+	padding-top: var(--nui-space-quarter);
+	border-top: var(--border-thickness) dashed var(--border-shade2);
+}
+
+/* Entries (List of Maps, e.g. Authors) */
+.fm-editor-dialog .fm-entries {
+	display: flex;
+	flex-direction: column;
+	gap: var(--nui-space-half);
+	width: 100%;
+}
+
+.fm-editor-dialog .fm-entries-schema {
+	background: var(--color-shade1);
+	border: var(--border-thickness) dashed var(--border-shade2);
+	border-radius: var(--border-radius1);
+	padding: var(--nui-space-quarter) var(--nui-space-half);
+}
+
+.fm-editor-dialog .fm-schema-inner {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var(--nui-space-half);
+}
+
+.fm-editor-dialog .fm-schema-label {
+	font-size: var(--font-size-xsmall);
+	font-weight: 600;
+	color: var(--text-color-dim);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+.fm-editor-dialog .fm-schema-pills {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var(--nui-space-quarter);
+}
+
+.fm-editor-dialog .fm-schema-pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	background: var(--color-shade3);
+	border: var(--border-thickness) solid var(--border-shade3);
+	border-radius: var(--border-radius1);
+	padding: 0.15rem 0.45rem;
+	font-size: var(--font-size-xsmall);
+	font-family: monospace;
+	color: var(--text-color);
+}
+
+.fm-editor-dialog .fm-schema-key-name {
+	cursor: pointer;
+}
+
+.fm-editor-dialog .fm-schema-key-name:hover {
+	text-decoration: underline;
+	color: var(--color-highlight, #3b82f6);
+}
+
+.fm-editor-dialog .fm-schema-key-del {
+	background: none;
+	border: none;
+	padding: 0;
+	font-size: 0.85rem;
+	line-height: 1;
+	color: var(--text-color-dim);
+	cursor: pointer;
+}
+
+.fm-editor-dialog .fm-schema-key-del:hover {
+	color: var(--color-danger, #ef4444);
+}
+
+.fm-editor-dialog .fm-schema-add {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--nui-space-quarter);
+	margin-left: auto;
+}
+
+.fm-editor-dialog .fm-schema-add nui-input {
+	width: 11rem;
+}
+
+.fm-editor-dialog .fm-schema-add input {
+	padding: 0.2rem 0.4rem;
+	font-size: var(--font-size-xsmall);
+}
+
+.fm-editor-dialog .fm-entry-card {
+	background: var(--color-shade1);
+	border: var(--border-thickness) solid var(--border-shade2);
+	border-radius: var(--border-radius1);
+	padding: var(--nui-space-half) var(--nui-space);
+	display: flex;
+	flex-direction: column;
+	gap: var(--nui-space-half);
+}
+
+.fm-editor-dialog .fm-entry-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	font-size: var(--font-size-small);
+	font-weight: 500;
+	color: var(--text-color);
+	border-bottom: var(--border-thickness) solid var(--border-shade2);
+	padding-bottom: var(--nui-space-quarter);
+}
+
+.fm-editor-dialog .fm-entry-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+	gap: var(--nui-space-half) var(--nui-space);
+}
+
+.fm-editor-dialog .fm-entry-field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.2rem;
+}
+
+.fm-editor-dialog .fm-entry-field label {
+	font-size: var(--font-size-xsmall);
+	color: var(--text-color-dim);
+}
+
+/* Add Field Strip at Bottom */
+.fm-editor-dialog .fm-add-row {
+	display: flex;
+	align-items: center;
+	gap: var(--nui-space-half);
+	padding: var(--nui-space-half);
+	background: var(--color-shade2);
+	border: var(--border-thickness) solid var(--border-shade2);
+	border-radius: var(--border-radius1);
+	margin-top: auto;
+}
+
+.fm-editor-dialog .fm-add-key {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.fm-editor-dialog .fm-add-type {
+	flex: 0 0 auto;
+	width: 14rem;
+}
+
+/* Raw YAML View */
+.fm-editor-dialog .fm-raw-container {
+	flex: 1 1 auto;
+	display: flex;
+	flex-direction: column;
+	min-height: 24rem;
+}
+
+.fm-editor-dialog .fm-raw-container nui-textarea {
+	flex: 1 1 auto;
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	height: 100%;
+}
+
+.fm-editor-dialog .fm-raw-container textarea {
+	flex: 1 1 auto;
+	width: 100%;
+	height: 100%;
+	min-height: 24rem;
+	font-family: monospace;
+	font-size: var(--font-size-small);
+	line-height: 1.5;
+	tab-size: 2;
+	white-space: pre;
+}
+
 /* The preview is the rendered document itself — no panel box, no header. It is the
    output, and a frame around output only competes with the frame the document already
    has. The pane supplies the padding (see the inline-preview block above). */
