@@ -197,8 +197,13 @@ it gets the meaning above instead of deletion:
    surgical splices. Everything (kind stamping §6.2, validation §7, round-trip §8) hangs on this.
 2. **Faithful vs neutral canvas** — should the editor canvas look like the chosen target
    profile (slide edges in deck mode etc.) or stay profile-neutral?
-3. **Unknown presets render plain SILENTLY** in nui (`nui.js` emits `nui-preset-<family>`
-   with no diagnostic). Spec §5 requires a visible renderer diagnostic. Small fix.
+3. **Unknown presets render plain, with a console warning only** — `mbOpenTag` in `nui.js`
+   warns once per session (deduped through `mbUnknownPresetSeen`) and the message cites spec §5,
+   so the "no diagnostic at all" half of this is done (Build order 1). What is still missing is
+   the VISIBLE half: a `console.warn` is not a diagnostic the person reading the document can
+   see. The pattern to copy already sits in the same file — `mdRejectedMedia` renders a
+   `span.nui-md-media-rejected` marker carrying the reason in its `title`, which is exactly the
+   "renderer warning, source reference retained" shape §5 asks for.
 4. **Var rendering** — `mb:var` currently renders as a visible `dl.nui-blocks-var` card
    mid-document (spec-allowed for display renderers). Is that the right look in a document?
 5. **Validation (§7) absent** — a parse failure is console.error + silent no-op; no
@@ -206,7 +211,7 @@ it gets the meaning above instead of deletion:
    2026-09-22, so the failure path now has no entry point at all — worth knowing before
    designing the diagnostics.)
 6. **Editor placement** — md-blocks Agents.md: the editor is meant to be a **nui addon**
-   (peer of nui-slides), not Playground-only (`Playground/js/blocks-editor.js`, ~1290 lines).
+   (peer of nui-slides), not Playground-only (`Playground/js/blocks-editor.js`, ~2380 lines).
    Move to `NUI/lib/modules/nui-blocks-editor.js` when the architecture settles.
 
 ## Build order (agreed)
