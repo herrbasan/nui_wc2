@@ -842,7 +842,12 @@ nui-main > .content-page > .page-blocks-editor[breakout],
 	align-items: center;
 	justify-content: center;
 	aspect-ratio: 16 / 9;
+	/* Its own floor AND ceiling, both stated. This element also carries `.media-preview`,
+	   whose 15rem ceiling sits BELOW this 16rem floor — and `min-height` beats `max-height`,
+	   so that inherited ceiling was silently dead. A player is the content rather than a
+	   thumbnail, so it keeps a taller ceiling than the image block's. */
 	min-height: 16rem;
+	max-height: 22rem;
 	background: #000;
 }
 
