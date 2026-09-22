@@ -44,28 +44,15 @@ nui-main > .content-page > .page-blocks-editor[breakout],
 	padding: var(--nui-space) var(--nui-space-double);
 }
 
-.page-blocks-editor .editor-page-header {
+/* The only toolbar on the page, and it is inside the scrolling canvas column by
+   design — nothing is pinned, so no vertical space is held for controls that are
+   set once and then left alone. */
+.page-blocks-editor .editor-blocks-header {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
 	flex-wrap: wrap;
-	gap: var(--nui-space);
-	margin-bottom: var(--nui-space);
-	padding-bottom: var(--nui-space-half);
-	border-bottom: var(--border-thickness) solid var(--border-shade2);
-}
-
-.page-blocks-editor .editor-header-controls {
-	display: flex;
-	align-items: center;
-	flex-wrap: wrap;
-	gap: var(--nui-space);
-}
-
-.page-blocks-editor .editor-control-group {
-	display: flex;
-	align-items: center;
-	gap: var(--nui-space-half);
+	gap: var(--nui-space-half) var(--nui-space);
 }
 
 .page-blocks-editor .editor-actions {
@@ -74,26 +61,150 @@ nui-main > .content-page > .page-blocks-editor[breakout],
 	gap: var(--nui-space-half);
 }
 
-/* Full-width Workspace Views */
-.page-blocks-editor .editor-workspace,
-.page-blocks-editor .editor-workspace[data-active-view="canvas"],
-.page-blocks-editor .editor-workspace[data-active-view="preview"],
-.page-blocks-editor .editor-workspace[data-active-view="raw"] {
+/* Workspace: one column by default, two when the preview is inline. */
+.page-blocks-editor .editor-workspace {
 	display: block;
 	width: 100%;
 }
 
-.page-blocks-editor .editor-workspace[data-active-view="split"] {
+/* Inline preview: canvas | divider | preview. The pane widths live in --be-split — the
+   share of the container width given to the canvas, in percent — so the divider drag
+   writes one number and the layout recomputes from it. The divider is a real grid track
+   rather than an overlay: an absolutely positioned handle would have to guess where the
+   gap centre sits, which drifts as the theme's spacing changes. */
+.page-blocks-editor .editor-workspace[data-preview-mode="inline"] {
 	display: grid;
-	grid-template-columns: minmax(44rem, 1.4fr) minmax(24rem, 1fr);
-	gap: var(--nui-space-double);
-	align-items: start;
+	grid-template-columns: minmax(0, calc(var(--be-split, 58) * 1%)) auto minmax(0, 1fr);
+	gap: var(--nui-space);
+	align-items: stretch;
 	width: 100%;
 }
 
+/* With the preview hidden or in its own window there is no second column and nothing to
+   divide, so the canvas simply takes the full width. */
+.page-blocks-editor .editor-workspace:not([data-preview-mode="inline"]) .editor-preview-pane,
+.page-blocks-editor .editor-workspace:not([data-preview-mode="inline"]) .editor-split-handle {
+	display: none;
+}
+
+/* The divider is a full --nui-space hitbox with a hairline drawn down its middle. The
+   swappable part is the ::before: the target has to stay pointer-sized while what you
+   SEE is a line, and one element cannot be both. Hover and focus thicken the line rather
+   than recolouring a fat bar — same reason. */
+.page-blocks-editor .editor-workspace[data-preview-mode="inline"] .editor-split-handle {
+	display: block;
+	align-self: stretch;
+	position: relative;
+	min-height: 4rem;
+	width: var(--nui-space);
+	cursor: col-resize;
+	touch-action: none;
+	background: none;
+}
+
+.page-blocks-editor .editor-split-handle::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 50%;
+	width: 2px;
+	margin-left: -1px;
+	border-radius: 1px;
+	background: var(--be-well-border);
+	transition: background 0.15s ease, width 0.15s ease, margin-left 0.15s ease;
+}
+
+.page-blocks-editor .editor-split-handle:hover::before,
+.page-blocks-editor .editor-split-handle:focus-visible::before,
+.page-blocks-editor .editor-split-handle.dragging::before {
+	width: 4px;
+	margin-left: -2px;
+	background: var(--color-highlight);
+}
+
+/* The line is the focus indicator, so no box is drawn around the whole hitbox. */
+.page-blocks-editor .editor-split-handle:focus-visible {
+	outline: none;
+}
+
+/* ── Independent scrolling ──
+   With the preview inline, the editor owns the viewport: the page fills the shell's
+   content box and each pane scrolls inside itself, instead of the whole document
+   scrolling as one. `align-items: stretch` above is what enables it — the panes are held
+   to the height of the workspace rather than growing to their content.
+
+   Above the stacking breakpoint only. Once the panes stack into one column there is no
+   divider and no second viewport, so ordinary page scrolling is the right behaviour. */
+@media (min-width: 1101px) {
+	nui-main > .content-page:has(.editor-workspace[data-preview-mode="inline"]) {
+		height: 100%;
+		min-height: 0;
+	}
+
+	.page-blocks-editor[breakout]:has(.editor-workspace[data-preview-mode="inline"]) {
+		display: flex;
+		flex-direction: column;
+		height: 100%;
+		min-height: 0;
+		/* No outer horizontal padding: the panes carry their own (--nui-space-double), and
+		   the page padding would otherwise leave a strip of dead space to the RIGHT of the
+		   preview's scrollbar. The scrollbar belongs on the viewport edge — it is chrome,
+		   and a gutter between it and the window reads as a stray margin. Vertical padding
+		   stays, as the only breathing room above the toolbar. */
+		padding-inline: 0;
+	}
+
+	.page-blocks-editor:has(.editor-workspace[data-preview-mode="inline"]) .editor-workspace {
+		flex: 1;
+		min-height: 0;
+	}
+
+	.page-blocks-editor .editor-workspace[data-preview-mode="inline"] > .editor-canvas-pane,
+	.page-blocks-editor .editor-workspace[data-preview-mode="inline"] > .editor-preview-pane {
+		overflow-y: auto;
+		/* The horizontal value is not cosmetic. A full-bleed section
+		   (`.nui-variant-bleed` — `preset=band:bleed` and friends) pulls itself out by
+		   exactly `--nui-space` on each side, CANCELING that much of this padding. The
+		   gap between such a section and the scrollbar is therefore always
+		   `padding − --nui-space`:
+		     · 16px padding → gap 0: the section runs straight into the scrollbar, and
+		       anything less than 16px lets the bleed escape and adds a horizontal
+		       scrollbar as well;
+		     · 32px padding → gap 16px.
+		   Hence --nui-space-double. The scrollbar is editor chrome, not part of the
+		   document, so the fix belongs on the pane rather than in the renderer's bleed —
+		   the preview still shows a true full-bleed section, inset only by the gutter. */
+		overflow-x: hidden;
+		min-height: 0;
+		padding: var(--nui-space) var(--nui-space-double);
+	}
+
+	/* Halve the preview's LEFT padding only. The right one is load-bearing (it is what
+	   holds a full-bleed section off the scrollbar — see above); this one only separates
+	   the document from the divider. Worth knowing: at 16px the bleed's -16px margin eats
+	   the padding exactly, so a full-bleed section now starts flush with the pane's own
+	   left edge rather than 16px inside it. */
+	.page-blocks-editor .editor-workspace[data-preview-mode="inline"] > .editor-preview-pane {
+		padding-left: var(--nui-space);
+	}
+
+	/* The canvas is a flex column, so without this its cards would SHRINK to fit the now
+	   bounded pane instead of overflowing it: the cards would squash and there would be
+	   nothing left to scroll. */
+	.page-blocks-editor .editor-workspace[data-preview-mode="inline"] > .editor-canvas-pane > * {
+		flex-shrink: 0;
+	}
+}
+
 @media (max-width: 1100px) {
-	.page-blocks-editor .editor-workspace[data-active-view="split"] {
+	/* Below this width the panes stack, so there is nothing left to drag. */
+	.page-blocks-editor .editor-workspace[data-preview-mode="inline"] {
 		grid-template-columns: 1fr;
+	}
+
+	.page-blocks-editor .editor-workspace[data-preview-mode="inline"] .editor-split-handle {
+		display: none;
 	}
 }
 
@@ -103,6 +214,13 @@ nui-main > .content-page > .page-blocks-editor[breakout],
 	flex-direction: column;
 	gap: var(--nui-space-half);
 	min-width: min(100%, 42rem);
+}
+
+/* ...except with the inline preview, where the divider owns the width: a locked floor
+   would sit permanently above the dragged value and the handle would stop tracking the
+   pointer. The drag carries its own minimum instead (SPLIT_MIN_PANE_PX). */
+.page-blocks-editor .editor-workspace[data-preview-mode="inline"] .editor-canvas-pane {
+	min-width: 0;
 }
 
 .page-blocks-editor .editor-card {
@@ -1006,72 +1124,9 @@ nui-main > .content-page > .page-blocks-editor[breakout],
 	min-width: 0;
 }
 
-/* Right Side Pane: Raw MD and Live Preview */
-.page-blocks-editor .editor-side-pane {
-	position: sticky;
-	top: calc(var(--app-header-height, 4rem) + var(--nui-space));
-	display: flex;
-	flex-direction: column;
-	gap: var(--nui-space);
-	min-width: 0;
-}
-
-.page-blocks-editor .editor-panel-box {
-	background: var(--be-section-bg);
-	border: 1px solid var(--be-section-border);
-	border-radius: var(--border-radius2);
-	overflow: hidden;
-	display: flex;
-	flex-direction: column;
-}
-
-.page-blocks-editor .editor-panel-box .panel-header {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	padding: var(--nui-space-half) var(--nui-space);
-	background: var(--be-section-header-bg);
-	border-bottom: 1px solid var(--be-section-border);
-}
-
-.page-blocks-editor .editor-panel-box .panel-header h3 {
-	margin: 0;
-	font-size: var(--font-size-small);
-}
-
-.page-blocks-editor .preview-badge {
-	font-size: var(--font-size-xsmall);
-	background: var(--color-highlight-dim);
-	color: var(--text-color);
-	padding: 0.1rem 0.4rem;
-	border-radius: var(--border-radius1);
-}
-
-.page-blocks-editor .raw-md-textarea {
-	width: 100%;
-	height: 25rem;
-	box-sizing: border-box;
-	background: var(--color-base);
-	color: var(--text-color);
-	font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-	font-size: var(--font-size-small);
-	line-height: 1.4;
-	border: none;
-	padding: var(--nui-space);
-	resize: vertical;
-}
-
-.page-blocks-editor .raw-md-textarea:focus {
-	outline: none;
-}
-
-/* Full height, no inner scroller: the preview is a read-along mirror of the
-   canvas, so it grows with the document and the page scrolls — a nested
-   scroll region would only trap the wheel mid-document. */
-.page-blocks-editor .live-preview-panel .panel-content {
-	padding: var(--nui-space);
-	background: var(--color-base);
-}
+/* The preview is the rendered document itself — no panel box, no header. It is the
+   output, and a frame around output only competes with the frame the document already
+   has. The pane supplies the padding (see the inline-preview block above). */
 
 /* Palette Dialog Grid */
 .palette-grid {

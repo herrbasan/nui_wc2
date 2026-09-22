@@ -7,8 +7,6 @@ export function initBlocksEditor(element, params, nui) {
 	const { util } = nui;
 
 	// Elements
-	const modeSelect = element.querySelector('#editor-target-mode');
-	const chromePanel = element.querySelector('#editor-chrome-panel');
 	const chromeHeaderInput = element.querySelector('#chrome-header-input');
 	const chromeFooterInput = element.querySelector('#chrome-footer-input');
 	const sectionsContainer = element.querySelector('#editor-sections-container');
@@ -16,22 +14,18 @@ export function initBlocksEditor(element, params, nui) {
 	const btnAddSecBottom = element.querySelector('#btn-add-section-bottom');
 	const btnLoadSample = element.querySelector('#btn-load-sample');
 	const btnCopyMd = element.querySelector('#btn-copy-md');
-	const viewSwitcher = element.querySelector('#editor-view-switcher');
+	const previewSwitcher = element.querySelector('#editor-preview-switcher');
 	const paneCanvas = element.querySelector('#pane-canvas');
-	const panePreview = element.querySelector('#pane-preview');
-	const paneRaw = element.querySelector('#pane-raw');
 	const workspace = element.querySelector('.editor-workspace');
-	const rawEditor = element.querySelector('#raw-markdown-editor');
-	const btnSyncRaw = element.querySelector('#btn-sync-raw-to-visual');
 	const livePreview = element.querySelector('#live-markdown-preview');
-	const previewBadge = element.querySelector('#preview-mode-badge');
 	const btnEditFrontmatter = element.querySelector('#btn-edit-frontmatter');
 	const metaTitleDisplay = element.querySelector('[data-meta-title]');
 
 	// Current State
 	let currentDoc = createDefaultDoc();
-	let currentMode = 'web';
 	let isSyncing = false;
+	let previewMode = 'inline';
+	let previewWindow = null;
 
 	function createDefaultDoc() {
 		return {
@@ -111,33 +105,10 @@ export function initBlocksEditor(element, params, nui) {
 		return doc;
 	}
 
-	// ── Target Mode Switching ──
-	function setTargetMode(mode) {
-		currentMode = mode;
-		if (mode === 'slides') {
-			chromePanel.style.display = 'block';
-			previewBadge.textContent = 'Slideshow View';
-		} else if (mode === 'document') {
-			chromePanel.style.display = 'none';
-			previewBadge.textContent = 'Document (Print) View';
-		} else {
-			chromePanel.style.display = 'none';
-			previewBadge.textContent = 'Webpage / CMS View';
-		}
-		syncToOutputs();
-	}
-
-	if (modeSelect) {
-		modeSelect.addEventListener('nui-change', (e) => {
-			const val = e.detail?.values?.[0] || modeSelect.querySelector('select')?.value || 'web';
-			setTargetMode(val);
-		});
-		modeSelect.querySelector('select')?.addEventListener('change', (e) => {
-			setTargetMode(e.target.value);
-		});
-	}
-
 	// ── Chrome Inputs for Slides ──
+	// The panel that shows these starts hidden and has no trigger since the Target
+	// select was removed (it was that select's only effect). The editing itself still
+	// works — unhide the panel to use it.
 	function updateChromeFromDoc() {
 		const main = currentDoc.mains?.[0];
 		if (!main) return;
@@ -2292,72 +2263,289 @@ export function initBlocksEditor(element, params, nui) {
 		isSyncing = true;
 		try {
 			const md = util.serializeBlocks(currentDoc);
-			if (rawEditor && rawEditor.value !== md) {
-				rawEditor.value = md;
-			}
+			const html = util.markdownToHtml(md);
 			if (livePreview) {
-				const html = util.markdownToHtml(md);
 				livePreview.innerHTML = html;
 				util.enhanceSlideshows?.(livePreview);
 				util.enhancePlayers?.(livePreview);
 			}
+			renderPreviewWindow(html);
 		} finally {
 			isSyncing = false;
 		}
 	}
 
-	btnSyncRaw?.addEventListener('click', () => {
-		const text = rawEditor.value;
-		try {
-			const parsed = util.parseBlocks(text);
-			if (parsed && parsed.mains?.length) {
-				currentDoc = normalizeDoc(parsed);
-				renderVisualEditor();
-				syncToOutputs();
-			}
-		} catch (err) {
-			console.error('Failed to parse raw markdown:', err);
-		}
-	});
-
-	// ── View Mode Switching (Editor, Live Preview, Raw Markdown, Split View) ──
-	function setView(viewName) {
-		if (!workspace) return;
-		workspace.setAttribute('data-active-view', viewName);
-		viewSwitcher?.querySelectorAll('nui-button').forEach(btn => {
-			if (btn.dataset.view === viewName) btn.setAttribute('state', 'active');
+	// ── Preview Modes ──
+	// The canvas is always the editing surface. The preview is either beside it (inline),
+	// put away (hidden), or in its own window. When it is not inline the divider has
+	// nothing to divide, so the canvas takes the full width on its own.
+	function setPreviewMode(mode) {
+		if (mode === 'window' && !ensurePreviewWindow()) return;
+		previewMode = mode;
+		if (mode !== 'window') closePreviewWindow();
+		workspace.setAttribute('data-preview-mode', mode);
+		previewSwitcher?.querySelectorAll('nui-button').forEach(btn => {
+			if (btn.dataset.preview === mode) btn.setAttribute('state', 'active');
 			else btn.removeAttribute('state');
 		});
+		if (mode === 'inline') element.querySelector('.page-blocks-editor')?.setAttribute('breakout', '');
+		syncToOutputs();
+		applySplitPreference();
+	}
 
-		const pageEl = element.querySelector('.page-blocks-editor');
-		if (viewName === 'split') {
-			pageEl?.setAttribute('breakout', '');
-			paneCanvas.style.display = 'flex';
-			panePreview.style.display = 'block';
-			paneRaw.style.display = 'none';
-		} else {
-			pageEl?.removeAttribute('breakout');
-			if (viewName === 'canvas') {
-				paneCanvas.style.display = 'flex';
-				panePreview.style.display = 'none';
-				paneRaw.style.display = 'none';
-			} else if (viewName === 'preview') {
-				paneCanvas.style.display = 'none';
-				panePreview.style.display = 'block';
-				paneRaw.style.display = 'none';
-			} else if (viewName === 'raw') {
-				paneCanvas.style.display = 'none';
-				panePreview.style.display = 'none';
-				paneRaw.style.display = 'block';
+	// ── Preview in its own window ──
+	// The popup gets a plain container and finished HTML, NOT the <nui-markdown> element
+	// moved across. Custom elements are registered per window, so a moved node would
+	// arrive un-upgraded and inert. Writing HTML also keeps the pop-out mechanism
+	// swappable: window.open today, documentPictureInPicture is one function's change.
+	function ensurePreviewWindow() {
+		if (previewWindow && !previewWindow.closed) {
+			previewWindow.focus();
+			return true;
+		}
+		// '_blank', NOT a fixed name. With a name, `open` returns any window already
+		// using it — including a leftover from an earlier attempt — and a window this
+		// document did not create is not necessarily scriptable from here. That reuse
+		// is what produced a SecurityError on the first version.
+		const win = window.open('', '_blank', 'width=760,height=900');
+		if (!win) {
+			// The mode cannot mean what it says if there is no window, so say so rather
+			// than leaving a button that appears to work.
+			nui.components.banner?.show({
+				content: 'The browser blocked the preview window. Allow pop-ups for this page, then try again.',
+				priority: 'warning',
+				autoClose: 6000
+			});
+			return false;
+		}
+
+		try {
+			win.document.title = 'Blocks Preview';
+			win.document.body.innerHTML = '<div id="preview-root"></div>';
+
+			// Copy the stylesheets so the popup looks like the preview it replaced.
+			// `.href` is already resolved absolute — the raw attribute would resolve
+			// against the popup's about:blank and silently load nothing.
+			for (const link of document.querySelectorAll('link[rel="stylesheet"]')) {
+				const clone = win.document.createElement('link');
+				clone.rel = 'stylesheet';
+				clone.href = link.href;
+				win.document.head.appendChild(clone);
 			}
+			for (const style of document.querySelectorAll('style')) {
+				win.document.head.appendChild(style.cloneNode(true));
+			}
+			const layout = win.document.createElement('style');
+			layout.textContent = 'body{margin:0;background:var(--color-base,#fff)}'
+				+ '#preview-root{padding:var(--nui-space,1rem)}';
+			win.document.head.appendChild(layout);
+
+			previewWindow = win;
+			return true;
+		} catch (err) {
+			// Another window is a boundary, not your own DOM: the browser can hand back
+			// something this document is not allowed to script. Report it and close the
+			// half-built window, rather than leaving it on screen behind a mode that
+			// claims to be working.
+			console.error('[blocks-editor] could not prepare the preview window:', err);
+			win.close();
+			nui.components.banner?.show({
+				content: 'Could not open the preview window: ' + err.message,
+				priority: 'alert',
+				autoClose: 6000
+			});
+			return false;
 		}
 	}
 
-	viewSwitcher?.addEventListener('click', (e) => {
-		const btn = e.target.closest('nui-button[data-view]');
+	function closePreviewWindow() {
+		if (previewWindow && !previewWindow.closed) previewWindow.close();
+		previewWindow = null;
+	}
+
+	// Closing the popup has no reliable event to hang this on. A freshly opened window
+	// fires `pagehide` for its OWN initial about:blank being replaced, so that listener
+	// reports a close that has not happened — measured: pagehide fires immediately while
+	// `closed` stays false for as long as you watch. Reading it as a close made the
+	// button look dead, since the mode snapped straight back to inline.
+	//
+	// So the closure is checked where it actually matters: whenever we render, and when
+	// focus returns to this window — which is what happens when the user closes it.
+	function revertIfPreviewWindowGone() {
+		if (previewMode !== 'window') return;
+		if (previewWindow && !previewWindow.closed) return;
+		previewWindow = null;
+		setPreviewMode('inline');
+	}
+
+	window.addEventListener('focus', revertIfPreviewWindowGone);
+
+	// The popup's document is re-acquired on every render instead of held. A held
+	// reference goes stale if the window's document is ever replaced, and writes into a
+	// detached copy fail silently — the window would just sit there empty with no clue
+	// why. Re-acquiring also makes the check for "this window is no longer ours" free.
+	function renderPreviewWindow(html) {
+		if (previewMode !== 'window') return;
+		revertIfPreviewWindowGone();
+		if (previewMode !== 'window') return;
+
+		let root = null;
+		try {
+			root = previewWindow.document.getElementById('preview-root');
+		} catch (err) {
+			root = null;
+		}
+		if (!root) {
+			console.warn('[blocks-editor] the preview window is no longer scriptable from this '
+				+ 'page — its document was replaced. Falling back to the inline preview.');
+			closePreviewWindow();
+			setPreviewMode('inline');
+			nui.components.banner?.show({
+				content: 'The preview window was taken over by the browser. The preview is back here instead.',
+				priority: 'warning',
+				autoClose: 6000
+			});
+			return;
+		}
+		root.innerHTML = html;
+	}
+
+	previewSwitcher?.addEventListener('click', (e) => {
+		const btn = e.target.closest('nui-button[data-preview]');
 		if (!btn) return;
-		setView(btn.dataset.view);
+		setPreviewMode(btn.dataset.preview);
 	});
+
+	// ── Split View Divider ──
+	// The two panes are sized by one number: --be-split, the percentage of the container
+	// width the canvas gets (the preview takes the rest). Only the DRAG measures the live
+	// canvas rect — everything else works from the stored percentage, so the value never
+	// depends on when a handler happened to run relative to layout.
+	const splitHandle = element.querySelector('#editor-split-handle');
+	const SPLIT_DEFAULT_PCT = 58;
+	// Below this, a pane is too narrow to edit a 3-column structure in.
+	const SPLIT_MIN_PANE_PX = 320;
+
+	// The divider track and the gap on either side of it are read from the rendered
+	// layout — they are theme-driven, and duplicating them here would leave a constant
+	// that silently goes stale.
+	// Two values, deliberately. `splitPreference` is what the user chose; `splitApplied`
+	// is that choice clamped to what the container can currently hold. The clamp is
+	// LOSSY — it cannot be inverted — so a single stored number would let any momentarily
+	// narrow layout overwrite the choice permanently. Measured on this page, the content
+	// column collapses to ~842px for ~250ms while a sidebar transition runs, and a
+	// `resize` listener that clamped and stored would latch 320/842 = 38% from that
+	// transient and never recover. Keeping the preference intact makes the clamp
+	// self-correcting: as the column widens again the preference is re-clamped and the
+	// pane returns to where it was put.
+	let splitPreference = SPLIT_DEFAULT_PCT;
+
+	function splitGeometry() {
+		const gap = parseFloat(getComputedStyle(workspace).columnGap) || 0;
+		const total = workspace.clientWidth;
+		// What the two panes actually have to divide between them.
+		const free = total - splitHandle.offsetWidth - gap * 2;
+		return { total, free, gap };
+	}
+
+	function applySplit(canvasPct) {
+		const next = canvasPct.toFixed(2);
+		if (workspace.style.getPropertyValue('--be-split') === next) return;
+		workspace.style.setProperty('--be-split', next);
+		splitHandle.setAttribute('aria-valuenow', String(Math.round(canvasPct)));
+	}
+
+	// Returns null when the container is too small to satisfy both minimums, in which
+	// case the layout is left alone rather than pinned to a meaningless value.
+	//
+	// The pane widths are percentages of the container's content box, but the minimums
+	// are pixel sizes for the PANES — so pixel values convert through `total`, not
+	// through `free`. Dividing by `free` (the obvious-looking choice, and this code's
+	// first version) puts the floor short by the divider and the two gaps: a 320px
+	// minimum rendered as 342px, and the drag silently stopped early.
+	function clampSplitPct(canvasPct) {
+		const { total, free } = splitGeometry();
+		const minPct = (SPLIT_MIN_PANE_PX / total) * 100;
+		const maxPct = ((free - SPLIT_MIN_PANE_PX) / total) * 100;
+		if (!(total > 0) || maxPct <= minPct) return null;
+		return Math.min(maxPct, Math.max(minPct, canvasPct));
+	}
+
+	// Re-clamps the preference against the CURRENT container. This is the only thing the
+	// container listener does — clamping is safe to repeat, storing is not.
+	//
+	// The view check is a precondition of the measurement, not a guard against an
+	// unlikely case: outside Split View the divider is hidden and the grid gap does not
+	// apply, so `splitGeometry` would read a container that has no divider track and no
+	// gaps — and clamp a perfectly good preference down to fit a layout it does not
+	// belong to. That wrong value then persists back into Split View, so merely visiting
+	// Live Preview would move the divider.
+	function applySplitPreference() {
+		if (workspace.getAttribute('data-preview-mode') !== 'inline') return;
+		const pct = clampSplitPct(splitPreference);
+		if (pct !== null) applySplit(pct);
+	}
+
+	// The drag and keyboard speak in pixel widths for the canvas; the preference is a
+	// percentage, so the conversion goes through `total`. What the user sees clamped is
+	// what gets remembered — a drag onto the floor stores the floor.
+	function setSplitWidth(canvasWidthPx) {
+		const pct = clampSplitPct((canvasWidthPx / splitGeometry().total) * 100);
+		if (pct === null) return;
+		splitPreference = pct;
+		applySplit(pct);
+	}
+
+	function resetSplit() {
+		splitPreference = SPLIT_DEFAULT_PCT;
+		applySplitPreference();
+	}
+
+	splitHandle?.addEventListener('pointerdown', (e) => {
+		if (workspace.getAttribute('data-preview-mode') !== 'inline') return;
+		e.preventDefault();
+		const startX = e.clientX;
+		const startWidth = paneCanvas.getBoundingClientRect().width;
+		splitHandle.setPointerCapture(e.pointerId);
+		splitHandle.classList.add('dragging');
+
+		const onMove = (ev) => setSplitWidth(startWidth + (ev.clientX - startX));
+		const onEnd = (ev) => {
+			splitHandle.classList.remove('dragging');
+			splitHandle.releasePointerCapture(ev.pointerId);
+			splitHandle.removeEventListener('pointermove', onMove);
+			splitHandle.removeEventListener('pointerup', onEnd);
+			splitHandle.removeEventListener('pointercancel', onEnd);
+		};
+		splitHandle.addEventListener('pointermove', onMove);
+		splitHandle.addEventListener('pointerup', onEnd);
+		splitHandle.addEventListener('pointercancel', onEnd);
+	});
+
+	// Keyboard equivalent of the drag (APG window-splitter pattern).
+	splitHandle?.addEventListener('keydown', (e) => {
+		if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+			e.preventDefault();
+			const step = ((e.shiftKey ? 10 : 2) / 100) * splitGeometry().total;
+			setSplitWidth(paneCanvas.getBoundingClientRect().width + (e.key === 'ArrowLeft' ? -step : step));
+		} else if (e.key === 'Home' || e.key === 'End') {
+			e.preventDefault();
+			setSplitWidth(e.key === 'Home' ? SPLIT_MIN_PANE_PX : splitGeometry().free - SPLIT_MIN_PANE_PX);
+		} else if (e.key === 'Enter' || e.key === ' ') {
+			e.preventDefault();
+			resetSplit();
+		}
+	});
+
+	splitHandle?.addEventListener('dblclick', resetSplit);
+
+	// Observe the CONTAINER, not the window. A window resize is a single event, but the
+	// column width this layout depends on keeps changing for ~250ms afterwards while the
+	// sidebar transition runs — so a window listener sees one transient width, and the
+	// applied value would be left describing a layout that no longer exists. The observer
+	// fires on every step of that change, re-clamping against each one.
+	new ResizeObserver(applySplitPreference).observe(workspace);
+	applySplitPreference();
 
 	btnCopyMd?.addEventListener('click', async () => {
 		const md = util.serializeBlocks(currentDoc);
@@ -2464,8 +2652,11 @@ export function initBlocksEditor(element, params, nui) {
 			.replace(/"/g, '&quot;');
 	}
 
-	// Initial render
+	// Initial render. Side-by-side is the default surface — setPreviewMode also carries
+	// the breakout attribute the split layout needs, so pre-setting the attribute in the
+	// markup would not be enough on its own.
 	renderVisualEditor();
 	syncToOutputs();
+	setPreviewMode('inline');
 }
 
