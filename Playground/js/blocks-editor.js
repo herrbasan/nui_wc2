@@ -309,22 +309,11 @@ export function initBlocksEditor(element, params, nui) {
 		let keys = [...new Set(entries.flatMap((e) => Object.keys(e || {})))];
 		if (keys.length === 0) keys = ['name', 'role'];
 
-		const schemaBar = document.createElement('div');
-		schemaBar.className = 'fm-entries-schema';
-		wrap.appendChild(schemaBar);
-
-		const cardsContainer = document.createElement('div');
-		cardsContainer.className = 'fm-entries-cards';
-		cardsContainer.style.display = 'flex';
-		cardsContainer.style.flexDirection = 'column';
-		cardsContainer.style.gap = 'var(--nui-space-half)';
-		wrap.appendChild(cardsContainer);
-
 		function collectCurrentEntries() {
 			const list = [];
-			for (const card of cardsContainer.querySelectorAll('.fm-entry-card')) {
+			for (const row of wrap.querySelectorAll('.fm-table-row')) {
 				const item = {};
-				for (const inp of card.querySelectorAll('[data-entry-key]')) {
+				for (const inp of row.querySelectorAll('[data-entry-key]')) {
 					const k = inp.dataset.entryKey;
 					const v = inp.querySelector('input')?.value;
 					if (v !== undefined) item[k] = v;
@@ -334,26 +323,24 @@ export function initBlocksEditor(element, params, nui) {
 			return list;
 		}
 
-		function renderSchema() {
-			schemaBar.innerHTML = `
-				<div class="fm-schema-inner">
-					<span class="fm-schema-label">Properties:</span>
-					<div class="fm-schema-pills"></div>
-					<div class="fm-schema-add">
-						<nui-input><input type="text" placeholder="Add property (e.g. bio)" data-new-schema-key></nui-input>
-						<nui-button variant="outline" size="small"><button type="button" aria-label="Add property"><nui-icon name="add"></nui-icon></button></nui-button>
-					</div>
-				</div>
-			`;
-			const pills = schemaBar.querySelector('.fm-schema-pills');
+		function renderTable(list) {
+			wrap.innerHTML = '';
+
+			const table = document.createElement('div');
+			table.className = 'fm-entries-table';
+
+			// Header row
+			const headRow = document.createElement('div');
+			headRow.className = 'fm-table-header';
+
 			keys.forEach((k) => {
-				const pill = document.createElement('span');
-				pill.className = 'fm-schema-pill';
-				pill.innerHTML = `
-					<span class="fm-schema-key-name" title="Click to rename">${k}</span>
-					<button type="button" class="fm-schema-key-del" title="Remove property '${k}' from all items">×</button>
+				const col = document.createElement('div');
+				col.className = 'fm-col-header';
+				col.innerHTML = `
+					<span class="fm-col-title" title="Click to rename property">${fmHumanize(k)}</span>
+					<button type="button" class="fm-col-del" title="Remove property '${k}'" aria-label="Remove property ${k}">×</button>
 				`;
-				pill.querySelector('.fm-schema-key-name').addEventListener('click', () => {
+				col.querySelector('.fm-col-title').addEventListener('click', () => {
 					const newName = prompt(`Rename property '${k}' to:`, k);
 					if (!newName || newName.trim() === '' || newName.trim() === k) return;
 					const nk = newName.trim();
@@ -370,89 +357,95 @@ export function initBlocksEditor(element, params, nui) {
 							delete item[k];
 						}
 					});
-					reRender(current);
+					renderTable(current);
 				});
-				pill.querySelector('.fm-schema-key-del').addEventListener('click', () => {
+				col.querySelector('.fm-col-del').addEventListener('click', () => {
 					if (keys.length <= 1) return;
 					const current = collectCurrentEntries();
 					keys = keys.filter((key) => key !== k);
 					current.forEach((item) => { delete item[k]; });
-					reRender(current);
+					renderTable(current);
 				});
-				pills.appendChild(pill);
+				headRow.appendChild(col);
 			});
 
-			const addInput = schemaBar.querySelector('[data-new-schema-key]');
-			const addBtn = schemaBar.querySelector('.fm-schema-add nui-button button');
-			const handleAdd = () => {
-				const nk = addInput.value.trim();
-				if (!nk || keys.includes(nk)) return;
+			// Add property button in header row
+			const addCol = document.createElement('div');
+			addCol.className = 'fm-col-actions-header';
+			addCol.innerHTML = `
+				<nui-button variant="outline" size="small"><button type="button" aria-label="Add property to all items" title="Add property column"><nui-icon name="add"></nui-icon>Property</button></nui-button>
+			`;
+			addCol.querySelector('button').addEventListener('click', () => {
+				const newProp = prompt('Add new property to all items (e.g. avatar, bio):');
+				if (!newProp || !newProp.trim()) return;
+				const nk = newProp.trim();
+				if (keys.includes(nk)) {
+					alert(`Property '${nk}' already exists.`);
+					return;
+				}
 				const current = collectCurrentEntries();
 				keys.push(nk);
 				current.forEach((item) => {
 					if (!(nk in item)) item[nk] = '';
 				});
-				reRender(current);
-			};
-			addBtn.addEventListener('click', handleAdd);
-			addInput.addEventListener('keydown', (e) => {
-				if (e.key === 'Enter') {
-					e.preventDefault();
-					handleAdd();
-				}
+				renderTable(current);
 			});
-		}
+			headRow.appendChild(addCol);
 
-		function addEntryCard(entry = {}, idx = 0) {
-			const card = document.createElement('div');
-			card.className = 'fm-entry-card';
+			table.appendChild(headRow);
 
-			const firstVal = Object.values(entry)[0] || '';
-			const titleSuffix = firstVal ? ` — ${firstVal}` : '';
-			const head = document.createElement('div');
-			head.className = 'fm-entry-header';
-			head.innerHTML = `<span>Item ${idx + 1}${titleSuffix}</span>`;
-			head.appendChild(fmIconButton('close', 'Remove entry', () => card.remove()));
-			card.appendChild(head);
+			// Rows
+			const rowsContainer = document.createElement('div');
+			rowsContainer.className = 'fm-table-rows';
 
-			const grid = document.createElement('div');
-			grid.className = 'fm-entry-grid';
+			function addRow(entry = {}) {
+				const row = document.createElement('div');
+				row.className = 'fm-table-row';
 
-			const entryKeys = [...new Set([...keys, ...Object.keys(entry)])];
-			for (const k of entryKeys) {
-				const field = document.createElement('div');
-				field.className = 'fm-entry-field';
-				const lbl = document.createElement('label');
-				lbl.textContent = fmHumanize(k);
-				field.appendChild(lbl);
+				for (const k of keys) {
+					const cell = document.createElement('div');
+					cell.className = 'fm-table-cell';
+					const inp = fmInput('text', entry[k] ?? '');
+					delete inp.dataset.kind;
+					inp.dataset.entryKey = k;
+					cell.appendChild(inp);
+					row.appendChild(cell);
+				}
 
-				const inp = fmInput('text', entry[k] ?? '');
-				delete inp.dataset.kind;
-				inp.dataset.entryKey = k;
-				field.appendChild(inp);
-				grid.appendChild(field);
+				const actionCell = document.createElement('div');
+				actionCell.className = 'fm-table-cell-actions';
+				actionCell.appendChild(fmIconButton('close', 'Remove item', () => {
+					if (rowsContainer.children.length > 1) {
+						row.remove();
+					} else {
+						row.querySelectorAll('input').forEach((i) => { i.value = ''; });
+					}
+				}));
+				row.appendChild(actionCell);
+
+				rowsContainer.appendChild(row);
 			}
-			card.appendChild(grid);
-			cardsContainer.appendChild(card);
+
+			list.forEach((e) => addRow(e && typeof e === 'object' ? e : {}));
+			table.appendChild(rowsContainer);
+
+			// Footer with Add Item button
+			const footer = document.createElement('div');
+			footer.className = 'fm-table-footer';
+			const addBtn = document.createElement('nui-button');
+			addBtn.setAttribute('variant', 'outline');
+			addBtn.setAttribute('size', 'small');
+			addBtn.innerHTML = '<button type="button"><nui-icon name="add"></nui-icon>Add Item</button>';
+			addBtn.addEventListener('click', () => {
+				addRow({});
+			});
+			footer.appendChild(addBtn);
+			table.appendChild(footer);
+
+			wrap.appendChild(table);
 		}
 
-		function reRender(list) {
-			cardsContainer.innerHTML = '';
-			renderSchema();
-			list.forEach((e, i) => addEntryCard(e && typeof e === 'object' ? e : {}, i));
-		}
-
-		reRender(entries.length ? entries : [{}]);
-
-		const addBtn = document.createElement('nui-button');
-		addBtn.setAttribute('variant', 'outline');
-		addBtn.setAttribute('size', 'small');
-		addBtn.innerHTML = '<button type="button"><nui-icon name="add"></nui-icon>Add Item</button>';
-		addBtn.addEventListener('click', () => {
-			addEntryCard({}, cardsContainer.children.length);
-		});
-		wrap.appendChild(addBtn);
-
+		renderTable(entries.length ? entries : [{}]);
 		return wrap;
 	}
 
@@ -613,9 +606,9 @@ export function initBlocksEditor(element, params, nui) {
 				}
 				case 'entries': {
 					const list = [];
-					for (const card of w.querySelectorAll('.fm-entry-card')) {
+					for (const row of w.querySelectorAll('.fm-table-row')) {
 						const entry = {};
-						for (const inp of card.querySelectorAll('[data-entry-key]')) {
+						for (const inp of row.querySelectorAll('[data-entry-key]')) {
 							const k = inp.dataset.entryKey;
 							const val = inp.querySelector('input')?.value;
 							if (val !== undefined && val !== '') {

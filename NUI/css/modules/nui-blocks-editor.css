@@ -1291,131 +1291,107 @@ nui-main > .content-page > .page-blocks-editor[breakout],
 	border-top: var(--border-thickness) dashed var(--border-shade2);
 }
 
-/* Entries (List of Maps, e.g. Authors) */
+/* Entries (List of Objects / Maps, e.g. Authors) - Clean Table Layout */
 .fm-editor-dialog .fm-entries {
 	display: flex;
 	flex-direction: column;
-	gap: var(--nui-space-half);
 	width: 100%;
 }
 
-.fm-editor-dialog .fm-entries-schema {
+.fm-editor-dialog .fm-entries-table {
+	display: flex;
+	flex-direction: column;
+	gap: var(--nui-space-half);
 	background: var(--color-shade1);
-	border: var(--border-thickness) dashed var(--border-shade2);
+	border: var(--border-thickness) solid var(--border-shade2);
 	border-radius: var(--border-radius1);
-	padding: var(--nui-space-quarter) var(--nui-space-half);
+	padding: var(--nui-space-half);
+	overflow-x: auto;
 }
 
-.fm-editor-dialog .fm-schema-inner {
+.fm-editor-dialog .fm-table-header {
 	display: flex;
 	align-items: center;
-	flex-wrap: wrap;
 	gap: var(--nui-space-half);
+	padding-bottom: var(--nui-space-quarter);
+	border-bottom: var(--border-thickness) solid var(--border-shade2);
 }
 
-.fm-editor-dialog .fm-schema-label {
+.fm-editor-dialog .fm-col-header {
+	flex: 1 1 0;
+	min-width: 8rem;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	background: var(--color-shade2);
+	border: var(--border-thickness) solid var(--border-shade2);
+	border-radius: var(--border-radius1);
+	padding: 0.25rem 0.5rem;
+}
+
+.fm-editor-dialog .fm-col-title {
 	font-size: var(--font-size-xsmall);
 	font-weight: 600;
-	color: var(--text-color-dim);
-	text-transform: uppercase;
-	letter-spacing: 0.05em;
-}
-
-.fm-editor-dialog .fm-schema-pills {
-	display: flex;
-	align-items: center;
-	flex-wrap: wrap;
-	gap: var(--nui-space-quarter);
-}
-
-.fm-editor-dialog .fm-schema-pill {
-	display: inline-flex;
-	align-items: center;
-	gap: 0.25rem;
-	background: var(--color-shade3);
-	border: var(--border-thickness) solid var(--border-shade3);
-	border-radius: var(--border-radius1);
-	padding: 0.15rem 0.45rem;
-	font-size: var(--font-size-xsmall);
-	font-family: monospace;
 	color: var(--text-color);
-}
-
-.fm-editor-dialog .fm-schema-key-name {
 	cursor: pointer;
 }
 
-.fm-editor-dialog .fm-schema-key-name:hover {
+.fm-editor-dialog .fm-col-title:hover {
 	text-decoration: underline;
 	color: var(--color-highlight, #3b82f6);
 }
 
-.fm-editor-dialog .fm-schema-key-del {
+.fm-editor-dialog .fm-col-del {
 	background: none;
 	border: none;
-	padding: 0;
-	font-size: 0.85rem;
+	padding: 0 0.2rem;
+	font-size: 0.95rem;
 	line-height: 1;
 	color: var(--text-color-dim);
 	cursor: pointer;
 }
 
-.fm-editor-dialog .fm-schema-key-del:hover {
+.fm-editor-dialog .fm-col-del:hover {
 	color: var(--color-danger, #ef4444);
 }
 
-.fm-editor-dialog .fm-schema-add {
-	display: inline-flex;
+.fm-editor-dialog .fm-col-actions-header {
+	flex: 0 0 auto;
+	display: flex;
 	align-items: center;
-	gap: var(--nui-space-quarter);
-	margin-left: auto;
 }
 
-.fm-editor-dialog .fm-schema-add nui-input {
-	width: 11rem;
-}
-
-.fm-editor-dialog .fm-schema-add input {
-	padding: 0.2rem 0.4rem;
-	font-size: var(--font-size-xsmall);
-}
-
-.fm-editor-dialog .fm-entry-card {
-	background: var(--color-shade1);
-	border: var(--border-thickness) solid var(--border-shade2);
-	border-radius: var(--border-radius1);
-	padding: var(--nui-space-half) var(--nui-space);
+.fm-editor-dialog .fm-table-rows {
 	display: flex;
 	flex-direction: column;
+	gap: var(--nui-space-quarter);
+}
+
+.fm-editor-dialog .fm-table-row {
+	display: flex;
+	align-items: center;
 	gap: var(--nui-space-half);
 }
 
-.fm-editor-dialog .fm-entry-header {
+.fm-editor-dialog .fm-table-cell {
+	flex: 1 1 0;
+	min-width: 8rem;
+}
+
+.fm-editor-dialog .fm-table-cell nui-input {
+	width: 100%;
+}
+
+.fm-editor-dialog .fm-table-cell-actions {
+	flex: 0 0 auto;
 	display: flex;
-	justify-content: space-between;
 	align-items: center;
-	font-size: var(--font-size-small);
-	font-weight: 500;
-	color: var(--text-color);
-	border-bottom: var(--border-thickness) solid var(--border-shade2);
-	padding-bottom: var(--nui-space-quarter);
 }
 
-.fm-editor-dialog .fm-entry-grid {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
-	gap: var(--nui-space-half) var(--nui-space);
-}
-
-.fm-editor-dialog .fm-entry-field {
+.fm-editor-dialog .fm-table-footer {
+	padding-top: var(--nui-space-quarter);
 	display: flex;
-	flex-direction: column;
-	gap: 0.2rem;
-}
-
-.fm-editor-dialog .fm-entry-field label {
-	font-size: var(--font-size-xsmall);
-	color: var(--text-color-dim);
+	justify-content: flex-start;
 }
 
 /* Add Field Strip at Bottom */
