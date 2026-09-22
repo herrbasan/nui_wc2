@@ -35,6 +35,9 @@ Playground/
 
 - **`/docs`**: Internal **development documentation**. Contains notes, migration guides, component upgrade plans, and archived discussion/planning docs. Not meant for end-users.
 - **`/documentation`**: Official **front-facing documentation** and Ground Truth. Contains the main `DOCUMENTATION.md` orientation guide and the generated `components.json` registry. This is the source of truth for understanding how to use the library.
+- **`documentation/NUI/` — a second copy, in the storage box, NOT in this repo.** ~50 files at MCP-storage path `documentation/NUI/`, alongside the `LLM APIs/`, `The Project/` and `Workshop/` domains. The chat app reads this set. It is a **hand-authored, condensed quick reference — deliberately not a copy of this repo's docs, and nothing generates it** (`scripts/update-docs.js` writes only `documentation/components.json`; `scripts/sync-markdown.js` only copies demo snippets into this repo's own docs). Nothing detects when it goes stale, so it drifts silently: as of September 2026 `component_sortable.md` still documented `nui-sortable-start` / `nui-sortable-end` and `{ fromIndex, toIndex }` — **none of which exist** — three months after they were replaced by `nui-sortable-change`.
+
+  **So: when you change a component, an addon or a guide here, update the matching file in `documentation/NUI/` in the same session.** Naming is `component_<name>.md`, `addon_<name>.md`, `guide_<name>.md`, `concept_<name>.md`, `reference_<name>.md`; the domain's own `Agents.md` §3 *Source Mapping* lists which repo files each class derives from. Keep it condensed — that is the point of the domain — and bump the frontmatter `date:`.
 
 ## Component Registry
 
@@ -163,6 +166,7 @@ Follow [W3C ARIA Authoring Practices Guide](https://www.w3.org/WAI/ARIA/apg/patt
 2. **Add styles** in `NUI/css/nui-theme.css`
 3. **Create demo page** in `Playground/pages/components/[name].html` (see below)
 4. **Update navigation** in `Playground/js/main.js`
+5. **Update the storage-box copy** in `documentation/NUI/component_[name].md` (or `addon_[name].md`). See *Documentation Folders* above: it is hand-written, nothing generates it, and nothing warns you when it goes stale. Changing an existing component counts too, not just adding one.
 
 ## Creating Demo Pages
 
