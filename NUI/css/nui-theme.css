@@ -3604,9 +3604,9 @@ nui-tag-input .nui-tag-input-field {
 	min-width: 8rem;
 	width: auto;
 	min-height: unset;
-	height: 2rem;
-	line-height: 2rem;
-	padding: 2px var(--nui-space-half) 0 var(--nui-space-quarter);
+	height: auto;
+	align-self: stretch;
+	padding: 0 var(--nui-space-half);
 	background: transparent;
 	border: none;
 	border-bottom: none;
@@ -3614,11 +3614,11 @@ nui-tag-input .nui-tag-input-field {
 	box-shadow: none;
 	font: inherit;
 	font-size: var(--font-size-small);
+	line-height: normal;
 	color: var(--color-text);
 	margin: 0;
 	display: inline-block;
 	box-sizing: border-box;
-	vertical-align: middle;
 }
 
 nui-tag-input input[type="text"].nui-tag-input-field:focus {
