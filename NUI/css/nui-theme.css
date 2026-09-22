@@ -3604,8 +3604,9 @@ nui-tag-input .nui-tag-input-field {
 	min-width: 8rem;
 	width: auto;
 	min-height: unset;
-	height: calc(var(--nui-form-row-height, 2.5rem) - 0.85rem);
-	padding: 0 var(--nui-space-quarter);
+	height: 2rem;
+	line-height: 2rem;
+	padding: 2px var(--nui-space-half) 0 var(--nui-space-quarter);
 	background: transparent;
 	border: none;
 	border-bottom: none;
@@ -3617,6 +3618,7 @@ nui-tag-input .nui-tag-input-field {
 	margin: 0;
 	display: inline-block;
 	box-sizing: border-box;
+	vertical-align: middle;
 }
 
 nui-tag-input input[type="text"].nui-tag-input-field:focus {
