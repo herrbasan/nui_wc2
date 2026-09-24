@@ -39,6 +39,18 @@ Playground/
 
   **So: when you change a component, an addon or a guide here, update the matching file in `documentation/NUI/` in the same session.** Naming is `component_<name>.md`, `addon_<name>.md`, `guide_<name>.md`, `concept_<name>.md`, `reference_<name>.md`; the domain's own `Agents.md` §3 *Source Mapping* lists which repo files each class derives from. Keep it condensed — that is the point of the domain — and bump the frontmatter `date:`.
 
+## Adding Icons to the Sprite (NEVER hand-edit)
+
+The icon sprite `NUI/assets/material-icons-sprite.svg` is a **closed set** — icons are `<symbol>` blocks; missing icons fail silently (empty render, no console error). **Twice the sprite was overwritten by hand-edits from stale bases, silently dropping 8 icons** (fixed 2026-09-24, 6674de9). Never paste symbols by hand.
+
+To add an icon, use the forge tools on the workshop MCP server (`mcp_workshop_tools`):
+
+1. **Look up / preview (optional):** `forge.call` → `icons_get` with `{ query: "folder_open" }` — returns a ready `<symbol>` block without touching any file.
+2. **Add for real:** `forge.call` → `icons_add`:
+   - Copy the current sprite into the storage box first: `Copy-Item NUI\assets\material-icons-sprite.svg \\BADKID\Stuff\MCP_Storage\tmp_sprite.svg` (the forge worker runs on Badkid and cannot see this workspace).
+   - Call `icons_add` with `payload: ["../../MCP_Storage/tmp_sprite.svg"]`, `args: { query: "icon_name" }`. It fetches the official SVG, applies `fill="currentColor"`, **fails loud on duplicate ids** (`force: true` replaces), and writes the complete updated sprite to `\\BADKID\Stuff\MCP_Storage\forge\icons_add\icons_add\material-icons-sprite.svg`.
+   - Copy the result back over `NUI/assets/material-icons-sprite.svg`, delete the tmp file, commit. Git diff must show exactly one added `<symbol>` block — nothing else.
+
 ## Component Registry
 
 > **📋 Component Registry:** `documentation/components.json` is the **source of truth** for all components, their events, imports, and documentation paths. When adding or modifying components, run `node scripts/update-docs.js` to update the registry. This file contains `docPath` fields pointing to pure Markdown files that provide crucial instructions for how to use each component. Read those markdown files instead of guessing.
