@@ -460,6 +460,22 @@ nui-main > .content-page > .page-blocks-editor[breakout],
 	margin-top: var(--nui-space-half);
 }
 
+/* An unmodelled section preset (a profile's own family) is shown, not managed —
+   the token is preserved verbatim, so it is displayed as a token, not as prose. */
+.page-blocks-editor nui-popover .section-opts-static {
+	font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+	font-size: var(--font-size-xsmall);
+	opacity: 0.9;
+}
+
+.page-blocks-editor nui-popover .section-opts-note {
+	margin: var(--nui-space-half) 0 0;
+	max-width: 18rem;
+	font-size: var(--font-size-xsmall);
+	line-height: 1.4;
+	opacity: 0.65;
+}
+
 .page-blocks-editor .section-opts-row input[type="checkbox"] {
 	width: 1rem;
 	height: 1rem;
@@ -1541,11 +1557,62 @@ nui-main > .content-page > .page-blocks-editor[breakout],
 }
 
 /* "Style:" label — the select is a property of the block, not its type.
-   The type is fixed at creation and visible from the body editor. */
+   The type is fixed at creation and visible from the body editor. When a style
+   token is REFUSED the same span carries the reason (`.is-error`), so the field
+   can keep what was typed and still say why nothing was written. */
 .page-blocks-editor .block-style-label {
 	font-size: var(--font-size-xsmall);
 	color: var(--text-color-dim);
 	white-space: nowrap;
+}
+.page-blocks-editor .block-style-label.is-error {
+	color: var(--palette-alert);
+	white-space: normal;
+}
+
+/* Custom preset field — the escape hatch at the end of every style select, for
+   tokens a profile carries and the editor's own tables do not. Same voice as the
+   section title field: quiet text at rest with a dashed underline hint, chrome
+   revealed on hover, the full field on focus — monospace because it holds a token,
+   not prose. */
+.page-blocks-editor .block-preset-input {
+	flex: 0 1 16rem;
+	min-width: 9rem;
+	font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+	font-size: var(--font-size-xsmall);
+	background: transparent;
+	border: none;
+	border-bottom: 1px dashed transparent;
+	color: var(--text-color);
+	opacity: 0.6;
+	padding: 0.15rem 0.35rem;
+	margin: 0;
+	min-height: 0;
+	height: auto;
+	line-height: 1.2;
+	transition: opacity 0.15s, background 0.15s;
+}
+
+.page-blocks-editor .block-card-header:hover .block-preset-input,
+.page-blocks-editor .col-style-row:hover .block-preset-input {
+	opacity: 0.85;
+}
+
+.page-blocks-editor .block-preset-input:hover,
+.page-blocks-editor .block-preset-input:focus {
+	outline: none;
+	background: var(--be-well-bg);
+	border-bottom-color: var(--color-highlight);
+	opacity: 1;
+}
+
+/* Invalid wins even under focus: a refused token says so on the underline,
+   the reason sits in the Style: label. */
+.page-blocks-editor .block-preset-input.is-invalid,
+.page-blocks-editor .block-preset-input.is-invalid:hover,
+.page-blocks-editor .block-preset-input.is-invalid:focus {
+	border-bottom-color: var(--palette-alert);
+	color: var(--palette-alert);
 }
 
 /* Icon badge row (preset=image:icon): the icon is a block attribute (§4.2),

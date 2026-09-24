@@ -1070,6 +1070,169 @@ export function initBlocksEditor(element, params, nui) {
 		return nodeCard;
 	}
 
+	// The style select lists the vocabulary the EDITOR knows for this shape. A profile
+	// may carry tokens the editor has never heard of — `byline` is RAUM's author line,
+	// `cover:filmstrip` a profile's own modifier — and real documents contain them. A
+	// curated list can DISPLAY such a token (below), but display is only half the
+	// contract: without an escape hatch the editor can open documents it cannot write,
+	// and a style it names is a style you cannot choose. So every style select ends
+	// with one, guarded by the format's own grammar instead of any vocabulary —
+	// `family[:modifier[:variant]]` (spec §5), one to three identifier segments.
+	// Anything past that is the renderer's business: spec §5 makes an unknown preset
+	// render plain with a diagnostic, so a profile token is legal, never fatal.
+	//
+	// The sentinel contains `:`, which no segment may (`PRESET_SEGMENT`), so it can
+	// never collide with a real token — and it is branched on before any write, so it
+	// cannot reach the document.
+	const CUSTOM_PRESET = 'custom:';
+	const PRESET_SEGMENT = /^[A-Za-z0-9_-]+$/;
+
+	// Checked against the renderer's own reader rather than a second opinion:
+	// `mbParsePreset` lowercases and strips anything outside `[a-z0-9_-]` per segment,
+	// and reads at most three. A token that cannot survive that is not a preset, and
+	// refusing it here beats writing a word that will not mean in the file what it
+	// says in the field.
+	function checkPresetToken(raw) {
+		const text = String(raw || '').trim();
+		if (!text) return { token: '' };
+		const parts = text.split(':');
+		if (parts.length > 3) return { error: 'At most three segments: family[:modifier[:variant]]' };
+		if (parts.some(p => !PRESET_SEGMENT.test(p))) return { error: 'Segments are identifiers: letters, digits, _ and -' };
+		return { token: parts.map(p => p.toLowerCase()).join(':') };
+	}
+
+	// One implementation of the style control, shared by block cards and column slots
+	// (both had the same curated-list-with-display-only-unknowns shape). `labelEl` is
+	// the "Style:" span beside it: a refused token repurposes that span for its
+	// message, so saying WHY nothing was saved costs no new layout. `onCommit(token)`
+	// writes the value — `''` means no preset — and is called only with a token that
+	// passed the grammar, so no caller has to re-validate.
+	function mountPresetControl({ container, presets, value, labelEl, ariaLabel, onCommit }) {
+		const customOption = { value: CUSTOM_PRESET, label: 'Custom preset…' };
+
+		// Unset is not custom. Some lists (link, player) offer no empty option, so one
+		// is prepended to give "no style" somewhere to sit — never a fabricated token.
+		const listFor = () => [
+			...(presets.some(p => p.value === '') ? [] : [{ value: '', label: '' }]),
+			...presets,
+			customOption
+		];
+		const known = (token) => presets.some(p => p.value === token);
+
+		let current = value;
+		// A custom token is shown THROUGH the hatch, never as a fabricated option in the
+		// curated list: the select reads "Custom preset…" and the field beside it holds
+		// the token itself — the same thing said once, editable, instead of a style that
+		// is selectable but cannot be changed. The field is open whenever the token is
+		// custom; it closes only because the style stopped being custom.
+		let hatchOpen = !!(current && !known(current));
+		const selectValue = () => (!current || known(current)) ? current : CUSTOM_PRESET;
+
+		const selectWrap = document.createElement('nui-select');
+		selectWrap.setAttribute('size', 'small');
+		const nativeSelect = document.createElement('select');
+		nativeSelect.innerHTML = listFor().map(({ value: v, label }) =>
+			`<option value="${v}" ${selectValue() === v ? 'selected' : ''}>${label}</option>`
+		).join('');
+		selectWrap.appendChild(nativeSelect);
+		container.appendChild(selectWrap);
+
+		const input = document.createElement('input');
+		input.type = 'text';
+		input.className = 'block-preset-input';
+		input.placeholder = 'family[:modifier[:variant]]';
+		input.spellcheck = false;
+		input.setAttribute('aria-label', ariaLabel || 'Custom preset token');
+		input.value = current;
+		input.style.display = hatchOpen ? '' : 'none';
+		container.appendChild(input);
+
+		customElements.upgrade(selectWrap);
+
+		// The first paint above goes through the slotted-`<option>` fallback because the
+		// header is detached at build time and nui-select builds its state in
+		// connectedCallback. paint() runs from user actions, so the card IS connected —
+		// the entry API, which renders from state rather than the slotted DOM.
+		const paint = () => {
+			selectWrap.setItems(listFor().map(({ value: v, label }) => ({ value: v, label })));
+			selectWrap.setValue(selectValue());
+		};
+
+		const clearError = () => {
+			input.classList.remove('is-invalid');
+			input.removeAttribute('title');
+			labelEl.textContent = 'Style:';
+			labelEl.classList.remove('is-error');
+		};
+
+		// Back to the truthful state for the current token: field open exactly when the
+		// style is custom, holding exactly what the file holds.
+		const settle = () => {
+			clearError();
+			hatchOpen = !!(current && !known(current));
+			input.value = current;
+			input.style.display = hatchOpen ? '' : 'none';
+			paint();
+		};
+
+		const open = () => {
+			clearError();
+			hatchOpen = true;
+			input.style.display = '';
+			input.value = current;
+			input.focus();
+			// Caret at the end, nothing pre-selected: the field behaves like every other
+			// text field here (the section title does the same — click in, type). A
+			// select-all on open made every touch of the hatch destroy the whole token.
+			input.setSelectionRange(input.value.length, input.value.length);
+		};
+
+		let cancelBlur = false;
+
+		const commit = () => {
+			const { token, error } = checkPresetToken(input.value);
+			if (error) {
+				// A refused token is a question, not a save: the field stays open, keeps
+				// what was typed, and says why in the label that is already there. A
+				// console line would be invisible to the person typing.
+				input.classList.add('is-invalid');
+				input.title = error;
+				labelEl.textContent = error;
+				labelEl.classList.add('is-error');
+				return;
+			}
+			current = token;
+			onCommit(token);
+			settle();
+		};
+
+		input.addEventListener('input', clearError);
+		input.addEventListener('keydown', (e) => {
+			if (e.key === 'Enter') { e.preventDefault(); commit(); }
+			else if (e.key === 'Escape') { e.preventDefault(); cancelBlur = true; settle(); }
+		});
+		// Clicking away means "keep it" — Enter is the accelerator, not the only way in.
+		input.addEventListener('blur', () => {
+			if (input.style.display === 'none') return;
+			if (cancelBlur) { cancelBlur = false; return; }
+			commit();
+		});
+
+		selectWrap.addEventListener('nui-change', (e) => {
+			const val = e.detail?.values?.[0] ?? '';
+			// The sentinel is a STATE the select can already be in (a custom style),
+			// not an action to re-run — re-picking the highlighted row, or a dropdown
+			// closing on the same value, must not reach out and take the focus back.
+			// The field only opens (and only then grabs focus) from a curated style.
+			if (val === CUSTOM_PRESET) { if (!hatchOpen) open(); return; }
+			current = val;
+			onCommit(val);
+			settle();
+		});
+
+		return { refresh: paint, open };
+	}
+
 	// Shared by every block card. `presets` is the style table for the preset
 	// select — filtered by block type, since the type is fixed at creation and
 	// only styles matching its shape are offered. `onToggleRaw` is omitted for
@@ -1087,29 +1250,18 @@ export function initBlocksEditor(element, params, nui) {
 			<span class="block-style-label">Style:</span>
 		`;
 
-		const presetSelectWrap = document.createElement('nui-select');
-		presetSelectWrap.setAttribute('size', 'small');
-		const currentPreset = node.attrs?.preset || '';
-		// A preset this table doesn't know (e.g. `image:hero:bleed`) must still show
-		// as itself — silently displaying the first option would misreport the block.
-		const options = presets.some(p => p.value === currentPreset)
-			? presets
-			: [{ value: currentPreset, label: currentPreset }, ...presets];
-		const nativeSelect = document.createElement('select');
-		nativeSelect.innerHTML = options.map(({ value, label }) =>
-			`<option value="${value}" ${currentPreset === value ? 'selected' : ''}>${label}</option>`
-		).join('');
-		presetSelectWrap.appendChild(nativeSelect);
-		left.appendChild(presetSelectWrap);
-		customElements.upgrade(presetSelectWrap);
-
-		presetSelectWrap.addEventListener('nui-change', (e) => {
-			const val = e.detail?.values?.[0] ?? '';
-			node.attrs = node.attrs || {};
-			if (val) node.attrs.preset = val;
-			else delete node.attrs.preset;
-			onPresetChange?.(val);
-			syncToOutputs();
+		mountPresetControl({
+			container: left,
+			presets,
+			value: node.attrs?.preset || '',
+			labelEl: left.querySelector('.block-style-label'),
+			onCommit: (token) => {
+				node.attrs = node.attrs || {};
+				if (token) node.attrs.preset = token;
+				else delete node.attrs.preset;
+				onPresetChange?.(token);
+				syncToOutputs();
+			}
 		});
 
 		const right = document.createElement('div');
@@ -1808,8 +1960,9 @@ export function initBlocksEditor(element, params, nui) {
 			const colSlot = document.createElement('div');
 			colSlot.className = 'column-slot';
 
-			// Slot style — the col's own preset (mb:col preset=), same select
-			// pattern as the block header, unknown tokens shown as themselves.
+			// Slot style — the col's own preset (mb:col preset=), the same control as the
+			// block header: a curated list, unknown tokens shown as themselves, and the
+			// same escape hatch for a profile's own vocabulary.
 			const styleRow = document.createElement('div');
 			styleRow.className = 'col-style-row';
 			const styleLab = document.createElement('span');
@@ -1817,26 +1970,20 @@ export function initBlocksEditor(element, params, nui) {
 			styleLab.textContent = 'Style:';
 			styleRow.appendChild(styleLab);
 
-			const colSelectWrap = document.createElement('nui-select');
-			colSelectWrap.setAttribute('size', 'small');
-			const colPreset = col.attrs?.preset || '';
-			const colOptions = COL_PRESETS.some(p => p.value === colPreset)
-				? COL_PRESETS
-				: [{ value: colPreset, label: colPreset }, ...COL_PRESETS];
-			const colNative = document.createElement('select');
-			colNative.innerHTML = colOptions.map(({ value, label }) =>
-				`<option value="${value}" ${colPreset === value ? 'selected' : ''}>${label}</option>`
-			).join('');
-			colSelectWrap.appendChild(colNative);
-			customElements.upgrade(colSelectWrap);
-			colSelectWrap.addEventListener('nui-change', (e) => {
-				const val = e.detail?.values?.[0] ?? '';
-				col.attrs = col.attrs || {};
-				if (val) col.attrs.preset = val;
-				else delete col.attrs.preset;
-				syncToOutputs();
+			mountPresetControl({
+				container: styleRow,
+				presets: COL_PRESETS,
+				value: col.attrs?.preset || '',
+				labelEl: styleLab,
+				ariaLabel: 'Column style preset',
+				onCommit: (token) => {
+					col.attrs = col.attrs || {};
+					if (token) col.attrs.preset = token;
+					else delete col.attrs.preset;
+					syncToOutputs();
+				}
 			});
-			styleRow.appendChild(colSelectWrap);
+
 			colSlot.appendChild(styleRow);
 
 			const colNodes = document.createElement('nui-sortable');
@@ -2763,10 +2910,23 @@ export function initBlocksEditor(element, params, nui) {
 	// Section options <-> preset token. The cover height is a NAMED aspect-ratio
 	// variant (square/wide/banner/strip), never a raw value — spec §3 bans style
 	// values on directives, and a width-relative ratio works in every profile.
+	//
+	// The popover models only what it can label. A FAMILY it does not know
+	// (`teaser`) and any SEGMENT it does not own (`cover:filmstrip`) belong to a
+	// profile, and inventing a replacement for them is worse than not offering the
+	// control at all: `cover:filmstrip` composed as `cover` is silent data loss on
+	// a change to an unrelated option. So `modeled` gates the whole panel and
+	// `extras` rides along with every token it writes.
+	const SEC_FAMILIES = new Set(['', 'cover', 'band']);
+	const SEC_MODELED = new Set(['cover', 'band', 'bleed', 'inverted', 'square', 'banner', 'strip']);
+
 	function parseSecOpts(sec) {
 		const parts = String(sec.attrs?.preset || '').toLowerCase().split(':').filter(Boolean);
 		const family = parts[0] || '';
 		return {
+			family,
+			modeled: SEC_FAMILIES.has(family),
+			extras: parts.filter(p => !SEC_MODELED.has(p)),
 			placement: family === 'cover' ? 'cover' : 'contain',
 			ratio: family === 'cover' && ['square', 'banner', 'strip'].includes(parts[1]) ? parts[1] : 'wide',
 			band: family === 'band',
@@ -2776,10 +2936,13 @@ export function initBlocksEditor(element, params, nui) {
 	}
 
 	function composePreset(opts) {
+		// Unmodelled segments keep their place at the end of the token, so an option
+		// this panel does own can still be changed without touching what it does not.
+		const tail = opts.extras.map(e => ':' + e).join('');
 		if (opts.placement === 'cover') {
-			return 'cover' + (opts.ratio && opts.ratio !== 'wide' ? ':' + opts.ratio : '');
+			return 'cover' + (opts.ratio && opts.ratio !== 'wide' ? ':' + opts.ratio : '') + tail;
 		}
-		if (opts.band) return 'band' + (opts.bleed ? ':bleed' : '') + (opts.inverted ? ':inverted' : '');
+		if (opts.band) return 'band' + (opts.bleed ? ':bleed' : '') + (opts.inverted ? ':inverted' : '') + tail;
 		return '';
 	}
 
@@ -2861,6 +3024,25 @@ export function initBlocksEditor(element, params, nui) {
 			pendingSelects.push({ wrap, options, current, onChange });
 			return wrap;
 		};
+
+		// A section whose preset family this panel does not model gets NO controls — not
+		// disabled ones. The rows below describe `cover` and `band`, so offering them for
+		// `teaser` would rewrite the author's FAMILY as though it were one of their
+		// segments (`band` + the preserved extras → `band:teaser`), which is a different
+		// token with a different meaning. The token is preserved verbatim and shown; that
+		// is the whole job here, and doing less would be worse than doing nothing.
+		if (!opts.modeled) {
+			const value = document.createElement('span');
+			value.className = 'section-opts-static';
+			value.textContent = sec.attrs?.preset || '';
+			pop.appendChild(mkRow('Preset', value));
+			const note = document.createElement('p');
+			note.className = 'section-opts-note';
+			note.textContent = 'A profile preset. The options here describe the built-in templates (cover, band) only, so this token is left exactly as authored.';
+			pop.appendChild(note);
+			header.appendChild(pop);
+			return pop;
+		}
 
 		if (hero) {
 			const ratioRow = mkRow('Aspect ratio', mkSelect(

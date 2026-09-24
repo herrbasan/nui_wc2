@@ -3523,7 +3523,7 @@ nui-tag-input {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
-	min-height: var(--nui-form-row-height, 2.5rem);
+	height: var(--nui-form-row-height, 2.5rem);
 	gap: var(--nui-space-quarter);
 	padding: var(--nui-space-quarter) var(--nui-space-half);
 	background: var(--color-shade3);
@@ -3555,14 +3555,15 @@ nui-tag-input:focus-within {
 	background: var(--color-shade2);
 	border: solid var(--border-thickness) var(--border-shade3);
 	border-radius: var(--border-radius2);
-	padding-left: 0.8rem;
-	padding-top: 0.2rem;
-	padding-bottom: 0.2rem;
-	font-size: var(--font-size-small);
+	padding-left: 0.7rem;
+	padding-top: 0.3rem;
+	padding-bottom: 0.3rem;
+	font-size: var(--font-size-xsmall);
 	color: var(--color-text);
-	filter: drop-shadow(0.05rem 0.05rem 0.15rem light-dark(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.3)));
+	/*filter: drop-shadow(0.05rem 0.05rem 0.15rem light-dark(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.3)));*/
 	user-select: none;
 }
+
 
 .nui-tag.is-active {
 	border-color: var(--color-accent);
@@ -3585,8 +3586,8 @@ nui-tag-input:focus-within {
 	cursor: pointer;
 	transition: color 0.1s;
 	padding: 0;
-	width: 2.5rem;
-	min-height: none;
+	width: 2rem;
+	min-height: 0;
 	height: 100%;
 	opacity: 0.6;
 	transition: opacity 0.2s;
@@ -3616,7 +3617,7 @@ nui-tag-input .nui-tag-input-field {
 	box-shadow: none;
 	font: inherit;
 	font-size: var(--font-size-small);
-	line-height: normal;
+	line-height: 0;
 	color: var(--color-text);
 	margin: 0;
 	display: inline-block;
@@ -6448,22 +6449,22 @@ nui-markdown p > img {
 	display: block;
 }
 
-/* Image variants: hero and contain */
+/* Image variants: hero and contain.
+   `image:hero` is an inline figure at its NATURAL aspect ratio — full column width,
+   uncropped. It is spec §5's "prominent banner", and prominence is WIDTH, not a crop.
+   No ratio may be implied here: a block's preset vocabulary is
+   `family[:modifier[:variant]]` and `hero` already spends both optional segments
+   (`hero` + `bleed`), so a block has nowhere to state a ratio — and a renderer rule
+   the author cannot see or reach is not a default, it is a lost third of the image.
+   Ratio is the SECTION's vocabulary, because a section can say it in the file
+   (`cover:square` / `:banner` / `:strip`, below). Hero keeps one thing a plain
+   figure has not: the frame's corner radius. */
 .nui-blocks-media.nui-variant-hero img,
 .nui-preset-hero img {
 	width: 100%;
 	height: auto;
-	aspect-ratio: 21 / 9;
-	max-height: 22rem;
-	object-fit: cover;
-	object-position: var(--mb-focal, center);
 	border-radius: var(--border-radius1);
 	display: block;
-}
-.nui-blocks-media.nui-variant-bleed.nui-variant-hero img,
-.nui-blocks-media.nui-variant-bleed.nui-preset-hero img {
-	border-radius: 0;
-	max-height: 20rem;
 }
 .nui-blocks-media.nui-variant-contain img,
 .nui-preset-contain img {

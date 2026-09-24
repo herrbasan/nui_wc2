@@ -68,6 +68,22 @@ No preset dropdown.
 - **"hero" = the editor word** (template name; never in the file).
 - **"cover" = the file word** (section preset; media becomes the section background).
 - `image:hero` **block** preset stays as-is (inline banner figure, different level, already in use).
+- **`image:hero` carries no ratio — and the renderer may not invent one (settled 2026-09-23).**
+  The stylesheet had it clamped to `aspect-ratio: 21 / 9` + `max-height: 22rem` +
+  `object-fit: cover` in `nui-theme.css`, so a third of every hero image was cropped by a
+  rule the author could not see, name, or change. The preset vocabulary cannot hold a
+  ratio: it is `family[:modifier[:variant]]` and `image:hero` spends both optional
+  segments (`hero` + `bleed`) — `mbParsePreset` reads `parts[0..2]` and silently drops a
+  4th. A **block** has nowhere to say "square", so no block rule may imply a shape.
+  A **section** can (`cover:square` / `:banner` / `:strip`), which is exactly the
+  asymmetry the user hit: the same visual need is configurable at section level and
+  hardcoded at block level. Hero is now a full-width figure at its **natural** ratio;
+  its only remaining distinction from a plain figure is the frame radius. Do not
+  reintroduce a ratio here — if the block hero needs one, that is a spec decision about
+  the grammar (a 4th orthogonal segment), not a stylesheet tweak.
+  *Side finding:* `object-position: var(--mb-focal, center)` was removed with the clamp —
+  nothing anywhere sets `--mb-focal`, and no code reads the spec's `focal` block attribute,
+  so it was a no-op promising a feature that does not exist. `focal` remains unimplemented.
 
 ## Context-scoped block options (settled 2026-09-16)
 
@@ -124,6 +140,57 @@ paragraphs, an icon block with no icon).
   worth the maintenance. RTE-internal range styling rejected: no nested blocks
   (spec §4.2 forbids them); styling a range would mean wrapping it in its own
   sibling block, which manual copy already covers.
+
+## The style list is a profile's, and the editor must be able to LEAVE it (settled 2026-09-23)
+
+Found while loading a real blog post: the byline block showed a style the editor
+could **display but not author**. `buildBlockHeader` prepended an unknown token so it
+would never be misreported — but the select was the only way to set a style, so a
+document's own vocabulary could be preserved and not chosen. The asymmetry is the bug:
+*an editor that can open a document it cannot write is half an editor.*
+
+- **`byline` is not an accident and not ours.** It is RAUM's profile vocabulary —
+  `Raum/tools/lib/md.mjs` intercepts the family, `assets/css/site.css` gives it
+  `.essay-byline`, ~30 posts carry it in EN and DE, and the SSR plan records the
+  decision ("Byline is document content"). It is a spoken, localized line — the
+  narrator reads "Veröffentlicht am 25. Juli 2026" — which is why it is document
+  content and not derived from `authors[]` in the frontmatter.
+- **So the fix is not to add `byline` to a table.** Absorbing one application's token
+  into the library's vocabulary is the mistake the format's profile boundary exists to
+  prevent. The fix is an escape hatch: every style select (blocks AND column slots)
+  ends with **Custom preset…**, validated against the format's own grammar rather than
+  against any vocabulary — `family[:modifier[:variant]]`, 1–3 identifier segments,
+  checked against the same rules `mbParsePreset` applies. A refused token keeps what was
+  typed, marks the field, and says why **in the "Style:" label** (a console line is not a
+  diagnostic a person typing can see). Empty means no preset.
+- **Known families stay shape-gated; unknown ones are author-asserted.** The
+  restyle-vs-retype law above is unchanged — a custom token is a *style*, so shape is
+  still fixed at creation. Spec §5 covers the rest: an unknown preset renders plain with
+  a diagnostic, so a profile token is legal, never fatal.
+- **Custom tokens are shown THROUGH the hatch, not as fabricated options.** First cut
+  prepended the unknown token to the curated list so it would never be misreported —
+  which left a style that was selectable but not editable, and blurred the line between
+  "this table knows it" and "the document carries it" (David, 2026-09-23: odd that
+  `byline` shows as a style in the list). Now the select reads **Custom preset…** and
+  the field beside it holds the token itself — the same thing said once, editable.
+  Typing a token the table DOES know into the field closes the hatch and the select
+  shows the curated option, so the two representations never disagree.
+- **One control, two call sites.** `mountPresetControl()` is the single implementation
+  (the block header and the column slot each had their own copy of the
+  curated-list-with-display-only-unknowns pattern).
+- **Sections had the same disease, worse: silent deletion.** `parseSecOpts` /
+  `composePreset` composed the token from the options it owned and wrote the result
+  back, so `cover:filmstrip` became `cover` — and an unknown family like `teaser` was
+  DELETED — on a change to an unrelated option. Now unmodelled segments ride along on
+  every token the panel writes (`cover` + ratio + preserved extras), and a section whose
+  *family* the panel does not model gets **no options at all** — not disabled ones,
+  which is what the first attempt did and which would have rewritten a `teaser` family
+  as `band:teaser` (a different token with a different meaning). It gets a read-only
+  token row and a note instead.
+- Verified in the browser against a fixture served through the editor's own loader:
+  `byline` → `Byline:alt` round-trips to `nui-preset-byline nui-variant-alt`;
+  `cover:filmstrip` + ratio→banner survives as `cover:banner:filmstrip`; `teaser`
+  offers 0 controls and keeps its token.
 
 ## Vars are named key-value sets (settled 2026-09-18)
 
