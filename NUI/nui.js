@@ -679,10 +679,19 @@ function setupDropzone(element) {
 	}
 
 	function onWindowDragOver(e) {
+		if (!hasFiles(e)) return;
 		e.preventDefault();
 	}
 
+	// Only file drags may activate the overlay. Text-selection drags, links and
+	// other in-page drags carry no 'Files' type in dataTransfer.types (readable
+	// during dragenter/dragover — only the data itself is restricted until drop).
+	function hasFiles(e) {
+		return [...(e.dataTransfer?.types || [])].includes('Files');
+	}
+
 	function onWindowDragEnter(e) {
+		if (!hasFiles(e)) return;
 		e.preventDefault();
 		activate();
 	}
@@ -6562,15 +6571,25 @@ export const nui = {
 			this.configure(options);
 		}
 
+		// Host opt-out signal: if the host defines --nui-space itself it owns the
+		// theme (same condition ensureBaseStyles uses to skip the stylesheet).
+		// Computed BEFORE injection — after it, NUI's own theme defines the variable.
+		// Never write inline color-scheme in that case: an inline style beats every
+		// stylesheet rule and would stomp the host's theme toggle (raum.com, #51).
+		const hostOwnsTheme = getComputedStyle(document.documentElement)
+			.getPropertyValue('--nui-space').trim() !== '';
+
 		ensureBaseStyles();
 		setupActionDelegation();
 
-		const savedTheme = localStorage.getItem('nui-theme');
-		if (savedTheme) {
-			document.documentElement.style.colorScheme = savedTheme;
-		} else {
-			const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-			document.documentElement.style.colorScheme = prefersDark ? 'dark' : 'light';
+		if (!hostOwnsTheme) {
+			const savedTheme = localStorage.getItem('nui-theme');
+			if (savedTheme) {
+				document.documentElement.style.colorScheme = savedTheme;
+			} else {
+				const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+				document.documentElement.style.colorScheme = prefersDark ? 'dark' : 'light';
+			}
 		}
 
 		const baseValue = getComputedStyle(document.documentElement)
