@@ -97,7 +97,23 @@ Data-driven form — `rowAction` on the item, either a data-action string or `{a
 }
 ```
 
-`icon` defaults to `settings`; `label` (the `aria-label`) defaults to `"Settings"`. The action dispatches through the standard action system — with no registered handler it fires `nui-action` and `nui-action-<name>` on the button. The legacy key `headerAction` is still accepted as an alias of `rowAction`, but only `rowAction` also works on leaf items.
+`icon` defaults to `settings`; `label` (the `aria-label`) defaults to `"Settings"`. The row action is dimmed at rest and lifts to full opacity on hover or keyboard focus, so it does not compete with the row's label.
+
+Handle it like any other action. Register a handler — it receives the element the action was resolved against, the action element itself, the event, and the param after the colon:
+
+```javascript
+nui.registerAction('edit-section', async (target, el, event, param) => {
+	const { dialog, main } = await nui.components.dialog.page('Edit section', '', {
+		buttons: [
+			{ label: 'Cancel', type: 'outline', value: 'cancel' },
+			{ label: 'Save', type: 'primary', value: 'save' }
+		]
+	});
+	// ...populate `main`, then read the outcome from nui-dialog-close
+});
+```
+
+With no registered handler, the action instead fires the bubbling `nui-action` and `nui-action-<name>` events on the button. The legacy key `headerAction` is still accepted as an alias of `rowAction`, but only `rowAction` also works on leaf items.
 
 ## Attributes
 

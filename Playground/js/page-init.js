@@ -690,13 +690,49 @@ nui.registerPage('components/link-list', {
 			}
 
 			// Row actions: an unhandled data-action dispatches nui-action on the button.
-			// Any data-action string works; the demo just reports what fired.
+			// The two registered ones below handle their own names, so only the legacy
+			// `headerAction` alias reaches this listener.
 			element.addEventListener('nui-action', (e) => {
 				const { name, param } = e.detail;
 				if (!String(name).startsWith('demo-')) return;
 				const display = element.querySelector('#row-action-display');
 				if (display) display.textContent = `Row action: ${name}${param ? ' (' + param + ')' : ''}`;
 			});
+
+			// The gear opens an edit dialog for its own row — the realistic use for a
+			// section/bucket/table affordance in a CMS. `nui.registerAction` handlers
+			// resolve before the generic nui-action events, and receive the param after
+			// the colon in `data-action="name:param"`.
+			async function openRowActionDialog(title, kind, name) {
+				// Registered actions live on the shared nui instance, so a page that is no
+				// longer on screen must not act.
+				if (!element.isConnected) return;
+
+				const display = element.querySelector('#row-action-display');
+				if (display) display.textContent = `Row action: ${title} — "${name}"`;
+
+				const { dialog, main } = await nui.components.dialog.page(title, '', {
+					contentScroll: true,
+					buttons: [
+						{ label: 'Cancel', type: 'outline', value: 'cancel' },
+						{ label: 'Save', type: 'primary', value: 'save' }
+					]
+				});
+
+				main.innerHTML = `<section><h3>${kind} name</h3><nui-form><nui-input-group><label>Name</label><nui-input><input type="text"></nui-input></nui-input-group></nui-form></section>`;
+				main.querySelector('input[type="text"]').value = name;
+
+				dialog.addEventListener('nui-dialog-close', (ev) => {
+					if (!display) return;
+					const value = main.querySelector('input[type="text"]')?.value;
+					display.textContent = ev.detail.returnValue === 'save'
+						? `Saved ${kind.toLowerCase()} "${value}" (was "${name}")`
+						: `Cancelled editing ${kind.toLowerCase()} "${name}"`;
+				});
+			}
+
+			nui.registerAction('demo-section-edit', (target, el, e, param) => openRowActionDialog('Edit section', 'Section', param));
+			nui.registerAction('demo-item-edit', (target, el, e, param) => openRowActionDialog('Edit item', 'Item', param));
 
 			// Setup interactive testing
 			const foldStateDisplay = element.querySelector('#fold-state-display');

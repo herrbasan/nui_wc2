@@ -478,6 +478,9 @@ nui-link-list ul li span {
 	cursor: inherit;
 }
 
+/* Dim at rest, lifting on hover/focus. A row action is an affordance, so it should not
+   compete with the row's label until the pointer or the keyboard arrives. The hover
+   reveal is paired with :focus-visible so keyboard users get the same signal. */
 nui-link-list ul li button.action {
 	background: none;
 	border: none;
@@ -488,11 +491,15 @@ nui-link-list ul li button.action {
 	align-items: center;
 	justify-content: center;
 	flex-shrink: 0;
+	opacity: 0.5;
+	transition: opacity 0.2s ease, background-color 0.2s;
 }
 
-nui-link-list ul li button.action:hover {
+nui-link-list ul li button.action:hover,
+nui-link-list ul li button.action:focus-visible {
 	background-color: var(--color-shade4);
 	border-radius: var(--nui-radius);
+	opacity: 1;
 }
 
 nui-link-list li.separator hr {

@@ -64,7 +64,7 @@
 		</script>
 	</nui-code>
 
-	<p>The action goes through the standard action system. With no registered handler it fires <code>nui-action</code> and <code>nui-action-&lt;name&gt;</code> on the button, bubbling. The group headers below carry row actions — click one of the gear buttons:</p>
+	<p>The action goes through the standard action system. Register a handler with <code>nui.registerAction(name, fn)</code> — it receives the element, its <code>data-action</code>, and the param after the colon — or, with no handler registered, listen for the bubbling <code>nui-action</code> / <code>nui-action-&lt;name&gt;</code> events. The gear buttons below open an <code>nui-dialog</code> for their own row:</p>
 
 	<div class="demo-result">
 		<h4>Row Action Events:</h4>
