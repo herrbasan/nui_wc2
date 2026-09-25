@@ -600,8 +600,9 @@ nui.registerPage('components/link-list', {
 				{
 					label: 'Content & Windows',
 					icon: 'wysiwyg',
+					rowAction: { action: 'demo-section-edit:content', icon: 'settings', label: 'Edit section' },
 					items: [
-						{ label: 'Content' },
+						{ label: 'Content', rowAction: 'demo-item-edit:content' },
 						{ label: 'Windows' }
 					]
 				},
@@ -622,6 +623,7 @@ nui.registerPage('components/link-list', {
 				{
 					label: 'Functions & Objects',
 					icon: 'filter_list',
+					headerAction: 'demo-legacy-action',
 					items: [
 						{ label: 'Function Item 1' },
 						{ label: 'Function Item 2' },
@@ -686,7 +688,16 @@ nui.registerPage('components/link-list', {
 					nuiCode.highlight();
 				}
 			}
-			
+
+			// Row actions: an unhandled data-action dispatches nui-action on the button.
+			// Any data-action string works; the demo just reports what fired.
+			element.addEventListener('nui-action', (e) => {
+				const { name, param } = e.detail;
+				if (!String(name).startsWith('demo-')) return;
+				const display = element.querySelector('#row-action-display');
+				if (display) display.textContent = `Row action: ${name}${param ? ' (' + param + ')' : ''}`;
+			});
+
 			// Setup interactive testing
 			const foldStateDisplay = element.querySelector('#fold-state-display');
 			const treeStateDisplay = element.querySelector('#tree-state-display');

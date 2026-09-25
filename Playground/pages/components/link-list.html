@@ -32,6 +32,47 @@
 </section>
 
 <section>
+	<h2>Row Actions</h2>
+	<p>A row can carry a trailing control that is <strong>not</strong> navigation. It renders as a sibling of the link (or of the group toggle), so clicking it never activates or expands the row. It works on group headers and on leaf items, at any depth.</p>
+
+	<p>Declaratively, put a <code>&lt;button class="action"&gt;</code> inside the <code>&lt;li&gt;</code>:</p>
+	<nui-code>
+		<script type="example" data-lang="html">
+<li class="group-header">
+	<span>
+		<nui-icon name="folder"></nui-icon>
+		<span>Group Name</span>
+	</span>
+	<button type="button" class="action" data-action="edit-section:group">
+		<nui-icon name="settings"></nui-icon>
+	</button>
+</li>
+		</script>
+	</nui-code>
+
+	<p>From <code>loadData()</code>, use <code>rowAction</code> on the item — a plain data-action string, or an object when the icon and label need to differ from the default <code>settings</code> / <code>"Settings"</code>:</p>
+	<nui-code>
+		<script type="example" data-lang="js">
+{
+	label: 'Content & Windows',
+	icon: 'wysiwyg',
+	rowAction: { action: 'edit-section:content', icon: 'settings', label: 'Edit section' },
+	items: [
+		{ label: 'Content', rowAction: 'edit-item:content' }
+	]
+}
+		</script>
+	</nui-code>
+
+	<p>The action goes through the standard action system. With no registered handler it fires <code>nui-action</code> and <code>nui-action-&lt;name&gt;</code> on the button, bubbling. The group headers below carry row actions — click one of the gear buttons:</p>
+
+	<div class="demo-result">
+		<h4>Row Action Events:</h4>
+		<pre id="row-action-display">No row action yet</pre>
+	</div>
+</section>
+
+<section>
 	<h2>Fold Mode (Accordion)</h2>
 	<p>In fold mode, only one group can be open at a time. Opening a group automatically closes others:</p>
 	

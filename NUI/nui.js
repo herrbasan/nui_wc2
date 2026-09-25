@@ -1288,6 +1288,20 @@ registerComponent('nui-link-list', (element) => {
 		}
 	};
 
+	function escapeAttr(value) {
+		return String(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+	}
+
+	// Trailing row control. `rowAction` (or the legacy `headerAction`) is either a
+	// data-action string or { action, icon, label }. Rendered as a SIBLING of the
+	// link/toggle, so clicking it never activates or expands the row.
+	function buildActionHTML(spec) {
+		if (!spec) return '';
+		const cfg = typeof spec === 'string' ? { action: spec } : spec;
+		if (!cfg.action) return '';
+		return `<button type="button" class="action" data-action="${escapeAttr(cfg.action)}" aria-label="${escapeAttr(cfg.label || 'Settings')}"><nui-icon name="${escapeAttr(cfg.icon || 'settings')}"></nui-icon></button>`;
+	}
+
 	function buildItemHTML(item, nested = false, isRoot = false) {
 		if (item.separator) return '<li class="separator" role="none"><hr></li>';
 		if (item.items) {
@@ -1297,13 +1311,12 @@ registerComponent('nui-link-list', (element) => {
 		const hrefAttr = item.href ? ` href="${item.href}"` : ' href=""';
 		const dataAction = item.action ? ` data-action="${item.action}"` : '';
 		const link = `<li class="list-item" role="none"><a${hrefAttr}${dataAction} role="treeitem">` +
-			`${item.icon ? `<nui-icon name="${item.icon}"></nui-icon>` : ''}<span>${item.label}</span></a></li>`;
+			`${item.icon ? `<nui-icon name="${item.icon}"></nui-icon>` : ''}<span>${item.label}</span></a>${buildActionHTML(item.rowAction ?? item.headerAction)}</li>`;
 		return nested ? link : (isRoot ? `<ul role="group" class="root-item">${link}</ul>` : `<ul role="group">${link}</ul>`);
 	}
 
 	function buildGroupHeaderHTML(item) {
-		const action = item.headerAction ? `<button type="button" class="action" data-action="${item.headerAction}" aria-label="Settings"><nui-icon name="settings"></nui-icon></button>` : '';
-		return `<li class="group-header" role="none"><button type="button" class="group-toggle" role="treeitem" aria-expanded="false">${item.icon ? `<nui-icon name="${item.icon}"></nui-icon>` : ''}<span>${item.label}</span></button>${action}</li>`;
+		return `<li class="group-header" role="none"><button type="button" class="group-toggle" role="treeitem" aria-expanded="false">${item.icon ? `<nui-icon name="${item.icon}"></nui-icon>` : ''}<span>${item.label}</span></button>${buildActionHTML(item.rowAction ?? item.headerAction)}</li>`;
 	}
 
 	// ##### STATE MANAGEMENT
