@@ -674,6 +674,32 @@ nui-link-list[mode="fold"] ul li.group-header button.group-toggle {
 	padding-left: var(--nui-space);
 }
 
+/* Row action in fold mode. Both the group toggle and the row link are stretched to fill
+   the row (`inset:0` / `width:100%`), so a trailing sibling is left with no room and gets
+   pushed to the LEFT edge, vertically off-centre — it reads as a second icon next to the
+   label. Pin it to the right instead.
+   Order at the right edge: [gear] [caret] — the caret keeps the outer edge, the gear sits
+   inboard of it, mirroring how the old n000b CMS sidebar reads. */
+nui-link-list[mode="fold"] ul li:has(button.action) {
+	position: relative;
+}
+
+nui-link-list[mode="fold"] ul li:has(button.action) button.action {
+	position: absolute;
+	right: calc(var(--nui-space) + 1.5rem);
+	top: 50%;
+	transform: translateY(-50%);
+}
+
+/* Reserve the strip the gear occupies so the label can never run underneath it.
+   box-sizing is content-box by default here, so it must be set explicitly — otherwise
+   the padding widens the stretched row instead of insetting its content. */
+nui-link-list[mode="fold"] ul li:has(button.action) a,
+nui-link-list[mode="fold"] ul li:has(button.action) button.group-toggle {
+	box-sizing: border-box;
+	padding-right: calc(var(--nui-space) + 4rem);
+}
+
 /* Container for collapsible group items - fold mode only */
 nui-link-list[mode="fold"] .group-items {
 	overflow: hidden;
