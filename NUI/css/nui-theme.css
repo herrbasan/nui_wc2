@@ -5546,14 +5546,23 @@ opacity: 0;
 nui-markdown {
 	display: block;
 	width: 100%;
-	/* A query CONTAINER, which is what lets the document's own responsive rules below
-	   measure the space they are actually in. Viewport queries became the wrong axis as
-	   soon as a document could be shown inside something narrower than the window: the
-	   editor's preview column is resizable, so a 320px pane in a 1600px window never
-	   triggered `@media (max-width: 40rem)` and floated media plus 3-column galleries
-	   stayed at their widest. Named, so a nested container cannot silently capture the
-	   queries. `inline-size` containment does not affect block size, so the surface still
-	   grows to its content. */
+}
+
+/* A query CONTAINER — structured MD-Blocks documents ONLY. The element sets
+   `.nui-md-document` when its render contains blocks structure (nui.js), and
+   that gate matters: `container-type: inline-size` is NOT layout-neutral. It
+   implies inline-size containment, so during shrink-to-fit sizing (abspos,
+   float, inline-block hosts) the element measures AS IF EMPTY and the host
+   collapses to min-content — chat bubbles in LLM-Gateway-Chat went narrow-tall
+   slivers (#52). The container exists so the document's own responsive rules
+   below can measure the space they are actually in — viewport queries became
+   the wrong axis once a document could sit in a resizable pane narrower than
+   the window. Named, so a nested container cannot silently capture the
+   queries. Every `@container doc` rule in this file targets `.nui-blocks-*`
+   selectors, which only structured documents emit, so the gate excludes
+   nothing that ever used the queries — plain markdown keeps normal intrinsic
+   sizing. */
+nui-markdown.nui-md-document {
 	container: doc / inline-size;
 }
 

@@ -8294,6 +8294,18 @@ class NuiMarkdown extends HTMLElement {
 		return FRONTMATTER_MODES.has(attr) ? attr : 'collapsed';
 	}
 
+	// Structured MD-Blocks documents opt into size-query containment
+	// (`.nui-md-document`, see nui-theme.css). The gate must track the RENDER,
+	// not the host app: `container-type: inline-size` sizes the element as if
+	// empty during shrink-to-fit, which collapses abspos/float hosts (#52) — and
+	// plain markdown is exactly what such hosts embed. `@container doc` queries
+	// only target `.nui-blocks-*` rules, which only structured documents emit,
+	// so presence of blocks structure is the container's exact consumer set.
+	_syncDocumentMarker() {
+		this.classList.toggle('nui-md-document',
+			!!this.querySelector('.nui-blocks-main, .nui-blocks-section'));
+	}
+
 	async connectedCallback() {
 		if (this._isStreaming) return;
 		if (this._processed) return; // Guard: skip re-processing on re-attach (virtual scroll)
@@ -8328,6 +8340,7 @@ class NuiMarkdown extends HTMLElement {
 		const fm = FRONTMATTER_MODES.has(mode) ? parseFrontmatter(rawText) : null;
 		this._metadata = fm ? fm.data : null;
 		this.innerHTML = markdownToHtml(rawText, { frontmatter: mode, base: this.base });
+		this._syncDocumentMarker();
 		this._processed = true; // Mark as processed so re-attach is free
 		util.enhanceSlideshows(this, this.getAttribute('slide-duration'));
 		util.enhancePlayers(this);
@@ -8412,8 +8425,9 @@ class NuiMarkdown extends HTMLElement {
 		this._processed = false; // A new stream invalidates any prior processed state
 		this._streamText = '';
 		this._activeBuffer = '';
-		
+
 		this.innerHTML = '';
+		this._syncDocumentMarker(); // fresh stream: clear any prior document state
 		this._stableContainer = document.createElement('div');
 		this._stableContainer.className = 'nui-md-stable';
 		
@@ -8438,6 +8452,7 @@ class NuiMarkdown extends HTMLElement {
 			this._processBuffer(true);
 			this._isStreaming = false;
 			this._processed = true; // Re-attach is free: connectedCallback must not re-parse the rendered DOM
+			this._syncDocumentMarker();
 		}
 	}
 
