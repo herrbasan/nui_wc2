@@ -176,18 +176,26 @@ Right.
 
 ## Responsive Behaviour
 
-The host is a **query container** named `doc` (`container: doc / inline-size`), and the
-MD-Blocks responsive rules are written against it rather than against the viewport. A
-full-bleed section, a floated media block (`preset=image:left|right`), a mosaic or row
-gallery and a multi-column grid all collapse according to **the width of the surface the
-document is rendered into**, not the width of the window.
+For **structured MD-Blocks documents** the element is a **query container** named `doc`
+(`container: doc / inline-size`), and the MD-Blocks responsive rules are written against
+it rather than against the viewport. A full-bleed section, a floated media block
+(`preset=image:left|right`), a mosaic or row gallery and a multi-column grid all collapse
+according to **the width of the surface the document is rendered into**, not the width of
+the window.
 
 That matters anywhere a document lands in something narrower than the window: a CMS
 column, a sidebar, an editor's resizable preview pane. Against the viewport those places
 got the desktop layout at every width, since a viewport query cannot see a container.
 
-- Nothing to configure when you use the element — the container is the host itself, so
-  putting the `nui-markdown` in a narrow element is enough to get the narrow layout.
+- Nothing to configure when you use the element — a render that contains blocks structure
+  (a `nui-blocks-main` / `nui-blocks-section`) gets the `.nui-md-document` class, which is
+  what carries the container.
+- **Plain Markdown never becomes a container.** `container-type: inline-size` implies
+  inline-size containment: during shrink-to-fit sizing (absolutely-positioned, floated or
+  inline-block hosts) a contained element measures *as if empty*, collapsing the host to
+  min-content — chat bubbles went narrow-tall slivers before this was gated (#52). Plain
+  documents have no `.nui-blocks-*` descendants, so no `@container doc` rule can ever
+  apply to them; they keep normal intrinsic sizing.
 - **If you render the output yourself** — calling `util.markdownToHtml` and injecting the
   HTML, the way `util.enhancePlayers` is documented for — you are outside the container and
   will get the widest layout. Put `container: doc / inline-size` on your own wrapper to
