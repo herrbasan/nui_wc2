@@ -64,7 +64,7 @@
 		</script>
 	</nui-code>
 
-	<p>The action goes through the standard action system. Register a handler with <code>nui.registerAction(name, fn)</code> — it receives the element, its <code>data-action</code>, and the param after the colon — or, with no handler registered, listen for the bubbling <code>nui-action</code> / <code>nui-action-&lt;name&gt;</code> events. The gear buttons below open an <code>nui-dialog</code> for their own row:</p>
+	<p>The action goes through the standard action system. Register a handler with <code>nui.registerAction(name, fn)</code> — it receives the element, the action element, the event, and the param after the colon — or, with no handler registered, listen for the bubbling <code>nui-action</code> / <code>nui-action-&lt;name&gt;</code> events. Since a row action is an icon-only control, it pairs naturally with a tooltip; the ones below explain their own row on hover or keyboard focus:</p>
 
 	<div class="demo-result">
 		<h4>Row Action Events:</h4>

@@ -600,9 +600,9 @@ nui.registerPage('components/link-list', {
 				{
 					label: 'Content & Windows',
 					icon: 'wysiwyg',
-					rowAction: { action: 'demo-section-edit:content', icon: 'settings', label: 'Edit section' },
+					rowAction: { action: 'demo-section-edit:content', icon: 'info', label: 'Section info' },
 					items: [
-						{ label: 'Content', rowAction: 'demo-item-edit:content' },
+						{ label: 'Content', rowAction: { action: 'demo-item-edit:content', icon: 'info', label: 'Item info' } },
 						{ label: 'Windows' }
 					]
 				},
@@ -699,40 +699,24 @@ nui.registerPage('components/link-list', {
 				if (display) display.textContent = `Row action: ${name}${param ? ' (' + param + ')' : ''}`;
 			});
 
-			// The gear opens an edit dialog for its own row — the realistic use for a
-			// section/bucket/table affordance in a CMS. `nui.registerAction` handlers
-			// resolve before the generic nui-action events, and receive the param after
-			// the colon in `data-action="name:param"`.
-			async function openRowActionDialog(title, kind, name) {
-				// Registered actions live on the shared nui instance, so a page that is no
-				// longer on screen must not act.
-				if (!element.isConnected) return;
-
-				const display = element.querySelector('#row-action-display');
-				if (display) display.textContent = `Row action: ${title} — "${name}"`;
-
-				const { dialog, main } = await nui.components.dialog.page(title, '', {
-					contentScroll: true,
-					buttons: [
-						{ label: 'Cancel', type: 'outline', value: 'cancel' },
-						{ label: 'Save', type: 'primary', value: 'save' }
-					]
-				});
-
-				main.innerHTML = `<section><h3>${kind} name</h3><nui-form><nui-input-group><label>Name</label><nui-input><input type="text"></nui-input></nui-input-group></nui-form></section>`;
-				main.querySelector('input[type="text"]').value = name;
-
-				dialog.addEventListener('nui-dialog-close', (ev) => {
-					if (!display) return;
-					const value = main.querySelector('input[type="text"]')?.value;
-					display.textContent = ev.detail.returnValue === 'save'
-						? `Saved ${kind.toLowerCase()} "${value}" (was "${name}")`
-						: `Cancelled editing ${kind.toLowerCase()} "${name}"`;
+			// A row action is an icon-only control, so it carries a tooltip rather than a label
+			// (that is the documented use for nui-tooltip). Built AFTER loadData, because a
+			// procedurally created target needs its tooltip injected adjacent to it — the
+			// tooltip host is position:fixed, so it adds nothing to the row's flex layout.
+			function attachRowTooltips(listEl) {
+				if (!listEl) return;
+				listEl.querySelectorAll('button.action').forEach(btn => {
+					if (btn.nextElementSibling?.tagName === 'NUI-TOOLTIP') return;
+					const row = btn.closest('li');
+					const name = (row?.querySelector('button.group-toggle span, a span')?.textContent || '').trim();
+					const tooltip = document.createElement('nui-tooltip');
+					tooltip.textContent = name ? `${btn.getAttribute('aria-label')} — ${name}` : btn.getAttribute('aria-label');
+					btn.after(tooltip);
 				});
 			}
 
-			nui.registerAction('demo-section-edit', (target, el, e, param) => openRowActionDialog('Edit section', 'Section', param));
-			nui.registerAction('demo-item-edit', (target, el, e, param) => openRowActionDialog('Edit item', 'Item', param));
+			attachRowTooltips(demoFold);
+			attachRowTooltips(demoTree);
 
 			// Setup interactive testing
 			const foldStateDisplay = element.querySelector('#fold-state-display');

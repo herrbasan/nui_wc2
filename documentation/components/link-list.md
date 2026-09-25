@@ -99,7 +99,15 @@ Data-driven form — `rowAction` on the item, either a data-action string or `{a
 
 `icon` defaults to `settings`; `label` (the `aria-label`) defaults to `"Settings"`. The row action is dimmed at rest and lifts to full opacity on hover or keyboard focus, so it does not compete with the row's label.
 
-Handle it like any other action. Register a handler — it receives the element the action was resolved against, the action element itself, the event, and the param after the colon:
+Because it is an icon-only control, pair it with an [`nui-tooltip`](tooltip.md) carrying the explanation. For a procedurally generated row, inject the tooltip adjacent to the button after `loadData()` — the tooltip host is `position: fixed`, so it adds nothing to the row's layout:
+
+```javascript
+const tooltip = document.createElement('nui-tooltip');
+tooltip.textContent = 'Edit section — Content & Windows';
+row.querySelector('button.action').after(tooltip);
+```
+
+To handle the action itself, register a handler with `nui.registerAction(name, fn)`. It resolves before the generic events and receives the target, the action element, the event, and the param after the colon:
 
 ```javascript
 nui.registerAction('edit-section', async (target, el, event, param) => {
