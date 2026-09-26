@@ -319,10 +319,9 @@ If you MUST apply CSS (spacing on your own wrappers, very rare theming), use ONL
 ### nui-select
 
 ```html
-<!-- ✅ CORRECT -->
-<nui-select searchable>
+<!-- ✅ CORRECT — placeholder is display text on the wrapper, never an option -->
+<nui-select searchable placeholder="Select country...">
   <select name="country">
-    <option value="">Select country...</option>
     <option value="us">United States</option>
     <option value="uk">United Kingdom</option>
   </select>
@@ -657,7 +656,7 @@ const { dialog, main, result } = nui.components.dialog.page(
 const returnValue = await result;
 ```
 | Attributes | `mode="page"`, `title="..."`, `placement="center|top|bottom"`, `blocking` |
-| Methods | `.showModal()`, `.show()`, `.close(retVal)`, `.isOpen()` |
+| Methods | `.showModal()`, `.show()` (non-modal; closes on **Escape** unless `blocking` — native `<dialog>` fires no cancel event when non-modal, so the component wires it), `.close(retVal)`, `.isOpen()` |
 | Events | `nui-dialog-open`, `nui-dialog-close`, `nui-dialog-cancel` |
 | ⚠️ `page()` signature | `page(title, htmlContent, options)` — 2nd param is HTML content, NOT subtitle |
 

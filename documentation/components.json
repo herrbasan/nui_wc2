@@ -1,6 +1,6 @@
 {
 	"schemaVersion": 1,
-	"generated": "2026-09-26T03:51:06.871Z",
+	"generated": "2026-09-26T05:13:14.665Z",
 	"source": "Playground/pages/**",
 	"components": [
 		{
@@ -35,7 +35,9 @@
 			"name": "nui-app",
 			"group": "layout",
 			"description": "Application shell creating CSS Grid layout with fixed regions: header, sidebar, content, and optional footer.",
-			"events": [],
+			"events": [
+				"nui-sidebar-change"
+			],
 			"innerElement": null,
 			"imports": null,
 			"page": "components/app-layout",
@@ -78,7 +80,8 @@
 			"group": "forms",
 			"description": "Styled wrapper around native buttons, including icon buttons and variant styling.",
 			"events": [
-				"nui-click"
+				"nui-click",
+				"nui-file-selected"
 			],
 			"innerElement": "<button> or <a>",
 			"imports": null,
@@ -149,7 +152,9 @@
 			"group": "forms",
 			"description": "File drop overlay with named zones, automatic grid layout, and window-level drag event handling.",
 			"events": [
-				"nui-drop"
+				"nui-dropzone-open",
+				"nui-dropzone-close",
+				"nui-dropzone-drop"
 			],
 			"innerElement": null,
 			"imports": null,
@@ -179,7 +184,8 @@
 			"events": [
 				"nui-input",
 				"nui-change",
-				"nui-clear"
+				"nui-clear",
+				"nui-validate"
 			],
 			"innerElement": "<input>, <textarea>",
 			"imports": null,
@@ -207,7 +213,7 @@
 			"group": "navigation",
 			"description": "Navigation list with collapsible groups, active state management, keyboard support, and data-driven API.",
 			"events": [
-				"nui-link-list-change"
+				"nui-active-change"
 			],
 			"innerElement": null,
 			"imports": null,
@@ -244,6 +250,19 @@
 			"page": "components/overlay",
 			"demoPath": "Playground/pages/components/overlay.html",
 			"docPath": "documentation/components/overlay.md"
+		},
+		{
+			"@context": "nui",
+			"@type": "Component",
+			"name": "nui-page",
+			"group": "layout",
+			"description": "Content layout engine: constrains direct children to a readable max-width, with the breakout attribute for full-width sections.",
+			"events": [],
+			"innerElement": null,
+			"imports": null,
+			"page": "components/page",
+			"demoPath": "Playground/pages/components/page.html",
+			"docPath": "documentation/components/page.md"
 		},
 		{
 			"@context": "nui",
@@ -290,7 +309,13 @@
 				"nui-disable",
 				"nui-item-add",
 				"nui-item-remove",
-				"nui-items-replace"
+				"nui-items-replace",
+				"nui-select-all",
+				"nui-validate",
+				"nui-loading",
+				"nui-loaded",
+				"nui-options-loaded",
+				"nui-options-error"
 			],
 			"innerElement": "<select>",
 			"imports": null,
@@ -317,9 +342,7 @@
 			"name": "nui-slider",
 			"group": "forms",
 			"description": "Enhanced range input wrapping native <input type='range'> with custom visual styling and drag interaction.",
-			"events": [
-				"nui-change"
-			],
+			"events": [],
 			"innerElement": "<input type=\"range\">",
 			"imports": null,
 			"page": "components/slider",
@@ -333,8 +356,7 @@
 			"group": "interaction",
 			"description": "Drag-and-drop reordering with FLIP animations, touch/mouse/keyboard support, and nui-sortable-item children.",
 			"events": [
-				"nui-sortable-reorder",
-				"nui-sortable-item-delete"
+				"nui-sortable-change"
 			],
 			"innerElement": null,
 			"imports": null,
@@ -378,7 +400,8 @@
 			"description": "Tag/chip input with keyboard navigation, hidden form inputs for submission, and editable or display-only modes.",
 			"events": [
 				"nui-tag-add",
-				"nui-tag-remove"
+				"nui-tag-remove",
+				"nui-change"
 			],
 			"innerElement": null,
 			"imports": null,
@@ -423,7 +446,7 @@
 			"group": "forms",
 			"description": "Editable code input with real-time syntax highlighting, caret preservation, auto-indent, and optional line numbers.",
 			"events": [
-				"nui-code-editor-change"
+				"nui-change"
 			],
 			"innerElement": null,
 			"imports": {
@@ -533,7 +556,10 @@
 			"name": "nui-lightbox",
 			"group": "media",
 			"description": "Image gallery with thumbnail/full-res lazy loading, keyboard navigation, carousel loop mode, and touch gestures.",
-			"events": [],
+			"events": [
+				"nui-lightbox-open",
+				"nui-lightbox-close"
+			],
 			"innerElement": "<img> with data-lightbox-src",
 			"imports": {
 				"js": "NUI/lib/modules/nui-lightbox.js",
@@ -549,11 +575,7 @@
 			"name": "nui-list",
 			"group": "data",
 			"description": "Virtualized scroller with integrated search, sort, filter. Renders only visible items for large datasets.",
-			"events": [
-				"nui-list-change",
-				"nui-list-select",
-				"nui-item-action"
-			],
+			"events": [],
 			"innerElement": null,
 			"imports": {
 				"js": "NUI/lib/modules/nui-list.js",
@@ -569,7 +591,12 @@
 			"name": "nui-media-player",
 			"group": "media",
 			"description": "Custom-skinnable video/audio player wrapper over native media elements with pause-others and poster support.",
-			"events": [],
+			"events": [
+				"nui-media-event",
+				"nui-media-play",
+				"nui-media-pause",
+				"nui-media-volume"
+			],
 			"innerElement": "<video> or <audio>",
 			"imports": {
 				"js": "NUI/lib/modules/nui-media-player.js",
@@ -585,7 +612,9 @@
 			"name": "nui-menu",
 			"group": "navigation",
 			"description": "Application-style menubar with dropdowns, nested submenus, and full keyboard navigation.",
-			"events": [],
+			"events": [
+				"nui-menu-action"
+			],
 			"innerElement": null,
 			"imports": {
 				"js": "NUI/lib/modules/nui-menu.js",
@@ -602,8 +631,9 @@
 			"group": "forms",
 			"description": "Lightweight WYSIWYG editor using contenteditable with toolbar for basic formatting, links, tables, and images.",
 			"events": [
-				"nui-rich-text-change",
-				"nui-rich-text-image"
+				"nui-change",
+				"nui-image-request",
+				"nui-image-upload"
 			],
 			"innerElement": null,
 			"imports": {
@@ -956,6 +986,14 @@
 	},
 	"events": [
 		{
+			"component": "nui-app",
+			"events": [
+				{
+					"name": "nui-sidebar-change"
+				}
+			]
+		},
+		{
 			"component": "nui-banner",
 			"events": [
 				{
@@ -971,6 +1009,9 @@
 			"events": [
 				{
 					"name": "nui-click"
+				},
+				{
+					"name": "nui-file-selected"
 				}
 			]
 		},
@@ -992,7 +1033,13 @@
 			"component": "nui-dropzone",
 			"events": [
 				{
-					"name": "nui-drop"
+					"name": "nui-dropzone-open"
+				},
+				{
+					"name": "nui-dropzone-close"
+				},
+				{
+					"name": "nui-dropzone-drop"
 				}
 			]
 		},
@@ -1007,6 +1054,9 @@
 				},
 				{
 					"name": "nui-clear"
+				},
+				{
+					"name": "nui-validate"
 				}
 			]
 		},
@@ -1014,7 +1064,7 @@
 			"component": "nui-link-list",
 			"events": [
 				{
-					"name": "nui-link-list-change"
+					"name": "nui-active-change"
 				}
 			]
 		},
@@ -1075,14 +1125,24 @@
 				},
 				{
 					"name": "nui-items-replace"
-				}
-			]
-		},
-		{
-			"component": "nui-slider",
-			"events": [
+				},
 				{
-					"name": "nui-change"
+					"name": "nui-select-all"
+				},
+				{
+					"name": "nui-validate"
+				},
+				{
+					"name": "nui-loading"
+				},
+				{
+					"name": "nui-loaded"
+				},
+				{
+					"name": "nui-options-loaded"
+				},
+				{
+					"name": "nui-options-error"
 				}
 			]
 		},
@@ -1090,10 +1150,7 @@
 			"component": "nui-sortable",
 			"events": [
 				{
-					"name": "nui-sortable-reorder"
-				},
-				{
-					"name": "nui-sortable-item-delete"
+					"name": "nui-sortable-change"
 				}
 			]
 		},
@@ -1113,6 +1170,9 @@
 				},
 				{
 					"name": "nui-tag-remove"
+				},
+				{
+					"name": "nui-change"
 				}
 			]
 		},
@@ -1120,7 +1180,7 @@
 			"component": "nui-code-editor",
 			"events": [
 				{
-					"name": "nui-code-editor-change"
+					"name": "nui-change"
 				}
 			]
 		},
@@ -1170,16 +1230,38 @@
 			]
 		},
 		{
-			"component": "nui-list",
+			"component": "nui-lightbox",
 			"events": [
 				{
-					"name": "nui-list-change"
+					"name": "nui-lightbox-open"
 				},
 				{
-					"name": "nui-list-select"
+					"name": "nui-lightbox-close"
+				}
+			]
+		},
+		{
+			"component": "nui-media-player",
+			"events": [
+				{
+					"name": "nui-media-event"
 				},
 				{
-					"name": "nui-item-action"
+					"name": "nui-media-play"
+				},
+				{
+					"name": "nui-media-pause"
+				},
+				{
+					"name": "nui-media-volume"
+				}
+			]
+		},
+		{
+			"component": "nui-menu",
+			"events": [
+				{
+					"name": "nui-menu-action"
 				}
 			]
 		},
@@ -1187,10 +1269,13 @@
 			"component": "nui-rich-text",
 			"events": [
 				{
-					"name": "nui-rich-text-change"
+					"name": "nui-change"
 				},
 				{
-					"name": "nui-rich-text-image"
+					"name": "nui-image-request"
+				},
+				{
+					"name": "nui-image-upload"
 				}
 			]
 		},

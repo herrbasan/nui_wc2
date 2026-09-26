@@ -103,7 +103,7 @@ For real-time surfaces — presence, socket state, service health — `status` p
 
 ### Notes
 
-- **The label carries the meaning.** The dot is a CSS pseudo-element, so it is invisible to screen readers and needs no `aria-label` — `.`"Online" already reads correctly. Do not ship a dot without text.
+- **The label carries the meaning.** The dot is a CSS pseudo-element, so it is invisible to screen readers and needs no `aria-label` — "Online" already reads correctly. Do not ship a dot without text.
 - **Update it like any other attribute:** `el.setAttribute('status', 'online')` / `el.removeAttribute('status')`. The colour change is instant; the pulse starts and stops with the value.
 - **Motion is respected.** The pulse is suppressed under `prefers-reduced-motion: reduce` by the theme's global rule, and `connecting` vs `retrying` still differ by colour.
 

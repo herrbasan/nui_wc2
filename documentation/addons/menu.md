@@ -124,7 +124,9 @@ None
 
 ### Events
 
-None
+| Event | Detail | Description |
+|-------|--------|-------------|
+| `nui-menu-action` | `{ action, item }` | A menu item carrying an `action` was activated (click or Enter). Bubbles. Declarative markup uses `data-action` instead, as in the example above. |
 
 ## When to Use
 

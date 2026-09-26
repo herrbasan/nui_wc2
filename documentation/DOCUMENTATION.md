@@ -78,7 +78,7 @@ No imports needed. Available after loading `nui.js`.
 **Layout**
 - [App Layout](#page=components/app-layout) — Application shell with CSS Grid: header, sidebar, content, footer.
 - [App Header](#page=components/app-header) — Top bar with left/center/right slot zones and sidebar toggle.
-- [Page](#page=components/app-layout) — Content layout engine with readable max-width and `breakout` attribute for full-width sections.
+- [Page](#page=components/page) — Content layout engine with readable max-width and `breakout` attribute for full-width sections.
 - [Card](#page=components/card) — Flexible content container with surface styling and layout modes.
 - [Layout Grid](#page=components/layout) — Responsive column grid (1/2/3 columns based on viewport).
 
@@ -117,11 +117,16 @@ These modules require loading additional JS (and often CSS). Each doc lists the 
 
 - [Code Editor](#page=addons/code-editor) — Editable code input with real-time syntax highlighting, auto-indent, and line numbers.
 - [Context Menu](#page=addons/context-menu) — Programmatic floating popup menus with submenus and keyboard navigation.
+- [File Icon](#page=addons/file-icon) — File-type icon by extension: one document glyph, the extension overlaid, coloured by category.
+- [File List](#page=addons/file-list) — File rows with type icons, status badges and per-row actions; upload staging or document library, with optional drag reordering.
+- [File Tree](#page=addons/file-tree) — Lazy-loading file explorer tree with ARIA treeview keyboard navigation; filesystem-agnostic via a host-supplied provider.
+- [Graph](#page=addons/graph) — Low-power canvas sparkline for high-frequency telemetry and live time-series.
 - [Lightbox](#page=addons/lightbox) — Image gallery with thumbnail/full-res lazy loading, carousel loop, and touch gestures.
 - [List](#page=addons/list) — Virtualized scroller with integrated search, sort, filter. Renders only visible items for large datasets.
 - [Media Player](#page=addons/media-player) — Custom-skinnable video/audio player wrapper over native media elements.
 - [Menu](#page=addons/menu) — Application-style menubar with dropdowns, nested submenus, and full keyboard navigation.
 - [Rich Text](#page=addons/rich-text) — Lightweight WYSIWYG editor with toolbar for basic formatting, links, tables, and images.
+- [Slides](#page=addons/slides) — Presentation profile for MD-Blocks documents: one slide per section, fixed canvas scaling, repeating chrome.
 - [Wizard](#page=addons/wizard) — Multi-step wizard with progression navigation, validation, and layout modes.
 - [App Window](#page=addons/app-window) — Programmatic window chrome for Electron frameless windows.
 

@@ -103,6 +103,7 @@ The factory function returns an object with the following methods:
 | `show(x, y)` | `x: number, y: number` | Spawns the context menu at the exact viewport coordinates requested (e.g., from a `MouseEvent.clientX/Y`). Automatically flips to stay on-screen if too close to an edge. |
 | `showAt(element, align?)` | `element: Element`, `align: String` | Spawns the menu anchored to a specific DOM element (like a button). |
 | `hide()` | *(None)* | Programmatically closes the menu. |
+| `destroy()` | *(None)* | Closes the menu and removes it from the DOM. |
 
 ---
 

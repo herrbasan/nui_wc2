@@ -250,18 +250,16 @@ Parent element should provide text alternative:
 Provides full ARIA tree navigation:
 
 ```html
-<nui-link-list mode="tree" accordion aria-label="Main navigation">
-	<div class="nui-list-item group">
-		<div class="item">
-			<nui-icon name="folder"></nui-icon>
-			<span>Components</span>
-		</div>
-		<div class="sub">
-			<div class="sub-item">
-				<span>Buttons</span>
-			</div>
-		</div>
-	</div>
+<nui-link-list mode="tree" aria-label="Main navigation">
+	<ul>
+		<li class="group-header">
+			<button type="button" class="group-toggle">
+				<nui-icon name="folder"></nui-icon>
+				<span>Components</span>
+			</button>
+		</li>
+		<li><a href="#page=components/button">Button</a></li>
+	</ul>
 </nui-link-list>
 ```
 
@@ -276,7 +274,7 @@ Provides full ARIA tree navigation:
 **Keyboard Support:**
 - Tab: Navigate between items (auto-expands collapsed groups on focus)
 - Enter/Space: Activate item or toggle expansion
-- Arrow keys: Navigate within list (future enhancement)
+- Arrow Up/Down: Move focus between visible items; Home/End jump to first/last
 
 **Auto-Expand on Focus:**
 When a keyboard user tabs into a sub-item within a collapsed group, the group automatically expands. This ensures keyboard-only users can access all navigation items without requiring visual confirmation of group state.

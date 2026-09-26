@@ -113,6 +113,7 @@ None
 | --- | --- |
 | nui-change | Fired whenever the content of the editor changes (like native input events). event.detail.value contains the updated HTML. |
 | nui-image-request | Fired when the user clicks the "Insert Image" icon in the toolbar. Use `e.preventDefault()` to intercept this event and open your own custom media browser dialog. To complete the insertion, call target.insertImage(url, alt). |
+| nui-image-upload | Fired when an image **file** is dropped onto or pasted into the editor. Detail: `{ file, clientX?, clientY? }` (coordinates only on drop). The default insertion is suppressed — the host uploads `detail.file` and completes via `target.insertImage(url, alt)`. |
 
 ```javascript
 editor.addEventListener('nui-change', (e) => {

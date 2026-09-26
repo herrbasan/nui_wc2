@@ -227,6 +227,7 @@ Because the actual form values live natively inside the underlying `<select>`, y
 | `close()` | none | Folds the popup shut. |
 | `disable()` | none | Sets the component and underlying control to disabled. |
 | `enable()` | none | Re-enables the interactive controls. |
+| `loadOptions(asyncFn)` | `Function` | Runs an async options provider with managed loading state: disables the control and shows "Loading..." (`nui-loading`), feeds the resolved array straight to `setItems()` — so map your API shape to `{ value, label }` **inside** the provider — then re-enables and re-syncs (`nui-loaded`). Resolves `{ data, error }`; dispatches `nui-options-loaded` on success, `nui-options-error` on rejection. Never throws. |
 
 #### `setItems()` Structure
 
@@ -253,3 +254,7 @@ Because it encapsulates a complex interaction, `nui-select` broadcasts specific 
 | `nui-clear` | `CustomEvent` | Fires when the clear method deletes all active choices. |
 | `nui-select-all` | `CustomEvent` | Fires when the `select-all` row is used. Detail contains `{ selected, count }` — `count` is how many visible options the action applied to. |
 | `nui-validate` | `CustomEvent` | Fires when `validate()` runs. Detail contains `{ valid, message }`. Not fired by blur or form submit — those only apply the `is-invalid` class. |
+| `nui-loading` | `CustomEvent` | `loadOptions()` entered the loading state (control disabled, "Loading..." shown). |
+| `nui-loaded` | `CustomEvent` | `loadOptions()` left the loading state (success or failure). |
+| `nui-options-loaded` | `CustomEvent` | `loadOptions()` resolved and the options were applied. Detail contains `{ data }` — the provider's raw result. |
+| `nui-options-error` | `CustomEvent` | `loadOptions()` rejected. Detail contains `{ error }`. |

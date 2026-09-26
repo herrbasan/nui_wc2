@@ -12,14 +12,14 @@ This is an addon module. Load the JS before use (no CSS required):
 
 This module provides window chrome (title bar, content area, optional status bar) for Electron frameless windows. It is a programmatic utility, not a custom element, designed specifically for desktop application contexts where the browser chrome is hidden.
 
-The ppWindow() function creates a structured DOM container with:
+The `appWindow()` function creates a structured DOM container with:
 - **Title bar** - Icon, title, and window controls (close button)
 - **Content area** - Main slot for application content
 - **Status bar** - Optional bottom bar for status information
 
 ## Declarative Usage
 
-*Note: ppWindow is a programmatic factory function and does not have a custom element or declarative usage.*
+*Note: `appWindow` is a programmatic factory function and does not have a custom element or declarative usage.*
 
 ### Attributes
 
@@ -37,9 +37,9 @@ The ppWindow() function creates a structured DOM container with:
 
 ### DOM Methods
 
-The ppWindow function is initialized as a factory function.
+The `appWindow` function is initialized as a factory function.
 
-`javascript
+```javascript
 import { appWindow } from '../NUI/lib/modules/nui-app-window.js';
 
 const win = appWindow({
@@ -52,26 +52,27 @@ const win = appWindow({
         console.log('Window closed');
     }
 });
-`
+```
 
 #### Initialization Options
 
 | Property | Type | Description |
 |----------|------|-------------|
-| 	itle | string | Window title (defaults to document.title) |
-| icon | string | Icon name from the NUI icon sprite |
-| inner | string\|HTMLElement | Content to display in the main area |
-| statusbar | oolean | Show status bar at the bottom (default: alse) |
-| 	arget | HTMLElement | Container to append the window to (default: document.body) |
-| onClose | unction | Callback invoked when win.close() is called |
+| `title` | string | Window title (defaults to `document.title`) |
+| `icon` | string | Icon name from the NUI icon sprite |
+| `menuToggle` | boolean | Renders a menu toggle in the title bar instead of the icon; clicking it toggles the left sidebar of a `nui-app` inside the content area |
+| `inner` | string\|HTMLElement | Content to display in the main area |
+| `statusbar` | boolean | Show status bar at the bottom (default: `false`) |
+| `target` | HTMLElement | Container to append the window to (default: `document.body`; **clears `body` first**) |
+| `onClose` | function | Callback invoked when `win.close()` is called |
 
 #### Instance Methods
 
 | Method | Description |
 |--------|-------------|
-| close() | Calls the onClose callback. Does not remove the element from the DOM. |
-| ocus() | Adds ocused class to <body> |
-| lur() | Removes ocused class from <body> |
+| `close()` | Calls the `onClose` callback. Does not remove the element from the DOM. |
+| `focus()` | Adds `focused` class to `<body>` |
+| `blur()` | Removes `focused` class from `<body>` |
 
 #### Instance Properties
 

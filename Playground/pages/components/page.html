@@ -1,0 +1,90 @@
+<div class="page-page">
+
+<script type="application/ld+json">
+{
+  "@context": "nui",
+  "@type": "Component",
+  "name": "nui-page",
+  "group": "layout",
+  "description": "Content layout engine: constrains direct children to a readable max-width, with the breakout attribute for full-width sections.",
+  "events": [],
+  "innerElement": null,
+  "imports": null
+}
+</script>
+
+<header>
+	<h1>Page Component</h1>
+	<p class="lead">The content layout engine — readable max-width by default, <code>breakout</code> for full-width sections.</p>
+</header>
+
+<section>
+	<h2>What It Is</h2>
+	<p><code>&lt;nui-page&gt;</code> is the wrapper the router creates automatically for every loaded fragment — you rarely author it yourself. It solves a reading problem: long lines on wide screens are hard to read, so every direct child is constrained to <code>--space-page-maxwidth</code> (~56rem), while any child carrying the <code>breakout</code> attribute spans the full container width.</p>
+	<p>This demo page is itself rendered inside a router-created <code>&lt;nui-page&gt;</code> — the constrained columns you see here are the component working.</p>
+</section>
+
+<section>
+	<h2>Constrained vs. Breakout</h2>
+	<p>The first block below is an ordinary constrained child. The second carries <code>breakout</code> and spans the full content width.</p>
+
+	<div class="demo-area">
+		<nui-page>
+			<div class="demo-chrome">
+				<p><strong>Constrained child</strong> — capped at the readable max-width, like all default children.</p>
+			</div>
+			<div breakout class="demo-chrome">
+				<p><strong>Breakout child</strong> — spans the full container width via the <code>breakout</code> attribute.</p>
+			</div>
+		</nui-page>
+	</div>
+
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-page>
+	<div class="demo-chrome">
+		<p>Constrained child</p>
+	</div>
+	<div breakout class="demo-chrome">
+		<p>Breakout child — full container width</p>
+	</div>
+</nui-page></script>
+	</nui-code>
+</section>
+
+<section>
+	<h2>Re-constraining with .maxwidth-container</h2>
+	<p>When a section breaks out for a full-bleed background, its content loses the readable constraint. Wrap the inner content in <code>.maxwidth-container</code> to re-apply it — full-bleed surface, readable text.</p>
+
+	<div class="demo-area">
+		<nui-page>
+			<div breakout class="demo-chrome">
+				<div class="maxwidth-container">
+					<p><strong>Breakout surface, constrained content.</strong> The shaded area spans the full width; this text sits back inside the readable column.</p>
+				</div>
+			</div>
+		</nui-page>
+	</div>
+
+	<nui-code>
+		<script type="example" data-lang="html">
+<div breakout class="demo-chrome">
+	<div class="maxwidth-container">
+		<p>Full-bleed surface, readable text.</p>
+	</div>
+</div></script>
+	</nui-code>
+</section>
+
+<section>
+	<h2>Router Integration</h2>
+	<p>The router creates the wrapper for you: navigating to <code>#page=components/page</code> fetched this fragment, wrapped it in <code>&lt;nui-page class="content-page ..."&gt;</code>, injected the HTML, and upgraded the elements. On later visits the cached wrapper is shown and hidden — <code>init()</code> does not run again.</p>
+	<p>If a fragment must opt out of the page wrapper's layout behavior, give it a plain <code>&lt;div&gt;</code> root instead of relying on the wrapper.</p>
+</section>
+
+<section>
+	<h2>LLM Guide</h2>
+	<nui-details summary="LLM Guide - nui-page" src="../documentation/components/page.md" lazy></nui-details>
+</section>
+
+</div>

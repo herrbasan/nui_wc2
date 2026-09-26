@@ -47,23 +47,21 @@ linkList.setActive('#dashboard');
 
 ## Declarative Usage
 
-For static navigation, write the HTML directly:
+For static navigation, write the HTML directly. A group is a `<li class="group-header">` holding a `<button class="group-toggle">`; the `<li>` items that follow it (up to the next group header) are wrapped into a `.group-items` container on upgrade:
 
 ```html
 <nui-link-list mode="fold">
-	<nav>
-		<details open>
-			<summary>Main Menu</summary>
-			<ul>
-				<li><a href="#dashboard">Dashboard</a></li>
-				<li><a href="#settings">Settings</a></li>
-			</ul>
-		</details>
-	</nav>
+	<ul>
+		<li class="group-header">
+			<button type="button" class="group-toggle">Main Menu</button>
+		</li>
+		<li><a href="#dashboard">Dashboard</a></li>
+		<li><a href="#settings">Settings</a></li>
+	</ul>
 </nui-link-list>
 ```
 
-The structure uses `<details>`/`<summary>` for groups, providing native collapsibility before JavaScript enhances it.
+This is the same shape `loadData()` generates. `<details>`/`<summary>` markup is **not** parsed — a declarative group only collapses when it uses the `group-header` / `group-toggle` structure above.
 
 
 ## Row Actions
@@ -146,10 +144,11 @@ With no registered handler, the action instead fires the bubbling `nui-action` a
 | `nui-active-change` | `{ element, href, text }` | Fired whenever the active selected link changes natively (via click) or programmatically. |
 ## Keyboard Navigation
 
-Link lists implement roving tabindex:
-- Tab focuses the list itself
-- Arrow keys navigate between items
-- Enter/Space activates links
-- Right/Left expands/collapses groups
+Hybrid navigation — every link and group toggle is a native tab stop (no roving tabindex; the rationale is in `documentation/guides/accessibility.md` → *Sidebar Navigation*):
 
-This reduces tab stops while keeping full accessibility.
+- **Tab**: moves through items natively. In `fold` mode, focusing a collapsed group toggle auto-expands the group.
+- **Arrow Up/Down**: move focus between visible items.
+- **Home/End**: jump to the first / last visible item.
+- **Enter/Space**: activate the link or toggle the group.
+
+There is no Left/Right binding — groups expand via Enter/Space or by tabbing into them in `fold` mode.

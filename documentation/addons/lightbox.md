@@ -82,5 +82,6 @@ nui.components.lightbox.show([
 
 | Event | Detail | Description |
 |-------|--------|-------------|
-| None | | |
+| `nui-lightbox-open` | `{}` | The lightbox dialog became visible. |
+| `nui-lightbox-close` | `{}` | The lightbox dialog closed. |
 

@@ -39,14 +39,13 @@ The component builds a custom control interface over native media elements:
 
 ### Attributes
 
-| Option | Description |
+| Attribute | Description |
 | --- | --- |
-| url | The media source URL. |
-| type | Media type: "video" or "audio". |
-| poster | Poster image URL for video players. |
-| pauseOthers | When true (default), automatically pauses other players when this one plays. |
-| attributes | Object with attributes to set on the native <video> or <audio> element (e.g., { loop: true, crossorigin: 'anonymous' }). |
-| playerAttributes | Object with attributes to set on the <nui-media-player> wrapper element. |
+| `type` | `"video"` (default) or `"audio"`. Only used when no inner media element is authored — the component creates one. Otherwise set automatically from the inner element's tag. |
+| `src` | Media source URL for the created element. Ignored when an inner `<video>`/`<audio>` is authored. |
+| `pause-others` | Boolean. When present, starting playback pauses every other `nui-media-player` on the page. |
+
+Authoring an inner `<video>`/`<audio>` with native attributes (`poster`, `loop`, `crossorigin`, …) is the full-fidelity declarative form; the `type`/`src` shorthand exists for attribute-driven creation.
 
 ### Class Variants
 
@@ -67,6 +66,17 @@ nui.components.mediaPlayer.create('#container', {
 });
 ```
 
+#### Factory Options
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `url` | string | — | Media source URL. |
+| `type` | string | `'video'` | `'video'` or `'audio'`. |
+| `poster` | string | — | Poster image URL (video). |
+| `pauseOthers` | boolean | `true` | Pause other players when this one plays. Applied as the `pause-others` attribute. |
+| `attributes` | Object | `{}` | Attributes set on the native `<video>`/`<audio>` element (e.g. `{ loop: true, crossorigin: 'anonymous' }`). |
+| `playerAttributes` | Object | `{}` | Attributes set on the `<nui-media-player>` wrapper element. |
+
 ### DOM Methods
 
 | Method | Description |
@@ -79,7 +89,16 @@ None
 
 ### Events
 
-Since the component wraps native media elements, all standard media events work:
+The component dispatches its own events alongside the native media events:
+
+| Event | Detail | Description |
+| --- | --- | --- |
+| `nui-media-play` | `{}` | Playback started. |
+| `nui-media-pause` | `{}` | Playback paused. |
+| `nui-media-volume` | `{ value }` | Volume changed via the player's volume slider. |
+| `nui-media-event` | `{ type, originalEvent }` | Re-dispatch of native media events from the inner element. |
+
+Since the component wraps native media elements, all standard media events work as well:
 
 ```javascript
 const player = document.querySelector('nui-media-player');

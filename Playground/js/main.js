@@ -275,6 +275,7 @@ const navigationData = [
 				items: [
 					{ label: 'App Header', href: '#page=components/app-header' },
 					{ label: 'App Layout', href: '#page=components/app-layout' },
+					{ label: 'Page', href: '#page=components/page' },
 					{ label: 'Layout', href: '#page=components/layout' },
 					{ label: 'Skip Links', href: '#page=components/skip-links' }
 				]
