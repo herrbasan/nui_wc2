@@ -18,7 +18,6 @@ This document contains the **Engineering Manual** for developing and maintaining
 ```text
 NUI/
 ├── nui.js              # Core library with all components
-├── nui.d.ts            # TypeScript definitions
 ├── css/nui-theme.css   # Theme and component styles
 └── assets/             # Icons, sprites, patterns
 
@@ -30,6 +29,8 @@ Playground/
 │   └── addons/         # Optional module demos
 └── js/main.js          # Navigation configuration
 ```
+
+> **There is no `nui.d.ts`, and there must not be one again.** It was retired on 2026-09-26. Hand-maintained type declarations cannot stay true for a zero-build vanilla-JS library: the file reached 928 lines while knowing nothing about `nui-popover`, `nui-sortable`, `nui-form-row`, `nui-graph`, the file addons, `select-all`/`clearable` or markdown frontmatter — and it declared both `registerFeature` and `registerType` with wrong handler signatures. Nothing consumed it (no `package.json`, no `tsconfig.json`, no `.ts` file, no `@ts-check` in the repo), so it was a fourth, contradictory copy of the API — and this project has no TypeScript anywhere. The machine-readable contract is `documentation/components.json`; the prose contract is `documentation/**/*.md`. If a TypeScript consumer ever needs declarations, **generate** them from `nui.js` — never reintroduce a hand-maintained file.
 
 ### Documentation Folders
 
