@@ -88,10 +88,11 @@
         <h2>Interactive Delegation (<code>data-action</code>)</h2>
         <p>The app shell relies heavily on standard <code>nui-action</code> events to communicate between the Header and the Sidebars without custom JavaScript wiring.</p>
         <ul>
-            <li><code>data-action="toggle-sidebar"</code> - Toggles the left sidebar.</li>
+            <li><code>data-action="toggle-sidebar"</code> - Toggles the left sidebar (default).</li>
+            <li><code>data-action="toggle-sidebar:left"</code> - Explicitly toggles the left sidebar.</li>
             <li><code>data-action="toggle-sidebar:right"</code> - Toggles the right sidebar.</li>
         </ul>
-        <p>You can see this in action by clicking the menu button or settings button in the main header of the Playground above.</p>
+        <p>You can see this in action by clicking the menu button or settings button in the main header of the Playground above. The handlers are built into the <code>&lt;nui-app&gt;</code> shell — see the <a href="#page=components/app-layout">nui-app layout demo</a> and the full <code>data-action</code> table in the <code>nui-app</code> guide (<code>documentation/components/app.md</code>).</p>
     </section>
 
 

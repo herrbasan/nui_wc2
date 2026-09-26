@@ -1,0 +1,6 @@
+﻿docs: sync storage NUI domain from repo docs; fix app-header sidebar-toggle references
+
+- add scripts/sync-storage-docs.mjs: mirrors documentation/{components,addons,guides} to MCP storage documentation/NUI/ as full copies with frontmatter; concept_*/reference_cheatsheet from DOCUMENTATION.md / LLM-CHEATSHEET.md
+- app-header.md: link nui-app guide, add toggle-sidebar:left, note handlers are nui-app built-ins
+- app-header demo page: list all three toggle actions, link app-layout demo
+- scripts/README.md: document sync script

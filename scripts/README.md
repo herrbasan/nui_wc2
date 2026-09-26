@@ -84,3 +84,11 @@ Each page should include a JSON-LD block after the opening tag:
 ```
 
 **Note:** Escape `</script>` as `<\/script>` inside the JSON-LD code values to prevent breaking the HTML parser.
+
+## `sync-storage-docs.mjs`
+
+Syncs the repo documentation to the MCP storage box domain `documentation/NUI/` (`\\BADKID\Stuff\MCP_Storage`). Copies each `documentation/{components,addons,guides}/*.md` as `{component,addon,guide}_<name>.md` (hyphens -> underscores) plus `concept_*` / `reference_cheatsheet.md`, prepending fresh frontmatter (title, source path, date). Run after changing repo docs.
+
+``bash
+node scripts/sync-storage-docs.mjs
+``

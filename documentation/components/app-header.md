@@ -1,6 +1,6 @@
 # nui-app-header
 
-> **Layout Reference:** For the full structural rules of building an application shell, refer to the `nui-app` guide.
+> **Layout Reference:** For the full structural rules of building an application shell — including the complete `data-action` table for sidebar toggles — refer to the [`nui-app` guide](app.md).
 
 ## Overview
 The `<nui-app-header>` serves as a semantic flex-container designed to replace complex top-bar code with a standard, predictable structure. It is intended to live directly inside an `<nui-app>` wrapper, working in tandem with `<nui-sidebar>` and `<nui-content>`.
@@ -62,8 +62,11 @@ Any element placed inside the header can accept the `data-badge` attribute. This
 
 The App Shell relies entirely on global event delegation through `data-action` attributes to handle sidebars. This eliminates messy JS listeners for basic layout actions.
 
-- **`data-action="toggle-sidebar"`**: Toggles the visibility of the primary (left) `<nui-sidebar>`.
+- **`data-action="toggle-sidebar"`**: Toggles the visibility of the primary (left) `<nui-sidebar>`. Defaults to `left` when no param is given.
+- **`data-action="toggle-sidebar:left"`**: Explicitly toggles the left sidebar (same as above).
 - **`data-action="toggle-sidebar:right"`**: Toggles the visibility of the secondary `<nui-sidebar position="right">`.
+
+> These are built-in action handlers of the `<nui-app>` shell (see the [`nui-app` guide](app.md) for the full table, plus `sidebar-forced` behavior on narrow viewports). The buttons above only work because the header lives inside `<nui-app>` — on the Playground page the toggles control its own main header/sidebars.
 
 ## DOM Structure & Accessibility
 When initialized, NUI automatically ensures the underlying `<header>` tag receives `role="banner"` if no ARIA landmark roles are implicitly matched or provided, upgrading your layout's semantic accessibility for screen readers.
