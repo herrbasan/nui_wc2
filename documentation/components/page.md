@@ -40,8 +40,9 @@ The `breakout` attribute is the key feature. It is not specific to `nui-page` �
 When content is loaded (via router or statically), `nui-page` automatically:
 
 1. **Constrains width** — All direct children get `max-width: var(--space-page-maxwidth)` for readability.
-2. **Adds padding** — Consistent horizontal padding via CSS variables.
-3. **Enables breakout** — Any child with a `breakout` attribute spans full width.
+2. **Centers the column** — Constrained children are centered (`margin-inline: auto`), so the readable column sits at the inner bounds of the container instead of hugging the left edge on wide viewports.
+3. **Adds padding** — Consistent horizontal padding via CSS variables.
+4. **Enables breakout** — Any child with a `breakout` attribute spans full width.
 
 ### The Breakout Pattern
 
