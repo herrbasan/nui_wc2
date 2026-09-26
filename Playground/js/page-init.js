@@ -2350,6 +2350,77 @@ nui.registerPage('addons/menu', {
 	}
 });
 
+nui.registerPage('addons/file-icon', {
+	html: 'addons/file-icon.html',
+	async init(element, params, nui) {
+		if (customElements.get('nui-file-icon')) return;
+
+		const link = document.createElement('link');
+		link.rel = 'stylesheet';
+		link.href = '../NUI/css/modules/nui-file-icon.css';
+		document.head.appendChild(link);
+
+		await import('../../NUI/lib/modules/nui-file-icon.js');
+	}
+});
+
+nui.registerPage('addons/file-list', {
+	html: 'addons/file-list.html',
+	async init(element, params, nui) {
+		// nui-file-list renders nui-file-icon in every row, so its addon comes first.
+		if (!customElements.get('nui-file-icon')) {
+			const iconLink = document.createElement('link');
+			iconLink.rel = 'stylesheet';
+			iconLink.href = '../NUI/css/modules/nui-file-icon.css';
+			document.head.appendChild(iconLink);
+			await import('../../NUI/lib/modules/nui-file-icon.js');
+		}
+
+		if (!customElements.get('nui-file-list')) {
+			const listLink = document.createElement('link');
+			listLink.rel = 'stylesheet';
+			listLink.href = '../NUI/css/modules/nui-file-list.css';
+			document.head.appendChild(listLink);
+			await import('../../NUI/lib/modules/nui-file-list.js');
+		}
+
+		const log = element.querySelector('#file-list-log');
+		const logEvent = (name, file) => {
+			log.textContent = `${name}  ${file}\n` + log.textContent.split('\n').slice(0, 7).join('\n');
+		};
+
+		const basic = element.querySelector('#file-list-basic');
+		basic.loadData([
+			{ name: 'release-notes.md', size: 18432, url: '#' },
+			{ name: 'quarterly-report.pdf', size: 1843200, url: '#' },
+			{ name: 'brand/logo.svg', size: 5120 }
+		], { actions: ['download', 'remove'] });
+		basic.addEventListener('nui-file-action', e => logEvent('nui-file-action', `${e.detail.action} ${e.detail.file.name}`));
+		// The demo refuses the built-in download — otherwise clicking one would
+		// save a file. This is also the documented way to handle it yourself.
+		basic.addEventListener('nui-file-download', e => e.preventDefault());
+
+		const staging = element.querySelector('#file-list-staging');
+		staging.loadData([
+			{ name: 'presentation.pptx', size: 5242880, status: 'uploading' },
+			{ name: 'interview.mp4', size: 128974848, status: 'queued' },
+			{ name: 'avatar.png', size: 40960, status: 'done' },
+			{ name: 'corrupt.zip', size: 2048, status: 'failed' }
+		], { actions: ['remove'] });
+		staging.addEventListener('nui-file-action', e => logEvent('nui-file-action', `${e.detail.action} ${e.detail.file.name}`));
+
+		const sortable = element.querySelector('#file-list-sortable');
+		sortable.loadData([
+			{ name: '01-introduction.md', size: 3200 },
+			{ name: '02-methods.md', size: 8100 },
+			{ name: '03-results.md', size: 6400 },
+			{ name: '04-appendix.md', size: 2100 }
+		], { actions: ['remove'], sortable: true });
+		sortable.addEventListener('nui-file-reorder', e => logEvent('nui-file-reorder', e.detail.files.map(f => f.name).join(' → ')));
+		sortable.addEventListener('nui-file-action', e => logEvent('nui-file-action', `${e.detail.action} ${e.detail.file.name}`));
+	}
+});
+
 nui.registerPage('addons/file-tree', {
 	html: 'addons/file-tree.html',
 	async init(element, params, nui) {

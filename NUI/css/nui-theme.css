@@ -1078,6 +1078,40 @@ nui-badge[variant="info"] {
 	border-left: 6px solid var(--color-highlight-dim);
 }
 
+/* Connection-status variant: a colour-coded dot before the label, for real-time
+   surfaces (presence, socket state, service health). The label carries the
+   meaning — the dot is a pseudo-element, so it never enters the accessibility
+   tree and no aria-label is needed. Colour states the current status; a pulse
+   states that a transitional status is still moving.
+   Motion preference is handled by the global *::before rule above. */
+nui-badge[status]::before {
+	content: '';
+	width: 0.5rem;
+	height: 0.5rem;
+	margin-right: var(--nui-space-half);
+	border-radius: 50%;
+	background-color: var(--color-shade5);
+	flex-shrink: 0;
+}
+
+nui-badge[status="online"]::before   { background-color: var(--palette-activate); }
+nui-badge[status="away"]::before     { background-color: var(--palette-mark); }
+nui-badge[status="offline"]::before  { background-color: var(--palette-alert); }
+
+/* Transitional: colour says where it is heading, the pulse says it is moving. */
+nui-badge[status="connecting"]::before { background-color: var(--color-highlight); }
+nui-badge[status="retrying"]::before   { background-color: var(--palette-mark); }
+
+nui-badge[status="connecting"]::before,
+nui-badge[status="retrying"]::before {
+	animation: nui-status-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes nui-status-pulse {
+	0%, 100% { opacity: 1;    transform: scale(1); }
+	50%      { opacity: 0.35; transform: scale(0.75); }
+}
+
 
 /* =============================================================================
    ICON COMPONENT
@@ -3162,6 +3196,33 @@ nui-select.is-above .nui-select-popup-tags {
 	background: var(--color-shade1);
 	pointer-events: none;
 	user-select: none;
+}
+
+/* List-level actions (opt-in `select-all` / `clearable`). They carry
+   .nui-select-option so the component's roving focus reaches them, which is why
+   they need their own accents: these are commands, not choices, so they are
+   colour-distinguished and separated from the option list rather than merely
+   sitting inside it. */
+.nui-select-action {
+	color: var(--color-highlight);
+	font-weight: bold;
+	background-color: var(--color-shade1);
+}
+
+.nui-select-action--all {
+	position: sticky; /* stays reachable while a long option list scrolls */
+	top: 0;
+	z-index: 1;
+	border-bottom: var(--border-thickness) solid var(--border-shade2);
+}
+
+.nui-select-action--clear {
+	border-top: var(--border-thickness) solid var(--border-shade2);
+}
+
+.nui-select-action.is-selected {
+	background: light-dark(var(--color-highlight-dim), rgb(50, 50, 50));
+	color: var(--color-white);
 }
 
 .nui-select-no-results {

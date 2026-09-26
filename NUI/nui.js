@@ -3180,6 +3180,10 @@ registerComponent('nui-select', (element) => {
 	const isMulti = select.multiple;
 	const isSearchable = element.hasAttribute('searchable');
 	const isMobileEnabled = element.hasAttribute('mobile-sheet');
+	// Opt-in list-level actions. `clearable` deliberately mirrors the nui-input
+	// attribute of the same name.
+	const isClearable = element.hasAttribute('clearable');
+	const isSelectAll = element.hasAttribute('select-all') && isMulti;
 
 	// Placeholder is display text, not data. Precedence:
 	// 1. `placeholder` attribute on <nui-select>
@@ -3403,6 +3407,15 @@ registerComponent('nui-select', (element) => {
 
 	// ##### PRIVATE FUNCTIONS
 
+	// Opt-in action rows. They are rebuilt with the options below, because
+	// buildOptions wipes every .nui-select-option — and carrying that class is what
+	// puts them in the component's roving focus, so they are reachable by keyboard
+	// instead of being mouse-only. They live in the popup rather than the control
+	// because the control is a <button>, and a nested <button> is invalid HTML.
+	let selectAllRow = null;
+	let selectAllRowText = null;
+	let clearActionRow = null;
+
 	// Build option rows from native select
 	const buildOptions = () => {
 		list.els('.nui-select-option, .nui-select-group').forEach(el => el.remove());
@@ -3431,6 +3444,35 @@ registerComponent('nui-select', (element) => {
 				addOption(child, list);
 			}
 		});
+
+		selectAllRow = null;
+		selectAllRowText = null;
+		clearActionRow = null;
+
+		if (isSelectAll) {
+			selectAllRow = dom.create('div', {
+				class: 'nui-select-option nui-select-action nui-select-action--all',
+				target: list
+			});
+			dom.create('span', { class: 'nui-select-option-check', target: selectAllRow });
+			selectAllRowText = dom.create('span', { class: 'nui-select-option-text', target: selectAllRow });
+			selectAllRow.onclick = e => { e.stopPropagation(); toggleAllVisible(); };
+			list.prepend(selectAllRow); // above the options, below nothing that matters
+		}
+
+		// A clear row is only rendered when clearing has a destination. For multi-select
+		// that is always true; a single-select needs a none-option to return to, and
+		// shipping the row without one would mean a dead control and a console warning
+		// from clear() every time it was used.
+		if (isClearable && (isMulti || findNoneOption() || findPlaceholderOption())) {
+			clearActionRow = dom.create('div', {
+				class: 'nui-select-option nui-select-action nui-select-action--clear',
+				text: 'Clear selection',
+				target: list
+			});
+			clearActionRow.onclick = e => { e.stopPropagation(); clear(); };
+		}
+
 		syncState(false); // Don't dispatch change event during initial build
 	};
 
@@ -3452,6 +3494,35 @@ registerComponent('nui-select', (element) => {
 		Array.from(select.options).find(o => o.value === '' && o.disabled);
 	const findFirstSelectable = () =>
 		Array.from(select.options).find(o => !o.disabled);
+
+	// Options the user can currently act on: enabled, and not hidden by a search.
+	const visibleEnabledOptions = () =>
+		Array.from(select.options).filter(o => !o.disabled && !rowCache.get(o)?.hidden);
+
+	const updateSelectAllRow = () => {
+		if (!selectAllRow) return;
+		const targets = visibleEnabledOptions();
+		const allSelected = targets.length > 0 && targets.every(o => o.selected);
+		selectAllRowText.textContent = allSelected ? 'Clear all' : 'Select all';
+		selectAllRow.classList.toggle('is-selected', allSelected);
+		selectAllRow.hidden = targets.length === 0;
+	};
+
+	// "All" means what the user can see: with a search active it acts on the matches,
+	// not on options the filter has hidden. It toggles, so one row covers both
+	// directions and its label always states what a click will do.
+	const toggleAllVisible = () => {
+		const targets = visibleEnabledOptions();
+		if (!targets.length) return;
+		const next = !targets.every(o => o.selected);
+		targets.forEach(o => o.selected = next);
+		select.dispatchEvent(new Event('change', { bubbles: true }));
+		syncState();
+		element.dispatchEvent(new CustomEvent('nui-select-all', {
+			bubbles: true,
+			detail: { selected: next, count: targets.length }
+		}));
+	};
 
 	// Sync visual state with native select
 	const syncState = (dispatchChange = true) => {
@@ -3496,6 +3567,8 @@ registerComponent('nui-select', (element) => {
 		// render as an error before the user has done anything (a red underline on page
 		// load). validate() raises it; any change that makes the control valid clears it.
 		if (select.validity.valid) element.classList.remove('is-invalid');
+
+		updateSelectAllRow();
 
 		if (dispatchChange) {
 			element.dispatchEvent(new CustomEvent('nui-change', { 
@@ -3546,6 +3619,7 @@ registerComponent('nui-select', (element) => {
 			g.hidden = !Array.from(g.querySelectorAll('.nui-select-option')).some(r => !r.hidden);
 		});
 		noResults.hidden = count > 0;
+		updateSelectAllRow(); // "all" is the visible set, so the filter changes it
 	};
 
 	// Open/close
@@ -4168,11 +4242,17 @@ registerComponent('nui-select', (element) => {
 			case ' ':
 				e.preventDefault();
 				if (activeOptionIndex >= 0 && activeOptionIndex < options.length) {
-					const value = options[activeOptionIndex].dataset.value;
-					const opt = Array.from(select.options).find(o => o.value === value);
-					if (opt) pick(opt);
-					if (!isMulti) {
-						control.focus();
+					const row = options[activeOptionIndex];
+					const opt = Array.from(select.options).find(o => o.value === row.dataset.value);
+					if (opt) {
+						pick(opt);
+						if (!isMulti) {
+							control.focus();
+						}
+					} else {
+						// An action row (select-all / clear) carries no value: activate it
+						// through its own click handler rather than through pick().
+						row.click();
 					}
 				}
 				break;
@@ -6640,6 +6720,8 @@ export const nui = {
 				'nui-context-menu': { js: 'lib/modules/nui-context-menu.js', css: 'css/modules/nui-context-menu.css' },
 				'nui-rich-text':    { js: 'lib/modules/nui-rich-text.js',    css: 'css/modules/nui-rich-text.css' },
 				'nui-file-tree':    { js: 'lib/modules/nui-file-tree.js',    css: 'css/modules/nui-file-tree.css' },
+				'nui-file-icon':    { js: 'lib/modules/nui-file-icon.js',    css: 'css/modules/nui-file-icon.css' },
+				'nui-file-list':    { js: 'lib/modules/nui-file-list.js',    css: 'css/modules/nui-file-list.css' },
 			};
 
 			const _loading = new Set();

@@ -1,6 +1,6 @@
 {
 	"schemaVersion": 1,
-	"generated": "2026-09-26T03:41:31.298Z",
+	"generated": "2026-09-26T03:51:06.871Z",
 	"source": "Playground/pages/**",
 	"components": [
 		{
@@ -47,7 +47,7 @@
 			"@type": "Component",
 			"name": "nui-badge",
 			"group": "ui",
-			"description": "Status badges and notification indicators with variants (primary, success, danger, warning, info) and data-badge overlay mode.",
+			"description": "Status badges and notification indicators: variants (primary, success, danger, warning, info), a connection-status dot (status) and data-badge overlay mode.",
 			"events": [],
 			"innerElement": null,
 			"imports": null,
@@ -449,6 +449,44 @@
 			"page": "addons/context-menu",
 			"demoPath": "Playground/pages/addons/context-menu.html",
 			"docPath": "documentation/addons/context-menu.md"
+		},
+		{
+			"@context": "nui",
+			"@type": "Component",
+			"name": "nui-file-icon",
+			"group": "ui",
+			"description": "File-type icon by extension: one document glyph with the extension overlaid and coloured by category. Derives the type from a filename or from an explicit type/extension.",
+			"events": [],
+			"innerElement": null,
+			"imports": {
+				"js": "NUI/lib/modules/nui-file-icon.js",
+				"css": "NUI/css/modules/nui-file-icon.css"
+			},
+			"page": "addons/file-icon",
+			"demoPath": "Playground/pages/addons/file-icon.html",
+			"docPath": "documentation/addons/file-icon.md"
+		},
+		{
+			"@context": "nui",
+			"@type": "Component",
+			"name": "nui-file-list",
+			"group": "data",
+			"description": "List of files with type icons, names, optional status and per-row actions (download / remove). Serves both an upload dropzone's staging list and a document library; optional drag reordering via the core nui-sortable.",
+			"events": [
+				"nui-file-action",
+				"nui-file-remove",
+				"nui-file-removed",
+				"nui-file-download",
+				"nui-file-reorder"
+			],
+			"innerElement": null,
+			"imports": {
+				"js": "NUI/lib/modules/nui-file-list.js",
+				"css": "NUI/css/modules/nui-file-list.css"
+			},
+			"page": "addons/file-list",
+			"demoPath": "Playground/pages/addons/file-list.html",
+			"docPath": "documentation/addons/file-list.md"
 		},
 		{
 			"@context": "nui",
@@ -1083,6 +1121,26 @@
 			"events": [
 				{
 					"name": "nui-code-editor-change"
+				}
+			]
+		},
+		{
+			"component": "nui-file-list",
+			"events": [
+				{
+					"name": "nui-file-action"
+				},
+				{
+					"name": "nui-file-remove"
+				},
+				{
+					"name": "nui-file-removed"
+				},
+				{
+					"name": "nui-file-download"
+				},
+				{
+					"name": "nui-file-reorder"
 				}
 			]
 		},

@@ -1,0 +1,82 @@
+/**
+ * NUI File List - Addon Component Styles
+ *
+ * Rows are the same shape in both modes; only the chrome differs. A sortable row
+ * IS a <nui-sortable-item> and takes its padding, border and radius from the core
+ * sortable styles — so the plain variant declares those itself and neither mode
+ * ever stacks a second box inside a row.
+ */
+
+nui-file-list {
+	display: block;
+}
+
+.nui-file-rows {
+	display: flex;
+	flex-direction: column;
+	gap: var(--nui-space-eighth);
+}
+
+.nui-file-row {
+	display: flex;
+	align-items: center;
+	gap: var(--nui-space);
+	min-width: 0;
+}
+
+/* Non-sortable chrome: a flat list separated by hairlines, not cards. */
+.nui-file-row--plain {
+	padding: var(--nui-space-half) var(--nui-space);
+	border-bottom: var(--border-thickness) solid var(--border-shade1);
+	background-color: var(--color-base);
+	transition: background-color 0.1s;
+}
+
+.nui-file-row--plain:hover {
+	background-color: var(--color-shade1);
+}
+
+.nui-file-row--plain:last-child {
+	border-bottom: none;
+}
+
+.nui-file-meta {
+	display: flex;
+	flex-direction: column;
+	gap: 0.1rem;
+	flex: 1;
+	min-width: 0;
+}
+
+.nui-file-name {
+	color: var(--color-text);
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.nui-file-detail {
+	font-size: var(--font-size-small);
+	color: var(--color-text-dim);
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.nui-file-status {
+	flex-shrink: 0;
+}
+
+.nui-file-actions {
+	display: flex;
+	align-items: center;
+	gap: var(--nui-space-half);
+	flex-shrink: 0;
+}
+
+.nui-file-empty {
+	margin: 0;
+	padding: var(--nui-space-double);
+	text-align: center;
+	color: var(--color-shade5);
+}

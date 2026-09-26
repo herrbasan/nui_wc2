@@ -246,6 +246,51 @@
 </section>
 
 <section>
+	<h2>List Actions</h2>
+	<p>Two opt-in rows can be added to the dropdown: <code>select-all</code> (multi-select only) at the top, and
+		<code>clearable</code> at the bottom. Both are ordinary rows of the list, so arrow keys reach them and
+		Enter activates them. Select-all acts on the options <em>currently visible</em>, toggles to "Clear all"
+		once everything is selected, and never selects a disabled option.</p>
+
+	<h3>Try It</h3>
+	<div class="demo-area">
+		<nui-input-group>
+			<label>With list actions</label>
+			<nui-select id="multi-select-actions" searchable select-all clearable>
+				<select name="actions-demo" multiple>
+					<option value="a">Alpha</option>
+					<option value="b">Beta</option>
+					<option value="c">Gamma</option>
+					<option value="d" disabled>Delta (unavailable)</option>
+					<option value="e">Epsilon</option>
+				</select>
+			</nui-select>
+		</nui-input-group>
+	</div>
+
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-select searchable select-all clearable>
+	<select name="tabs" multiple>
+		<option value="a">Alpha</option>
+		<option value="b">Beta</option>
+		<option value="c">Gamma</option>
+		<option value="d" disabled>Delta (unavailable)</option>
+	</select>
+</nui-select>
+		</script>
+	</nui-code>
+
+	<div class="demo-callout demo-mt-1">
+		<nui-icon name="info"></nui-icon>
+		<p>On a single-select, the clear row only renders when there is a none-state to return to
+			(an enabled blank option, or the disabled prompt) — so it is never a control that can only
+			fall back to "select the first option". Listen for <code>nui-select-all</code> with
+			<code>{ selected, count }</code>.</p>
+	</div>
+</section>
+
+<section>
 	<h2>Option Groups</h2>
 	<p>Organize options into groups using <code>&lt;optgroup&gt;</code> elements.</p>
 
@@ -1029,6 +1074,16 @@ document.getElementById('demo-form').addEventListener('submit', (e) => {
 				<td><code>label</code></td>
 				<td>string</td>
 				<td>Accessibility label (auto-detected from parent label)</td>
+			</tr>
+			<tr>
+				<td><code>select-all</code></td>
+				<td>boolean</td>
+				<td>Multi-select only. Toggling "Select all" / "Clear all" row, acting on the visible options</td>
+			</tr>
+			<tr>
+				<td><code>clearable</code></td>
+				<td>boolean</td>
+				<td>"Clear selection" row at the bottom of the dropdown. Single-select renders it only when a none-state exists</td>
 			</tr>
 		</tbody>
 	</table>

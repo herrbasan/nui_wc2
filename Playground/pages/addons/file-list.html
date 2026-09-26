@@ -1,0 +1,123 @@
+<div class="page-file-list">
+
+<script type="application/ld+json">
+{
+  "@context": "nui",
+  "@type": "Component",
+  "name": "nui-file-list",
+  "group": "data",
+  "description": "List of files with type icons, names, optional status and per-row actions (download / remove). Serves both an upload dropzone's staging list and a document library; optional drag reordering via the core nui-sortable.",
+  "events": ["nui-file-action", "nui-file-remove", "nui-file-removed", "nui-file-download", "nui-file-reorder"],
+  "innerElement": null,
+  "imports": {
+    "js": "NUI/lib/modules/nui-file-list.js",
+    "css": "NUI/css/modules/nui-file-list.css"
+  }
+}
+</script>
+
+	<nui-details summary="LLM Guide - nui-file-list" src="../documentation/addons/file-list.md" lazy>
+
+	</nui-details>
+
+	<header>
+		<h1>File List</h1>
+		<p class="lead">Files with type icons, names, optional status and per-row actions — the shape an upload dropzone stages into, and the shape a document library displays.</p>
+	</header>
+
+	<section>
+		<h2>Basic Usage</h2>
+		<p>Give it files and it renders rows. The <code>download</code> action is only rendered when a file has a <code>url</code>, so no control is ever dead.</p>
+
+		<nui-code>
+			<script type="example" data-lang="js">
+fileList.loadData([
+	{ name: 'release-notes.md', size: 18432, url: '/files/release-notes.md' },
+	{ name: 'report.pdf', size: 1843200, url: '/files/report.pdf' },
+	{ name: 'logo.svg', size: 5120 }
+], { actions: ['download', 'remove'] });
+			</script>
+		</nui-code>
+
+		<h3>Try It</h3>
+		<div class="demo-area">
+			<nui-file-list id="file-list-basic"></nui-file-list>
+		</div>
+	</section>
+
+	<section>
+		<h2>Upload Staging List</h2>
+		<p>A <code>status</code> renders as a badge. Useful while files are still being transferred — the list is the same component either way.</p>
+
+		<h3>Try It</h3>
+		<div class="demo-area">
+			<nui-file-list id="file-list-staging"></nui-file-list>
+		</div>
+	</section>
+
+	<section>
+		<h2>Sortable</h2>
+		<p>Set <code>sortable: true</code> to reorder by drag. <code>nui-sortable</code> is a core component, so this adds no second import. Reordering is <em>reported</em>, not performed on your data: the host owns the array, so the list reorders its own copy and dispatches <code>nui-file-reorder</code> — cancel that event and the rows snap back.</p>
+
+		<nui-code>
+			<script type="example" data-lang="js">
+fileList.loadData(files, { actions: ['remove'], sortable: true });
+
+fileList.addEventListener('nui-file-reorder', e => {
+	save(e.detail.files.map(f => f.name));   // e.preventDefault() refuses the change
+});
+			</script>
+		</nui-code>
+
+		<h3>Try It</h3>
+		<div class="demo-area">
+			<nui-file-list id="file-list-sortable"></nui-file-list>
+		</div>
+	</section>
+
+	<section>
+		<h2>Events</h2>
+		<div class="demo-area">
+			<p class="demo-result" id="file-list-log">Interact with a list to see events here.</p>
+		</div>
+
+		<nui-table>
+			<table>
+				<thead>
+					<tr><th>Event</th><th>Detail</th><th>Fires</th></tr>
+				</thead>
+				<tbody>
+					<tr><td><code>nui-file-action</code></td><td><code>{ action, file, index }</code></td><td>Any row action — the catch-all handler.</td></tr>
+					<tr><td><code>nui-file-remove</code></td><td><code>{ action, file, index }</code></td><td>Remove requested. <code>preventDefault()</code> keeps the file in the list.</td></tr>
+					<tr><td><code>nui-file-download</code></td><td><code>{ action, file, index }</code></td><td>Download requested. <code>preventDefault()</code> suppresses the built-in download.</td></tr>
+					<tr><td><code>nui-file-removed</code></td><td><code>{ file, index }</code></td><td>After the file has been removed.</td></tr>
+					<tr><td><code>nui-file-reorder</code></td><td><code>{ files, order }</code></td><td>After a drag. <code>preventDefault()</code> refuses the new order.</td></tr>
+				</tbody>
+			</table>
+		</nui-table>
+	</section>
+
+	<section>
+		<h2>Methods</h2>
+		<nui-table>
+			<table>
+				<thead>
+					<tr><th>Method</th><th>Description</th></tr>
+				</thead>
+				<tbody>
+					<tr><td><code>loadData(files, options)</code></td><td>Replace the list. Throws <code>TypeError</code> if <code>files</code> is not an array.</td></tr>
+					<tr><td><code>addFiles(files)</code></td><td>Append without a full reload.</td></tr>
+					<tr><td><code>removeFile(fileOrIndex)</code></td><td>Remove one entry; returns <code>false</code> when it is not present.</td></tr>
+					<tr><td><code>getFiles()</code></td><td>A copy of the current list.</td></tr>
+					<tr><td><code>clear()</code></td><td>Empty the list.</td></tr>
+				</tbody>
+			</table>
+		</nui-table>
+
+		<div class="demo-callout demo-mt-1">
+			<nui-icon name="info"></nui-icon>
+			<p>Options: <code>actions</code> (keys of <code>download</code>, <code>remove</code>, <code>preview</code>, <code>open</code> — or your own key, dispatched as <code>nui-file-&lt;key&gt;</code>), <code>sortable</code>, <code>emptyText</code>, <code>onAction(action, file, index)</code>. A file is <code>{ name, size, url, detail, status, id }</code>; <code>size</code> may be a byte count or a string.</p>
+		</div>
+	</section>
+
+</div>

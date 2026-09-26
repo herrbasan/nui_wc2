@@ -6,7 +6,7 @@
   "@type": "Component",
   "name": "nui-badge",
   "group": "ui",
-  "description": "Status badges and notification indicators with variants (primary, success, danger, warning, info) and data-badge overlay mode.",
+  "description": "Status badges and notification indicators: variants (primary, success, danger, warning, info), a connection-status dot (status) and data-badge overlay mode.",
   "events": [],
   "innerElement": null,
   "imports": null
@@ -92,7 +92,40 @@
 </section>
 
 <section>
-<h2>Integrated Status Badge</h2>
+<h2>Connection Status</h2>
+<p>For real-time surfaces, <code>status</code> adds a colour-coded dot before the label. Transitional states — <code>connecting</code>, <code>retrying</code> — pulse while the state is still moving.</p>
+
+<div class="demo-area">
+<div class="demo-flex-center">
+<nui-badge status="online">Online</nui-badge>
+<nui-badge status="away">Away</nui-badge>
+<nui-badge status="offline">Offline</nui-badge>
+<nui-badge status="connecting">Connecting…</nui-badge>
+<nui-badge status="retrying">Retrying…</nui-badge>
+</div>
+</div>
+
+<nui-code>
+<script type="example" data-lang="html">
+<nui-badge status="online">Online</nui-badge>
+<nui-badge status="away">Away</nui-badge>
+<nui-badge status="offline">Offline</nui-badge>
+<nui-badge status="connecting">Connecting…</nui-badge>
+<nui-badge status="retrying">Retrying…</nui-badge>
+
+<!-- Combines with a variant: dot and accent bar together -->
+<nui-badge status="offline" variant="danger">Disconnected</nui-badge>
+</script>
+</nui-code>
+
+<div class="demo-callout demo-mt-1">
+<nui-icon name="info"></nui-icon>
+<p>The label carries the meaning — the dot is a pseudo-element, so it is invisible to screen readers and needs no <code>aria-label</code>. Update it with <code>el.setAttribute('status', 'online')</code>. The pulse is suppressed under <code>prefers-reduced-motion</code>, where colour alone still distinguishes the states.</p>
+</div>
+</section>
+
+<section>
+<h2>Notification Indicators (<code>data-badge</code>)</h2>
 <p>Instead of wrapping elements in complex DOM hierarchies to show a notification dot or count, you can simply add the <code>data-badge</code> attribute to any container element. The badge uses a pseudo-element, enabling a zero-bloat approach for notification indicators (e.g. on icons or buttons).</p>
 
 <div class="demo-area">

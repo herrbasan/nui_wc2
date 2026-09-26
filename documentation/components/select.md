@@ -54,6 +54,25 @@ To enable multiple selections, simply apply the native `multiple` attribute dire
 </nui-select>
 ```
 
+### List Actions (`select-all` / `clearable`)
+
+Two opt-in rows can be added to the dropdown: a **Select all** row at the top and a **Clear selection** row at the bottom. Both are ordinary rows of the list, so arrow keys reach them and Enter/Space activates them.
+
+```html
+<nui-select searchable select-all clearable>
+	<select name="languages" multiple>
+		<option value="python">Python</option>
+		<option value="javascript">JavaScript</option>
+		<option value="rust" disabled>Rust (unavailable)</option>
+	</select>
+</nui-select>
+```
+
+- **`select-all`** is multi-select only. It acts on the options the user can *currently see*, so with a search active it selects the matches rather than silently reaching options the filter has hidden. It **toggles** — once everything visible is selected the row reads "Clear all" and a click clears instead. Disabled options are never selected.
+- **`clearable`** adds the clear row. On a single-select the row is only rendered when there is a none-state to return to (an enabled blank option, or the disabled prompt) — a clear control that could only fall back to "select the first option" is not shipped. See [the None-State Model](#the-none-state-model).
+
+These rows live in the dropdown rather than in the control because the control is a `<button>`: a nested `<button>` is invalid HTML. Both attributes are read at initialisation.
+
 ### Option Groups
 
 `nui-select` inherently understands and inherits native `<optgroup>` tags perfectly, styling them as distinct segments.
@@ -187,6 +206,8 @@ inner.innerHTML = '<option value="us">United States</option>';
 | `searchable` | boolean | Enables real-time text-filtering of select options. |
 | `mobile-sheet` | boolean | Forces mobile bottom-sheet UI presentation instead of dropdowns. *(Automatically engaged on devices <= 640px wide).* |
 | `placeholder` | string | Prompt text shown when nothing is selected. Takes precedence over the disabled-blank-option idiom. Display text only — it is never a selectable row. See [the None-State Model](#the-none-state-model). |
+| `select-all` | boolean | Multi-select only. Adds a toggling "Select all" / "Clear all" row at the top of the dropdown, acting on the options currently visible. See [List Actions](#list-actions-select-all--clearable). |
+| `clearable` | boolean | Adds a "Clear selection" row at the bottom of the dropdown. On a single-select the row only appears when a none-state exists to return to. See [List Actions](#list-actions-select-all--clearable). |
 | `size` | string | `"small"` gives the compact 2rem control for toolbars and card headers, and narrows the host to its content instead of stretching to 100%. Only the *height* is compact: the horizontal padding is the base control's (`var(--nui-space)`, which is also `button`'s), so a compact select and a compact button line their text up on the same inset rather than needing per-control tuning. Omit for the full-height form control (`--nui-form-row-height`, 2.5rem). |
 
 ## Programmatic Usage
@@ -230,4 +251,5 @@ Because it encapsulates a complex interaction, `nui-select` broadcasts specific 
 | `nui-open` | `CustomEvent` | Fires when the popup drops open. |
 | `nui-close` | `CustomEvent` | Fires when the popup is shut. |
 | `nui-clear` | `CustomEvent` | Fires when the clear method deletes all active choices. |
+| `nui-select-all` | `CustomEvent` | Fires when the `select-all` row is used. Detail contains `{ selected, count }` — `count` is how many visible options the action applied to. |
 | `nui-validate` | `CustomEvent` | Fires when `validate()` runs. Detail contains `{ valid, message }`. Not fired by blur or form submit — those only apply the `is-invalid` class. |

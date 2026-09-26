@@ -136,7 +136,9 @@ registerValidator('addon CSS loaded', (root) => {
 		'nui-list': 'nui-list.css', 'nui-lightbox': 'nui-lightbox.css',
 		'nui-code-editor': 'nui-code-editor.css', 'nui-media-player': 'nui-media-player.css',
 		'nui-wizard': 'nui-wizard.css', 'nui-menu': 'nui-menu.css',
-		'nui-context-menu': 'nui-context-menu.css', 'nui-rich-text': 'nui-rich-text.css'
+		'nui-context-menu': 'nui-context-menu.css', 'nui-rich-text': 'nui-rich-text.css',
+		'nui-file-tree': 'nui-file-tree.css', 'nui-file-icon': 'nui-file-icon.css',
+		'nui-file-list': 'nui-file-list.css'
 	};
 	const loaded = new Set();
 	for (const sheet of document.styleSheets) {
@@ -183,7 +185,8 @@ registerValidator('nui-tabs structure', (root) => {
 registerValidator('unregistered addon elements', (root) => {
 	const knownAddons = [
 		'nui-list', 'nui-lightbox', 'nui-code-editor', 'nui-media-player',
-		'nui-wizard', 'nui-menu', 'nui-context-menu', 'nui-rich-text'
+		'nui-wizard', 'nui-menu', 'nui-context-menu', 'nui-rich-text',
+		'nui-file-tree', 'nui-file-icon', 'nui-file-list'
 	];
 	knownAddons.forEach(tag => {
 		root.querySelectorAll(tag).forEach(el => {
@@ -196,21 +199,26 @@ registerValidator('unregistered addon elements', (root) => {
 });
 
 registerValidator('attribute typos', (root) => {
+	// `also` covers a second enumerated attribute on the same element, so a
+	// typo'd nui-badge status does not silently render the neutral dot.
 	const knownVariants = {
 		'NUI-BUTTON':  { attr: 'variant', valid: ['primary', 'outline', 'ghost', 'danger', 'delete', 'warning', 'icon'] },
-		'NUI-BADGE':   { attr: 'variant', valid: ['primary', 'success', 'danger', 'warning', 'info'] },
+		'NUI-BADGE':   { attr: 'variant', valid: ['primary', 'success', 'danger', 'warning', 'info'],
+		                also: [{ attr: 'status', valid: ['online', 'away', 'offline', 'connecting', 'retrying'] }] },
 		'NUI-PROGRESS': { attr: 'type',   valid: ['bar', 'circular', 'busy', 'circular-busy'] },
 		'NUI-BANNER':  { attr: 'priority', valid: ['info', 'alert'] },
 		'NUI-DIALOG':  { attr: 'placement', valid: ['center', 'top', 'bottom'] },
 	};
-	Object.entries(knownVariants).forEach(([tag, { attr, valid }]) => {
+	Object.entries(knownVariants).forEach(([tag, primary]) => {
 		root.querySelectorAll(tag).forEach(el => {
-			const value = el.getAttribute(attr);
-			if (value && !valid.includes(value)) {
-				const suggestion = valid.find(v => v.startsWith(value.slice(0, 2)));
-				warn(el, `Unknown ${attr}="${value}" on <${tag.toLowerCase()}>.`,
-					suggestion ? `Did you mean ${attr}="${suggestion}"? Valid: ${valid.join(', ')}` : `Valid: ${valid.join(', ')}`);
-			}
+			[primary, ...(primary.also || [])].forEach(({ attr, valid }) => {
+				const value = el.getAttribute(attr);
+				if (value && !valid.includes(value)) {
+					const suggestion = valid.find(v => v.startsWith(value.slice(0, 2)));
+					warn(el, `Unknown ${attr}="${value}" on <${tag.toLowerCase()}>.`,
+						suggestion ? `Did you mean ${attr}="${suggestion}"? Valid: ${valid.join(', ')}` : `Valid: ${valid.join(', ')}`);
+				}
+			});
 		});
 	});
 });

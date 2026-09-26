@@ -336,14 +336,22 @@ If you MUST apply CSS (spacing on your own wrappers, very rare theming), use ONL
   </select>
 </nui-select>
 
+<!-- ✅ CORRECT — opt-in list actions -->
+<nui-select searchable select-all clearable>
+  <select name="tabs" multiple>
+    <option value="a">Alpha</option>
+    <option value="b">Beta</option>
+  </select>
+</nui-select>
+
 <!-- ❌ WRONG — no inner <select> -->
 <nui-select>
   <option value="a">A</option>
 </nui-select>
 ```
 
-| Attributes | `searchable`, `mobile-sheet`, `placeholder`, `size` (`"small"` = compact 2rem toolbar variant, host narrows to content) |
-| Events | `nui-change`, `nui-select`, `nui-open`, `nui-close`, `nui-clear`, `nui-validate` (`{valid, message}`, from `validate()` only) |
+| Attributes | `searchable`, `mobile-sheet`, `placeholder`, `size` (`"small"` = compact 2rem toolbar variant, host narrows to content), `select-all` (multi only — toggling row acting on the *visible* options), `clearable` ("Clear selection" row; on a single-select only when a none-state exists) |
+| Events | `nui-change`, `nui-select`, `nui-open`, `nui-close`, `nui-clear`, `nui-select-all` (`{selected, count}`), `nui-validate` (`{valid, message}`, from `validate()` only) |
 
 ℹ️ **The dropdown is a top-layer popover** (`popover="manual"`, `position: fixed`, viewport-anchored, re-placed on scroll/resize) — so no ancestor's `overflow: hidden` can clip it and no ancestor's `transform` can displace it. Never add `display`/`overflow`/`hidden` rules to `.nui-select-popup`, and delete any consumer workaround that forced `overflow: visible` on a dialog/tabpanel/card to let a dropdown escape. Requires the Popover API (Chrome 114+, Safari 17+, Firefox 125+).
 | Methods | `.open()`, `.close()`, `.setValue(v)`, `.getValue()`, `.hasValue()`, `.clear()`, `.setItems(arr)`, `.addItem(v,l)`, `.removeItem(v)`, `.enable()`, `.disable()`, `.loadOptions(asyncFn)` |
@@ -728,8 +736,13 @@ nui.components.banner.hideAll();
 <nui-badge data-badge="3">
   <button>Notifications</button>
 </nui-badge>
+
+<!-- Connection / presence status: coloured dot + pulse while transitional -->
+<nui-badge status="online">Online</nui-badge>
+<nui-badge status="connecting">Connecting…</nui-badge>
 ```
 | Variants | `primary`, `success`, `danger`, `warning`, `info` |
+| Status | `status="online|away|offline|connecting|retrying"` — leading dot; `connecting`/`retrying` pulse. The label carries the meaning (the dot is a pseudo-element, invisible to screen readers) |
 
 📖 **Full docs:** [`documentation/components/badge.md`](documentation/components/badge.md)
 
