@@ -33,6 +33,8 @@ The `breakout` attribute is the key feature. It is not specific to `nui-page` �
 |-----------|---------|-------------|
 | `breakout` | Any direct child of `<nui-page>` | Expands the child to full container width, bypassing the max-width constraint. |
 
+⚠️ **Breakout is container-relative.** A breakout child is only as wide as its container — a `<nui-page>` nested inside a constrained column makes `breakout` invisible, because both constrained and breakout children render at the container's width. The constraint must be broken at the level that actually has width to give.
+
 ## How It Works
 
 When content is loaded (via router or statically), `nui-page` automatically:
