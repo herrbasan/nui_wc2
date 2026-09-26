@@ -1341,20 +1341,15 @@ nui-page>* {
 	box-sizing: border-box;
 }
 
-/* Children without 'breakout' attribute are constrained for readability.
-   Centered (margin-inline auto) so the column sits at the inner bounds of
-   the container instead of hugging the left edge on wide viewports. */
+/* Children without 'breakout' attribute are constrained for readability */
 nui-page>*:not([breakout]) {
 	max-width: var(--space-page-maxwidth);
-	margin-inline: auto;
 }
 
-/* Breakout elements: fill container width without causing overflow */
+/* Breakout elements: fill container width, keeping the same horizontal
+   padding as constrained children so content mirrors the text-flow gutter */
 nui-page>[breakout] {
 	max-width: 100%;
-	/* Reset horizontal padding - let the element handle its own spacing */
-	padding-left: 0;
-	padding-right: 0;
 }
 
 /* Backward compatibility - legacy class-based approach (deprecated) */
@@ -1374,14 +1369,11 @@ nui-main>.content-feature>* {
 nui-main>.content-page>*:not([breakout]),
 nui-main>.content-feature>*:not([breakout]) {
 	max-width: var(--space-page-maxwidth);
-	margin-inline: auto;
 }
 
 nui-main>.content-page>[breakout],
 nui-main>.content-feature>[breakout] {
 	max-width: 100%;
-	padding-left: 0;
-	padding-right: 0;
 }
 
 
@@ -4569,7 +4561,6 @@ nui-layout[banner] .maxwidth-container,
 nui-page>[breakout] .maxwidth-container {
 	padding: var(--nui-space) var(--nui-space-double);
 	max-width: var(--space-page-maxwidth);
-	margin-inline: auto;
 	box-sizing: border-box;
 }
 
