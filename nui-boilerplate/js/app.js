@@ -4,6 +4,17 @@ import { nui } from '../../NUI/nui.js';
 // Import page registrations (nui.registerPage pattern)
 import './page-init.js';
 
+// Opt-in debug validator — enable with ?nui-debug on the URL.
+// App-level, not a library feature: NUI core knows nothing about addons.
+// Off by default, so production carries the addon's zero cost.
+if (new URLSearchParams(location.search).has('nui-debug')) {
+    import('../../NUI/lib/modules/nui-debug.js');
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = '../../NUI/css/modules/nui-debug.css';
+    document.head.appendChild(link);
+}
+
 // Setup Application Global Actions via the Data-Action system
 document.addEventListener('click', (e) => {
     // Traverse element tree up for a data-action attribute
@@ -13,18 +24,11 @@ document.addEventListener('click', (e) => {
     // Deconstruct action syntax -> "action:param@selector"
     const actionSpec = actionEl.dataset.action;
     const [actionPart] = actionSpec.split('@');
-    const [action, param] = actionPart.split(':');
+    const [action] = actionPart.split(':');
 
-    // Handle well-known programmatic app actions here:
+    // Handle well-known programmatic app actions here.
+    // `toggle-sidebar` needs no handler — it is a built-in NUI data-action.
     switch (action) {
-        case 'toggle-sidebar':
-            const app = document.querySelector('nui-app');
-            if (app?.toggleSidebar) {
-                // Toggles 'left' by default unless parameter provides otherwise
-                app.toggleSidebar(param || 'left');
-            }
-            break;
-            
         case 'toggle-theme':
             const current = document.documentElement.style.colorScheme || 'light';
             const newTheme = current === 'dark' ? 'light' : 'dark';

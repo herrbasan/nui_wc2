@@ -12,8 +12,8 @@
       { "name": "init", "signature": "nui.init()", "description": "Initialize library (auto-called on load)", "params": [], "returns": null },
       { "name": "configure", "signature": "nui.configure({ iconSpritePath, baseFontSize, animationDuration })", "description": "Update configuration after init", "params": ["config"], "returns": null },
       { "name": "setupRouter", "signature": "nui.setupRouter({ container, basePath, defaultPage })", "description": "Setup SPA router with fragment loading", "params": ["options"], "returns": null },
-      { "name": "registerFeature", "signature": "nui.registerFeature(name, fn)", "description": "Register JS-only page handler", "params": ["name", "fn"], "returns": null },
-      { "name": "registerType", "signature": "nui.registerType(name, fn)", "description": "Register content handler", "params": ["name", "fn"], "returns": null },
+      { "name": "registerFeature", "signature": "nui.registerFeature(name, fn) — fn(wrapper, params)", "description": "Register a feature handler for #feature= routes. The handler receives the wrapper FIRST.", "params": ["name", "fn"], "returns": null },
+      { "name": "registerType", "signature": "nui.registerType(type, fn) — fn(id, params, wrapper)", "description": "Register a custom route type for #type=id routes. The handler receives the route id FIRST and the wrapper LAST — the reverse of registerFeature.", "params": ["type", "fn"], "returns": null },
       { "name": "version", "signature": "nui.version", "description": "Library version string", "params": [], "returns": "string" }
     ],
     "components": [
@@ -25,7 +25,7 @@
           { "name": "alert", "signature": "await nui.components.dialog.alert(title, message, options?)", "description": "Show alert dialog", "async": true },
           { "name": "confirm", "signature": "await nui.components.dialog.confirm(title, message, options?)", "description": "Show confirmation dialog, returns boolean", "async": true, "returns": "boolean" },
           { "name": "prompt", "signature": "await nui.components.dialog.prompt(title, message, { fields: [{ id, label, type?, value? }] }, options?)", "description": "Show prompt dialog, returns object or null", "async": true, "returns": "object | null" },
-          { "name": "page", "signature": "await nui.components.dialog.page(title, subtitle?, { contentScroll, buttons: [{ label, type, value }] })", "description": "Show custom page dialog", "async": true, "returns": "{ dialog, main }" }
+          { "name": "page", "signature": "await nui.components.dialog.page(title, htmlContent, { buttons: [{ label, type, value, icon }], contentScroll, blocking, modal, target })", "description": "Show a page-mode dialog. The second argument is HTML content, NOT a subtitle.", "async": true, "returns": "{ dialog, main, result }" }
         ]
       },
       {
@@ -89,11 +89,12 @@ nui.init(options);
 // Update configuration
 nui.configure({ iconSpritePath: '/custom/path.svg' });
 
-// Register content features for router
-nui.registerFeature('dashboard', (container, params) => { ... });
+// Register content features for router — handler gets the wrapper FIRST
+nui.registerFeature('dashboard', (wrapper, params) => { ... });
 
-// Register type handlers for router
-nui.registerType('markdown', (container, content) => { ... });
+// Register custom route types for router — handler gets the id FIRST, wrapper LAST
+// ⚠️ Not the same order as registerFeature. Guessing wrong writes into nothing.
+nui.registerType('markdown', (id, params, wrapper) => { ... });
 
 // Create a router instance
 const router = nui.createRouter(container, options);
@@ -132,12 +133,12 @@ nui.setupRouter(options);
 				<tr>
 					<td><code>registerFeature(name, fn)</code></td>
 					<td>Function</td>
-					<td>Register a named feature for content routing</td>
+					<td>Register a named feature for content routing. Handler: <code>fn(wrapper, params)</code></td>
 				</tr>
 				<tr>
 					<td><code>registerType(type, handler)</code></td>
 					<td>Function</td>
-					<td>Register a content type handler</td>
+					<td>Register a content type handler. Handler: <code>fn(id, params, wrapper)</code> — a different order from <code>registerFeature</code></td>
 				</tr>
 				<tr>
 					<td><code>createRouter(container, options)</code></td>

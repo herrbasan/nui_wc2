@@ -38,6 +38,32 @@ The router's job is minimal by design:
 
 This simplicity enables multiple architectural patterns.
 
+### Handlers: the registrations and their signatures
+
+Registration signatures are **not** interchangeable. `registerType` and `registerFeature` are both three-argument handlers, but the arguments arrive in a **different order**:
+
+| Registration | Handler signature | First argument is |
+|---|---|---|
+| `nui.registerPage(name, { html, init })` | `init(element, params, nui)` | the page wrapper |
+| `nui.registerFeature(name, fn)` | `fn(wrapper, params)` | the wrapper |
+| `nui.registerType(type, fn)` | `fn(id, params, wrapper)` | the route **id** — `wrapper` is last |
+
+There is no error when you get this wrong. Writing a type handler by analogy with a feature handler puts `id` where you expect the element; `wrapper` is then truthy but wrong, so the natural first line — `wrapper.innerHTML = '…'` — happens to work on the right parameter and silently writes into nothing on the wrong one.
+
+### A custom route type gets no theme styling — and no height
+
+The router names every container `content-<type> content-<type>-<id>`, and the theme styles only two of those: `nui-main > .content-page` and `nui-main > .content-feature`. A custom type (`#col=<key>` → `.content-col`) therefore inherits **no padding, no max-width, and no height**.
+
+The missing height is the dangerous part, because `nui-main` is the absolutely-positioned scroll container — its children only have height if something gives it to them. A virtualized `<nui-list>` inside a custom type then renders **nothing at all**, with no error: its host has no measurable height. Pass the height down yourself:
+
+```css
+/* main.css — scoped to your own wrapper classes, never to NUI components */
+nui-main > .content-col { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.content-col .list-host { position: relative; flex: 1; min-height: 0; }
+```
+
+The `.list-host` still needs `position: relative` and a real height, as `documentation/addons/list.md` requires of any `nui-list` container.
+
 ## Pattern 1: Centralized Application Logic
 
 **Philosophy:** Your application is a JavaScript program. The router is just a view controller.

@@ -309,30 +309,31 @@ nui.configure({
 	</nui-code>
 
 	<h3>registerFeature</h3>
-	<p>Register custom features for use with <code>data-action</code>:</p>
+	<p>Register a handler for <code>#feature=&lt;name&gt;</code> routes. The wrapper comes <strong>first</strong>:</p>
 	<nui-code>
 		<script type="example" data-lang="js">
-nui.registerFeature('greet', (element, params) => {
-	alert('Hello, ' + (params.name || 'World') + '!');
+nui.registerFeature('greet', (wrapper, params) => {
+	// wrapper is the container element — first argument
+	wrapper.innerHTML = `<h1>Hello from #feature=greet</h1>`;
 });
-
-// Now usable as: <button data-action="greet:name=Alice">
 		</script>
 	</nui-code>
+	<p>For <code>data-action</code> handlers, use <code>nui.registerAction(name, handler)</code> — not this.</p>
 
 	<h3>registerType</h3>
-	<p>Register custom type handlers for dynamic content:</p>
+	<p>Register a handler for <code>#&lt;type&gt;=&lt;id&gt;</code> routes. Note the <strong>different argument order</strong> — the route id comes first and the wrapper last:</p>
 	<nui-code>
 		<script type="example" data-lang="js">
-nui.registerType('user-card', (element, data) => {
-	element.innerHTML = `
-		<img src="${data.avatar}" alt="${data.name}">
-		<h3>${data.name}</h3>
-		<p>${data.bio}</p>
-	`;
+nui.registerType('user-card', (id, params, wrapper) => {
+	// id is the route id, e.g. "u-42" — the wrapper is LAST
+	wrapper.innerHTML = `<h3>User ${id}</h3>`;
 });
 		</script>
 	</nui-code>
+
+	<div class="demo-callout">
+		⚠️ <code>registerFeature</code> and <code>registerType</code> both take three arguments in a <em>different order</em>. Swapping them raises no error: <code>wrapper</code> is then truthy but wrong, so <code>wrapper.innerHTML = '…'</code> silently writes somewhere unexpected instead of throwing. A custom type also gets no theme styling — see <code>architecture-patterns.md</code>.
+	</div>
 </section>
 
 </div>

@@ -4,8 +4,12 @@
  * 
  * Usage:
  *   <script type="module" src="NUI/lib/modules/nui-debug.js"></script>
- *   — or —
- *   Open http://localhost:5500/?nui-debug
+ *   <link rel="stylesheet" href="NUI/css/modules/nui-debug.css">
+ * 
+ * There is no ?nui-debug query param in NUI core — core does not know about
+ * addons. An app may add one itself; `nui-boilerplate/js/app.js` does, which is
+ * why the param works there:
+ *   if (new URLSearchParams(location.search).has('nui-debug')) { ... }
  */
 
 import { nui } from '../../nui.js';
@@ -64,7 +68,7 @@ registerValidator('nui-app structure', (root) => {
 		}
 		if (!kids.some(c => c.tagName === 'NUI-CONTENT')) {
 			warn(app, 'Missing <nui-content>. Layout will break.',
-				'Add <nui-content><main>...</main></nui-content> as child of <nui-app>');
+				'Add <nui-content><nui-main>...</nui-main></nui-content> as child of <nui-app>');
 		}
 		// Bare native elements at app level
 		[...app.children].forEach(c => {
@@ -89,12 +93,75 @@ registerValidator('missing inner elements', (root) => {
 	};
 	Object.entries(needs).forEach(([tag, [selector, fix]]) => {
 		root.querySelectorAll(tag).forEach(el => {
+			// Page-mode dialogs must NOT have an authored inner <dialog> — the
+			// component builds the shell itself, and page mode only applies when
+			// the dialog is absent. Flagging it here would mark correct markup.
+			if (tag === 'NUI-DIALOG' && el.getAttribute('mode') === 'page') return;
 			if (!el.querySelector(selector)) {
 				const tagName = tag.toLowerCase();
 				warn(el, `<${tagName}> is missing its inner native element.`, fix);
 			}
 		});
 	});
+});
+
+registerValidator('nui-content child', (root) => {
+	root.querySelectorAll('nui-content').forEach(content => {
+		if (content.querySelector('nui-main')) return;
+		const bareMain = content.querySelector('main');
+		if (bareMain) {
+			warn(bareMain, '<main> directly inside <nui-content> — the app shell expects <nui-main>.',
+				'Replace <main> with <nui-main>. nui-main carries role="main" and id="main-content" itself, and app-mode CSS targets nui-content > nui-main: a bare <main> gets no scroll behaviour and no router page styling, silently.');
+		} else {
+			warn(content, '<nui-content> has no <nui-main> child. The content area will not scroll.',
+				'Add <nui-content><nui-main>...</nui-main></nui-content>');
+		}
+	});
+});
+
+registerValidator('sidebar link-list mode', (root) => {
+	root.querySelectorAll('nui-sidebar nui-link-list').forEach(list => {
+		const mode = list.getAttribute('mode');
+		if (mode && mode !== 'fold') {
+			warn(list, `<nui-link-list mode="${mode}"> inside <nui-sidebar> — the sidebar overrides this to "fold".`,
+				mode === 'tree'
+					? 'Remove the mode attribute (the sidebar sets "fold"), or move the list out of the sidebar if "tree" is really wanted.'
+					: `Only "fold" applies inside a sidebar. Remove mode="${mode}".`);
+		}
+	});
+});
+
+registerValidator('addon CSS loaded', (root) => {
+	const addonCss = {
+		'nui-list': 'nui-list.css', 'nui-lightbox': 'nui-lightbox.css',
+		'nui-code-editor': 'nui-code-editor.css', 'nui-media-player': 'nui-media-player.css',
+		'nui-wizard': 'nui-wizard.css', 'nui-menu': 'nui-menu.css',
+		'nui-context-menu': 'nui-context-menu.css', 'nui-rich-text': 'nui-rich-text.css'
+	};
+	const loaded = new Set();
+	for (const sheet of document.styleSheets) {
+		const href = sheet.href || '';
+		if (href) loaded.add(href.split('/').pop().split('?')[0]);
+	}
+	Object.entries(addonCss).forEach(([tag, file]) => {
+		root.querySelectorAll(tag).forEach(el => {
+			// Only when the JS half is present: a missing JS import is already
+			// reported by the validator above, and double-reporting hides which
+			// half is actually missing.
+			if (customElements.get(tag) && !loaded.has(file)) {
+				warn(el, `<${tag}> is registered but its CSS module (${file}) is not loaded.`,
+					`Add <link rel="stylesheet" href="NUI/css/modules/${file}">. An addon needs BOTH the JS import and the CSS link.`);
+			}
+		});
+	});
+});
+
+registerValidator('routed links without a router', (root) => {
+	if (nui.router) return;
+	const routed = root.querySelectorAll('nui-link-list a[href^="#page="], nui-link-list a[href^="#feature="]');
+	if (!routed.length) return;
+	warn(routed[0], `Link list has routed hrefs (#page= / #feature=) but nui.setupRouter() was never called (${routed.length} link(s) affected).`,
+		'Call nui.setupRouter({ container, navigation, basePath, defaultPage }) after nui.js is imported. Without it, clicking navigation appears to do nothing.');
 });
 
 registerValidator('nui-tabs structure', (root) => {

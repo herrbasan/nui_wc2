@@ -127,7 +127,7 @@ With no registered handler, the action instead fires the bubbling `nui-action` a
 
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `mode` | string | `"tree"` | Controls whether multiple groups can be expanded simultaneously (`"tree"`) or if expanding one group collapses the others (`"fold"`). |
+| `mode` | string | `"tree"` | Controls whether multiple groups can be expanded simultaneously (`"tree"`) or if expanding one group collapses the others (`"fold"`). **Overridden to `"fold"` when the list is inside a `<nui-sidebar>`** — `nui-sidebar` sets the attribute itself if none is authored. Setting `mode="tree"` there is valid on a valid attribute, throws nothing, and looks plausible on screen, but the sidebar wins. |
 
 ## Programmatic API
 

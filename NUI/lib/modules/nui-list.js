@@ -38,6 +38,7 @@ function createList(element, options) {
 	list.scrollProz = 0;
 	list.lastScrollProz = -1;
 	list.stop = false;
+	list.cleanedUp = false;
 	list.mode = 'normal';
 	list.scrollMute = false;
 	
@@ -1001,6 +1002,12 @@ function createList(element, options) {
 	}
 	
 	function cleanUp() {
+		// Idempotent by contract: disconnectedCallback calls this, and callers
+		// are documented to call it too. A second pass finds `container` already
+		// nulled and would throw, so the guarded early return is the fix — not a
+		// defensive fallback. Callers cannot know disconnection already cleaned up.
+		if (list.cleanedUp) return;
+		list.cleanedUp = true;
 		log('CleanUp');
 		// Halt the rAF render loop BEFORE tearing down: it dereferences the
 		// fields nulled below on every frame, and the observer that would stop

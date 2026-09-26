@@ -4,8 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="color-scheme" content="light dark">
-    <!-- Content Security Policy — 'unsafe-eval' required for NUI page scripts -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline';">
+    <!-- Content Security Policy — 'unsafe-eval' required for NUI page scripts.
+         img-src must allow data: — NUI draws its nui-input check and nui-select
+         arrow/tick as CSS mask-image data: URIs, which fall back to default-src
+         and are silently blocked without it. -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
     <title>NUI Boilerplate</title>
     <!-- Core NUI CSS Variables and Components -->
     <link rel="stylesheet" href="../NUI/css/nui-theme.css">
@@ -28,18 +31,24 @@
 
         <nui-app-header>
             <div slot="left">
-                <nui-button data-action="toggle-sidebar" variant="icon">
-                    <nui-icon name="menu">☰</nui-icon>
+                <nui-button variant="icon">
+                    <button type="button" data-action="toggle-sidebar" aria-label="Toggle navigation">
+                        <nui-icon name="menu">☰</nui-icon>
+                    </button>
                 </nui-button>
                 <h1>NUI Application</h1>
             </div>
             
             <div slot="right">
-                <nui-button data-action="toggle-theme" variant="icon">
-                    <nui-icon name="brightness">⛭</nui-icon>
+                <nui-button variant="icon">
+                    <button type="button" data-action="toggle-theme" aria-label="Toggle color scheme">
+                        <nui-icon name="brightness">⛭</nui-icon>
+                    </button>
                 </nui-button>
-                <nui-button data-action="toggle-sidebar:right" variant="icon">
-                    <nui-icon name="settings">⚙</nui-icon>
+                <nui-button variant="icon">
+                    <button type="button" data-action="toggle-sidebar:right" aria-label="Toggle settings panel">
+                        <nui-icon name="settings">⚙</nui-icon>
+                    </button>
                 </nui-button>
             </div>
         </nui-app-header>

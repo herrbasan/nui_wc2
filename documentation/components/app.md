@@ -14,7 +14,7 @@ The NUI layout system provides two distinct modes: **App Mode** (with `<nui-app>
 
 1. `<nui-app>` activates CSS Grid mode. It must wrap the entire application shell to create fixed layout regions.
 2. Inside `<nui-app>`, the immediate children MUST be exactly: `<nui-app-header>`, `<nui-sidebar>`, `<nui-content>`, and optionally `<nui-app-footer>`.
-3. These are structural layout web components. They MUST wrap native semantic HTML elements (`<header>`, `<nav>`, `<main>`, `<footer>`) respectively as their direct children.
+3. These are structural layout web components. They MUST wrap native semantic HTML elements (`<header>`, `<nav>`, `<footer>`) as their direct children — with one exception: the content area's child is **`<nui-main>`**, which carries `role="main"` itself, not a bare `<main>`.
 
 ## Strict DOM Structure (Do NOT deviate)
 
@@ -32,7 +32,7 @@ Do not invent tags like `<nui-top-nav>` or `<nui-side-nav>`. Do not omit the int
 	</nui-sidebar>
 
 	<nui-content>
-		<main>Content here</main>
+		<nui-main>Content here</nui-main>
 	</nui-content>
 
 	<nui-app-footer>
@@ -45,7 +45,7 @@ Do not invent tags like `<nui-top-nav>` or `<nui-side-nav>`. Do not omit the int
 ```html
 <nui-app>
 	<nui-top-nav>Site Title</nui-top-nav> <!-- Invented tag, missing <header> -->
-	<nui-sidebar>Navigation links</nui-sidebar> <!-- Missing <nav> -->
+	<nui-sidebar>Navigation links</nui-sidebar> <!-- Missing <nav> or <nui-link-list> -->
 	<main>Content</main> <!-- Missing <nui-content> wrapper -->
 </nui-app>
 ```
@@ -284,7 +284,7 @@ app.invalidateBreakpointCache();
 
 ### `<nui-sidebar>` Methods
 
-These delegate to the inner `<nui-link-list>` if one is present:
+These delegate to the inner `<nui-link-list>` if one is present. **Call them on the sidebar, not on the inner list** — the list also exposes them, and reaching past the sidebar into it is the obvious move but not the intended handle:
 
 | Method | Description |
 |--------|-------------|
@@ -354,13 +354,14 @@ The primary navigation sidebar.
 - **App Mode:** Fixed to the left or right side.
 - `position="left"` (default) or `position="right"`.
 - Must contain a `<nav>` element or `<nui-link-list>`.
+- **A `<nui-link-list>` inside a sidebar is forced to `mode="fold"`** when no `mode` is authored. Setting `mode="tree"` here is valid on a valid attribute, throws nothing, looks plausible, and is overwritten. `fold` is the sidebar form.
 - See above for `behavior` and `position` attributes.
 
 ### `<nui-content>`
-The main scrolling viewport container.
-- **App Mode:** Takes up the remaining grid fraction. Handles overflow and scrolling automatically.
+The positioning context for the content area.
+- **App Mode:** Absolute-filled region between the fixed bars; handles the offsets for header, footer and forced sidebars.
 - **Page Mode:** Standard structural block.
-- Must contain a `<main>` primary element (or `<nui-main>`).
+- Must contain **`<nui-main>`** — not a bare `<main>`. `nui-main` is the scroll container (`overflow-y: auto`) and sets `role="main"` + `id="main-content"` itself. A bare `<main>` here gets no scroll behaviour and no router page styling, silently.
 
 ### `<nui-app-footer>`
 An optional persistent footer bar.

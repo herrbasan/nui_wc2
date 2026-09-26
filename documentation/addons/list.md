@@ -238,7 +238,7 @@ Items are positioned absolutely with `style.top` set to `index × itemHeight`. O
 | `updateItems(items, force?)` | `Array<{idx, data}>` | `void` | Batch update multiple items. |
 | `updateOptions(newOptions)` | `Object` | `void` | Merge new options into existing config. Rebuilds header if search/sort/filters changed. |
 | `reset()` | none | `void` | Scroll to top (or bottom in logmode), clear selection, reset scroll tracking. |
-| `cleanUp()` | none | `void` | Remove all event listeners, disconnect IntersectionObserver, clear intervals, empty data. **Call before removing the element from DOM.** |
+| `cleanUp()` | none | `void` | Remove all event listeners, disconnect IntersectionObserver, clear intervals, empty data. **Idempotent** — safe to call before `remove()`, because `disconnectedCallback()` calls it too. |
 
 ### Read-only Properties
 
@@ -363,11 +363,14 @@ The list calls `el.update()` each time the element is recycled (scrolled into vi
 
 ### Cleanup Before Removal
 
-Always call `cleanUp()` before removing the list element from the DOM to prevent memory leaks:
+`nui-list` disconnects itself: `disconnectedCallback()` calls `cleanUp()`, so **`list.remove()` alone is sufficient** and leaks nothing.
+
+If you want to release resources before the element leaves the DOM, call `cleanUp()` first — it is idempotent, so the subsequent `disconnectedCallback()` is a no-op:
 
 ```javascript
 element.hide = () => {
-    list.cleanUp();
+    list.cleanUp();   // optional, explicit release
+    list.remove();    // disconnectedCallback's cleanUp() returns early
 };
 ```
 

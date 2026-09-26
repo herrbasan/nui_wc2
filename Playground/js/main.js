@@ -162,15 +162,9 @@ document.addEventListener('click', (e) => {
 	
 	const actionSpec = actionEl.dataset.action;
 	const [actionPart] = actionSpec.split('@');
-	const [action, param] = actionPart.split(':');
+	const [action] = actionPart.split(':');
 
 	switch (action) {
-		case 'toggle-sidebar':
-			const app = document.querySelector('nui-app');
-			if (app?.toggleSidebar) {
-				app.toggleSidebar(param || 'left');
-			}
-			break;
 		case 'toggle-theme':
 			const current = document.documentElement.style.colorScheme || 'light';
 			const newTheme = current === 'dark' ? 'light' : 'dark';

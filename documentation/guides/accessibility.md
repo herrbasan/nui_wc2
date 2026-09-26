@@ -4,6 +4,8 @@
 
 NUI follows a **DOM-first accessibility approach** with **intelligent context detection**: semantic HTML works without JavaScript, components automatically add missing ARIA attributes by analyzing their context, and progressive enhancement ensures full accessibility.
 
+> **Shell structure lives in [`documentation/components/app.md`](../components/app.md).** That file is the single authority for the app shell. This guide covers *how* NUI applies accessibility — roles, labels, warnings, keyboard — and deliberately does not restate the shell, because two copies of it drifted apart once already.
+
 ## Core Principles
 
 ### 1. Semantic HTML Foundation
@@ -34,37 +36,43 @@ Components automatically detect missing accessibility attributes and add them:
 </button>
 ```
 
-**Navigation landmarks get context-aware labels:**
+**The navigation link list brings its own roles:**
 ```html
 <!-- Developer writes: -->
-<nui-side-nav>
-	<nui-link-list mode="tree">...</nui-link-list>
-</nui-side-nav>
+<nui-sidebar>
+	<nui-link-list aria-label="Sidebar navigation">...</nui-link-list>
+</nui-sidebar>
 
-<!-- Component upgrades to: -->
-<nui-side-nav>
-	<nui-link-list mode="tree" role="navigation" aria-label="Sidebar navigation">
-		...
+<!-- Rendered as: -->
+<nui-sidebar>
+	<nui-link-list role="tree" aria-label="Sidebar navigation">
+		<ul role="group">
+			<li role="none"><a role="treeitem">…</a></li>
+		</ul>
 	</nui-link-list>
-</nui-side-nav>
+</nui-sidebar>
 ```
 
-**Main content gets landmark role:**
+`role="navigation"` is **not** added here. A hierarchical link list is the ARIA **Tree View Pattern** — `role="tree"` → `group` → `treeitem` — described under *Sidebar Navigation* at the end of this guide. If you also want a navigation landmark, author a `<nav>` around the list; the `role="navigation"` landmark NUI creates itself belongs to `<nui-skip-links>`.
+
+**Main content gets its landmark role from `<nui-main>`:**
 ```html
 <!-- Developer writes: -->
 <nui-content>
-	<main>
+	<nui-main>
 		<h1>Welcome</h1>
-	</main>
+	</nui-main>
 </nui-content>
 
-<!-- Component upgrades to: -->
+<!-- <nui-main> adds these itself when absent: -->
 <nui-content>
-	<main role="main" id="main-content">
+	<nui-main role="main" id="main-content">
 		<h1>Welcome</h1>
-	</main>
+	</nui-main>
 </nui-content>
 ```
+
+The element carrying `role="main"` is **`<nui-main>`**, not a bare `<main>` inside `<nui-content>`. `nui-main` is also the app-mode scroll container, so it is the form to author in any case. Shell structure is defined in [`documentation/components/app.md`](../components/app.md) — that file is the single authority, and this guide does not restate it.
 
 ### 3. Developer Warnings
 Components log helpful warnings when accessibility improvements are made:
@@ -94,7 +102,7 @@ All interactive elements support:
 - Icons are marked `aria-hidden="true"` (decorative)
 - Parent elements (buttons/links) have descriptive `aria-label`
 - Dynamic state changes announced via ARIA attributes
-- Navigation landmarks (`role="navigation"`)
+- A `role="navigation"` landmark from `<nui-skip-links>`; hierarchical lists use the Tree View Pattern (`role="tree"`)
 
 ## Intelligent Accessibility System
 
@@ -122,16 +130,16 @@ NUI components run accessibility checks during initialization:
 **Example 1: Icon Button Labels**
 ```html
 <!-- Input -->
-<nui-top-nav>
+<nui-app-header>
 	<header>
 		<nui-button>
 			<button><nui-icon name="search"></nui-icon></button>
 		</nui-button>
 	</header>
-</nui-top-nav>
+</nui-app-header>
 
 <!-- Upgraded to -->
-<nui-top-nav>
+<nui-app-header>
 	<header role="banner">
 		<nui-button>
 			<button aria-label="Search navigation">
@@ -139,48 +147,51 @@ NUI components run accessibility checks during initialization:
 			</button>
 		</nui-button>
 	</header>
-</nui-top-nav>
+</nui-app-header>
 ```
 
-**Example 2: Navigation Landmarks**
+**Example 2: Landmark Labels**
+
+A landmark with no label and no heading inside gets the fallback label and a warning; one with a heading inside is labelled from it, silently.
+
 ```html
 <!-- Input -->
-<nui-side-nav>
-	<nui-link-list>
-		<div class="nui-list-item">
-			<div class="item"><span>Home</span></div>
-		</div>
-	</nui-link-list>
-</nui-side-nav>
+<nui-sidebar>
+	<nav>
+		<h2>Settings</h2>
+		<a href="#page=profile">Profile</a>
+	</nav>
+</nui-sidebar>
 
-<!-- Upgraded to -->
-<nui-side-nav>
-	<nui-link-list role="navigation" aria-label="Sidebar navigation">
-		<div class="nui-list-item">
-			<div class="item" role="button" tabindex="0" aria-label="Home">
-				<span>Home</span>
-			</div>
-		</div>
-	</nui-link-list>
-</nui-side-nav>
+<!-- Upgraded to — the contained heading is used, so no warning -->
+<nui-sidebar>
+	<nav aria-labelledby="nav-7f3a91">
+		<h2 id="nav-7f3a91">Settings</h2>
+		<a href="#page=profile">Profile</a>
+	</nav>
+</nui-sidebar>
 ```
+
+With no heading inside, the fallback is `aria-label="Navigation"` plus a Console warning. A `<nui-link-list>` is not affected by any of this — it renders `role="tree"` and is not a landmark (see *Sidebar Navigation* at the end of this guide).
 
 **Example 3: Main Content Landmark**
 ```html
 <!-- Input -->
 <nui-content>
-	<main>
+	<nui-main>
 		<article>...</article>
-	</main>
+	</nui-main>
 </nui-content>
 
 <!-- Upgraded to -->
 <nui-content>
-	<main role="main" id="main-content">
+	<nui-main role="main" id="main-content">
 		<article>...</article>
-	</main>
+	</nui-main>
 </nui-content>
 ```
+
+`nui-main` supplies the landmark. A bare `<main>` inside `nui-content` is not upgraded — nothing looks for it, and it loses the scroll container the app layout expects.
 
 ### When Auto-Upgrade Happens
 
@@ -255,11 +266,12 @@ Provides full ARIA tree navigation:
 ```
 
 **Automatic ARIA attributes added:**
-- `role="navigation"` on container
-- `role="button"` on expandable items
+- `role="tree"` on the `<nui-link-list>` container
+- `role="group"` on each `<ul>`
+- `role="treeitem"` on links and group-header buttons
+- `role="none"` on the `<li>` wrappers
 - `aria-expanded="true|false"` on group items
-- `aria-current="page"` on active item
-- `role="list"` and `role="listitem"` on sub-items
+- `aria-selected="true"` on the parent `<li>` of the active link
 
 **Keyboard Support:**
 - Tab: Navigate between items (auto-expands collapsed groups on focus)
@@ -464,18 +476,18 @@ Theme uses CSS `light-dark()` function for automatic contrast:
 ### 3. Leverage Context Detection
 ```html
 <!-- In navigation context, icons get contextual labels -->
-<nui-top-nav>
+<nui-app-header>
 	<header>
 		<button><nui-icon name="menu"></nui-icon></button>
 		<!-- Auto-labeled: "Menu navigation" -->
 	</header>
-</nui-top-nav>
+</nui-app-header>
 
-<!-- In main content, same icon gets different context -->
-<main>
+<!-- Outside a nav/header/sidebar context, the same icon gets no suffix -->
+<nui-main>
 	<button><nui-icon name="menu"></nui-icon></button>
 	<!-- Auto-labeled: "Menu" -->
-</main>
+</nui-main>
 ```
 
 ### 4. Trust But Verify
@@ -519,18 +531,18 @@ Try using your app with:
 ### 7. Use Landmark Regions
 ```html
 <nui-app>
-	<nui-top-nav>
+	<nui-app-header>
 		<header>
 			<!-- Auto-upgraded: role="banner" -->
 			<nav aria-label="Main menu">...</nav>
 		</header>
-	</nui-top-nav>
+	</nui-app-header>
 	
 	<nui-content>
-		<main>
-			<!-- Auto-upgraded: role="main", id="main-content" -->
+		<nui-main>
+			<!-- Gets role="main", id="main-content" -->
 			<article>...</article>
-		</main>
+		</nui-main>
 	</nui-content>
 	
 	<nui-app-footer>
@@ -547,31 +559,32 @@ NUI provides helpful warnings when it auto-upgrades accessibility:
 
 ### Warning Types
 
-**Icon Button Label Generation:**
+**Icon Button Label Generation** (message text is exact; the element is passed as the second console argument):
 ```
-⚠️ nui-button: Icon-only button missing aria-label.
-   Auto-generated: "Menu navigation".
-   Consider adding explicit aria-label for better UX.
+Icon-only button missing aria-label. Auto-generated: "Menu navigation". Consider adding explicit aria-label.
 ```
-**Action:** Add explicit `aria-label` to button for production code.
+**Action:** Add an explicit `aria-label` to the inner `<button>` for production code.
 
-**Navigation Landmark Label:**
+**Landmark Label** — fired on a bare `<nav>` or `[role="navigation"]` with no label:
 ```
-⚠️ nui-link-list: Navigation missing aria-label. Adding generic label.
+Landmark missing aria-label. Adding: "Navigation"
 ```
-**Action:** Add `aria-label` to `<nui-link-list>` describing its purpose.
+**Action:** Add an `aria-label`, or put a heading inside the landmark — a contained heading is used via `aria-labelledby` instead, and raises no warning.
 
-**Main Content Recommendation:**
+**App Shell Structure** — fired by `<nui-app>`:
 ```
-⚠️ nui-content: Consider using <nui-main> element for accessibility.
+[NUI] <nui-app> is missing <nui-app-header>. The app shell requires: <nui-app-header>, <nui-sidebar>, <nui-content>.
+[NUI] <nui-app> contains bare elements (e.g., <header>, <main>) outside layout wrappers. Each region must be wrapped: bare <header> → <nui-app-header><header>. Bare <main> → <nui-content><main>.
 ```
-**Action:** Use `<nui-main>` as the scroll container inside `<nui-content>`.
+**Action:** Follow the structure in [`documentation/components/app.md`](../components/app.md).
 
 **Non-Semantic Interactive Element:**
 ```
-⚠️ Clickable element without semantic tag or role. Adding role="button".
+Non-semantic clickable element. Adding role="button".
 ```
 **Action:** Use `<button>` or `<a>` instead of `<div onclick>`.
+
+⚠️ Warnings are deduplicated per message — each is logged once per element-message pair, so a clean reload is the only reliable read. There is **no** warning for a bare `<main>` inside `<nui-content>`; that mistake is silent here and is caught by the `nui-debug` validator instead.
 
 ### Disabling Warnings
 
@@ -589,13 +602,19 @@ console.warn = (function(originalWarn) {
 **Better approach:** Fix the warnings during development.
 ```html
 <nui-app>
-	<header>
-		<nav aria-label="Main navigation">...</nav>
-	</header>
-	<main>
-		<article>...</article>
-	</main>
-	<footer>...</footer>
+	<nui-app-header>
+		<header>
+			<nav aria-label="Main navigation">...</nav>
+		</header>
+	</nui-app-header>
+	<nui-content>
+		<nui-main>
+			<article>...</article>
+		</nui-main>
+	</nui-content>
+	<nui-app-footer>
+		<footer>...</footer>
+	</nui-app-footer>
 </nui-app>
 ```
 

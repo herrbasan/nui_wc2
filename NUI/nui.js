@@ -57,6 +57,11 @@ const builtinActionHandlers = {
 		if (t?.close) { e.stopImmediatePropagation(); t.close(p); return true; }
 		return false;
 	},
+	'toggle-sidebar': (t, el, e, p) => {
+		const app = (t?.toggleSidebar ? t : el.closest('nui-app'));
+		if (app?.toggleSidebar) { e.stopImmediatePropagation(); app.toggleSidebar(p || 'left'); return true; }
+		return false;
+	},
 	'card-flip': (t, el, e) => {
 		const card = (t !== el) ? t : el.closest('nui-card');
 		if (card) { e.stopImmediatePropagation(); card.toggleAttribute('flipped'); return true; }
@@ -1972,7 +1977,9 @@ registerComponent('nui-dialog', (element) => {
 		element.appendChild(dialog);
 
 		if (config.debug !== false) {
-			console.info(`[NUI] ℹ <nui-dialog> auto-created inner <dialog>. For zero-JS fallback, use:\n  <nui-dialog><dialog>...</dialog></nui-dialog>`);
+			console.info(mode === 'page'
+				? `[NUI] ℹ <nui-dialog mode="page"> built its own page shell. Do NOT author an inner <dialog>: page mode is only applied when it is absent.`
+				: `[NUI] ℹ <nui-dialog> auto-created inner <dialog>. For zero-JS fallback, use:\n  <nui-dialog><dialog>...</dialog></nui-dialog>`);
 		}
 	}
 
@@ -6210,6 +6217,11 @@ function setupRouter(options = {}) {
 	}
 
 	router.start();
+
+	// Publish the active router. It is the only observable signal that routed
+	// navigation (#page= / #feature= hrefs) will actually be handled — the
+	// debug addon's "routed links without a router" validator reads it.
+	nui.router = router;
 
 	return router;
 }

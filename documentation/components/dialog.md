@@ -134,13 +134,71 @@ For fully custom layouts, define the dialog in HTML.
 
 | Attribute | Value | Description |
 |-----------|-------|-------------|
-| `placement` | `center` (default), `top`, `bottom` | Controls vertical alignment on desktop screens. |
+| `placement` | `center` (default), `top`, `bottom` | Controls vertical alignment on desktop screens. Ignored in page mode — a page dialog fills the viewport. |
 | `blocking` | `Boolean` | If present on `<nui-dialog>`, clicking the backdrop or pressing Escape will be completely ignored. |
+| `mode` | `page` | Builds the app-scale page shell (header / scrollable main / fixed footer) instead of a center-screen overlay. See [Page Mode](#page-mode) below. |
+| `title` | `String` | **Page mode only.** Renders the header `<h2>` and an icon-only close button. The header is created only when the attribute is present, even if empty. |
+| `data-buttons` | JSON array of `{label, value, type, icon}` | **Page mode only.** Injects `<nui-button>`s into the fixed footer; clicking one closes the dialog with that button's `value`. The `element.buttons` JS property takes precedence over the attribute. |
+| `content-scroll` | `false` | **Page mode only.** Sets the `<main>` to `overflow: hidden; padding: 0` with column flex, for embedding a self-measuring scroller such as `<nui-list>`. |
 
 ### DOM Structure & Features
-- **Inner `<dialog>`**: Must be present.
-- **`<form method="dialog">`**: Utilizing this native HTML pattern allows any inner submit buttons to automatically close the dialog and pass their `value` attribute upward as the `returnValue`.
+- **Inner `<dialog>`**: Must be present — **except in page mode**, where it must be absent. See the gotcha below.
+- **`<form method="dialog">`**: Utilizing this native HTML pattern allows any inner submit buttons to automatically close the dialog and pass their `value` attribute upward as the `returnValue`. Page mode does **not** use this pattern — its shell owns the footer. See below.
 - **Backdrop Clicks**: Handled natively by `<nui-dialog>`. Clicking the semitransparent background instantly fires the close animations unless `blocking` is active.
+
+---
+
+## Page Mode
+
+`mode="page"` turns the dialog into an app-scale surface: 90vw × 90vh (capped at `--space-page-maxwidth`, default `1200px`) with a structured shell, for workflows too large to sit in a center-screen modal.
+
+```html
+<nui-dialog id="picker" mode="page" title="Choose a document"
+            data-buttons='[{"label":"Cancel","value":"cancel","type":"outline"},{"label":"Open","value":"open","type":"primary"}]'>
+	<p>Content goes here — no <code>&lt;dialog&gt;</code>, no <code>&lt;form&gt;</code>.</p>
+</nui-dialog>
+```
+
+**The shell it builds** (all three generated — do not author them):
+
+| Region | Contents |
+|--------|----------|
+| `<header>` | The `title` as an `<h2>`, plus an icon-only close button that closes with `'cancel'`. Only built when the `title` attribute is present. |
+| `<main>` | Everything you authored inside `<nui-dialog>`. Scrolls by default. |
+| `<footer>` | One `<nui-button>` per entry in `data-buttons`. Each closes the dialog with its `value`. |
+
+### ⚠️ The inner `<dialog>` must be absent
+
+Page mode is built **only when there is no inner `<dialog>`**. The entire page-mode branch lives inside `if (!dialog)`:
+
+```html
+<!-- ✅ Correct — the component creates the shell -->
+<nui-dialog mode="page" title="Settings">…</nui-dialog>
+
+<!-- ❌ Silent failure — mode="page" is ignored, you get a center-screen modal -->
+<nui-dialog mode="page" title="Settings">
+	<dialog><main>…</main></dialog>
+</nui-dialog>
+```
+
+The second form throws nothing and still renders a working overlay dialog, so the only signal is that it is not full-page. This is the most likely authoring mistake in page mode: the rest of this document teaches the declarative form *with* an inner `<dialog>`, and that form wins here.
+
+### Page mode vs. the declarative pattern
+
+| | Declarative custom dialog | `mode="page"` |
+|---|---|---|
+| Inner `<dialog>` | Required | **Forbidden** |
+| Header / footer | You author them | Generated (header needs `title`; footer needs `data-buttons`) |
+| Close mechanism | `<form method="dialog">` and button `value` | Generated close button (`'cancel'`) + `data-buttons` values |
+| Layout | Content-sized | 90vw × 90vh, `--space-page-maxwidth` cap |
+
+To embed a self-measuring scroller such as `<nui-list>`, add `content-scroll="false"` so the `<main>` stops scrolling and hands the height down instead:
+
+```html
+<nui-dialog mode="page" title="Log" content-scroll="false">
+	<div style="position: relative; height: 100%;"><nui-list></nui-list></div>
+</nui-dialog>
+```
 
 ---
 

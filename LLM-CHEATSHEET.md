@@ -4,6 +4,28 @@
 
 ---
 
+## Start Here — an App in Five Steps
+
+1. **Copy [`nui-boilerplate/`](nui-boilerplate/).** It is the canonical start — do not hand-write a shell from the reference below.
+2. **Rename and set the title** — `<title>`, and the `<h1>` in `<div slot="left">`.
+3. **Load navigation data** — `document.querySelector('#main-navigation').loadData([...])`, items with `href: '#page=…'` or `'#feature=…'`.
+4. **Call `nui.setupRouter({ container, navigation, basePath, defaultPage })`.** Without it, nav `href`s do nothing.
+5. **Pick the page pattern** — `nui.registerPage(name, { html, init })` for HTML fragments; `nui.registerType(type, fn)` / `nui.registerFeature(name, fn)` for views generated in JS.
+
+Then read **Quick Rules** below before generating any NUI HTML, and run the self-check at the end of this section before you declare the app done.
+
+### Self-Check Before You Ship
+
+- [ ] `nui-app` children in order, each with its native element or the correct `nui-*` equivalent
+- [ ] `nui-content` → **`nui-main`** (not a bare `<main>`)
+- [ ] the sidebar's link list carries no explicit `mode` other than `fold`
+- [ ] nav items carry route `href`s **and** `setupRouter` ran with `navigation:`
+- [ ] addons have **both** the JS import and the CSS link
+- [ ] the `nui-app:not(.nui-ready)` gate is present so the shell does not flash
+- [ ] `nui.debug.run()` reports clean (see **Debug Addon** below)
+
+---
+
 ## Development Tools
 
 ### Debug Addon (`nui-debug`)
@@ -16,7 +38,17 @@ Validates your HTML for common mistakes and logs structured warnings. **Zero pro
 <link rel="stylesheet" href="NUI/css/modules/nui-debug.css">
 ```
 
-Or auto-load via query param: `http://localhost:5500/?nui-debug`
+Or enable it from the URL with this loader in your app entry. **It is not a library feature** — NUI core knows nothing about addons, so an arbitrary app will not respond to `?nui-debug` unless it adds this. `nui-boilerplate/js/app.js` ships it:
+
+```javascript
+if (new URLSearchParams(location.search).has('nui-debug')) {
+  import('NUI/lib/modules/nui-debug.js');
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = 'NUI/css/modules/nui-debug.css';
+  document.head.appendChild(link);
+}
+```
 
 **What it checks:** missing inner elements, wrong `nui-app` children, `data-action` selector targets, attribute typos, unregistered addon elements, tabs structure.
 
@@ -48,22 +80,28 @@ When `config.debug !== false` (the default), NUI automatically imports JS + CSS 
 
 ```
 <nui-app>                          ← Activates CSS Grid app shell
-├── <nui-skip-links></nui-skip-links>  ← ACCESSIBILITY: auto-generates skip links
+├── <nui-skip-links></nui-skip-links>  ← ACCESSIBILITY: auto-generates skip links (a role="navigation" landmark)
 ├── <nui-app-header>               ← REQUIRED: top bar
 │   └── <header>                   ← MUST wrap native <header>
 │       ├── <div slot="left">      ← Left zone (menu toggle, title)
 │       ├── <div slot="center">    ← Center zone (optional)
 │       └── <div slot="right">     ← Right zone (actions, theme toggle)
 ├── <nui-sidebar behavior="primary">  ← REQUIRED: left nav
-│   └── <nav> or <nui-link-list>   ← MUST wrap native <nav>
+│   └── <nav> or <nui-link-list>   ← either is valid; they are different things
 ├── <nui-content>                  ← REQUIRED: main content area
-│   └── <main>                     ← MUST wrap native <main>
+│   └── <nui-main>                 ← REQUIRED: <nui-main>, NOT a bare <main>
 │       └── (your page content)
 └── <nui-app-footer> (optional)    ← Bottom bar
     └── <footer>                   ← MUST wrap native <footer>
 ```
 
 **Every `nui-*` layout wrapper MUST contain its native HTML element.** Missing inner native elements = broken layout with zero visual feedback.
+
+Three of these are invisible in the rendered result, so they are worth stating where the decision is made:
+
+- **`<nui-main>`, not `<main>`, inside `nui-content`.** `nui-main` carries `role="main"` and `id="main-content"` itself, and the app-mode CSS scroll container is `nui-content > nui-main`. A bare `<main>` gets no scroll behaviour and no theme styling for router-injected pages — with no error.
+- **`<nav>` and `<nui-link-list>` are not interchangeable.** `nui-link-list` renders `role="tree"` (items are `treeitem`s); it is a widget, not a landmark. `<nav>` provides the navigation landmark. Use the link list alone if the tree is enough, or wrap it in `<nav>` if you want the landmark — but know which you are choosing.
+- **`nui-sidebar` forces `mode="fold"`** on an inner link list that has no explicit `mode`. See `## Navigation Components` → `nui-link-list`.
 
 ---
 
@@ -372,11 +410,11 @@ If you MUST apply CSS (spacing on your own wrappers, very rare theming), use ONL
   </nui-app-header>
 
   <nui-sidebar behavior="primary">
-    <nav>Navigation</nav>
+    <nui-link-list></nui-link-list>
   </nui-sidebar>
 
   <nui-content>
-    <main>Content here</main>
+    <nui-main>Content here</nui-main>
   </nui-content>
 
   <nui-app-footer>
@@ -390,9 +428,9 @@ If you MUST apply CSS (spacing on your own wrappers, very rare theming), use ONL
   <main>Content</main>
 </nui-app>
 
-<!-- ❌ WRONG — nui-content missing inner <main> -->
+<!-- ❌ WRONG — nui-content with a bare <main>: nui-main is the scroll container -->
 <nui-app>
-  <nui-content>Content</nui-content>
+  <nui-content><main>Content</main></nui-content>
 </nui-app>
 ```
 
@@ -401,7 +439,7 @@ If you MUST apply CSS (spacing on your own wrappers, very rare theming), use ONL
 | Legacy `<nui-app>` Attributes | `nui-vars-sidebar_width`, `nui-vars-sidebar_force-breakpoint` (left only), `nui-vars-sidebar-right_force-breakpoint` (right only) — still honored. Use the per-side `*_force-breakpoint` variants when left and right need different breakpoints. The new `sidebar-width` attribute takes precedence and applies to both sidebars. |
 | `data-action` | `toggle-sidebar` (left), `toggle-sidebar:left`, `toggle-sidebar:right` |
 | Events | `nui-sidebar-change` → `detail: { position, state }` where state is `open|closed|forced` |
-| Methods | `app.toggleSidebar(pos)`, `app.invalidateBreakpointCache()` |
+| Methods | **Drive the sidebar, not its inner link list** — `app.toggleSidebar(pos)`; `setActive` / `getActive` / `getActiveData` / `clearActive` / `clearSubs` are delegated from `nui-sidebar` |
 | CSS Vars | `--sidebar-width` (21rem), `--app-header-height` (4rem) |
 
 📖 **Full docs:** [`documentation/components/app.md`](documentation/components/app.md)
@@ -414,10 +452,12 @@ If you MUST apply CSS (spacing on your own wrappers, very rare theming), use ONL
 
 ### nui-sidebar
 | Attributes | `behavior="primary"` (collapses first), `behavior="secondary"`, `behavior="manual"`, `position="right"` |
-| Inner | `<nav>` or `<nui-link-list>` |
+| Inner | `<nav>` or `<nui-link-list>`. A link list inside a sidebar is **forced to `mode="fold"`** when no `mode` is authored — do not set `mode="tree"` here |
+| Delegated | `setActive` / `getActive` / `getActiveData` / `clearActive` / `clearSubs` — call them on the sidebar, not the inner list |
 
 ### nui-content / nui-main
-| Role | `nui-content` = positioning context, `nui-main` = scroll container (gets `role="main"`) |
+| Role | `nui-content` = positioning context; **`nui-main`** = scroll container, and it sets `role="main"` + `id="main-content"` itself |
+| Child | `<nui-main>` — **not** a bare `<main>`. App-mode CSS targets `nui-content > nui-main`, so a `<main>` breaks scrolling and router page styling silently |
 
 ### nui-page
 | Attributes | `breakout` (allows full-width child sections) |
@@ -525,7 +565,7 @@ If you MUST apply CSS (spacing on your own wrappers, very rare theming), use ONL
   </ul>
 </nui-link-list>
 ```
-| Attributes | `mode="tree|fold"` |
+| Attributes | `mode="tree|fold"`. **Inside a `nui-sidebar` the mode is forced to `fold`** — authoring `mode="tree"` there is valid on a valid attribute, throws nothing, and looks plausible, but is overwritten |
 | Event | `nui-active-change` |
 | Methods | `.loadData(data)`, `.setActive(selector)`, `.getActive()`, `.clearActive()`, `.clearSubs()` |
 
@@ -915,11 +955,13 @@ nui.components.icon.create(name, asElement?)
 nui.setupRouter({ container: 'nui-content nui-main', navigation: 'nui-sidebar', defaultPage: 'home' })
 nui.createRouter(container, { default: 'page=home', basePath: '/pages' })
 
-// Custom registrations
-nui.registerFeature(name, initFn)    // Register a feature handler
-nui.registerAction(name, handler)     // Register a data-action handler
-nui.registerType(type, handler)       // Register a custom route type
+// Custom registrations — note the ASYMMETRIC parameter order
+nui.registerFeature(name, (wrapper, params) => {})    // feature: element FIRST
+nui.registerType(type, (id, params, wrapper) => {})   // type:    id first, wrapper LAST
+nui.registerAction(name, (target, el, event, param) => {})
 ```
+
+⚠️ **`registerFeature` and `registerType` are not interchangeable.** Both take three arguments in a *different order*. Writing a type handler by analogy with a feature handler puts `id` where you expect the element — `wrapper` is then truthy but wrong, so `wrapper.innerHTML = '…'` silently writes into nothing instead of throwing.
 
 📖 **Full API docs:** [`documentation/DOCUMENTATION.md`](documentation/DOCUMENTATION.md) — API Structure section
 
@@ -949,30 +991,35 @@ nui.registerPage('my-page', {
 
 ## Boilerplate (New Project)
 
+**Copy [`nui-boilerplate/`](nui-boilerplate/) — do not transcribe a shell from this file.**
+
+That folder is the canonical shell and the thing to base a new app on. It ships the left sidebar driven by `nui-link-list`, a `<nui-main>` content area, a right sidebar, the `?nui-debug` opt-in, and `js/app.js` wiring navigation + router. Keeping a second copy of the shell here would only give you two bases to choose between, which is exactly the coin flip this section used to cause.
+
+Its shell, reduced to the load-bearing parts:
+
 ```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="NUI/css/nui-theme.css">
-  <script type="module" src="NUI/nui.js"></script>
-</head>
-<body>
-  <nui-app content-min-width="55rem">
-    <nui-skip-links></nui-skip-links>
-    <nui-app-header>
-      <header>
-        <div slot="left"><h1>My App</h1></div>
-      </header>
-    </nui-app-header>
-    <nui-sidebar>
-      <nav>Nav here</nav>
-    </nui-sidebar>
-    <nui-content>
-      <main>Content here</main>
-    </nui-content>
-  </nui-app>
-</body>
-</html>
+<nui-app sidebar-width="20rem" content-width="60rem" content-min-width="50rem">
+  <nui-skip-links></nui-skip-links>
+
+  <nui-app-header>
+    <div slot="left">
+      <nui-button variant="icon">
+        <button type="button" data-action="toggle-sidebar" aria-label="Toggle navigation">
+          <nui-icon name="menu">☰</nui-icon>
+        </button>
+      </nui-button>
+      <h1>My App</h1>
+    </div>
+  </nui-app-header>
+
+  <nui-sidebar behavior="primary" id="nav-sidebar">
+    <nui-link-list id="main-navigation"></nui-link-list>
+  </nui-sidebar>
+
+  <nui-content>
+    <nui-main></nui-main>
+  </nui-content>
+</nui-app>
 ```
+
+Note the two things a shell is most often got wrong on: the content child is `<nui-main>`, and the icon button carries an explicit inner `<button>` with an `aria-label` (the auto-created inner button is a development affordance — production markup spells it out).
