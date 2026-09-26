@@ -1352,6 +1352,13 @@ nui-page>[breakout] {
 	max-width: 100%;
 }
 
+/* When a breakout element contains .maxwidth-container, it acts as a full-bleed
+   surface (background spans edge-to-edge), while .maxwidth-container provides the
+   readable constraint and the exact text gutter matching standard sections. */
+nui-page>[breakout]:has(.maxwidth-container) {
+	padding-inline: 0;
+}
+
 /* Backward compatibility - legacy class-based approach (deprecated) */
 nui-main>.content-page,
 nui-main>.content-feature {
@@ -1374,6 +1381,11 @@ nui-main>.content-feature>*:not([breakout]) {
 nui-main>.content-page>[breakout],
 nui-main>.content-feature>[breakout] {
 	max-width: 100%;
+}
+
+nui-main>.content-page>[breakout]:has(.maxwidth-container),
+nui-main>.content-feature>[breakout]:has(.maxwidth-container) {
+	padding-inline: 0;
 }
 
 
@@ -4557,12 +4569,35 @@ nui-layout[banner] {
 	padding: 0;
 }
 
-nui-layout[banner] .maxwidth-container,
-nui-page>[breakout] .maxwidth-container {
+/* .maxwidth-container — first-class utility: re-applies the page constraint
+   anywhere (inside breakout children, or on any element that must sit inside
+   the readable column). Same max-width and horizontal gutter the nui-page
+   child rules apply. */
+.maxwidth-container {
 	padding: var(--nui-space) var(--nui-space-double);
 	max-width: var(--space-page-maxwidth);
 	box-sizing: border-box;
 }
+
+/* Section rhythm inside nui-page: sections separate vertically via bottom
+   margin only — no top margin, no padding (padding is the child rule's job).
+   The last child carries no bottom margin. */
+nui-page>section {
+	margin-block: 0 var(--nui-space-triple);
+}
+
+nui-page>section:last-child {
+	margin-bottom: 0;
+}
+
+nui-page>header {
+	margin-block: 0 var(--nui-space-double);
+}
+
+nui-page>footer {
+	margin-block: var(--nui-space-double) 0;
+}
+
 
 /* nui Scrollbar */
 /* ######################################################################################### */

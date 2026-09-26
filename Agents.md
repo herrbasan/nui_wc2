@@ -215,10 +215,13 @@ nui.registerPage('components/my-page', {
 ```
 
 ```html
-<!-- pages/components/my-page.html — pure markup, no scripts -->
-<div class="page-my-page">
-    <nui-button>Click Me</nui-button>
-</div>
+<!-- pages/components/my-page.html — pure markup, direct children, no wrapper div -->
+<header>
+    <h1>My Page</h1>
+</header>
+<section>
+    <nui-button><button type="button">Click Me</button></nui-button>
+</section>
 ```
 
 **Legacy pattern — `<script type="nui/page">` (still supported, not recommended):**
@@ -388,35 +391,33 @@ Use these classes from `Playground/css/main.css` before inventing new ones:
 
 ### Page structure: preferred markup
 
-Most demo pages should read like documentation:
+Most demo pages should read like documentation, with direct `<header>` and `<section>` children (the router automatically wraps the fragment in `<nui-page class="content-page ... page-<slug>">`):
 
 ```html
-<div class="page-my-component">
-    <header>
-        <h1>My Component</h1>
-        <p class="lead">One-sentence value proposition.</p>
-    </header>
+<header>
+    <h1>My Component</h1>
+    <p class="lead">One-sentence value proposition.</p>
+</header>
 
-    <section>
-        <h2>Basic Usage</h2>
-        <p>What it is, when to use it.</p>
+<section>
+    <h2>Basic Usage</h2>
+    <p>What it is, when to use it.</p>
 
-        <nui-code>
-            <script type="example" data-lang="html"><!-- Example --></script>
-        </nui-code>
+    <nui-code>
+        <script type="example" data-lang="html"><!-- Example --></script>
+    </nui-code>
 
-        <div class="demo-area">
-            <!-- Live example -->
-        </div>
-    </section>
-</div>
+    <div class="demo-area">
+        <!-- Live example -->
+    </div>
+</section>
 ```
 
 ### CSS rules
 
 **Shared vs page-scoped:**
 - Shared patterns: add a global class in `Playground/css/main.css`
-- One-off needs: scope under `.page-<slug> ...` in `Playground/css/main.css`
+- One-off needs: scope under `.page-<slug> ...` in `Playground/css/main.css` (the router adds `page-<slug>` directly to the `<nui-page>` element)
 
 **Theme variables:**
 - Use existing CSS variables from `NUI/css/nui-theme.css`
@@ -431,9 +432,7 @@ Most demo pages should read like documentation:
 1. Create `Playground/pages/<group>/<name>.html`
 2. Add navigation entry in `Playground/js/main.js`:
    - `href: '#page=<group>/<name>'`
-3. If page needs scoped styles, wrap fragment in single root element:
-   - `<div class="page-<name>"> ... </div>`
-   - Add styles to `Playground/css/main.css` under clearly labeled comment
+3. Author top-level sections as direct children (`<header>`, `<section>`, `<footer>`) — do NOT add an outer `<div>` wrapper
 4. If page needs JavaScript:
    - Add `nui.registerPage()` to `Playground/js/page-init.js`
    - Use `init(element, params, nui)` and attach `element.show/element.hide` if needed

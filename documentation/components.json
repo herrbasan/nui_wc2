@@ -1,6 +1,6 @@
 {
 	"schemaVersion": 1,
-	"generated": "2026-09-26T05:13:14.665Z",
+	"generated": "2026-09-26T08:13:12.750Z",
 	"source": "Playground/pages/**",
 	"components": [
 		{
@@ -256,7 +256,7 @@
 			"@type": "Component",
 			"name": "nui-page",
 			"group": "layout",
-			"description": "Content layout engine: constrains direct children to a readable max-width, with the breakout attribute for full-width sections.",
+			"description": "Content layout engine: constrains direct children to a readable max-width, with breakout and .maxwidth-container for full-width sections and full-bleed bands.",
 			"events": [],
 			"innerElement": null,
 			"imports": null,

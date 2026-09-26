@@ -3198,7 +3198,7 @@ export function initBlocksEditor(element, params, nui) {
 			if (btn.dataset.preview === mode) btn.setAttribute('state', 'active');
 			else btn.removeAttribute('state');
 		});
-		if (mode === 'inline') element.querySelector('.page-blocks-editor')?.setAttribute('breakout', '');
+		if (mode === 'inline') element.setAttribute('breakout', '');
 		syncToOutputs();
 		applySplitPreference();
 	}

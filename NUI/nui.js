@@ -5962,7 +5962,9 @@ async function loadFragment(url, wrapper, params) {
 
 function pageContent(type, id, params, options = {}) {
 	const wrapper = document.createElement(type === 'page' ? 'nui-page' : 'div');
-	wrapper.className = `content-${type} content-${type}-${id.replace(/\//g, '-').replace(/[^a-z0-9-]/gi, '')}`;
+	const slug = id.split('/').pop();
+	const extraClass = slug === 'card' ? ' page-component-card' : '';
+	wrapper.className = `content-${type} content-${type}-${id.replace(/\//g, '-').replace(/[^a-z0-9-]/gi, '')} page-${slug}${extraClass}`;
 	wrapper.innerHTML = '<div class="loading">Loading...</div>';
 
 	if (type === 'page') {

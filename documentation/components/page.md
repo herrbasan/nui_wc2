@@ -77,8 +77,8 @@ The router creates `<nui-page>` wrappers automatically when loading fragments. E
 
 1. User navigates to `#page=components/button`
 2. Router fetches `pages/components/button.html`
-3. Router creates `<nui-page class="content-page ...">` wrapper
+3. Router creates `<nui-page class="content-page ... page-button">` wrapper
 4. Router injects HTML and upgrades custom elements
 5. On subsequent visits, the cached wrapper is shown/hidden
 
-You don't need to add `<nui-page>` to your fragments — the router provides it. If you want a fragment without the page wrapper behavior, your fragment can use a plain `<div>` as root instead.
+You don't need to add `<nui-page>` to your fragments — the router provides it. Fragments author direct `<header>`, `<section>`, and `<footer>` children so constraint, gutter padding, and vertical rhythm apply cleanly to each section, enabling per-section `breakout` and `.maxwidth-container` highlights.

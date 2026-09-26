@@ -24,12 +24,13 @@ IMPORTANT RULES:
 ================================================================================
 -->
 
-<!-- 1. PAGE WRAPPER - Use a div as root; the router wraps in nui-page automatically -->
-<div class="page-[component]">
+<!-- 1. STRUCTURE CONTRACT: Direct children (<header>, <section>, <footer>)
+     The router automatically wraps this fragment in <nui-page class="content-page ... page-[component]">.
+     Do NOT add an outer <div> wrapper — direct children receive constraint, padding, and vertical rhythm. -->
 
-	<!-- 2. LLM GUIDE - Uses nui-details with lazy loading to defer markdown fetch -->
-	<nui-details summary="LLM Guide - nui-[component]" src="../documentation/components/[component].md" lazy>
-	</nui-details>
+<!-- 2. LLM GUIDE - Uses nui-details with lazy loading to defer markdown fetch -->
+<nui-details summary="LLM Guide - nui-[component]" src="../documentation/components/[component].md" lazy>
+</nui-details>
 
 	<!-- 3. HEADER - Always required -->
 	<header>
@@ -205,4 +206,3 @@ IMPORTANT RULES:
 	- Leaving page: hide() called → page hidden (display:none)
 	================================================================================
 	-->
-</div>

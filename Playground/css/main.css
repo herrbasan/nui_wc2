@@ -1269,4 +1269,11 @@ background: var(--color-shade2);
 	border: solid var(--border-thickness) var(--border-shade2);
 }
 
+/* Page component demo: full-bleed highlight band */
+.page-highlight-band {
+	background: var(--color-shade2);
+	border-block: var(--border-thickness) solid var(--border-shade2);
+}
+
+
 
