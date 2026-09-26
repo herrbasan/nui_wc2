@@ -1620,8 +1620,12 @@ registerComponent('nui-skip-links', (element) => {
 		const defaultLinks = [];
 
 		// In app mode, only provide skip to main content
-		// (top nav and sidebar are already visible in fixed positions)
-		const main = document.el('main');
+		// (top nav and sidebar are already visible in fixed positions).
+		// The main landmark is <nui-main> in the app shell (it carries
+		// role="main" itself); a bare <main> is the page-mode fallback.
+		// Scoped to the app first so a <main> generated inside a dialog shell
+		// can never win over the app content.
+		const main = (app && app.el('nui-main, main')) || document.el('nui-main, main');
 		if (main) {
 			defaultLinks.push({ target: main, label: 'Skip to main content' });
 		}
@@ -1839,14 +1843,53 @@ registerComponent('nui-button-container', (element) => {
 	}
 });
 
+// Non-modal dialogs (opened with .show()) get no backdrop and no native cancel
+// event — without a wired dismissal path they can only be closed by an authored
+// button (issue #38). Escape closes the most recently opened non-modal dialog,
+// unless it is `blocking`. Persistent panels set `blocking`.
+const openNonModalDialogs = [];
+let nonModalEscapeWired = false;
+
+function wireNonModalEscape() {
+	if (nonModalEscapeWired) return;
+	nonModalEscapeWired = true;
+	document.addEventListener('keydown', (e) => {
+		if (e.key !== 'Escape') return;
+		for (let i = openNonModalDialogs.length - 1; i >= 0; i--) {
+			const host = openNonModalDialogs[i];
+			const dlg = host.el('dialog');
+			if (!dlg || !dlg.open) { openNonModalDialogs.splice(i, 1); continue; }
+			if (host.hasAttribute('blocking')) continue;
+			host.close('cancel');
+			host.dispatchEvent(new CustomEvent('nui-dialog-cancel', { bubbles: true }));
+			return;
+		}
+	});
+}
+
 function setupDialogBehavior(element, dialog, eventPrefix) {
 	const close = (ret) => {
 		dialog.classList.add('closing');
-		dialog.addEventListener('transitionend', () => {
-			dialog.classList.remove('closing');
+		let done = false;
+		const onEnd = (e) => { if (e.target === dialog) finish(); };
+		const finish = () => {
+			if (done) return;
+			done = true;
+			dialog.removeEventListener('transitionend', onEnd);
+			// close() fires the native 'close' event synchronously while 'closing'
+			// is still present, so the native listener stays silent on the
+			// programmatic path and this dispatch is the single one. Removing the
+			// class FIRST made the native listener dispatch as well — every
+			// programmatic close used to send the event twice.
 			dialog.close(ret);
+			dialog.classList.remove('closing');
 			element.dispatchEvent(new CustomEvent(`${eventPrefix}-close`, { bubbles: true, detail: { returnValue: ret } }));
-		}, { once: true });
+		};
+		// transitionend never fires when the closing state has no transition (a
+		// non-modal dialog carries none), which used to leave the dialog stuck
+		// open with the 'closing' class forever — the timeout is the real path there.
+		dialog.addEventListener('transitionend', onEnd);
+		setTimeout(finish, 400);
 	};
 
 	element.showModal = () => {
@@ -1862,6 +1905,8 @@ function setupDialogBehavior(element, dialog, eventPrefix) {
 	element.isOpen = () => dialog.open;
 
 	dialog.addEventListener('close', () => {
+		const nmIdx = openNonModalDialogs.indexOf(element);
+		if (nmIdx >= 0) openNonModalDialogs.splice(nmIdx, 1);
 		if (!dialog.classList.contains('closing')) {
 			element.dispatchEvent(new CustomEvent(`${eventPrefix}-close`, { bubbles: true, detail: { returnValue: dialog.returnValue } }));
 		}
@@ -1987,6 +2032,8 @@ registerComponent('nui-dialog', (element) => {
 
 	element.show = () => {
 		dialog.show();
+		if (!openNonModalDialogs.includes(element)) openNonModalDialogs.push(element);
+		wireNonModalEscape();
 		element.dispatchEvent(new CustomEvent('nui-dialog-open', { bubbles: true }));
 	};
 });
@@ -7832,6 +7879,44 @@ function mbEnhancePlayers(root) {
 	return cleanups;
 }
 
+// A REFUSED destination never becomes a request (marker in the output), but a
+// PERMITTED destination that fails — 404, ORB block, dead host — used to fail
+// silently: the reader saw a broken-image icon or nothing and could not tell a
+// typo from a gated asset (issue #36). The browser only reports the failure at
+// fetch time, so it has to be caught post-injection: each image gets an error
+// watch, and a failed one is replaced by a marker carrying the alt text and the
+// failed destination. Images that already failed before wiring (cached 404) are
+// caught by the complete/naturalWidth check.
+function mdBrokenMediaMarker(img) {
+	const alt = img.getAttribute('alt') || '';
+	const dest = img.getAttribute('src') || '';
+	console.warn(`[nui-markdown] media asset failed to load: ${dest}`);
+	const marker = document.createElement('span');
+	marker.className = 'nui-md-media-broken';
+	marker.setAttribute('role', 'img');
+	marker.setAttribute('aria-label', alt ? `${alt} — media failed to load` : 'media failed to load');
+	marker.setAttribute('title', `Failed to load: ${dest}`);
+	marker.dataset.brokenDestination = dest;
+	marker.textContent = alt;
+	img.replaceWith(marker);
+}
+
+function mbEnhanceBrokenMedia(root) {
+	root.querySelectorAll('img').forEach((img) => {
+		if (img.dataset.mediaWatched) return;
+		img.dataset.mediaWatched = 'true';
+		if (img.src && img.complete && img.naturalWidth === 0) {
+			mdBrokenMediaMarker(img);
+			return;
+		}
+		img.addEventListener('error', () => mdBrokenMediaMarker(img), { once: true });
+	});
+}
+
+// Public entry point, same contract as util.enhancePlayers: consumers who inject
+// markdownToHtml output directly call this after injection.
+util.enhanceBrokenMedia = (root) => mbEnhanceBrokenMedia(root);
+
 // Public, self-managing entry point, same contract as util.enhanceSlideshows:
 // consumers who inject markdownToHtml output directly call this after injection.
 util.enhancePlayers = (root) => {
@@ -8233,9 +8318,12 @@ function markdownCore(md) {
 
 	// Simple tables
 	html = html.replace(/^[ \t]*\|(.+)\|\n[ \t]*\|([-:| ]+)\|\n((?:[ \t]*\|.+\|\n?)*)/gm, (match, header, sep, body) => {
-		const headCells = header.trim().replace(/^\||\|$/g, '').split('|').map(c => `<th>${c.trim()}</th>`).join('');
+		// Split on unescaped pipes only: `\|` is a literal pipe inside a cell
+		// (GFM table escaping), never a column boundary. Unescaped after the split.
+		const splitCells = (row) => row.trim().replace(/^\||\|$/g, '').split(/(?<!\\)\|/).map(c => c.trim().replace(/\\\|/g, '|'));
+		const headCells = splitCells(header).map(c => `<th>${c}</th>`).join('');
 		const bodyRows = body.trim().split('\n').filter(r => r.trim()).map(row => {
-			const cells = row.trim().replace(/^\||\|$/g, '').split('|').map(c => `<td>${c.trim()}</td>`).join('');
+			const cells = splitCells(row).map(c => `<td>${c}</td>`).join('');
 			return `<tr>${cells}</tr>`;
 		}).join('');
 		return `<table class="nui-table"><thead><tr>${headCells}</tr></thead><tbody>${bodyRows}</tbody></table>`;
@@ -8451,6 +8539,7 @@ class NuiMarkdown extends HTMLElement {
 		this._processed = true; // Mark as processed so re-attach is free
 		util.enhanceSlideshows(this, this.getAttribute('slide-duration'));
 		util.enhancePlayers(this);
+		util.enhanceBrokenMedia(this);
 
 		if (!this._lightboxBound) {
 			this._lightboxBound = true;
@@ -8560,6 +8649,7 @@ class NuiMarkdown extends HTMLElement {
 			this._isStreaming = false;
 			this._processed = true; // Re-attach is free: connectedCallback must not re-parse the rendered DOM
 			this._syncDocumentMarker();
+			util.enhanceBrokenMedia(this);
 		}
 	}
 

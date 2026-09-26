@@ -5844,6 +5844,28 @@ nui-markdown p > img {
 	line-height: 1;
 }
 
+/* A PERMITTED media destination that failed (404, ORB block, dead host) is
+   reported too — the fetch-time counterpart of .nui-md-media-rejected (issue
+   #36). The renderer swaps the broken <img> for this marker post-injection, so
+   a missing asset can never be mistaken for a policy refusal or for content
+   that was never there. */
+.nui-md-media-broken {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--nui-space-quarter);
+	padding: 0 var(--nui-space-half);
+	border: dashed var(--border-thickness) var(--border-shade3);
+	border-radius: var(--border-radius1);
+	color: var(--text-color-dim);
+	font-size: var(--font-size-small);
+	cursor: help;
+}
+.nui-md-media-broken::before {
+	content: '\26A0';
+	font-size: var(--font-size-medium);
+	line-height: 1;
+}
+
 /* preset=player — inline playback of a link-class media block (spec §5.1). The
    markup is <nui-media-player> wrapping a native <video|audio controls>: without
    the addon the native element IS the spec's mapped output, with it the house

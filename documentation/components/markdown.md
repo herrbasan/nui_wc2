@@ -38,7 +38,7 @@ The built-in parser supports:
 - Lists (ordered and unordered, tight or loose, nested by indentation)
 - Links
 - Code blocks (fenced and inline)
-- Tables
+- Tables (an escaped `\|` inside a cell is a literal pipe, never a column boundary)
 - Blockquotes
 - Horizontal rules
 - Images
@@ -161,6 +161,7 @@ Right.
 | `preset=link` / `preset=link:cta` | An **action row**: the block is a `<nav>` and the links are its direct children (`<nav><a>…</a><a>…</a></nav>`). The Markdown list — or the single paragraph a lone link produces — is dropped, because the family owns the output element and the authored shape is not the output shape. Row spacing comes from the container's flex gap, so an action row is never announced as "list, 2 items". A block mixing prose with links is left as authored. |
 | `preset=gallery:slideshow` | A **rotating gallery**: the plates crossfade one at a time (default 5 s per plate, `slide-duration` attribute on `<nui-markdown>` overrides in ms). In a **cover section** this is the DEFAULT for a multi-plate gallery — `preset=gallery:row` is the explicit opt back into the static even row. Rotation is an enhanced-renderer layer, not spec law — without enhancement the list keeps its static even-row layout. Pause is built in (WCAG 2.2.2.2): a quiet toggle button, plus auto-pause on hover, focus-within, and offscreen; `prefers-reduced-motion` never auto-advances. A single plate is static, not a show. |
 | Refused media destination | A destination the trust boundary (§8: executable schemes, protocol-relative URLs, drive paths — plus `null` from `setMarkdownImagePolicy`) refuses **never becomes a request**. It renders as `<span class="nui-md-media-rejected">` holding the alt text, with the destination and reason on `data-refused-destination` / `data-refused-reason` and a `title`, plus a console warning. This is §7's *"renderer warning, source reference retained"*: a refusal has to be distinguishable from a mistyped path, which renders as an ordinary `<img>` and fails as a broken image. |
+| Failed media asset | A **permitted** destination that fails at fetch time (404, ORB block, dead host) is caught post-injection: the `<img>` is replaced by `<span class="nui-md-media-broken">` carrying the alt text, `data-broken-destination` and a `title`, plus a console warning (issue #36 — a missing asset used to be indistinguishable from a renderer bug). Wired by `util.enhanceBrokenMedia(root)`, which the component calls on every render and at stream end; self-injectors of `markdownToHtml` output call it after injection, same contract as `util.enhancePlayers`. |
 
 `id` becomes an anchor target, `preset` a `nui-preset-*` class, and `label` is editor-only and never rendered. A preset is `family[:modifier[:variant]]` — the family sets the semantic element and class, each further segment adds a `nui-variant-*` / `nui-size-*` class, and a renderer that does not know a segment drops it rather than failing.
 

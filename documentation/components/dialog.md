@@ -214,6 +214,10 @@ Whether a dialog is spawned via JS or declared in HTML, it emits standardized ev
 | `nui-dialog-close` *(Event)* | `<nui-dialog>` | Fired immediately when the dialog begins closing. `e.detail.returnValue` contains the string value of the button that closed it. |
 | `nui-dialog-cancel` *(Event)* | `<nui-dialog>` | Fired alongside `close` if the dialog was closed via Escape key or backdrop click. `returnValue` will be `'cancel'`. |
 
+### Non-modal dismissal (`.show()`)
+
+A dialog opened non-modally — `element.show()` or `data-action="dialog-show"` — has no backdrop, so backdrop click-to-close does not apply. **Escape closes the most recently opened non-modal dialog**: the component wires this itself, because a native `<dialog>` fires no `cancel` event when non-modal, which previously left `.show()` dialogs with no dismissal path at all (issue #38). It dispatches `nui-dialog-cancel` alongside `nui-dialog-close` with `returnValue: 'cancel'`. Set `blocking` on persistent panels to opt out.
+
 ## Declarative Triggers (No JS Required)
 
 You do not need to write JavaScript to open/close explicitly declared modal dialogs. Use the `data-action` engine binding:

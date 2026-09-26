@@ -8,7 +8,7 @@ Skip links embody the principle that accessibility features should benefit all u
 
 The component provides two usage modes:
 
-1. **Automatic mode** - Detects `<main>` elements and generates appropriate skip links
+1. **Automatic mode** - Detects the main landmark — `<nui-main>` in the app shell (it carries `role="main"` itself), a bare `<main>` in page mode — and generates the skip link. The lookup is scoped to the surrounding `nui-app` first, so a `<main>` generated inside a dialog shell never wins over the app content.
 2. **Declarative mode** - Accepts custom anchor elements for specific navigation needs
 
 Skip links are visually hidden until focused, appearing as the first focusable element when users press Tab. The component automatically manages `tabindex="-1"` on target elements to ensure proper focus handling.
@@ -33,7 +33,7 @@ When placed without children, the component scans for common landmarks:
     <nui-skip-links></nui-skip-links>
     <nui-app-header>...</nui-app-header>
     <nui-content>
-        <main>...</main>
+        <nui-main>...</nui-main>
     </nui-content>
 </nui-app>
 ```
