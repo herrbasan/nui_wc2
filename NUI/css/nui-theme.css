@@ -1157,6 +1157,112 @@ nui-icon svg {
 }
 
 /* =============================================================================
+   nui-file-icon COMPONENT
+   ============================================================================= */
+
+nui-file-icon {
+	--nfi-color: var(--color-shade5);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	vertical-align: middle;
+	line-height: 1;
+}
+
+/* Document SVG sheet styling */
+.nui-file-icon-svg {
+	width: 2rem;
+	height: 2.5rem;
+	overflow: visible;
+	display: block;
+}
+
+.nui-file-icon-sheet {
+	fill: var(--color-shade2);
+	stroke: var(--border-shade3);
+	stroke-width: 1.2;
+	stroke-linejoin: round;
+}
+
+.nui-file-icon-flap {
+	fill: var(--color-shade3);
+	stroke: var(--border-shade3);
+	stroke-width: 1.2;
+	stroke-linejoin: round;
+}
+
+.nui-file-icon-line {
+	stroke: var(--border-shade3);
+	stroke-width: 1.2;
+	stroke-linecap: round;
+}
+
+.nui-file-icon-ext {
+	font-family: var(--font-family-mono, monospace);
+	font-size: 9.5px;
+	font-weight: 700;
+	fill: var(--nfi-color);
+	letter-spacing: 0.03em;
+}
+
+/* Large size: hero / detail view */
+nui-file-icon[size="large"] .nui-file-icon-svg {
+	width: 3rem;
+	height: 3.75rem;
+}
+
+/* Small size: compact inline / tree row badge mode — strips document silhouette */
+nui-file-icon[size="small"] {
+	width: 2rem;
+	height: auto;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+}
+
+.nui-file-icon-badge {
+	font-family: var(--font-family-mono, monospace);
+	font-size: 0.7rem;
+	font-weight: 700;
+	line-height: 1;
+	letter-spacing: 0.02em;
+	color: var(--nfi-color);
+	display: inline-block;
+	text-align: center;
+	width: 100%;
+}
+
+/* Categories — semantic category colors using light-dark() */
+nui-file-icon.nui-file-icon--pdf     { --nfi-color: light-dark(rgb(205, 45, 35), rgb(235, 80, 70)); }
+nui-file-icon.nui-file-icon--doc     { --nfi-color: light-dark(rgb(35, 75, 155), rgb(110, 150, 235)); }
+nui-file-icon.nui-file-icon--sheet   { --nfi-color: light-dark(rgb(25, 115, 60), rgb(65, 185, 110)); }
+nui-file-icon.nui-file-icon--slide   { --nfi-color: light-dark(rgb(200, 65, 30), rgb(235, 110, 75)); }
+nui-file-icon.nui-file-icon--text    { --nfi-color: light-dark(rgb(85, 105, 125), rgb(140, 165, 190)); }
+nui-file-icon.nui-file-icon--ts      { --nfi-color: light-dark(rgb(30, 105, 185), rgb(90, 160, 240)); }
+nui-file-icon.nui-file-icon--js      { --nfi-color: light-dark(rgb(180, 130, 10), rgb(235, 185, 50)); }
+nui-file-icon.nui-file-icon--html    { --nfi-color: light-dark(rgb(195, 60, 30), rgb(235, 105, 75)); }
+nui-file-icon.nui-file-icon--css     { --nfi-color: light-dark(rgb(30, 95, 190), rgb(85, 150, 245)); }
+nui-file-icon.nui-file-icon--py      { --nfi-color: light-dark(rgb(45, 105, 160), rgb(95, 165, 230)); }
+nui-file-icon.nui-file-icon--rs      { --nfi-color: light-dark(rgb(180, 70, 25), rgb(225, 115, 70)); }
+nui-file-icon.nui-file-icon--go      { --nfi-color: light-dark(rgb(0, 140, 175), rgb(45, 195, 230)); }
+nui-file-icon.nui-file-icon--c       { --nfi-color: light-dark(rgb(80, 95, 120), rgb(135, 155, 185)); }
+nui-file-icon.nui-file-icon--java    { --nfi-color: light-dark(rgb(175, 90, 20), rgb(225, 140, 70)); }
+nui-file-icon.nui-file-icon--cs      { --nfi-color: light-dark(rgb(105, 45, 135), rgb(170, 105, 205)); }
+nui-file-icon.nui-file-icon--php     { --nfi-color: light-dark(rgb(75, 85, 145), rgb(135, 145, 205)); }
+nui-file-icon.nui-file-icon--rb      { --nfi-color: light-dark(rgb(175, 35, 35), rgb(225, 80, 80)); }
+nui-file-icon.nui-file-icon--sh      { --nfi-color: light-dark(rgb(35, 130, 85), rgb(75, 195, 135)); }
+nui-file-icon.nui-file-icon--code    { --nfi-color: light-dark(rgb(35, 120, 70), rgb(74, 196, 122)); }
+nui-file-icon.nui-file-icon--data    { --nfi-color: light-dark(rgb(180, 115, 15), rgb(230, 165, 55)); }
+nui-file-icon.nui-file-icon--image   { --nfi-color: light-dark(rgb(130, 50, 145), rgb(195, 110, 210)); }
+nui-file-icon.nui-file-icon--audio   { --nfi-color: light-dark(rgb(185, 45, 95), rgb(235, 95, 145)); }
+nui-file-icon.nui-file-icon--video   { --nfi-color: light-dark(rgb(95, 55, 165), rgb(155, 115, 230)); }
+nui-file-icon.nui-file-icon--archive { --nfi-color: light-dark(rgb(165, 110, 20), rgb(215, 160, 60)); }
+nui-file-icon.nui-file-icon--font    { --nfi-color: light-dark(rgb(20, 125, 125), rgb(65, 185, 185)); }
+nui-file-icon.nui-file-icon--file    { --nfi-color: light-dark(rgb(105, 105, 105), rgb(140, 140, 140)); }
+
+/* =============================================================================
    APP LAYOUT
    ============================================================================= */
 

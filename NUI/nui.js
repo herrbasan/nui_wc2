@@ -529,6 +529,133 @@ registerComponent('nui-icon', (element) => {
 	defineAttributeProperty(element, 'iconName', 'name');
 });
 
+// ################################# nui-file-icon COMPONENT
+
+const FILE_ICON_CATEGORIES = {
+	// dedicated language / type colors
+	pdf: 'pdf',
+	ts: 'ts', tsx: 'ts',
+	js: 'js', mjs: 'js', cjs: 'js', jsx: 'js',
+	py: 'py', ipynb: 'py',
+	rs: 'rs',
+	go: 'go',
+	c: 'c', h: 'c', cpp: 'c', hpp: 'c', cc: 'c',
+	cs: 'cs',
+	java: 'java', jar: 'java', kt: 'java', kts: 'java',
+	php: 'php',
+	rb: 'rb',
+	sh: 'sh', bash: 'sh', zsh: 'sh', ps1: 'sh', bat: 'sh', cmd: 'sh',
+	html: 'html', htm: 'html', xhtml: 'html',
+	css: 'css', scss: 'css', sass: 'css', less: 'css',
+	vue: 'code', svelte: 'code', lua: 'code', zig: 'code', swift: 'code', r: 'code',
+	// data & config
+	json: 'data', yaml: 'data', yml: 'data', toml: 'data', xml: 'data', sql: 'data', db: 'data', sqlite: 'data', env: 'data',
+	// documents
+	doc: 'doc', docx: 'doc', rtf: 'doc', odt: 'doc', pages: 'doc',
+	txt: 'text', md: 'text', markdown: 'text', log: 'text',
+	// spreadsheets & presentations
+	xls: 'sheet', xlsx: 'sheet', ods: 'sheet', numbers: 'sheet', csv: 'sheet', tsv: 'sheet',
+	ppt: 'slide', pptx: 'slide', odp: 'slide', key: 'slide',
+	// media
+	png: 'image', jpg: 'image', jpeg: 'image', gif: 'image', webp: 'image', avif: 'image', svg: 'image', ico: 'image', bmp: 'image', tif: 'image', tiff: 'image', psd: 'image', ai: 'image',
+	mp3: 'audio', wav: 'audio', ogg: 'audio', flac: 'audio', m4a: 'audio', aac: 'audio', opus: 'audio', aif: 'audio', aiff: 'audio', mid: 'audio',
+	mp4: 'video', webm: 'video', mkv: 'video', mov: 'video', avi: 'video', wmv: 'video', flv: 'video',
+	// archives
+	zip: 'archive', tar: 'archive', gz: 'archive', '7z': 'archive', rar: 'archive', bz2: 'archive', xz: 'archive', tgz: 'archive', iso: 'archive',
+	// fonts
+	ttf: 'font', otf: 'font', woff: 'font', woff2: 'font',
+};
+
+const FILE_ICON_3LETTER_MAP = {
+	json: 'JSN', html: 'HTM', docx: 'DOC', pptx: 'PPT', xlsx: 'XLS',
+	markdown: 'MD', jpeg: 'JPG', tiff: 'TIF', yaml: 'YML', toml: 'TML',
+	bash: 'SH', batch: 'BAT', rust: 'RS', python: 'PY', java: 'JAV',
+	dockerfile: 'DCK', license: 'LIC', text: 'TXT', wasm: 'WSM',
+	aiff: 'AIF', webp: 'WBP', avif: 'AVF', epub: 'PUB', scss: 'SCS',
+	sass: 'SCS', less: 'LSS', sqlite: 'SQL', mjs: 'JS', cjs: 'JS',
+	jsx: 'JSX', tsx: 'TSX', ps1: 'PS'
+};
+
+function to3LetterLabel(ext) {
+	if (!ext) return 'FIL';
+	if (FILE_ICON_3LETTER_MAP[ext]) return FILE_ICON_3LETTER_MAP[ext];
+	if (ext.length <= 3) return ext.toUpperCase();
+	const noVowels = ext[0] + ext.slice(1).replace(/[aeiou]/gi, '');
+	if (noVowels.length >= 3) return noVowels.slice(0, 3).toUpperCase();
+	return ext.slice(0, 3).toUpperCase();
+}
+
+const FILE_EXT_ATTR_PATTERN = /^[a-z0-9+]+$/;
+
+function normalizeFileExt(value) {
+	const ext = String(value).trim().toLowerCase().replace(/^\./, '');
+	if (!ext) return '';
+	if (!FILE_EXT_ATTR_PATTERN.test(ext)) {
+		throw new TypeError(`[NUI] <nui-file-icon> type="${value}" is not a file extension. Use letters, digits and "+" only — e.g. "pdf" or "gz".`);
+	}
+	return ext;
+}
+
+function extFromFileName(name) {
+	const base = String(name).split(/[\\/]/).pop() || '';
+	const dot = base.lastIndexOf('.');
+	return dot > 0 ? normalizeFileExt(base.slice(dot + 1)) : '';
+}
+
+function renderFileIcon(element) {
+	const explicit = element.getAttribute('type') ?? element.getAttribute('extension');
+	const ext = explicit != null ? normalizeFileExt(explicit) : extFromFileName(element.getAttribute('name') || '');
+	const category = FILE_ICON_CATEGORIES[ext] || 'file';
+	const isSmall = element.getAttribute('size') === 'small';
+
+	element.classList.add('nui-file-icon');
+	for (const cls of Array.from(element.classList)) {
+		if (cls.startsWith('nui-file-icon--')) element.classList.remove(cls);
+	}
+	element.classList.add(`nui-file-icon--${category}`);
+	element.dataset.ext = ext;
+
+	const label = element.getAttribute('label');
+	if (label) {
+		element.setAttribute('role', 'img');
+		element.setAttribute('aria-label', label);
+	} else {
+		element.removeAttribute('role');
+		element.removeAttribute('aria-label');
+	}
+
+	const displayLabel = to3LetterLabel(ext);
+
+	if (isSmall) {
+		element.innerHTML = `<span class="nui-file-icon-badge" aria-hidden="true">${displayLabel}</span>`;
+	} else {
+		element.innerHTML = `<svg viewBox="0 0 32 40" class="nui-file-icon-svg" aria-hidden="true" focusable="false">
+	<path d="M 4 2 H 21 L 29 10 V 37 A 2 2 0 0 1 27 39 H 5 A 2 2 0 0 1 3 37 V 4 A 2 2 0 0 1 5 2 Z" class="nui-file-icon-sheet"></path>
+	<path d="M 21 2 V 9 A 1 1 0 0 0 22 10 H 29 Z" class="nui-file-icon-flap"></path>
+	<line x1="7" y1="12" x2="16" y2="12" class="nui-file-icon-line"></line>
+	<line x1="7" y1="17" x2="22" y2="17" class="nui-file-icon-line"></line>
+	<text x="16" y="33" text-anchor="middle" class="nui-file-icon-ext">${displayLabel}</text>
+</svg>`;
+	}
+}
+
+registerComponent('nui-file-icon', (element) => {
+	renderFileIcon(element);
+
+	setupAttributeProxy(element, {
+		'name': () => renderFileIcon(element),
+		'type': () => renderFileIcon(element),
+		'extension': () => renderFileIcon(element),
+		'size': () => renderFileIcon(element),
+		'label': () => renderFileIcon(element)
+	});
+
+	defineAttributeProperty(element, 'name');
+	defineAttributeProperty(element, 'type');
+	defineAttributeProperty(element, 'extension');
+	defineAttributeProperty(element, 'size');
+});
+
 // ################################# nui-progress COMPONENT
 
 registerComponent('nui-progress', (element) => {

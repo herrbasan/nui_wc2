@@ -1,0 +1,220 @@
+<script type="application/ld+json">
+{
+  "@context": "nui",
+  "@type": "Component",
+  "name": "nui-file-icon",
+  "group": "visuals",
+  "description": "File-type icon by extension: a document glyph with the extension overlaid and coloured by category. In small size, collapses to just the colored extension badge. Core component.",
+  "events": [],
+  "innerElement": null,
+  "imports": null
+}
+</script>
+
+<nui-details summary="LLM Guide - nui-file-icon" src="../documentation/components/file-icon.md" lazy>
+</nui-details>
+
+<header>
+	<h1>File Icon</h1>
+	<p class="lead">A document glyph with the extension overlaid and coloured by category. In small size, collapses to just the colored extension badge.</p>
+</header>
+
+<section>
+	<h2>By Extension</h2>
+	<p>Pass <code>type</code> or <code>extension</code> (with or without the dot) when the file extension is known directly.</p>
+
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-file-icon type="pdf"></nui-file-icon>
+<nui-file-icon type="ts"></nui-file-icon>
+<nui-file-icon type="json"></nui-file-icon>
+<nui-file-icon type="png"></nui-file-icon>
+<nui-file-icon type="zip"></nui-file-icon></script>
+	</nui-code>
+
+	<h3>Try It</h3>
+	<div class="demo-area">
+		<div class="demo-flex-center" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+			<nui-file-icon type="pdf"></nui-file-icon>
+			<nui-file-icon type="docx"></nui-file-icon>
+			<nui-file-icon type="md"></nui-file-icon>
+			<nui-file-icon type="ts"></nui-file-icon>
+			<nui-file-icon type="js"></nui-file-icon>
+			<nui-file-icon type="json"></nui-file-icon>
+			<nui-file-icon type="html"></nui-file-icon>
+			<nui-file-icon type="css"></nui-file-icon>
+			<nui-file-icon type="png"></nui-file-icon>
+			<nui-file-icon type="mp3"></nui-file-icon>
+			<nui-file-icon type="mp4"></nui-file-icon>
+			<nui-file-icon type="zip"></nui-file-icon>
+			<nui-file-icon type="xlsx"></nui-file-icon>
+			<nui-file-icon type="pptx"></nui-file-icon>
+		</div>
+	</div>
+</section>
+
+<section>
+	<h2>By Filename / Path</h2>
+	<p>Given <code>name</code>, the extension is automatically derived. Path directories are skipped, and dotfiles without extension render as neutral file types.</p>
+
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-file-icon name="report.pdf"></nui-file-icon>
+<nui-file-icon name="src/components/button.ts"></nui-file-icon>
+<nui-file-icon name="assets/hero@2x.png"></nui-file-icon>
+<nui-file-icon name=".gitignore"></nui-file-icon></script>
+	</nui-code>
+
+	<h3>Try It</h3>
+	<div class="demo-area">
+		<div class="demo-flex-center" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+			<nui-file-icon name="release-notes.md"></nui-file-icon>
+			<nui-file-icon name="src/index.ts"></nui-file-icon>
+			<nui-file-icon name="config.json"></nui-file-icon>
+			<nui-file-icon name="assets/hero@2x.png"></nui-file-icon>
+			<nui-file-icon name=".gitignore"></nui-file-icon>
+			<nui-file-icon name="Makefile"></nui-file-icon>
+		</div>
+	</div>
+</section>
+
+<section>
+	<h2>Sizes</h2>
+	<p><code>nui-file-icon</code> supports three sizes: <code>default</code>, <code>large</code>, and <code>small</code>.</p>
+	<ul>
+		<li><strong>Default:</strong> Standard document sheet (~2rem &times; 2.5rem) with folded corner flap, document lines, and colored extension label.</li>
+		<li><strong>Large (<code>size="large"</code>):</strong> Expanded sheet (~3rem &times; 3.75rem) for detail cards and previews.</li>
+		<li><strong>Small (<code>size="small"</code>):</strong> Strips the document outline entirely, rendering <strong>only the colored extension text</strong>. Designed for dense tree views, table rows, and inline lists.</li>
+	</ul>
+
+	<nui-code>
+		<script type="example" data-lang="html">
+<!-- Small: colored extension badge only -->
+<nui-file-icon size="small" type="ts"></nui-file-icon>
+<nui-file-icon size="small" type="json"></nui-file-icon>
+<nui-file-icon size="small" type="pdf"></nui-file-icon>
+
+<!-- Default: standard document glyph -->
+<nui-file-icon type="ts"></nui-file-icon>
+
+<!-- Large: detail view -->
+<nui-file-icon size="large" type="ts"></nui-file-icon></script>
+	</nui-code>
+
+	<h3>Try It: Size Comparison</h3>
+	<div class="demo-area">
+		<div style="display: flex; gap: 2rem; align-items: center;">
+			<div>
+				<p class="demo-text-muted" style="margin-bottom: 0.5rem; font-size: 0.8rem;">Small (Badge Only)</p>
+				<div style="display: flex; gap: 0.5rem; align-items: center;">
+					<nui-file-icon size="small" type="ts"></nui-file-icon>
+					<nui-file-icon size="small" type="js"></nui-file-icon>
+					<nui-file-icon size="small" type="json"></nui-file-icon>
+					<nui-file-icon size="small" type="md"></nui-file-icon>
+					<nui-file-icon size="small" type="pdf"></nui-file-icon>
+					<nui-file-icon size="small" type="zip"></nui-file-icon>
+				</div>
+			</div>
+			<div>
+				<p class="demo-text-muted" style="margin-bottom: 0.5rem; font-size: 0.8rem;">Default (Glyph)</p>
+				<div style="display: flex; gap: 0.5rem; align-items: center;">
+					<nui-file-icon type="ts"></nui-file-icon>
+					<nui-file-icon type="js"></nui-file-icon>
+					<nui-file-icon type="json"></nui-file-icon>
+					<nui-file-icon type="md"></nui-file-icon>
+					<nui-file-icon type="pdf"></nui-file-icon>
+					<nui-file-icon type="zip"></nui-file-icon>
+				</div>
+			</div>
+			<div>
+				<p class="demo-text-muted" style="margin-bottom: 0.5rem; font-size: 0.8rem;">Large (Detail)</p>
+				<div style="display: flex; gap: 0.5rem; align-items: center;">
+					<nui-file-icon size="large" type="ts"></nui-file-icon>
+					<nui-file-icon size="large" type="pdf"></nui-file-icon>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<h3>Try It: Dense Row Context (Small Badges in a List)</h3>
+	<div class="demo-area">
+		<div style="display: flex; flex-direction: column; gap: 0.5rem; max-width: 400px;">
+			<div style="display: flex; align-items: center; gap: 0.5rem;">
+				<nui-file-icon size="small" name="app.ts"></nui-file-icon>
+				<span>app.ts</span>
+			</div>
+			<div style="display: flex; align-items: center; gap: 0.5rem;">
+				<nui-file-icon size="small" name="package.json"></nui-file-icon>
+				<span>package.json</span>
+			</div>
+			<div style="display: flex; align-items: center; gap: 0.5rem;">
+				<nui-file-icon size="small" name="README.md"></nui-file-icon>
+				<span>README.md</span>
+			</div>
+			<div style="display: flex; align-items: center; gap: 0.5rem;">
+				<nui-file-icon size="small" name="report.pdf"></nui-file-icon>
+				<span>report.pdf</span>
+			</div>
+			<div style="display: flex; align-items: center; gap: 0.5rem;">
+				<nui-file-icon size="small" name="styles.css"></nui-file-icon>
+				<span>styles.css</span>
+			</div>
+		</div>
+	</div>
+</section>
+
+<section>
+	<h2>Attributes</h2>
+	<nui-table>
+		<table>
+			<thead>
+				<tr><th>Attribute</th><th>Type</th><th>Description</th></tr>
+			</thead>
+			<tbody>
+				<tr><td><code>name</code></td><td>string</td><td>Filename or path. The extension is derived from the last dot of the last segment.</td></tr>
+				<tr><td><code>type</code> / <code>extension</code></td><td>string</td><td>Explicit extension, with or without leading dot. Takes precedence over <code>name</code>.</td></tr>
+				<tr><td><code>size</code></td><td>string</td><td><code>"small"</code> (badge only), <code>"large"</code> (detail view), or omit for default glyph.</td></tr>
+				<tr><td><code>label</code></td><td>string</td><td>Sets <code>role="img"</code> and <code>aria-label</code> for standalone use when no adjacent filename exists.</td></tr>
+			</tbody>
+		</table>
+	</nui-table>
+</section>
+
+<section>
+	<h2>Extension & Color Mapping</h2>
+	<p>Extensions are normalized to a maximum of 3 characters (e.g. <code>json</code> &rarr; <code>JSN</code>, <code>html</code> &rarr; <code>HTM</code>, <code>docx</code> &rarr; <code>DOC</code>) allowing larger, bolder typography on the pill badge. Extensions map to semantic color schemes:</p>
+	<nui-table>
+		<table>
+			<thead>
+				<tr><th>Category</th><th>Color Tone</th><th>Sample Extensions</th><th>Badge</th></tr>
+			</thead>
+			<tbody>
+				<tr><td>PDF</td><td>Acrobat Red</td><td><code>pdf</code></td><td><nui-file-icon size="small" type="pdf"></nui-file-icon></td></tr>
+				<tr><td>TypeScript</td><td>TS Blue</td><td><code>ts</code>, <code>tsx</code></td><td><nui-file-icon size="small" type="ts"></nui-file-icon></td></tr>
+				<tr><td>JavaScript</td><td>JS Amber</td><td><code>js</code>, <code>mjs</code>, <code>cjs</code>, <code>jsx</code></td><td><nui-file-icon size="small" type="js"></nui-file-icon></td></tr>
+				<tr><td>HTML</td><td>HTML Orange-Red</td><td><code>html</code>, <code>htm</code></td><td><nui-file-icon size="small" type="html"></nui-file-icon></td></tr>
+				<tr><td>CSS</td><td>CSS Blue</td><td><code>css</code>, <code>scss</code>, <code>sass</code>, <code>less</code></td><td><nui-file-icon size="small" type="css"></nui-file-icon></td></tr>
+				<tr><td>Data & Config</td><td>Warm Gold</td><td><code>json</code>, <code>yaml</code>, <code>yml</code>, <code>toml</code>, <code>xml</code>, <code>sql</code>, <code>db</code>, <code>env</code></td><td><nui-file-icon size="small" type="json"></nui-file-icon></td></tr>
+				<tr><td>Python</td><td>Python Blue</td><td><code>py</code>, <code>ipynb</code></td><td><nui-file-icon size="small" type="py"></nui-file-icon></td></tr>
+				<tr><td>Rust</td><td>Rust Orange</td><td><code>rs</code></td><td><nui-file-icon size="small" type="rs"></nui-file-icon></td></tr>
+				<tr><td>Go</td><td>Go Cyan</td><td><code>go</code></td><td><nui-file-icon size="small" type="go"></nui-file-icon></td></tr>
+				<tr><td>C / C++</td><td>Blue-Grey</td><td><code>c</code>, <code>h</code>, <code>cpp</code>, <code>hpp</code></td><td><nui-file-icon size="small" type="cpp"></nui-file-icon></td></tr>
+				<tr><td>C#</td><td>C# Purple</td><td><code>cs</code></td><td><nui-file-icon size="small" type="cs"></nui-file-icon></td></tr>
+				<tr><td>Java / Kotlin</td><td>Java Amber</td><td><code>java</code>, <code>jar</code>, <code>kt</code></td><td><nui-file-icon size="small" type="java"></nui-file-icon></td></tr>
+				<tr><td>PHP</td><td>PHP Indigo</td><td><code>php</code></td><td><nui-file-icon size="small" type="php"></nui-file-icon></td></tr>
+				<tr><td>Ruby</td><td>Ruby Red</td><td><code>rb</code></td><td><nui-file-icon size="small" type="rb"></nui-file-icon></td></tr>
+				<tr><td>Shell / Scripts</td><td>Terminal Green</td><td><code>sh</code>, <code>bash</code>, <code>zsh</code>, <code>ps1</code>, <code>bat</code>, <code>cmd</code></td><td><nui-file-icon size="small" type="sh"></nui-file-icon></td></tr>
+				<tr><td>Documents</td><td>Word Blue</td><td><code>doc</code>, <code>docx</code>, <code>odt</code>, <code>rtf</code>, <code>pages</code></td><td><nui-file-icon size="small" type="docx"></nui-file-icon></td></tr>
+				<tr><td>Plain Text</td><td>Slate Grey</td><td><code>txt</code>, <code>md</code>, <code>markdown</code>, <code>log</code></td><td><nui-file-icon size="small" type="md"></nui-file-icon></td></tr>
+				<tr><td>Spreadsheets</td><td>Excel Green</td><td><code>xls</code>, <code>xlsx</code>, <code>csv</code>, <code>tsv</code>, <code>ods</code></td><td><nui-file-icon size="small" type="xlsx"></nui-file-icon></td></tr>
+				<tr><td>Presentations</td><td>Coral Orange</td><td><code>ppt</code>, <code>pptx</code>, <code>odp</code>, <code>key</code></td><td><nui-file-icon size="small" type="pptx"></nui-file-icon></td></tr>
+				<tr><td>Images</td><td>Purple / Magenta</td><td><code>png</code>, <code>jpg</code>, <code>jpeg</code>, <code>gif</code>, <code>webp</code>, <code>svg</code></td><td><nui-file-icon size="small" type="png"></nui-file-icon></td></tr>
+				<tr><td>Audio</td><td>Pink / Rose</td><td><code>mp3</code>, <code>wav</code>, <code>flac</code>, <code>m4a</code>, <code>ogg</code>, <code>aac</code></td><td><nui-file-icon size="small" type="mp3"></nui-file-icon></td></tr>
+				<tr><td>Video</td><td>Violet</td><td><code>mp4</code>, <code>webm</code>, <code>mkv</code>, <code>mov</code>, <code>avi</code></td><td><nui-file-icon size="small" type="mp4"></nui-file-icon></td></tr>
+				<tr><td>Archives</td><td>Brown-Gold</td><td><code>zip</code>, <code>tar</code>, <code>gz</code>, <code>7z</code>, <code>rar</code></td><td><nui-file-icon size="small" type="zip"></nui-file-icon></td></tr>
+				<tr><td>Fonts</td><td>Teal</td><td><code>ttf</code>, <code>otf</code>, <code>woff</code>, <code>woff2</code></td><td><nui-file-icon size="small" type="ttf"></nui-file-icon></td></tr>
+				<tr><td>Neutral / Unknown</td><td>Muted Gray</td><td><code>bin</code>, <code>dat</code>, <code>bak</code>, or files without extension</td><td><nui-file-icon size="small" type="bin"></nui-file-icon></td></tr>
+			</tbody>
+		</table>
+	</nui-table>
+</section>

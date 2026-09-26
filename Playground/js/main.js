@@ -298,6 +298,7 @@ const navigationData = [
 					{ label: 'Card', href: '#page=components/card' },
 					{ label: 'Code', href: '#page=components/code' },
 					{ label: 'Icon', href: '#page=components/icon' },
+					{ label: 'File Icon', href: '#page=components/file-icon' },
 					{ label: 'Markdown', href: '#page=components/markdown' },
 					{ label: 'Table', href: '#page=components/table' }
 				]
@@ -332,7 +333,6 @@ const navigationData = [
 			{ label: 'App Window', href: '#page=addons/app-window' },
 			{ label: 'Code Editor', href: '#page=addons/code-editor' },
 			{ label: 'Context Menu', href: '#page=addons/context-menu' },
-			{ label: 'File Icon', href: '#page=addons/file-icon' },
 			{ label: 'File List', href: '#page=addons/file-list' },
 			{ label: 'File Tree', href: '#page=addons/file-tree' },
 			{ label: 'Graph', href: '#page=addons/graph' },
