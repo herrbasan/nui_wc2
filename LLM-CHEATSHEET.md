@@ -693,7 +693,34 @@ nui.components.banner.hideAll();
 ```
 | Events | `nui-banner-open`, `nui-banner-close` |
 
+> Every factory banner is logged to the notification store by default (`log: false` opts out). See `nui-notification-log` below.
+
 📖 **Full docs:** [`documentation/components/banner.md`](documentation/components/banner.md)
+
+### nui-notification-log
+
+Store-backed notification log. `nui.notify()` appends to the store; badge, log panel and banners are views of it.
+
+```javascript
+nui.notify({ content: 'Settings saved' });                        // log-only
+nui.notify({ content: 'Saved', banner: true });                   // log + transient banner
+nui.notify({ id: 'srv-1', content: 'Build done' });               // same id replaces (server feeds)
+nui.components.notifications.remove('srv-1'); // retract
+nui.components.notifications.list() / unread() / markAllRead() / clear()
+```
+| Events | `nui-notify-change` on `document` — `{ type, entry, count, unread }` |
+
+```html
+<!-- Header bell: badge auto-syncs unread count; popover IS the panel chrome -->
+<nui-button variant="icon" data-notify-badge>
+  <button type="button" aria-label="Notifications"><nui-icon name="notifications"></nui-icon></button>
+</nui-button>
+<nui-popover aria-label="Notifications" placement="bottom">
+  <nui-notification-log></nui-notification-log>
+</nui-popover>
+```
+
+📖 **Full docs:** [`documentation/components/notifications.md`](documentation/components/notifications.md)
 
 ### nui-progress
 
@@ -959,6 +986,8 @@ nui.components.dialog.prompt(title, message, options?)
 nui.components.dialog.page(title, htmlContent, options?)  // ⚠️ 2nd param = htmlContent, NOT subtitle
 nui.components.banner.show({ content, placement, priority, autoClose })
 nui.components.banner.hideAll()
+nui.notify({ content, id?, priority?, timestamp?, action?, banner?, autoClose? })
+nui.components.notifications.list() / unread() / remove(id) / markAllRead() / clear()
 nui.components.dropzone.create(zones, callback, target?)
 nui.components.linkList.create(data, options?)
 nui.components.icon.create(name, asElement?)

@@ -1,6 +1,6 @@
 {
 	"schemaVersion": 1,
-	"generated": "2026-09-26T08:29:49.283Z",
+	"generated": "2026-09-27T06:08:27.955Z",
 	"source": "Playground/pages/**",
 	"components": [
 		{
@@ -246,6 +246,21 @@
 			"page": "components/markdown",
 			"demoPath": "Playground/pages/components/markdown.html",
 			"docPath": "documentation/components/markdown.md"
+		},
+		{
+			"@context": "nui",
+			"@type": "Component",
+			"name": "nui-notification-log",
+			"group": "feedback",
+			"description": "Store-backed notification log with header badge sync, popover panel view, per-item dismiss and clear-all. Banners log to the same store by default.",
+			"events": [
+				"nui-notify-change"
+			],
+			"innerElement": null,
+			"imports": null,
+			"page": "components/notifications",
+			"demoPath": "Playground/pages/components/notifications.html",
+			"docPath": "documentation/components/notifications.md"
 		},
 		{
 			"@context": "nui",
@@ -1062,6 +1077,14 @@
 			"events": [
 				{
 					"name": "nui-active-change"
+				}
+			]
+		},
+		{
+			"component": "nui-notification-log",
+			"events": [
+				{
+					"name": "nui-notify-change"
 				}
 			]
 		},

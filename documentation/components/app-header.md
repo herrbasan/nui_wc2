@@ -57,6 +57,7 @@ Any element placed inside the header can accept the `data-badge` attribute. This
 |-----------|----------|
 | `data-badge="number"` | Renders a pill badge showing the provided number or text (e.g., `data-badge="5"`). |
 | `data-badge=""` | Renders a small, minimal "dot" indicator without text. |
+| `data-notify-badge` | **Store-driven:** the notification store keeps the unread count synced on this element automatically — no manual `data-badge` updates. Pair with an `<nui-notification-log>` in a popover to get the full notification UI (see [notifications.md](notifications.md)). |
 
 ## Interactive Delegation (`data-action`)
 

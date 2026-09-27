@@ -93,6 +93,7 @@ No imports needed. Available after loading `nui.js`.
 
 **Feedback**
 - [Banner](#page=components/banner) — Edge-anchored notification banners with auto-close and priority levels.
+- [Notifications](#page=components/notifications) — Store-backed notification log: badge sync, popover panel, banner integration.
 - [Progress](#page=components/progress) — Linear, circular, and indeterminate progress indicators.
 
 **Data**

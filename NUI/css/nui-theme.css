@@ -6900,3 +6900,115 @@ nui-markdown :is(h1, h2, h3, h4, h5, h6) img {
 .nui-md-frontmatter-nested dd {
 	margin: 0;
 }
+/* ################################# NOTIFICATION LOG (nui-notification-log) */
+/* Store-driven list view. The surrounding panel (bubble surface, anchoring, light
+   dismiss) is entirely nui-popover's — these rules only style the chrome inside it:
+   a header row, bounded scrollable list, and dismissible rows. */
+
+nui-notification-log {
+display: block;
+min-width: 22rem;
+max-width: 100%;
+}
+
+nui-notification-log .nui-notification-log-header {
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: var(--nui-space);
+margin-bottom: var(--nui-space-half);
+}
+
+nui-notification-log .nui-notification-clear {
+background: none;
+border: none;
+padding: 0;
+color: var(--color-highlight);
+font-size: var(--font-size-small);
+cursor: pointer;
+}
+
+nui-notification-log .nui-notification-clear:hover:not(:disabled) {
+text-decoration: underline;
+}
+
+nui-notification-log .nui-notification-clear:disabled {
+opacity: 0.4;
+cursor: default;
+}
+
+nui-notification-log .nui-notification-log-list {
+list-style: none;
+margin: 0;
+padding: 0;
+max-height: min(24rem, var(--popover-max-height, 60vh));
+overflow-y: auto;
+}
+
+nui-notification-log .nui-notification-item {
+display: flex;
+align-items: flex-start;
+gap: var(--nui-space-half);
+padding: var(--nui-space-half) 0 var(--nui-space-half) var(--nui-space-half);
+border-bottom: 1px solid var(--border-shade1);
+border-left: 2px solid transparent;
+}
+
+nui-notification-log .nui-notification-item[data-unread] {
+border-left-color: var(--color-highlight);
+}
+
+nui-notification-log .nui-notification-item[data-priority="alert"] {
+border-left-color: var(--palette-alert);
+}
+
+nui-notification-log .nui-notification-item:last-child {
+border-bottom: none;
+}
+
+nui-notification-log .nui-notification-body {
+flex: 1;
+min-width: 0;
+}
+
+nui-notification-log .nui-notification-action {
+display: block;
+width: 100%;
+padding: 0;
+background: none;
+border: none;
+color: var(--color-highlight);
+font: inherit;
+text-align: left;
+cursor: pointer;
+}
+
+nui-notification-log .nui-notification-action:hover {
+text-decoration: underline;
+}
+
+nui-notification-log .nui-notification-time {
+display: block;
+color: var(--text-color-dim);
+font-size: var(--font-size-small);
+}
+
+nui-notification-log .nui-notification-dismiss {
+background: none;
+border: none;
+color: inherit;
+opacity: 0.5;
+cursor: pointer;
+font-size: var(--font-size-small);
+line-height: 1;
+padding: 2px;
+}
+
+nui-notification-log .nui-notification-dismiss:hover {
+opacity: 1;
+}
+
+nui-notification-log .nui-notification-empty {
+color: var(--text-color-dim);
+padding: var(--nui-space) 0;
+}

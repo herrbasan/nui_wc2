@@ -320,6 +320,7 @@ const navigationData = [
 					{ label: 'Popover', href: '#page=components/popover' },
 					{ label: 'Overlay', href: '#page=components/overlay' },
 					{ label: 'Banner', href: '#page=components/banner' },
+					{ label: 'Notifications', href: '#page=components/notifications' },
 					{ label: 'Progress', href: '#page=components/progress' },
 					{ label: 'Tooltip', href: '#page=components/tooltip' }
 				]

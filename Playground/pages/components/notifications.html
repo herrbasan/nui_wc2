@@ -1,0 +1,115 @@
+<script type="application/ld+json">
+{
+  "@context": "nui",
+  "@type": "Component",
+  "name": "nui-notification-log",
+  "group": "feedback",
+  "description": "Store-backed notification log with header badge sync, popover panel view, per-item dismiss and clear-all. Banners log to the same store by default.",
+  "events": ["nui-notify-change"],
+  "innerElement": null,
+  "imports": null
+}
+</script>
+
+<nui-details summary="LLM Guide - Notifications" src="../documentation/components/notifications.md" lazy>
+
+
+</nui-details>
+
+<header>
+<h1>Notifications</h1>
+<p class="lead">A store-backed notification log — banners become a transient echo, the log keeps the record</p>
+</header>
+
+<section>
+<h2>How it works</h2>
+<p>Notifications are <strong>data first</strong>: <code>nui.notify()</code> (or <code>nui.components.banner.show()</code>) appends to a single in-memory store, and three views react to it — the badge on the header bell (top right of this Playground), the <code>&lt;nui-notification-log&gt;</code> panel that opens from that bell, and optionally a transient banner. Every banner shown anywhere in the app is logged automatically, so a message that flashed by is always recoverable from the log.</p>
+</section>
+
+<section>
+<h2>Try it</h2>
+<p>Push notifications below, then open the bell in the page header. The badge counts <em>unread</em> entries; opening the panel marks everything read.</p>
+
+<div class="demo-area">
+<nui-button-container gap="1rem">
+<nui-button><button type="button" data-action="demo-notify:info">Log Only (Silent)</button></nui-button>
+<nui-button><button type="button" data-action="demo-notify:banner">Notify + Banner</button></nui-button>
+<nui-button><button type="button" data-action="demo-notify:alert">Alert Priority</button></nui-button>
+<nui-button><button type="button" data-action="demo-notify:action">With Action</button></nui-button>
+</nui-button-container>
+</div>
+
+<nui-code>
+<script type="example" data-lang="javascript">
+// Log-only — no intrusion, badge increments
+nui.notify({ content: 'Report exported to /exports/report.pdf' });
+
+// Log + transient banner echo
+nui.notify({ content: 'Settings saved', banner: true, autoClose: 3000 });
+
+// Alert priority renders with the alert accent
+nui.notify({ content: 'Build failed: 3 errors', priority: 'alert' });
+
+// Entries can carry an action — clicking them in the log fires it
+nui.notify({ content: 'New demo page available', action: 'demo-link' });
+</script>
+</nui-code>
+</section>
+
+<section>
+<h2>Server-fed demo</h2>
+<p>A real app feeds the store from SSE, WebSocket or a polling loop — the call is identical. The simulated feed below pushes entries with stable ids (same id <em>replaces</em>, never duplicates), updates one countdown entry repeatedly, then retracts it.</p>
+
+<div class="demo-area">
+<nui-button-container gap="1rem">
+<nui-button><button type="button" data-action="demo-feed:start">Start Simulated Feed</button></nui-button>
+<nui-button><button type="button" data-action="demo-feed:stop">Stop Feed</button></nui-button>
+</nui-button-container>
+<p class="demo-result" data-feed-status>Feed stopped.</p>
+</div>
+
+<nui-code>
+<script type="example" data-lang="javascript">
+// Typical transport handler — reconnect-safe because of the stable id
+eventSource.addEventListener('message', (e) => {
+	const msg = JSON.parse(e.data);
+	nui.notify({ id: msg.id, content: msg.text, priority: msg.level, timestamp: msg.ts });
+});
+</script>
+</nui-code>
+</section>
+
+<section>
+<h2>Banner integration</h2>
+<p><code>nui.components.banner.show()</code> logs to the same store by default — every banner on the <a href="#page=components/banner">Banner page</a> ends up in the log. Pass <code>log: false</code> for pure UI feedback that carries no information (progress hints, drag state), and pass an <code>id</code> when the same notification may be shown repeatedly.</p>
+
+<nui-code>
+<script type="example" data-lang="javascript">
+nui.components.banner.show({ content: 'Saved', autoClose: 2000 });           // logged
+nui.components.banner.show({ content: 'Dragging…', autoClose: 0, log: false }); // not logged
+</script>
+</nui-code>
+</section>
+
+<section>
+<h2>Embedded log</h2>
+<p>The log is a plain component, not married to the popover — embedded directly in a page it simply renders the store, live.</p>
+
+<div class="demo-chrome">
+<nui-notification-log></nui-notification-log>
+</div>
+
+<nui-code>
+<script type="example" data-lang="html">
+<!-- Header bell with auto-synced unread badge -->
+<nui-button variant="icon" data-notify-badge>
+	<button type="button" aria-label="Notifications">
+		<nui-icon name="notifications"></nui-icon>
+	</button>
+</nui-button>
+<nui-popover aria-label="Notifications" placement="bottom">
+	<nui-notification-log></nui-notification-log>
+</nui-popover>
+</script>
+</nui-code>
+</section>

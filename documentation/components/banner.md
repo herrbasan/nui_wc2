@@ -68,6 +68,8 @@ banner.onClose((action) => {
 | `showCloseButton` | Boolean | `true` | Automatically injects a dismiss button. |
 | `showProgress` | Boolean | `true` | Shows a visual countdown animation if `autoClose` is active. |
 | `target` | Element | (auto) | The DOM element to append to (defaults to `.nui-banner-layer` or `document.body`). |
+| `log` | Boolean | `true` | Log the banner to the notification store (see [notifications.md](notifications.md)). Set `false` for pure UI feedback that carries no information. |
+| `id` | String | — | Forwarded to the notification store; repeated banners with the same `id` replace one log entry instead of flooding it. |
 
 ## Element Methods & Events
 

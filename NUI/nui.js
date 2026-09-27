@@ -5537,6 +5537,128 @@ registerComponent('nui-popover', (element) => {
 	};
 });
 
+// ################################# NOTIFICATION STORE
+
+// Single source of truth for notifications. Banners, header badges and the
+// notification log are VIEWS of this store — callers only ever talk to
+// nui.notify() (or nui.components.banner.show(), which logs here by default).
+// The store is plain in-memory data; feeding it from a server (SSE, WebSocket,
+// polling) needs nothing more than calling notify() from the transport handler.
+// A caller-provided `id` makes a feed idempotent: same id replaces, never
+// duplicates — and lets the source retract an entry it already pushed.
+
+const notificationStore = (() => {
+	const MAX_ENTRIES = 50;
+	const items = [];
+	let unread = 0;
+	let nextUid = 1;
+
+	const syncBadgeTargets = () => {
+		document.els('[data-notify-badge]').forEach(el => {
+			if (unread > 0) el.setAttribute('data-badge', String(unread));
+			else el.removeAttribute('data-badge');
+		});
+	};
+
+	const emit = (type, entry = null) => {
+		syncBadgeTargets();
+		document.dispatchEvent(new CustomEvent('nui-notify-change', {
+			detail: { type, entry, count: items.length, unread }
+		}));
+	};
+
+	const store = {
+		get items() { return [...items]; },
+		get unread() { return unread; },
+
+		add(entry = {}) {
+			if (entry.content == null || entry.content === '') {
+				throw new Error('[NUI] notifications: entry.content is required.');
+			}
+			let type = 'add';
+			if (entry.id != null) {
+				const idx = items.findIndex(i => i.id === entry.id);
+				if (idx !== -1) {
+					if (!items[idx].read) unread--;
+					items.splice(idx, 1);
+					type = 'replace';
+				}
+			}
+			const timestamp = entry.timestamp ? new Date(entry.timestamp) : new Date();
+			if (isNaN(timestamp)) {
+				throw new Error(`[NUI] notifications: entry.timestamp "${entry.timestamp}" is not a parseable date.`);
+			}
+			const item = {
+				uid: nextUid++,
+				id: entry.id ?? null,
+				content: entry.content,
+				priority: entry.priority === 'alert' ? 'alert' : 'info',
+				action: entry.action ?? null,
+				timestamp,
+				read: false
+			};
+			items.unshift(item);
+			unread++;
+			while (items.length > MAX_ENTRIES) {
+				if (!items.pop().read) unread--;
+			}
+			emit(type, item);
+			return item;
+		},
+
+		remove(uid) {
+			const idx = items.findIndex(i => i.uid === uid);
+			if (idx === -1) return false;
+			const [item] = items.splice(idx, 1);
+			if (!item.read) unread--;
+			emit('remove', item);
+			return true;
+		},
+
+		removeById(id) {
+			const item = items.find(i => i.id === id);
+			return item ? this.remove(item.uid) : false;
+		},
+
+		markAllRead() {
+			if (unread === 0) return;
+			items.forEach(i => { i.read = true; });
+			unread = 0;
+			emit('read');
+		},
+
+		clear() {
+			if (items.length === 0) return;
+			items.length = 0;
+			unread = 0;
+			emit('clear');
+		}
+	};
+
+	return store;
+})();
+
+const notificationApi = {
+	notify(entry = {}) {
+		const item = notificationStore.add(entry);
+		if (entry.banner) {
+			bannerFactory.show({
+				content: entry.content,
+				priority: entry.priority,
+				placement: entry.placement,
+				autoClose: entry.autoClose ?? 4000,
+				log: false // already logged above — the banner is only the transient echo
+			});
+		}
+		return item;
+	},
+	list: () => notificationStore.items,
+	unread: () => notificationStore.unread,
+	remove: (id) => notificationStore.removeById(id),
+	clear: () => notificationStore.clear(),
+	markAllRead: () => notificationStore.markAllRead()
+};
+
 // ################################# BANNER FACTORY
 
 const activeBanners = { top: null, bottom: null };
@@ -5626,6 +5748,18 @@ const bannerFactory = {
 
 		banner.show();
 
+		// Transient banners still leave a trace: logged so a notification the user
+		// missed is recoverable from the notification log. Opt out with log: false
+		// for pure UI feedback that carries no information (progress hints etc.).
+		if (options.log !== false) {
+			notificationStore.add({
+				id: options.id,
+				content: options.content,
+				priority: options.priority,
+				action: options.action
+			});
+		}
+
 		return controller;
 	},
 
@@ -5658,6 +5792,105 @@ const bannerFactory = {
 		return true;
 	}
 };
+
+// ################################# nui-notification-log COMPONENT
+
+// Store-driven list view. The panel chrome (bubble, anchoring, light dismiss) is
+// entirely nui-popover's — place this element inside one and it renders the
+// store's contents, syncing live via the nui-notify-change event. When hosted in
+// a popover, opening the panel marks everything read (the badge counts unread).
+
+registerComponent('nui-notification-log', (element) => {
+	const headerRow = dom.create('div', { class: 'nui-notification-log-header', target: element });
+	dom.create('strong', { text: 'Notifications', target: headerRow });
+	const clearBtn = dom.create('button', {
+		class: 'nui-notification-clear',
+		attrs: { type: 'button' },
+		text: 'Clear all',
+		events: { click: () => notificationApi.clear() },
+		target: headerRow
+	});
+	const list = dom.create('ul', {
+		class: 'nui-notification-log-list',
+		attrs: { role: 'log', 'aria-live': 'polite' },
+		target: element
+	});
+	const empty = dom.create('div', {
+		class: 'nui-notification-empty',
+		text: 'No notifications',
+		target: element
+	});
+
+	const fmtTime = (date) => {
+		const seconds = Math.max(0, Math.round((Date.now() - date.getTime()) / 1000));
+		if (seconds < 45) return 'just now';
+		if (seconds < 90) return '1 min ago';
+		const minutes = Math.round(seconds / 60);
+		if (minutes < 60) return `${minutes} min ago`;
+		if (minutes < 90) return '1 h ago';
+		const hours = Math.round(minutes / 60);
+		if (hours < 24) return `${hours} h ago`;
+		return date.toLocaleString();
+	};
+
+	const renderItem = (item) => {
+		const li = dom.create('li', {
+			class: 'nui-notification-item',
+			attrs: { 'data-priority': item.priority }
+		});
+		if (!item.read) li.setAttribute('data-unread', '');
+
+		const body = dom.create('div', { class: 'nui-notification-body', target: li });
+		// Content is never trusted input: bannerFactory already treats content as
+		// HTML, and the store holds exactly what callers pass — same trust level.
+		if (item.action) {
+			const btn = dom.create('button', {
+				class: 'nui-notification-content nui-notification-action',
+				attrs: { type: 'button', 'data-action': item.action },
+				target: body
+			});
+			btn.innerHTML = item.content;
+		} else {
+			const div = dom.create('div', { class: 'nui-notification-content', target: body });
+			div.innerHTML = item.content;
+		}
+		dom.create('span', {
+			class: 'nui-notification-time',
+			text: fmtTime(item.timestamp),
+			attrs: { title: item.timestamp.toLocaleString() },
+			target: body
+		});
+		dom.create('button', {
+			class: 'nui-notification-dismiss',
+			attrs: { type: 'button', 'aria-label': 'Dismiss notification' },
+			text: '✕',
+			events: { click: () => notificationStore.remove(item.uid) },
+			target: li
+		});
+		return li;
+	};
+
+	const render = () => {
+		const items = notificationStore.items;
+		list.replaceChildren(...items.map(renderItem));
+		empty.hidden = items.length > 0;
+		clearBtn.disabled = items.length === 0;
+	};
+
+	const onChange = () => render();
+	document.addEventListener('nui-notify-change', onChange);
+
+	const host = element.closest('nui-popover');
+	const onOpen = () => notificationApi.markAllRead();
+	host?.addEventListener('nui-popover-open', onOpen);
+
+	render();
+
+	return () => {
+		document.removeEventListener('nui-notify-change', onChange);
+		host?.removeEventListener('nui-popover-open', onOpen);
+	};
+});
 
 // ################################# DIALOG SYSTEM
 
@@ -6831,6 +7064,7 @@ const dropzoneFactory = {
 const componentsApi = {
 	dialog: dialogSystem,
 	banner: bannerFactory,
+	notifications: notificationApi,
 	dropzone: dropzoneFactory,
 	linkList: {
 		create: createLinkList
@@ -6845,6 +7079,10 @@ export const nui = {
 
 	ready() {
 		return _readyPromise;
+	},
+
+	notify(entry) {
+		return componentsApi.notifications.notify(entry);
 	},
 
 	init(options) {

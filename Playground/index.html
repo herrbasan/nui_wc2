@@ -56,11 +56,14 @@
                             <nui-icon name="brightness">⛭</nui-icon>
                         </button>
                     </nui-button>
-                    <nui-button variant="icon" data-badge="3">
-                        <button type="button" data-action="show-notifications" aria-label="Show notifications">
+                    <nui-button variant="icon" data-notify-badge>
+                        <button type="button" aria-label="Notifications">
                             <nui-icon name="notifications">🔔</nui-icon>
                         </button>
                     </nui-button>
+                    <nui-popover aria-label="Notifications" placement="bottom">
+                        <nui-notification-log></nui-notification-log>
+                    </nui-popover>
                     <nui-button variant="icon">
                         <button type="button" data-action="toggle-sidebar:right" aria-label="Toggle settings panel">
                             <nui-icon name="settings">⚙</nui-icon>

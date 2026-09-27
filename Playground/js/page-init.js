@@ -155,6 +155,73 @@ nui.registerPage('components/banner', {
 	}
 });
 
+nui.registerPage('components/notifications', {
+	html: 'components/notifications.html',
+	init(element, params, nui) {
+		let feedTimer = null;
+		let feedCounter = 0;
+		const statusEl = element.querySelector('[data-feed-status]');
+
+		const stopFeed = () => {
+			if (feedTimer) {
+				clearInterval(feedTimer);
+				feedTimer = null;
+			}
+			// The source retracts an entry it previously pushed — same id.
+			nui.components.notifications.remove('srv-countdown');
+			statusEl.textContent = 'Feed stopped.';
+		};
+
+		element.addEventListener('nui-action', (e) => {
+			const { name, param } = e.detail;
+
+			switch (name) {
+				case 'demo-notify':
+					if (param === 'info') {
+						nui.notify({ content: 'Report exported to <strong>/exports/report.pdf</strong>' });
+					} else if (param === 'banner') {
+						nui.notify({ content: 'Settings saved (with banner echo)', banner: true, autoClose: 3000 });
+					} else if (param === 'alert') {
+						nui.notify({ content: 'Build failed: 3 errors in <code>src/bundle.js</code>', priority: 'alert' });
+					} else if (param === 'action') {
+						nui.notify({ content: 'Open the Badge demo page', action: 'demo-link' });
+					}
+					break;
+
+				case 'demo-link':
+					window.location.hash = '#page=components/badge';
+					break;
+
+				case 'demo-feed':
+					if (param === 'start' && !feedTimer) {
+						feedCounter = 0;
+						statusEl.textContent = 'Feed running …';
+						feedTimer = setInterval(() => {
+							feedCounter++;
+							nui.components.notifications.notify({
+								id: `srv-${feedCounter}`,
+								content: `Server event #${feedCounter}: job finished`,
+								timestamp: Date.now()
+							});
+							// One long-lived entry, updated in place (same id → replace)
+							nui.components.notifications.notify({
+								id: 'srv-countdown',
+								content: `Batch processing: <strong>${60 - feedCounter}s</strong> remaining — updates without duplicating`,
+								timestamp: Date.now()
+							});
+						}, 3000);
+					} else if (param === 'stop') {
+						stopFeed();
+					}
+					break;
+			}
+		});
+
+		// Pages are cached — a running interval must not survive the page being hidden.
+		element.hide = () => stopFeed();
+	}
+});
+
 nui.registerPage('components/button', {
 	html: 'components/button.html',
 	init(element, params, nui) {
