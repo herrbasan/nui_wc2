@@ -1,100 +1,135 @@
-<script type="application/ld+json">
-{
-  "@context": "nui",
-  "@type": "Component",
-  "name": "dropped-table-editor",
-  "group": "experiments",
-  "description": "ABANDONED one-shot attempt at a table editor. Reference only — do not use.",
-  "events": ["nui-change"],
-  "innerElement": "table",
-  "imports": {
-    "js": "Playground/js/dropped-table-editor.js",
-    "css": "Playground/css/dropped-table-editor.css"
-  }
-}
-</script>
+<header>
+	<h1>Table Editor</h1>
+	<p class="lead">A native <code>&lt;table&gt;</code> that becomes editable in place. The table is the model — no shadow copy, no wrapper in the saved output.</p>
+</header>
 
-	<header>
-		<h1>Table Editor</h1>
-		<p class="lead">Unfinished and abandoned — preserved as a failed attempt, for reference only.</p>
-	</header>
+<div class="demo-callout">
+	<strong>Status: fresh attempt, awaiting feel-check.</strong> Replaces the
+	<abbr title="the abandoned one-shot attempt">dropped attempt</abbr> at
+	<code>#page=experiments/dropped-table-editor</code>. Mechanism is complete; interaction
+	<em>feel</em> is the open question, and it converges by sampling, not by reading.
+	Try: hover a row or column for grips, click a cell to type, <kbd>Tab</kbd> to walk,
+	<kbd>Shift</kbd>+click to extend a range, drag a grip to reorder, paste TSV from a
+	spreadsheet into any cell.
+</div>
 
-	<div class="demo-callout">
-		<strong>Status: abandoned (2026-09-22).</strong> One-shot generated first attempt at a
-		table editor addon. Parts of the mechanics work, but the interaction feel
-		failed review — generating a whole interactive component in a single pass doesn't work.
-		Do not build on this code. Renamed to <code>dropped-table-editor</code> to free the
-		<code>nui-table-editor</code> namespace for the fresh component. The decision log
-		(<code>docs/table-editor-decisions.md</code>) remains the resume point; any future attempt
-		proceeds slice by slice with user feel-checks between steps.
+<section>
+	<h2>Basic Usage</h2>
+	<p>Wrap a table. The editor enhances it in place; at rest it is an ordinary table with no framing.</p>
+
+	<nui-code>
+		<script type="example" data-lang="html"><!-- Markup is shown by the live example below --></script>
+	</nui-code>
+
+	<div class="demo-area">
+		<nui-table-editor>
+			<table>
+				<thead>
+					<tr>
+						<th data-align="left">Component</th>
+						<th data-align="left">Status</th>
+						<th data-align="center">Weight</th>
+						<th data-align="right">Lines</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td data-align="left">nui-button</td>
+						<td data-align="left">Stable</td>
+						<td data-align="center">Low</td>
+						<td data-align="right">184</td>
+					</tr>
+					<tr>
+						<td data-align="left">nui-table-editor</td>
+						<td data-align="left">In review</td>
+						<td data-align="center">High</td>
+						<td data-align="right">612</td>
+					</tr>
+					<tr>
+						<td data-align="left">nui-sortable</td>
+						<td data-align="left">Stable</td>
+						<td data-align="center">Medium</td>
+						<td data-align="right">296</td>
+					</tr>
+				</tbody>
+			</table>
+		</nui-table-editor>
 	</div>
+</section>
 
-	<section>
-		<h2>Interactive Table Showcase</h2>
-		<p>Hover rows or columns to reveal drag grips and context menus. Click any cell to type directly, navigate with <kbd>Tab</kbd> or <kbd>Enter</kbd>, and format columns with the floating toolbar.</p>
+<section>
+	<h2>Live GFM Export</h2>
+	<p>Serialization to a GitHub Flavored Markdown pipe table, regenerated on every change. Alignment becomes the delimiter row, so a right-aligned number column survives a round trip.</p>
+	<pre class="demo-result" id="te-gfm"><code></code></pre>
+	<p class="demo-result" id="te-log">Last change: none</p>
+</section>
 
-		<div class="demo-area">
-			<dropped-table-editor id="demo-table-main">
-				<table class="nui-table">
-					<thead>
-						<tr>
-							<th data-align="left">Item</th>
-							<th data-align="left">Category</th>
-							<th data-align="center">In Stock</th>
-							<th data-align="right">Unit Price</th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr>
-							<td data-align="left">Mechanical Keyboard</td>
-							<td data-align="left">Hardware</td>
-							<td data-align="center">Yes</td>
-							<td data-align="right">$129.99</td>
-						</tr>
-						<tr>
-							<td data-align="left">USB-C Monitor Cable</td>
-							<td data-align="left">Accessories</td>
-							<td data-align="center">Yes</td>
-							<td data-align="right">$19.50</td>
-						</tr>
-						<tr>
-							<td data-align="left">Desk Mat XL</td>
-							<td data-align="left">Office</td>
-							<td data-align="center">No</td>
-							<td data-align="right">$24.00</td>
-						</tr>
-					</tbody>
-				</table>
-			</dropped-table-editor>
+<section>
+	<h2>No Header Row</h2>
+	<p>GFM has exactly one header row, so a table can be headerless. The toggle in the top zone
+	converts the first body row into <code>&lt;thead&gt;</code> and back, without losing data.</p>
+
+	<div class="demo-area">
+		<nui-table-editor id="te-nohead">
+			<table>
+				<tbody>
+					<tr>
+						<td data-align="left">left</td>
+						<td data-align="center">center</td>
+						<td data-align="right">right</td>
+					</tr>
+					<tr>
+						<td data-align="left">alpha</td>
+						<td data-align="center">beta</td>
+						<td data-align="right">gamma</td>
+					</tr>
+				</tbody>
+			</table>
+		</nui-table-editor>
+	</div>
+</section>
+
+<section>
+	<h2>Tab Walks Off the End</h2>
+	<p><kbd>Tab</kbd> past the last cell appends a row, so a table grows by keyboard alone. Shift+Tab walks back.</p>
+
+	<div class="demo-area">
+		<nui-table-editor id="te-walk">
+			<table>
+				<tbody>
+					<tr>
+						<td data-align="left">Tab from here</td>
+						<td data-align="left">…and on past the end</td>
+					</tr>
+				</tbody>
+			</table>
+		</nui-table-editor>
+	</div>
+</section>
+
+<section>
+	<h2>Enhancing a Table In Place</h2>
+	<p>A host that owns its own markup — a rich-text editor, a block editor — enhances an existing
+	<code>&lt;table&gt;</code> with no wrapper element, so its saved HTML stays clean. Inside a
+	<code>contenteditable</code> ancestor the component adds UI only: the host keeps ownership of
+	editability and keyboard handling.</p>
+
+	<div class="demo-area">
+		<div id="te-host" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Host editable region">
+			<p>A paragraph, then a table the host owns:</p>
+			<table>
+				<tbody>
+					<tr>
+						<td data-align="left">Host markup</td>
+						<td data-align="left">still a bare &lt;table&gt;</td>
+					</tr>
+					<tr>
+						<td data-align="left">editable=false</td>
+						<td data-align="left">grips only</td>
+					</tr>
+				</tbody>
+			</table>
+			<p>…and a paragraph after it.</p>
 		</div>
-
-		<h3>Live GFM Pipe-Table Export</h3>
-		<p>Proves round-trip fidelity: DOM table serialized live into standard GitHub Flavored Markdown on every change.</p>
-		<pre class="demo-result" style="padding: var(--nui-space); background: var(--color-shade1); border: var(--border-thickness) solid var(--border-shade2); border-radius: var(--border-radius1); overflow-x: auto;"><code id="gfm-export-output"></code></pre>
-
-		<p class="demo-result" id="table-log" style="font-size: var(--font-size-small); color: var(--color-text-dim);">Last action: None</p>
-	</section>
-
-	<section>
-		<h2>From-Scratch Grid (2x2)</h2>
-		<p>Test growing the grid from an empty start, pasting TSV rows from spreadsheets, or toggling the header row.</p>
-
-		<div class="demo-area">
-			<dropped-table-editor id="demo-table-secondary">
-				<table class="nui-table">
-					<thead>
-						<tr>
-							<th>Column 1</th>
-							<th>Column 2</th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr>
-							<td>Data A</td>
-							<td>Data B</td>
-						</tr>
-					</tbody>
-				</table>
-			</dropped-table-editor>
-		</div>
-	</section>
+	</div>
+</section>

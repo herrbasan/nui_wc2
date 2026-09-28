@@ -1,0 +1,515 @@
+/* =============================================================================
+   NUI TABLE EDITOR ADDON
+   Progressive enhancement for native tables.
+   At rest: an ordinary table, no framing, no chrome. Everything appears on
+   hover/focus and leaves again.
+   ============================================================================= */
+
+nui-table-editor {
+	display: block;
+	position: relative;
+	width: 100%;
+	margin-block-end: var(--nui-space);
+}
+
+/* The table's own look is NOT restated here. nui-theme.css already styles
+   `table`, `th`, `td` globally, and `nui-table` adds the scroll container plus the
+   responsive card fallback. This addon adds only what editing requires on top of
+   that shared surface — it must never fork the table's appearance. */
+
+nui-table-editor > nui-table {
+	position: relative;
+	/* The editor's grips sit just outside the table's own box; the scroll container
+	   would otherwise clip them. */
+	overflow: visible;
+}
+
+/* `nui-table` collapses a table into stacked cards below 640px, which is right for
+   reading and wrong for editing: there is no column left to grip, and every grip
+   would point at nothing. The editor keeps the grid. An editor is an interaction
+   that only exists on a real grid, so the fallback is opted out of, not fought. */
+@media (max-width: 640px) {
+	nui-table-editor nui-table table.nui-table-enhanced,
+	nui-table-editor nui-table table.nui-table-enhanced thead,
+	nui-table-editor nui-table table.nui-table-enhanced tbody,
+	nui-table-editor nui-table table.nui-table-enhanced th,
+	nui-table-editor nui-table table.nui-table-enhanced td,
+	nui-table-editor nui-table table.nui-table-enhanced tr {
+		display: revert;
+		position: static;
+		margin-bottom: 0;
+		border: var(--border-thickness) solid var(--border-shade3);
+		border-radius: 0;
+		box-shadow: none;
+		padding: revert;
+		filter: none;
+		background: revert;
+		color: inherit;
+		width: auto;
+		max-width: none;
+		text-align: left;
+		vertical-align: top;
+	}
+
+	nui-table-editor nui-table table.nui-table-enhanced thead tr {
+		position: static;
+		top: auto;
+		left: auto;
+	}
+
+	/* `data-label` ::before labels are a card-fallback affordance; on a real grid the
+	   header cell is the label. */
+	nui-table-editor nui-table table.nui-table-enhanced td::before {
+		content: none;
+		display: none;
+	}
+}
+
+/* Editing needs a caret target and a click target that is unambiguously the cell. */
+nui-table-editor th[contenteditable],
+nui-table-editor td[contenteditable],
+table[data-nui-table-editor] th[contenteditable],
+table[data-nui-table-editor] td[contenteditable] {
+	cursor: text;
+	min-width: 3rem;
+	/* The shared surface clips overflow with ellipsis, which is right for reading a
+	   long value and wrong for editing one: the text you are typing must be visible
+	   while you type it, and a wrapped cell must grow. */
+	overflow: visible;
+	text-overflow: clip;
+	overflow-wrap: break-word;
+}
+
+/* Alignment is an attribute, never an inline style: it must survive
+   serialization into GFM and back. These rules carry the actual `text-align` —
+   the block above only relaxes the shared surface's overflow, which is what makes
+   an edited cell wrap instead of ellipsing. Losing the property here is silent:
+   the attribute is set, the GFM export is right, and nothing on screen moves. */
+nui-table-editor th[data-align="left"],
+nui-table-editor td[data-align="left"],
+nui-table-editor th[data-align="center"],
+nui-table-editor td[data-align="center"],
+nui-table-editor th[data-align="right"],
+nui-table-editor td[data-align="right"],
+table[data-nui-table-editor] [data-align="left"],
+table[data-nui-table-editor] [data-align="center"],
+table[data-nui-table-editor] [data-align="right"] {
+	text-align: left;
+}
+
+nui-table-editor th[data-align="center"],
+nui-table-editor td[data-align="center"],
+table[data-nui-table-editor] [data-align="center"] {
+	text-align: center;
+}
+
+nui-table-editor th[data-align="right"],
+nui-table-editor td[data-align="right"],
+table[data-nui-table-editor] [data-align="right"] {
+	text-align: right;
+}
+
+/* --- State tokens ---------------------------------------------------------------
+   Overridable on the element or a host scope.
+
+   The accent is spent on the SELECTION only. An earlier pass spent it on nothing —
+   selection and focus were both neutral surface steps, on the reasoning that the
+   accent belongs to links and primary action. Sampling overruled that: a neutral
+   fill reads as a tint, not as a selection. Selection is the component's primary
+   output, so it earns the one colour that means "the accent". Everything quieter —
+   caret ring, keyboard focus, grips, drop line — stays neutral, so the accent
+   never competes with itself. */
+
+nui-table-editor,
+table[data-nui-table-editor] {
+	/* Selection is the ONE state that earns the accent: it is the component's
+	   primary output ("these cells"), and a neutral fill read as a tint rather
+	   than a selection.
+
+	   Opaque, mixed toward the SURFACE, not toward transparent. A low-alpha wash
+	   over the table looked odd because the accent's hue shifts by a different
+	   amount in each channel depending on what sits underneath: over the near-black
+	   dark surface 10% of a mid blue collapses to a muddy grey-blue, which reads
+	   as dirt on the table rather than a colour. Mixing toward the surface instead
+	   keeps the hue and the contrast predictable, and gives one flat colour per
+	   scheme that is unambiguously the accent.
+
+	   The accent ratio is identical in both schemes; only the surface it mixes
+	   into changes. The text keeps the theme colour, which stays legible on both. */
+	--nte-select-bg: light-dark(
+		color-mix(in srgb, var(--color-highlight) 18%, var(--color-shade1)),
+		color-mix(in srgb, var(--color-highlight) 24%, var(--color-shade2))
+	);
+	--nte-select-text: var(--text-color);
+	--nte-active-ring: var(--text-color-dim);
+	--nte-on-bg: var(--color-shade4);
+	--nte-on-text: var(--text-color);
+	--nte-drop-line: var(--text-color-dim);
+	/* One easing for the whole component. Chrome that appears with different
+	   curves in different places reads as several unrelated things; a shared
+	   ease-out makes them read as one. */
+	--nte-ease: cubic-bezier(0.2, 0, 0, 1);
+	--nte-dur: 140ms;
+}
+
+/* --- Selection & focus ------------------------------------------------------------
+   The selection is the per-cell backdrop and nothing else. An outline around the
+   union rectangle was tried and removed: layered on a filled block it was a third
+   selection indicator saying the same thing, and the cells' own grid lines already
+   bound the range. One way of saying "selected" beats three. */
+
+nui-table-editor th[data-selected],
+nui-table-editor td[data-selected],
+table[data-nui-table-editor] [data-selected] {
+	background-color: var(--nte-select-bg, var(--color-shade3));
+	color: var(--nte-select-text, var(--text-color));
+}
+
+/* The caret cell is the one remaining ring, and it stays hairline: it says "the
+   keyboard is here", which is a quieter fact than "these cells are selected" and
+   should not outweigh it. Width and offset both follow --border-thickness, so the
+   ring sits on the same line as the grid instead of floating inside the cell. */
+nui-table-editor td[data-active],
+nui-table-editor th[data-active],
+table[data-nui-table-editor] [data-active] {
+	outline: var(--border-thickness) solid var(--nte-active-ring, var(--text-color-dim));
+	outline-offset: calc(var(--border-thickness) * -1);
+}
+
+nui-table-editor :is(th,td):focus-visible,
+table[data-nui-table-editor] :is(th,td):focus-visible {
+	outline: var(--border-thickness) solid var(--nte-active-ring, var(--text-color-dim));
+	outline-offset: calc(var(--border-thickness) * -1);
+}
+
+/* --- Overlay: one layer, positioned over the table, never in its flow. --- */
+
+.nte-overlay {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	z-index: 20;
+	font-size: var(--font-size-small);
+}
+
+.nte-overlay.is-hovered {
+	/* Grips and edge buttons take the pointer only while the table is in play. */
+	pointer-events: none;
+}
+
+.nte-overlay.is-hovered .nte-row-grip,
+.nte-overlay.is-hovered .nte-col-grip,
+.nte-overlay.is-hovered .nte-edge-add,
+.nte-overlay.is-hovered .nte-zone.is-active {
+	pointer-events: auto;
+}
+
+.nte-row-grip,
+.nte-col-grip,
+.nte-edge-add,
+.nte-drop-line {
+	opacity: 0;
+	transition: opacity 120ms ease;
+}
+
+.nte-overlay.is-hovered .nte-edge-add {
+	opacity: 1;
+}
+
+/* --- Grips and edge buttons ---------------------------------------------------
+   The base `button` rule in nui-theme.css floors every button at 2rem square with
+   a highlight fill. These are affordances, not toolbar buttons: they must be
+   smaller than the smallest control and must not read as primary actions. */
+
+.nte-row-grip,
+.nte-col-grip,
+.nte-edge-add {
+	opacity: 0;
+	position: absolute;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 0;
+	min-height: 0;
+	padding: 0;
+	font-size: inherit;
+	line-height: normal;
+	background-color: var(--color-shade2);
+	color: var(--text-color-dim);
+	border: var(--border-thickness) solid var(--border-shade3);
+	border-radius: var(--border-radius2);
+	cursor: grab;
+	transition: opacity var(--nte-dur) var(--nte-ease), background-color 100ms var(--nte-ease);
+	appearance: none;
+	vertical-align: top;
+}
+
+/* Only the row and column under the pointer show their grip. Showing every grip
+   at once is the spreadsheet look the at-rest law exists to reject: a table must
+   read as a table with one affordance, not as a grid of handles. */
+.nte-row-grip.is-hot,
+.nte-col-grip.is-hot,
+.nte-row-grip.is-selected,
+.nte-col-grip.is-selected {
+	opacity: 1;
+	background-color: var(--color-shade1);
+	color: var(--text-color);
+}
+
+.nte-row-grip {
+	left: 0;
+	width: 1rem;
+	transform: translateX(-100%);
+	border-top-right-radius: 0;
+	border-bottom-right-radius: 0;
+}
+
+.nte-col-grip {
+	top: 0;
+	height: 0.875rem;
+	transform: translateY(-100%);
+	border-bottom-left-radius: 0;
+	border-bottom-right-radius: 0;
+}
+
+/* The drag glyph is 1.2rem by default and a grip is 0.875rem tall, so at theme
+   size the icon overflows its own handle and reads as an empty box. The handle is
+   sized by feel, not by the icon, so the icon gives way. */
+.nte-row-grip nui-icon,
+.nte-col-grip nui-icon {
+	width: 0.75rem;
+	height: 0.75rem;
+	display: block;
+}
+
+.nte-row-grip:hover,
+.nte-col-grip:hover {
+	background-color: var(--color-shade2);
+	color: var(--text-color);
+}
+
+.nte-row-grip.is-selected,
+.nte-col-grip.is-selected {
+	background-color: var(--nte-on-bg, var(--color-shade3));
+	color: var(--nte-on-text, var(--text-color));
+}
+
+.nte-overlay.is-dragging .nte-row-grip,
+.nte-overlay.is-dragging .nte-col-grip {
+	cursor: grabbing;
+}
+
+.nte-edge-add {
+	width: 1.25rem;
+	height: 1.25rem;
+	border-radius: var(--border-radius3);
+	cursor: pointer;
+}
+
+.nte-edge-add:hover {
+	background-color: var(--color-shade2);
+	color: var(--text-color);
+}
+
+/* The edge buttons sit on the table's boundary lines, so they are nudged clear of
+   the border they would otherwise straddle. */
+.nte-edge-add-row { transform: translate(-50%, 0.375rem); }
+.nte-edge-add-col { transform: translate(0.375rem, -50%); }
+
+.nte-drop-line {
+	position: absolute;
+	background-color: var(--nte-drop-line, var(--text-color-dim));
+	pointer-events: none;
+	z-index: 30;
+}
+
+.nte-drop-line-row {
+	height: 2px;
+	box-shadow: 0 -1px 0 var(--color-white), 0 1px 0 var(--color-white);
+}
+
+.nte-drop-line-col {
+	width: 2px;
+	box-shadow: -1px 0 0 var(--color-white), 1px 0 0 var(--color-white);
+}
+
+.nte-drop-line.is-visible {
+	opacity: 1;
+}
+
+/* --- The single top zone: grows upward from the table's top edge --------------
+   A floating pill, not a boxed toolbar. A border around a bar that floats over a
+   document draws a hard line across the content behind it; elevation alone
+   separates the control from the page without cutting the page in half. */
+
+.nte-zone {
+	position: absolute;
+	bottom: 100%;
+	left: 0;
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	max-height: 4rem;
+	padding: 3px;
+	/* Clear the column grips, which sit in exactly this band: a column grip is
+	   0.875rem tall and translated fully above the table's top edge, so a zone with
+	   the usual hairline margin lands on top of them and hides the very handles the
+	   user is reaching for. Lift by grip + gap instead. */
+	margin-bottom: calc(0.875rem + var(--nui-space-quarter));
+	background-color: var(--color-base);
+	border-radius: var(--border-radius3);
+	box-shadow: 0 1px 2px var(--shadow-color), 0 4px 12px var(--shadow-color);
+	z-index: 26;
+	/* It never animates its own height. `height: 0 -> auto` cannot be interpolated,
+	   so the browser snaps it — the single biggest source of the flicker this
+	   component had. The box is always full size; opacity and a small lift do the
+	   appearing, and because the zone is absolutely positioned, a full-size box at
+	   rest costs the document nothing. */
+	opacity: 0;
+	transform: translateY(4px);
+	pointer-events: none;
+	transition: opacity 140ms var(--nte-ease), transform 140ms var(--nte-ease);
+}
+
+.nte-zone.is-active {
+	opacity: 1;
+	transform: translateY(0);
+	pointer-events: auto;
+}
+
+/* Separator: a single hairline, inset from the edges so it reads as a division
+   inside the pill rather than a rule drawn across it. */
+.nte-zone-sep {
+	width: 1px;
+	align-self: stretch;
+	margin: 3px 3px;
+	background-color: var(--border-shade1);
+	flex: none;
+}
+
+/* Segmented control: the three alignments are one control with three positions,
+   so they share one well and are divided from each other, not from the toolbar. */
+.nte-seg {
+	display: flex;
+	align-items: center;
+	gap: 1px;
+	padding: 1px;
+	background-color: var(--color-shade1);
+	border-radius: var(--border-radius2);
+}
+
+.nte-seg-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.75rem;
+	height: 1.5rem;
+	padding: 0;
+	background-color: transparent;
+	color: var(--text-color-dim);
+	border: 0;
+	border-radius: var(--border-radius1);
+	cursor: pointer;
+	transition: background-color 100ms var(--nte-ease), color 100ms var(--nte-ease);
+}
+
+.nte-seg-btn:hover {
+	background-color: var(--color-shade2);
+	color: var(--text-color);
+}
+
+.nte-seg-btn[aria-pressed="true"] {
+	background-color: var(--color-base);
+	color: var(--text-color);
+	box-shadow: 0 1px 2px var(--shadow-color);
+}
+
+/* The alignment marks are drawn, not fetched. The icon sprite has no
+   format_align_* symbols, and a missing sprite symbol renders as nothing at all —
+   a control that is silently absent. Three CSS lines cannot fail that way, and
+   they follow the theme instead of being frozen at one size. */
+.nte-align-glyph {
+	display: block;
+	width: 0.875rem;
+	height: 0.625rem;
+	background-color: currentColor;
+	/* Four lines: a full-width top, then three ragged below. */
+	-webkit-mask-repeat: no-repeat;
+	mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	mask-position: center;
+	-webkit-mask-size: contain;
+	mask-size: contain;
+}
+
+.nte-align-glyph-left {
+	-webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 10'%3E%3Crect width='14' height='2'/%3E%3Crect y='4' width='10' height='2'/%3E%3Crect y='8' width='12' height='2'/%3E%3C/svg%3E");
+	mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 10'%3E%3Crect width='14' height='2'/%3E%3Crect y='4' width='10' height='2'/%3E%3Crect y='8' width='12' height='2'/%3E%3C/svg%3E");
+}
+
+.nte-align-glyph-center {
+	-webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 10'%3E%3Crect width='14' height='2'/%3E%3Crect x='2' y='4' width='10' height='2'/%3E%3Crect x='1' y='8' width='12' height='2'/%3E%3C/svg%3E");
+	mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 10'%3E%3Crect width='14' height='2'/%3E%3Crect x='2' y='4' width='10' height='2'/%3E%3Crect x='1' y='8' width='12' height='2'/%3E%3C/svg%3E");
+}
+
+.nte-align-glyph-right {
+	-webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 10'%3E%3Crect width='14' height='2'/%3E%3Crect x='4' y='4' width='10' height='2'/%3E%3Crect x='2' y='8' width='12' height='2'/%3E%3C/svg%3E");
+	mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 10'%3E%3Crect width='14' height='2'/%3E%3Crect x='4' y='4' width='10' height='2'/%3E%3Crect x='2' y='8' width='12' height='2'/%3E%3C/svg%3E");
+}
+
+.nte-zone-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--nui-space-eighth);
+	height: 1.75rem;
+	padding: 0 var(--nui-space-half);
+	background-color: transparent;
+	color: var(--text-color-dim);
+	border: 0;
+	border-radius: var(--border-radius2);
+	cursor: pointer;
+	font: inherit;
+	font-size: var(--font-size-small);
+	line-height: 1;
+	white-space: nowrap;
+	transition: background-color 100ms var(--nte-ease), color 100ms var(--nte-ease);
+}
+
+.nte-zone-btn:hover {
+	background-color: var(--color-shade2);
+	color: var(--text-color);
+}
+
+.nte-zone-btn[aria-pressed="true"] {
+	background-color: var(--color-shade2);
+	color: var(--text-color);
+}
+
+.nte-zone-info {
+	color: var(--text-color-dim);
+	white-space: nowrap;
+	font-size: var(--font-size-xsmall);
+	font-variant-numeric: tabular-nums;
+	padding-inline: var(--nui-space-quarter);
+}
+
+/* A11y: grips are icon-only, so the accessible name is the label, and the focus
+   ring must be visible against the table surface. It uses the same neutral ring as
+   the cell caret, so keyboard focus is one consistent signal across the component. */
+.nte-row-grip:focus-visible,
+.nte-col-grip:focus-visible,
+.nte-edge-add:focus-visible,
+.nte-seg-btn:focus-visible,
+.nte-zone-btn:focus-visible {
+	outline: 2px solid var(--nte-active-ring, var(--text-color-dim));
+	outline-offset: 1px;
+}
+
+/* --- Reduced motion: the chrome still appears, it just stops animating. --- */
+
+@media (prefers-reduced-motion: reduce) {
+	.nte-overlay *,
+	.nte-zone {
+		transition: none;
+	}
+}

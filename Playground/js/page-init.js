@@ -3213,8 +3213,8 @@ nui.registerPage('addons/slides', {
 	}
 });
 
-nui.registerPage('experiments/table-editor', {
-	html: 'experiments/table-editor.html',
+nui.registerPage('experiments/dropped-table-editor', {
+	html: 'experiments/dropped-table-editor.html',
 	async init(element, params, nui) {
 		// Dynamically load CSS and JS if not already loaded
 		if (!customElements.get('dropped-table-editor')) {
@@ -3306,6 +3306,53 @@ nui.registerPage('experiments/table-editor', {
 
 		// Initial export rendering
 		updateExport();
+	}
+});
+
+nui.registerPage('experiments/table-editor', {
+	html: 'experiments/table-editor.html',
+	async init(element, params, nui) {
+		// The dev auto-loader resolves NUI/lib/modules/{tag}.js for addon elements in
+		// the DOM, but the stylesheet is a separate concern and is linked explicitly.
+		if (!document.querySelector('link[data-table-editor-css]')) {
+			const link = document.createElement('link');
+			link.rel = 'stylesheet';
+			link.href = '../NUI/css/modules/nui-table-editor.css';
+			link.dataset.tableEditorCss = '';
+			document.head.appendChild(link);
+		}
+		if (!customElements.get('nui-table-editor')) {
+			await import('../../NUI/lib/modules/nui-table-editor.js');
+		}
+		await customElements.whenDefined('nui-table-editor');
+
+		const gfm = element.querySelector('#te-gfm code');
+		const log = element.querySelector('#te-log');
+
+		function renderExport() {
+			const editor = element.querySelector('nui-table-editor');
+			if (gfm && editor?._editor) gfm.textContent = editor.exportMarkdown();
+		}
+
+		element.addEventListener('nui-change', (e) => {
+			if (!e.target.closest('nui-table-editor')) return;
+			renderExport();
+			if (log) {
+				log.textContent = `Last change: ${e.detail.type} at ${new Date().toLocaleTimeString()}`;
+			}
+		});
+
+		// The host-owned table has no wrapper, so it is enhanced explicitly. The
+		// in-place entry point is the API a rich-text or block editor would use.
+		const hostRegion = element.querySelector('#te-host');
+		if (hostRegion) {
+			const { setupTableEditor } = await import('../../NUI/lib/modules/nui-table-editor.js');
+			for (const table of hostRegion.querySelectorAll('table')) {
+				setupTableEditor(table);
+			}
+		}
+
+		renderExport();
 	}
 });
 

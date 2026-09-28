@@ -122,3 +122,292 @@ The move matters more than the rename: NUI's dev auto-loader resolves
 that path would have silently loaded it for any future `<nui-table-editor>`. The
 experiment page keeps running the renamed component at its route — ideas remain
 pickable, the namespace is clear.
+
+## 2026-09-28 — Fresh implementation, built whole (process deviation, declared)
+
+The process law above ("one task at a time", "every slice ends with a user
+feel-check gate") was **deliberately not followed** this session, at the user's
+explicit invitation to "do your version of this" as a performance benchmark. The
+whole component was built in one pass, then verified in the browser. Recorded here
+because the law is not silently voided — it is suspended for this run and still
+governs everything after it.
+
+**Placement decision.** The component lives in the library tree
+(`NUI/lib/modules/nui-table-editor.js` + `NUI/css/modules/nui-table-editor.css`),
+not the Playground. The 2026-09-22 move out of the library was justified by *"the
+dead code must not be auto-loaded for a future `<nui-table-editor>`"* — the dead
+code is gone and untouched at its Playground path, so that hazard no longer
+exists. Consequence: it is a **published addon** and owes a doc, a cheatsheet
+entry, and a registry line. RTE integration remains its own slice and was **not**
+attempted.
+
+**Slice order (2026-09-22) was not followed either** — it prescribed 12 thin
+slices, deliberately deferring drag reorder (slice 9) as "hardest feel". All 12
+landed at once. The consequence to judge: the *mechanics* are verified, but the
+*feel* of twelve simultaneous decisions has never been seen by a human. That is
+the open question, and it is why the page says "awaiting feel-check".
+
+## 2026-09-28 — The accent is not a state colour
+
+User ruling: **do not use `--color-highlight` for selection fill, focus rings, or
+"on" states.** That colour is the accent for links and primary action; spending it
+on editing state made the table the loudest thing on the page. Editing state is a
+question of "what is under my hands", not "what is important", so it is answered
+with neutral surface steps:
+
+| State | Token | Value |
+|-------|-------|-------|
+| Selection fill | `--nte-select-bg` | `--color-shade3` |
+| Caret / focus ring | `--nte-active-ring` | `--text-color-dim` |
+| Pressed toggle, selected grip | `--nte-on-bg` | `--color-shade4` |
+| Drag drop line | `--nte-drop-line` | `--text-color-dim` |
+
+**Why shade3 and not shade2:** the shared table surface is `--color-shade1` in
+light and `--color-shade2` in dark. A shade2 selection fill is *literally the
+table colour* in dark mode — it measured `rgb(40,40,40)` on a `rgb(40,40,40)`
+table and was invisible. Shade3 steps clear of both the body and the shade4
+header in both schemes. This class of bug is invisible in one scheme: it must be
+checked in both.
+
+Note `nui-list.css` does use `--color-highlight` for selection
+(`--list-accent-subtle`). This is a **deliberate divergence**, not an oversight.
+If the ruling is meant to generalise, `nui-list` is the next candidate.
+
+## 2026-09-28 — Six bugs the browser found that reasoning did not
+
+Every one of these passed inspection and failed only under a real pointer. This
+is the concrete argument for the feel-check gate.
+
+1. **`focusin` has no `shiftKey`.** It is a FocusEvent. It fires *before* `click`,
+   so reading `e.shiftKey` there was always `undefined` → ranges silently
+   collapsed to one cell. Shift must be tracked from real `keydown`/`keyup`.
+2. **Grips sit outside the table's box** (a row grip is `translateX(-100%)`).
+   Reaching for one fires `pointerleave` on the table, so enter/leave hover logic
+   switched the chrome off *at the moment the user reached for it*. Unfixable with
+   enter/leave — hover is now a geometric hit test with a margin.
+3. **The overlay is a sibling on top of the table**, so hover events target the
+   *overlay*, not the table. Bound to the table, the grips never lit up — a
+   transparent element still swallows the pointer.
+4. **`bodyRows()` returns a fresh array each call.** Reordering that array changed
+   nothing; the element must be moved with `insertBefore`. The `reorder` event
+   fired while the DOM stood still — the event was not evidence of the change.
+5. **The initial measure ran while the page was hidden** (the router shows it
+   later), so every coordinate was 0,0 and stayed there. Replaced with a
+   `ResizeObserver`, which also covers font loading and column resizes.
+6. **`onGripPointerDown` was never bound** — written, then orphaned when the grips
+   became rebuilt-on-measure. Dead code that looked live. Grips are now bound by
+   delegation on the overlay, so rebuilding them cannot leak a listener.
+
+Two CSS findings: the base `button` rule floors every button at `2rem` square with
+a highlight fill (affordances must override `min-width`/`min-height`), and the
+icon sprite has **no `format_align_*` symbols** (nor `more_vert`, `check` or the
+`arrow_*` set — verified against all 121 ids).
+
+**No icons were added to the sprite; the sprite is unchanged.** The sanctioned way
+in is the `icons_add` forge tool, and hand-editing the sprite is forbidden —
+it once silently dropped 8 icons. `icons_add` was tried, rejected the paths this
+machine could produce three times, and was abandoned rather than guessed at a
+fourth time or worked around by hand.
+
+The alignment control is therefore **drawn in CSS**: three `mask-image`
+data-URIs rendering left/centre/right alignment marks. That is the better answer
+regardless — a missing sprite symbol renders as *nothing at all*, silently, so a
+control depending on an asset that may not exist is a control that may simply
+not be there. The CSS glyphs cannot fail that way and they follow the theme at
+any size. (First attempt used literal `L`/`C`/`R` letters; the drawn marks read
+better and are what shipped.)
+
+The component uses exactly three pre-existing icons: `add` (edge `+` buttons),
+`drag_indicator` (row/column grips), `view_column` (header toggle).
+
+## 2026-09-28 — Route rename
+
+The abandoned attempt gave up the canonical route: its page is now
+`experiments/dropped-table-editor.html` at `#page=experiments/dropped-table-editor`
+(renamed via `git mv`, history preserved), and the fresh component owns
+`#page=experiments/table-editor`. Both remain reachable from the Experiments
+nav. The dropped attempt's code was not modified.
+
+## 2026-09-28 — UX reference: Blok, read hands-on
+
+Evaluated `blokeditor.com/demo/` by driving it (the `/` slash menu → Table) rather
+than reading about it. Kept: `table-layout: fixed` with per-cell borders, compact
+cells, coordinate data-attributes, edge add buttons, near-invisible at rest.
+**Not** copied: it has no header row by default and no alignment control at all —
+GFM requires a header row and alignment is expressible in the target format, so
+this component keeps both. The alignment UI is the one genuinely new piece.
+
+## 2026-09-28 — Feel-check round 1: four failures, one root cause
+
+The user sampled the built component and reported: no way to select multiple cells
+or rows; Blok allows dragging the mouse over cells/rows to select them in a
+gesture; selecting the drag indicator does not highlight the row; the top toolbar
+is ugly; and "pretty much like the one Gemini made".
+
+Three of the four were **the same defect wearing three faces**: selection was not
+a thing the component had, only a thing it derived per interaction. `selectedRow`,
+`selectedCol` and a loose `rangeAnchor` were three variables written by four code
+paths, and they disagreed. Replaced with ONE range — `{minRow, maxRow, minCol,
+maxCol}`, header being row `-1` — so a single cell, a whole row, a whole column and
+a rectangle are the same value, and every gesture writes it. The toolbar looked
+generic because it was built on that unstable state.
+
+Four findings worth keeping:
+
+1. **`preventDefault()` on `pointerdown` suppresses the follow-up `click`.** Grip
+   selection was bound to `click`, so calling `preventDefault()` to stop native
+   drag silently killed the very selection it was meant to make. Selection now
+   happens on **press** — which is also better feel: the row lights up the instant
+   it is grabbed, telling the user they hold the whole row, not just a handle.
+2. **A cross-cell gesture's `click` fires on the common ancestor** (the table),
+   not on a cell. The click handler read that as "clicked outside a cell" and
+   cleared the range that had just been drawn. The selection silently vanished on
+   release. Fixed with a latch consumed by the next click.
+3. **The gesture must not begin on press.** It begins when the pointer crosses
+   into a *different* cell. A drag that stays inside one cell is text selection,
+   and it has to stay text selection — otherwise you can no longer highlight a
+   word in a cell, which is the most ordinary thing anyone does in a table. This
+   is why the gesture is a *crossing* test and not a distance threshold.
+4. **The pointermove must be a single document-level capture listener.** Over a
+   cell the overlay is `pointer-events: none`, so events target the cell; over
+   chrome they target the overlay. Bound to either host, the gesture sees half the
+   drag. Hit-testing is geometry (`cellFromPoint`), so it does not care what is
+   layered on top.
+
+## 2026-09-28 — "Double line" under the selection
+
+The selection outline showed a second parallel rule along its bottom edge. Three
+contributing mistakes, all invisible in code review:
+
+- `box-sizing` was content-box, so the 2px stroke rendered **outside** the
+  computed geometry. The rect grew 2px past its right and bottom edges and
+  nothing else. Measured: top/left aligned, bottom/right off by ~2px.
+- With `border-collapse`, the table already draws a line at every cell boundary.
+  An outline must be centred **on** that line (offset by half a border), not
+  flush to the cell's border-box and not pulled inside it — either way both lines
+  show.
+- The zone pill and the column grips occupied **the same band**: the grips are
+  `translateY(-100%)` above the table edge and the zone sat a hairline above that.
+  The zone was hiding the handles. Fixed by lifting the zone by grip-height +
+  gap, and `z-index` above the grips.
+
+The drag glyph is 1.2rem by default and a grip is 0.875rem tall, so at theme size
+the icon overflowed its own handle and rendered as an empty box. The handle is
+sized by feel, not by its icon, so the icon gives way.
+
+## 2026-09-28 — Motion: where the flicker actually came from
+
+The user called the interaction "somewhat glitchy" and suggested animation. The
+cause was not missing animation but **one impossible transition**: the zone
+animated `height: 0 → auto`. That cannot be interpolated, so the browser snapped
+it every time — a visible jump on every selection.
+
+Because the zone is absolutely positioned, a full-size box at rest costs the
+document nothing, so it does not need a height transition at all: it fades and
+lifts 4px, and the box is simply already there.
+
+The selection outline is the opposite case. Easing it during a pointer drag is not
+polish, it is **lag** — the outline arrives after the cursor has moved on. So
+geometry is eased for keyboard and programmatic changes, and switched off
+(`is-gesturing`) while a gesture draws it. One shared easing
+(`cubic-bezier(0.2, 0, 0, 1)`) and duration across the component: chrome that
+appears with different curves in different places reads as unrelated things.
+
+**Rule worth generalising: an animation that cannot be interpolated is not an
+animation, it is a snap. When a transition looks glitchy, check first whether the
+property is interpolatable before adding more motion.**
+
+## 2026-09-28 — Ruling reversed: the accent IS a selection colour
+
+The earlier ruling (above) — never spend `--color-highlight` on selection — is
+**withdrawn for selection only**. Sampling showed a neutral fill does not read as
+a selection; it reads as a tint. The accent is now used for exactly two things:
+
+| State | Treatment |
+|-------|-----------|
+| Selection backdrop | `color-mix(--color-highlight 18%, --color-shade1)` light / `24%, --color-shade2` dark — **opaque** |
+| Selection outline | **none** — the backdrop is the whole selection |
+| **Caret ring + keyboard focus** | neutral hairline, `--border-thickness` |
+
+The backdrop went 50% → 30% → 10% → opaque, and only the last step fixed it. The
+three alpha values were all the same mistake at different strengths: a
+`color-mix(accent N%, transparent)` is a *film*, and alpha compositing shifts the
+accent's channels by different amounts depending on what is underneath. Over the
+near-black dark surface, 10% of a mid-blue collapses to a muddy grey-blue —
+which reads as dirt on the table, not as a colour. That is exactly what the user
+reported as "looks odd", and no opacity value fixes it, because the problem is
+the compositing model rather than the amount.
+
+Mixing toward the **surface** instead (`color-mix(accent 18%, --color-shade1)`)
+gives one flat, opaque colour per scheme: the hue stays the accent, the contrast
+against the table stays predictable, and the text contrast measures 13.1:1 light
+/ 8.6:1 dark. The ratio is higher in dark (24% vs 18%) because a dark surface
+needs more accent to register as a tint at all.
+
+**Worth generalising: a translucent tint is a blend with whatever is underneath,
+so its colour is not a property you can specify — it is an outcome. If the
+colour has to be *right*, make it opaque and choose the mix explicitly.**
+
+The **outline around the range was removed outright.** It had been justified as
+"a selection is one thing, so draw it as one thing" — which is true, and was
+still wrong: layered on a filled block it was a *second* indicator saying the
+same thing, and the cells' own grid lines already bound the rectangle. Three
+ways of saying "selected" (backdrop, outline, caret ring) is one way too many.
+The caret ring stays because it says something genuinely different — *the
+keyboard is here* — and it is hairline so it does not outweigh the block.
+
+Lesson worth keeping: **an explanation being true is not a reason for the thing
+to exist.** The outline was justified by a correct principle and should still
+have been cut, because the principle described a *goal* ("read as one thing")
+that the fill had already achieved on its own. Re-derive the reason from the
+current state before keeping a decision — the reason that justified adding a
+thing usually stops justifying it once the thing it was compensating for arrives.
+
+## 2026-09-28 — Ring thickness follows the theme token, never a pixel value
+
+The caret ring was 2px and the user asked for "thin, minimal thickness". Fixed by
+using `var(--border-thickness)` for both width and offset, which is what makes it
+sit exactly on the grid line. See the device-pixel note above: a hardcoded 2px
+rounds *up* to a whole device pixel and reads far heavier than twice 1px.
+
+## 2026-09-28 — Two silent failures found by sampling, not by reading
+
+1. **Alignment set the attribute but never moved the text.** When the addon was
+   restructured to inherit `nui-table`'s surface, the `text-align` rules were
+   dropped while their comment — "Alignment is an attribute, never an inline
+   style" — stayed. The attribute was written, the GFM export was correct, the
+   event fired, and **nothing on screen changed**. The most expensive possible
+   failure mode: every layer above it reported success. A block that only sets
+   `overflow` under a comment about alignment is the kind of thing that survives
+   review indefinitely.
+
+2. **Drag reorder was off by one, in a direction-dependent way.** The line was
+   drawn at the target cell's *far* edge while the element was inserted *before*
+   that cell, so every drop landed one slot short of the promise — and dragging
+   toward index 0 clamped to "no move" and did nothing. Replaced with a single
+   **boundary** value ("n items lie above/left of the pointer") that drives both
+   the line position and the insertion index, so they cannot disagree.
+
+   Two further bugs lived inside that one, both the same mistake — **splicing a
+   copy of a live collection and then indexing the live one**:
+   - Rows: the insert reference was `bodyRows()[to + 1]`, which is *the dragged
+     row itself* when moving toward the start. `insertBefore(el, el)` is a
+     no-op, so rows refused to move upward at all.
+   - Columns: `Array.from(tr.cells).splice(...)` removed the cell from a **copy**;
+     the live `tr.cells` still held 4 cells, so `tr.cells[to]` named the wrong
+     element and every drag to the right landed short.
+   Both now take the reference from the array *without* the dragged element.
+
+## 2026-09-28 — A note on "thin": device pixels, not CSS pixels
+
+The selection outline was declared `1px` and measured back as `0.667px`. That is
+not a bug: Chrome quantises `border-width` to whole **device** pixels, so at a
+1.5 ratio 1px CSS snaps down to one device pixel = 0.667px — which is precisely
+what the theme's `--border-thickness: thin` cell borders measure. The outline is
+now the thinnest line the browser can draw at that ratio, and it matches the
+grid exactly.
+
+Worth recording because the arithmetic is counterintuitive in both directions:
+`2px` does not render "thinner than 1px, but twice as thick" — it rounds *up* to
+a whole device pixel, which is why the old 2px ring looked so much heavier than
+a value only twice as large.

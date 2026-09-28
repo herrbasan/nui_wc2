@@ -909,6 +909,7 @@ Hover/focus help text only — **non-interactive by contract**. For a panel of c
 | nui-file-tree | `NUI/lib/modules/nui-file-tree.js` | `NUI/css/modules/nui-file-tree.css` |
 | nui-slides | `NUI/lib/modules/nui-slides.js` | `NUI/css/modules/nui-slides.css` |
 | nui-graph | `NUI/lib/modules/nui-graph.js` | `NUI/css/modules/nui-graph.css` |
+| nui-table-editor † | `NUI/lib/modules/nui-table-editor.js` | `NUI/css/modules/nui-table-editor.css` |
 
 ```html
 <!-- Example: nui-list -->
@@ -916,7 +917,9 @@ Hover/focus help text only — **non-interactive by contract**. For a panel of c
 <script type="module" src="NUI/lib/modules/nui-list.js"></script>
 ```
 
-📖 **Addon docs:** [`documentation/addons/`](documentation/addons/) — list.md, lightbox.md, code-editor.md, media-player.md, wizard.md, menu.md, context-menu.md, rich-text.md, app-window.md, file-tree.md, slides.md, graph.md
+📖 **Addon docs:** [`documentation/addons/`](documentation/addons/) — list.md, lightbox.md, code-editor.md, media-player.md, wizard.md, menu.md, context-menu.md, rich-text.md, app-window.md, file-tree.md, slides.md, graph.md, table-editor.md
+
+† **nui-table-editor is new and awaiting feel-check** — mechanics are verified in the browser, interaction feel is not yet signed off. It enhances a native `<table>` in place (`setupTableEditor(table)`) or wraps one (`<nui-table-editor><table>…`). Inside a `contenteditable` host it adds UI only and never takes over editability or keys. See [table-editor.md](documentation/addons/table-editor.md).
 
 ---
 
