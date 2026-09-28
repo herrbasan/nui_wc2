@@ -4,7 +4,7 @@
   "@type": "Component",
   "name": "nui-file-icon",
   "group": "visuals",
-  "description": "File-type icon by extension: a document glyph with the extension overlaid and coloured by category. In small size, collapses to just the colored extension badge. Core component.",
+  "description": "File-type icon by extension: a document sheet with a category-coloured banner hanging off its left edge, label in white. In small size, collapses to just the banner plate. Core component.",
   "events": [],
   "innerElement": null,
   "imports": null
@@ -16,7 +16,7 @@
 
 <header>
 	<h1>File Icon</h1>
-	<p class="lead">A document glyph with the extension overlaid and coloured by category. In small size, collapses to just the colored extension badge.</p>
+	<p class="lead">A document sheet with a category-coloured banner hanging off its left edge, label in white. In small size, collapses to just the banner plate.</p>
 </header>
 
 <section>
@@ -82,19 +82,19 @@
 	<h2>Sizes</h2>
 	<p><code>nui-file-icon</code> supports three sizes: <code>default</code>, <code>large</code>, and <code>small</code>.</p>
 	<ul>
-		<li><strong>Default:</strong> Standard document sheet (~2rem &times; 2.5rem) with folded corner flap, document lines, and colored extension label.</li>
-		<li><strong>Large (<code>size="large"</code>):</strong> Expanded sheet (~3rem &times; 3.75rem) for detail cards and previews.</li>
-		<li><strong>Small (<code>size="small"</code>):</strong> Strips the document outline entirely, rendering <strong>only the colored extension text</strong>. Designed for dense tree views, table rows, and inline lists.</li>
+		<li><strong>Default:</strong> Document sheet (~2rem &times; 2.5rem) with folded corner, wearing the category-coloured banner.</li>
+		<li><strong>Large (<code>size="large"</code>):</strong> Expanded sheet (~2.5rem &times; 3.125rem) for detail cards and previews.</li>
+		<li><strong>Small (<code>size="small"</code>):</strong> Strips the document sheet entirely, rendering <strong>only the coloured banner plate</strong>. Designed for dense tree views, table rows, and inline lists.</li>
 	</ul>
 
 	<nui-code>
 		<script type="example" data-lang="html">
-<!-- Small: colored extension badge only -->
+<!-- Small: banner plate only -->
 <nui-file-icon size="small" type="ts"></nui-file-icon>
 <nui-file-icon size="small" type="json"></nui-file-icon>
 <nui-file-icon size="small" type="pdf"></nui-file-icon>
 
-<!-- Default: standard document glyph -->
+<!-- Default: sheet + banner -->
 <nui-file-icon type="ts"></nui-file-icon>
 
 <!-- Large: detail view -->
@@ -105,7 +105,7 @@
 	<div class="demo-area">
 		<div style="display: flex; gap: 2rem; align-items: center;">
 			<div>
-				<p class="demo-text-muted" style="margin-bottom: 0.5rem; font-size: 0.8rem;">Small (Badge Only)</p>
+				<p class="demo-text-muted" style="margin-bottom: 0.5rem; font-size: 0.8rem;">Small (Banner Only)</p>
 				<div style="display: flex; gap: 0.5rem; align-items: center;">
 					<nui-file-icon size="small" type="ts"></nui-file-icon>
 					<nui-file-icon size="small" type="js"></nui-file-icon>
@@ -116,7 +116,7 @@
 				</div>
 			</div>
 			<div>
-				<p class="demo-text-muted" style="margin-bottom: 0.5rem; font-size: 0.8rem;">Default (Glyph)</p>
+				<p class="demo-text-muted" style="margin-bottom: 0.5rem; font-size: 0.8rem;">Default (Sheet + Banner)</p>
 				<div style="display: flex; gap: 0.5rem; align-items: center;">
 					<nui-file-icon type="ts"></nui-file-icon>
 					<nui-file-icon type="js"></nui-file-icon>
@@ -173,7 +173,7 @@
 			<tbody>
 				<tr><td><code>name</code></td><td>string</td><td>Filename or path. The extension is derived from the last dot of the last segment.</td></tr>
 				<tr><td><code>type</code> / <code>extension</code></td><td>string</td><td>Explicit extension, with or without leading dot. Takes precedence over <code>name</code>.</td></tr>
-				<tr><td><code>size</code></td><td>string</td><td><code>"small"</code> (badge only), <code>"large"</code> (detail view), or omit for default glyph.</td></tr>
+				<tr><td><code>size</code></td><td>string</td><td><code>"small"</code> (banner only), <code>"large"</code> (detail view), or omit for the default sheet + banner.</td></tr>
 				<tr><td><code>label</code></td><td>string</td><td>Sets <code>role="img"</code> and <code>aria-label</code> for standalone use when no adjacent filename exists.</td></tr>
 			</tbody>
 		</table>
@@ -182,11 +182,11 @@
 
 <section>
 	<h2>Extension & Color Mapping</h2>
-	<p>Extensions are normalized to a maximum of 3 characters (e.g. <code>json</code> &rarr; <code>JSN</code>, <code>html</code> &rarr; <code>HTM</code>, <code>docx</code> &rarr; <code>DOC</code>) allowing larger, bolder typography on the pill badge. Extensions map to semantic color schemes:</p>
+	<p>Extensions are normalized to a maximum of 3 characters (e.g. <code>json</code> &rarr; <code>JSN</code>, <code>html</code> &rarr; <code>HTM</code>, <code>docx</code> &rarr; <code>DOC</code>) allowing larger, bolder white typography on the coloured banner plate. Extensions map to semantic color schemes:</p>
 	<nui-table>
 		<table>
 			<thead>
-				<tr><th>Category</th><th>Color Tone</th><th>Sample Extensions</th><th>Badge</th></tr>
+				<tr><th>Category</th><th>Color Tone</th><th>Sample Extensions</th><th>Banner</th></tr>
 			</thead>
 			<tbody>
 				<tr><td>PDF</td><td>Acrobat Red</td><td><code>pdf</code></td><td><nui-file-icon size="small" type="pdf"></nui-file-icon></td></tr>

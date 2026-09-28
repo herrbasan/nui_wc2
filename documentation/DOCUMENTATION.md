@@ -102,6 +102,7 @@ No imports needed. Available after loading `nui.js`.
 **UI**
 - [Badge](#page=components/badge) — Status badges and notification indicators with variant styling.
 - [Code](#page=components/code) — Code block with syntax highlighting for web languages.
+- [File Icon](#page=components/file-icon) — File-type icon by extension: one document sheet, a category-coloured banner hanging off its left edge, label in white.
 - [Icon](#page=components/icon) — SVG sprite-based icon with text fallback and decorative mode.
 - [Markdown](#page=components/markdown) — Lightweight Markdown-to-HTML converter with streaming support.
 - [Tooltip](#page=components/tooltip) — Contextual help using native Popover API with smart positioning.
@@ -118,7 +119,6 @@ These modules require loading additional JS (and often CSS). Each doc lists the 
 
 - [Code Editor](#page=addons/code-editor) — Editable code input with real-time syntax highlighting, auto-indent, and line numbers.
 - [Context Menu](#page=addons/context-menu) — Programmatic floating popup menus with submenus and keyboard navigation.
-- [File Icon](#page=addons/file-icon) — File-type icon by extension: one document glyph, the extension overlaid, coloured by category.
 - [File List](#page=addons/file-list) — File rows with type icons, status badges and per-row actions; upload staging or document library, with optional drag reordering.
 - [File Tree](#page=addons/file-tree) — Lazy-loading file explorer tree with ARIA treeview keyboard navigation; filesystem-agnostic via a host-supplied provider.
 - [Graph](#page=addons/graph) — Low-power canvas sparkline for high-frequency telemetry and live time-series.

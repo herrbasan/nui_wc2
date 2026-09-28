@@ -1,6 +1,6 @@
 {
 	"schemaVersion": 1,
-	"generated": "2026-09-27T06:08:27.955Z",
+	"generated": "2026-09-28T19:47:56.980Z",
 	"source": "Playground/pages/**",
 	"components": [
 		{
@@ -167,7 +167,7 @@
 			"@type": "Component",
 			"name": "nui-file-icon",
 			"group": "visuals",
-			"description": "File-type icon by extension: a document glyph with the extension overlaid and coloured by category. In small size, collapses to just the colored extension badge. Core component.",
+			"description": "File-type icon by extension: a document sheet with a category-coloured banner hanging off its left edge, label in white. In small size, collapses to just the banner plate. Core component.",
 			"events": [],
 			"innerElement": null,
 			"imports": null,

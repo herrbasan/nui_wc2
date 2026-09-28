@@ -624,18 +624,17 @@ function renderFileIcon(element) {
 		element.removeAttribute('aria-label');
 	}
 
-	const displayLabel = to3LetterLabel(ext);
+	// The label always sits on the category-colored banner plate, never on the sheet.
+	const banner = `<span class="nui-file-icon-banner" aria-hidden="true">${to3LetterLabel(ext)}</span>`;
 
 	if (isSmall) {
-		element.innerHTML = `<span class="nui-file-icon-badge" aria-hidden="true">${displayLabel}</span>`;
+		element.innerHTML = `<span class="nui-file-icon-box">${banner}</span>`;
 	} else {
-		element.innerHTML = `<svg viewBox="0 0 32 40" class="nui-file-icon-svg" aria-hidden="true" focusable="false">
-	<path d="M 4 2 H 21 L 29 10 V 37 A 2 2 0 0 1 27 39 H 5 A 2 2 0 0 1 3 37 V 4 A 2 2 0 0 1 5 2 Z" class="nui-file-icon-sheet"></path>
-	<path d="M 21 2 V 9 A 1 1 0 0 0 22 10 H 29 Z" class="nui-file-icon-flap"></path>
-	<line x1="7" y1="12" x2="16" y2="12" class="nui-file-icon-line"></line>
-	<line x1="7" y1="17" x2="22" y2="17" class="nui-file-icon-line"></line>
-	<text x="16" y="33" text-anchor="middle" class="nui-file-icon-ext">${displayLabel}</text>
-</svg>`;
+		element.innerHTML = `<span class="nui-file-icon-box">
+	<svg viewBox="0 0 32 40" class="nui-file-icon-svg" aria-hidden="true" focusable="false">
+		<path d="M 4 2 H 21 L 29 10 V 37 A 2 2 0 0 1 27 39 H 5 A 2 2 0 0 1 3 37 V 4 A 2 2 0 0 1 5 2 Z" class="nui-file-icon-doc"></path>
+		<path d="M 21 2 V 9 A 1 1 0 0 0 22 10 H 29 Z" class="nui-file-icon-fold"></path>
+	</svg>${banner}</span>`;
 	}
 }
 

@@ -11,11 +11,13 @@
 
 ## Design Philosophy
 
-A clean vector document sheet with folded corner flap, document lines, and the extension label colored by category. In dense or small contexts (`size="small"`), the document silhouette is stripped away completely, rendering only the colored extension text.
+A plain vector document sheet with a folded corner, wearing a **banner plate that rides its left edge** — mostly on the sheet, with a small overhang to the left. The banner carries the 3-letter extension, the banner is colored by category, and **the label is always white**. The sheet itself stays neutral so the banner is the only thing that speaks.
+
+Because the label is white on every category color, the plate is deepened (`color-mix` 80% toward black) from the raw category hue. That is what keeps white legible on the pale categories (`text`, `ts`, `c`) instead of washing out.
 
 Every file type shares a consistent design token system:
-- **Default / Large:** Document sheet with folded corner flap, document lines, and category-colored extension label.
-- **Small:** Compact colored extension text, ideal for tree views, table rows, and dense lists.
+- **Default / Large:** Document sheet with folded corner, plus the category-colored banner riding the left edge.
+- **Small:** The banner alone, sheet stripped — ideal for tree views, table rows, and dense lists.
 
 It is a display component. It holds no data, dispatches no events, and requires no external icons.
 
@@ -31,7 +33,7 @@ It is a display component. It holds no data, dispatches no events, and requires 
 <nui-file-icon name="src/index.ts"></nui-file-icon>
 <nui-file-icon name="assets/hero@2x.png"></nui-file-icon>
 
-<!-- Dense rows / tree view mode: badge only -->
+<!-- Dense rows / tree view mode: banner only -->
 <nui-file-icon size="small" name="app.ts"></nui-file-icon>
 ```
 
@@ -48,7 +50,7 @@ It is a display component. It holds no data, dispatches no events, and requires 
 
 ## 3-Letter Abbreviation Rule
 
-Extensions longer than 3 characters are automatically normalized to 2 or 3 letters (e.g. `json` &rarr; `JSN`, `html` &rarr; `HTM`, `docx` &rarr; `DOC`, `pptx` &rarr; `PPT`, `xlsx` &rarr; `XLS`, `yaml` &rarr; `YML`, `toml` &rarr; `TML`). This frees up horizontal space and allows the extension text on the badge pill to be large and legible.
+Extensions longer than 3 characters are automatically normalized to 2 or 3 letters (e.g. `json` &rarr; `JSN`, `html` &rarr; `HTM`, `docx` &rarr; `DOC`, `pptx` &rarr; `PPT`, `xlsx` &rarr; `XLS`, `yaml` &rarr; `YML`, `toml` &rarr; `TML`). This frees up horizontal space and lets the label on the banner run large enough to stay legible at icon scale.
 
 ## Categories & Colors
 
@@ -84,5 +86,5 @@ Extensions longer than 3 characters are automatically normalized to 2 or 3 lette
 |-----------|------|-------------|
 | `name` | string | Filename or path; the extension is derived from the last dot of the last segment. |
 | `type` / `extension` | string | An explicit extension, with or without a leading dot. Takes precedence over `name`. |
-| `size` | string | `"small"` (badge only for trees and dense rows), `"large"` (detail view), or omit for default glyph. |
+| `size` | string | `"small"` (banner only, for trees and dense rows), `"large"` (detail view), or omit for the default sheet + banner. |
 | `label` | string | Makes the icon a labelled `role="img"` for standalone use. |
