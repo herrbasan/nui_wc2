@@ -1216,7 +1216,7 @@ nui-file-icon {
 	justify-content: center;
 	background: var(--nfi-plate);
 	color: #fff;
-	border-radius: 2px;
+	border-radius: 1px;
 	font-family: inherit;
 	font-size: calc(var(--nfi-h) * 0.25);
 	font-weight: 700;
