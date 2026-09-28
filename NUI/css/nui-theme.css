@@ -1234,6 +1234,7 @@ nui-file-icon[size="large"] {
 nui-file-icon[size="small"] {
 	--nfi-w: 2rem;
 	--nfi-h: 1rem;
+	--nfi-chip: 0.375rem;
 }
 
 nui-file-icon[size="small"] .nui-file-icon-banner {
@@ -1242,6 +1243,8 @@ nui-file-icon[size="small"] .nui-file-icon-banner {
 	width: 100%;
 	height: 100%;
 	font-size: calc(var(--nfi-h) * 0.6);
+	/* Chipped top-right corner — a clean diagonal cut, no fold drawn on top */
+	clip-path: polygon(0 0, calc(100% - var(--nfi-chip)) 0, 100% var(--nfi-chip), 100% 100%, 0 100%);
 }
 
 /* Categories — semantic category colors using light-dark() */

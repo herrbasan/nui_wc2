@@ -17,7 +17,7 @@ Because the label is white on every category color, the plate is deepened (`colo
 
 Every file type shares a consistent design token system:
 - **Default / Large:** Document sheet with folded corner, plus the category-colored banner riding the left edge.
-- **Small:** The banner alone, sheet stripped — ideal for tree views, table rows, and dense lists.
+- **Small:** The banner alone, sheet stripped, with the top-right corner chipped off at an angle so the plate still reads as a page — ideal for tree views, table rows, and dense lists.
 
 It is a display component. It holds no data, dispatches no events, and requires no external icons.
 
@@ -86,5 +86,5 @@ Extensions longer than 3 characters are automatically normalized to 2 or 3 lette
 |-----------|------|-------------|
 | `name` | string | Filename or path; the extension is derived from the last dot of the last segment. |
 | `type` / `extension` | string | An explicit extension, with or without a leading dot. Takes precedence over `name`. |
-| `size` | string | `"small"` (banner only, for trees and dense rows), `"large"` (detail view), or omit for the default sheet + banner. |
+| `size` | string | `"small"` (banner only with a chipped top-right corner, for trees and dense rows), `"large"` (detail view), or omit for the default sheet + banner. |
 | `label` | string | Makes the icon a labelled `role="img"` for standalone use. |
