@@ -904,6 +904,12 @@ function setupTableEditor(table, options = {}) {
 
 		if (kind === 'row') {
 			const rows = bodyRows(table);
+			// The ELEMENT references are taken before the move, and the new
+			// selection is measured from them after it. A range is positional --
+			// {minRow, maxRow} are indices -- so leaving it alone after a reorder
+			// would silently re-point it at whatever now sits in those slots. The
+			// highlight would jump to a row the user never touched, reading as
+			// "this row changed" when in truth "this row moved, and here it is now".
 			const band = rows.slice(from, from + size);
 			// The reference must come from the list WITHOUT the band. Taking it
 			// from the live list makes the target the dragged row itself whenever
@@ -915,24 +921,56 @@ function setupTableEditor(table, options = {}) {
 				if (ref) bodyOf().insertBefore(tr, ref);
 				else bodyOf().appendChild(tr);
 			}
-		} else {
-			const trs = [table.tHead?.rows[0], ...bodyRows(table)].filter(Boolean);
-			for (const tr of trs) {
-				// The reference must be taken from the array WITHOUT the dragged
-				// cell. Splicing a copy of tr.cells leaves the live DOM untouched, so
-				// tr.cells[to] would still be the original element and the column
-				// would land one slot short of the line — every drag to the right.
-				const cells = Array.from(tr.cells);
-				const band = cells.slice(from, from + size);
-				const rest = cells.filter((_, i) => i < from || i >= from + size);
-				const ref = rest[toIndex] || null;
-				for (const cell of band) {
-					if (ref) tr.insertBefore(cell, ref);
-					else tr.appendChild(cell);
-				}
+			emit('reorder', { kind, from, to, size });
+
+			const after = bodyRows(table);
+			const first = after.indexOf(band[0]);
+			const last = after.indexOf(band[band.length - 1]);
+			// A moved band is still contiguous, so these are always in range; the
+			// check is here because a range pointing past the end would mark
+			// nothing while the zone still claimed a selection.
+			if (first >= 0 && last - first + 1 === size) {
+				applyRange({ minRow: first, maxRow: last, minCol: 0, maxCol: colCount(table) - 1 });
+			}
+			refresh();
+			return;
+		}
+
+		const trs = [table.tHead?.rows[0], ...bodyRows(table)].filter(Boolean);
+		// The first cell of the band, per row, captured before the move so the new
+		// column position can be read off the DOM afterwards rather than computed
+		// from indices the move has just invalidated.
+		const probes = trs.map(tr => tr.cells[from] ?? null);
+		for (const tr of trs) {
+			// The reference must be taken from the array WITHOUT the dragged
+			// cell. Splicing a copy of tr.cells leaves the live DOM untouched, so
+			// tr.cells[to] would still be the original element and the column
+			// would land one slot short of the line — every drag to the right.
+			const cells = Array.from(tr.cells);
+			const band = cells.slice(from, from + size);
+			const rest = cells.filter((_, i) => i < from || i >= from + size);
+			const ref = rest[toIndex] || null;
+			for (const cell of band) {
+				if (ref) tr.insertBefore(cell, ref);
+				else tr.appendChild(cell);
 			}
 		}
 		emit('reorder', { kind, from, to, size });
+
+		// Read each probe cell's new index. `tr.cells` is a live HTMLCollection,
+		// which has no indexOf, so it is materialised into an array first -- the
+		// lookup below is on elements that have just been re-parented, and asking
+		// the collection itself threw and lost the re-anchored selection.
+		const positions = probes.map((cell, i) => (cell ? Array.from(trs[i].cells).indexOf(cell) : -1));
+		const lo = Math.min(...positions);
+		const hi = Math.max(...positions);
+		if (positions.every(p => p >= 0) && hi - lo + 1 === size) {
+			applyRange({
+				minRow: hasHeader(table) ? -1 : 0,
+				maxRow: bodyRows(table).length - 1,
+				minCol: lo, maxCol: hi
+			});
+		}
 		refresh();
 	}
 
