@@ -6455,6 +6455,12 @@ function createRouter(container, options = {}) {
 			try {
 				await element.nuiLoaded;
 			} catch (e) {
+				// This used to be an empty catch, which made a page whose init()
+				// throws indistinguishable from a routing problem: the fragment
+				// renders, the page is simply dead, and nothing is logged. A
+				// boundary that tolerates variance has to leave a trace.
+				element.dataset.initError = e?.message || String(e);
+				console.error(`[NUI] init error (${type}:${id}):`, e);
 			}
 		}
 
@@ -7363,9 +7369,20 @@ function fmEscape(s) {
 		.replace(/"/g, '&quot;');
 }
 
-function parseYaml(src) {
-	if (typeof src !== 'string') return {};
+// parseYaml is BEST-EFFORT and reports nothing: an unreadable line ends a block
+// and the function returns a partial structure. That is unacceptably silent for
+// an editor whose text owns the document — a file the reader half-understood
+// would be shown as a shorter document with no error anywhere.
+//
+// This is the reporting variant. `skipped` collects lines the reader stepped
+// over (content indented under nothing that claims it — the signature of a block
+// scalar or a continuation line, neither of which the subset supports), and
+// `leftover` collects meaningful lines the reader never reached. Either being
+// non-empty means the text was NOT fully understood, and says where.
+function parseYamlReport(src) {
+	if (typeof src !== 'string') return { value: {}, skipped: [], leftover: [] };
 	const lines = src.replace(/\r\n/g, '\n').split('\n');
+	const skipped = [];
 	let i = 0;
 
 	const indentOf = (line) => line.match(/^[ \t]*/)[0].replace(/\t/g, '    ').length;
@@ -7374,11 +7391,44 @@ function parseYaml(src) {
 		let inS = false, inD = false;
 		for (let k = 0; k < s.length; k++) {
 			const c = s[k];
+			if (c === '\\' && inD) { k++; continue; }
 			if (c === "'" && !inD) inS = !inS;
 			else if (c === '"' && !inS) inD = !inD;
 			else if (c === '#' && !inS && !inD && (k === 0 || /\s/.test(s[k - 1]))) return s.slice(0, k);
 		}
 		return s;
+	};
+
+	// Split a "key: value" line at the first colon that is OUTSIDE quotes, or
+	// return null when the line carries no key at all. A regex cannot do this:
+	// a quoted key containing a colon ("a:b": 1) splits mid-string, and the old
+	// /^([^:]+):(.*)$/ silently produced {"a": "b": 1}.
+	// Backslash escapes matter here exactly as they do in stripComment: without
+	// them the escaped quote in "m'x\"y": 1 closed the string early, leaving the
+	// separator colon "inside" a string that was already closed, and the whole
+	// entry parsed away as {}.
+	const splitKey = (line) => {
+		let inS = false, inD = false;
+		for (let k = 0; k < line.length; k++) {
+			const c = line[k];
+			if (c === '\\' && inD) { k++; continue; }
+			if (c === "'" && !inD) inS = !inS;
+			else if (c === '"' && !inS) inD = !inD;
+			else if (c === ':' && !inS && !inD) return [line.slice(0, k), line.slice(k + 1)];
+		}
+		return null;
+	};
+
+	// A quoted key carries its quote characters in the text; the document's key
+	// does not have them. Decodes exactly what parseScalar's quoted branch does,
+	// so serializeYaml's JSON.stringify is undone here symmetrically.
+	const unquoteKey = (k) => {
+		const t = k.trim();
+		if (t.length >= 2 && t[0] === '"' && t[t.length - 1] === '"') {
+			return t.slice(1, -1).replace(/\\(["\\nrt])/g, (m, c) => ({ '"': '"', '\\': '\\', n: '\n', r: '\r', t: '\t' }[c]));
+		}
+		if (t.length >= 2 && t[0] === "'" && t[t.length - 1] === "'") return t.slice(1, -1).replace(/''/g, "'");
+		return t;
 	};
 
 	function parseScalar(raw) {
@@ -7424,23 +7474,21 @@ function parseYaml(src) {
 			if (j < lines.length && indentOf(lines[j]) > indent) return parseBlock(indentOf(lines[j]));
 			return null;
 		}
-		const m = c.match(/^([^:]+):(.*)$/);
-		if (m) {
+		const sp = splitKey(c);
+		if (sp) {
 			const obj = {};
 			i++; // consume the "- key: ..." line
-			obj[m[1].trim()] = parseValue(m[2], indent);
+			obj[unquoteKey(sp[0])] = parseValue(sp[1], indent);
 			// Sibling deeper-indented "key: value" lines continue this inline map.
 			while (i < lines.length) {
 				const nl = lines[i];
 				if (nl.trim() === '' || nl.trim().startsWith('#')) { i++; continue; }
 				const nind = indentOf(nl);
 				if (nind <= indent) break;
-				const nm = nl.match(/^([^:]+):(.*)$/);
-				if (!nm) { i++; continue; }
-				const k2 = nm[1].trim();
-				const r2 = nm[2];
+				const nsp = splitKey(nl);
+				if (!nsp) { i++; continue; }
 				i++;
-				obj[k2] = parseValue(r2, nind);
+				obj[unquoteKey(nsp[0])] = parseValue(nsp[1], nind);
 			}
 			return obj;
 		}
@@ -7457,7 +7505,9 @@ function parseYaml(src) {
 			if (line.trim() === '' || line.trim().startsWith('#')) { i++; continue; }
 			const ind = indentOf(line);
 			if (ind < indent) break;
-			if (ind > indent) { i++; continue; }
+			// Deeper than this block and not claimed by any key above it: the
+			// subset cannot read it, so record it rather than drop it silently.
+			if (ind > indent) { skipped.push(i + 1); i++; continue; }
 			const dash = line.match(/^(\s*)-[ \t]*(.*)$/);
 			if (dash) {
 				if (isSeq === null) isSeq = true;
@@ -7465,14 +7515,12 @@ function parseYaml(src) {
 				arr.push(parseSeqItem(dash[2], indent));
 				continue;
 			}
-			const m = line.match(/^([^:]+):(.*)$/);
-			if (m) {
+			const sp = splitKey(line);
+			if (sp) {
 				if (isSeq === null) isSeq = false;
 				if (isSeq) break;
-				const key = m[1].trim();
-				const rest = m[2];
 				i++; // consume the "key:" line
-				map[key] = parseValue(rest, indent);
+				map[unquoteKey(sp[0])] = parseValue(sp[1], indent);
 				continue;
 			}
 			break;
@@ -7481,8 +7529,20 @@ function parseYaml(src) {
 	}
 
 	i = nextMeaningful();
-	if (i >= lines.length) return {};
-	return parseBlock(indentOf(lines[i]));
+	if (i >= lines.length) return { value: {}, skipped, leftover: [] };
+	const value = parseBlock(indentOf(lines[i]));
+
+	// Anything meaningful still ahead of the cursor was never read.
+	const leftover = [];
+	for (let k = i; k < lines.length; k++) {
+		if (lines[k].trim() === '' || lines[k].trim().startsWith('#')) continue;
+		leftover.push({ line: k + 1, text: lines[k] });
+	}
+	return { value, skipped, leftover };
+}
+
+function parseYaml(src) {
+	return parseYamlReport(src).value;
 }
 
 // Serialize a frontmatter object back to block-style YAML — the inverse of
@@ -7500,8 +7560,28 @@ function fmNeedsQuote(s) {
 		|| /:\s|\s#/.test(s)
 		|| /^(null|~|true|false)$/i.test(s)
 		|| /^-?\d+$/.test(s)
-		|| /^-?\d*\.\d+$/.test(s);
+		|| /^-?\d*\.\d+$/.test(s)
+		// A newline or tab in a bare scalar is not recoverable: the parser reads
+		// one line at a time, so "v: a\nb" came back as "a" and "b" was lost.
+		// JSON.stringify escapes exactly what parseScalar's quoted branch decodes.
+		|| /[\n\r\t]/.test(s)
+		// A quote ANYWHERE, not only in the leading position the indicator rule
+		// above covers. The reader tracks quote state to find the key/value
+		// separator, so one stray apostrophe swallows the colon and the whole
+		// entry parses away: {"it's": 1} came back as {}.
+		|| /["']/.test(s);
 }
+
+// A key is quoted under the value's rules PLUS one of its own: any colon at all,
+// not just ": ". A bare key's colon is read as the key/value separator whatever
+// follows it, so "a:b: 1" parsed back as {"a": "b: 1"}. The value rule is not
+// sufficient because it only quotes a colon followed by whitespace.
+const fmKey = (k) => {
+	const s = String(k);
+	return (s.includes(':') || s.includes('#') || /[\n\r\t]/.test(s) || fmNeedsQuote(s))
+		? JSON.stringify(s)
+		: s;
+};
 
 function fmSerializeScalar(v) {
 	if (v === null || v === undefined) return 'null';
@@ -7532,7 +7612,7 @@ function serializeYaml(obj) {
 	// after the consts below are initialized, so the TDZ never bites.
 	const writeMap = (map, ind) => {
 		const pad = ' '.repeat(ind);
-		for (const [k, v] of Object.entries(map)) writeValue(`${pad}${k}:`, v, ind);
+		for (const [k, v] of Object.entries(map)) writeValue(`${pad}${fmKey(k)}:`, v, ind);
 	};
 	const writeSeq = (arr, ind) => {
 		const pad = ' '.repeat(ind);
@@ -7541,8 +7621,8 @@ function serializeYaml(obj) {
 				// Sequence of maps: first key rides the dash line, siblings at
 				// dash-indent + 2 — exactly what parseSeqItem's sibling loop expects.
 				const [[k0, v0], ...rest] = Object.entries(item);
-				writeValue(`${pad}- ${k0}:`, v0, ind + 2);
-				for (const [k, v] of rest) writeValue(`${pad}  ${k}:`, v, ind + 2);
+				writeValue(`${pad}- ${fmKey(k0)}:`, v0, ind + 2);
+				for (const [k, v] of rest) writeValue(`${pad}  ${fmKey(k)}:`, v, ind + 2);
 			} else {
 				writeValue(`${pad}-`, item, ind);
 			}
@@ -8809,6 +8889,7 @@ util.setMarkdownImageRewrite = (fn) => { markdownImageRewrite = (typeof fn === '
 // Add to util for global access
 util.markdownToHtml = markdownToHtml;
 util.parseYaml = parseYaml;
+util.parseYamlReport = parseYamlReport;
 util.serializeYaml = serializeYaml;
 util.parseFrontmatter = parseFrontmatter;
 util.renderFrontmatter = renderFrontmatter;
