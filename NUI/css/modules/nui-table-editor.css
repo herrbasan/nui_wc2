@@ -112,6 +112,26 @@ table[data-nui-table-editor] [data-align="right"] {
 /* --- State tokens ---------------------------------------------------------------
    Overridable on the element or a host scope.
 
+   `.nte-overlay` is in the selector because the chrome does NOT live inside the
+   table. `setupTableEditor(table, { chromeHost })` appends the overlay to the
+   host, so for an in-place enhanced table the grips, the zone and the drop lines
+   are children of a plain <div> that is neither the table nor the wrapper. The
+   tokens were declared on the table and the wrapper only, which left the chrome
+   in an enhanced-in-place table OUTSIDE their scope entirely: every token
+   resolved to nothing and each rule fell back to its own default.
+
+   The symptom was a component that looked like two different components. The
+   bands read `--nte-on-bg` and fell back to `--color-shade3` (dark 60) instead of
+   the intended `--color-shade4` (dark 80) -- 20 points apart, plainly visible
+   side by side. Less visibly, the zone's `transition` referenced `--nte-ease`,
+   so the whole transition list was invalid and silently dropped, and the drop
+   line lost its colour. The wrapper case was correct purely because its chrome
+   happened to sit inside a token scope.
+
+   The overlay is the one element that always contains every piece of chrome, so
+   it is the right scope to add. The table stays in the list because the cells
+   need these too.
+
    The accent is spent on the SELECTION only. An earlier pass spent it on nothing —
    selection and focus were both neutral surface steps, on the reasoning that the
    accent belongs to links and primary action. Sampling overruled that: a neutral
@@ -121,7 +141,8 @@ table[data-nui-table-editor] [data-align="right"] {
    never competes with itself. */
 
 nui-table-editor,
-table[data-nui-table-editor] {
+table[data-nui-table-editor],
+.nte-overlay {
 	/* The selection fill is a NEUTRAL step, not the accent. A cell selection
 	   says "these cells", which is a question of what is under the hands, not of
 	   what is important -- and spending the accent on it made the table the
