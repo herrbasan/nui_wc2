@@ -474,10 +474,14 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 	color: var(--text-color);
 }
 
+/* Pressed means ON, and the zone is full of controls that are all capable of
+   being on -- three alignments, the header toggle, and the grips below. So
+   "on" is ONE look everywhere, from the token the decision log already
+   assigns to it, and it is the same value whether the control sits on the
+   segmented well or on the zone itself. */
 .nte-seg-btn[aria-pressed="true"] {
-	background-color: var(--color-base);
+	background-color: var(--nte-on-bg, var(--color-shade3));
 	color: var(--text-color);
-	box-shadow: 0 1px 2px var(--shadow-color);
 }
 
 /* The alignment marks are real sprite icons (format_align_left/center/right),
@@ -514,7 +518,7 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 }
 
 .nte-zone-btn[aria-pressed="true"] {
-	background-color: var(--color-shade2);
+	background-color: var(--nte-on-bg, var(--color-shade3));
 	color: var(--text-color);
 }
 
