@@ -707,4 +707,51 @@ were two things believing they both owned a fact; this was one thing — the
 caption — changing the size of another thing, the control row, as a side effect
 of a fact only the caption cared about.
 
+## 2026-09-29 — The edge `+` buttons: both were off-centre, and the fix is subtractive
+
+**User: "the (+) buttons should be both centered on their axis, the x-axis one
+works, y-axis is offset. The Button itself should be a bit bigger / pill shaped
+with a shadow."**
+
+**Both were offset, by the same 10px.** The measurement:
+
+| | reported as | actually | error |
+|---|---|---|---|
+| row button, x-axis | "works" | centre at 806, expected 816 | **−10px** |
+| col button, y-axis | "offset" | centre at 620, expected 630 | **−10px** |
+
+The x-axis one was not correct, only *less noticeable*: 10px along an 896px row is
+1.1% of the span, and 10px down a 162px column is 6%. A defect measured in pixels
+presents as a defect measured in proportion, and the user's eye caught the
+proportionally larger one. **When a user reports one instance of a symmetric
+thing, the other instance is usually also broken** — the report is a sample of
+where the error is *legible*, not where it exists.
+
+**Cause: the centring was applied twice.** `position()` already subtracts the
+measured half-size when it writes `left`/`top` (`rect.width / 2 - addSize`), and
+the CSS transform then carried `translate(-50%)` as well. Two mechanisms, one
+job, each independently correct, together wrong by exactly one half-size. The
+transform now nudges only — `translate(0, 0.375rem)` and `translate(0.375rem, 0)`
+— leaving centring to `position()`, which *measures* rather than assumes and so
+survives the resize below without a second thought.
+
+This is the same shape as the caption, one layer down: two things owning a fact.
+The measurement is what separated them, and it is the reason the rule is stated
+as a measurement and not as an adjective.
+
+**Bigger, rounder, lifted.** 1.25rem → **1.5rem**, and `border-radius: 50%`
+rather than `--border-radius3`. At 1.25rem the 0.5rem radius came within 2px of
+the 10px a full round needs, so the shape was a *rounded square by coincidence* —
+it would have stopped reading as circular the moment the size changed. Stated as
+`50%`, the intent survives any future resize. The shadow is the zone's own
+two-part `0 1px 2px / 0 4px 12px`, reused rather than invented, so the toolbar
+and the edge affordances that belong to it look like one family; hover deepens it
+slightly, which is the affordance acknowledging the pointer.
+
+Measured after: centring error **0 on both axes**, at 896px and at 320px, on the
+first table and the second, still 6px clear of each boundary. Both buttons still
+add a row/column and still emit `structure:add-row` / `structure:add-column`.
+
+
+
 

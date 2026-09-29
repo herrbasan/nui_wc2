@@ -189,10 +189,21 @@ value, so they cannot disagree with one another. Alignment in the zone applies t
 
 All panel-style controls live in **one overlay zone above the table's top edge**.
 It grows upward, is capped at ~4rem, and never displaces the table or the
-document. It is a floating pill — a one-device-pixel `--border-shade1` edge plus
-elevation. Grips and edge `+` buttons are positional: they sit at their own row,
-column or edge, and the zone is lifted clear of the column grips rather than
-covering them.
+document. It is a floating pill — a one-device-pixel `--border-shade2` edge plus
+elevation — **centred over the table**, and it holds a **fixed width**: nothing
+about the current selection may resize it, or the controls slide sideways out
+from under the pointer that is reaching for them.
+
+The zone sits close to the table, and lifts only when a **column** grip is in the
+band above the top edge, which is the one thing that occupies it. Row grips sit
+beside the table, not above it, and the drop lines stay inside the table's own
+box, so a row selection keeps the close gap. The lift animates — a snap would
+read as a glitch at the moment the grip appeared.
+
+Grips and edge `+` buttons are positional: they sit at their own row, column or
+edge. The `+` buttons are 1.5rem circles with the same elevation as the zone, and
+they are centred on their axis by `position()`, which measures the button rather
+than assuming a size.
 
 The zone never animates its own height. `height: 0 → auto` cannot be
 interpolated, so the browser snaps it — that snap was the component's worst
