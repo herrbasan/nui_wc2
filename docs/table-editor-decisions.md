@@ -666,6 +666,71 @@ transition list. It is animated as a margin rather than a transform offset
 because the transform is already carrying the appear lift — the same one-property
 -one-job rule that decided the centering.
 
+## 2026-09-29 — The `+` hit area spans the axis; the rule behind it
+
+**User: "the element always has a bottom margin so there is room on that side but
+it should use more then that room", following "make the area (hitbox) of the add
+buttons as wide/heigh as the axis, with a hover state that has a line behind the
+(+) button spanning with widht/height".**
+
+The margin is real and it was being wasted. `nui-table` carries
+`margin-block-end: var(--nui-space)` — 16px — and the `+` sat 1.5rem wide in it.
+A full-width band is 2.25rem (36px) deep and overhangs that margin by 20px,
+which is the "more than that room" the space was there for in the first place.
+
+**The band IS the button.** There is no separate hit strip the pointer has to find
+before the control. The visible `+` became a child (`.nte-edge-add-dot`) so the
+CSS can centre it inside the band with flexbox — the visible dot keeps its
+identity and its own background, and the band is transparent and unstyled. That
+split exists because the base `button` rule in `nui-theme.css` gives every button
+`min-width`/`min-height: 2rem`, a highlight fill and its own padding: a band that
+inherited them would be a 2rem-tall coloured bar across the table.
+
+**`position()` no longer centres anything.** It writes the band's origin and
+extent and nothing else — the `addSize` half-size subtraction is gone, along with
+the transform that double-counted it yesterday. Centring is now the stylesheet's
+single job, so the button can be resized without `position()` knowing. The two
+mechanisms competing for one fact are not reconciled here; **one of them was
+deleted.**
+
+**The hover rule is a pseudo-element**, 1px of ink, `rgb(70,70,70)`
+(`--border-shade3`) — a RULE, so it does not scale with the user's font size,
+matching the separator in the zone. It spans the full width (row band) or full
+height (column band), and the dot's opaque background sits on top of it, so the
+`+` reads as sitting ON the line rather than the line crossing through it.
+
+### Two things this nearly got wrong
+
+**The band is larger than the hover margin.** `HOVER_MARGIN` is 24px; each band
+is 36px. With a margin-only neighbourhood test, the outer 12px of the row band
+lay outside "over the table", so the chrome would have switched itself off at the
+exact moment the pointer reached the band's far edge — the precise failure the
+`overTableOrChrome` geometry test was written to avoid, reintroduced through a
+number. `overChrome()` now tests the bands' own rects.
+
+**`visibility: hidden` on an idle band is a deadlock.** The band is invisible
+until `is-hovered`, and `is-hovered` is set by hovering the table. An invisible
+element takes no pointer events, so a band that is `visibility: hidden` can never
+be the *first* thing the pointer reaches — it only works if the pointer crosses
+the table first. I briefly made the band permanently grabbable to "fix" this,
+which is self-contradictory for exactly that reason. It is gated on `is-hovered`
+and that is correct; the ordering (pointer crosses the table, band becomes
+visible, pointer continues onto it) is what makes it reachable. `visibility` is
+still required for a11y: a 36px-tall invisible strip spanning the table would
+otherwise be a tab stop, which is a real regression at this size even though it
+was only latent at 1.5rem.
+
+Measured: row band 896×36, column band 36×162, each dot centred on its axis to
+within 1px. Hit-tested at all four extremes of both bands — far left, far right,
+outer edge, far top, far bottom — and every point resolves to the band. Clicking
+the row band at its far left and the column band at its far bottom both add a
+row/column and emit `structure:add-row`/`add-column`. Real hover confirms
+`:hover` matching, the rule at `opacity: 1`, and the dot lifting. Regression sweep
+clean: click, shift-extend, row-band grip, column-band grip with the zone
+lifting, whole-table no-grips with the zone returning, `ArrowDown`, GFM export.
+
+
+
 ## 2026-09-29 — The selection caption is gone; the toolbar no longer reflows
 
 **User: "the display of the selected cells in the toolbar is unnecessary i think.

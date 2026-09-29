@@ -200,10 +200,13 @@ beside the table, not above it, and the drop lines stay inside the table's own
 box, so a row selection keeps the close gap. The lift animates — a snap would
 read as a glitch at the moment the grip appeared.
 
-Grips and edge `+` buttons are positional: they sit at their own row, column or
-edge. The `+` buttons are 1.5rem circles with the same elevation as the zone, and
-they are centred on their axis by `position()`, which measures the button rather
-than assuming a size.
+Grips and edge `+` controls are positional: they sit at their own row, column or
+edge. Each `+` is a **band spanning its whole axis** — the row button's hit area
+is the table's full width just below it, the column button's the full height just
+to its right — with a 1.5rem circular dot centred inside it. You aim at the
+*place* you want the row or column, not at a small disc on the boundary line, and
+the band deliberately overhangs into the margin the table already carries. On
+hover a 1px rule spans the band behind the dot.
 
 The zone never animates its own height. `height: 0 → auto` cannot be
 interpolated, so the browser snaps it — that snap was the component's worst

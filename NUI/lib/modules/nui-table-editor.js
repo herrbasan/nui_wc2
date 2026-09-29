@@ -47,6 +47,33 @@ function icon(name) {
 	return i;
 }
 
+/**
+ * An edge `+` control: a hit area spanning the table's whole edge, with the
+ * visible button centred inside it.
+ *
+ * The button is the target and the band is the button — there is no separate
+ * clickable strip that the pointer has to find first. That is the whole point:
+ * a 1.5rem circle is a small target for a gesture that appends a row, and
+ * making the target span the edge means the user aims at the *place* they want
+ * the row, not at a small disc floating on the boundary line.
+ *
+ * The visible dot is a child so it can be centred without the button's own
+ * transform doing a second job — the same one-property-one-job rule that decided
+ * the zone's centering. `aria-label` on the button keeps the accessible name,
+ * and the child is presentational.
+ */
+function edgeButton(axis, label) {
+	const btn = el('button', `nte-edge-add nte-edge-add-${axis}`, {
+		type: 'button',
+		'aria-label': label,
+		title: label
+	});
+	const dot = el('span', 'nte-edge-add-dot');
+	dot.appendChild(icon(ICON_ADD));
+	btn.appendChild(dot);
+	return btn;
+}
+
 // ── Table geometry ────────────────────────────────────────────────────────────
 
 /** Row elements of the body, header row excluded. */
@@ -183,10 +210,8 @@ function setupTableEditor(table, options = {}) {
 	overlay.appendChild(zone);
 	const colGrips = el('div', 'nte-col-grips');
 	const rowGrips = el('div', 'nte-row-grips');
-	const addRow = el('button', 'nte-edge-add nte-edge-add-row', { type: 'button', 'aria-label': 'Add row', title: 'Add row' });
-	addRow.appendChild(icon(ICON_ADD));
-	const addCol = el('button', 'nte-edge-add nte-edge-add-col', { type: 'button', 'aria-label': 'Add column', title: 'Add column' });
-	addCol.appendChild(icon(ICON_ADD));
+	const addRow = edgeButton('row', 'Add row');
+	const addCol = edgeButton('col', 'Add column');
 	const dropRowLine = el('div', 'nte-drop-line nte-drop-line-row');
 	const dropColLine = el('div', 'nte-drop-line nte-drop-line-col');
 	overlay.append(colGrips, rowGrips, addRow, addCol, dropRowLine, dropColLine);
@@ -1226,14 +1251,25 @@ function setupTableEditor(table, options = {}) {
 		// runs on every measure, so a resize keeps a spanning grip sized correctly.
 		buildGrips();
 
-		// Edge buttons centre on the table's midpoint edges. Their half-size is
-		// measured, not assumed — the CSS owns the size, the JS only places it, so
-		// restyling the button never silently misplaces it.
-		const addSize = addRow.getBoundingClientRect().width / 2;
-		addRow.style.left = `${rect.width / 2 - addSize}px`;
+		// Edge buttons span their axis: the row button's hit area is the table's
+		// full width just below it, the column button's is the full height just
+		// right of it. The visible dot is centred by CSS, so there is no half-size
+		// to subtract here — that subtraction is what put these two mechanisms in
+		// competition in the first place, and one of them has to go. Centring
+		// belongs to the stylesheet now, which is why the button can be resized
+		// without position() knowing anything about it.
+		//
+		// The band is anchored to the table's edge and extends OUTWARD, into the
+		// margin the table already has. `nui-table` carries `margin-block-end:
+		// var(--nui-space)`, so the row band occupies real estate that exists
+		// precisely so something can sit under the table; a band that stopped at
+		// the edge would be a strip of page the user cannot click.
+		addRow.style.left = '0px';
+		addRow.style.width = `${rect.width}px`;
 		addRow.style.top = `${rect.height}px`;
 		addCol.style.left = `${rect.width}px`;
-		addCol.style.top = `${rect.height / 2 - addSize}px`;
+		addCol.style.top = '0px';
+		addCol.style.height = `${rect.height}px`;
 	}
 
 	/**
@@ -1280,14 +1316,28 @@ function setupTableEditor(table, options = {}) {
 	 * logic driven by enter/leave would switch the chrome off at the exact moment
 	 * the user reaches for it. Enter/leave cannot express "pointer is anywhere in
 	 * this table's neighbourhood", so the neighbourhood is tested geometrically.
+	 *
+	 * The edge bands are tested by their own geometry, not folded into the margin,
+	 * because they extend FURTHER than it: each is 2.25rem (36px) against a 24px
+	 * margin, so the outer 12px of the row band lies outside the neighbourhood.
+	 * With a margin-only test, the band would switch the chrome off at the exact
+	 * moment the pointer reached its far edge — the same failure enter/leave was
+	 * rejected for, reintroduced through a number.
 	 */
 	const HOVER_MARGIN = 24;
+	function overChrome(x, y) {
+		const b = addRow.getBoundingClientRect();
+		if (x >= b.left && x <= b.right && y >= b.top && y <= b.bottom) return true;
+		const c = addCol.getBoundingClientRect();
+		return x >= c.left && x <= c.right && y >= c.top && y <= c.bottom;
+	}
 	function overTableOrChrome(x, y) {
 		const r = table.getBoundingClientRect();
 		if (x >= r.left - HOVER_MARGIN && x <= r.right + HOVER_MARGIN &&
 			y >= r.top - HOVER_MARGIN && y <= r.bottom + HOVER_MARGIN) return true;
 		const z = zone.getBoundingClientRect();
-		return x >= z.left && x <= z.right && y >= z.top && y <= z.bottom;
+		if (x >= z.left && x <= z.right && y >= z.top && y <= z.bottom) return true;
+		return overChrome(x, y);
 	}
 
 	on(document, 'pointerdown', (e) => {

@@ -223,6 +223,13 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 	pointer-events: auto;
 }
 
+/* Gated on `is-hovered`, and that is still correct for a band spanning the
+   axis: reaching one is not a problem, because the pointer has to cross the
+   table (or its own geometry, which `overTableOrChrome` tests directly) to get
+   there, and either route keeps the hover class on. An earlier attempt made the
+   band permanently grabbable instead, which contradicted `visibility: hidden`
+   below — an invisible element takes no pointer events, so the band would have
+   been unreachable at exactly the moment it was still invisible. */
 .nte-overlay.is-hovered .nte-edge-add,
 .nte-overlay.is-hovered .nte-zone.is-active {
 	pointer-events: auto;
@@ -231,15 +238,9 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 /* Only the edge buttons and the drop line fade in on hover. The grips are not
    in this rule: they are built already-visible, and fading a freshly created
    element in would only delay a handle the user has already committed to. */
-.nte-edge-add,
 .nte-drop-line {
 	opacity: 0;
 	transition: opacity 120ms ease;
-}
-
-.nte-overlay.is-hovered .nte-edge-add {
-	opacity: 1;
-	visibility: visible;
 }
 
 /* --- Grips and edge buttons ---------------------------------------------------
@@ -348,44 +349,123 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 	cursor: grabbing;
 }
 
+/* The band IS the target: the row button's hit area is the table's full width
+   just below it, the column button's the full height just to its right. A 1.5rem
+   disc is a small target for a gesture that appends a row, so the user aims at
+   the PLACE they want the row rather than at a disc floating on the boundary.
+
+   The band is transparent and unstyled — it is a hit area, not a control that
+   looks like one. The base `button` rule in nui-theme.css gives every button a
+   2rem minimum, a highlight fill and its own padding, all of which are undone
+   here; a band that inherited them would be a 2rem-tall coloured bar across the
+   table. The visible dot is a child so the CSS can centre it without the
+   button's transform taking a second job.
+
+   The band deliberately overhangs the table's edge into the margin beneath it.
+   `nui-table` already carries `margin-block-end`, so this space exists to be
+   used; a band that stopped at the edge would hand back a strip of page the user
+   cannot click. The height is generous (2.25rem) for the same reason — it is a
+   target, and its size is the affordance. */
 .nte-edge-add {
+	position: absolute;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	margin: 0;
+	min-width: 0;
+	min-height: 0;
+	background: none;
+	border: 0;
+	border-radius: 0;
+	color: var(--text-color-dim);
+	cursor: pointer;
+	/* Idle: invisible, and OUT of the tab order and the a11y tree. `opacity: 0`
+	   does neither, so a keyboard user would tab into an invisible control —
+	   latent when this was a 1.5rem disc, glaring now that it is a strip spanning
+	   the table. `visibility` is the property that removes both, and it is
+	   transitioned alongside opacity so the fade itself is unaffected. */
+	opacity: 0;
+	visibility: hidden;
+	transition: opacity 120ms var(--nte-ease), visibility 120ms var(--nte-ease), color 100ms var(--nte-ease);
+}
+
+.nte-overlay.is-hovered .nte-edge-add {
+	opacity: 1;
+	visibility: visible;
+}
+
+.nte-edge-add-row { height: 2.25rem; }
+.nte-edge-add-col { width: 2.25rem; }
+
+/* The rule that appears behind the dot on hover, spanning the band. It is a
+   RULE, so it is 1px of ink and does not scale with the user's font size — the
+   same reasoning as the separator in the zone. Drawn with a pseudo-element so it
+   needs no extra element in the DOM and cannot be read by a screen reader. */
+.nte-edge-add::before {
+	content: "";
+	position: absolute;
+	background-color: var(--nte-edge-rule, var(--border-shade3));
+	opacity: 0;
+	transition: opacity 120ms var(--nte-ease);
+	pointer-events: none;
+}
+
+/* The row band's rule runs horizontally across the full width; the column
+   band's runs vertically down the full height. Both sit behind the dot, which
+   carries an opaque background and so reads as a `+` sitting ON the line rather
+   than a line crossing through it. */
+.nte-edge-add-row::before {
+	left: 0;
+	right: 0;
+	top: 50%;
+	height: 1px;
+	transform: translateY(-50%);
+}
+
+.nte-edge-add-col::before {
+	top: 0;
+	bottom: 0;
+	left: 50%;
+	width: 1px;
+	transform: translateX(-50%);
+}
+
+.nte-edge-add:hover { color: var(--text-color); }
+.nte-edge-add:hover::before { opacity: 1; }
+
+/* The visible control. A circle, not a rounded square: at 1.25rem the 0.5rem
+   radius came within 2px of the 10px a full round needs, so the shape was a
+   rounded square by coincidence and would have stopped reading as circular on
+   any resize. Stated as `50%`, the intent survives the size. */
+.nte-edge-add-dot {
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 	width: 1.5rem;
 	height: 1.5rem;
-	/* A circle, not a rounded square. At 1.25rem the 0.5rem radius came within
-	   2px of the 10px needed for a full round, so the shape read as "square with
-	   softened corners" -- an accident of size rather than a decision. Stated
-	   outright, the control looks deliberate at any size. */
 	border-radius: 50%;
-	cursor: pointer;
-	/* The edge buttons sit ON the table's boundary lines, so they need to read as
-	   floating above the table rather than printed into it. This is the zone's own
+	background-color: var(--color-base);
+	border: var(--border-thickness) solid var(--border-shade2);
+	/* The dot sits ON the table's boundary line, so it needs to read as floating
+	   above the table rather than printed into it. This is the zone's own
 	   two-part shadow, reused deliberately: the same treatment for the same reason
 	   is what makes the toolbar and its edge affordances look like one family. */
 	box-shadow: 0 1px 2px var(--shadow-color), 0 4px 12px var(--shadow-color);
-	transition: background-color 100ms var(--nte-ease), color 100ms var(--nte-ease), box-shadow 100ms var(--nte-ease);
+	transition: background-color 100ms var(--nte-ease), box-shadow 100ms var(--nte-ease);
 }
 
-.nte-edge-add:hover {
+/* The dot is above its own rule, so the rule appears to pass behind it. */
+.nte-edge-add-dot nui-icon {
+	position: relative;
+	z-index: 1;
+}
+
+.nte-edge-add:hover .nte-edge-add-dot {
 	background-color: var(--color-shade2);
-	color: var(--text-color);
-	/* Lifts on hover, so the affordance acknowledges the pointer. The offset
-	   change is small on purpose: a large jump would read as the button moving,
-	   not the button rising. */
 	box-shadow: 0 2px 4px var(--shadow-color), 0 6px 16px var(--shadow-color);
 }
-
-/* The edge buttons sit on the table's boundary lines, so they are nudged clear of
-   the border they would otherwise straddle.
-
-   The transform nudges ONLY. It used to also carry `translate(-50%)` on the
-   centring axis, which double-counted: position() already subtracts the measured
-   half-size when it writes `left`/`top`. Both buttons were therefore off-centre
-   by exactly half their own width -- 10px, invisible along an 896px row and
-   obvious down a 162px column, which is why only the y-axis one was reported.
-   Centring is position()'s job alone, and it measures rather than assumes, so it
-   stays correct when the button is resized. */
-.nte-edge-add-row { transform: translate(0, 0.375rem); }
-.nte-edge-add-col { transform: translate(0.375rem, 0); }
 
 .nte-drop-line {
 	position: absolute;
