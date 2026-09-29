@@ -1638,11 +1638,19 @@ function setupTableEditor(table, options = {}) {
 	 * this table's neighbourhood", so the neighbourhood is tested geometrically.
 	 *
 	 * The edge bands are tested by their own geometry, not folded into the margin,
-	 * because they extend FURTHER than it: each is 2.25rem (36px) against a 24px
-	 * margin, so the outer 12px of the row band lies outside the neighbourhood.
-	 * With a margin-only test, the band would switch the chrome off at the exact
-	 * moment the pointer reached its far edge — the same failure enter/leave was
-	 * rejected for, reintroduced through a number.
+	 * because they extend FURTHER than it: each is 1.5rem (24px) against a 24px
+	 * margin, so their far edge sits right on the boundary. With a margin-only
+	 * test the band would switch the chrome off at the exact moment the pointer
+	 * reached its far edge — the same failure enter/leave was rejected for,
+	 * reintroduced through a number.
+	 *
+	 * This margin answers ONE question — "is the pointer in the neighbourhood?",
+	 * which is about keeping the hover VISUAL alive while the pointer travels. It
+	 * is deliberately not the same test as `overOwnChrome` below, which answers a
+	 * different and stricter question: "did the user press on this table or
+	 * something of its own?" Those two were one number, and using 24px for both
+	 * meant a press anywhere in a 24px collar around the table — which is where a
+	 * user reaches to DISMISS — did nothing at all.
 	 */
 	const HOVER_MARGIN = 24;
 	function overTableOrChrome(x, y) {
@@ -1653,9 +1661,37 @@ function setupTableEditor(table, options = {}) {
 		return x >= z.left && x <= z.right && y >= z.top && y <= z.bottom;
 	}
 
+	function inRect(x, y, r) {
+		return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+	}
+
+	/**
+	 * Is the press on this table, or on chrome that belongs to it?
+	 *
+	 * Precise where `overTableOrChrome` is generous. The table itself, the zone,
+	 * and the band controls — each by its OWN rect, because the bands are the one
+	 * thing that genuinely lives outside the table's box. There is no collar here
+	 * and there must not be one: a collar is exactly the margin a user clicks to
+	 * dismiss, so a generous test makes the most natural dismissal the one that
+	 * does not work.
+	 *
+	 * The 1px tolerance is for the seam, not for a neighbourhood. The column
+	 * grip's edge meets the table's top border exactly, and sub-pixel rounding on
+	 * either side would otherwise make a press on the grip's own 1px border read
+	 * as a press off the table.
+	 */
+	function overOwnChrome(x, y) {
+		if (inRect(x, y, table.getBoundingClientRect())) return true;
+		if (inRect(x, y, zone.getBoundingClientRect())) return true;
+		for (const el of overlay.querySelectorAll('.nte-row-grip, .nte-col-grip, .nte-row-del, .nte-col-del')) {
+			if (inRect(x, y, el.getBoundingClientRect())) return true;
+		}
+		return false;
+	}
+
 	on(document, 'pointerdown', (e) => {
 		if (drag) return;
-		if (overTableOrChrome(e.clientX, e.clientY)) return;
+		if (overOwnChrome(e.clientX, e.clientY)) return;
 		clearSelection();
 		overlay.classList.remove('is-hovered');
 		hideZone();
