@@ -694,6 +694,23 @@ export function setupJsonGrid(host, options = {}) {
 
 	// ── Cell editing ──────────────────────────────────────────────────
 
+	/**
+	 * Edit a LEAF. A container is not a value — it has no text to edit.
+	 *
+	 * The editor is a CONTENTEDITABLE SPAN, not an <input>, and that is the whole
+	 * trick. An input renders its text with its own internal metrics, so swapping
+	 * one in moved the text ~1.8px even with the box centred perfectly — a
+	 * residual that `line-height: normal` did not move either. A contenteditable
+	 * span is the same element the value already was, with the same font and the
+	 * same line box, so the text cannot move at all: there is nothing to align.
+	 *
+	 * It also removes two fights outright rather than by workaround. The theme
+	 * imposes global control floors (inputs get a 40px min-height, buttons 32px),
+	 * which made the edited row 8px taller; and an input's intrinsic width is
+	 * the column's min-content width, which made the table reflow. A
+	 * contenteditable span has neither. nui-table-editor makes its cells
+	 * contenteditable for the same reasons.
+	 */
 	function beginEdit(cell) {
 		if (state.editing === cell) return;
 		const path = parsePointer(cell.dataset.path || '');
@@ -701,10 +718,15 @@ export function setupJsonGrid(host, options = {}) {
 		if (current === null || typeof current === 'object') return;
 		closePanel();
 
-		const input = el('input', 'jg-input');
-		input.type = 'text';
-		input.value = typeof current === 'string' ? current : String(current);
-		input.setAttribute('aria-label', 'Value');
+		const editor = el('span', 'jg-scalar jg-editor');
+		editor.textContent = typeof current === 'string' ? current : String(current);
+		editor.setAttribute('contenteditable', 'plaintext-only');
+		editor.setAttribute('spellcheck', 'false');
+		editor.setAttribute('role', 'textbox');
+		editor.setAttribute('aria-label', 'Value');
+		// Not a tab stop: Tab is the gesture that commits, and an editable field
+		// in the tab order would make every cell two stops.
+		editor.tabIndex = -1;
 		state.editing = cell;
 		cell.dataset.editing = 'true';
 
@@ -713,10 +735,15 @@ export function setupJsonGrid(host, options = {}) {
 		// value made it impossible to change its type — the two concerns are
 		// different, and neither should destroy the other.
 		const display = cell.querySelector('.jg-scalar');
-		if (display) display.replaceWith(input);
-		else cell.replaceChildren(input);
-		input.focus();
-		input.select();
+		if (display) display.replaceWith(editor);
+		else cell.replaceChildren(editor);
+		editor.focus();
+
+		const range = document.createRange();
+		range.selectNodeContents(editor);
+		const selection = getSelection();
+		selection.removeAllRanges();
+		selection.addRange(range);
 
 		let done = false;
 		const finish = (save) => {
@@ -726,18 +753,25 @@ export function setupJsonGrid(host, options = {}) {
 			if (!save) { render(); return; }
 			// The format's own reader decides what the text means; the badge
 			// displays the result rather than constraining it.
-			const coerced = coerceScalar(input.value, state.formatId);
+			const coerced = coerceScalar(editor.textContent.replace(/\s*\n+\s*/g, ' '), state.formatId);
 			if (!coerced.ok) { host.dataset.error = coerced.reason; render(); say(coerced.reason, true); return; }
 			commit(`set ${cell.dataset.path}`, (draft) => setAt(draft, path, coerced.value));
 		};
-		input.addEventListener('keydown', (e) => {
+		editor.addEventListener('keydown', (e) => {
 			if (e.key === 'Enter') { e.preventDefault(); finish(true); }
 			if (e.key === 'Escape') { e.preventDefault(); finish(false); }
 		});
-		input.addEventListener('blur', () => {
+		// A scalar is one line of one cell, so a pasted multi-line value is folded
+		// rather than allowed to reflow the row.
+		editor.addEventListener('paste', (e) => {
+			e.preventDefault();
+			const text = (e.clipboardData?.getData('text/plain') || '').replace(/\s*\n+\s*/g, ' ');
+			document.execCommand('insertText', false, text);
+		});
+		editor.addEventListener('blur', () => {
 			// Commit on the NEXT task, not on blur. A control clicked in the same
-			// gesture — the type chip, the options menu — also blurs this input, and
-			// committing immediately would rebuild the grid and remove the very
+			// gesture — the type chip, the options menu — also blurs this editor,
+			// and committing immediately would rebuild the grid and remove the very
 			// control the user is about to click. The deferred check finds the cell
 			// no longer being edited (the control's own action re-rendered it) and
 			// stands down instead of committing a stale cell.

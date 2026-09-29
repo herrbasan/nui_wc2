@@ -41,6 +41,29 @@
 	vertical-align: top;
 }
 
+/* A LEAF is vertically centred in the row; a BRANCH is not.
+ *
+ * Top-aligning everything put the two texts at different heights, and not by a
+ * little: the type chip is 32px tall (the theme's button touch-target floor), so
+ * a value cell is taller than a key cell, and top-aligning dropped the value's
+ * text about 5.8px below the key's. Centring closes that.
+ *
+ * Every cell that holds a single line is centred: the index, the key, and a
+ * value whose leaf is one line high. A cell holding a nested table stays
+ * top-aligned on purpose — a block of rows should sit at the top of its cell,
+ * not float in the middle of it. `:has()` is what tells the two apart, and the
+ * leaf is a direct child of the cell, so this is a structural distinction and
+ * not a guess. Centring only ONE side of a pair is the mistake that leaves the
+ * 5.8px in place while the rule looks applied. */
+.jg-host .jg-root > tbody > tr > td.jg-index,
+.jg-host .jg-root > tbody > tr > td.jg-key,
+.jg-host .jg-root > tbody > tr > td:has(> .jg-leaf),
+.jg-host .jg-sub > tbody > tr > td.jg-sub-index,
+.jg-host .jg-sub > tbody > tr > td.jg-sub-key,
+.jg-host .jg-sub > tbody > tr > td:has(> .jg-leaf) {
+	vertical-align: middle;
+}
+
 /* The index column is chrome, not data: the one column the user cannot edit. */
 .jg-host .jg-index {
 	text-align: right;
@@ -179,7 +202,6 @@
 	padding: calc(var(--nui-space-half) / 2) var(--nui-space);
 	vertical-align: top;
 }
-
 .jg-host .jg-sub-key {
 	white-space: nowrap;
 	width: 1%;
@@ -278,25 +300,43 @@
  * classes and three types, and `.jg-host td[data-editing]` is two classes and
  * one type. A padding rule that never applies is worse than no padding rule:
  * it reads as the fix and measures as nothing. The input therefore has NO
- * padding of its own, so the cell's padding is not applied twice — which is
- * exactly what was making the row 8px taller while editing. */
-.jg-host .jg-input {
-	flex: 1 1 auto;
-	min-width: 0;
-	width: auto;
-	box-sizing: border-box;
-	padding: 0;
-	/* The theme gives inputs a 40px touch-target floor and buttons a 32px one.
-	   An editor is not a standalone control — it is sized by the leaf it sits in,
-	   whose height is set by the type chip beside it at 32px. Inheriting the 40px
-	   made the edited row 8px taller than every other row, which is the same
-	   layout push as the width one, just on the other axis. */
-	min-height: 0;
-	font: inherit;
-	color: inherit;
-	background: var(--color-base);
-	border: var(--border-thickness) solid var(--color-highlight);
-	border-radius: var(--border-radius1);
+ * padding of its own, so the cell's padding is not applied twice.
+ *
+ * ── The field IS the cell ──────────────────────────────────────────────
+ * The input carries no box of its own: no background, no border, no radius.
+ * What identifies it as editable while it is open is the CELL lighting up, which
+ * is the same answer the rest of this component gives for editing state — a
+ * neutral surface step, never the accent. `--color-highlight` answers "what is
+ * important"; a cell you are typing into answers "what is under my hands".
+ *
+ * The input is a FLEX ITEM with `min-width: 0`, which is what keeps an
+ * intrinsically-sized control out of the column's min-content width, and
+ * `min-height: 0` because the theme gives inputs a 40px touch-target floor and
+ * buttons a 32px one — that 8px difference was the edited row growing.
+ *
+ * The browser's own focus ring is deliberately NOT suppressed. The cell
+ * highlight says "this is the active cell"; it does not say "this is the
+ * keyboard focus", and a keyboard user still needs the latter. */
+.jg-host .jg-editor {
+	display: block;
+	background: transparent;
+	cursor: text;
+	/* The editor is a contenteditable span carrying the SAME `.jg-scalar` class
+	   as the value it stands in for, so it is the same font in the same line box
+	   in the same box — there is nothing to align, and the text cannot move when
+	   a cell opens. An <input> could not promise that: it renders its text with
+	   its own internal metrics and sat ~1.8px low even with the box centred
+	   perfectly, and `line-height: normal` did not move it either. */
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	outline-offset: 1px;
+}
+
+.jg-host td:focus-within {
+	background: color-mix(in oklab, var(--color-shade2) 60%, var(--color-base));
+	box-shadow: inset 0 0 0 var(--border-thickness) var(--border-shade3);
+	transition: background-color 100ms var(--nte-ease, ease-out);
 }
 
 /* ── Breadcrumb ───────────────────────────────────────────────────────── */
