@@ -134,11 +134,39 @@ table[data-nui-table-editor] {
 	   keeps the hue and the contrast predictable, and gives one flat colour per
 	   scheme that is unambiguously the accent.
 
-	   The accent ratio is identical in both schemes; only the surface it mixes
-	   into changes. The text keeps the theme colour, which stays legible on both. */
+	   The ratio is bounded from ABOVE by text legibility, not from below by taste.
+	   Mixing toward the surface lightens the fill as the ratio rises, and the cell
+	   keeps the theme's text colour, so every step up in accent costs text
+	   contrast. Measured on the current theme (contrast of the selected fill
+	   against the neighbouring cell, and of the text on that fill):
+
+	       ratio   fill vs cell   text on fill
+	         24%       1.37          8.6      <- the old value: imperceptible
+	         55%       2.16          5.5
+	         65%       2.50          4.7      <- chosen: last step before
+	         75%       2.88          4.1         text drops under WCAG AA 4.5
+	         85%       3.30          3.6
+
+	   65% is the highest ratio that still clears 4.5:1 for the text sitting on it.
+	   The fill cannot reach the 3:1 that WCAG asks of non-text indicators while
+	   the text is the theme's own colour over the same fill -- the two goals pull
+	   against each other, and legibility of the cell's CONTENT is the one that
+	   cannot be traded. Reaching 3:1 would mean darkening the text on selected
+	   cells, which makes the selection the only place in the component whose
+	   text is a different colour from its neighbours.
+
+	   The two schemes take DIFFERENT ratios, and that asymmetry is forced rather
+	   than stylistic. In dark the fill is mixed toward a surface that is already
+	   darker than the text, so raising the ratio walks the fill up toward the text
+	   and the two collide quickly -- 65% is the ceiling. In light the fill is
+	   mixed toward a surface far from the text already, so the ratio can climb
+	   while the text keeps a wide margin: at 75% the fill matches dark's 2.50
+	   visibility AND the text is still 6.44:1. Equal visibility, very different
+	   headroom, so the numbers differ. A single shared ratio would have made one
+	   of the two schemes visibly weaker than the other. */
 	--nte-select-bg: light-dark(
-		color-mix(in srgb, var(--color-highlight) 18%, var(--color-shade1)),
-		color-mix(in srgb, var(--color-highlight) 24%, var(--color-shade2))
+		color-mix(in srgb, var(--color-highlight) 75%, var(--color-shade1)),
+		color-mix(in srgb, var(--color-highlight) 65%, var(--color-shade2))
 	);
 	--nte-select-text: var(--text-color);
 	--nte-active-ring: var(--text-color-dim);
