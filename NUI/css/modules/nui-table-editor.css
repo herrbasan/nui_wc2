@@ -122,56 +122,27 @@ table[data-nui-table-editor] [data-align="right"] {
 
 nui-table-editor,
 table[data-nui-table-editor] {
-	/* Selection is the ONE state that earns the accent: it is the component's
-	   primary output ("these cells"), and a neutral fill read as a tint rather
-	   than a selection.
+	/* The selection fill is a NEUTRAL step, not the accent. A cell selection
+	   says "these cells", which is a question of what is under the hands, not of
+	   what is important -- and spending the accent on it made the table the
+	   loudest thing on the page.
 
-	   Opaque, mixed toward the SURFACE, not toward transparent. A low-alpha wash
-	   over the table looked odd because the accent's hue shifts by a different
-	   amount in each channel depending on what sits underneath: over the near-black
-	   dark surface 10% of a mid blue collapses to a muddy grey-blue, which reads
-	   as dirt on the table rather than a colour. Mixing toward the surface instead
-	   keeps the hue and the contrast predictable, and gives one flat colour per
-	   scheme that is unambiguously the accent.
+	   Opaque, mixed toward the SURFACE, never toward transparent: a low-alpha
+	   wash shifts hue depending on what sits underneath, and over the near-black
+	   dark surface a small amount of mid-blue collapses to a muddy grey-blue that
+	   reads as dirt rather than a colour. Mixing toward the surface keeps the
+	   result flat and predictable in both schemes.
 
-	   The ratio is bounded from ABOVE by text legibility, not from below by taste.
-	   Mixing toward the surface lightens the fill as the ratio rises, and the cell
-	   keeps the theme's text colour, so every step up in accent costs text
-	   contrast. Measured on the current theme (contrast of the selected fill
-	   against the neighbouring cell, and of the text on that fill):
-
-	       ratio   fill vs cell   text on fill
-	         30%       1.49          7.9      <- too faint to read as a selection
-	         50%       2.01          5.9
-	         55%       2.16          5.5      <- chosen
-	         60%       2.32          5.1
-	         65%       2.50          4.7      <- legible, but reads as HEAVY
-
-	   55% sits where the cell is unmistakably selected without the fill becoming
-	   the loudest thing in the table, and it leaves a clear margin on text
-	   contrast rather than spending it. The earlier 65% was defensible on
-	   contrast arithmetic alone and wrong on feel: a selection is a background,
-	   and a background at 2.5:1 against its own row competes with the content it
-	   is supposed to sit behind.
-
-	   The fill cannot reach the 3:1 that WCAG asks of non-text indicators while
-	   the text is the theme's own colour over the same fill -- the two goals pull
-	   against each other, and legibility of the cell's CONTENT is the one that
-	   cannot be traded. Reaching 3:1 would mean darkening the text on selected
-	   cells, which makes the selection the only place in the component whose
-	   text is a different colour from its neighbours.
-
-	   The two schemes take DIFFERENT ratios, and that asymmetry is forced rather
-	   than stylistic. In dark the fill is mixed toward a surface that is already
-	   darker than the text, so raising the ratio walks the fill up toward the text
-	   and the two collide quickly -- 55% keeps a comfortable margin. In light the
-	   surface is far from the text to begin with, so the ratio can climb while
-	   the text keeps a wide margin: 65% gives light the same visible step that
-	   55% gives dark, with the text still above 10:1. A single shared ratio
-	   would have made one of the two schemes visibly weaker than the other. */
+	   --color-shade5 is the neutral used, mixed toward the scheme's own surface.
+	   The colours are the user's, chosen by eye: 55,55,55 in dark and
+	   230,230,230 in light -- 17% and 16% of --color-shade5 into their own
+	   surface respectively. The two ratios are near-equal even though the results
+	   are not, because the dark surface is already close to the step being mixed
+	   in and the light one is not: the same percentage is a small move on a dark
+	   surface and a large one on a light one. */
 	--nte-select-bg: light-dark(
-		color-mix(in srgb, var(--color-highlight) 65%, var(--color-shade1)),
-		color-mix(in srgb, var(--color-highlight) 55%, var(--color-shade2))
+		color-mix(in srgb, var(--color-shade5) 16%, var(--color-shade1)),
+		color-mix(in srgb, var(--color-shade5) 17%, var(--color-shade2))
 	);
 	--nte-select-text: var(--text-color);
 	--nte-active-ring: var(--text-color-dim);

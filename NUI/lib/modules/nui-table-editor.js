@@ -1025,6 +1025,47 @@ function setupTableEditor(table, options = {}) {
 		}
 
 		if (gesture) {
+			// SLOP: how far past the anchor cell's edge a drag may travel before it
+			// is read as a cell-range sweep rather than a text selection.
+			//
+			// The two gestures genuinely conflict at the boundary: selecting text to
+			// the end of a cell and sweeping a range over cells are the same
+			// movement. Picking the cell range at the exact edge meant that
+			// overshooting a word by two pixels destroyed the text selection and
+			// selected cells instead -- which is not what anyone is trying to do
+			// when they drag across one word.
+			//
+			// The hand naturally travels past the glyphs it just covered, so the
+			// anchor cell is treated as larger than it renders, and a drag ending
+			// inside that margin is still a text selection.
+			//
+			// The margin is a FRACTION OF THE CELL, not a pixel count. A fixed
+			// number means two different things in a wide cell and a narrow one --
+			// 30px is a sixth of one and half of the other -- so the same gesture
+			// would be forgiving in some columns and broken in others, and it
+			// would not follow the user's font size at all.
+			//
+			// A fraction of the cell also gets BOTH axes right from one number,
+			// because cells are much wider than they are tall. On a 208x40 cell
+			// this is 29px of slack sideways -- the figure the user chose by feel --
+			// and only 6px vertically, which is the asymmetry actually wanted: a
+			// drag along a line of text overshoots sideways, while a small
+			// vertical tolerance stops an ordinary flick from becoming a range.
+			//
+			// Measured travel to the handoff is measured from wherever the drag
+			// started, not from the cell's edge: a press at the cell centre has
+			// 20px of cell below it, so it travels 20 + 6 = 26px down before the
+			// range takes over.
+			const SLOP = 0.14;
+			const anchorCell = cellAt(table, gesture.anchor[0], gesture.anchor[1]);
+			if (!gesture.active && anchorCell) {
+				const a = anchorCell.getBoundingClientRect();
+				const slackX = a.width * SLOP;
+				const slackY = a.height * SLOP;
+				if (e.clientX <= a.right + slackX && e.clientX >= a.left - slackX &&
+					e.clientY <= a.bottom + slackY && e.clientY >= a.top - slackY) return;
+			}
+
 			const cell = cellFromPoint(e.clientX, e.clientY);
 			if (!cell) return;
 			const here = coordsOf(cell);
