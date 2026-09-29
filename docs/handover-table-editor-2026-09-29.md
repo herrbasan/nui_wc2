@@ -16,7 +16,8 @@ is not, and the two things that are genuinely open.
 | `docs/table-editor-decisions.md` | The full decision log, 2026-09-21 → 2026-09-29 |
 | `#page=experiments/dropped-table-editor` | The abandoned first attempt, kept for contrast |
 
-`7383ff0` is pushed. Everything since is uncommitted — see the commit below.
+`7383ff0` pushed the component; `01266ef` (alignment icons, sprite source repair,
+feel-check fixes) is pushed too. The tree is clean — nothing outstanding.
 
 ---
 
@@ -128,13 +129,30 @@ on `#page=documentation/cheatsheet`.
 `scripts/sprite-drift.mjs` is the new guard: it diffs sprite ids against source
 files and reports both directions of drift. Run it after any icon change.
 
-### Still unverified
+### Verified 2026-09-29
 
-The three `format_align_*` **path strings were written from recall and never
-checked against Google's originals.** They survive regeneration — which is the
-property that matters going forward — but "renders correctly" is not "is the real
-glyph". `.\assets\download-material-icon.ps1 -IconName format_align_left` would
-fetch the real one to diff against. Worth doing once, and cheap.
+The three `format_align_*` paths were diffed against **Google's originals** and are
+**byte-identical**:
+
+```
+raw.githubusercontent.com/google/material-design-icons/master/src/editor/<name>/materialicons/24px.svg
+```
+
+All three `d` attributes match the committed source files exactly. The glyphs were
+also confirmed visually in the toolbar — left/centre/right bar alignment is
+unambiguous at icon size, so the render corroborates the path match.
+
+⚠️ **`download-material-icon.ps1` is the wrong tool for this job and will mislead
+you.** It fetches the *Material Symbols* family
+(`symbols/web/<name>/materialsymbolsoutlined/`, `viewBox="0 -960 960 960"`), while
+all 124 sources are *classic Material Icons* (`src/<category>/<name>/materialicons/24px.svg`,
+`viewBox="0 0 24 24"`). Both render at the right size — the generator normalises any
+viewBox to 24×24 — so the mismatch is **silent**: the sprite would quietly mix two
+glyph families. The classic layout also has no flat path; the category is one of 18
+(`action`, `editor`, `content`, …), which is presumably why the script never used it.
+
+The classic URL is stable and category is the only unknown. Until the script is
+fixed, fetch originals by hand with the URL above.
 
 ---
 

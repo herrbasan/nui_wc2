@@ -420,3 +420,30 @@ Worth recording because the arithmetic is counterintuitive in both directions:
 `2px` does not render "thinner than 1px, but twice as thick" — it rounds *up* to
 a whole device pixel, which is why the old 2px ring looked so much heavier than
 a value only twice as large.
+## 2026-09-29 — The icon family trap, and closing the format_align verification
+
+The three `format_align_*` path strings were written from recall and flagged
+unverified. **Closed: all three are byte-identical to Google's originals**, fetched
+from `.../material-design-icons/master/src/editor/<name>/materialicons/24px.svg`,
+and corroborated visually (left/centre/right bar alignment is unambiguous at icon
+size).
+
+The verification itself produced a finding worth more than the verification.
+`assets/download-material-icon.ps1` fetches **Material Symbols**
+(`symbols/web/<name>/materialsymbolsoutlined/`, `viewBox="0 -960 960 960"`), but
+all 124 sources are **classic Material Icons** (`src/<category>/<name>/materialicons/24px.svg`,
+`viewBox="0 0 24 24"`). The generator normalises any viewBox to 24×24, so both
+families render at the correct size and **the mismatch is silent** — running the
+script would quietly seed a different glyph design into the sprite. The handover
+had recommended exactly that command; following it literally would have produced
+a wrong-family file that still looked plausible.
+
+Two rules, both already in `Agents.md` in one form or another, made concrete:
+
+- **A source file is not verified because it survives regeneration.** Regeneration
+  only proves the source exists. "Is this the real glyph" is a separate question,
+  answered by diffing against the upstream original.
+- **Any tool that writes into `Material_Icons/` must state which family it fetches
+  and fail loudly on the other.** A generator that normalises away the difference
+  has removed the error signal, and a wrong-family icon is exactly the kind of
+  defect that ships silently into every component that uses it.
