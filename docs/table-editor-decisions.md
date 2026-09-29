@@ -1042,6 +1042,68 @@ alignment, header toggle round-trip, GFM export, insert→delete round trip
 balanced. Geometry measured on both band kinds and screenshotted, in the harness
 and the Playground.
 
+## 2026-09-29 — The two-minute problem, and why no hint was added
+
+**User: "The editor might not be intuitive in the first 2 minutes, but at minute
+3 its incredibly fast to work with." Then, naming the cost precisely: "the
+selection gesture is not guessable but .. discoverable :)"**
+
+That is the whole review in two clauses, and it is a much more useful verdict than
+a score. Two gestures carry the component: **insert at the selection**, and
+**select a whole row/column band**. Everything else — alignment, the header
+toggle, keyboard walk, TSV paste — is either guessable or self-evident. Two is a
+good number. Zero would be a failure, and eight would be a spreadsheet.
+
+**The measurement that matters.** On a single click: six visible controls, zero
+grips, zero deletes. Every structural affordance in the component is invisible
+until a band exists. So the question is not "is this discoverable" in the
+abstract — it is whether a user who tries an ordinary thing gets a signal.
+
+They do, on the second try:
+
+| attempt | what appeared |
+|---|---|
+| single click | toolbar only, no handles |
+| shift+click to the row's last cell | `Row 1` + `Delete row 1` |
+| click the header cell, shift+click the last row cell | `Column 1` + `Delete column 1` |
+
+Two ordinary attempts, each revealing a different band type.
+
+### The hint I did not add
+
+I started to add a line to the zone naming the gesture. It is the reflex move and
+it is wrong here, for a reason that is already this component's founding law:
+*at rest it is an ordinary table.* Permanent instructional text is chrome, and
+chrome is spent on the majority — the users who select a cell and type, who never
+want a band, and who would be paying for a sentence about a gesture they will
+never make. The handles appearing **because you did something** is a stronger
+teaching signal than a label would be: it is immediate, it is tied to the exact
+action that caused it, and it costs nothing when unused.
+
+**Discoverable beats documented, when the documentation would have to be
+permanent.** The cost is real and it is not zero — the first two minutes — so this
+is a trade, not a free win. It is the right trade only because the alternative
+taxes everyone to help a few.
+
+What *was* worth fixing is the doc, which described a hover affordance that was
+deliberately removed months ago: it promised that hovering a row or column would
+reveal its grip, and there is no hover state. Anyone reading it would have hunted
+for something that does not exist. The line now says what actually happens —
+extending to the first and last cell of a row or column selects the band, and
+that is what reveals the handles.
+
+### The finding this leaves open
+
+Nothing in the component points at the band gesture on first contact, and the
+grips are the only route to drag and delete. That is a deliberate trade and it is
+now written down with its reasoning, so a future change that adds a persistent
+hint has to argue against this paragraph rather than against a feeling. The thing
+to watch is the user who *never* tries shift+click: for them, two of the
+component's capabilities do not exist. If that turns out to matter, the honest
+fix is a one-time coach mark dismissed on first successful band selection — not a
+permanent line, and not hover chrome.
+
+
 
 
 

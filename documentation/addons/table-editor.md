@@ -150,10 +150,9 @@ valid. Alignment becomes the delimiter row:
 
 | Action | Result |
 |--------|--------|
-| Hover a row / column | That row's and column's grips appear — only those two |
 | Click a cell | Select + edit; the top zone opens with alignment, header and insert controls |
 | **Drag across cells** | Selects the rectangle you swept — the primary way to select several cells |
-| <kbd>Shift</kbd>+click | Extend the selection into a range |
+| <kbd>Shift</kbd>+click | Extend the selection into a range. Extending to the first and last cell of a row or column **selects the whole band**, which is what reveals its drag grip and delete `×` |
 | Click a row / column grip | Selects that whole row / column |
 | Toggle **Header row** | Moves the first row in and out of `<thead>`, converting its cells `td`↔`th`. Off means an ordinary body row — unbolded, unshaded — and the GFM export emits an empty header. |
 | **Insert Row / Column** | Inserts a row or column **after** the selected band, and selects it. <kbd>Ctrl</kbd>+click inserts **before** instead |
