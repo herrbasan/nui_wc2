@@ -272,6 +272,18 @@ function setupTableEditor(table, options = {}) {
 
 		if (!r) {
 			activeCell = null;
+			// The grips and the delete controls are BUILT FROM the range, so clearing
+			// the range has to rebuild them or they stay on screen. This branch used
+			// to return before buildGrips(), which meant a cell selection cleared
+			// perfectly -- it has no handles -- while a row or column band left its
+			// drag grip and its delete sitting there over a table with nothing
+			// selected. The clear looked broken only for the selections that own
+			// visible chrome, which is exactly the case worth noticing.
+			//
+			// Derive, do not toggle: buildGrips() reads `range` and produces no
+			// bands for a null one, so there is no flag to clear and no way for the
+			// handles and the selection to disagree.
+			buildGrips();
 			updateZone();
 			return;
 		}
@@ -1481,11 +1493,32 @@ function setupTableEditor(table, options = {}) {
 		suppressNextClick = true;
 		position();
 	}
-	on(document, 'pointerup', endGesture, true);
-	on(document, 'pointercancel', endGesture, true);
 
-	on(overlay, 'pointerup', endDrag);
-	on(overlay, 'pointercancel', endDrag);
+	// The drag ends from the DOCUMENT, in the capture phase, for the same reason
+	// the sweep gesture does: a document listener sees the release whatever the
+	// pointer is over, and nothing that happens during the gesture can stop it.
+	//
+	// It used to end on the overlay, which only ever worked by accident. Starting
+	// a drag runs applyRange -> position() -> buildGrips(), and buildGrips REPLACES
+	// the grip the press arrived on -- so the element that would have received the
+	// release was already detached from the tree, and a release dispatched at it
+	// had no path up to the overlay. setPointerCapture was the only thing papering
+	// over that: it retargets the whole pointer stream to the overlay, so the real
+	// release arrived even though the element under the finger was gone.
+	//
+	// So the drag's lifetime hung on an optional API (`overlay.setPointerCapture?.`)
+	// silently doing the work of a listener. Where it is missing or throws, `drag`
+	// never becomes null: is-dragging sticks, and -- because the outside-press
+	// dismissal opens with `if (drag) return` -- every later click outside the
+	// table stops clearing the selection, permanently, with nothing on screen to
+	// say why. A drag that cannot end is not a cosmetic bug; it disables the way
+	// out. One owner, on the one element that cannot be rebuilt mid-gesture.
+	function endPointer() {
+		endDrag();
+		endGesture();
+	}
+	on(document, 'pointerup', endPointer, true);
+	on(document, 'pointercancel', endPointer, true);
 
 	// ── Wiring ─────────────────────────────────────────────────────────────────
 
