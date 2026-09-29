@@ -377,7 +377,7 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 	   appearing, and because the zone is absolutely positioned, a full-size box at
 	   rest costs the document nothing. */
 	opacity: 0;
-	transform: translateY(4px);
+	transform: translateY(var(--nui-space-quarter));
 	pointer-events: none;
 	/* `visibility` is what actually takes the idle toolbar out of the a11y tree
 	   and off the tab order -- `opacity: 0` does neither, so without this the
@@ -398,14 +398,17 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 /* Separator: a single hairline, inset from the edges so it reads as a division
    inside the pill rather than a rule drawn across it. The inset tracks the zone's
    padding -- at the old 3px it nearly touched the border, and against the new
-   hairline it would have read as a stray line rather than a division. */
+   hairline it would have read as a stray line rather than a division.
+
+   `width` stays 1px on purpose: this is a RULE, not a measurement. A hairline that
+   scaled with the user's font size would stop being a hairline. Box shadows below
+   are the same case -- blur radii and offsets are ink, not spacing. */
 .nte-zone-sep {
 	width: 1px;
 	align-self: stretch;
 	margin: calc(var(--nui-space-eighth) * 2) calc(var(--nui-space-eighth) * 2);
 	background-color: var(--border-shade1);
 	flex: none;
-}
 }
 
 /* Segmented control: the three alignments are one control with three positions,
@@ -415,8 +418,10 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 .nte-seg {
 	display: flex;
 	align-items: center;
+	/* The hairline between two segments of ONE control is a rule, so it stays 1px;
+	   the well's own padding is spacing and scales. */
 	gap: 1px;
-	padding: 2px;
+	padding: var(--nui-space-eighth);
 	background-color: var(--color-shade1);
 	border-radius: var(--border-radius2);
 }
@@ -501,8 +506,8 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 .nte-edge-add:focus-visible,
 .nte-seg-btn:focus-visible,
 .nte-zone-btn:focus-visible {
-	outline: 2px solid var(--nte-active-ring, var(--text-color-dim));
-	outline-offset: 1px;
+	outline: var(--border-thickness) solid var(--nte-active-ring, var(--text-color-dim));
+	outline-offset: var(--nui-space-eighth);
 }
 
 /* --- Reduced motion: the chrome still appears, it just stops animating. --- */
