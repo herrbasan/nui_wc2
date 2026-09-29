@@ -394,6 +394,15 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 	position: absolute;
 	bottom: 100%;
 	left: 0;
+	right: 0;
+	/* Centred over the table. `fit-content` + `margin-inline: auto` rather than
+	   the usual `left: 50%` + `translateX(-50%)`: the transform here already
+	   carries the appear animation, and giving one property two jobs is how a
+	   later edit silently kills the fade. Auto inline margins are the centering
+	   that needs nothing but the box. `margin-inline` rather than `margin`, so the
+	   `margin-bottom` that clears the column grips is left alone. */
+	width: fit-content;
+	margin-inline: auto;
 	display: flex;
 	align-items: center;
 	gap: var(--nui-space-eighth);
@@ -409,8 +418,12 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 	margin-bottom: calc(0.875rem + var(--nui-space-quarter));
 	background-color: var(--color-base);
 	/* One device pixel, not a hairline-plus: --border-thickness is the thinnest
-	   line the device can draw. */
-	border: var(--border-thickness) solid var(--border-shade1);
+	   line the device can draw. The step up from --border-shade1 is deliberate --
+	   shade1 was too close to the surface to give the pill a defined edge, and
+	   shade2 is the same step this library's other floating surfaces use
+	   (nui-dropdown, nui-file-tree, nui-blocks-editor), so the toolbar reads as
+	   chrome of the same weight rather than as an outline nobody drew on purpose. */
+	border: var(--border-thickness) solid var(--border-shade2);
 	border-radius: var(--border-radius3);
 	box-shadow: 0 1px 2px var(--shadow-color), 0 4px 12px var(--shadow-color);
 	z-index: 26;

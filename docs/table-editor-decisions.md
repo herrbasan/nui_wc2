@@ -514,7 +514,60 @@ only inside a `contenteditable` ancestor. Wiring it into `nui-rich-text` to
 replace the prompt-insert + context-menu table support was always gated on this
 feel-check. The gate is now closed.
 
-## 2026-09-29 — Post-handover audit: the vertical walk never worked
+## 2026-09-29 — Toolbar placement: centred, and a defined edge
+
+**User: "I would want it to be centred over the table. Also its subtle border
+should be a little less subtle."**
+
+Measured before the change: the zone was **328px left of the table's centre** in
+a 896px table — it sat flush to the table's left edge (`left: 0`), which is where
+it inherited its position from. Its border was `--border-shade1`, which against
+`--color-base` (dark `rgb(20,20,20)`) is `rgb(45,45,45)`: a step that reads as
+"an outline nobody drew on purpose" rather than as an edge.
+
+**Centring is done with `width: fit-content` + `margin-inline: auto`, not
+`left: 50%` + `translateX(-50%)`.** The obvious idiom would have broken the
+component: `.nte-zone` already uses `transform` for its appear animation
+(`translateY` for the lift, `translateY(0)` when active). Handing `transform` a
+second job means the two rules overwrite each other, and the failure is a toolbar
+that fades without lifting — a partial animation nobody would report as a bug.
+Auto inline margins are the centring that needs nothing but the box. `margin-inline`
+rather than `margin`, so the `margin-bottom` that lifts the zone clear of the
+column grips is untouched.
+
+**The border goes up exactly one step, `--border-shade1` → `--border-shade2`.**
+Not a new colour, and not a "slightly stronger grey": `shade2` is the same step
+`nui-dropdown`, `nui-file-tree` and `nui-blocks-editor` already use for a
+floating surface that needs a defined edge. The toolbar now reads as chrome of
+the same weight as the rest of the library rather than as a special case.
+
+Verified: centre offset `0px` on a single-cell selection (239px zone) and on the
+widest possible zone — a whole-table selection carrying the "4 × 4" caption
+(292px) — across all four demo tables, including the one enhanced in place
+inside a different parent. Both stay clear of the table's top edge, so the
+column grips are not covered.
+
+### A boundary test that lied, and what it cost
+
+The narrow-table check (140px) first reported a **13px zone**. It was wrong, and
+knowing that took three attempts:
+
+1. The probe container was positioned off-screen, so `getComputedStyle` returned
+   **empty strings** and `getBoundingClientRect` returned zeros — an element that
+   is not rendered reports nothing, and "no data" was about to be read as "tiny".
+2. Re-run inside the live page flow, the zone still measured 13px — but with
+   **zero children**. The synthetic `keydown` I dispatched never selected
+   anything, so `updateZone()` correctly built an empty zone. 13px was the
+   padding of a toolbar with no toolbar in it.
+3. A real click on the same 140px table: **3 children, 239px, offset 0**.
+
+The rule generalises past this component: **a synthetic event that does not
+reproduce the component's own state change will produce a confident, plausible,
+entirely fictional measurement.** Two of the failures in the post-handover audit
+were the same mistake. Where the answer looks surprising, suspect the rig first
+and prove which it is before reporting anything.
+
+
 
 A cold re-read of the handover drove the demo again. Fourteen sampling rounds had
 signed the component off, and the keyboard walk still had a dead axis: **`Enter`
