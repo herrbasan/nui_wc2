@@ -257,34 +257,46 @@
 /* An editor must never change the size of the thing it is editing.
  *
  * A text input carries an INTRINSIC width — its default `size=20` — and in a
- * table cell that intrinsic width IS the column's min-content width. So simply
- * focusing a cell widened the column and reflowed the whole table. `width: 100%`
- * cannot fix that, because the contribution comes from the element's own
- * intrinsic size, not from a percentage.
+ * table cell that intrinsic width IS the column's min-content width, so focusing
+ * a cell used to widen the column and reflow the whole table. `width: 100%`
+ * cannot prevent that: the percentage resolves against a width the input is
+ * itself helping to create.
  *
- * Taking the input OUT OF FLOW is the fix. An absolutely positioned box
- * contributes nothing to its container's sizing, so the cell keeps whatever
- * width it already had and the table cannot move. The padding is zeroed for the
- * same rule, so `inset: 0` lands exactly on the cell rather than over its
- * padding. */
-.jg-host td[data-editing='true'] {
-	padding: 0;
-	position: relative;
-}
-
+ * The fix is `min-width: 0` on a FLEX ITEM. A flex item's contribution to its
+ * container's min-content width is clamped by its min-width, so zeroing it
+ * removes the input from the column's intrinsic width entirely, while the input
+ * still takes the space the VALUE occupied.
+ *
+ * The earlier attempt took the input out of flow with `position: absolute;
+ * inset: 0`. That fixed the width and broke something else: `inset: 0` fills the
+ * whole CELL, so the input lay on top of the very type chip and options menu that
+ * sit beside the value. The edit box belongs to the value, not to the cell.
+ *
+ * Note there is no `td[data-editing] { padding: 0 }` rule. The cell's own
+ * padding is what the input needs, and an attempt to zero it silently lost to
+ * the base rule on specificity — `.jg-host .jg-root > tbody > tr > td` is two
+ * classes and three types, and `.jg-host td[data-editing]` is two classes and
+ * one type. A padding rule that never applies is worse than no padding rule:
+ * it reads as the fix and measures as nothing. The input therefore has NO
+ * padding of its own, so the cell's padding is not applied twice — which is
+ * exactly what was making the row 8px taller while editing. */
 .jg-host .jg-input {
-	position: absolute;
-	inset: 0;
-	width: auto;
-	height: auto;
+	flex: 1 1 auto;
 	min-width: 0;
+	width: auto;
 	box-sizing: border-box;
+	padding: 0;
+	/* The theme gives inputs a 40px touch-target floor and buttons a 32px one.
+	   An editor is not a standalone control — it is sized by the leaf it sits in,
+	   whose height is set by the type chip beside it at 32px. Inheriting the 40px
+	   made the edited row 8px taller than every other row, which is the same
+	   layout push as the width one, just on the other axis. */
+	min-height: 0;
 	font: inherit;
 	color: inherit;
 	background: var(--color-base);
 	border: var(--border-thickness) solid var(--color-highlight);
 	border-radius: var(--border-radius1);
-	padding: calc(var(--nui-space-half) / 2) var(--nui-space);
 }
 
 /* ── Breadcrumb ───────────────────────────────────────────────────────── */
