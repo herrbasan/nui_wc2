@@ -40,17 +40,42 @@ Playground/
 
   **So: when you change a component, an addon or a guide here, update the matching file in `documentation/NUI/` in the same session.** Naming is `component_<name>.md`, `addon_<name>.md`, `guide_<name>.md`, `concept_<name>.md`, `reference_<name>.md`; the domain's own `Agents.md` §3 *Source Mapping* lists which repo files each class derives from. Keep it condensed — that is the point of the domain — and bump the frontmatter `date:`.
 
-## Adding Icons to the Sprite (NEVER hand-edit)
+## Adding Icons to the Sprite (NEVER hand-edit the sprite)
 
-The icon sprite `NUI/assets/material-icons-sprite.svg` is a **closed set** — icons are `<symbol>` blocks; missing icons fail silently (empty render, no console error). **Twice the sprite was overwritten by hand-edits from stale bases, silently dropping 8 icons** (fixed 2026-09-24, 6674de9). Never paste symbols by hand.
+The icon sprite `NUI/assets/material-icons-sprite.svg` is a **closed set** — icons are `<symbol>` blocks; missing icons fail silently (empty render, no console error). **Twice the sprite was overwritten by hand-edits from stale bases, silently dropping 8 icons** (fixed 2026-09-24, 6674de9).
 
-To add an icon, use the forge tools on the workshop MCP server (`mcp_workshop_tools`):
+**The sprite is GENERATED. It is an output, never an input.**
 
-1. **Look up / preview (optional):** `forge.call` → `icons_get` with `{ query: "folder_open" }` — returns a ready `<symbol>` block without touching any file.
-2. **Add for real:** `forge.call` → `icons_add`:
-   - Copy the current sprite into the storage box first: `Copy-Item NUI\assets\material-icons-sprite.svg \\BADKID\Stuff\MCP_Storage\tmp_sprite.svg` (the forge worker runs on Badkid and cannot see this workspace).
-   - Call `icons_add` with `payload: ["../../MCP_Storage/tmp_sprite.svg"]`, `args: { query: "icon_name" }`. It fetches the official SVG, applies `fill="currentColor"`, **fails loud on duplicate ids** (`force: true` replaces), and writes the complete updated sprite to `\\BADKID\Stuff\MCP_Storage\forge\icons_add\icons_add\material-icons-sprite.svg`.
-   - Copy the result back over `NUI/assets/material-icons-sprite.svg`, delete the tmp file, commit. Git diff must show exactly one added `<symbol>` block — nothing else.
+```
+assets/Material_Icons/*.svg   --[ generate_icon_sprite.py ]-->   NUI/assets/material-icons-sprite.svg
+        the source of truth                                          the build artefact
+```
+
+Anything hand-written into the sprite is erased by the next generator run. Adding an icon *is* adding a source file and rebuilding.
+
+### The procedure
+
+1. **Find the icon.** Google Material has thousands of names, and guessing wastes rounds. Use the `icons_get` forge tool (`mcp_workshop_tools` → `forge.call` → `icons_get`, `args: { query: "..." }`):
+   - exact name match → returns a ready `<symbol>` block, no file touched
+   - no match → returns the top candidates **with a screenshot of Google's search results**, so the icon can be chosen by looking rather than by guessing
+2. **Write the source file** to `assets/Material_Icons/<icon_name>.svg`, in the house style the other 124 use — 24px square, black fill, a transparent background path, then the geometry:
+   ```xml
+   <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><path d="M0 0h24v24H0z" fill="none"/><path d="..."/></svg>
+   ```
+   The generator sets `fill="currentColor"` and normalises the viewBox itself, and it filters `fill="none"` background paths out — so the source is a plain Google icon, not a pre-sprited one.
+3. **Rebuild:** `python assets/generate_icon_sprite.py` — it prints the new icon count and size.
+4. **Verify, in this order:**
+   - the count went up by exactly one
+   - every previously existing `id` is still present (`node scripts/sprite-drift.mjs` reports any drift; zero in both directions is the goal)
+   - the icon appears on the Playground **cheatsheet** page (`#page=documentation/cheatsheet`) — the grid renders every symbol, so a broken icon is visible rather than inferred
+   - `git diff` on the sprite shows symbol changes and **no icon disappeared**
+
+### House rules
+
+- **Never hand-edit the sprite.** It is regenerated; the edit does not survive. This is not a style preference — it is the failure that twice dropped 8 icons.
+- **Check the name is free first.** A duplicate source file or a duplicate `id` fails silently: the first wins, the second is ignored, and the icon simply never appears.
+- **One icon at a time.** Several icons in one commit make a lost symbol impossible to spot in the diff.
+- `scripts/sprite-drift.mjs` exists for step 4 — it diffs sprite ids against source files and reports symbols with no source (which a rebuild would delete) and sources with no symbol (which never made it in). Run it after any icon change.
 
 ## Component Registry
 

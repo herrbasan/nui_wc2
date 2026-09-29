@@ -198,7 +198,6 @@ keyboard and programmatic changes. `prefers-reduced-motion` removes transitions
 without hiding chrome.
 
 ### State tokens
-
 Overridable per element or host scope:
 
 | Token | Default | Controls |
@@ -249,6 +248,24 @@ different signals. To go back to a fully neutral scheme, override
 > measure too. Referencing the same token is what keeps the ring matching the
 > grid; a hardcoded `2px` rounds *up* to a whole device pixel and renders
 > visibly heavier, not proportionally heavier.
+
+## Icons used
+
+`add` (edge `+` buttons), `drag_indicator` (row/column grips),
+`view_column` (header toggle), and `format_align_left` / `format_align_center` /
+`format_align_right` (the alignment segmented control).
+
+The three `format_align_*` symbols follow the existing marks' construction — a
+full-width rule on top, ragged rules below — so they sit with the rest of the icon
+set instead of looking like a different family. The control was originally
+CSS-drawn glyphs; the sprite symbols replaced them at the user's preference, which
+keeps every icon in this component on one system.
+
+> The sprite is a **generated artefact** — `assets/generate_icon_sprite.py` builds
+> it from `assets/Material_Icons/*.svg`, so anything hand-written into the sprite
+> is erased on the next run. Adding an icon means adding a source file and
+> rebuilding; `Agents.md` has the procedure and the checks. A missing icon renders
+> as **nothing at all**, with no console error.
 
 ### Accessibility
 

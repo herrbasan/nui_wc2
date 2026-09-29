@@ -334,10 +334,10 @@ function setupTableEditor(table, options = {}) {
 		const align = cellAt(table, range.minRow, range.minCol)?.getAttribute('data-align') || 'left';
 
 		const seg = el('div', 'nte-seg', { role: 'group', 'aria-label': 'Column alignment' });
-		for (const [value, text] of [
-			['left', 'Align left'],
-			['center', 'Align centre'],
-			['right', 'Align right']
+		for (const [value, iconName, text] of [
+			['left', 'format_align_left', 'Align left'],
+			['center', 'format_align_center', 'Align centre'],
+			['right', 'format_align_right', 'Align right']
 		]) {
 			const btn = el('button', 'nte-seg-btn', {
 				type: 'button',
@@ -346,10 +346,7 @@ function setupTableEditor(table, options = {}) {
 				'aria-pressed': String(align === value),
 				'data-align-value': value
 			});
-			// The glyphs are drawn in CSS, not fetched: the icon sprite has no
-			// format_align_* symbols, and a missing icon renders as nothing at all —
-			// a silent failure. Three lines of CSS cannot fail that way.
-			btn.appendChild(el('span', `nte-align-glyph nte-align-glyph-${value}`));
+			btn.appendChild(icon(iconName));
 			seg.appendChild(btn);
 		}
 		zone.appendChild(seg);

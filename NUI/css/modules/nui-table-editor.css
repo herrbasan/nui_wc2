@@ -424,37 +424,14 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 	box-shadow: 0 1px 2px var(--shadow-color);
 }
 
-/* The alignment marks are drawn, not fetched. The icon sprite has no
-   format_align_* symbols, and a missing sprite symbol renders as nothing at all —
-   a control that is silently absent. Three CSS lines cannot fail that way, and
-   they follow the theme instead of being frozen at one size. */
-.nte-align-glyph {
+/* The alignment marks are real sprite icons (format_align_left/center/right),
+   sized down to the button. The sprite symbol is 24x24 with generous padding
+   around the marks, so at the default --icon-size the marks look tiny and lost
+   in a 1.5rem button. */
+.nte-seg-btn nui-icon {
+	width: 1rem;
+	height: 1rem;
 	display: block;
-	width: 0.875rem;
-	height: 0.625rem;
-	background-color: currentColor;
-	/* Four lines: a full-width top, then three ragged below. */
-	-webkit-mask-repeat: no-repeat;
-	mask-repeat: no-repeat;
-	-webkit-mask-position: center;
-	mask-position: center;
-	-webkit-mask-size: contain;
-	mask-size: contain;
-}
-
-.nte-align-glyph-left {
-	-webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 10'%3E%3Crect width='14' height='2'/%3E%3Crect y='4' width='10' height='2'/%3E%3Crect y='8' width='12' height='2'/%3E%3C/svg%3E");
-	mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 10'%3E%3Crect width='14' height='2'/%3E%3Crect y='4' width='10' height='2'/%3E%3Crect y='8' width='12' height='2'/%3E%3C/svg%3E");
-}
-
-.nte-align-glyph-center {
-	-webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 10'%3E%3Crect width='14' height='2'/%3E%3Crect x='2' y='4' width='10' height='2'/%3E%3Crect x='1' y='8' width='12' height='2'/%3E%3C/svg%3E");
-	mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 10'%3E%3Crect width='14' height='2'/%3E%3Crect x='2' y='4' width='10' height='2'/%3E%3Crect x='1' y='8' width='12' height='2'/%3E%3C/svg%3E");
-}
-
-.nte-align-glyph-right {
-	-webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 10'%3E%3Crect width='14' height='2'/%3E%3Crect x='4' y='4' width='10' height='2'/%3E%3Crect x='2' y='8' width='12' height='2'/%3E%3C/svg%3E");
-	mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 10'%3E%3Crect width='14' height='2'/%3E%3Crect x='4' y='4' width='10' height='2'/%3E%3Crect x='2' y='8' width='12' height='2'/%3E%3C/svg%3E");
 }
 
 .nte-zone-btn {

@@ -203,22 +203,31 @@ a highlight fill (affordances must override `min-width`/`min-height`), and the
 icon sprite has **no `format_align_*` symbols** (nor `more_vert`, `check` or the
 `arrow_*` set — verified against all 121 ids).
 
-**No icons were added to the sprite; the sprite is unchanged.** The sanctioned way
-in is the `icons_add` forge tool, and hand-editing the sprite is forbidden —
-it once silently dropped 8 icons. `icons_add` was tried, rejected the paths this
-machine could produce three times, and was abandoned rather than guessed at a
-fourth time or worked around by hand.
+The alignment control was first built as **CSS-drawn glyphs**: three
+`mask-image` data-URIs rendering left/centre/right marks. A missing sprite symbol
+renders as *nothing at all*, silently, so a control depending on an asset that
+may not exist is a control that may simply not be there — the CSS glyphs cannot
+fail that way, and they follow the theme at any size. (First attempt used literal
+`L`/`C`/`R` letters; the drawn marks read better.)
 
-The alignment control is therefore **drawn in CSS**: three `mask-image`
-data-URIs rendering left/centre/right alignment marks. That is the better answer
-regardless — a missing sprite symbol renders as *nothing at all*, silently, so a
-control depending on an asset that may not exist is a control that may simply
-not be there. The CSS glyphs cannot fail that way and they follow the theme at
-any size. (First attempt used literal `L`/`C`/`R` letters; the drawn marks read
-better and are what shipped.)
-
-The component uses exactly three pre-existing icons: `add` (edge `+` buttons),
+The component used three pre-existing icons: `add` (edge `+` buttons),
 `drag_indicator` (row/column grips), `view_column` (header toggle).
+
+## 2026-09-29 — Alignment marks added to the sprite as real symbols
+
+The CSS-drawn glyphs were replaced with real `format_align_left/center/right`
+sprite symbols, at the user's preference. Reasoning for the record: the glyphs
+were the right *idea* — no asset dependency, cannot fail silently — but they were
+CSS masquerading as icons while every other control in the component used the
+icon system. One system beats a locally-correct exception, and the marks are now
+real Material alignment glyphs rather than the CSS approximation.
+
+Added as three source files in `assets/Material_Icons/` and the sprite rebuilt with
+`python assets/generate_icon_sprite.py` — the sprite is generated, so a symbol
+added to it directly is erased on the next run. Verified: 124 sources → 124
+symbols, `node scripts/sprite-drift.mjs` reports zero drift in both directions, no
+symbol id removed, and all three resolve in the browser
+(`use href=…#format_align_left`, 16×16) and appear on the cheatsheet page.
 
 ## 2026-09-28 — Route rename
 
