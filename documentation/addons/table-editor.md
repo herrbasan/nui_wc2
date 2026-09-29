@@ -162,9 +162,14 @@ valid. Alignment becomes the delimiter row:
 | <kbd>Enter</kbd> | Move down a row |
 | Arrow keys | Move between cells; <kbd>ArrowUp</kbd> off the first body row reaches the header. Suppressed while text is selected |
 | <kbd>Esc</kbd> | Clear the selection |
+| **Click outside the table** | Clear the selection — cell, row band and column band alike, including the grips and the `×` that belong to a band |
 | Drag a grip | Reorder the row or column, with a drop line |
 | Click a band's `×` | Delete that whole row band or column band |
 | Paste TSV | Grows the grid and fills it — spreadsheet paste works |
+
+A press on the table's own chrome — a grip, a `×`, a zone button — is *not* an
+outside press and keeps the selection, because those controls act on the
+selection rather than dismissing it.
 
 Arrow keys move between cells, and are suppressed while text is selected so
 your own cursor movement still works. The horizontal pair additionally yields to
