@@ -29,9 +29,15 @@ import { nui } from '../../nui.js';
 const ICON_ADD = 'add';
 const ICON_DRAG = 'drag_indicator';
 
-function el(tag, className, attrs) {	const node = document.createElement(tag);
+function el(tag, className, attrs) {
+	const node = document.createElement(tag);
 	if (className) node.className = className;
-	if (attrs) for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
+	if (attrs) for (const [k, v] of Object.entries(attrs)) {
+		// textContent is a DOM property, not an attribute: setAttribute('textContent')
+		// writes a dead attribute and the element stays empty.
+		if (k === 'textContent') node.textContent = v;
+		else node.setAttribute(k, v);
+	}
 	return node;
 }
 
