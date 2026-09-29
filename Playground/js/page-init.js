@@ -3272,6 +3272,21 @@ nui.registerPage('experiments/json-grid', {
 			release: { date: '2026-05-01', notes: null, downloads: 1284903 },
 		}, null, 2);
 
+		// A document nested far past the default collapse depth. It is the whole
+		// argument for depth being a view concern: this opens shallow and stays
+		// navigable, and drilling is one click per level.
+		//
+		// The first key must have NO value: `root: deep` followed by an indented
+		// key is content indented under nothing that claims it, and the reader
+		// refuses the document for it — which is correct, and was how the first
+		// attempt at this sample was rejected.
+		const DEEP_SAMPLE = (() => {
+			const lines = ['root:'];
+			for (let level = 1; level <= 12; level++) lines.push(`${'  '.repeat(level)}level${level}:`);
+			lines.push(`${'  '.repeat(13)}leaf: bottom`);
+			return lines.join('\n') + '\n';
+		})();
+
 		const grid = setupJsonGrid(host, { text: YAML_SAMPLE, format: 'yaml' });
 
 		function show(text) { out.textContent = text; }
@@ -3284,6 +3299,8 @@ nui.registerPage('experiments/json-grid', {
 		// A refusal is a MESSAGE. The grid deliberately does not colour itself —
 		// the accent is not a state colour — so the words land somewhere.
 		host.addEventListener('nui-error', (e) => say(`Refused — ${e.detail.message}`, true));
+		host.addEventListener('nui-say', (e) => say(e.detail.message));
+		host.addEventListener('nui-say-error', (e) => say(e.detail.message, true));
 		host.addEventListener('nui-change', (e) => {
 			show(e.detail.text);
 			say(`${e.detail.label} · ${e.detail.format}`);
@@ -3294,6 +3311,7 @@ nui.registerPage('experiments/json-grid', {
 		const actions = {
 			'load-yaml': () => { grid.load(YAML_SAMPLE, 'yaml'); },
 			'load-json': () => { grid.load(JSON_SAMPLE, 'json'); },
+			'load-deep': () => { grid.load(DEEP_SAMPLE, 'yaml'); },
 			'add-property': () => grid.commit('add licence', (d) => jsonModel.insertAt(d, ['licence'], 'MIT')),
 			'change-type': () => grid.commit('stars → boolean', (d) => jsonModel.setAt(d, ['stars'], d.stars !== 0)),
 			refuse: () => {

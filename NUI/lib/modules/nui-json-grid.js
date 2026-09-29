@@ -1,34 +1,51 @@
-// nui-json-grid — the grid view for a JSON/YAML document.
+// nui-json-grid — a JSON/YAML document as blocks.
 //
-// The whole component is ONE recursive rule: the shape of a value decides how it
-// renders. Four cases, keyed off Array.isArray and typeof, and nothing else.
+// ── The block model ──────────────────────────────────────────────────────
+// Every value is a BLOCK. A block is either a leaf (a scalar) or a branch (an
+// object, or a non-empty array), and a branch holds blocks. That is the whole
+// model, and it is the same one the MD-Blocks editor uses, so the two editors
+// think alike.
 //
-//   scalar               → inline, coloured by type
-//   array of scalars     → sub-table, index + value, no header
-//   object               → sub-table, key + value, no header
-//   array of objects     → sub-table WITH a header row
+// ── Depth is a VIEW concern, never a data concern ────────────────────────
+// This is the answer to deeply nested documents, and it is two verbs over one
+// idea — a branch can be hidden, or promoted:
 //
-// Only the last case gets a header, because only there is the union of keys the
-// actual information — an object's keys are already its left column, and an
-// array of scalars has no keys at all.
+//   COLLAPSE  hide a branch's children; its head keeps a summary, so nothing
+//             is lost, only deferred. Beyond `collapseDepth` a branch is
+//             collapsed BY DEFAULT, so a forty-level document opens shallow and
+//             readable instead of as a mile of nested boxes.
+//   DRILL     promote a branch's children to the top level, with a breadcrumb
+//             above. Getting fifteen levels down is then one click per level
+//             and no scrolling, and the breadcrumb is how you come back.
 //
-// A value cell renders its own value, recursively, to any depth. There is no
-// stringify-and-trap step and no "open" affordance: nesting is visible at a
-// glance, and nothing in the document is out of reach from where you are.
+// A document of any depth is therefore no harder to edit than a shallow one: the
+// view only ever shows the levels you chose to show.
 //
-// EVERY value cell carries its own JSON Pointer in data-path, however deeply it
-// is nested. The DOM is therefore its own address book, and a click resolves to a
-// path without the view having to re-derive one by walking back up the tree.
+// ── Chrome is discreet, and it is a MESSAGE not a colour ────────────────
+// nui-table-editor settled the rules and they are the same here: chrome appears
+// on hover or selection rather than always (reading a document is a more common
+// job than moving one); the accent is NOT a state colour; ring widths use
+// --border-thickness, never a fixed px, because the browser quantises
+// border-width to whole device pixels. Controls reserve their space and fade in,
+// so revealing one never reflows the table.
 //
-// The grid is a VIEW. It never mutates a structure — every edit goes through
-// applyEdit(), the single writer, which owns the text. There is no setAt or
-// insertAt call against live state anywhere in this file.
+// ── The grid is a VIEW ───────────────────────────────────────────────────
+// It never mutates a structure. Every change goes through applyEdit(), the
+// single writer, which owns the text. There is no setAt or insertAt call
+// against live state in this file — only inside the `mutate` callbacks handed
+// to commit(), which is where they belong.
+//
+// EVERY value cell carries its own JSON Pointer in data-path, at any depth, so
+// the DOM is its own address book and a click resolves without walking back up.
 //
 // Type colours reuse the existing .hl-* syntax classes rather than introducing a
-// palette: the grid and the code view then read as the same document in the same
+// palette: the grid and the code view read as the same document in the same
 // vocabulary, and the theme gains no new surface.
 
-import { openDocument, applyEdit, createHistory, coerceScalar, typeOf, toPointer, parsePointer, setAt } from './nui-json-model.js';
+import {
+	openDocument, applyEdit, createHistory, coerceScalar, convertTo,
+	typeOf, toPointer, parsePointer, setAt, insertAt, removeAt, inferColumnType,
+} from './nui-json-model.js';
 
 const el = (tag, className, text) => {
 	const node = document.createElement(tag);
@@ -37,13 +54,31 @@ const el = (tag, className, text) => {
 	return node;
 };
 
-/** A value cell. The path goes on the CELL, so any leaf inside it is addressable. */
-function valueCell(value, path, extraClass = '') {
-	const cell = el('td', `jg-value ${extraClass}`.trim());
-	cell.dataset.path = toPointer(path);
-	cell.append(renderValue(value, path));
-	return cell;
+/** A branch is a container with something in it. An empty one is a leaf. */
+function isBranch(value) {
+	if (value === null || typeof value !== 'object') return false;
+	return Array.isArray(value) ? value.length > 0 : Object.keys(value).length > 0;
 }
+
+/** What a collapsed branch says instead of showing its contents. */
+function summaryOf(value) {
+	const n = Array.isArray(value) ? value.length : Object.keys(value).length;
+	const noun = Array.isArray(value) ? (n === 1 ? 'item' : 'items') : (n === 1 ? 'field' : 'fields');
+	return `${n} ${noun}`;
+}
+
+/** The sample each type shows in the palette, rendered in its own colour. */
+const TYPE_SAMPLES = {
+	string: '"text"', number: '42', boolean: 'true', null: 'null', object: '{ … }', array: '[ … ]',
+};
+const TYPE_CLASS = {
+	string: 'hl-string', number: 'hl-number', boolean: 'hl-literal',
+	null: 'hl-literal', object: 'jg-empty', array: 'jg-empty',
+};
+
+let controlSeq = 0;
+
+// ── Rendering ───────────────────────────────────────────────────────────
 
 function renderScalar(value) {
 	if (typeof value === 'string') {
@@ -59,31 +94,115 @@ function renderScalar(value) {
 	return el('span', 'jg-scalar jg-null hl-literal', 'null');
 }
 
-/**
- * The shape rule. Returns a DOM node rendering one value, to any depth.
- * @param {*} value
- * @param {string[]} path where this value lives
- */
-export function renderValue(value, path) {
-	if (value === null || typeof value !== 'object') return renderScalar(value);
-	if (Array.isArray(value)) return renderArray(value, path);
-	return renderObject(value, path);
+function control(label, className, title) {
+	const button = el('button', `jg-ctl ${className}`.trim(), label);
+	button.type = 'button';
+	button.title = title;
+	button.setAttribute('aria-label', title);
+	return button;
 }
 
-function renderArray(value, path) {
-	if (value.length === 0) return el('span', 'jg-scalar jg-empty', '[]');
+/**
+ * A branch's head: disclosure, summary, and the discreet controls.
+ * @param {boolean} collapsed
+ */
+function branchHead(value, path, ctx, collapsed) {
+	const head = el('div', 'jg-head');
+	const pointer = toPointer(path);
 
-	// <thead> must precede <tbody>. Appending the header afterwards is invalid
-	// markup, and the browser silently reorders it — which showed up as a header
-	// row announced AFTER its own records in the accessibility tree.
+	const caret = control(collapsed ? '▸' : '▾', 'jg-caret', `${collapsed ? 'Expand' : 'Collapse'} ${summaryOf(value)}`);
+	caret.setAttribute('aria-expanded', String(!collapsed));
+	caret.dataset.caret = pointer;
+	head.append(caret);
+
+	head.append(el('span', 'jg-summary', summaryOf(value)));
+	head.append(el('span', 'jg-branch-type', Array.isArray(value) ? 'array' : 'object'));
+
+	const add = control('+', 'jg-ctl-add', `Add to ${summaryOf(value)}`);
+	add.dataset.add = pointer;
+	head.append(add);
+
+	const menu = control('⋯', 'jg-ctl-menu', `Options for ${summaryOf(value)}`);
+	menu.dataset.menu = pointer;
+	head.append(menu);
+
+	return head;
+}
+
+/** A leaf's controls: the type chip is how a type is CHANGED, not shown always. */
+function leafHead(value, path) {
+	const head = el('div', 'jg-head jg-head-leaf');
+	const chip = control(typeOf(value), 'jg-type-chip', `Change type (currently ${typeOf(value)})`);
+	chip.dataset.type = toPointer(path);
+	head.append(chip);
+
+	const menu = control('⋯', 'jg-ctl-menu', 'Options for this value');
+	menu.dataset.menu = toPointer(path);
+	head.append(menu);
+	return head;
+}
+
+/** A leaf block: the value, and the quiet controls that act on it. */
+function leafBlock(value, path) {
+	const wrap = el('div', 'jg-leaf');
+	wrap.append(renderScalar(value), leafHead(value, path));
+	return wrap;
+}
+
+function isCollapsed(pointer, depth, ctx) {
+	const explicit = ctx.collapsed.get(pointer);
+	if (explicit !== undefined) return explicit;
+	// Beyond the default depth a branch is closed until asked for.
+	return depth >= ctx.collapseDepth;
+}
+
+/**
+ * The shape rule. Returns a DOM node rendering one value, to any depth.
+ *
+ * `level` is the NESTING depth, threaded explicitly through the recursion. It
+ * cannot come from the context, because the context's depth is the drill depth —
+ * a different number entirely. Collapsing by the wrong one silently renders a
+ * deep document at full height, which is the thing this exists to prevent.
+ *
+ * @param {*} value
+ * @param {string[]} path
+ * @param {{collapsed: Map<string,boolean>, collapseDepth: number}} ctx
+ * @param {number} level
+ */
+export function renderValue(value, path, ctx, level = 0) {
+	if (value === null || typeof value !== 'object') return leafBlock(value, path);
+	if (Array.isArray(value)) return renderArray(value, path, ctx, level);
+	return renderObject(value, path, ctx, level);
+}
+
+function valueCell(value, path, ctx, level, extraClass = '') {
+	const cell = el('td', `jg-value ${extraClass}`.trim());
+	cell.dataset.path = toPointer(path);
+	cell.append(renderValue(value, path, ctx, level));
+	return cell;
+}
+
+function renderArray(value, path, ctx, level) {
+	if (value.length === 0) return emptyBlock('[]', path, ctx);
+
+	const cell = el('div', 'jg-branch');
+	const pointer = toPointer(path);
+	const collapsed = isCollapsed(pointer, level, ctx);
+	cell.append(branchHead(value, path, ctx, collapsed));
+	cell.dataset.branch = pointer;
+	if (collapsed) return cell;
+
+	// <thead> must precede <tbody>; appending a header afterwards is invalid and
+	// the browser silently reorders it, which shows up as a header announced
+	// AFTER its own records in the accessibility tree.
 	const withHeader = value.every(entry => typeOf(entry) === 'object');
 	const table = el('table', 'jg-sub');
 	const body = el('tbody');
+	table.append(body);
 
 	// The union of keys, in the order they first appear. Never sorted, and never
 	// a union across the WHOLE document — only here, where the header is the
-	// information rather than a repeat of the left column. Declared out here
-	// because both the header and the rows need it.
+	// information rather than a repeat of the left column.
 	const columns = withHeader ? [] : null;
 	if (columns) {
 		for (const entry of value) {
@@ -93,39 +212,46 @@ function renderArray(value, path) {
 		const hr = el('tr');
 		for (const key of columns) hr.append(el('th', 'jg-sub-key hl-prop', key));
 		head.append(hr);
-		table.append(head);
+		table.prepend(head);
 	}
-	table.append(body);
 
-	if (withHeader) {
+	if (columns) {
 		value.forEach((entry, rowIndex) => {
 			const tr = el('tr');
 			for (const key of columns) {
-				// A key this record does not have renders as an EMPTY cell —
-				// genuinely absent, which is different from a null.
+				// A key this record does not have renders EMPTY — genuinely absent,
+				// which is a different thing from a null.
 				tr.append(Object.prototype.hasOwnProperty.call(entry, key)
-					? valueCell(entry[key], [...path, String(rowIndex), key], 'jg-sub-value')
+					? valueCell(entry[key], [...path, String(rowIndex), key], ctx, level + 1, 'jg-sub-value')
 					: el('td', 'jg-value jg-sub-value jg-absent'));
 			}
 			body.append(tr);
 		});
-		return table;
+	} else {
+		// An array of anything else: index + value, no header. Each entry recurses,
+		// so a list or map inside a list still shows its structure.
+		value.forEach((entry, index) => {
+			const tr = el('tr');
+			tr.append(el('td', 'jg-sub-index', String(index)));
+			tr.append(valueCell(entry, [...path, String(index)], ctx, level + 1, 'jg-sub-value'));
+			body.append(tr);
+		});
 	}
 
-	// An array of anything else: index + value, no header. Each entry recurses,
-	// so a list or map inside a list still shows its structure.
-	value.forEach((entry, index) => {
-		const tr = el('tr');
-		tr.append(el('td', 'jg-sub-index', String(index)));
-		tr.append(valueCell(entry, [...path, String(index)], 'jg-sub-value'));
-		body.append(tr);
-	});
-	return table;
+	cell.append(table);
+	return cell;
 }
 
-function renderObject(value, path) {
+function renderObject(value, path, ctx, level) {
 	const keys = Object.keys(value);
-	if (keys.length === 0) return el('span', 'jg-scalar jg-empty', '{}');
+	if (keys.length === 0) return emptyBlock('{}', path, ctx);
+
+	const cell = el('div', 'jg-branch');
+	const pointer = toPointer(path);
+	const collapsed = isCollapsed(pointer, level, ctx);
+	cell.append(branchHead(value, path, ctx, collapsed));
+	cell.dataset.branch = pointer;
+	if (collapsed) return cell;
 
 	// An object: key + value, no header — the keys ARE the left column.
 	const table = el('table', 'jg-sub');
@@ -133,15 +259,33 @@ function renderObject(value, path) {
 	for (const key of keys) {
 		const tr = el('tr');
 		tr.append(el('td', 'jg-sub-key hl-prop', key));
-		tr.append(valueCell(value[key], [...path, key], 'jg-sub-value'));
+		tr.append(valueCell(value[key], [...path, key], ctx, level + 1, 'jg-sub-value'));
 		body.append(tr);
 	}
 	table.append(body);
-	return table;
+	cell.append(table);
+	return cell;
 }
 
-/** The root table: one row per entry, with the index, the key, and the value. */
-export function renderRoot(structure) {
+/** An empty container is still editable — you have to be able to fill it. */
+function emptyBlock(text, path, ctx) {
+	const wrap = el('div', 'jg-branch jg-branch-empty');
+	const menu = control('⋯', 'jg-ctl-menu', `Options for this ${text}`);
+	menu.dataset.menu = toPointer(path);
+	const add = control('+', 'jg-ctl-add', `Add to this ${text}`);
+	add.dataset.add = toPointer(path);
+	wrap.append(el('span', 'jg-scalar jg-empty', text), add, menu);
+	return wrap;
+}
+
+/**
+ * The root table: one row per entry, with the index, the key, and the value.
+ * `ctx.focus` is the drill path — when set, the table shows that branch alone.
+ */
+export function renderRoot(structure, ctx, focus = []) {
+	const shown = focus.length ? readAt(structure, focus) : structure;
+	const basePath = focus;
+
 	const table = el('table', 'jg-root');
 	const head = el('thead');
 	const hr = el('tr');
@@ -151,20 +295,61 @@ export function renderRoot(structure) {
 
 	const body = el('tbody');
 	// Document order, always. The editor must not reorder a human's file.
-	const entries = Array.isArray(structure)
-		? structure.map((v, i) => [String(i), v])
-		: Object.entries(structure);
+	const entries = Array.isArray(shown)
+		? shown.map((v, i) => [String(i), v])
+		: Object.entries(shown);
 
 	entries.forEach(([key, value], index) => {
+		const path = [...basePath, key];
 		const tr = el('tr');
+		tr.dataset.row = toPointer(path);
 		tr.append(el('td', 'jg-index', String(index + 1)));
 		tr.append(el('td', 'jg-key hl-prop', key));
-		tr.append(valueCell(value, [key]));
+
+		const cell = el('td', 'jg-value');
+		cell.dataset.path = toPointer(path);
+		// A drilled focus is the top level, so its children start at 0 — depth is
+		// counted from what you are looking at, not from the document root.
+		cell.append(renderValue(value, path, ctx, 0));
+		tr.append(cell);
 		body.append(tr);
 	});
+
 	table.append(body);
 	return table;
 }
+
+/** The breadcrumb shown when a branch has been drilled into. */
+function renderBreadcrumb(structure, focus) {
+	const bar = el('nav', 'jg-crumbs');
+	bar.setAttribute('aria-label', 'Location');
+
+	const rootBtn = control('document', 'jg-crumb', 'Back to the whole document');
+	rootBtn.dataset.crumb = '';
+	bar.append(rootBtn);
+
+	focus.forEach((token, depth) => {
+		bar.append(el('span', 'jg-crumb-sep', '/'));
+		const at = focus.slice(0, depth + 1);
+		const value = readAt(structure, at);
+		const btn = control(token, 'jg-crumb', `Back to ${toPointer(at)}`);
+		btn.dataset.crumb = toPointer(at);
+		bar.append(btn);
+		if (isBranch(value)) bar.append(el('span', 'jg-crumb-kind', Array.isArray(value) ? 'array' : 'object'));
+	});
+	return bar;
+}
+
+function readAt(root, path) {
+	let node = root;
+	for (const token of path) {
+		if (node === null || typeof node !== 'object') return undefined;
+		node = node[Array.isArray(node) ? Number(token) : token];
+	}
+	return node;
+}
+
+// ── The controller ──────────────────────────────────────────────────────
 
 /**
  * Enhance a host element as a grid. The host is a CONTAINER, not a wrapper the
@@ -172,7 +357,7 @@ export function renderRoot(structure) {
  * that already controls an element can hand it over.
  *
  * @param {HTMLElement} host
- * @param {{text?: string, format?: string}} [options]
+ * @param {{text?: string, format?: string, collapseDepth?: number}} [options]
  */
 export function setupJsonGrid(host, options = {}) {
 	if (!host) throw new Error('setupJsonGrid needs a host element');
@@ -182,11 +367,30 @@ export function setupJsonGrid(host, options = {}) {
 	// keys off this class rather than off the tag name.
 	host.classList.add('jg-host');
 
-	const state = { doc: null, history: null, formatId: options.format || 'yaml', editing: null };
+	const state = {
+		doc: null,
+		history: null,
+		formatId: options.format || 'yaml',
+		editing: null,
+		focus: [],
+		// Tri-state per pointer: absent means "follow the depth default", which is
+		// what lets a deep document open shallow without losing the user's choices.
+		collapsed: new Map(),
+		collapseDepth: options.collapseDepth ?? 3,
+		panel: null,
+	};
+
+	function ctx() {
+		return { collapsed: state.collapsed, collapseDepth: state.collapseDepth };
+	}
 
 	function render() {
 		state.editing = null;
-		host.replaceChildren(renderRoot(state.doc.structure));
+		closePanel();
+		const children = [];
+		if (state.focus.length) children.push(renderBreadcrumb(state.doc.structure, state.focus));
+		children.push(renderRoot(state.doc.structure, ctx(), state.focus));
+		host.replaceChildren(...children);
 	}
 
 	function announce(label, text, structure) {
@@ -198,11 +402,8 @@ export function setupJsonGrid(host, options = {}) {
 
 	/**
 	 * Open a document. A document the reader only half-understood is refused here
-	 * rather than rendered, and the refusal is a MESSAGE — the grid does not
-	 * colour itself over it.
-	 *
-	 * Loading announces, like every other change. A host that mirrors the text
-	 * would otherwise go stale the moment the format changed under it.
+	 * rather than rendered. Loading announces, like every other change — a host
+	 * that mirrors the text would otherwise go stale when the format changed.
 	 */
 	function load(text, formatId = state.formatId) {
 		let doc;
@@ -216,6 +417,8 @@ export function setupJsonGrid(host, options = {}) {
 		state.doc = doc;
 		state.history = createHistory(text);
 		state.formatId = formatId;
+		state.focus = [];
+		state.collapsed.clear();
 		render();
 		delete host.dataset.error;
 		host.dataset.state = 'ok';
@@ -224,7 +427,7 @@ export function setupJsonGrid(host, options = {}) {
 	}
 
 	/**
-	 * The only write path. A refused edit leaves the text and the view untouched
+	 * The ONLY write path. A refused edit leaves the text and the view untouched
 	 * and says why — a structural edit that cannot be represented must not
 	 * half-apply, and must not look like it worked.
 	 */
@@ -233,6 +436,10 @@ export function setupJsonGrid(host, options = {}) {
 			const next = applyEdit({ text: state.doc.text, formatId: state.formatId, mutate, label });
 			state.doc = { text: next.text, structure: next.structure, format: next.format };
 			state.history.push(next.text, label);
+			// The pointer may have moved (a delete shifts array indices), so drop
+			// any collapse decision about something that no longer exists rather
+			// than leaving a stale entry to answer for a path that means nothing.
+			pruneCollapsed();
 			render();
 			announce(label, next.text, next.structure);
 			return { ok: true };
@@ -243,12 +450,202 @@ export function setupJsonGrid(host, options = {}) {
 		}
 	}
 
-	/** Edit a LEAF. A container is not a value — it has no text to edit. */
+	function pruneCollapsed() {
+		for (const pointer of [...state.collapsed.keys()]) {
+			if (!hasPointer(state.doc.structure, parsePointer(pointer))) state.collapsed.delete(pointer);
+		}
+	}
+
+	function hasPointer(root, path) {
+		let node = root;
+		for (const token of path) {
+			if (node === null || typeof node !== 'object') return false;
+			if (!Object.prototype.hasOwnProperty.call(node, Array.isArray(node) ? Number(token) : token)) return false;
+			node = node[Array.isArray(node) ? Number(token) : token];
+		}
+		return true;
+	}
+
+	// ── Transient panels ───────────────────────────────────────────────
+	// nui-popover wires `popovertarget` on the trigger at connect time, so a
+	// single long-lived panel CANNOT follow a moving trigger. Each panel is
+	// therefore created for one invocation and removed on close — which keeps
+	// everything the component gives for free: light dismiss, Escape, focus
+	// return, anchor positioning, and auto-dismiss when the trigger scrolls out.
+
+	function closePanel() {
+		if (!state.panel) return;
+		state.panel.remove();
+		state.panel = null;
+	}
+
+	function openPanel(trigger, label, build, event) {
+		closePanel();
+		const panel = el('nui-popover');
+		panel.setAttribute('aria-label', label);
+		trigger.id = `jg-trigger-${++controlSeq}`;
+		panel.setAttribute('for', trigger.id);
+		build(panel);
+		trigger.after(panel);
+		panel.addEventListener('nui-popover-close', () => {
+			if (state.panel === panel) state.panel = null;
+			panel.remove();
+		}, { once: true });
+		state.panel = panel;
+
+		// Inserting the panel gives the trigger `popovertarget`, and the browser's
+		// popover ACTIVATION behaviour then runs for this very click and toggles
+		// the popover. So a click that opened the panel must not also call
+		// show(), or the two fight and it opens and vanishes in the same frame.
+		// stopPropagation cannot prevent that — activation is not propagation.
+		// Only a programmatic open needs show().
+		if (!event) panel.show();
+		return panel;
+	}
+
+	function typePalette(onPick, current) {
+		const grid = el('div', 'jg-types');
+		grid.setAttribute('role', 'radiogroup');
+		grid.setAttribute('aria-label', 'Type');
+		for (const type of ['string', 'number', 'boolean', 'null', 'object', 'array']) {
+			const option = el('button', 'jg-type');
+			option.type = 'button';
+			option.setAttribute('role', 'radio');
+			option.setAttribute('aria-checked', String(type === current));
+			if (type === current) option.dataset.current = '';
+			option.append(el('span', 'jg-type-name', type));
+			const sample = el('span', `jg-type-sample ${TYPE_CLASS[type]}`, TYPE_SAMPLES[type]);
+			option.append(sample);
+			option.addEventListener('click', () => onPick(type));
+			grid.append(option);
+		}
+		return grid;
+	}
+
+	/**
+	 * ADD and CHANGE TYPE share one popover, because they are one decision:
+	 * what kind of value belongs here. The blocks editor makes the same call —
+	 * the palette is the only place a type is chosen.
+	 */
+	function openTypePanel(trigger, { mode, path }, event) {
+		const target = parsePointer(path);
+		// In CREATE mode the container is the value AT the path — /tags is the
+		// list you are adding to. In EDIT mode there is no container question:
+		// the value itself is what changes.
+		const container = readAt(state.doc.structure, target);
+		const isArray = Array.isArray(container);
+		const current = mode === 'edit' ? typeOf(readAt(state.doc.structure, target)) : null;
+
+		openPanel(trigger, mode === 'create' ? 'Add a value' : 'Change type', (panel) => {
+			// A new property in an object needs a name; a new entry in an array is
+			// addressed by position and has none.
+			let nameInput = null;
+			if (mode === 'create' && !isArray) {
+				panel.append(el('label', 'jg-field-label', 'Name'));
+				const wrap = el('nui-input');
+				nameInput = el('input');
+				nameInput.type = 'text';
+				nameInput.placeholder = 'property name';
+				wrap.append(nameInput);
+				panel.append(wrap);
+				// Focus after the panel is in the top layer, otherwise the browser
+				// refuses to move focus into it.
+				panel.addEventListener('nui-popover-open', () => nameInput.focus(), { once: true });
+			}
+
+			// Context sensitivity: a new value in a column of numbers should not
+			// require picking "number" to get a 0 instead of "".
+			const suggested = mode === 'create'
+				? inferColumnType(isArray ? container : Object.values(container ?? {}))
+				: current;
+			if (mode === 'create' && suggested) {
+				panel.append(el('p', 'jg-hint', `This column looks like ${suggested}`));
+			}
+
+			panel.append(typePalette((type) => {
+				if (mode === 'create') {
+					const name = isArray ? null : nameInput?.value.trim();
+					if (!isArray && !name) { say('A property needs a name', true); nameInput?.focus(); return; }
+					const result = commit(`add ${name ?? type}`, (draft) => {
+						const value = type === 'object' ? {} : type === 'array' ? [] : null;
+						return isArray
+							? insertAt(draft, [...target, String(container.length)], value)
+							: insertAt(draft, [...target, name], value);
+					});
+					if (result.ok) closePanel();
+					return;
+				}
+				// Changing a type can DISCARD, so convertTo refuses the lossy ones
+				// and says why. The panel stays open with the reason; the document
+				// is untouched.
+				const verdict = convertForEdit(readAt(state.doc.structure, target), type);
+				if (!verdict.ok) { say(verdict.reason, true); return; }
+				const result = commit(`type ${current} → ${type}`, (draft) => setAt(draft, target, verdict.value));
+				if (result.ok) closePanel();
+			}, current));
+		}, event);
+	}
+
+	function parentAt(root, path) {
+		let node = root;
+		for (let i = 0; i < path.length - 1; i++) {
+			node = node[Array.isArray(node) ? Number(path[i]) : path[i]];
+		}
+		return path.length ? node : root;
+	}
+
+	// convertTo lives in the model; the only thing added here is the creation
+	// case (null → a fresh empty container), which is not a conversion.
+	function convertForEdit(value, target) {
+		if (value === null) {
+			return { ok: true, value: target === 'object' ? {} : target === 'array' ? [] : target === 'string' ? '' : target === 'number' ? 0 : target === 'boolean' ? false : null };
+		}
+		return convertTo(value, target);
+	}
+
+	function openMenuPanel(trigger, pointer, event) {
+		const path = parsePointer(pointer);
+		const value = readAt(state.doc.structure, path);
+		openPanel(trigger, 'Value options', (panel) => {
+			const list = el('div', 'jg-menu');
+			const item = (label, run, danger = false) => {
+				const button = el('button', `jg-menu-item${danger ? ' jg-menu-danger' : ''}`, label);
+				button.type = 'button';
+				button.addEventListener('click', () => { run(); closePanel(); });
+				list.append(button);
+				return button;
+			};
+			if (isBranch(value)) item('Open on its own', () => drillTo(pointer));
+			if (typeOf(value) !== 'array') item('Duplicate', () => {
+				const parent = parentAt(state.doc.structure, path);
+				const at = Array.isArray(parent) ? Number(path[path.length - 1]) + 1 : path[path.length - 1];
+				commit('duplicate', (draft) => insertAt(draft, [...path.slice(0, -1), String(at)], value));
+			});
+			item('Copy path', async () => {
+				try { await navigator.clipboard.writeText(pointer); say(`Copied ${pointer}`); }
+				catch { say('The browser would not give the clipboard. The path is ' + pointer, true); }
+			});
+			item('Delete', () => commit('delete', (draft) => removeAt(draft, path)), true);
+			panel.append(list);
+		}, event);
+	}
+
+	function drillTo(pointer) {
+		state.focus = parsePointer(pointer);
+		// Collapse decisions are keyed by ABSOLUTE pointer, so they stay true
+		// after a drill. Clearing them here would throw away exactly the
+		// knowledge that made drilling cheap.
+		render();
+	}
+
+	// ── Cell editing ──────────────────────────────────────────────────
+
 	function beginEdit(cell) {
 		if (state.editing === cell) return;
 		const path = parsePointer(cell.dataset.path || '');
 		const current = readAt(state.doc.structure, path);
 		if (current === null || typeof current === 'object') return;
+		closePanel();
 
 		const input = el('input', 'jg-input');
 		input.type = 'text';
@@ -269,11 +666,7 @@ export function setupJsonGrid(host, options = {}) {
 			// The format's own reader decides what the text means; the badge
 			// displays the result rather than constraining it.
 			const coerced = coerceScalar(input.value, state.formatId);
-			if (!coerced.ok) {
-				host.dataset.error = coerced.reason;
-				render();
-				return;
-			}
+			if (!coerced.ok) { host.dataset.error = coerced.reason; render(); say(coerced.reason, true); return; }
 			commit(`set ${cell.dataset.path}`, (draft) => setAt(draft, path, coerced.value));
 		};
 		input.addEventListener('keydown', (e) => {
@@ -285,13 +678,44 @@ export function setupJsonGrid(host, options = {}) {
 
 	function step(redo) {
 		const back = redo ? state.history.redo() : state.history.undo();
-		if (back === null) return;
+		if (back === null) return false;
 		state.doc = openDocument(back, state.formatId);
+		pruneCollapsed();
 		render();
 		announce(redo ? 'redo' : 'undo', back, state.doc.structure);
+		return true;
 	}
 
+	function say(message, isError = false) {
+		host.dispatchEvent(new CustomEvent(isError ? 'nui-say-error' : 'nui-say', { bubbles: true, detail: { message } }));
+	}
+
+	// ── Events ────────────────────────────────────────────────────────
+
 	host.addEventListener('click', (e) => {
+		const caret = e.target.closest('[data-caret]');
+		if (caret) {
+			const pointer = caret.dataset.caret;
+			const path = parsePointer(pointer);
+			// Depth is absolute minus the drill offset, so the default still means
+			// the same thing after drilling into a deep branch.
+			const now = isCollapsed(pointer, path.length - state.focus.length, ctx());
+			state.collapsed.set(pointer, !now);
+			render();
+			return;
+		}
+		const crumb = e.target.closest('[data-crumb]');
+		if (crumb) { drillTo(crumb.dataset.crumb); return; }
+
+		const typeChip = e.target.closest('[data-type]');
+		if (typeChip) { openTypePanel(typeChip, { mode: 'edit', path: typeChip.dataset.type }, e); return; }
+
+		const add = e.target.closest('[data-add]');
+		if (add) { openTypePanel(add, { mode: 'create', path: add.dataset.add }, e); return; }
+
+		const menu = e.target.closest('[data-menu]');
+		if (menu) { openMenuPanel(menu, menu.dataset.menu, e); return; }
+
 		// A click on a NESTED leaf addresses that leaf, because every value cell
 		// carries its own pointer.
 		const leaf = e.target.closest('.jg-scalar');
@@ -312,32 +736,33 @@ export function setupJsonGrid(host, options = {}) {
 	host._jsonGrid = {
 		load,
 		commit,
+		say,
 		get text() { return state.doc?.text; },
 		get structure() { return state.doc?.structure; },
 		get format() { return state.formatId; },
+		get focus() { return [...state.focus]; },
 		canUndo: () => !!state.history?.canUndo(),
 		canRedo: () => !!state.history?.canRedo(),
-		destroy() { host.replaceChildren(); host.classList.remove('jg-host'); host._jsonGrid = null; },
+		destroy() {
+			closePanel();
+			host.replaceChildren();
+			host.classList.remove('jg-host');
+			host._jsonGrid = null;
+		},
 	};
 	return host._jsonGrid;
-}
-
-function readAt(root, path) {
-	let node = root;
-	for (const token of path) {
-		if (node === null || typeof node !== 'object') return undefined;
-		node = node[Array.isArray(node) ? Number(token) : token];
-	}
-	return node;
 }
 
 class NuiJsonGrid extends HTMLElement {
 	connectedCallback() {
 		if (this.hasAttribute('data-initialized')) return;
 		this.setAttribute('data-initialized', 'true');
-		// The element IS the host: setupJsonGrid owns its children entirely.
 		const seed = this.getAttribute('text') ?? this.textContent;
-		this._grid = setupJsonGrid(this, { text: seed, format: this.getAttribute('format') || 'yaml' });
+		this._grid = setupJsonGrid(this, {
+			text: seed,
+			format: this.getAttribute('format') || 'yaml',
+			collapseDepth: Number(this.getAttribute('collapse-depth')) || undefined,
+		});
 	}
 	disconnectedCallback() { this._grid?.destroy(); this._grid = null; }
 	get text() { return this._grid?.text; }

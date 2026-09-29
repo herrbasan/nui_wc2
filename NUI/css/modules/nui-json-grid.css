@@ -1,13 +1,17 @@
-/* .jg-host — the grid view.
+/* nui-json-grid — blocks, disclosure, and discreet chrome.
  *
  * Colours come entirely from the existing .hl-* syntax classes, so the grid and
  * the code view read as the same document in the same vocabulary. This file owns
- * LAYOUT only: hairlines, spacing, and the edit affordance.
+ * LAYOUT and CHROME only.
  *
- * Border widths are --border-thickness, never a fixed px: chrome quantises
+ * Border widths are --border-thickness, never a fixed px: the browser quantises
  * border-width to whole device pixels, so a hardcoded 2px renders heavier than
  * twice 1px. The same trap applies to calc() — --border-thickness is the keyword
- * `thin`, and calc(thin * -1) is invalid and silently drops the declaration.
+ * `thin`, and calc(thin * -1) is invalid and the declaration is dropped silently.
+ *
+ * The accent is NOT a state colour. --color-highlight answers "what is
+ * important"; editing and selection state answer "what is under my hands", and
+ * get a neutral surface step instead.
  */
 
 .jg-host {
@@ -51,8 +55,107 @@
 	width: 1%;
 }
 
-/* A nested sub-table: a hairline box, and nothing else gets one. The root grid
-   has no outer border, so the box reads as "this is a contained value". */
+/* ── Blocks ───────────────────────────────────────────────────────────── */
+
+.jg-branch {
+	position: relative;
+}
+
+.jg-host .jg-head {
+	display: flex;
+	align-items: center;
+	gap: var(--nui-space-quarter);
+	min-height: 1.4em;
+	/* Controls are always laid out, only their opacity changes. Reserving the
+	   space means revealing a control never reflows the row. */
+	padding-right: 7.5em;
+	margin-bottom: calc(var(--nui-space-quarter) / 2);
+}
+
+.jg-host .jg-head-leaf {
+	padding-right: 0;
+	margin-bottom: 0;
+}
+
+/* A leaf: the value takes the room it needs, the controls sit at the end. */
+.jg-host .jg-leaf {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--nui-space);
+}
+
+.jg-host .jg-summary,
+.jg-host .jg-branch-type {
+	color: var(--text-color-dim);
+	font-size: var(--font-size-xsmall);
+}
+
+.jg-host .jg-branch-type {
+	font-style: italic;
+	opacity: 0.8;
+}
+
+/* ── Controls: present but quiet ──────────────────────────────────────── */
+/* opacity rather than visibility, deliberately. A visibility:hidden control is
+   out of the tab order, so a keyboard user could never reach it and would never
+   know it existed. These are real controls and belong in the a11y tree. */
+
+.jg-host .jg-ctl {
+	appearance: none;
+	background: none;
+	border: none;
+	font: inherit;
+	line-height: 1;
+	cursor: pointer;
+	color: var(--text-color-dim);
+	padding: 0 var(--nui-space-quarter);
+	border-radius: var(--border-radius1);
+	opacity: 0;
+	transition: opacity 0.12s ease-out, background-color 0.12s ease-out;
+}
+
+.jg-host tr:hover .jg-ctl,
+.jg-host td:focus-within .jg-ctl,
+.jg-host .jg-ctl:focus-visible,
+.jg-host .jg-caret {
+	opacity: 1;
+}
+
+/* The disclosure is not chrome — it is the primary control, and it is always
+   visible. Hiding the thing you need in order to find the thing you want would
+   be a joke. */
+.jg-host .jg-caret {
+	font-size: var(--font-size-small);
+	width: 1.2em;
+	text-align: center;
+	opacity: 1;
+}
+
+.jg-host .jg-ctl:hover {
+	background: color-mix(in oklab, var(--color-shade2) 70%, var(--color-base));
+	color: var(--text-color);
+}
+
+/* Focus must be unmistakable: it is the only way a keyboard user finds these. */
+.jg-host .jg-ctl:focus-visible {
+	outline: var(--border-thickness) solid var(--color-highlight);
+	outline-offset: 1px;
+	opacity: 1;
+}
+
+.jg-host .jg-ctl-add {
+	font-size: var(--font-size-medium);
+	line-height: 0.8;
+}
+
+.jg-host .jg-type-chip {
+	font-size: var(--font-size-xsmall);
+	border: var(--border-thickness) solid var(--border-shade2);
+}
+
+/* ── Nested sub-tables ────────────────────────────────────────────────── */
+
 .jg-host .jg-sub {
 	border: var(--border-thickness) solid var(--border-shade2);
 	border-collapse: collapse;
@@ -65,6 +168,7 @@
 
 .jg-host .jg-sub-key {
 	white-space: nowrap;
+	width: 1%;
 }
 
 .jg-host .jg-sub-index {
@@ -72,6 +176,7 @@
 	color: var(--text-color-dim);
 	font-size: var(--font-size-xsmall);
 	padding-right: var(--nui-space);
+	width: 1%;
 }
 
 /* A key this record does not have. Distinct from a null, which is a value. */
@@ -85,14 +190,15 @@
 	color: var(--text-color-dim);
 }
 
-/* A leaf is editable, so it must look like it. */
+/* ── Leaves ───────────────────────────────────────────────────────────── */
+
 .jg-host .jg-scalar {
 	cursor: text;
 	border-radius: var(--border-radius1);
 }
 
 .jg-host .jg-scalar:hover {
-	background: color-mix(in oklab, var(--color-shade2) 60%, transparent);
+	background: color-mix(in oklab, var(--color-shade2) 60%, var(--color-base));
 }
 
 .jg-host td[data-editing='true'] {
@@ -110,10 +216,138 @@
 	padding: calc(var(--nui-space-half) / 2) var(--nui-space);
 }
 
-/* A refused edit leaves the document and the view completely alone.
- *
- * It deliberately does NOT outline itself. --color-highlight is the accent, and
- * the accent is not a state colour: it answers "what is important", not "what
- * went wrong". A refusal is a MESSAGE, so it goes out as an nui-error event and
- * the host puts it in a banner — where words carry it, instead of a colour
- * standing in for words that are not there. */
+/* ── Breadcrumb ───────────────────────────────────────────────────────── */
+
+.jg-host .jg-crumbs {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--nui-space-quarter);
+	padding-bottom: var(--nui-space-half);
+	margin-bottom: var(--nui-space-half);
+	border-bottom: var(--border-thickness) solid var(--border-shade2);
+	font-family: monospace;
+	font-size: var(--font-size-xsmall);
+}
+
+.jg-host .jg-crumb {
+	appearance: none;
+	background: none;
+	border: none;
+	font: inherit;
+	color: var(--text-color-dim);
+	cursor: pointer;
+	padding: 0 var(--nui-space-quarter);
+	border-radius: var(--border-radius1);
+}
+
+.jg-host .jg-crumb:hover {
+	background: color-mix(in oklab, var(--color-shade2) 70%, var(--color-base));
+	color: var(--text-color);
+}
+
+.jg-host .jg-crumb:focus-visible {
+	outline: var(--border-thickness) solid var(--color-highlight);
+	outline-offset: 1px;
+}
+
+.jg-host .jg-crumb-sep {
+	color: var(--text-color-dim);
+	opacity: 0.6;
+}
+
+.jg-host .jg-crumb-kind {
+	color: var(--text-color-dim);
+	font-style: italic;
+	opacity: 0.7;
+}
+
+/* ── Panels: the type palette and the options menu ────────────────────── */
+
+.jg-host .jg-types {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: var(--nui-space-quarter);
+	min-width: 16rem;
+}
+
+.jg-host .jg-type {
+	appearance: none;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: calc(var(--nui-space-quarter) / 2);
+	font: inherit;
+	font-family: monospace;
+	font-size: var(--font-size-xsmall);
+	text-align: left;
+	cursor: pointer;
+	padding: var(--nui-space-half);
+	border: var(--border-thickness) solid var(--border-shade2);
+	border-radius: var(--border-radius2);
+	background: var(--color-base);
+	color: var(--text-color);
+}
+
+.jg-host .jg-type:hover {
+	border-color: var(--border-shade4);
+	background: color-mix(in oklab, var(--color-shade2) 50%, var(--color-base));
+}
+
+.jg-host .jg-type:focus-visible {
+	outline: var(--border-thickness) solid var(--color-highlight);
+	outline-offset: 1px;
+}
+
+.jg-host .jg-type[data-current] {
+	border-color: var(--color-highlight);
+}
+
+.jg-host .jg-type-name {
+	font-weight: 600;
+}
+
+.jg-host .jg-type-sample {
+	opacity: 0.9;
+}
+
+.jg-host .jg-field-label {
+	display: block;
+	font-size: var(--font-size-xsmall);
+	color: var(--text-color-dim);
+	margin-bottom: calc(var(--nui-space-quarter) / 2);
+}
+
+.jg-host .jg-hint {
+	margin: var(--nui-space-half) 0;
+	font-size: var(--font-size-xsmall);
+	color: var(--text-color-dim);
+}
+
+.jg-host .jg-menu {
+	display: flex;
+	flex-direction: column;
+	min-width: 12rem;
+}
+
+.jg-host .jg-menu-item {
+	appearance: none;
+	background: none;
+	border: none;
+	font: inherit;
+	font-size: var(--font-size-small);
+	text-align: left;
+	cursor: pointer;
+	padding: var(--nui-space-half);
+	border-radius: var(--border-radius1);
+	color: var(--text-color);
+}
+
+.jg-host .jg-menu-item:hover {
+	background: color-mix(in oklab, var(--color-shade2) 70%, var(--color-base));
+}
+
+.jg-host .jg-menu-item:focus-visible {
+	outline: var(--border-thickness) solid var(--color-highlight);
+	outline-offset: -1px;
+}
