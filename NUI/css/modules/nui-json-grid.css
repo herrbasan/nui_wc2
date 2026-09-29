@@ -330,12 +330,24 @@
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	outline-offset: 1px;
+	/* No focus ring on the editor itself. The cell IS the field, so the CELL
+	   carries the focus state — a ring around the text inside a lit cell says the
+	   same thing twice, and says it louder. The cell's own ring below is the
+	   focus indicator, one step more present than before precisely because it is
+	   now the only one. */
+	outline: none;
 }
 
 .jg-host td:focus-within {
 	background: color-mix(in oklab, var(--color-shade2) 60%, var(--color-base));
-	box-shadow: inset 0 0 0 var(--border-thickness) var(--border-shade3);
+	/* A 1px length, NOT `var(--border-thickness)`. That variable is the keyword
+	   `thin`, and `thin` is not accepted in the spread slot of a box-shadow in
+	   this engine — the whole declaration is dropped SILENTLY, so the cell
+	   highlights with a background and no ring and the rule looks applied. A
+	   hardcoded 1px is the house idiom for a hairline ring (nui-file-tree uses
+	   `inset 2px 0 0`, the theme uses `inset 0 1px 2px`), and ink is the one
+	   place this project uses px deliberately. */
+	box-shadow: inset 0 0 0 1px var(--border-shade4);
 	transition: background-color 100ms var(--nte-ease, ease-out);
 }
 
