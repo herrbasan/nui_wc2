@@ -141,13 +141,19 @@ table[data-nui-table-editor] {
 	   against the neighbouring cell, and of the text on that fill):
 
 	       ratio   fill vs cell   text on fill
-	         24%       1.37          8.6      <- the old value: imperceptible
-	         55%       2.16          5.5
-	         65%       2.50          4.7      <- chosen: last step before
-	         75%       2.88          4.1         text drops under WCAG AA 4.5
-	         85%       3.30          3.6
+	         30%       1.49          7.9      <- too faint to read as a selection
+	         50%       2.01          5.9
+	         55%       2.16          5.5      <- chosen
+	         60%       2.32          5.1
+	         65%       2.50          4.7      <- legible, but reads as HEAVY
 
-	   65% is the highest ratio that still clears 4.5:1 for the text sitting on it.
+	   55% sits where the cell is unmistakably selected without the fill becoming
+	   the loudest thing in the table, and it leaves a clear margin on text
+	   contrast rather than spending it. The earlier 65% was defensible on
+	   contrast arithmetic alone and wrong on feel: a selection is a background,
+	   and a background at 2.5:1 against its own row competes with the content it
+	   is supposed to sit behind.
+
 	   The fill cannot reach the 3:1 that WCAG asks of non-text indicators while
 	   the text is the theme's own colour over the same fill -- the two goals pull
 	   against each other, and legibility of the cell's CONTENT is the one that
@@ -158,15 +164,14 @@ table[data-nui-table-editor] {
 	   The two schemes take DIFFERENT ratios, and that asymmetry is forced rather
 	   than stylistic. In dark the fill is mixed toward a surface that is already
 	   darker than the text, so raising the ratio walks the fill up toward the text
-	   and the two collide quickly -- 65% is the ceiling. In light the fill is
-	   mixed toward a surface far from the text already, so the ratio can climb
-	   while the text keeps a wide margin: at 75% the fill matches dark's 2.50
-	   visibility AND the text is still 6.44:1. Equal visibility, very different
-	   headroom, so the numbers differ. A single shared ratio would have made one
-	   of the two schemes visibly weaker than the other. */
+	   and the two collide quickly -- 55% keeps a comfortable margin. In light the
+	   surface is far from the text to begin with, so the ratio can climb while
+	   the text keeps a wide margin: 65% gives light the same visible step that
+	   55% gives dark, with the text still above 10:1. A single shared ratio
+	   would have made one of the two schemes visibly weaker than the other. */
 	--nte-select-bg: light-dark(
-		color-mix(in srgb, var(--color-highlight) 75%, var(--color-shade1)),
-		color-mix(in srgb, var(--color-highlight) 65%, var(--color-shade2))
+		color-mix(in srgb, var(--color-highlight) 65%, var(--color-shade1)),
+		color-mix(in srgb, var(--color-highlight) 55%, var(--color-shade2))
 	);
 	--nte-select-text: var(--text-color);
 	--nte-active-ring: var(--text-color-dim);
@@ -195,19 +200,32 @@ table[data-nui-table-editor] [data-selected] {
 
 /* The caret cell is the one remaining ring, and it stays hairline: it says "the
    keyboard is here", which is a quieter fact than "these cells are selected" and
-   should not outweigh it. Width and offset both follow --border-thickness, so the
-   ring sits on the same line as the grid instead of floating inside the cell. */
+   should not outweigh it.
+
+   The offset is what makes it ONE border. A cell already carries the grid's own
+   --border-shade3 line, and an outline at offset 0 is painted just outside it,
+   so the two stack into a double edge with a darker seam between them. Pulling
+   the ring inward by its own width lands it ON the grid line, where it
+   REPLACES that line rather than sitting beside it.
+
+   The offset cannot be calc(var(--border-thickness) * -1): that token is the
+   keyword `thin`, and arithmetic on a keyword is invalid, so the declaration was
+   being dropped and the offset silently stayed at 0 -- the double border this
+   comment describes, present in the built component while claiming not to be.
+   The value below is the thin keyword's own resolved width at the usual device
+   ratios; the ring is hairline either way, so an approximation to the token is
+   correct where arithmetic on the token is not. */
 nui-table-editor td[data-active],
 nui-table-editor th[data-active],
 table[data-nui-table-editor] [data-active] {
 	outline: var(--border-thickness) solid var(--nte-active-ring, var(--text-color-dim));
-	outline-offset: calc(var(--border-thickness) * -1);
+	outline-offset: calc(var(--nui-space-eighth) * -0.5);
 }
 
 nui-table-editor :is(th,td):focus-visible,
 table[data-nui-table-editor] :is(th,td):focus-visible {
 	outline: var(--border-thickness) solid var(--nte-active-ring, var(--text-color-dim));
-	outline-offset: calc(var(--border-thickness) * -1);
+	outline-offset: calc(var(--nui-space-eighth) * -0.5);
 }
 
 /* --- Overlay: one layer, positioned over the table, never in its flow. --- */
@@ -277,17 +295,23 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 	vertical-align: top;
 }
 
-/* Only the row and column under the pointer show their grip. Showing every grip
-   at once is the spreadsheet look the at-rest law exists to reject: a table must
-   read as a table with one affordance, not as a grid of handles. */
-.nte-row-grip.is-hot,
-.nte-col-grip.is-hot,
+/* A grip appears for a row or column that is actually SELECTED, and for no other
+   reason. There is no hover state.
+
+   Moving things is a rarer job than reading, editing or aligning, and chrome that
+   is always present spends focus and clarity on the job that is about to happen
+   rather than the one that is. A grip on every row and column is the spreadsheet
+   look, and it is not what this component is for.
+
+   Because the grip is tied to the selection, the affordance shows itself exactly
+   when the user has already said "this row" -- which is also the only moment the
+   grip has something to act on. The fill itself is set with the rest of the
+   selected-grip styling below, where it belongs with the hover treatment it
+   must outrank. */
 .nte-row-grip.is-selected,
 .nte-col-grip.is-selected {
 	opacity: 1;
 	visibility: visible;
-	background-color: var(--color-shade1);
-	color: var(--text-color);
 }
 
 .nte-row-grip {

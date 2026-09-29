@@ -267,16 +267,6 @@ function setupTableEditor(table, options = {}) {
 		};
 	}
 
-	/** A range that touches every column of the table is a whole-ROW selection. */
-	function isWholeRow(r) {
-		return r.minCol === 0 && r.maxCol === colCount(table) - 1;
-	}
-
-	function isWholeColumn(r) {
-		const first = hasHeader(table) ? -1 : 0;
-		return r.minRow === first && r.maxRow === bodyRows(table).length - 1;
-	}
-
 	function applyRange(r) {
 		range = r;
 		table.querySelectorAll('[data-selected]').forEach(c => c.removeAttribute('data-selected'));
@@ -295,12 +285,41 @@ function setupTableEditor(table, options = {}) {
 				cellAt(table, row, col)?.setAttribute('data-selected', '');
 			}
 		}
-		if (isWholeRow(r)) {
-			rowGrips.querySelector(`[data-row="${r.minRow}"]`)?.classList.add('is-selected');
+
+		// A grip is shown for every FULLY covered row and every FULLY covered
+		// column -- not just the first. This used to light `[data-row=minRow]`
+		// alone, which was correct only while a whole-row selection could be a
+		// single row: a three-row sweep showed one grip, implying the other two
+		// were not selected even though every one of their cells was. The grip
+		// has to be derived per row and per column, because "is this row
+		// entirely inside the range" is a different question for each row.
+		const lastCol = colCount(table) - 1;
+		const fullWidth = r.minCol === 0 && r.maxCol === lastCol;
+		if (fullWidth) {
+			for (let row = Math.max(r.minRow, 0); row <= r.maxRow; row++) {
+				rowGrips.querySelector(`[data-row="${row}"]`)?.classList.add('is-selected');
+			}
 		}
-		if (isWholeColumn(r)) {
-			colGrips.querySelector(`[data-col="${r.minCol}"]`)?.classList.add('is-selected');
+		const first = hasHeader(table) ? -1 : 0;
+		const fullHeight = r.minRow === first && r.maxRow === bodyRows(table).length - 1;
+		if (fullHeight) {
+			for (let col = r.minCol; col <= r.maxCol; col++) {
+				colGrips.querySelector(`[data-col="${col}"]`)?.classList.add('is-selected');
+			}
 		}
+
+		// The one case where grips are withheld: the WHOLE table is selected.
+		// There is no narrower selection left to move, so a grip would have
+		// nothing to act on and would be a pure lie about what is selected. It
+		// would also be the loudest the chrome ever gets -- every row and every
+		// column lit at once, the grid-of-handles look the at-rest law rejects.
+		// The selection itself stays fully visible; only the handles go.
+		const wholeTable = fullWidth && fullHeight;
+		if (wholeTable) {
+			rowGrips.querySelectorAll('.is-selected').forEach(g => g.classList.remove('is-selected'));
+			colGrips.querySelectorAll('.is-selected').forEach(g => g.classList.remove('is-selected'));
+		}
+
 		activeCell = cellAt(table, r.minRow, r.minCol) || null;
 		activeCell?.setAttribute('data-active', '');
 		updateZone();
@@ -662,49 +681,27 @@ function setupTableEditor(table, options = {}) {
 		emit('structure', { action: 'paste-tsv', rows: grid.length, cols: grid[0]?.length || 0 });
 	}
 
-	// ── Pointer: hover reveals the row and column under the pointer only ────────
+	// ── Pointer ─────────────────────────────────────────────────────────────────
+	//
+	// There is deliberately no hover state for the grips. An earlier version
+	// revealed the row and column grip under the pointer, on the reasoning that
+	// one affordance is quieter than a grid of them -- but a grip appearing
+	// wherever the pointer merely passed is a signal about the POINTER, not
+	// about the selection, and on a table with many rows it still produced a
+	// running edge of handles as the pointer moved.
+	//
+	// A grip now appears only when that whole row or column is actually
+	// selected, which is the state it acts on. The grip is drawn from the same
+	// Because the grip is tied to the selection, it is derived from the same range
+	// as everything else (see applyRange), so it can never claim a row the
+	// selection does not contain -- and every fully covered row gets one, not
+	// just the first.
+	//
+	// The grips are still hit-testable while the overlay is hovered, so drag to
+	// reorder and click to select still work without a visible handle. What was
+	// removed is the appearance, not the capability.
 
 	let drag = null;
-	let hotRow = -1;
-	let hotCol = -1;
-
-	/** Index of the body row whose midpoint band contains clientY, or -1. */
-	function rowAt(clientY) {
-		const rows = bodyRows(table);
-		for (let i = 0; i < rows.length; i++) {
-			const r = rows[i].getBoundingClientRect();
-			if (clientY >= r.top && clientY <= r.bottom) return i;
-		}
-		return -1;
-	}
-
-	/** Index of the column whose horizontal band contains clientX, or -1. */
-	function colAt(clientX) {
-		const head = headerRowEl(table);
-		if (!head) return -1;
-		const cells = Array.from(head.cells);
-		for (let i = 0; i < cells.length; i++) {
-			const r = cells[i].getBoundingClientRect();
-			if (clientX >= r.left && clientX <= r.right) return i;
-		}
-		return -1;
-	}
-
-	function setHot(row, col) {
-		if (row === hotRow && col === hotCol) return;
-		hotRow = row;
-		hotCol = col;
-		rowGrips.querySelectorAll('.nte-row-grip').forEach(g => {
-			g.classList.toggle('is-hot', Number(g.dataset.row) === row);
-		});
-		colGrips.querySelectorAll('.nte-col-grip').forEach(g => {
-			g.classList.toggle('is-hot', Number(g.dataset.col) === col);
-		});
-	}
-
-	function clearHot() {
-		setHot(-1, -1);
-	}
 
 	/**
 	 * Drop targets are BOUNDARIES, not items.
@@ -910,22 +907,12 @@ function setupTableEditor(table, options = {}) {
 		// Hover is a geometric question, not an enter/leave one: the grips sit OUTSIDE
 		// the table's box, so travelling onto one fires pointerleave on the table and
 		// any enter/leave logic would switch the chrome off exactly as the user
-		// reaches for it.
+		// reaches for it. The class still governs the edge buttons and the grips'
+		// pointer-events; the grips' VISIBILITY comes from the selection, not here.
 		const inside = overTableOrChrome(e.clientX, e.clientY);
 		const was = overlay.classList.contains('is-hovered');
 		overlay.classList.toggle('is-hovered', inside);
-		if (!inside && was) {
-			clearHot();
-			hideZone();
-		}
-
-		if (e.target?.closest?.('.nte-row-grip, .nte-col-grip')) {
-			const g = e.target.closest('[data-row], [data-col]');
-			setHot(g.dataset.row !== undefined ? Number(g.dataset.row) : hotRow,
-				g.dataset.col !== undefined ? Number(g.dataset.col) : hotCol);
-		} else if (overTableOrChrome(e.clientX, e.clientY)) {
-			setHot(rowAt(e.clientY), colAt(e.clientX));
-		}
+		if (!inside && was) hideZone();
 	}, true);
 
 	function endGesture() {
@@ -1125,7 +1112,6 @@ function setupTableEditor(table, options = {}) {
 		if (overTableOrChrome(e.clientX, e.clientY)) return;
 		clearSelection();
 		overlay.classList.remove('is-hovered');
-		clearHot();
 		hideZone();
 	}, true);
 	on(zone, 'pointerenter', () => zone.classList.add('is-pinned'));
