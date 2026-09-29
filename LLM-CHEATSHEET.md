@@ -919,7 +919,7 @@ Hover/focus help text only — **non-interactive by contract**. For a panel of c
 
 📖 **Addon docs:** [`documentation/addons/`](documentation/addons/) — list.md, lightbox.md, code-editor.md, media-player.md, wizard.md, menu.md, context-menu.md, rich-text.md, app-window.md, file-tree.md, slides.md, graph.md, table-editor.md
 
-† **nui-table-editor is new and awaiting feel-check** — mechanics are verified in the browser, interaction feel is not yet signed off. It enhances a native `<table>` in place (`setupTableEditor(table)`) or wraps one (`<nui-table-editor><table>…`). Inside a `contenteditable` host it adds UI only and never takes over editability or keys. See [table-editor.md](documentation/addons/table-editor.md).
+† **nui-table-editor is new and feel-checked** — mechanics and interaction feel are both signed off. It enhances a native `<table>` in place (`setupTableEditor(table)`) or wraps one (`<nui-table-editor><table>…`). Inside a `contenteditable` host it adds UI only and never takes over editability or keys. See [table-editor.md](documentation/addons/table-editor.md).
 
 ---
 

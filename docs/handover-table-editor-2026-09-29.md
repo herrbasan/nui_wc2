@@ -156,21 +156,44 @@ fixed, fetch originals by hand with the URL above.
 
 ---
 
+## Closed 2026-09-29 — feel-check signed off
+
+**The user signed off the interaction feel: "the feel is really good, i think we
+surpassed whats floating around in terms of easy to use table editors."** The
+component is complete.
+
+The feel-check ran as a long sampling loop rather than a single gate — roughly
+fourteen rounds over one session, and **every round found real defects**, none of
+which were visible to code review:
+
+- two silent no-ops: zone labels rendered empty (`el()` wrote `textContent` as an
+  attribute), and the header toggle changed the DOM without changing the screen
+  (`th` is styled by tag, so a `<th>` in `<tbody>` is still a header)
+- the top zone closed under the pointer on every button press
+- three different treatments for one "on" state, two of them near-invisible
+- a dead `outline-offset` whose own comment claimed a behaviour it did not have
+- grips lighting one row for a multi-row selection, and blinking out on mouseup
+- the selection staying on the slot rather than following what moved
+- multi-column bands not carrying the selection at all
+- text selection destroyed by a few pixels of hand overshoot at a cell edge
+
+**Every one was found by the user driving the UI, and none by inspection.** The
+process law in `docs/table-editor-decisions.md` — one slice at a time, user gates
+each — was suspended for the initial build against the user's invitation. It was
+never repealed, and the feel-check it describes is what this session ran, at
+larger scale. The deviation is recorded in the log rather than hidden.
+
 ## Open
 
-1. **The feel-check is not signed off.** The user sampled it three times and each
-   round found real defects (all fixed), but nobody has declared the interaction
-   feel correct. The process law in `docs/table-editor-decisions.md` — one slice at
-   a time, user gates each — was **suspended** for this build, not repealed. It
-   still governs everything after.
-2. **RTE integration is not started, deliberately.** The component exposes
-   `setupTableEditor(table)` for exactly this, and inside a `contenteditable`
-   ancestor it adds UI only and never touches keys. Wiring it into
-   `nui-rich-text` to replace the existing prompt-insert + context-menu table
-   support is its own slice, gated on the feel-check.
+**RTE integration is not started, deliberately.** The component exposes
+`setupTableEditor(table)` for exactly this, and inside a `contenteditable`
+ancestor it adds UI only and never touches keys. Wiring it into `nui-rich-text`
+to replace the existing prompt-insert + context-menu table support is its own
+slice, and the gate that was holding it — the feel-check — is now closed.
 
-The component was built in one pass at the user's invitation, against that law.
-That deviation is recorded in the decision log rather than hidden.
+The component was built in one pass at the user's invitation, against the
+slice-at-a-time law. That deviation is recorded in the decision log rather than
+hidden.
 
 ---
 

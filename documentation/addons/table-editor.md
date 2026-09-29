@@ -1,9 +1,10 @@
 # nui-table-editor
 
-> **Status: fresh implementation, awaiting feel-check.** Mechanism is complete and
-> verified in the browser. Interaction *feel* is reviewed by sampling the demo at
-> `#page=experiments/table-editor` — not by reading this file. The abandoned
-> first attempt remains at `#page=experiments/dropped-table-editor` for contrast.
+> **Status: complete.** Mechanism and interaction feel are both signed off. The
+> feel-check was closed by sampling the demo at
+> `#page=experiments/table-editor` — ten-plus rounds, every round finding real
+> defects. The abandoned first attempt remains at
+> `#page=experiments/dropped-table-editor` for contrast.
 
 ## Setup
 

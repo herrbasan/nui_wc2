@@ -143,9 +143,9 @@ attempted.
 
 **Slice order (2026-09-22) was not followed either** — it prescribed 12 thin
 slices, deliberately deferring drag reorder (slice 9) as "hardest feel". All 12
-landed at once. The consequence to judge: the *mechanics* are verified, but the
-*feel* of twelve simultaneous decisions has never been seen by a human. That is
-the open question, and it is why the page says "awaiting feel-check".
+landed at once, and the *feel* of twelve simultaneous decisions was unseen by a
+human until the feel-check on 2026-09-29. It found real defects in every one of
+roughly fourteen rounds. That is the argument for the law, not against it.
 
 ## 2026-09-28 — The accent is not a state colour
 
@@ -447,3 +447,69 @@ Two rules, both already in `Agents.md` in one form or another, made concrete:
   and fail loudly on the other.** A generator that normalises away the difference
   has removed the error signal, and a wrong-family icon is exactly the kind of
   defect that ships silently into every component that uses it.
+
+## 2026-09-29 — Feel-check signed off; the component is complete
+
+**User: "the feel is really good, i think we surpassed whats floating around in
+terms of easy to use table editors."** Fourteen sampling rounds, and every round
+found real defects.
+
+### What the rounds actually found, and the shape they share
+
+| defect | why no one could see it |
+|---|---|
+| both zone labels rendered empty | `el()` wrote `textContent` as an *attribute* — present in the DOM, 0×0, no error |
+| header toggle did nothing visible | the theme styles `th` by TAG, so a `<th>` in `<tbody>` is still a header; computed style was byte-identical either way |
+| top zone closed under the pointer | `refresh()` began with `clearSelection()` |
+| alignment "on" state imperceptible | three treatments for one state, and the weakest was the one pretending to be *elevated* |
+| a darker inner line on the caret | `outline-offset: calc(var(--border-thickness) * -1)` — that token is the keyword `thin`, arithmetic on a keyword is invalid, the declaration was dropped, and the comment above it described the behaviour that wasn't happening |
+| one grip for a multi-row selection | `is-selected` was set on grips that `position()` then rebuilt, so it survived no gesture |
+| selection stayed on the slot after a move | a range is positional; indices silently re-point at whatever moved in |
+| multi-column bands dropped the selection | only the band's FIRST cell was probed, so `hi - lo + 1 === size` failed and the re-anchor was skipped in silence |
+| text selection died at a cell edge | two gestures genuinely conflict there and nothing had decided which wins |
+
+**Not one was findable by reading the code.** Every one is invisible to inspection
+and obvious in front of a pointer. The feel-check is not a formality bolted onto
+the process — it is the only instrument that measures this class of thing at all,
+and a component whose feel is unverified has an unmeasured error rate.
+
+### Three rules worth carrying past this component
+
+1. **A comment stating a visual property is a claim, not evidence.** "It stays a
+   row, just unstyled" was false and is why a no-op survived. Measure
+   `getComputedStyle`; do not read the comment above the code.
+2. **Derive state, do not mirror it.** Every durable fix here removed a second
+   copy of a fact: grips are built from the selection rather than toggled, the
+   pressed states share one token, the range is re-anchored from the moved
+   elements rather than kept as indices. The bugs were all cases of two things
+   believing they both owned the same fact.
+3. **A guard that can decline to fire must be tested firing.** The multi-column
+   band "worked" — the reorder completed, the grip moved — while the guard
+   silently skipped. A partial success reads exactly like a success.
+
+### And the one about how I worked
+
+Four times I reported a fix verified on the narrowest case that could pass: one
+row when bands are the feature, one column when columns are the axis, one scheme
+when both exist. Each hid a real defect the user had to find. **Test the boundary
+of the thing you changed, not its easiest instance** — the easy instance is the
+one the eye lands on, and it passing is evidence only about itself.
+
+### Design decisions that closed the session
+
+| decision | reasoning |
+|---|---|
+| Grips on selection, not hover | moving is a rarer job than reading or aligning; always-on chrome spends focus on the job that is *about to happen* rather than the one that is |
+| One grip per band, spanning it | a selection is one thing and one handle says so with a smaller claim than N |
+| No grips when the whole table is selected | nothing left to move, so a grip would be a lie about what is selected |
+| The accent is not a state colour | the 2026-09-28 ruling, restated: editing state answers "what is under my hands" |
+| Cell fill is a neutral grey | user-chosen: `rgb(55,55,55)` / `rgb(230,230,230)`, mixed toward each scheme's own surface |
+| Gesture slop is a fraction of the cell | a fixed number means different things in a wide and a narrow cell; a fraction also gets both axes right from one constant, since cells are wider than they are tall |
+| Do the 80% with excellence | the cost of a feature is paid whether or not this user needs it |
+
+### The next slice, unstarted
+
+RTE integration. `setupTableEditor(table)` exists for exactly this and adds UI
+only inside a `contenteditable` ancestor. Wiring it into `nui-rich-text` to
+replace the prompt-insert + context-menu table support was always gated on this
+feel-check. The gate is now closed.
