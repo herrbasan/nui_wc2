@@ -29,6 +29,7 @@ import { nui } from '../../nui.js';
 const ICON_ADD = 'add';
 const ICON_DRAG = 'drag_indicator';
 const ICON_CLOSE = 'close';
+const ICON_COPY = 'content_copy';
 
 function el(tag, className, attrs) {
 	const node = document.createElement(tag);
@@ -547,6 +548,27 @@ function setupTableEditor(table, options = {}) {
 			zone.appendChild(btn);
 		}
 
+		// Paste, offered only when a band has actually been copied. A clipboard
+		// button that is always present but usually inert is a control that has to
+		// be read before it can be used; one that appears the moment Ctrl+C works
+		// is the component reporting its own state. The copy lives in the
+		// component, so the button does not need the system clipboard permission
+		// to know whether it has anything to paste.
+		if (copied) {
+			zone.appendChild(el('span', 'nte-zone-sep'));
+			const label = copied.kind === 'row' ? 'row' : 'column';
+			const plural = copied.cells.length > 1 ? `${copied.cells.length} ${label}s` : label;
+			const pasteBtn = el('button', 'nte-zone-btn nte-zone-add', {
+				type: 'button',
+				'data-action-paste': copied.kind,
+				'aria-label': `Paste a copy of the copied ${label} after the selection — hold Ctrl to paste before`,
+				title: `Paste copied ${plural} after selection · Ctrl-click to paste before`
+			});
+			pasteBtn.appendChild(icon(ICON_COPY));
+			pasteBtn.appendChild(el('span', 'nte-zone-label', { textContent: 'Paste' }));
+			zone.appendChild(pasteBtn);
+		}
+
 		// No caption of what is selected. There was one here -- a quiet "3 x 2" --
 		// and it was a mistake twice over. It was information the user did not need,
 		// because the selection is already drawn in the table; and because the zone
@@ -572,6 +594,7 @@ function setupTableEditor(table, options = {}) {
 	function zoneKeyOf(node) {
 		if (node.dataset?.alignValue) return `[data-align-value="${node.dataset.alignValue}"]`;
 		if (node.dataset?.actionAdd) return `[data-action-add="${node.dataset.actionAdd}"]`;
+		if (node.dataset?.actionPaste) return '[data-action-paste]';
 		if (node.hasAttribute?.('data-action-header')) return '[data-action-header]';
 		return null;
 	}
@@ -704,6 +727,148 @@ function setupTableEditor(table, options = {}) {
 				minCol: at, maxCol: at
 			});
 			emit('structure', { action: before ? 'insert-column-before' : 'insert-column-after', at });
+		}
+		refresh();
+	}
+
+	// ── Clipboard: copy a band, paste a copy of it ─────────────────────────────
+
+	/**
+	 * The copied band, or null.
+	 *
+	 * This is the component's own clipboard, deliberately separate from the
+	 * system one. A band is a STRUCTURE — a run of cells with an axis, an
+	 * alignment per column, a header — and a system clipboard only carries a flat
+	 * string. Round-tripping the band through text would lose the axis and the
+	 * alignment, and a "paste" that re-guessed them would paste something other
+	 * than what was copied.
+	 *
+	 * The system clipboard is still written, as TSV, because that is what makes
+	 * the copy useful OUTSIDE the editor: a column copied here pastes into a
+	 * spreadsheet intact. The two are not redundant — one is for this table, one
+	 * is for everything else.
+	 */
+	let copied = null;
+
+	/** The row/column band the current selection covers, or null. */
+	function selectedBand() {
+		const rowBands = selectedRowBands();
+		if (rowBands.length) return { kind: 'row', from: rowBands[0].from, to: rowBands[0].to };
+		const colBands = selectedColBands();
+		if (colBands.length) return { kind: 'col', from: colBands[0].from, to: colBands[0].to };
+		return null;
+	}
+
+	function bandCells(band) {
+		const out = [];
+		if (band.kind === 'row') {
+			for (let r = band.from; r <= band.to; r++) {
+				const row = [];
+				for (let c = 0; c < colCount(table); c++) row.push(cellText(cellAt(table, r, c)));
+				out.push(row);
+			}
+		} else {
+			for (let c = band.from; c <= band.to; c++) {
+				const col = [];
+				// The header is row -1 and is part of a column: copying a column and
+				// dropping its heading would leave a column with no label, which is
+				// not a copy of anything the user could see.
+				if (hasHeader(table)) col.push(cellText(cellAt(table, -1, c)));
+				for (let r = 0; r < bodyRows(table).length; r++) col.push(cellText(cellAt(table, r, c)));
+				out.push(col);
+			}
+		}
+		return out;
+	}
+
+	function copyBand() {
+		const band = selectedBand();
+		if (!band) return false;
+		const cells = bandCells(band);
+		// Alignment travels with the copy. A right-aligned number column pasted
+		// back as left-aligned is a copy with its meaning stripped off.
+		const align = [];
+		for (let c = 0; c < colCount(table); c++) {
+			align.push(cellAt(table, hasHeader(table) ? -1 : 0, c)?.getAttribute('data-align') || 'left');
+		}
+		copied = { kind: band.kind, cells, align, from: band.from, to: band.to };
+		// TSV for the system clipboard: a spreadsheet reads it as a grid, and the
+		// component's own paste handler reads it as one too.
+		const tsv = cells.map(row => row.join('\t')).join('\n');
+		navigator.clipboard?.writeText?.(tsv)?.catch?.(() => {
+			// Clipboard permission is not ours to assume. The band copy above has
+			// already succeeded and is what the paste button uses, so a refused
+			// system write costs the user the interop copy and nothing else. It is
+			// worth a line: a silent failure here would look like Ctrl+C did nothing.
+		});
+		emit('content', { action: 'copy-band', kind: band.kind, rows: cells.length });
+		updateZone();
+		return true;
+	}
+
+	/**
+	 * Insert a copy of the copied band adjacent to the current selection.
+	 *
+	 * `before` mirrors the insert buttons: plain pastes after the selection, Ctrl
+	 * pastes before it. The copied band keeps its own size, so copying a three-row
+	 * band pastes three rows — the band is the unit, not the single row under the
+	 * pointer.
+	 */
+	function pasteBand(before) {
+		if (!copied || !range) return;
+		const n = copied.cells.length;
+		if (copied.kind === 'row') {
+			const at = before ? Math.max(0, range.minRow) : range.maxRow + 1;
+			// `insertRowAt` inserts AT `at`, so the new row's index IS `at` -- there
+			// is nothing to look up. The lookup that used to be here
+			// (`bodyRows(table).indexOf(insertRowAt(at))`) returned -1, because
+			// `tbody.rows` is a LIVE collection and re-reading it inside
+			// `indexOf` resolved against a different snapshot than the one the
+			// element was inserted into. The fill loop then indexed `bodyRows[-1]`,
+			// got undefined, and the paste silently produced an EMPTY row that
+			// looked exactly like a successful insert.
+			//
+			// This is the third time this file has been bitten by a live
+			// HTMLCollection (see the reorder re-anchor), and the lesson is now
+			// concrete: never ask a live collection where something is. Derive the
+			// position from the operation that put it there, or hold the element.
+			insertRowAt(at);
+			for (let i = 0; i < n; i++) {
+				const target = bodyRows(table)[at + i];
+				if (!target) break;
+				copied.cells[i].forEach((text, c) => {
+					if (target.cells[c]) {
+						setCellText(target.cells[c], text);
+						target.cells[c].setAttribute('data-align', copied.align[c] || 'left');
+					}
+				});
+			}
+			applyRange({ minRow: at, maxRow: at + n - 1, minCol: 0, maxCol: colCount(table) - 1 });
+			emit('structure', { action: 'paste-rows', at, count: n });
+		} else {
+			const at = before ? Math.max(0, range.minCol) : range.maxCol + 1;
+			// Every column is inserted first, then filled. Filling as we go would
+			// read the shifted grid and write each value one column further right
+			// than it belongs -- and since `copied.cells[i]` is indexed by the
+			// SOURCE column, the mismatch is silent: the paste appears to work and
+			// lands one column off with the wrong heading.
+			for (let i = 0; i < n; i++) insertColumn(at + i);
+			for (let i = 0; i < n; i++) {
+				// A column copy includes the header, so its cells run one longer
+				// than the body rows. `cellAt` addresses row -1 for the header, so
+				// the offset is applied by index rather than by slicing.
+				copied.cells[i].forEach((text, k) => {
+					const r = hasHeader(table) ? k - 1 : k;
+					if (r < -1) return;
+					const cell = cellAt(table, r, at + i);
+					if (!cell) return;
+					setCellText(cell, text);
+					cell.setAttribute('data-align', copied.align[copied.from + i] || 'left');
+				});
+			}
+			const first = hasHeader(table) ? -1 : 0;
+			applyRange({ minRow: first, maxRow: bodyRows(table).length - 1, minCol: at, maxCol: at + n - 1 });
+			emit('structure', { action: 'paste-columns', at, count: n });
 		}
 		refresh();
 	}
@@ -867,6 +1032,17 @@ function setupTableEditor(table, options = {}) {
 		if (e.key === 'Escape') {
 			clearSelection();
 			hideZone();
+			return;
+		}
+		// Ctrl+C copies the BAND, but only when a whole row or column is selected
+		// AND no text is selected. A user highlighting a word inside a cell to copy
+		// it is doing ordinary text copy, and silently substituting a column copy
+		// for that would be the more surprising failure of the two. The band copy
+		// still writes to the system clipboard, so nothing is lost either way —
+		// but a selection that is not a band leaves the key alone entirely.
+		if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
+			if (window.getSelection()?.toString()) return;
+			if (copyBand()) e.preventDefault();
 			return;
 		}
 		// Arrow keys move between cells only when the caret is not editing text;
@@ -1344,6 +1520,8 @@ function setupTableEditor(table, options = {}) {
 		if (e.target.closest('[data-action-header]')) { refresh(toggleHeader()); return; }
 		const addBtn = e.target.closest('[data-action-add]');
 		if (addBtn) { insertAtSelection(addBtn.dataset.actionAdd, e.ctrlKey); return; }
+		const pasteBtn = e.target.closest('[data-action-paste]');
+		if (pasteBtn) { pasteBand(e.ctrlKey); return; }
 		// Delete acts on the WHOLE band, not on one row or column of it: a handle
 		// covering three rows that removed only the first would be a lie about
 		// what it does, exactly as for the drag grip.

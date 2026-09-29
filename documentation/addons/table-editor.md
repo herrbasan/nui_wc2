@@ -156,6 +156,8 @@ valid. Alignment becomes the delimiter row:
 | Click a row / column grip | Selects that whole row / column |
 | Toggle **Header row** | Moves the first row in and out of `<thead>`, converting its cells `td`↔`th`. Off means an ordinary body row — unbolded, unshaded — and the GFM export emits an empty header. |
 | **Insert Row / Column** | Inserts a row or column **after** the selected band, and selects it. <kbd>Ctrl</kbd>+click inserts **before** instead |
+| <kbd>Ctrl</kbd>+<kbd>C</kbd> on a band | Copy the whole row band or column band. Requires the band to be fully selected — a single cell or a rectangle does **not** copy, so ordinary text copy is never overridden |
+| **Paste** | Inserts a copy of the copied band after the selection (<kbd>Ctrl</kbd>+click before it) and selects it. The button appears only once something has been copied |
 | <kbd>Tab</kbd> / <kbd>Shift</kbd>+<kbd>Tab</kbd> | Walk cells; <kbd>Tab</kbd> past the last cell appends a row |
 | <kbd>Enter</kbd> | Move down a row |
 | Arrow keys | Move between cells; <kbd>ArrowUp</kbd> off the first body row reaches the header. Suppressed while text is selected |
@@ -231,6 +233,32 @@ user is about to type.
 
 Note for hosts: inserting a column into a table with a header row creates a `th`
 in `<thead>`, not a `td`. A cell's tag is a property of the section it sits in.
+
+### Copy and paste are band-only
+
+Deliberately. A single cell and a rectangle both **refuse** to copy, and the
+component leaves <kbd>Ctrl</kbd>+<kbd>C</kbd> entirely alone when they are
+selected. Two reasons, and the second is the important one:
+
+1. A band is the unit this component reasons in — one range, one grip, one delete.
+   Copying a single cell would introduce a second unit for the same selection, and
+   paste would then have to guess which of the two it was.
+2. **A user highlighting a word inside a cell to copy it is doing ordinary text
+   copy.** Silently substituting a column copy for that would be the more
+   surprising failure of the two. Nothing is lost either way: the band copy also
+   writes TSV to the system clipboard, so a copied column pastes into a
+   spreadsheet intact.
+
+The component keeps its own copy — cells, axis, and per-column alignment — rather
+than round-tripping through the system clipboard, which carries only a flat
+string. Alignment travelling with the copy is the reason: a right-aligned number
+column pasted back left-aligned is a copy with its meaning stripped off. The
+system clipboard is written as a side effect for interop, not as the mechanism.
+
+The **Paste** button appears only once something has been copied. A clipboard
+control that is always present but usually inert has to be read before it can be
+used; one that appears the moment <kbd>Ctrl</kbd>+<kbd>C</kbd> works is the
+component reporting its own state.
 
 The band is a real `<button>`, which means every state the theme paints for
 `button` has to be undone deliberately — `button:hover` fills with
