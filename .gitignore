@@ -4,4 +4,5 @@ _Archive/
 node_modules/
 .kilo/demo/
 demo/
+.scratch/
 fiveserver.config.js

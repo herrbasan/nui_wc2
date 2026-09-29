@@ -380,14 +380,22 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 	border-radius: 0;
 	color: var(--text-color-dim);
 	cursor: pointer;
-	/* Idle: invisible, and OUT of the tab order and the a11y tree. `opacity: 0`
-	   does neither, so a keyboard user would tab into an invisible control —
-	   latent when this was a 1.5rem disc, glaring now that it is a strip spanning
-	   the table. `visibility` is the property that removes both, and it is
-	   transitioned alongside opacity so the fade itself is unaffected. */
+	/* The theme's `button:hover` sets `background-color: var(--color-highlight)`
+	   and `color: var(--color-white)`. Specificity is 0,1,1 against this rule's
+	   0,1,0, so the theme WINS and the whole band floods blue on hover -- the
+	   band is the hit area, so a 36px-tall by 896px-wide blue slab is what the
+	   user saw instead of a line. A class selector cannot out-specify it, so the
+	   hover state is cancelled explicitly at matching specificity. This is the
+	   component-wide cost of building an affordance out of a real <button>:
+	   every state the theme paints has to be undone deliberately. */
 	opacity: 0;
 	visibility: hidden;
 	transition: opacity 120ms var(--nte-ease), visibility 120ms var(--nte-ease), color 100ms var(--nte-ease);
+}
+
+.nte-edge-add:hover {
+	background: none;
+	color: var(--text-color);
 }
 
 .nte-overlay.is-hovered .nte-edge-add {
@@ -395,8 +403,23 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 	visibility: visible;
 }
 
-.nte-edge-add-row { height: 2.25rem; }
-.nte-edge-add-col { width: 2.25rem; }
+/* The band is the table's own `margin-block-end` (--nui-space, 16px) and not
+   one pixel more. That margin is the space the theme provides between a table
+   and whatever follows it, so it is the budget: at 2.25rem the band ran 20px
+   past it and swallowed the next element, and at 1.5rem it still overhung by
+   8px. The dot is 1rem for the same reason — sized to the BUDGET rather than
+   to the band, so the band can be exactly the margin and the dot exactly fills
+   half of it.
+
+   `min-width`/`min-height: 0` on the base rule is load-bearing, not tidy-up.
+   The theme's `button` rule sets `min-width`/`min-height: var(--nui-space-double)`
+   (2rem) at specificity 0,0,1. A `height` on `.nte-edge-add-row` cannot shrink
+   a box whose floor is 2rem, so the band would be stuck at 32px no matter what
+   the height said. Anyone shrinking this control again must keep the min-*.
+
+   Still ~78x the dot's area, so the target is trivially easy to hit. */
+.nte-edge-add-row { height: var(--nui-space); }
+.nte-edge-add-col { width: var(--nui-space); }
 
 /* The rule that appears behind the dot on hover, spanning the band. It is a
    RULE, so it is 1px of ink and does not scale with the user's font size — the
@@ -447,18 +470,22 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
    rounded square by coincidence and would have stopped reading as circular on
    any resize. Stated as `50%`, the intent survives the size.
 
-   1.125rem, down from 1.5rem. The band is 2.25rem, so the target is four times
-   the dot's area: the dot no longer has to BE big to be reachable, and a small
-   dot reads as a marker on an edge rather than as a button competing with the
-   table's own content. Size is now purely visual, and the affordance's size
-   lives in the hitbox where it belongs. */
+/* 0.875rem, not 1rem. The band is `var(--nui-space)` (16px) and the dot's border
+   sits OUTSIDE its box (box-sizing: content-box), so a 1rem dot renders 17.3px
+   and overflows the band by 1.3px — visibly clipped on a short table, where the
+   `+` loses its top and bottom strokes. The dot is sized to FIT the band, and
+   the band is sized to the table's margin; those two constraints meet here. */
 .nte-edge-add-dot {
 	position: relative;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	width: 1.125rem;
-	height: 1.125rem;
+	width: 0.875rem;
+	height: 0.875rem;
+	/* `box-sizing: border-box` so the declared size INCLUDES the border. Without
+	   it the 1px border is added outside the box and the dot renders larger than
+	   the band it is centred in. */
+	box-sizing: border-box;
 	border-radius: 50%;
 	background-color: var(--color-base);
 	border: var(--border-thickness) solid var(--border-shade2);
@@ -474,10 +501,24 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 .nte-edge-add-dot nui-icon {
 	position: relative;
 	z-index: 1;
-	/* --icon-size is 1.2rem, which no longer fits an 18px dot: the glyph would
-	   overflow the circle it sits in. Sized to fit the dot, not the theme. */
-	width: 0.75rem;
-	height: 0.75rem;
+	/* --icon-size is 1.2rem, which does not fit a 0.875rem dot: the glyph would
+	   overflow the circle. Sized to the dot, not to the theme. */
+	width: 0.625rem;
+	height: 0.625rem;
+}
+
+/* The glyph sat 1.59px ABOVE the dot's centre. The cause is not flex
+   centring: `.nte-edge-add-dot` is a <span>, and the theme's text-flow rule
+   `span > nui-icon` applies `top: -0.1rem` plus side margins to an icon that
+   appears inside running text. It exists to optically align an icon with a
+   line of prose; here the icon is the sole content of a fixed-size box, so the
+   optical nudge is just an error. `vertical-align` cannot fix it — that
+   property does not apply to flex children, so the first attempt at this was
+   inert. Resetting the margin and the offset is what actually centres it. */
+.nte-edge-add-dot nui-icon,
+.nte-edge-add-dot nui-icon svg {
+	margin: 0;
+	top: 0;
 }
 
 /* Hover changes the GLYPH's colour and nothing else. No fill, no deeper shadow:

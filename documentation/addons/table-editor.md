@@ -207,13 +207,19 @@ read as a glitch at the moment the grip appeared.
 Grips and edge `+` controls are positional: they sit at their own row, column or
 edge. Each `+` is a **band spanning its whole axis** — the row button's hit area
 is the table's full width just below it, the column button's the full height just
-to its right — with a small 1.125rem circular dot centred inside it. You aim at
-the *place* you want the row or column, not at a small disc on the boundary line,
-and the band deliberately overhangs into the margin the table already carries.
-The dot is small because the target no longer has to *be* big: the band's area is
-~89× the dot's. On hover the only change is a 1px `--color-highlight` rule
-spanning the band behind the dot; the dot's own surface does not change, so the
-rule is never obscured.
+to its right. The band is exactly the table's own `margin-block-end` and not one
+pixel more, so it never overlaps what follows the table; a 0.875rem circular dot
+is centred inside it. You aim at the *place* you want the row or column, and the
+target is ~100× the dot's area. On hover the only change is a 1px
+`--color-highlight` rule spanning the band behind the dot; the dot's own surface
+does not change, so the rule is never obscured.
+
+The band is a real `<button>`, which means every state the theme paints for
+`button` has to be undone deliberately — `button:hover` fills with
+`--color-highlight` at a higher specificity than any class selector, and its
+`min-width`/`min-height` floor would cap the band at 2rem. Any restyling here
+must keep the explicit `background: none` on hover and the `min-*: 0` on the base
+rule.
 
 The zone never animates its own height. `height: 0 → auto` cannot be
 interpolated, so the browser snaps it — that snap was the component's worst

@@ -867,6 +867,86 @@ centred, and clicking the far left of the row band and the far bottom of the
 column band still adds a row/column and emits `structure:add-row` /
 `structure:add-column`.
 
+## 2026-09-29 — Three defects a screenshot found that the measurements did not
+
+**User: "the bar should be line and the (+) is now somewhat ugly (plus not
+centered and mabye it too small now). The area of the hitbox can be a bit
+smaller. we need to stay within the bounds of the bottom margin of the table."
+Then: "please check your work visually."**
+
+Every number I had measured was *correct*. The band was 36px, the `::before` was
+1px, the dot was 19.3px, the glyph was centred by flex. And the component still
+rendered a **solid blue bar** with an off-centre `+`. Measurement verified the
+thing I was measuring and nothing else.
+
+### 1. The band was a bar, because the theme paints `button:hover`
+
+`button:hover` in `nui-theme.css` is `background-color: var(--color-highlight)`.
+Its specificity is (0,1,1) — one *element* plus a pseudo-class — against my
+`.nte-edge-add` at (0,1,0). **The theme wins, and the whole 36×896 hit area
+floods blue.** The `::before` line was drawn correctly the entire time, on top
+of a blue slab, which is why every computed value read as intended and the
+screen said otherwise.
+
+The fix is `.nte-edge-add:hover { background: none }` at matching specificity.
+A class selector cannot out-specify `button:hover`; the theme's state has to be
+cancelled explicitly. This is the standing cost of building an affordance out of
+a real `<button>`, and it applies to every state the theme paints.
+
+**The lesson is the one this log keeps earning, in a new costume: I had
+`getComputedStyle` reading the *element* and never once reading the *cascade*.**
+"Does this property have the value I wrote?" is not the question. "Which rule
+won?" is. Every time a value I authored did not appear, the first suspect must
+be a competing rule, not a stale stylesheet.
+
+### 2. The `+` sat 1.59px high — and my first fix was inert
+
+`.nte-edge-add-dot` is a `<span>`, so the theme's text-flow rule `span > nui-icon`
+applied: `top: -0.1rem` plus side margins. That rule exists to optically align an
+icon with a line of prose; here the icon is the only content of a fixed box, so
+the optical nudge is simply an error.
+
+My first attempt set `vertical-align: middle`, which **does not apply to flex
+children** — so it changed nothing and I would have reported it fixed if I had
+not re-measured. The actual fix resets `margin` and `top`.
+
+### 3. The band has to fit the table's margin, which drags the dot down with it
+
+`nui-table` gives the affordance `margin-block-end: var(--nui-space)` — 16px.
+That margin is the budget: at 2.25rem the band ran 20px past it and swallowed
+the next element; at 1.5rem it still overhung by 8px.
+
+The band cannot be smaller than its dot, so shrinking the band means shrinking
+the dot. The dot went to **0.875rem with `box-sizing: border-box`** — without
+that, the 1px border is added *outside* the box and a 1rem dot renders 17.3px,
+overflowing a 16px band by 1.3px and visibly clipping the `+` on a short table.
+The screenshot showed the clipped `+`; the arithmetic had said "fits".
+
+And `min-width`/`min-height: 0` on the base band rule turns out to be
+load-bearing rather than tidy-up: the theme's `button` rule floors every button
+at `var(--nui-space-double)` (2rem = 32px), and a `height` cannot shrink a box
+whose floor is 32px. Anyone shrinking this again must keep those two lines.
+
+Final measured state: band **16px deep and 16px wide** — exactly the margin, not
+one pixel more — clearing the next element; dot 14px, fitting the band; glyph
+offset **0**; target area **102× the dot's**. Real mouse clicks at the far left
+of the row band and the far bottom of the column band still add a row and a
+column. Confirmed on a 1-row table and a 90px-wide table (target 7× there, the
+one case where the ratio gets thin) and in both colour schemes, in the isolated
+harness and in the Playground.
+
+### On the harness
+
+The first version was `page.setContent` on `about:blank` with absolute URLs. It
+returned plausible numbers and could not be reloaded or screenshotted against
+the real page, which is exactly when it was needed. The working version is a
+real file served by the same Live Server, gitignored at `.scratch/`, holding
+three tables — wrapped, enhanced in place, and headerless — each with ordinary
+content directly below it, because **"does the band overlap what follows" is not
+answerable without something following it.**
+
+
+
 
 
 
