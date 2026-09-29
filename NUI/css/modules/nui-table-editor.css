@@ -401,11 +401,19 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 /* The rule that appears behind the dot on hover, spanning the band. It is a
    RULE, so it is 1px of ink and does not scale with the user's font size — the
    same reasoning as the separator in the zone. Drawn with a pseudo-element so it
-   needs no extra element in the DOM and cannot be read by a screen reader. */
+   needs no extra element in the DOM and cannot be read by a screen reader.
+
+   `--color-highlight`, against the component's standing "the accent is not a
+   state colour" rule. That rule governs selection, focus and the "on" states —
+   things that answer "what is under my hands". This line is different: it is an
+   affordance announcing a clickable target, which is what the accent is for
+   everywhere else in the library, and it is transient and pointer-driven rather
+   than a state the table is in. The distinction is "editing state" versus
+   "available action". Deliberate, and the first use of the accent here. */
 .nte-edge-add::before {
 	content: "";
 	position: absolute;
-	background-color: var(--nte-edge-rule, var(--border-shade3));
+	background-color: var(--nte-edge-rule, var(--color-highlight));
 	opacity: 0;
 	transition: opacity 120ms var(--nte-ease);
 	pointer-events: none;
@@ -437,14 +445,20 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 /* The visible control. A circle, not a rounded square: at 1.25rem the 0.5rem
    radius came within 2px of the 10px a full round needs, so the shape was a
    rounded square by coincidence and would have stopped reading as circular on
-   any resize. Stated as `50%`, the intent survives the size. */
+   any resize. Stated as `50%`, the intent survives the size.
+
+   1.125rem, down from 1.5rem. The band is 2.25rem, so the target is four times
+   the dot's area: the dot no longer has to BE big to be reachable, and a small
+   dot reads as a marker on an edge rather than as a button competing with the
+   table's own content. Size is now purely visual, and the affordance's size
+   lives in the hitbox where it belongs. */
 .nte-edge-add-dot {
 	position: relative;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	width: 1.5rem;
-	height: 1.5rem;
+	width: 1.125rem;
+	height: 1.125rem;
 	border-radius: 50%;
 	background-color: var(--color-base);
 	border: var(--border-thickness) solid var(--border-shade2);
@@ -460,11 +474,18 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 .nte-edge-add-dot nui-icon {
 	position: relative;
 	z-index: 1;
+	/* --icon-size is 1.2rem, which no longer fits an 18px dot: the glyph would
+	   overflow the circle it sits in. Sized to fit the dot, not the theme. */
+	width: 0.75rem;
+	height: 0.75rem;
 }
 
+/* Hover changes the GLYPH's colour and nothing else. No fill, no deeper shadow:
+   the rule is the whole hover signal, and a second one underneath it would make
+   the line harder to read rather than easier. The dot's own surface stays put so
+   the rule behind it is never obscured. */
 .nte-edge-add:hover .nte-edge-add-dot {
-	background-color: var(--color-shade2);
-	box-shadow: 0 2px 4px var(--shadow-color), 0 6px 16px var(--shadow-color);
+	background-color: var(--color-base);
 }
 
 .nte-drop-line {

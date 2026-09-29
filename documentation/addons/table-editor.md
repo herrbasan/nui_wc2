@@ -25,10 +25,14 @@ Two rules drive every visual decision:
 
 - **The table is the model.** There is no shadow copy of the data. A host can
   enhance a `<table>` it already owns, and the saved HTML stays clean.
-- **The accent is not a state colour.** `--color-highlight` is reserved for links
-  and primary action. Selection, focus and "on" states use neutral surface steps
-  (`--color-shade3`, `--text-color-dim`), so a table under edit never becomes the
-  loudest thing on the page.
+- **The accent is not a state colour.** `--color-highlight` is reserved for links,
+  primary action, and **affordances that announce a clickable target** — selection,
+  focus and "on" states use neutral surface steps (`--color-shade3`,
+  `--text-color-dim`), so a table under edit never becomes the loudest thing on
+  the page. The one place the accent appears is the 1px rule the edge `+` bands
+  draw on hover: that is a transient, pointer-driven announcement of where a
+  click will land, not a state the table is in. The distinction is *editing state*
+  versus *available action*.
 
 The table's appearance is **not** restated here. `nui-theme.css` already styles
 `table`/`th`/`td`, and the component wraps slotted markup in `<nui-table>` so the
@@ -203,10 +207,13 @@ read as a glitch at the moment the grip appeared.
 Grips and edge `+` controls are positional: they sit at their own row, column or
 edge. Each `+` is a **band spanning its whole axis** — the row button's hit area
 is the table's full width just below it, the column button's the full height just
-to its right — with a 1.5rem circular dot centred inside it. You aim at the
-*place* you want the row or column, not at a small disc on the boundary line, and
-the band deliberately overhangs into the margin the table already carries. On
-hover a 1px rule spans the band behind the dot.
+to its right — with a small 1.125rem circular dot centred inside it. You aim at
+the *place* you want the row or column, not at a small disc on the boundary line,
+and the band deliberately overhangs into the margin the table already carries.
+The dot is small because the target no longer has to *be* big: the band's area is
+~89× the dot's. On hover the only change is a 1px `--color-highlight` rule
+spanning the band behind the dot; the dot's own surface does not change, so the
+rule is never obscured.
 
 The zone never animates its own height. `height: 0 → auto` cannot be
 interpolated, so the browser snaps it — that snap was the component's worst

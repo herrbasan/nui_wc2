@@ -817,6 +817,58 @@ Measured after: centring error **0 on both axes**, at 896px and at 320px, on the
 first table and the second, still 6px clear of each boundary. Both buttons still
 add a row/column and still emit `structure:add-row` / `structure:add-column`.
 
+## 2026-09-29 — The `+` dot shrinks; the line is the whole hover
+
+**User: "the hover state should only be a line, it should not have a background
+color. but the line could be in the hightlight color. I think we can make the
+buttons smaller again, since we have the whole element as hitbox now."**
+
+All three follow from one fact: **the band is the target, and the dot is only a
+marker for it.** Once that split existed, the dot's size stopped being a
+usability constraint and could be judged as a visual decision.
+
+**1.125rem, down from 1.5rem** — the measured target area is now **89× the dot's**.
+The icon went with it: `--icon-size` is 1.2rem, which overflows an 18px circle, so
+the glyph is pinned at 0.75rem. That is the second time in this file an icon has
+had to be sized to its container rather than to the theme (the grips, earlier) —
+the theme's default is right for a theme-sized control, not for one that has been
+shrunk to a marker.
+
+**Hover is the line and nothing else.** The dot keeps `--color-base` on hover and
+its resting shadow; only the glyph brightens. A second signal underneath the line
+would compete with it rather than support it — and because the dot is opaque, a
+filled dot would have *obscured* the very line it was announcing.
+
+**The line is `--color-highlight` (`rgb(76,132,229)`), and this is the first
+accent in the component.** The standing rule is "the accent is not a state
+colour", stated three times in this log and in the addon doc. I applied the
+instruction and wrote down why it does not actually contradict the rule, rather
+than quietly breaking it:
+
+> The rule governs **editing state** — selection, focus, the "on" states. Those
+> answer *"what is under my hands"*; the accent answers *"what is important"*, and
+> a table under edit must not be the loudest thing on the page. The edge `+` line
+> answers a different question: *"where will a click land"*. It is transient,
+> pointer-driven, and gone the moment the pointer leaves — an **available
+> action**, which is exactly what the accent is for everywhere else in the
+> library.
+
+So the ruling is not weakened, it is **stated more precisely than it was**: the
+accent is not a *state* colour. The addon doc's design-philosophy bullet now says
+"affordances that announce a clickable target" instead of "links and primary
+action" — the narrower phrasing was the thing that made this read as a
+contradiction, so the fix is to the phrasing, not to the colour.
+
+Verified in both schemes: rule `rgb(76,132,229)` at `opacity: 1` on hover and
+`opacity: 0` idle; dot background `rgb(20,20,20)` dark / `rgb(255,255,255)` light
+and **identical on hover**; shadow unchanged; glyph `rgb(230,230,230)` dark /
+`rgb(30,30,30)` light. Band geometry untouched at 896×36 and 36×162, dots
+centred, and clicking the far left of the row band and the far bottom of the
+column band still adds a row/column and emits `structure:add-row` /
+`structure:add-column`.
+
+
+
 
 
 
