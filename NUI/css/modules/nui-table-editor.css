@@ -214,6 +214,7 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 
 .nte-overlay.is-hovered .nte-edge-add {
 	opacity: 1;
+	visibility: visible;
 }
 
 /* --- Grips and edge buttons ---------------------------------------------------
@@ -225,6 +226,10 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 .nte-col-grip,
 .nte-edge-add {
 	opacity: 0;
+	/* As with the zone: opacity alone leaves a hidden button focusable and
+	   announced, and this table rebuilds a grip per row and per column, so the
+	   idle set is large and fully tabbable. visibility is what removes them. */
+	visibility: hidden;
 	position: absolute;
 	display: flex;
 	align-items: center;
@@ -239,7 +244,7 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 	border: var(--border-thickness) solid var(--border-shade3);
 	border-radius: var(--border-radius2);
 	cursor: grab;
-	transition: opacity var(--nte-dur) var(--nte-ease), background-color 100ms var(--nte-ease);
+	transition: opacity var(--nte-dur) var(--nte-ease), background-color 100ms var(--nte-ease), visibility var(--nte-dur) var(--nte-ease);
 	appearance: none;
 	vertical-align: top;
 }
@@ -252,6 +257,7 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 .nte-row-grip.is-selected,
 .nte-col-grip.is-selected {
 	opacity: 1;
+	visibility: visible;
 	background-color: var(--color-shade1);
 	color: var(--text-color);
 }
@@ -368,13 +374,20 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 	opacity: 0;
 	transform: translateY(4px);
 	pointer-events: none;
-	transition: opacity 140ms var(--nte-ease), transform 140ms var(--nte-ease);
+	/* `visibility` is what actually takes the idle toolbar out of the a11y tree
+	   and off the tab order -- `opacity: 0` does neither, so without this the
+	   hidden controls are still focusable and still announced, and Tab walks
+	   through buttons the user cannot see. It transitions alongside opacity so the
+	   fade is unaffected, and it is flipped back on by .is-active below. */
+	visibility: hidden;
+	transition: opacity 140ms var(--nte-ease), transform 140ms var(--nte-ease), visibility 140ms var(--nte-ease);
 }
 
 .nte-zone.is-active {
 	opacity: 1;
 	transform: translateY(0);
 	pointer-events: auto;
+	visibility: visible;
 }
 
 /* Separator: a single hairline, inset from the edges so it reads as a division

@@ -171,7 +171,14 @@ function setupTableEditor(table, options = {}) {
 	// is styled the same whether it is slotted in <nui-table-editor> or enhanced
 	// inside someone else's document.
 	table.setAttribute('data-nui-table-editor', '');
-	const overlay = el('div', 'nte-overlay', { 'aria-hidden': 'true' });
+	// The overlay is NOT aria-hidden. It carries the real toolbar (role="toolbar",
+	// arrow-key navigable) and the edge +/- buttons, all of which must be reachable
+	// by keyboard and screen reader. Marking it aria-hidden while it holds focusable
+	// controls is a contradiction the browser resolves by blocking the hiding --
+	// so the controls stayed unreachable anyway, with a console warning. The zone
+	// hides itself via opacity/visibility when idle, which removes it from the
+	// accessibility tree on its own.
+	const overlay = el('div', 'nte-overlay');
 	const zone = el('div', 'nte-zone', { role: 'toolbar', 'aria-label': 'Table controls' });
 	overlay.appendChild(zone);
 	const colGrips = el('div', 'nte-col-grips');
@@ -303,6 +310,24 @@ function setupTableEditor(table, options = {}) {
 		applyRange(null);
 	}
 
+	/**
+	 * Pull a range back inside the table. After a structural change a stored
+	 * range can point past the last row/column, and applying it as-is would mark
+	 * nothing while the zone still claimed a selection -- the panel stays open
+	 * over a highlight that is not there. The far end is clamped first so a
+	 * dragged/shifted range collapses toward the origin rather than inverting.
+	 */
+	function clampRange(r) {
+		const lastRow = bodyRows(table).length - 1;
+		const lastCol = colCount(table) - 1;
+		const firstRow = hasHeader(table) ? -1 : 0;
+		const minRow = Math.min(Math.max(r.minRow, firstRow), lastRow);
+		const maxRow = Math.min(Math.max(r.maxRow, minRow), lastRow);
+		const minCol = Math.min(Math.max(r.minCol, 0), lastCol);
+		const maxCol = Math.min(Math.max(r.maxCol, minCol), lastCol);
+		return { minRow, maxRow, minCol, maxCol };
+	}
+
 	function selectCell(cell, extend) {
 		const here = coordsOf(cell);
 		if (extend && range) applyRange(normalise([range.minRow, range.minCol], here));
@@ -326,6 +351,13 @@ function setupTableEditor(table, options = {}) {
 	// ── Top zone: the single safe area for panel-style controls ────────────────
 
 	function updateZone() {
+		// The zone is rebuilt from scratch on every state change, which destroys
+		// whichever button had focus and drops focus to <body> -- so a keyboard
+		// user pressing one zone control loses their place entirely and Escape
+		// stops reaching anything. The control is identified by what it DOES, not
+		// by its element, so the same button can be found again in the new tree.
+		const focused = document.activeElement;
+		const refocus = zone.contains(focused) ? zoneKeyOf(focused) : null;
 		zone.textContent = '';
 		if (!range) {
 			zone.classList.remove('is-active');
@@ -379,6 +411,17 @@ function setupTableEditor(table, options = {}) {
 
 		zone.classList.add('is-active');
 		overlay.classList.add('is-visible');
+
+		// Put focus back on the control that had it, so pressing one zone button
+		// does not silently move the user out of the toolbar.
+		if (refocus) zone.querySelector(refocus)?.focus();
+	}
+
+	/** A stable selector for a zone control, keyed by what the control does. */
+	function zoneKeyOf(node) {
+		if (node.dataset?.alignValue) return `[data-align-value="${node.dataset.alignValue}"]`;
+		if (node.hasAttribute?.('data-action-header')) return '[data-action-header]';
+		return null;
 	}
 
 	function hideZone() {
@@ -446,13 +489,22 @@ function setupTableEditor(table, options = {}) {
 		emit('structure', { action: 'delete-column' });
 	}
 
+	/**
+	 * Move the first row in and out of <thead>, converting its cells th<->td.
+	 *
+	 * Returns the row-index shift the move caused, so the caller can re-anchor a
+	 * selection onto the same CELLS: promoting a header promotes body row 0 (a
+	 * shift of -1, since the header is row -1), demoting drops it back into the
+	 * body (+1). Returning the shift rather than recomputing it at the call site
+	 * keeps the number next to the DOM change that causes it.
+	 */
 	function toggleHeader() {
 		const head = table.tHead;
 		if (head) {
 			// Turning the header OFF has to DEMOTE the cells, not just move the row.
 			// The theme styles `th` by tag, not by section: a <th> left sitting in
 			// <tbody> keeps the header's shading and weight, so relocating it alone
-			// is a silent no-op — the DOM changes, the export changes, the screen
+			// is a silent no-op -- the DOM changes, the export changes, the screen
 			// does not. Off has to mean "an ordinary body row" and look like one.
 			const first = head.rows[0];
 			for (const th of Array.from(first.cells)) {
@@ -462,9 +514,11 @@ function setupTableEditor(table, options = {}) {
 			}
 			bodyOf().insertBefore(first, bodyOf().rows[0]);
 			head.remove();
+			emit('header', { action: 'toggle-header' });
+			return 1;
 		} else {
 			const first = bodyOf().rows[0];
-			if (!first) return;
+			if (!first) return 0;
 			const cells = Array.from(first.cells);
 			const tr = el('tr');
 			const head = el('thead');
@@ -476,8 +530,10 @@ function setupTableEditor(table, options = {}) {
 			head.appendChild(tr);
 			table.insertBefore(head, bodyOf());
 			first.remove();
+			emit('header', { action: 'toggle-header' });
+			// Body row 0 became the header (row -1): everything below it moved up.
+			return -1;
 		}
-		emit('header', { action: 'toggle-header' });
 	}
 
 	function setAlign(value) {
@@ -899,6 +955,15 @@ function setupTableEditor(table, options = {}) {
 	}
 	on(table, 'keydown', onKeyDown);
 	on(table, 'paste', onPaste);
+	// Escape is also honoured from the chrome. Pressing a zone button leaves focus
+	// on that button, which is outside the table, so the table's keydown never sees
+	// the key -- and with the selection now surviving those clicks, Escape from the
+	// chrome is the only way back out. Same dismissal, whichever has focus.
+	on(overlay, 'keydown', (e) => {
+		if (e.key !== 'Escape') return;
+		clearSelection();
+		hideZone();
+	});
 	// The browser fires dragstart on contenteditable cells mid-gesture, which
 	// suppresses the pointermove stream the range depends on.
 	on(table, 'dragstart', (e) => { if (gesture?.active) e.preventDefault(); });
@@ -931,7 +996,7 @@ function setupTableEditor(table, options = {}) {
 	on(overlay, 'click', (e) => {
 		const alignBtnEl = e.target.closest('[data-align-value]');
 		if (alignBtnEl) { setAlign(alignBtnEl.dataset.alignValue); return; }
-		if (e.target.closest('[data-action-header]')) { toggleHeader(); refresh(); return; }
+		if (e.target.closest('[data-action-header]')) { refresh(toggleHeader()); return; }
 		if (e.target.closest('.nte-edge-add-row')) { insertRow(bodyRows(table).length - 1); emit('structure', { action: 'add-row' }); refresh(); return; }
 		if (e.target.closest('.nte-edge-add-col')) { insertColumn(colCount(table)); emit('structure', { action: 'add-column' }); refresh(); return; }
 	});
@@ -1001,8 +1066,26 @@ function setupTableEditor(table, options = {}) {
 		addCol.style.top = `${rect.height / 2 - addSize}px`;
 	}
 
-	function refresh() {
-		clearSelection();
+	/**
+	 * Re-anchor the selection to still-valid cells and rebuild the chrome.
+	 *
+	 * A structural change must NOT dismiss the selection. The top zone is the
+	 * control surface for the action just performed, so clearing the range here
+	 * closes the panel under the pointer and turns one operation into two --
+	 * press a button, then find and rebuild the selection to press the next.
+	 *
+	 * `rowShift` re-anchors by row INDEX across a change that renumbers rows:
+	 * promoting a header shifts the body up by one (-1), demoting shifts it back
+	 * down (+1), so the same CELLS stay selected. Everything else (append, column
+	 * move) leaves the numbering alone and shifts by 0.
+	 */
+	function refresh(rowShift = 0) {
+		if (range) {
+			applyRange(clampRange({
+				minRow: range.minRow + rowShift, maxRow: range.maxRow + rowShift,
+				minCol: range.minCol, maxCol: range.maxCol
+			}));
+		}
 		if (editable) table.querySelectorAll('th,td').forEach(c => c.setAttribute('contenteditable', 'true'));
 		position();
 	}
