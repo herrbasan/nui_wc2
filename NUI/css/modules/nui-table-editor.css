@@ -338,6 +338,14 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 	transform: translateX(-100%);
 	border-top-right-radius: 0;
 	border-bottom-right-radius: 0;
+	/* The edge that MEETS the grid carries no border of its own. The grip and
+	   the table both draw a 0.67px line at the same place, so the joint renders
+	   1.33px where every other line in the grid is 0.67px -- a visibly heavier
+	   edge exactly where the user is looking for continuity. The table's own line
+	   is already there and is the correct weight, so the grip steps aside and
+	   lets it do the job. This is the same decision as the squared corner above:
+	   finish the joint instead of stopping halfway. */
+	border-right: 0;
 }
 
 .nte-col-grip {
@@ -345,6 +353,15 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 	transform: translateY(-100%);
 	border-bottom-left-radius: 0;
 	border-bottom-right-radius: 0;
+	border-bottom: 0;
+}
+
+.nte-row-del {
+	border-left: 0;
+}
+
+.nte-col-del {
+	border-top: 0;
 }
 
 /* --- Delete: the other end of each band ----------------------------------
@@ -534,7 +551,7 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 }
 
 /* Lift the zone ONLY when a column grip is actually in the band above the table.
-   A column grip is 0.875rem tall and translated fully above the top edge, so it
+   A column grip is one band tall and translated fully above the top edge, so it
    occupies exactly the space the zone would otherwise sit in -- and a zone
    covering the handle hides the very thing the user is reaching for.
 
@@ -549,20 +566,18 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
    Nothing else can enter this band: the drop lines span the table's own box, and
    row grips sit to the LEFT of the table, not above it. Verified, not assumed.
 
-   The clearance IS the band, and nothing else. The zone's gap to the TABLE is
-   `margin-bottom + band height`, and that total must be the same whether a grip
-   exists or not -- the user reads the gap to the table, not the margin, and a
-   toolbar that sits noticeably closer to the table the moment a handle appears
-   looks like a mistake even though nothing overlaps. So the resting margin is
-   the gap, and a band displaces the zone by exactly its own height.
+   The clearance is `band + the resting gap`, and the resting gap is the point:
+   the zone sits the SAME distance above a band as it sits above the bare table,
+   so the toolbar does not appear to jump when a handle arrives. A band
+   displaces it by exactly its own height and not one pixel more.
 
-   Written as the token rather than a number because the two drifted apart
-   before: the band was widened to 1.05rem while this still said 0.875rem, and
-   the toolbar dropped to a ~1px gap over the table while showing 8px without
-   one. The band got bigger and the clearance did not, so the sum changed without
-   anyone intending it. One token, two consumers, no second place to update. */
+   Both halves are one token, because they are one fact. They were written as
+   separate numbers and drifted: the band was widened to 1.05rem while the
+   clearance still said 0.875rem, and the toolbar dropped to a ~1px gap over the
+   table while showing 8px without one. One token, two consumers, no second place
+   to update. */
 .nte-overlay:has(.nte-col-grip) .nte-zone {
-	margin-bottom: var(--nte-band);
+	margin-bottom: calc(var(--nte-band) + var(--nui-space-half));
 }
 
 /* Separator: a single hairline, inset from the edges so it reads as a division
