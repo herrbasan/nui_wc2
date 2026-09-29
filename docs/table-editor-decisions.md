@@ -567,7 +567,7 @@ entirely fictional measurement.** Two of the failures in the post-handover audit
 were the same mistake. Where the answer looks surprising, suspect the rig first
 and prove which it is before reporting anything.
 
-
+## 2026-09-29 — Post-handover audit: the vertical walk never worked
 
 A cold re-read of the handover drove the demo again. Fourteen sampling rounds had
 signed the component off, and the keyboard walk still had a dead axis: **`Enter`
@@ -623,3 +623,44 @@ nothing. Two consequences worth keeping:
 Verify a harness before believing it. Two of the three failures in this audit
 were in the test rig, not the component.
 
+
+## 2026-09-29 — The toolbar sits close, and lifts only for the handles
+
+**User: "can the position be closer to the table and only move up when horizontal
+drag handles are visible?"**
+
+Measured first: the gap was a flat **17–18px in every case** — single cell, row
+band, column band, whole table. The zone cleared a column grip *unconditionally*,
+so it spent 18px of separation on the selections where there is no grip to clear.
+
+**The lift is now conditional, and it is pure CSS.** `.nte-overlay:has(.nte-col-grip)
+.nte-zone` sets the clearance only when a column grip exists. Two reasons that
+selector and not a JS-maintained class:
+
+- It asks the question directly — *does a column grip exist* — rather than reading
+  a flag the JS maintains alongside the grips. A second copy of that fact is
+  exactly what this component's bugs have always been, and the class would be
+  free to disagree with the grips it describes.
+- No JS change at all. The zone's vertical position was already pure CSS
+  (`bottom: 100%` + a margin); `position()` only ever placed the overlay box.
+
+**The rule has to sit on the overlay, not the zone.** The zone is a *sibling* of
+the grip container, and no selector reaches a sibling's descendants from inside
+the zone — the obvious `&:has(~ *)` formulation is inert. I wrote that, saw it
+was wrong, and removed it rather than leaving a comment claiming it did something.
+
+**Only column grips are in the band, and that was verified, not assumed.** The
+drop lines span the table's own box, and row grips are translated `-100%` to the
+*left* — neither enters the space above the top edge. So a row band correctly
+gets the close gap, with its row grip untouched beside the table.
+
+Measured after: **8px** for a single cell, a row band, and a whole table;
+**17–18px** for a column band and a two-column band, with a rectangle-intersection
+check confirming the zone never covers the grip in either. Going back to a single
+cell releases the lift.
+
+**The lift animates.** A conditional `margin-bottom` that snapped would read as a
+glitch at the moment a grip appeared, so `margin-bottom` joined the existing
+transition list. It is animated as a margin rather than a transform offset
+because the transform is already carrying the appear lift — the same one-property
+-one-job rule that decided the centering.

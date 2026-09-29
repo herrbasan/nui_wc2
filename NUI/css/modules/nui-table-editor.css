@@ -411,11 +411,12 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 	   icons rather than a control surface. Expressed through the spacing scale so
 	   it stays in step with the theme rather than freezing a pixel value. */
 	padding: calc(var(--nui-space-eighth) * 3);
-	/* Clear the column grips, which sit in exactly this band: a column grip is
-	   0.875rem tall and translated fully above the table's top edge, so a zone with
-	   the usual hairline margin lands on top of them and hides the very handles the
-	   user is reaching for. Lift by grip + gap instead. */
-	margin-bottom: calc(0.875rem + var(--nui-space-quarter));
+	/* Sit close to the table by default. The toolbar is anchored to the table's top
+	   edge and floats just above it; a generous gap read as a separate object
+	   belonging to the page rather than a control belonging to this table. The old
+	   value cleared a column grip unconditionally, which spent 18px of separation
+	   on the ~90% of selections where there is no grip to clear. */
+	margin-bottom: var(--nui-space-half);
 	background-color: var(--color-base);
 	/* One device pixel, not a hairline-plus: --border-thickness is the thinnest
 	   line the device can draw. The step up from --border-shade1 is deliberate --
@@ -441,7 +442,13 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 	   through buttons the user cannot see. It transitions alongside opacity so the
 	   fade is unaffected, and it is flipped back on by .is-active below. */
 	visibility: hidden;
-	transition: opacity 140ms var(--nte-ease), transform 140ms var(--nte-ease), visibility 140ms var(--nte-ease);
+	/* `margin-bottom` is in the list because the zone's clearance is conditional
+	   (see .nte-overlay:has(.nte-col-grip) below). The lift is a movement, so it
+	   moves: without this the zone jumps 10px the instant a column grip appears,
+	   which reads as a glitch rather than as the toolbar making room. It is
+	   animated as a margin rather than a transform offset because the transform is
+	   already spoken for by the appear lift above. */
+	transition: opacity 140ms var(--nte-ease), transform 140ms var(--nte-ease), visibility 140ms var(--nte-ease), margin-bottom 140ms var(--nte-ease);
 }
 
 .nte-zone.is-active {
@@ -449,6 +456,25 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 	transform: translateY(0);
 	pointer-events: auto;
 	visibility: visible;
+}
+
+/* Lift the zone ONLY when a column grip is actually in the band above the table.
+   A column grip is 0.875rem tall and translated fully above the top edge, so it
+   occupies exactly the space the zone would otherwise sit in -- and a zone
+   covering the handle hides the very thing the user is reaching for.
+
+   The selector lives on the overlay because that is where the grips are: the zone
+   is a sibling, and no selector can reach a sibling's descendants from inside
+   the zone. `:has()` asks the question directly -- does a column grip exist --
+   rather than reading a class the JS maintains alongside the grips, so the
+   clearance cannot drift from the handles it exists for. That is the same rule
+   the component already follows by building grips FROM the selection instead of
+   toggling them.
+
+   Nothing else can enter this band: the drop lines span the table's own box, and
+   row grips sit to the LEFT of the table, not above it. Verified, not assumed. */
+.nte-overlay:has(.nte-col-grip) .nte-zone {
+	margin-bottom: calc(0.875rem + var(--nui-space-quarter));
 }
 
 /* Separator: a single hairline, inset from the edges so it reads as a division
