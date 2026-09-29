@@ -449,8 +449,17 @@ function setupTableEditor(table, options = {}) {
 	function toggleHeader() {
 		const head = table.tHead;
 		if (head) {
-			// Move the header row back into the body; it stays a row, just unstyled.
+			// Turning the header OFF has to DEMOTE the cells, not just move the row.
+			// The theme styles `th` by tag, not by section: a <th> left sitting in
+			// <tbody> keeps the header's shading and weight, so relocating it alone
+			// is a silent no-op — the DOM changes, the export changes, the screen
+			// does not. Off has to mean "an ordinary body row" and look like one.
 			const first = head.rows[0];
+			for (const th of Array.from(first.cells)) {
+				const td = el('td', null, { 'data-align': th.getAttribute('data-align') || 'left' });
+				setCellText(td, cellText(th));
+				th.replaceWith(td);
+			}
 			bodyOf().insertBefore(first, bodyOf().rows[0]);
 			head.remove();
 		} else {

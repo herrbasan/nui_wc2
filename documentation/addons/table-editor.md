@@ -150,10 +150,12 @@ valid. Alignment becomes the delimiter row:
 | **Drag across cells** | Selects the rectangle you swept — the primary way to select several cells |
 | <kbd>Shift</kbd>+click | Extend the selection into a range |
 | Click a row / column grip | Selects that whole row / column |
+| Toggle **Header row** | Moves the first row in and out of `<thead>`, converting its cells `td`↔`th`. Off means an ordinary body row — unbolded, unshaded — and the GFM export emits an empty header. |
 | <kbd>Tab</kbd> / <kbd>Shift</kbd>+<kbd>Tab</kbd> | Walk cells; <kbd>Tab</kbd> past the last cell appends a row |
 | <kbd>Enter</kbd> | Move down a row |
 | <kbd>Esc</kbd> | Clear the selection |
-| Drag a grip | Reorder the row or column, with a drop line || Click an edge `+` | Append a row (bottom) or column (right) |
+| Drag a grip | Reorder the row or column, with a drop line |
+| Click an edge `+` | Append a row (bottom) or column (right) |
 | Paste TSV | Grows the grid and fills it — spreadsheet paste works |
 
 Arrow keys move between cells only at a text boundary; otherwise they stay
