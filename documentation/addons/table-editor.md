@@ -154,13 +154,17 @@ valid. Alignment becomes the delimiter row:
 | Toggle **Header row** | Moves the first row in and out of `<thead>`, converting its cells `td`↔`th`. Off means an ordinary body row — unbolded, unshaded — and the GFM export emits an empty header. |
 | <kbd>Tab</kbd> / <kbd>Shift</kbd>+<kbd>Tab</kbd> | Walk cells; <kbd>Tab</kbd> past the last cell appends a row |
 | <kbd>Enter</kbd> | Move down a row |
+| Arrow keys | Move between cells; <kbd>ArrowUp</kbd> off the first body row reaches the header. Suppressed while text is selected |
 | <kbd>Esc</kbd> | Clear the selection |
 | Drag a grip | Reorder the row or column, with a drop line |
 | Click an edge `+` | Append a row (bottom) or column (right) |
 | Paste TSV | Grows the grid and fills it — spreadsheet paste works |
 
-Arrow keys move between cells only at a text boundary; otherwise they stay
-available to your own cursor movement.
+Arrow keys move between cells, and are suppressed while text is selected so
+your own cursor movement still works. The horizontal pair additionally yields to
+a caret that is not at the start or end of the cell, so <kbd>ArrowLeft</kbd> and
+<kbd>ArrowRight</kbd> edit text before they change cells. The vertical pair is
+not boundary-gated: a cell has no vertical text edge to be at.
 
 ### The selection gesture
 

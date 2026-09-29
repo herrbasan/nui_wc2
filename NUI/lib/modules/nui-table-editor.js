@@ -648,16 +648,27 @@ function setupTableEditor(table, options = {}) {
 
 	function moveFocus(from, dr, dc, appendRow) {
 		const [r0, c0] = coordsOf(from);
-		let r = Math.max(0, r0);
+		// Row -1 is the header, so the body starts at 0 and the header must not be
+		// reachable by walking DOWN into it. r0 is used as-is and clamped at the
+		// top, not normalised to 0: doing that would make Enter from the header
+		// select the first body row instead of staying put.
+		let r = r0;
 		let c = c0 + dc;
 		const cols = colCount(table);
+		// dr is the row axis and has to be applied. It used to be accepted and
+		// dropped, so Enter and the up/down arrows moved nothing at all while
+		// left/right worked -- the signature of a parameter that is never read.
+		if (dr) r += dr;
 		if (c >= cols) {
 			c = 0;
 			r += 1;
 		} else if (c < 0) {
 			c = cols - 1;
-			r = Math.max(0, r - 1);
+			r -= 1;
 		}
+		// Walking up off the first body row lands on the header when there is one,
+		// and is otherwise a no-op rather than an error.
+		if (r < 0) r = hasHeader(table) ? -1 : 0;
 		if (r >= bodyRows(table).length) {
 			if (!appendRow) return false;
 			const tr = insertRow(bodyRows(table).length - 1);
@@ -704,13 +715,22 @@ function setupTableEditor(table, options = {}) {
 		// otherwise they must stay available to the user's own cursor movement.
 		if (e.key.startsWith('Arrow') && !window.getSelection()?.toString()) {
 			const sel = window.getSelection();
-			const atEdge = sel && sel.rangeCount && (() => {
+			// "At the edge" is decided per axis. Collapsing a clone range to the
+			// START of the cell contents makes it zero-length only when the caret
+			// already sits at the very start, which is the test for the horizontal
+			// axis. For the vertical axis that test is meaningless: a cell whose
+			// caret sits mid-text still measures non-zero, so Up/Down never fired
+			// and a vertical walk was impossible. Vertical movement is blocked only
+			// while text is actually selected, which the guard above already
+			// established, so it is always allowed.
+			const horizontal = e.key === 'ArrowRight' || e.key === 'ArrowLeft';
+			const atEdge = !horizontal || (sel && sel.rangeCount && (() => {
 				const r = sel.getRangeAt(0).cloneRange();
 				r.selectNodeContents(cell);
 				if (e.key === 'ArrowRight') r.setStart(r.endContainer, r.endOffset);
 				if (e.key === 'ArrowLeft') r.collapse(false), r.setStart(r.startContainer, r.startOffset);
 				return r.toString().length === 0;
-			})();
+			})());
 			if (atEdge) {
 				const dr = e.key === 'ArrowDown' ? 1 : e.key === 'ArrowUp' ? -1 : 0;
 				const dc = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;

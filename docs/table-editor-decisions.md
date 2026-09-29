@@ -513,3 +513,60 @@ RTE integration. `setupTableEditor(table)` exists for exactly this and adds UI
 only inside a `contenteditable` ancestor. Wiring it into `nui-rich-text` to
 replace the prompt-insert + context-menu table support was always gated on this
 feel-check. The gate is now closed.
+
+## 2026-09-29 — Post-handover audit: the vertical walk never worked
+
+A cold re-read of the handover drove the demo again. Fourteen sampling rounds had
+signed the component off, and the keyboard walk still had a dead axis: **`Enter`
+and `ArrowUp`/`ArrowDown` moved nothing.** `Tab` and `ArrowLeft`/`ArrowRight`
+worked. Two independent causes, both the same species of error.
+
+**Cause 1 — a parameter accepted and never read.** `moveFocus(from, dr, dc,
+appendRow)` computed `r` from the column wrap alone. `dr` was passed in by every
+vertical caller and then dropped on the floor. A row walk that ignores its row
+argument is not a rounding error; it is a function that cannot do the thing its
+name says. Fixed by applying `dr` to `r`.
+
+**Cause 2 — an edge test measured the wrong axis.** The guard that decides
+whether a caret sits at a cell boundary collapsed a clone range to the start/end
+of the cell — a *horizontal* test. For `ArrowUp`/`ArrowDown` it was still
+evaluated, measuring the cell's whole contents: any cell with text measured
+non-zero, reported "not at an edge", and the key was swallowed. So even with
+cause 1 fixed, vertical movement stayed dead. The boundary test is now per-axis;
+the vertical walk is blocked only while text is genuinely selected, which the
+preceding guard already establishes.
+
+**Why sampling missed it.** Both are invisible in the horizontal case, which is
+the one every earlier round exercised — `Tab` and left/right share the code path
+that still worked, and both failures are silent no-ops with no console output.
+The feel-check signed the *gestures*; the vertical keyboard axis was never driven.
+This is the fourth time the boundary-of-the-change rule has paid: the easy
+instance is "does left/right still work", and it did.
+
+### The rule this adds
+
+**A parameter that is never read is a defect the compiler cannot see and the
+horizontal test cannot reach.** When a function takes a direction, an axis or an
+index, that argument must be provably load-bearing: if deleting its use changes
+no behaviour, the caller is lying about what it asked for. The tell is a
+half-working feature — one axis of a symmetric control — which reads as "the
+other one is just less used" rather than "this is broken".
+
+### A second trap, this one in the harness
+
+`activeElement` can be set while **no focus event fires at all** — observed in a
+hidden browser tab, where `cell.focus()` moved `activeElement` and dispatched
+nothing. Two consequences worth keeping:
+
+- `[data-active]` read after a synthetic focus is **null**, which looks exactly
+  like a selection that never happened. It is a measurement artifact.
+- Programmatic `td.click()` and CDP mouse input are both unreliable here (the
+  page is a background tab, so trusted input never lands). Complete gestures must
+  be assembled by hand — `pointerdown` → `pointermove` → `pointerup` → the
+  `click` the browser would have fired. **Omitting that trailing `click` leaves
+  `suppressNextClick` armed and silently eats the next real click**, which
+  presents as "selection randomly stopped working".
+
+Verify a harness before believing it. Two of the three failures in this audit
+were in the test rig, not the component.
+

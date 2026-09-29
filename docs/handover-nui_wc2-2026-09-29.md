@@ -61,10 +61,19 @@ or editability — that is what makes the RTE integration possible later.
 ### Mechanisms, all verified in the browser
 
 click-to-edit · `Tab`/`Shift+Tab` walk (`Tab` past the last cell appends a row) ·
-`Enter` down a row · **drag across cells to sweep a range** · `Shift`+click
-extend · grip click selects a whole row/column · grip drag reorders ·
-edge `+` appends row/column · header-row toggle · TSV paste grows and fills ·
-live GFM export with per-column alignment.
+`Enter` down a row · arrow-key walk (`ArrowUp` off the first body row reaches the
+header) · **drag across cells to sweep a range** · `Shift`+click extend ·
+grip click selects a whole row/column · grip drag reorders · edge `+` appends
+row/column · header-row toggle · TSV paste grows and fills · live GFM export
+with per-column alignment.
+
+> **Fixed after sign-off, 2026-09-29:** the vertical axis of that walk — `Enter`,
+> `ArrowUp`, `ArrowDown` — did nothing. `moveFocus` accepted a `dr` argument and
+> never applied it, and the caret-boundary guard measured the horizontal axis
+> even for vertical keys, so any cell with text reported "not at an edge" and the
+> key was swallowed. Both fixed and verified across nine cases. Full account in
+> `docs/table-editor-decisions.md`. **Lesson: a parameter that is never read is a
+> defect, and a half-working symmetric control reads as "less used", not broken.**
 
 ---
 
