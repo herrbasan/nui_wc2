@@ -44,7 +44,7 @@
 
 import {
 	openDocument, applyEdit, createHistory, coerceScalar, convertTo,
-	typeOf, toPointer, parsePointer, setAt, insertAt, removeAt,
+	typeOf, toPointer, parsePointer, setAt, insertAt, removeAt, renameKey,
 	inferNewKey, inferNewValueType, defaultValueFor,
 } from './nui-json-model.js';
 
@@ -54,6 +54,18 @@ const el = (tag, className, text) => {
 	if (text !== undefined) node.textContent = text;
 	return node;
 };
+
+/**
+ * A key cell. Only an OBJECT PROPERTY is renameable — an array entry's key is
+ * its index, and offering to rename an index would be offering to break the
+ * address scheme the whole grid is built on. So the marker is what the click
+ * handler tests, and an index simply does not get one.
+ */
+function keyCell(text, path, className, renameable) {
+	const cell = el('td', className, text);
+	if (renameable) cell.dataset.rename = toPointer(path);
+	return cell;
+}
 
 /** A branch is a container with something in it. An empty one is a leaf. */
 function isBranch(value) {
@@ -279,7 +291,7 @@ function renderObject(value, path, ctx, level) {
 	const body = el('tbody');
 	for (const key of keys) {
 		const tr = el('tr');
-		tr.append(el('td', 'jg-sub-key hl-prop', key));
+		tr.append(keyCell(key, [...path, key], 'jg-sub-key hl-prop', true));
 		tr.append(valueCell(value[key], [...path, key], ctx, level + 1, 'jg-sub-value'));
 		body.append(tr);
 	}
@@ -352,7 +364,8 @@ export function renderRoot(structure, ctx, focus = []) {
 		const tr = el('tr');
 		tr.dataset.row = toPointer(path);
 		tr.append(el('td', 'jg-index', String(index + 1)));
-		tr.append(el('td', 'jg-key hl-prop', key));
+		// A root of maps has property keys; a root of lists has indices.
+		tr.append(keyCell(key, path, 'jg-key hl-prop', !Array.isArray(shown)));
 
 		const cell = el('td', 'jg-value');
 		cell.dataset.path = toPointer(path);
@@ -670,6 +683,12 @@ export function setupJsonGrid(host, options = {}) {
 				return button;
 			};
 			if (isBranch(value)) item('Open on its own', () => drillTo(pointer));
+			// Offered here as well as by clicking the key: the click is the fast
+			// path, the menu is where you look when you did not know that.
+			if (pointer !== '' && !Array.isArray(parentOf(state.doc.structure, path))) {
+				const keyCellEl = host.querySelector(`td[data-rename="${CSS.escape(pointer)}"]`);
+				if (keyCellEl) item('Rename', () => beginRename(keyCellEl));
+			}
 			if (typeOf(value) !== 'array') item('Duplicate', () => {
 				const parent = parentAt(state.doc.structure, path);
 				const at = Array.isArray(parent) ? Number(path[path.length - 1]) + 1 : path[path.length - 1];
@@ -711,11 +730,14 @@ export function setupJsonGrid(host, options = {}) {
 	 * contenteditable span has neither. nui-table-editor makes its cells
 	 * contenteditable for the same reasons.
 	 */
-	function beginEdit(cell) {
-		const path = parsePointer(cell.dataset.path || '');
-		if (state.editing?.dataset.path === cell.dataset.path) return;
-		const current = readAt(state.doc.structure, path);
-		if (current === null || typeof current === 'object') return;
+	/**
+	 * Open an inline field over `cell`. Keys and values are the SAME gesture —
+	 * click the thing, type the new thing — so they share one editor, one set of
+	 * keys, and one way of being finished. The only difference is what a finished
+	 * edit means, which the caller's `commit` decides.
+	 */
+	function openField(cell, { text, ariaLabel, commit }) {
+		if (state.editing === cell) return;
 		closePanel();
 
 		// An editor open elsewhere is COMMITTED, not abandoned. The deferred blur
@@ -728,28 +750,34 @@ export function setupJsonGrid(host, options = {}) {
 		// inside a detached cell produces something that is never shown.
 		if (state.editing?._jgFinish) state.editing._jgFinish(true);
 		state.editing = null;
-		const target = host.querySelector(`td[data-path="${CSS.escape(toPointer(path))}"]`);
+		// Re-resolve by whatever marks THIS cell: a value cell is addressed by
+		// data-path, a key cell by data-rename. Re-resolving by data-path alone
+		// silently matched nothing for a key, and the editor simply never opened.
+		const marker = cell.dataset.rename !== undefined
+			? `td[data-rename="${CSS.escape(cell.dataset.rename)}"]`
+			: `td[data-path="${CSS.escape(cell.dataset.path || '')}"]`;
+		const target = host.querySelector(marker);
 		if (!target) return;
 		cell = target;
 
 		const editor = el('span', 'jg-scalar jg-editor');
-		editor.textContent = typeof current === 'string' ? current : String(current);
+		editor.textContent = text;
 		editor.setAttribute('contenteditable', 'plaintext-only');
 		editor.setAttribute('spellcheck', 'false');
 		editor.setAttribute('role', 'textbox');
-		editor.setAttribute('aria-label', 'Value');
-		// Not a tab stop: Tab is the gesture that commits, and an editable field
-		// in the tab order would make every cell two stops.
+		editor.setAttribute('aria-label', ariaLabel);
+		// Not a tab stop: an editable field in the tab order would make every
+		// cell two stops.
 		editor.tabIndex = -1;
 		state.editing = cell;
 		cell.dataset.editing = 'true';
 
-		// Swap ONLY the value, never the cell's children. Replacing the children
+		// Swap ONLY the field, never the cell's children. Replacing the children
 		// also destroyed this value's own type chip and options menu, so editing a
 		// value made it impossible to change its type — the two concerns are
 		// different, and neither should destroy the other.
-		const display = cell.querySelector('.jg-scalar');
-		if (display) display.replaceWith(editor);
+		const display = cell.querySelector('.jg-scalar, .jg-key-editor') || cell.firstElementChild;
+		if (display && display !== editor) display.replaceWith(editor);
 		else cell.replaceChildren(editor);
 		editor.focus();
 
@@ -766,11 +794,15 @@ export function setupJsonGrid(host, options = {}) {
 			cell._jgFinish = null;
 			state.editing = null;
 			if (!save) { render(); return; }
-			// The format's own reader decides what the text means; the badge
-			// displays the result rather than constraining it.
-			const coerced = coerceScalar(editor.textContent.replace(/\s*\n+\s*/g, ' '), state.formatId);
-			if (!coerced.ok) { host.dataset.error = coerced.reason; render(); say(coerced.reason, true); return; }
-			commit(`set ${cell.dataset.path}`, (draft) => setAt(draft, path, coerced.value));
+			// A refused edit — a rename onto a name that already exists, a name that
+			// is blank, a scalar that cannot hold what was typed — must leave the
+			// document untouched AND put the cell back the way it was. Testing only
+			// for `ok === false` left the editor orphaned in the grid whenever a
+			// refusal returned nothing at all, and an editor with no listener is a
+			// field that looks live and is not.
+			const typed = editor.textContent.replace(/\s*\n+\s*/g, ' ');
+			const result = commit(typed);
+			if (!result || result.ok === false) render();
 		};
 		// Clicking straight from one cell to another blurs this editor, and the
 		// deferred blur commit below would stand down because `state.editing` has
@@ -781,12 +813,12 @@ export function setupJsonGrid(host, options = {}) {
 			if (e.key === 'Enter') { e.preventDefault(); finish(true); }
 			if (e.key === 'Escape') { e.preventDefault(); finish(false); }
 		});
-		// A scalar is one line of one cell, so a pasted multi-line value is folded
+		// A field is one line of one cell, so a pasted multi-line value is folded
 		// rather than allowed to reflow the row.
 		editor.addEventListener('paste', (e) => {
 			e.preventDefault();
-			const text = (e.clipboardData?.getData('text/plain') || '').replace(/\s*\n+\s*/g, ' ');
-			document.execCommand('insertText', false, text);
+			const text2 = (e.clipboardData?.getData('text/plain') || '').replace(/\s*\n+\s*/g, ' ');
+			document.execCommand('insertText', false, text2);
 		});
 		editor.addEventListener('blur', () => {
 			// Commit on the NEXT task, not on blur. A control clicked in the same
@@ -796,6 +828,44 @@ export function setupJsonGrid(host, options = {}) {
 			// no longer being edited (the control's own action re-rendered it) and
 			// stands down instead of committing a stale cell.
 			setTimeout(() => { if (state.editing === cell) finish(true); }, 0);
+		});
+	}
+
+	/** Edit a LEAF. A container is not a value — it has no text to edit. */
+	function beginEdit(cell) {
+		const path = parsePointer(cell.dataset.path || '');
+		const current = readAt(state.doc.structure, path);
+		if (current === null || typeof current === 'object') return;
+		openField(cell, {
+			text: typeof current === 'string' ? current : String(current),
+			ariaLabel: 'Value',
+			// The format's own reader decides what the text means; the badge
+			// displays the result rather than constraining it.
+			commit: (typed) => {
+				const coerced = coerceScalar(typed, state.formatId);
+				if (!coerced.ok) { host.dataset.error = coerced.reason; render(); say(coerced.reason, true); return null; }
+				return commit(`set ${toPointer(path)}`, (draft) => setAt(draft, path, coerced.value));
+			},
+		});
+	}
+
+	/** Rename an object property. An array index has no name to change. */
+	function beginRename(cell) {
+		const path = parsePointer(cell.dataset.rename || '');
+		const name = path[path.length - 1];
+		if (name === undefined) return;
+		openField(cell, {
+			text: name,
+			ariaLabel: 'Property name',
+			commit: (typed) => {
+				const next = typed.trim();
+				if (!next) { say('A property needs a name', true); return null; }
+				if (next === name) { render(); return null; }
+				// renameKey refuses a collision and says so, and it keeps the key
+				// in its POSITION rather than moving it to the end — the editor
+				// must not reorder a human's file behind their back.
+				return commit(`rename ${name} → ${next}`, (draft) => renameKey(draft, path, next));
+			},
 		});
 	}
 
@@ -846,6 +916,12 @@ export function setupJsonGrid(host, options = {}) {
 
 		const menu = e.target.closest('[data-menu]');
 		if (menu) { openMenuPanel(menu, menu.dataset.menu, e); return; }
+
+		// A KEY is renamed by clicking it, the same gesture that edits a value.
+		// Only object properties carry the marker; an array index does not, because
+		// an index is an address and renaming one would break the addressing.
+		const keyCellEl = e.target.closest('td[data-rename]');
+		if (keyCellEl) { beginRename(keyCellEl); return; }
 
 		// The whole value cell is the target, not just the text in it. A short
 		// value is a few characters in a cell three hundred wide, and requiring a
