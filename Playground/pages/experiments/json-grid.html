@@ -18,10 +18,19 @@
 
 <section>
 	<h2>Grid</h2>
-	<p>Click any coloured value to edit it. The type shown is the type the
-	<em>format's own reader</em> gives the text — the badge displays the meaning,
-	it does not constrain it. Type <code>4096</code> into a string cell and it
-	becomes a number, because the text is the truth.</p>
+	<p><strong>Adding is one click.</strong> Every list ends with
+	<em>+ Add one more</em>, and so does every branch head. The new value
+	<strong>inherits the type of the one before it</strong> and takes a name that
+	continues the document's own numbering — <code>id1, id2</code> invites
+	<code>id3</code>, not <code>id1_2</code>. No dialog, because a dialog per row
+	is a dialog per row and adding twenty properties is the case that matters.</p>
+	<p>If the inherited type is wrong, click the type chip and change it. The type
+	badge <strong>displays</strong> what the format's own reader makes of the
+	text; it does not constrain it. Type <code>4096</code> into a string cell and
+	it becomes a number, because the text is the truth.</p>
+	<p>A conversion that would <em>discard</em> something is refused and says so.
+	An <em>empty</em> container converts freely — it holds nothing — which is what
+	makes add-then-retype a two-click operation.</p>
 	<div class="demo-area"><div id="grid"></div></div>
 </section>
 

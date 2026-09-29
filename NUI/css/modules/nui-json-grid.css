@@ -66,18 +66,25 @@
 	align-items: center;
 	gap: var(--nui-space-quarter);
 	min-height: 1.4em;
-	/* Controls are always laid out, only their opacity changes. Reserving the
-	   space means revealing a control never reflows the row. */
-	padding-right: 7.5em;
 	margin-bottom: calc(var(--nui-space-quarter) / 2);
 }
 
-.jg-host .jg-head-leaf {
-	padding-right: 0;
-	margin-bottom: 0;
+/* The controls sit at the far end of a flex row, so they are ALWAYS in the
+   layout and revealing one never reflows the row. An earlier version reserved a
+   fixed width instead, which was an invented number and reserved nothing at all
+   for leaves — where the chip then overlapped a long value. */
+.jg-host .jg-head .jg-ctl-add,
+.jg-host .jg-head .jg-ctl-menu,
+.jg-host .jg-head-leaf .jg-type-chip {
+	margin-left: auto;
 }
 
-/* A leaf: the value takes the room it needs, the controls sit at the end. */
+.jg-host .jg-head-leaf {
+	margin-bottom: 0;
+	padding-left: var(--nui-space);
+}
+
+/* A leaf: the value takes the room it needs, the controls keep their own. */
 .jg-host .jg-leaf {
 	display: flex;
 	align-items: center;
@@ -85,15 +92,22 @@
 	gap: var(--nui-space);
 }
 
-.jg-host .jg-summary,
-.jg-host .jg-branch-type {
+.jg-host .jg-leaf > .jg-scalar {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.jg-host .jg-summary {
 	color: var(--text-color-dim);
 	font-size: var(--font-size-xsmall);
 }
 
-.jg-host .jg-branch-type {
+/* A branch's type chip sits in the flow with the summary, not pushed to the
+   far end like a leaf's — it is part of what the head SAYS, not a control
+   parked at the end. */
+.jg-host .jg-branch-kind {
+	opacity: 1;
 	font-style: italic;
-	opacity: 0.8;
 }
 
 /* ── Controls: present but quiet ──────────────────────────────────────── */
@@ -188,6 +202,45 @@
 
 .jg-host .jg-empty {
 	color: var(--text-color-dim);
+}
+
+/* ── The add row ──────────────────────────────────────────────────────── */
+/* The last row of every list. It carries no data and is never selected; it is
+   the "and one more" gesture, where the eye already is. */
+
+.jg-host .jg-add-row > td {
+	padding: 0 var(--nui-space);
+	border-bottom: var(--border-thickness) solid var(--border-shade1);
+	vertical-align: middle;
+}
+
+.jg-host .jg-ctl-add-row {
+	opacity: 1;
+	font-size: var(--font-size-xsmall);
+	color: var(--text-color-dim);
+	text-align: left;
+	width: 100%;
+	padding: var(--nui-space-half) 0;
+}
+
+.jg-host .jg-ctl-add-row:hover {
+	background: none;
+	color: var(--text-color);
+}
+
+/* An empty container is a target, so it has to look like one. */
+.jg-host .jg-addable {
+	appearance: none;
+	background: none;
+	border: none;
+	font: inherit;
+	cursor: pointer;
+	padding: 0;
+}
+
+.jg-host .jg-addable:hover {
+	color: var(--text-color);
+	text-decoration: underline;
 }
 
 /* ── Leaves ───────────────────────────────────────────────────────────── */

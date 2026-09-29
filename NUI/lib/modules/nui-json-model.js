@@ -197,6 +197,13 @@ export function convertTo(value, target) {
 	if (from === 'null') return { ok: true, value: structuredClone(CREATION_DEFAULTS[target]) };
 
 	if (isContainer(from) || isContainer(target)) {
+		// An EMPTY container holds nothing, so converting it discards nothing and
+		// the refusal would be theatre. This is exactly the case the grid's
+		// add-then-retype flow depends on: a new property inherits the neighbour's
+		// type, and inheriting "object" must not lock the value to an object.
+		if (isContainer(from) && (Array.isArray(value) ? value.length : Object.keys(value).length) === 0) {
+			return { ok: true, value: structuredClone(CREATION_DEFAULTS[target]) };
+		}
 		const detail = isContainer(from)
 			? `${from} with ${typeOf(value) === 'array' ? value.length : Object.keys(value).length} ${isContainer(from) && typeOf(value) === 'array' ? 'entries' : 'keys'}`
 			: from;
@@ -352,6 +359,67 @@ export function coerceScalar(text, formatId) {
 	return { ok: true, value };
 }
 
+/**
+ * A name for a new property that does not collide and does not look machine-made
+ * in a file a human will read.
+ *
+ * If the existing keys share a trailing number, the new one continues their
+ * sequence — `id1, id2` invites `id3`, not `id1_2`. Failing that it starts a
+ * sequence of its own. Never returns a name already in use, because insertAt
+ * refuses a collision and the add would simply fail for no visible reason.
+ */
+export function inferNewKey(existingKeys) {
+	const taken = new Set(existingKeys);
+	const pattern = existingKeys.length
+		? /^(\D*)(\d+)$/.exec(String(existingKeys[existingKeys.length - 1]))
+		: null;
+	if (pattern) {
+		const [, prefix, digits] = pattern;
+		const width = digits.length;
+		let n = Number(digits);
+		// Continue from the highest existing number, not the last one, so keys
+		// that are not in order still do not collide.
+		for (const key of existingKeys) {
+			const m = new RegExp(`^${prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\d+)$`).exec(String(key));
+			if (m) n = Math.max(n, Number(m[1]));
+		}
+		for (let i = n + 1; i < n + 1000; i++) {
+			const candidate = prefix + String(i).padStart(width, '0');
+			if (!taken.has(candidate)) return candidate;
+		}
+	}
+	for (let i = 1; i < 1000; i++) {
+		const candidate = i === 1 ? 'newKey' : `newKey${i}`;
+		if (!taken.has(candidate)) return candidate;
+	}
+	throw new Error('Could not find an unused property name');
+}
+
+/**
+ * What a new value added to this container should become, for a ONE-CLICK add.
+ *
+ * Literally the previous sibling's type. That is the contract, and it is worth
+ * being literal about: quietly substituting a "friendlier" type when the
+ * neighbour happens to be a container is a surprise, and the whole reason adding
+ * is one click is that it should be predictable enough to do twenty times
+ * without thinking. If the inherited shape is wrong it is one chip-click to
+ * change — and an EMPTY container converts freely, so nothing is locked in.
+ *
+ * With no previous sibling at all, a string: a blank is the cheapest mistake to
+ * notice and the cheapest to fix.
+ */
+export function inferNewValueType(container) {
+	if (container === null || container === undefined) return 'string';
+	const values = Array.isArray(container) ? container : Object.values(container);
+	if (values.length === 0) return 'string';
+	return typeOf(values[values.length - 1]);
+}
+
+/** The empty value that starts a value of this type. */
+export function defaultValueFor(type) {
+	return structuredClone(CREATION_DEFAULTS[type] ?? null);
+}
+
 // ── Undo ────────────────────────────────────────────────────────────────
 // Free, and only because text owns the document. No structural undo logic, no
 // DOM snapshots — just the strings that were true at each point.
@@ -405,5 +473,6 @@ export function createHistory(initialText, limit = 200) {
 export default {
 	openDocument, applyEdit, createHistory, coerceScalar,
 	getAt, hasAt, setAt, removeAt, insertAt, renameKey, moveAt,
-	typeOf, convertTo, inferColumnType, toPointer, parsePointer,
+	typeOf, convertTo, inferColumnType, inferNewKey, inferNewValueType, defaultValueFor,
+	toPointer, parsePointer,
 };

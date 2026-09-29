@@ -44,7 +44,8 @@
 
 import {
 	openDocument, applyEdit, createHistory, coerceScalar, convertTo,
-	typeOf, toPointer, parsePointer, setAt, insertAt, removeAt, inferColumnType,
+	typeOf, toPointer, parsePointer, setAt, insertAt, removeAt,
+	inferNewKey, inferNewValueType, defaultValueFor,
 } from './nui-json-model.js';
 
 const el = (tag, className, text) => {
@@ -116,9 +117,17 @@ function branchHead(value, path, ctx, collapsed) {
 	head.append(caret);
 
 	head.append(el('span', 'jg-summary', summaryOf(value)));
-	head.append(el('span', 'jg-branch-type', Array.isArray(value) ? 'array' : 'object'));
 
-	const add = control('+', 'jg-ctl-add', `Add to ${summaryOf(value)}`);
+	// A branch's type is a CONTROL, not a label. A value added by one click
+	// inherits its neighbour's type, and if that inherited type is the wrong one
+	// there must be a way to change it — otherwise "add, then retype" has no
+	// second half, and the inherited type is a lock rather than a default.
+	const kind = Array.isArray(value) ? 'array' : 'object';
+	const kindButton = control(kind, 'jg-type-chip jg-branch-kind', `Change type (currently ${kind})`);
+	kindButton.dataset.type = pointer;
+	head.append(kindButton);
+
+	const add = control('+', 'jg-ctl-add', 'Add one more here — it takes the previous one\'s type');
 	add.dataset.add = pointer;
 	head.append(add);
 
@@ -183,7 +192,7 @@ function valueCell(value, path, ctx, level, extraClass = '') {
 }
 
 function renderArray(value, path, ctx, level) {
-	if (value.length === 0) return emptyBlock('[]', path, ctx);
+	if (value.length === 0) return emptyBlock('[]', path);
 
 	const cell = el('div', 'jg-branch');
 	const pointer = toPointer(path);
@@ -239,12 +248,24 @@ function renderArray(value, path, ctx, level) {
 	}
 
 	cell.append(table);
+
+	// A trailing add for the same reason the root has one: adding twenty
+	// properties should not mean scrolling back to a branch head twenty times.
+	const addRow = el('tr', 'jg-add-row');
+	const addCell = el('td', 'jg-sub-value');
+	addCell.colSpan = value.every(e2 => typeOf(e2) === 'object') ? Math.max(1, columns.length) : 2;
+	const addButton = control('+ Add one more', 'jg-ctl-add jg-ctl-add-row', 'Add one more at the end — it takes the previous one\'s type');
+	addButton.dataset.add = pointer;
+	addCell.append(addButton);
+	addRow.append(addCell);
+	body.append(addRow);
+
 	return cell;
 }
 
 function renderObject(value, path, ctx, level) {
 	const keys = Object.keys(value);
-	if (keys.length === 0) return emptyBlock('{}', path, ctx);
+	if (keys.length === 0) return emptyBlock('{}', path);
 
 	const cell = el('div', 'jg-branch');
 	const pointer = toPointer(path);
@@ -262,19 +283,46 @@ function renderObject(value, path, ctx, level) {
 		tr.append(valueCell(value[key], [...path, key], ctx, level + 1, 'jg-sub-value'));
 		body.append(tr);
 	}
+
+	const addRow = el('tr', 'jg-add-row');
+	const addCell = el('td', 'jg-sub-value');
+	addCell.colSpan = 2;
+	const addButton = control('+ Add one more', 'jg-ctl-add jg-ctl-add-row', 'Add one more at the end — it takes the previous one\'s type');
+	addButton.dataset.add = pointer;
+	addCell.append(addButton);
+	addRow.append(addCell);
+	body.append(addRow);
+
 	table.append(body);
 	cell.append(table);
 	return cell;
 }
 
-/** An empty container is still editable — you have to be able to fill it. */
-function emptyBlock(text, path, ctx) {
+/**
+ * An empty container is still editable — you have to be able to fill it.
+ *
+ * This is also where a freshly ADDED property lands when it inherits an object
+ * type, so it carries the same type control as any other value: add by one
+ * click, and if the inherited type is wrong, change it by one click.
+ */
+function emptyBlock(text, path) {
+	const pointer = toPointer(path);
+	const kind = text === '[]' ? 'array' : 'object';
 	const wrap = el('div', 'jg-branch jg-branch-empty');
-	const menu = control('⋯', 'jg-ctl-menu', `Options for this ${text}`);
-	menu.dataset.menu = toPointer(path);
-	const add = control('+', 'jg-ctl-add', `Add to this ${text}`);
-	add.dataset.add = toPointer(path);
-	wrap.append(el('span', 'jg-scalar jg-empty', text), add, menu);
+	wrap.dataset.branch = pointer;
+
+	const badge = el('button', 'jg-scalar jg-empty jg-addable', text);
+	badge.setAttribute('aria-label', `Add a value to this ${kind}`);
+	wrap.append(badge);
+
+	const kindButton = control(kind, 'jg-type-chip jg-branch-kind', `Change type (currently ${kind})`);
+	kindButton.dataset.type = pointer;
+	wrap.append(kindButton);
+
+	const add = control('+', 'jg-ctl-add', 'Add one more here — it takes the previous one\'s type');
+	add.dataset.add = pointer;
+	wrap.append(add);
+
 	return wrap;
 }
 
@@ -316,6 +364,19 @@ export function renderRoot(structure, ctx, focus = []) {
 	});
 
 	table.append(body);
+
+	// The root is the one container with no head, so it would otherwise have no
+	// way to add at all. The add lives at the END of the list, because that is
+	// where a new item belongs and where the eye already is.
+	const addRow = el('tr', 'jg-add-row');
+	const addCell = el('td');
+	addCell.colSpan = 3;
+	const addButton = control('+ Add one more', 'jg-ctl-add jg-ctl-add-row', 'Add one more at the end — it takes the previous one\'s type');
+	addButton.dataset.add = toPointer(basePath);
+	addCell.append(addButton);
+	addRow.append(addCell);
+	body.append(addRow);
+
 	return table;
 }
 
@@ -523,62 +584,55 @@ export function setupJsonGrid(host, options = {}) {
 	}
 
 	/**
-	 * ADD and CHANGE TYPE share one popover, because they are one decision:
-	 * what kind of value belongs here. The blocks editor makes the same call —
-	 * the palette is the only place a type is chosen.
+	 * ADD is ONE CLICK and inherits the previous sibling's type. A dialog per add
+	 * is a dialog per row, and adding twenty properties is the case that matters.
+	 * Change the type afterwards, from the chip, when you have seen where the
+	 * series is going.
 	 */
-	function openTypePanel(trigger, { mode, path }, event) {
+	function addSibling(pointer) {
+		const path = parsePointer(pointer);
+		const container = readAt(state.doc.structure, path);
+		if (container === null || typeof container !== 'object') return { ok: false, reason: 'That is a value, not something to add to' };
+
+		if (Array.isArray(container)) {
+			const type = inferNewValueType(container);
+			return commit(`add ${type}`, (draft) => insertAt(draft, [...path, String(container.length)], defaultValueFor(type)));
+		}
+		const name = inferNewKey(Object.keys(container));
+		const type = inferNewValueType(container);
+		const result = commit(`add ${name}`, (draft) => insertAt(draft, [...path, name], defaultValueFor(type)));
+		if (result.ok) focusPath([...path, name]);
+		return result;
+	}
+
+	/** Put the caret in a value we just created, so typing replaces it at once. */
+	function focusPath(path) {
+		const pointer = toPointer(path);
+		const cell = host.querySelector(`td[data-path="${CSS.escape(pointer)}"]`);
+		const leaf = cell?.querySelector('.jg-scalar');
+		if (leaf) beginEdit(cell);
+	}
+
+	/**
+	 * CHANGE TYPE, and only change type. The blocks editor made the palette the
+	 * only place a type is chosen; here creation is a one-click inherit and this
+	 * panel is where a type is corrected afterwards — the same single decision,
+	 * asked once rather than twice.
+	 *
+	 * A conversion that would DISCARD is refused with the reason and the panel
+	 * stays open. An EMPTY container is not refused: it holds nothing, and the
+	 * add-then-retype flow depends on being able to change an inherited type.
+	 */
+	function openTypePanel(trigger, { path }, event) {
 		const target = parsePointer(path);
-		// In CREATE mode the container is the value AT the path — /tags is the
-		// list you are adding to. In EDIT mode there is no container question:
-		// the value itself is what changes.
-		const container = readAt(state.doc.structure, target);
-		const isArray = Array.isArray(container);
-		const current = mode === 'edit' ? typeOf(readAt(state.doc.structure, target)) : null;
+		const current = typeOf(readAt(state.doc.structure, target));
+		const before = readAt(state.doc.structure, target);
 
-		openPanel(trigger, mode === 'create' ? 'Add a value' : 'Change type', (panel) => {
-			// A new property in an object needs a name; a new entry in an array is
-			// addressed by position and has none.
-			let nameInput = null;
-			if (mode === 'create' && !isArray) {
-				panel.append(el('label', 'jg-field-label', 'Name'));
-				const wrap = el('nui-input');
-				nameInput = el('input');
-				nameInput.type = 'text';
-				nameInput.placeholder = 'property name';
-				wrap.append(nameInput);
-				panel.append(wrap);
-				// Focus after the panel is in the top layer, otherwise the browser
-				// refuses to move focus into it.
-				panel.addEventListener('nui-popover-open', () => nameInput.focus(), { once: true });
-			}
-
-			// Context sensitivity: a new value in a column of numbers should not
-			// require picking "number" to get a 0 instead of "".
-			const suggested = mode === 'create'
-				? inferColumnType(isArray ? container : Object.values(container ?? {}))
-				: current;
-			if (mode === 'create' && suggested) {
-				panel.append(el('p', 'jg-hint', `This column looks like ${suggested}`));
-			}
-
+		openPanel(trigger, 'Change type', (panel) => {
+			panel.append(el('p', 'jg-hint', `${current} → …`));
 			panel.append(typePalette((type) => {
-				if (mode === 'create') {
-					const name = isArray ? null : nameInput?.value.trim();
-					if (!isArray && !name) { say('A property needs a name', true); nameInput?.focus(); return; }
-					const result = commit(`add ${name ?? type}`, (draft) => {
-						const value = type === 'object' ? {} : type === 'array' ? [] : null;
-						return isArray
-							? insertAt(draft, [...target, String(container.length)], value)
-							: insertAt(draft, [...target, name], value);
-					});
-					if (result.ok) closePanel();
-					return;
-				}
-				// Changing a type can DISCARD, so convertTo refuses the lossy ones
-				// and says why. The panel stays open with the reason; the document
-				// is untouched.
-				const verdict = convertForEdit(readAt(state.doc.structure, target), type);
+				if (type === current) { closePanel(); return; }
+				const verdict = convertForEdit(before, type);
 				if (!verdict.ok) { say(verdict.reason, true); return; }
 				const result = commit(`type ${current} → ${type}`, (draft) => setAt(draft, target, verdict.value));
 				if (result.ok) closePanel();
@@ -653,7 +707,14 @@ export function setupJsonGrid(host, options = {}) {
 		input.setAttribute('aria-label', 'Value');
 		state.editing = cell;
 		cell.dataset.editing = 'true';
-		cell.replaceChildren(input);
+
+		// Swap ONLY the value, never the cell's children. Replacing the children
+		// also destroyed this value's own type chip and options menu, so editing a
+		// value made it impossible to change its type — the two concerns are
+		// different, and neither should destroy the other.
+		const display = cell.querySelector('.jg-scalar');
+		if (display) display.replaceWith(input);
+		else cell.replaceChildren(input);
 		input.focus();
 		input.select();
 
@@ -673,7 +734,15 @@ export function setupJsonGrid(host, options = {}) {
 			if (e.key === 'Enter') { e.preventDefault(); finish(true); }
 			if (e.key === 'Escape') { e.preventDefault(); finish(false); }
 		});
-		input.addEventListener('blur', () => finish(true));
+		input.addEventListener('blur', () => {
+			// Commit on the NEXT task, not on blur. A control clicked in the same
+			// gesture — the type chip, the options menu — also blurs this input, and
+			// committing immediately would rebuild the grid and remove the very
+			// control the user is about to click. The deferred check finds the cell
+			// no longer being edited (the control's own action re-rendered it) and
+			// stands down instead of committing a stale cell.
+			setTimeout(() => { if (state.editing === cell) finish(true); }, 0);
+		});
 	}
 
 	function step(redo) {
@@ -708,10 +777,18 @@ export function setupJsonGrid(host, options = {}) {
 		if (crumb) { drillTo(crumb.dataset.crumb); return; }
 
 		const typeChip = e.target.closest('[data-type]');
-		if (typeChip) { openTypePanel(typeChip, { mode: 'edit', path: typeChip.dataset.type }, e); return; }
+		if (typeChip) { openTypePanel(typeChip, { path: typeChip.dataset.type }, e); return; }
 
 		const add = e.target.closest('[data-add]');
-		if (add) { openTypePanel(add, { mode: 'create', path: add.dataset.add }, e); return; }
+		if (add) { addSibling(add.dataset.add); return; }
+
+		// The empty-container badge is itself the add target: `{}` is a button.
+		const addable = e.target.closest('.jg-addable');
+		if (addable) {
+			const cell = addable.closest('[data-branch]');
+			if (cell) addSibling(cell.dataset.branch);
+			return;
+		}
 
 		const menu = e.target.closest('[data-menu]');
 		if (menu) { openMenuPanel(menu, menu.dataset.menu, e); return; }
@@ -725,6 +802,10 @@ export function setupJsonGrid(host, options = {}) {
 	});
 
 	host.addEventListener('keydown', (e) => {
+		// Ctrl+Z while a cell is being typed into belongs to the text field, not to
+		// the document. Undoing the document out from under an open editor is the
+		// kind of surprise that loses work.
+		if (e.target instanceof HTMLInputElement) return;
 		if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
 			e.preventDefault();
 			step(e.shiftKey);
@@ -737,6 +818,7 @@ export function setupJsonGrid(host, options = {}) {
 		load,
 		commit,
 		say,
+		addSibling,
 		get text() { return state.doc?.text; },
 		get structure() { return state.doc?.structure; },
 		get format() { return state.formatId; },

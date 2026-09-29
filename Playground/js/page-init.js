@@ -3312,7 +3312,7 @@ nui.registerPage('experiments/json-grid', {
 			'load-yaml': () => { grid.load(YAML_SAMPLE, 'yaml'); },
 			'load-json': () => { grid.load(JSON_SAMPLE, 'json'); },
 			'load-deep': () => { grid.load(DEEP_SAMPLE, 'yaml'); },
-			'add-property': () => grid.commit('add licence', (d) => jsonModel.insertAt(d, ['licence'], 'MIT')),
+			'add-property': () => grid.addSibling(''),
 			'change-type': () => grid.commit('stars → boolean', (d) => jsonModel.setAt(d, ['stars'], d.stars !== 0)),
 			refuse: () => {
 				// The context-sensitive menu will offer this; the point is that the
@@ -3529,8 +3529,17 @@ nui.registerPage('experiments/json-model', {
 			}],
 			['types: a refusal is a refusal', () => {
 				const r = model.convertTo({ a: 1 }, 'string');
-				if (r.ok) throw new Error('converting a map to a string must be refused');
+				if (r.ok) throw new Error('converting a NON-EMPTY map to a string must be refused');
 				if (!/discard/i.test(r.reason)) throw new Error(`reason should say data is discarded, got: ${r.reason}`);
+			}],
+			['types: an EMPTY container converts freely', () => {
+				// The add-then-retype flow depends on this: a new value inherits its
+				// neighbour's type, and inheriting "object" must not lock it there.
+				// An empty container holds nothing, so refusing would be theatre.
+				if (!model.convertTo({}, 'number').ok) throw new Error('empty object -> number must be allowed');
+				if (model.convertTo({}, 'string').value !== '') throw new Error('empty object -> string');
+				if (model.convertTo([], 'object').value === null) throw new Error('empty array -> object');
+				if (!model.convertTo([], 'boolean').ok) throw new Error('empty array -> boolean');
 			}],
 			['types: "abc" is not a number', () => {
 				if (model.convertTo('abc', 'number').ok) throw new Error('NaN must be refused');
@@ -3538,6 +3547,33 @@ nui.registerPage('experiments/json-model', {
 			['types: null becomes an empty value of any type', () => {
 				if (model.convertTo(null, 'string').value !== '') throw new Error('null→string');
 				if (model.convertTo(null, 'object').value === null) throw new Error('null→object');
+			}],
+			['add: a new key continues the document\'s own numbering', () => {
+				// "id1, id2" invites "id3", not "id1_2". A name that looks machine-made
+				// in a file a human will read is a small, permanent cost.
+				if (model.inferNewKey(['id1', 'id2']) !== 'id3') throw new Error('continues the sequence');
+				if (model.inferNewKey(['id2', 'id1', 'id9']) !== 'id10') throw new Error('must not collide even when unordered');
+				if (model.inferNewKey(['id01', 'id02']) !== 'id03') throw new Error('keeps the zero padding');
+				if (model.inferNewKey(['title']) !== 'newKey') throw new Error('falls back when there is no pattern');
+				if (model.inferNewKey(['newKey', 'newKey2']) !== 'newKey3') throw new Error('never collides with its own output');
+				if (model.inferNewKey([]) !== 'newKey') throw new Error('empty container');
+			}],
+			['add: a new value inherits the PREVIOUS sibling\'s type, literally', () => {
+				if (model.inferNewValueType({ a: 1, b: 'x' }) !== 'string') throw new Error('previous is a string');
+				if (model.inferNewValueType({ a: 'x', b: 7 }) !== 'number') throw new Error('previous is a number');
+				if (model.inferNewValueType([1, 2, true]) !== 'boolean') throw new Error('array previous');
+				// LITERAL, even when that is awkward: a container previous gives a
+				// container. Substituting a "friendlier" type would be a surprise,
+				// and the inherited type is a default, not a lock.
+				if (model.inferNewValueType({ a: 1, b: { c: 1 } }) !== 'object') throw new Error('a container previous stays a container');
+				if (model.inferNewValueType({}) !== 'string') throw new Error('nothing to inherit from');
+			}],
+			['add: the starting value for a type', () => {
+				if (model.defaultValueFor('string') !== '') throw new Error('string');
+				if (model.defaultValueFor('number') !== 0) throw new Error('number');
+				if (model.defaultValueFor('boolean') !== false) throw new Error('boolean');
+				if (JSON.stringify(model.defaultValueFor('object')) !== '{}') throw new Error('object');
+				if (JSON.stringify(model.defaultValueFor('array')) !== '[]') throw new Error('array');
 			}],
 			['types: column inference reads TYPE, not shape', () => {
 				if (model.inferColumnType([1, 2, 3]) !== 'number') throw new Error('numbers');
