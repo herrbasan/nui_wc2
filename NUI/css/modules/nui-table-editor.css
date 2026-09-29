@@ -207,6 +207,11 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 	pointer-events: none;
 	z-index: 20;
 	font-size: var(--font-size-small);
+	/* The column band's thickness, declared once. It is read by the band's own
+	   height and by the toolbar's clearance, and those two MUST agree: if the band
+	   grows and the clearance does not, the toolbar quietly drops until it is
+	   sitting on the table. One token, two consumers, no second place to update. */
+	--nte-band: 1.5rem;
 }
 
 .nte-overlay.is-hovered {
@@ -308,26 +313,24 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
    leftover whitespace is a worse handle. 20% on the thickness is 1.44x the
    target area, which is the difference between "aimed at" and "reached for".
 
-   The handle also carries elevation now, and that is not decoration -- it is
-   what the size change made necessary. Once the chrome is allowed to overlap
-   content, elevation is the only thing saying "this is on top of that" rather
-   than "this belongs to that". It is the same two-part shadow the zone uses,
-   so the toolbar and the handles read as one family. */
+   The band deliberately carries NO shadow. The zone does, and the difference is
+   not an inconsistency: the zone floats over unrelated page content, so
+   elevation is the only thing saying "this is on top of that". The bands sit in
+   the table's immediate surround, which is empty -- so a shadow has nothing
+   useful to fall on except the table itself, and it fell there. The column
+   grip's shadow darkened the top row of the table and the delete's spilled onto
+   whatever sat below, so the handle looked like it was wearing a smudge rather
+   than sitting above the page. A solid surface against a solid table needs no
+   elevation to read as separate; the border is enough. */
+
 .nte-row-grip,
 .nte-row-del {
-	width: 1.2rem;
+	width: var(--nte-band);
 }
 
 .nte-col-grip,
 .nte-col-del {
-	height: 1.05rem;
-}
-
-.nte-row-grip,
-.nte-col-grip,
-.nte-row-del,
-.nte-col-del {
-	box-shadow: 0 1px 2px var(--shadow-color), 0 4px 12px var(--shadow-color);
+	height: var(--nte-band);
 }
 
 .nte-row-grip {
@@ -544,9 +547,22 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
    toggling them.
 
    Nothing else can enter this band: the drop lines span the table's own box, and
-   row grips sit to the LEFT of the table, not above it. Verified, not assumed. */
+   row grips sit to the LEFT of the table, not above it. Verified, not assumed.
+
+   The clearance IS the band, and nothing else. The zone's gap to the TABLE is
+   `margin-bottom + band height`, and that total must be the same whether a grip
+   exists or not -- the user reads the gap to the table, not the margin, and a
+   toolbar that sits noticeably closer to the table the moment a handle appears
+   looks like a mistake even though nothing overlaps. So the resting margin is
+   the gap, and a band displaces the zone by exactly its own height.
+
+   Written as the token rather than a number because the two drifted apart
+   before: the band was widened to 1.05rem while this still said 0.875rem, and
+   the toolbar dropped to a ~1px gap over the table while showing 8px without
+   one. The band got bigger and the clearance did not, so the sum changed without
+   anyone intending it. One token, two consumers, no second place to update. */
 .nte-overlay:has(.nte-col-grip) .nte-zone {
-	margin-bottom: calc(0.875rem + var(--nui-space-quarter));
+	margin-bottom: var(--nte-band);
 }
 
 /* Separator: a single hairline, inset from the edges so it reads as a division
