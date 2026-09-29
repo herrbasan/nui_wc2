@@ -254,13 +254,31 @@
 	background: color-mix(in oklab, var(--color-shade2) 60%, var(--color-base));
 }
 
+/* An editor must never change the size of the thing it is editing.
+ *
+ * A text input carries an INTRINSIC width — its default `size=20` — and in a
+ * table cell that intrinsic width IS the column's min-content width. So simply
+ * focusing a cell widened the column and reflowed the whole table. `width: 100%`
+ * cannot fix that, because the contribution comes from the element's own
+ * intrinsic size, not from a percentage.
+ *
+ * Taking the input OUT OF FLOW is the fix. An absolutely positioned box
+ * contributes nothing to its container's sizing, so the cell keeps whatever
+ * width it already had and the table cannot move. The padding is zeroed for the
+ * same rule, so `inset: 0` lands exactly on the cell rather than over its
+ * padding. */
 .jg-host td[data-editing='true'] {
 	padding: 0;
+	position: relative;
 }
 
 .jg-host .jg-input {
-	width: 100%;
-	min-width: 4rem;
+	position: absolute;
+	inset: 0;
+	width: auto;
+	height: auto;
+	min-width: 0;
+	box-sizing: border-box;
 	font: inherit;
 	color: inherit;
 	background: var(--color-base);
