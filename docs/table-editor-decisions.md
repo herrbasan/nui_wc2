@@ -955,8 +955,8 @@ of deleting rows or columns, but that we could do like we do the drag, just the
 opposite site, so when a column is selected, it has the drag widget on top, and
 on the bottom an 'x' to delete the column, same with the rows."**
 
-All four operations already existed — `insertRow`, `insertColumn`, `deleteRow`,
-`deleteColumn` — and none of them were reachable. This was a UI change, not new
+All four operations already existed — `insertRow`, `insertColumn`, `deleteRows`,
+`deleteColumns` — and none of them were reachable. This was a UI change, not new
 machinery, which is why it went in a single slice.
 
 ### Why insert had to leave the edge
@@ -994,9 +994,40 @@ this component's standing rule is that editing state is answered neutrally, and
 a delete hover is editing state.
 
 The existing floor guards already covered the dangerous case: deleting the last
-remaining row **clears** it rather than removing it (`structure:clear-row`),
+remaining row **clears** it rather than removing it (`structure:clear-rows`),
 because a table with no body row has no height to hover and the editor would
 become unreachable. Verified by deleting down to one row and clicking again.
+
+### The doc said so, and the code did not
+
+**User: "it only deletes the first, not all selected columns/rows."** The section
+above had already stated the requirement — a handle spanning three rows that
+removed one "would be a lie about what it does" — and the implementation
+removed exactly one. The comment sat directly above the handler that got it
+wrong, describing the behaviour rather than the code, which is the usual way a
+stated intent and a wrong implementation coexist for a long time.
+
+The cause was plumbing, not logic. The GRIP was built from the band and carried
+its extent (`data-row-from`/`data-row-to`); the DELETE handle beside it carried
+only `data-row-del="<band.from>"`. The handler therefore had no idea a band was
+selected, and `deleteRow(tr)` / `deleteColumn(index)` took a single row or a
+single index. Two halves of one idea, and only one of them knew the band
+existed.
+
+- Both delete handles now carry the band extent (`data-row-del-to`,
+  `data-col-del-to`), which is the one-line part.
+- The functions take a RANGE and remove it **from the end backwards**. This is
+  the part that would have bitten next: removing a span front-to-back shifts
+  every later index, and "deletes the wrong things" would have replaced "only
+  deletes the first" with something subtler and harder to notice.
+- The floor guards generalised to a band: if removing the selection would leave
+  fewer than one body row (or column), the selection is CLEARED instead, because
+  an empty tbody has no height to hover.
+
+Verified: selecting two of three body rows deletes both and leaves the third
+intact; selecting two of three columns deletes both and leaves the third intact
+(which is the case that proves the backwards removal); selecting all three rows
+clears them rather than removing them.
 
 ### A real bug the accessibility snapshot caught
 

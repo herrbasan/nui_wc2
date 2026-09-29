@@ -426,6 +426,7 @@ function setupTableEditor(table, options = {}) {
 			const del = el('button', 'nte-row-del', {
 				type: 'button',
 				'data-row-del': String(band.from),
+				'data-row-del-to': String(band.to),
 				'aria-label': `Delete ${label.toLowerCase()}`,
 				title: 'Delete'
 			});
@@ -459,6 +460,7 @@ function setupTableEditor(table, options = {}) {
 				const del = el('button', 'nte-col-del', {
 					type: 'button',
 					'data-col-del': String(band.from),
+					'data-col-del-to': String(band.to),
 					'aria-label': `Delete ${label.toLowerCase()}`,
 					title: 'Delete'
 				});
@@ -873,30 +875,46 @@ function setupTableEditor(table, options = {}) {
 		refresh();
 	}
 
-	function deleteRow(tr) {
+	/**
+	 * Delete a BAND of rows, not one row. The handle spans the whole selection,
+	 * so a handle covering three rows that removed only the first would be a lie
+	 * about what it does — exactly as for the drag grip.
+	 *
+	 * A table must keep at least one body row: an empty tbody has no height to
+	 * hover, so the editor would become unreachable. Removing the whole selection
+	 * therefore CLEARS it rather than taking it away.
+	 *
+	 * The span is removed from the END backwards. Removing front-to-back would
+	 * shift every later index and delete the wrong rows — the classic symptom.
+	 */
+	function deleteRows(from, to) {
 		const rows = bodyRows(table);
-		// A table must keep at least one body row: an empty tbody has no height to
-		// hover, so the editor would become unreachable.
-		if (rows.length <= 1) {
-			tr.querySelectorAll('th,td').forEach(clearCell);
-			emit('structure', { action: 'clear-row' });
+		const span = rows.slice(from, to + 1);
+		if (span.length === 0) return;
+		if (rows.length - span.length < 1) {
+			span.forEach((tr) => tr.querySelectorAll('th,td').forEach(clearCell));
+			emit('structure', { action: 'clear-rows', count: span.length });
 			return;
 		}
-		tr.remove();
-		emit('structure', { action: 'delete-row' });
+		for (let i = span.length - 1; i >= 0; i--) span[i].remove();
+		emit('structure', { action: 'delete-rows', count: span.length });
 	}
 
-	function deleteColumn(index) {
+	/** The same, for a band of columns. */
+	function deleteColumns(from, to) {
 		const cols = colCount(table);
-		if (cols <= 1) {
-			for (const tr of bodyRows(table)) clearCell(tr.cells[index] || tr.cells[0]);
-			emit('structure', { action: 'clear-column' });
+		const count = to - from + 1;
+		if (count >= cols) {
+			for (const tr of [table.tHead?.rows[0], ...bodyRows(table)].filter(Boolean)) {
+				for (let i = 0; i < tr.cells.length; i++) clearCell(tr.cells[i]);
+			}
+			emit('structure', { action: 'clear-columns', count });
 			return;
 		}
 		for (const tr of [table.tHead?.rows[0], ...bodyRows(table)].filter(Boolean)) {
-			tr.cells[index]?.remove();
+			for (let i = to; i >= from; i--) tr.cells[i]?.remove();
 		}
-		emit('structure', { action: 'delete-column' });
+		emit('structure', { action: 'delete-columns', count });
 	}
 
 	/**
@@ -1527,13 +1545,16 @@ function setupTableEditor(table, options = {}) {
 		// what it does, exactly as for the drag grip.
 		const delRow = e.target.closest('[data-row-del]');
 		if (delRow) {
-			const rows = bodyRows(table);
-			const tr = rows[Number(delRow.dataset.rowDel)];
-			if (tr) { deleteRow(tr); refresh(); }
+			deleteRows(Number(delRow.dataset.rowDel), Number(delRow.dataset.rowDelTo));
+			refresh();
 			return;
 		}
 		const delCol = e.target.closest('[data-col-del]');
-		if (delCol) { deleteColumn(Number(delCol.dataset.colDel)); refresh(); return; }
+		if (delCol) {
+			deleteColumns(Number(delCol.dataset.colDel), Number(delCol.dataset.colDelTo));
+			refresh();
+			return;
+		}
 	});
 	on(overlay, 'contextmenu', (e) => {
 		const grip = e.target.closest('[data-row-from], [data-col-from]');
