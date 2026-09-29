@@ -243,15 +243,23 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 	pointer-events: none;
 }
 
-.nte-overlay.is-hovered .nte-row-grip,
-.nte-overlay.is-hovered .nte-col-grip,
+/* Grips take the pointer whenever they exist: one is only built when the user
+   has selected the band it acts on, so there is no idle grip to be pointer-
+   inert. Tying them to `is-hovered` as well would mean a grip you can see but
+   cannot grab, whenever the pointer strayed off the table. */
+.nte-row-grip,
+.nte-col-grip {
+	pointer-events: auto;
+}
+
 .nte-overlay.is-hovered .nte-edge-add,
 .nte-overlay.is-hovered .nte-zone.is-active {
 	pointer-events: auto;
 }
 
-.nte-row-grip,
-.nte-col-grip,
+/* Only the edge buttons and the drop line fade in on hover. The grips are not
+   in this rule: they are built already-visible, and fading a freshly created
+   element in would only delay a handle the user has already committed to. */
 .nte-edge-add,
 .nte-drop-line {
 	opacity: 0;
@@ -268,13 +276,33 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
    a highlight fill. These are affordances, not toolbar buttons: they must be
    smaller than the smallest control and must not read as primary actions. */
 
+/* Grips are visible from birth: one is only ever built when there is a selected
+   band for it to act on, so there is no idle state for a grip to be in. The
+   shared surface below is what makes it look like a handle rather than a button. */
 .nte-row-grip,
-.nte-col-grip,
+.nte-col-grip {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 0;
+	min-height: 0;
+	padding: 0;
+	font-size: inherit;
+	line-height: normal;
+	background-color: var(--nte-on-bg, var(--color-shade3));
+	color: var(--nte-on-text, var(--text-color));
+	border: var(--border-thickness) solid var(--border-shade3);
+	border-radius: var(--border-radius2);
+	cursor: grab;
+	transition: background-color 100ms var(--nte-ease);
+	appearance: none;
+	vertical-align: top;
+}
+
 .nte-edge-add {
 	opacity: 0;
-	/* As with the zone: opacity alone leaves a hidden button focusable and
-	   announced, and this table rebuilds a grip per row and per column, so the
-	   idle set is large and fully tabbable. visibility is what removes them. */
+	/* The edge buttons exist for every table at all times, so they need hiding out
+	   of the tab order when idle -- and opacity alone does not do that. */
 	visibility: hidden;
 	position: absolute;
 	display: flex;
@@ -295,24 +323,20 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 	vertical-align: top;
 }
 
-/* A grip appears for a row or column that is actually SELECTED, and for no other
-   reason. There is no hover state.
+/* A grip exists only for a row or column band the user has SELECTED. There is
+   no hidden state and no `is-selected` gate: the component builds a grip exactly
+   when there is a band to build one for, and builds none otherwise. Deriving the
+   grip from the selection -- rather than keeping one per row and toggling a class
+   -- is what stopped them blinking out at the end of a gesture.
 
-   Moving things is a rarer job than reading, editing or aligning, and chrome that
-   is always present spends focus and clarity on the job that is about to happen
-   rather than the one that is. A grip on every row and column is the spreadsheet
-   look, and it is not what this component is for.
+   One grip per BAND, spanning it, rather than one per row. The selection is a
+   single thing and one handle says so with a smaller claim than three; it also
+   cannot lie, because a grip that spans three rows moves those three rows.
 
-   Because the grip is tied to the selection, the affordance shows itself exactly
-   when the user has already said "this row" -- which is also the only moment the
-   grip has something to act on. The fill itself is set with the rest of the
-   selected-grip styling below, where it belongs with the hover treatment it
-   must outrank. */
-.nte-row-grip.is-selected,
-.nte-col-grip.is-selected {
-	opacity: 1;
-	visibility: visible;
-}
+   Moving things is a rarer job than reading, editing or aligning, and chrome
+   that is always present spends focus on the job that is about to happen rather
+   than the one that is. A grip on every row and column is the spreadsheet look,
+   and it is not what this component is for. */
 
 .nte-row-grip {
 	left: 0;
@@ -332,22 +356,18 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 
 /* The drag glyph is 1.2rem by default and a grip is 0.875rem tall, so at theme
    size the icon overflows its own handle and reads as an empty box. The handle is
-   sized by feel, not by the icon, so the icon gives way. */
+   sized by feel, not by the icon, so the icon gives way. A spanning grip is
+   taller than one row, so the glyph centres in it rather than sitting at the top. */
 .nte-row-grip nui-icon,
 .nte-col-grip nui-icon {
 	width: 0.75rem;
 	height: 0.75rem;
 	display: block;
+	align-self: center;
 }
 
 .nte-row-grip:hover,
 .nte-col-grip:hover {
-	background-color: var(--color-shade2);
-	color: var(--text-color);
-}
-
-.nte-row-grip.is-selected,
-.nte-col-grip.is-selected {
 	background-color: var(--nte-on-bg, var(--color-shade3));
 	color: var(--nte-on-text, var(--text-color));
 }

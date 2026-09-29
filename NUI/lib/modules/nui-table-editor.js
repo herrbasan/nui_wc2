@@ -271,8 +271,6 @@ function setupTableEditor(table, options = {}) {
 		range = r;
 		table.querySelectorAll('[data-selected]').forEach(c => c.removeAttribute('data-selected'));
 		activeCell?.removeAttribute('data-active');
-		rowGrips.querySelectorAll('.nte-row-grip').forEach(g => g.classList.remove('is-selected'));
-		colGrips.querySelectorAll('.nte-col-grip').forEach(g => g.classList.remove('is-selected'));
 
 		if (!r) {
 			activeCell = null;
@@ -286,39 +284,21 @@ function setupTableEditor(table, options = {}) {
 			}
 		}
 
-		// A grip is shown for every FULLY covered row and every FULLY covered
-		// column -- not just the first. This used to light `[data-row=minRow]`
-		// alone, which was correct only while a whole-row selection could be a
-		// single row: a three-row sweep showed one grip, implying the other two
-		// were not selected even though every one of their cells was. The grip
-		// has to be derived per row and per column, because "is this row
-		// entirely inside the range" is a different question for each row.
-		const lastCol = colCount(table) - 1;
-		const fullWidth = r.minCol === 0 && r.maxCol === lastCol;
-		if (fullWidth) {
-			for (let row = Math.max(r.minRow, 0); row <= r.maxRow; row++) {
-				rowGrips.querySelector(`[data-row="${row}"]`)?.classList.add('is-selected');
-			}
-		}
-		const first = hasHeader(table) ? -1 : 0;
-		const fullHeight = r.minRow === first && r.maxRow === bodyRows(table).length - 1;
-		if (fullHeight) {
-			for (let col = r.minCol; col <= r.maxCol; col++) {
-				colGrips.querySelector(`[data-col="${col}"]`)?.classList.add('is-selected');
-			}
-		}
-
-		// The one case where grips are withheld: the WHOLE table is selected.
-		// There is no narrower selection left to move, so a grip would have
-		// nothing to act on and would be a pure lie about what is selected. It
-		// would also be the loudest the chrome ever gets -- every row and every
-		// column lit at once, the grid-of-handles look the at-rest law rejects.
-		// The selection itself stays fully visible; only the handles go.
-		const wholeTable = fullWidth && fullHeight;
-		if (wholeTable) {
-			rowGrips.querySelectorAll('.is-selected').forEach(g => g.classList.remove('is-selected'));
-			colGrips.querySelectorAll('.is-selected').forEach(g => g.classList.remove('is-selected'));
-		}
+		// A grip is shown for each contiguous BAND of fully covered rows, and
+		// likewise for columns. A band is one grip spanning all of it, not one
+		// grip per row: the selection is a single thing, and one handle says so
+		// with a smaller claim than N handles. It also cannot lie -- a grip that
+		// spans two rows moves those two rows, never just one.
+		// Grips are BUILT from the current selection rather than toggled. They used
+		// to be one per row with a class switched on and off, and position() --
+		// which runs at the end of every gesture -- wiped that class, so the grips
+		// blinked out on mouseup. Deriving them from `range` cannot drift from it.
+		//
+		// They are built HERE rather than only in position() because a selection
+		// can change without any gesture: a shift+click, a grip press, a keyboard
+		// walk. Rebuilding from the range wherever the range changes is what keeps
+		// "grip exists" and "band is selected" the same statement.
+		buildGrips();
 
 		activeCell = cellAt(table, r.minRow, r.minCol) || null;
 		activeCell?.setAttribute('data-active', '');
@@ -353,6 +333,39 @@ function setupTableEditor(table, options = {}) {
 		else applyRange({ minRow: here[0], maxRow: here[0], minCol: here[1], maxCol: here[1] });
 	}
 
+	// ── Grip bands: the rows/columns a grip may span ───────────────────────────
+	//
+	// A grip exists only where the selection covers a row or column ENTIRELY. A
+	// partly selected row is not a row, and a handle on it would claim more than
+	// the selection holds -- the same rule that withholds grips when the whole
+	// table is selected, applied continuously rather than as a special case.
+	//
+	// The result is a list of contiguous [from, to] bands, and a grip spans each
+	// one. Selection is a rectangle, so in practice a band is just the range
+	// clipped to the body rows; the list shape is kept because "every selected
+	// row gets its own handle" is the thing being replaced, and returning bands
+	// makes the alternative expressible without restructuring.
+
+	function selectedRowBands() {
+		if (!range) return [];
+		const lastCol = colCount(table) - 1;
+		if (range.minCol !== 0 || range.maxCol !== lastCol) return [];
+		// A whole-table selection has nothing left to move, so it gets no grips.
+		if (range.minRow === (hasHeader(table) ? -1 : 0) &&
+			range.maxRow === bodyRows(table).length - 1) return [];
+		const from = Math.max(range.minRow, 0);
+		if (from > range.maxRow) return [];
+		return [{ from, to: range.maxRow }];
+	}
+
+	function selectedColBands() {
+		if (!range) return [];
+		const first = hasHeader(table) ? -1 : 0;
+		if (range.minRow !== first || range.maxRow !== bodyRows(table).length - 1) return [];
+		if (range.minCol === 0 && range.maxCol === colCount(table) - 1) return [];
+		return [{ from: range.minCol, to: range.maxCol }];
+	}
+
 	function selectRow(index) {
 		const last = colCount(table) - 1;
 		if (last < 0) return;
@@ -365,6 +378,61 @@ function setupTableEditor(table, options = {}) {
 			maxRow: bodyRows(table).length - 1,
 			minCol: index, maxCol: index
 		});
+	}
+
+	/**
+	 * Build one grip per selected row/column band, each spanning its whole band.
+	 *
+	 * Called whenever the selection changes AND on every measure. Deriving the
+	 * grips from `range` rather than keeping a grip per row and toggling a class
+	 * is what makes them reliable: the class was being wiped by the rebuild at
+	 * the end of every gesture, so the grips blinked out on mouseup.
+	 */
+	function buildGrips() {
+		if (destroyed) return;
+		const rect = table.getBoundingClientRect();
+
+		rowGrips.textContent = '';
+		const rows = bodyRows(table);
+		for (const band of selectedRowBands()) {
+			const top = rows[band.from]?.getBoundingClientRect();
+			const bottom = rows[band.to]?.getBoundingClientRect();
+			if (!top || !bottom) continue;
+			const single = band.from === band.to;
+			const grip = el('button', 'nte-row-grip', {
+				type: 'button',
+				'data-row-from': String(band.from),
+				'data-row-to': String(band.to),
+				'aria-label': single ? `Row ${band.from + 1}` : `Rows ${band.from + 1} to ${band.to + 1}`,
+				title: 'Drag to move, click to select'
+			});
+			grip.appendChild(icon(ICON_DRAG));
+			grip.style.top = `${top.top - rect.top}px`;
+			grip.style.height = `${bottom.bottom - top.top}px`;
+			rowGrips.appendChild(grip);
+		}
+
+		colGrips.textContent = '';
+		const cells = headerRowEl(table)?.cells;
+		if (cells) {
+			for (const band of selectedColBands()) {
+				const left = cells[band.from]?.getBoundingClientRect();
+				const right = cells[band.to]?.getBoundingClientRect();
+				if (!left || !right) continue;
+				const single = band.from === band.to;
+				const grip = el('button', 'nte-col-grip', {
+					type: 'button',
+					'data-col-from': String(band.from),
+					'data-col-to': String(band.to),
+					'aria-label': single ? `Column ${band.from + 1}` : `Columns ${band.from + 1} to ${band.to + 1}`,
+					title: 'Drag to move, click to select'
+				});
+				grip.appendChild(icon(ICON_DRAG));
+				grip.style.left = `${left.left - rect.left}px`;
+				grip.style.width = `${right.right - left.left}px`;
+				colGrips.appendChild(grip);
+			}
+		}
 	}
 
 	// ── Top zone: the single safe area for panel-style controls ────────────────
@@ -765,18 +833,33 @@ function setupTableEditor(table, options = {}) {
 		return cells[n].getBoundingClientRect().left - origin.left;
 	}
 
-	function onGripPointerDown(e, kind, index) {
+	function onGripPointerDown(e, kind, from, to) {
 		if (e.button !== 0) return;
-		const source = kind === 'row' ? bodyRows(table)[index] : headerRowEl(table)?.cells[index];
-		if (!source) return;
+		const rows = bodyRows(table);
+		const cells = headerRowEl(table)?.cells;
+		// A grip spans a BAND, so it acts on the band: a handle covering three
+		// rows that moved only the first would be a lie about what it does. The
+		// drag carries the whole range, and endDrag moves every element in it.
+		const items = kind === 'row'
+			? rows.slice(from, to + 1)
+			: Array.from(cells || []).slice(from, to + 1);
+		if (!items.length || !items[0]) return;
+
 		// Select FIRST, on press. Waiting for the click loses the selection twice
 		// over: the drag's own pointerup clears it, and a press that becomes a drag
-		// never delivers a click at all. Selecting on press means the row lights up
-		// under the pointer the instant it is grabbed — which is also what tells the
-		// user they have hold of the whole row and not just a handle.
-		if (kind === 'row') selectRow(index);
-		else selectColumn(index);
-		drag = { kind, index, moved: false, startX: e.clientX, startY: e.clientY };
+		// never delivers a click at all. Selecting on press means the band lights
+		// up under the pointer the instant it is grabbed -- which is also what
+		// tells the user they have hold of the whole band and not just a handle.
+		if (kind === 'row') {
+			applyRange({ minRow: from, maxRow: to, minCol: 0, maxCol: colCount(table) - 1 });
+		} else {
+			applyRange({
+				minRow: hasHeader(table) ? -1 : 0,
+				maxRow: rows.length - 1,
+				minCol: from, maxCol: to
+			});
+		}
+		drag = { kind, from, to, moved: false, startX: e.clientX, startY: e.clientY };
 		// Capture on the overlay, which is the element the move/up listeners live
 		// on. Capturing on the table would retarget events to an element that never
 		// sees them, and the drag would die the moment the pointer left the cell.
@@ -791,39 +874,47 @@ function setupTableEditor(table, options = {}) {
 		// bound per element would be discarded (and leak) on every resize.
 		const grip = e.target.closest('.nte-row-grip, .nte-col-grip');
 		if (!grip) return;
-		onGripPointerDown(e, grip.classList.contains('nte-row-grip') ? 'row' : 'col',
-			Number(grip.dataset.row ?? grip.dataset.col));
+		const isRow = grip.classList.contains('nte-row-grip');
+		const from = isRow ? grip.dataset.rowFrom : grip.dataset.colFrom;
+		const to = isRow ? grip.dataset.rowTo : grip.dataset.colTo;
+		onGripPointerDown(e, isRow ? 'row' : 'col', Number(from), Number(to));
 	});
 
 	function endDrag() {
 		if (!drag) return;
-		const { kind, index, boundary, moved } = drag;
+		const { kind, from, to, boundary, moved } = drag;
 		overlay.classList.remove('is-dragging');
 		dropRowLine.classList.remove('is-visible');
 		dropColLine.classList.remove('is-visible');
 		drag = null;
-		// A press that never moved is a selection, not a reorder: the row/column was
+		// A press that never moved is a selection, not a reorder: the band was
 		// already selected on pointerdown and must survive its own release.
 		if (!moved || boundary === undefined) { position(); return; }
 
+		const size = to - from + 1;
+
 		// `boundary` counts items on the far side of the pointer in the CURRENT
-		// array; the insertion index is that same boundary in the array that exists
-		// once the dragged item has been lifted out. They differ by one exactly when
-		// the item is moving toward the end.
-		const to = boundary > index ? boundary - 1 : boundary;
-		if (to === index) { position(); return; }
+		// array. The band occupies `size` slots, so the insertion point in the
+		// array without it is the boundary minus whatever part of the band is
+		// already above the pointer. Dropping a band is the same arithmetic as
+		// dropping one item, with the band's own width accounted for instead of
+		// ignored -- ignoring it is what lands a multi-row drag short.
+		const toIndex = boundary > to ? boundary - size : boundary;
+		if (toIndex === from) { position(); return; }
 
 		if (kind === 'row') {
-			const tr = bodyRows(table)[index];
-			if (!tr) { position(); return; }
-			// The reference must come from the list WITHOUT the dragged row. Taking
-			// it from the live list makes bodyRows()[to + 1] the dragged row itself
-			// whenever it moves toward the start, and insertBefore(el, el) is a
-			// silent no-op — the row then refuses to move upward at all.
-			const remaining = bodyRows(table).filter((_, i) => i !== index);
-			const ref = remaining[to] || null;
-			if (ref) bodyOf().insertBefore(tr, ref);
-			else bodyOf().appendChild(tr);
+			const rows = bodyRows(table);
+			const band = rows.slice(from, from + size);
+			// The reference must come from the list WITHOUT the band. Taking it
+			// from the live list makes the target the dragged row itself whenever
+			// it moves toward the start, and insertBefore(el, el) is a silent
+			// no-op -- the row then refuses to move upward at all.
+			const remaining = rows.filter((_, i) => i < from || i >= from + size);
+			const ref = remaining[toIndex] || null;
+			for (const tr of band) {
+				if (ref) bodyOf().insertBefore(tr, ref);
+				else bodyOf().appendChild(tr);
+			}
 		} else {
 			const trs = [table.tHead?.rows[0], ...bodyRows(table)].filter(Boolean);
 			for (const tr of trs) {
@@ -832,13 +923,16 @@ function setupTableEditor(table, options = {}) {
 				// tr.cells[to] would still be the original element and the column
 				// would land one slot short of the line — every drag to the right.
 				const cells = Array.from(tr.cells);
-				const [cell] = cells.splice(index, 1);
-				const ref = cells[to] || null;
-				if (ref) tr.insertBefore(cell, ref);
-				else tr.appendChild(cell);
+				const band = cells.slice(from, from + size);
+				const rest = cells.filter((_, i) => i < from || i >= from + size);
+				const ref = rest[toIndex] || null;
+				for (const cell of band) {
+					if (ref) tr.insertBefore(cell, ref);
+					else tr.appendChild(cell);
+				}
 			}
 		}
-		emit('reorder', { kind, from: index, to });
+		emit('reorder', { kind, from, to, size });
 		refresh();
 	}
 
@@ -988,11 +1082,21 @@ function setupTableEditor(table, options = {}) {
 		if (e.target.closest('.nte-edge-add-col')) { insertColumn(colCount(table)); emit('structure', { action: 'add-column' }); refresh(); return; }
 	});
 	on(overlay, 'contextmenu', (e) => {
-		const grip = e.target.closest('[data-row], [data-col]');
+		const grip = e.target.closest('[data-row-from], [data-col-from]');
 		if (!grip) return;
 		e.preventDefault();
-		if (grip.dataset.row !== undefined) selectRow(Number(grip.dataset.row));
-		else selectColumn(Number(grip.dataset.col));
+		const rows = bodyRows(table);
+		if (grip.dataset.rowFrom !== undefined) {
+			const from = Number(grip.dataset.rowFrom);
+			applyRange({ minRow: from, maxRow: Number(grip.dataset.rowTo), minCol: 0, maxCol: colCount(table) - 1 });
+		} else {
+			const from = Number(grip.dataset.colFrom);
+			applyRange({
+				minRow: hasHeader(table) ? -1 : 0,
+				maxRow: rows.length - 1,
+				minCol: from, maxCol: Number(grip.dataset.colTo)
+			});
+		}
 		updateZone();
 	});
 
@@ -1008,40 +1112,9 @@ function setupTableEditor(table, options = {}) {
 		overlay.style.width = `${rect.width}px`;
 		overlay.style.height = `${rect.height}px`;
 
-		// Row grips sit one per body row, flush to the table's left edge.
-		rowGrips.textContent = '';
-		bodyRows(table).forEach((tr, i) => {
-			const r = tr.getBoundingClientRect();
-			const grip = el('button', 'nte-row-grip', {
-				type: 'button',
-				'data-row': String(i),
-				'aria-label': `Row ${i + 1}`,
-				title: 'Drag to move, click to select'
-			});
-			grip.appendChild(icon(ICON_DRAG));
-			grip.style.top = `${r.top - rect.top}px`;
-			grip.style.height = `${r.height}px`;
-			rowGrips.appendChild(grip);
-		});
-
-		// Column grips sit above the table, one per column, aligned to its cell.
-		colGrips.textContent = '';
-		const head = headerRowEl(table);
-		if (head) {
-			Array.from(head.cells).forEach((cell, i) => {
-				const r = cell.getBoundingClientRect();
-				const grip = el('button', 'nte-col-grip', {
-					type: 'button',
-					'data-col': String(i),
-					'aria-label': `Column ${i + 1}`,
-					title: 'Drag to move, click to select'
-				});
-				grip.appendChild(icon(ICON_DRAG));
-				grip.style.left = `${r.left - rect.left}px`;
-				grip.style.width = `${r.width}px`;
-				colGrips.appendChild(grip);
-			});
-		}
+		// Grips are rebuilt from the selection, not toggled -- see buildGrips(). It
+		// runs on every measure, so a resize keeps a spanning grip sized correctly.
+		buildGrips();
 
 		// Edge buttons centre on the table's midpoint edges. Their half-size is
 		// measured, not assumed — the CSS owns the size, the JS only places it, so
