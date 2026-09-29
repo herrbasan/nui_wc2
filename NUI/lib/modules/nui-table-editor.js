@@ -937,10 +937,12 @@ function setupTableEditor(table, options = {}) {
 		}
 
 		const trs = [table.tHead?.rows[0], ...bodyRows(table)].filter(Boolean);
-		// The first cell of the band, per row, captured before the move so the new
-		// column position can be read off the DOM afterwards rather than computed
-		// from indices the move has just invalidated.
-		const probes = trs.map(tr => tr.cells[from] ?? null);
+		// BOTH ends of the band, per row, captured before the move. Probing only
+		// the first cell makes lo === hi for any band wider than one column, so
+		// the contiguity check below fails and the selection is silently left on
+		// the slots the band vacated -- which now hold different columns. The
+		// moved columns are elsewhere and the highlight does not travel with them.
+		const bandCells = trs.map(tr => Array.from(tr.cells).slice(from, from + size));
 		for (const tr of trs) {
 			// The reference must be taken from the array WITHOUT the dragged
 			// cell. Splicing a copy of tr.cells leaves the live DOM untouched, so
@@ -957,14 +959,19 @@ function setupTableEditor(table, options = {}) {
 		}
 		emit('reorder', { kind, from, to, size });
 
-		// Read each probe cell's new index. `tr.cells` is a live HTMLCollection,
+		// Read each end cell's new index. `tr.cells` is a live HTMLCollection,
 		// which has no indexOf, so it is materialised into an array first -- the
 		// lookup below is on elements that have just been re-parented, and asking
 		// the collection itself threw and lost the re-anchored selection.
-		const positions = probes.map((cell, i) => (cell ? Array.from(trs[i].cells).indexOf(cell) : -1));
-		const lo = Math.min(...positions);
-		const hi = Math.max(...positions);
-		if (positions.every(p => p >= 0) && hi - lo + 1 === size) {
+		const cellsNow = trs.map(tr => Array.from(tr.cells));
+		const firstPositions = bandCells.map((band, i) =>
+			band.length ? cellsNow[i].indexOf(band[0]) : -1);
+		const lastPositions = bandCells.map((band, i) =>
+			band.length ? cellsNow[i].indexOf(band[band.length - 1]) : -1);
+		const lo = Math.min(...firstPositions);
+		const hi = Math.max(...lastPositions);
+		if (firstPositions.every(p => p >= 0) && lastPositions.every(p => p >= 0) &&
+			hi - lo + 1 === size) {
 			applyRange({
 				minRow: hasHeader(table) ? -1 : 0,
 				maxRow: bodyRows(table).length - 1,
