@@ -184,10 +184,10 @@ value, so they cannot disagree with one another. Alignment in the zone applies t
 
 All panel-style controls live in **one overlay zone above the table's top edge**.
 It grows upward, is capped at ~4rem, and never displaces the table or the
-document. It is a floating pill — elevation, not a border; a ruled box floating
-over a document draws a hard line across the content behind it. Grips and edge
-`+` buttons are positional: they sit at their own row, column or edge, and the
-zone is lifted clear of the column grips rather than covering them.
+document. It is a floating pill — a one-device-pixel `--border-shade1` edge plus
+elevation. Grips and edge `+` buttons are positional: they sit at their own row,
+column or edge, and the zone is lifted clear of the column grips rather than
+covering them.
 
 The zone never animates its own height. `height: 0 → auto` cannot be
 interpolated, so the browser snaps it — that snap was the component's worst

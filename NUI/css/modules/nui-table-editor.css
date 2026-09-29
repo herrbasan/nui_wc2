@@ -344,9 +344,8 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 }
 
 /* --- The single top zone: grows upward from the table's top edge --------------
-   A floating pill, not a boxed toolbar. A border around a bar that floats over a
-   document draws a hard line across the content behind it; elevation alone
-   separates the control from the page without cutting the page in half. */
+   A floating pill. The border gives it a defined edge where the surface behind
+   it is close in value; the shadow lifts it off the page. */
 
 .nte-zone {
 	position: absolute;
@@ -354,15 +353,21 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 	left: 0;
 	display: flex;
 	align-items: center;
-	gap: 2px;
+	gap: var(--nui-space-eighth);
 	max-height: 4rem;
-	padding: 3px;
+	/* Room to breathe. 3px was tight enough that the controls read as a strip of
+	   icons rather than a control surface. Expressed through the spacing scale so
+	   it stays in step with the theme rather than freezing a pixel value. */
+	padding: calc(var(--nui-space-eighth) * 3);
 	/* Clear the column grips, which sit in exactly this band: a column grip is
 	   0.875rem tall and translated fully above the table's top edge, so a zone with
 	   the usual hairline margin lands on top of them and hides the very handles the
 	   user is reaching for. Lift by grip + gap instead. */
 	margin-bottom: calc(0.875rem + var(--nui-space-quarter));
 	background-color: var(--color-base);
+	/* One device pixel, not a hairline-plus: --border-thickness is the thinnest
+	   line the device can draw. */
+	border: var(--border-thickness) solid var(--border-shade1);
 	border-radius: var(--border-radius3);
 	box-shadow: 0 1px 2px var(--shadow-color), 0 4px 12px var(--shadow-color);
 	z-index: 26;
@@ -391,22 +396,27 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 }
 
 /* Separator: a single hairline, inset from the edges so it reads as a division
-   inside the pill rather than a rule drawn across it. */
+   inside the pill rather than a rule drawn across it. The inset tracks the zone's
+   padding -- at the old 3px it nearly touched the border, and against the new
+   hairline it would have read as a stray line rather than a division. */
 .nte-zone-sep {
 	width: 1px;
 	align-self: stretch;
-	margin: 3px 3px;
+	margin: calc(var(--nui-space-eighth) * 2) calc(var(--nui-space-eighth) * 2);
 	background-color: var(--border-shade1);
 	flex: none;
 }
+}
 
 /* Segmented control: the three alignments are one control with three positions,
-   so they share one well and are divided from each other, not from the toolbar. */
+   so they share one well and are divided from each other, not from the toolbar.
+   The well's own padding is kept tight so the group reads as a single object
+   inside the zone rather than three floating buttons with air between them. */
 .nte-seg {
 	display: flex;
 	align-items: center;
 	gap: 1px;
-	padding: 1px;
+	padding: 2px;
 	background-color: var(--color-shade1);
 	border-radius: var(--border-radius2);
 }
@@ -415,8 +425,8 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	width: 1.75rem;
-	height: 1.5rem;
+	width: 1.875rem;
+	height: 1.625rem;
 	padding: 0;
 	background-color: transparent;
 	color: var(--text-color-dim);
