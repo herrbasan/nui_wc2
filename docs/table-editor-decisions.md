@@ -945,6 +945,104 @@ three tables — wrapped, enhanced in place, and headerless — each with ordina
 content directly below it, because **"does the band overlap what follows" is not
 answerable without something following it.**
 
+## 2026-09-29 — Insert moves into the toolbar; delete joins the bands
+
+**User: "We could have the 'add column' and 'add row' in the toolbar instead of
+the edges of the table. The upside would be that it could insert at the cursor,
+so after the currently selected column / row. As pro feature, on ctrl-click it
+would do it before the column / row. Also, we currently don't have the concept
+of deleting rows or columns, but that we could do like we do the drag, just the
+opposite site, so when a column is selected, it has the drag widget on top, and
+on the bottom an 'x' to delete the column, same with the rows."**
+
+All four operations already existed — `insertRow`, `insertColumn`, `deleteRow`,
+`deleteColumn` — and none of them were reachable. This was a UI change, not new
+machinery, which is why it went in a single slice.
+
+### Why insert had to leave the edge
+
+**The edge affordance structurally cannot express the feature.** It lives on the
+table's boundary, so it can only ever mean "at the end". The user's upside —
+insert *at the selection* — is not a parameter that could be added to it. Moving
+the control into the zone is what makes position expressable at all, and the
+modifier is then nearly free: one button, plain = after, Ctrl = before, instead
+of a second control for the mirror case.
+
+Two details that needed deciding rather than transcribing:
+
+- **`insertRow(after)` cannot insert before the first row.** At `-1` it finds no
+  reference row and appends to the end instead, so "before" had no form in the
+  existing function. Rather than contort the call site, `insertRowAt(index)`
+  states the operation the callers actually need.
+- **The inserted row/column is SELECTED, not just created.** The insertion point
+  is worth confirming, and a fresh selection is also where the user is about to
+  type. An unselected empty row appearing in a grid is ambiguous.
+
+### Delete is the band's other end
+
+A column band's drag grip is above the table; its `×` is below. A row band's grip
+is left; its `×` is right. Three reasons, in weight order: **a drag and a delete
+are not equivalent in consequence** and should not be a click apart; the two
+handles bracket the band, which reads as "these act on this whole thing"; and it
+uses the space that is empty. The delete acts on the WHOLE band for the same
+reason the drag does — a handle spanning three rows that removed one would be a
+lie about what it does.
+
+The surface is the grip's, deliberately identical: same object, same look, the
+glyph is the only difference. The hover is a **neutral** surface step, not red —
+this component's standing rule is that editing state is answered neutrally, and
+a delete hover is editing state.
+
+The existing floor guards already covered the dangerous case: deleting the last
+remaining row **clears** it rather than removing it (`structure:clear-row`),
+because a table with no body row has no height to hover and the editor would
+become unreachable. Verified by deleting down to one row and clicking again.
+
+### A real bug the accessibility snapshot caught
+
+Inserting a column into a table **with a header** put a `td` in `<thead>`. The
+snapshot read `rowheader "Component", cell, rowheader "Status", cell, ...` — the
+header row parsed as a mix of `rowheader` and plain `cell` instead of a run of
+`columnheader`s. And because the theme styles `th` by tag, the new column's
+heading rendered unbolded and unshaded next to its neighbours.
+
+A cell's tag is a property of the **section it sits in**, not the column it
+belongs to. Invisible to a pixel diff of the grid's data, obvious in the
+accessibility tree — which is the one place the whole column's semantics live.
+
+### Two things I got wrong, both caught by looking
+
+**1. A line-range deletion removed the drag grips' positioning.** I removed the
+edge-add CSS by line number rather than by rule, and the range swallowed
+`.nte-row-grip`/`.nte-col-grip` axis offsets, the icon sizing, and
+`cursor: grabbing` on drag. The grips rendered *inside* the table. No error, no
+lint, and a computed style that reported exactly what the file no longer said.
+
+**2. A percentage offset resolved against the wrong box.** With the grip
+containers left `static`, a `position: relative` handle resolves `top: 100%`
+against the CONTAINER's content box — which is sized by the handles themselves,
+not by the table. The column delete computed `top: 28px` and sat inside the
+table. `100%` looked right and landed nowhere useful. Fixed by making the
+containers `position: absolute; inset: 0` so they *are* the table's box; the
+delete then computes `top: 195.333px`, the table's exact height.
+
+Both are the same lesson this log has now drawn three times, so it is worth
+stating as a rule rather than an anecdote: **a range-based edit to a stylesheet
+has no idea what it is deleting, and a percentage offset has no idea what it is
+resolving against.** Edit by rule, or read the diff.
+
+### Verified
+
+Insert after / Ctrl-insert before on both axes; inserted column is selected; new
+`th` in `<thead>`; delete removes a whole row band and a whole column band; the
+last-row and last-column floors clear instead of removing; drag reorder still
+works end-to-end (column dragged to position 1, drop line shown, selection and
+per-column alignment travelling with it). Regression: arrow walk, per-column
+alignment, header toggle round-trip, GFM export, insert→delete round trip
+balanced. Geometry measured on both band kinds and screenshotted, in the harness
+and the Playground.
+
+
 
 
 

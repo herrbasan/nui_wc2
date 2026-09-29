@@ -218,19 +218,16 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
    has selected the band it acts on, so there is no idle grip to be pointer-
    inert. Tying them to `is-hovered` as well would mean a grip you can see but
    cannot grab, whenever the pointer strayed off the table. */
+/* The delete controls take the pointer whenever they exist, on the same terms as
+   the grips: one is only built when the user has selected the band it acts on,
+   so there is no idle control that could sit invisible but clickable. */
 .nte-row-grip,
-.nte-col-grip {
+.nte-col-grip,
+.nte-row-del,
+.nte-col-del {
 	pointer-events: auto;
 }
 
-/* Gated on `is-hovered`, and that is still correct for a band spanning the
-   axis: reaching one is not a problem, because the pointer has to cross the
-   table (or its own geometry, which `overTableOrChrome` tests directly) to get
-   there, and either route keeps the hover class on. An earlier attempt made the
-   band permanently grabbable instead, which contradicted `visibility: hidden`
-   below — an invisible element takes no pointer events, so the band would have
-   been unreachable at exactly the moment it was still invisible. */
-.nte-overlay.is-hovered .nte-edge-add,
 .nte-overlay.is-hovered .nte-zone.is-active {
 	pointer-events: auto;
 }
@@ -243,16 +240,40 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 	transition: opacity 120ms ease;
 }
 
-/* --- Grips and edge buttons ---------------------------------------------------
+/* --- Grips and band controls -------------------------------------------------
    The base `button` rule in nui-theme.css floors every button at 2rem square with
    a highlight fill. These are affordances, not toolbar buttons: they must be
-   smaller than the smallest control and must not read as primary actions. */
+   smaller than the smallest control and must not read as primary actions.
+
+   Positioning model, stated once because four rules depend on it. The grip
+   containers are `position: absolute; inset: 0`, so they ARE the table's box --
+   the overlay is already sized to the table, so inset:0 makes them the same
+   rect. The handles inside are `position: absolute` and placed with `left`/`top`
+   plus a translate, so a `left`/`top` in px is measured from the table's edge and
+   a `100%` offset is the table's far edge.
+
+   This has to be said because the alternative does not work: with the containers
+   left `static`, a relatively positioned handle resolves `top: 100%` against the
+   CONTAINER's content box, which is sized by the handles themselves, not by the
+   table. The column delete then measured `top: 28px` and sat inside the table
+   rather than below it -- a percentage that looks right and lands nowhere
+   useful. */
+
+.nte-row-grips,
+.nte-col-grips {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+}
 
 /* Grips are visible from birth: one is only ever built when there is a selected
    band for it to act on, so there is no idle state for a grip to be in. The
    shared surface below is what makes it look like a handle rather than a button. */
 .nte-row-grip,
-.nte-col-grip {
+.nte-col-grip,
+.nte-row-del,
+.nte-col-del {
+	position: absolute;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -265,51 +286,20 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 	color: var(--nte-on-text, var(--text-color));
 	border: var(--border-thickness) solid var(--border-shade3);
 	border-radius: var(--border-radius2);
-	cursor: grab;
 	transition: background-color 100ms var(--nte-ease);
 	appearance: none;
 	vertical-align: top;
 }
 
-.nte-edge-add {
-	opacity: 0;
-	/* The edge buttons exist for every table at all times, so they need hiding out
-	   of the tab order when idle -- and opacity alone does not do that. */
-	visibility: hidden;
-	position: absolute;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	min-width: 0;
-	min-height: 0;
-	padding: 0;
-	font-size: inherit;
-	line-height: normal;
-	background-color: var(--color-shade2);
-	color: var(--text-color-dim);
-	border: var(--border-thickness) solid var(--border-shade3);
-	border-radius: var(--border-radius2);
-	cursor: grab;
-	transition: opacity var(--nte-dur) var(--nte-ease), background-color 100ms var(--nte-ease), visibility var(--nte-dur) var(--nte-ease);
-	appearance: none;
-	vertical-align: top;
-}
+.nte-row-grip { cursor: grab; }
+.nte-row-del,
+.nte-col-del { cursor: pointer; }
 
-/* A grip exists only for a row or column band the user has SELECTED. There is
-   no hidden state and no `is-selected` gate: the component builds a grip exactly
-   when there is a band to build one for, and builds none otherwise. Deriving the
-   grip from the selection -- rather than keeping one per row and toggling a class
-   -- is what stopped them blinking out at the end of a gesture.
+.nte-overlay.is-dragging .nte-row-grip,
+.nte-overlay.is-dragging .nte-col-grip { cursor: grabbing; }
 
-   One grip per BAND, spanning it, rather than one per row. The selection is a
-   single thing and one handle says so with a smaller claim than three; it also
-   cannot lie, because a grip that spans three rows moves those three rows.
-
-   Moving things is a rarer job than reading, editing or aligning, and chrome
-   that is always present spends focus on the job that is about to happen rather
-   than the one that is. A grip on every row and column is the spreadsheet look,
-   and it is not what this component is for. */
-
+/* The grip sits OUTSIDE the table's box, so the corner that would round toward
+   the table is squared off. */
 .nte-row-grip {
 	left: 0;
 	width: 1rem;
@@ -326,207 +316,69 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 	border-bottom-right-radius: 0;
 }
 
-/* The drag glyph is 1.2rem by default and a grip is 0.875rem tall, so at theme
-   size the icon overflows its own handle and reads as an empty box. The handle is
-   sized by feel, not by the icon, so the icon gives way. A spanning grip is
-   taller than one row, so the glyph centres in it rather than sitting at the top. */
+/* --- Delete: the other end of each band ----------------------------------
+   Drag and delete sit at OPPOSITE ends of the same band. A column band's grip
+   is above the table and its delete is below; a row band's grip is to the left
+   and its delete is to the right. Three reasons, in order of weight:
+
+   1. They are not equivalent in consequence. One rearranges, one destroys, and
+      putting a destructive control a pixel from a draggable one means a stray
+      click can reach the wrong one.
+   2. It brackets the band. The two affordances at opposite ends read as "this
+      whole band is the thing they act on", which is what a single spanning grip
+      already claims.
+   3. It uses space that is empty. The band's other end is not occupied.
+
+   The surface is the grip's and is deliberately identical -- they act on the
+   same object, so they look like the same object. The GLYPH is the only
+   difference, drag bars against an x, and the hover is a neutral surface step
+   rather than a colour: this component's standing rule is that editing state is
+   answered with a neutral surface, and a delete hover is editing state.
+
+   Placement uses the percentage form of the model above, so no inline `top` is
+   written for the column delete: it hangs off the table's bottom edge for the
+   whole band rather than at the band's own top. */
+
+/* A row band already owns the table's LEFT edge with its drag grip, so its
+   delete butts against the RIGHT edge instead -- the radius on the table-facing
+   side is the one that goes, not the outer corners. */
+.nte-row-del {
+	left: 100%;
+	width: 1rem;
+	border-top-left-radius: 0;
+	border-bottom-left-radius: 0;
+}
+
+.nte-col-del {
+	top: 100%;
+	height: 0.875rem;
+	border-top-left-radius: 0;
+	border-top-right-radius: 0;
+}
+
+/* The handles are 0.875rem tall and the theme's icon is 1.2rem, so the glyph
+   overflows its own handle and reads as an empty box. The handle is sized by
+   feel, so the icon gives way. `margin`/`top` are reset because the theme's
+   `span > nui-icon` text-flow rule nudges an icon by -0.1rem, which is an error
+   when the icon is the sole content of a fixed-size box. */
 .nte-row-grip nui-icon,
-.nte-col-grip nui-icon {
+.nte-col-grip nui-icon,
+.nte-row-del nui-icon,
+.nte-col-del nui-icon {
 	width: 0.75rem;
 	height: 0.75rem;
 	display: block;
 	align-self: center;
+	margin: 0;
+	top: 0;
 }
 
 .nte-row-grip:hover,
-.nte-col-grip:hover {
-	background-color: var(--nte-on-bg, var(--color-shade3));
-	color: var(--nte-on-text, var(--text-color));
-}
-
-.nte-overlay.is-dragging .nte-row-grip,
-.nte-overlay.is-dragging .nte-col-grip {
-	cursor: grabbing;
-}
-
-/* The band IS the target: the row button's hit area is the table's full width
-   just below it, the column button's the full height just to its right. A 1.5rem
-   disc is a small target for a gesture that appends a row, so the user aims at
-   the PLACE they want the row rather than at a disc floating on the boundary.
-
-   The band is transparent and unstyled — it is a hit area, not a control that
-   looks like one. The base `button` rule in nui-theme.css gives every button a
-   2rem minimum, a highlight fill and its own padding, all of which are undone
-   here; a band that inherited them would be a 2rem-tall coloured bar across the
-   table. The visible dot is a child so the CSS can centre it without the
-   button's transform taking a second job.
-
-   The band deliberately overhangs the table's edge into the margin beneath it.
-   `nui-table` already carries `margin-block-end`, so this space exists to be
-   used; a band that stopped at the edge would hand back a strip of page the user
-   cannot click. The height is generous (2.25rem) for the same reason — it is a
-   target, and its size is the affordance. */
-.nte-edge-add {
-	position: absolute;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	padding: 0;
-	margin: 0;
-	min-width: 0;
-	min-height: 0;
-	background: none;
-	border: 0;
-	border-radius: 0;
-	color: var(--text-color-dim);
-	cursor: pointer;
-	/* The theme's `button:hover` sets `background-color: var(--color-highlight)`
-	   and `color: var(--color-white)`. Specificity is 0,1,1 against this rule's
-	   0,1,0, so the theme WINS and the whole band floods blue on hover -- the
-	   band is the hit area, so a 36px-tall by 896px-wide blue slab is what the
-	   user saw instead of a line. A class selector cannot out-specify it, so the
-	   hover state is cancelled explicitly at matching specificity. This is the
-	   component-wide cost of building an affordance out of a real <button>:
-	   every state the theme paints has to be undone deliberately. */
-	opacity: 0;
-	visibility: hidden;
-	transition: opacity 120ms var(--nte-ease), visibility 120ms var(--nte-ease), color 100ms var(--nte-ease);
-}
-
-.nte-edge-add:hover {
-	background: none;
+.nte-col-grip:hover,
+.nte-row-del:hover,
+.nte-col-del:hover {
+	background-color: var(--color-shade2);
 	color: var(--text-color);
-}
-
-.nte-overlay.is-hovered .nte-edge-add {
-	opacity: 1;
-	visibility: visible;
-}
-
-/* The band is the table's own `margin-block-end` (--nui-space, 16px) and not
-   one pixel more. That margin is the space the theme provides between a table
-   and whatever follows it, so it is the budget: at 2.25rem the band ran 20px
-   past it and swallowed the next element, and at 1.5rem it still overhung by
-   8px. The dot is 1rem for the same reason — sized to the BUDGET rather than
-   to the band, so the band can be exactly the margin and the dot exactly fills
-   half of it.
-
-   `min-width`/`min-height: 0` on the base rule is load-bearing, not tidy-up.
-   The theme's `button` rule sets `min-width`/`min-height: var(--nui-space-double)`
-   (2rem) at specificity 0,0,1. A `height` on `.nte-edge-add-row` cannot shrink
-   a box whose floor is 2rem, so the band would be stuck at 32px no matter what
-   the height said. Anyone shrinking this control again must keep the min-*.
-
-   Still ~78x the dot's area, so the target is trivially easy to hit. */
-.nte-edge-add-row { height: var(--nui-space); }
-.nte-edge-add-col { width: var(--nui-space); }
-
-/* The rule that appears behind the dot on hover, spanning the band. It is a
-   RULE, so it is 1px of ink and does not scale with the user's font size — the
-   same reasoning as the separator in the zone. Drawn with a pseudo-element so it
-   needs no extra element in the DOM and cannot be read by a screen reader.
-
-   `--color-highlight`, against the component's standing "the accent is not a
-   state colour" rule. That rule governs selection, focus and the "on" states —
-   things that answer "what is under my hands". This line is different: it is an
-   affordance announcing a clickable target, which is what the accent is for
-   everywhere else in the library, and it is transient and pointer-driven rather
-   than a state the table is in. The distinction is "editing state" versus
-   "available action". Deliberate, and the first use of the accent here. */
-.nte-edge-add::before {
-	content: "";
-	position: absolute;
-	background-color: var(--nte-edge-rule, var(--color-highlight));
-	opacity: 0;
-	transition: opacity 120ms var(--nte-ease);
-	pointer-events: none;
-}
-
-/* The row band's rule runs horizontally across the full width; the column
-   band's runs vertically down the full height. Both sit behind the dot, which
-   carries an opaque background and so reads as a `+` sitting ON the line rather
-   than a line crossing through it. */
-.nte-edge-add-row::before {
-	left: 0;
-	right: 0;
-	top: 50%;
-	height: 1px;
-	transform: translateY(-50%);
-}
-
-.nte-edge-add-col::before {
-	top: 0;
-	bottom: 0;
-	left: 50%;
-	width: 1px;
-	transform: translateX(-50%);
-}
-
-.nte-edge-add:hover { color: var(--text-color); }
-.nte-edge-add:hover::before { opacity: 1; }
-
-/* The visible control. A circle, not a rounded square: at 1.25rem the 0.5rem
-   radius came within 2px of the 10px a full round needs, so the shape was a
-   rounded square by coincidence and would have stopped reading as circular on
-   any resize. Stated as `50%`, the intent survives the size.
-
-/* 0.875rem, not 1rem. The band is `var(--nui-space)` (16px) and the dot's border
-   sits OUTSIDE its box (box-sizing: content-box), so a 1rem dot renders 17.3px
-   and overflows the band by 1.3px — visibly clipped on a short table, where the
-   `+` loses its top and bottom strokes. The dot is sized to FIT the band, and
-   the band is sized to the table's margin; those two constraints meet here. */
-.nte-edge-add-dot {
-	position: relative;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 0.875rem;
-	height: 0.875rem;
-	/* `box-sizing: border-box` so the declared size INCLUDES the border. Without
-	   it the 1px border is added outside the box and the dot renders larger than
-	   the band it is centred in. */
-	box-sizing: border-box;
-	border-radius: 50%;
-	background-color: var(--color-base);
-	border: var(--border-thickness) solid var(--border-shade2);
-	/* The dot sits ON the table's boundary line, so it needs to read as floating
-	   above the table rather than printed into it. This is the zone's own
-	   two-part shadow, reused deliberately: the same treatment for the same reason
-	   is what makes the toolbar and its edge affordances look like one family. */
-	box-shadow: 0 1px 2px var(--shadow-color), 0 4px 12px var(--shadow-color);
-	transition: background-color 100ms var(--nte-ease), box-shadow 100ms var(--nte-ease);
-}
-
-/* The dot is above its own rule, so the rule appears to pass behind it. */
-.nte-edge-add-dot nui-icon {
-	position: relative;
-	z-index: 1;
-	/* --icon-size is 1.2rem, which does not fit a 0.875rem dot: the glyph would
-	   overflow the circle. Sized to the dot, not to the theme. */
-	width: 0.625rem;
-	height: 0.625rem;
-}
-
-/* The glyph sat 1.59px ABOVE the dot's centre. The cause is not flex
-   centring: `.nte-edge-add-dot` is a <span>, and the theme's text-flow rule
-   `span > nui-icon` applies `top: -0.1rem` plus side margins to an icon that
-   appears inside running text. It exists to optically align an icon with a
-   line of prose; here the icon is the sole content of a fixed-size box, so the
-   optical nudge is just an error. `vertical-align` cannot fix it — that
-   property does not apply to flex children, so the first attempt at this was
-   inert. Resetting the margin and the offset is what actually centres it. */
-.nte-edge-add-dot nui-icon,
-.nte-edge-add-dot nui-icon svg {
-	margin: 0;
-	top: 0;
-}
-
-/* Hover changes the GLYPH's colour and nothing else. No fill, no deeper shadow:
-   the rule is the whole hover signal, and a second one underneath it would make
-   the line harder to read rather than easier. The dot's own surface stays put so
-   the rule behind it is never obscured. */
-.nte-edge-add:hover .nte-edge-add-dot {
-	background-color: var(--color-base);
 }
 
 .nte-drop-line {
@@ -744,8 +596,10 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
    ring must be visible against the table surface. It uses the same neutral ring as
    the cell caret, so keyboard focus is one consistent signal across the component. */
 .nte-row-grip:focus-visible,
+.nte-row-grip:focus-visible,
 .nte-col-grip:focus-visible,
-.nte-edge-add:focus-visible,
+.nte-row-del:focus-visible,
+.nte-col-del:focus-visible,
 .nte-seg-btn:focus-visible,
 .nte-zone-btn:focus-visible {
 	outline: var(--border-thickness) solid var(--nte-active-ring, var(--text-color-dim));

@@ -28,6 +28,7 @@ import { nui } from '../../nui.js';
 
 const ICON_ADD = 'add';
 const ICON_DRAG = 'drag_indicator';
+const ICON_CLOSE = 'close';
 
 function el(tag, className, attrs) {
 	const node = document.createElement(tag);
@@ -45,33 +46,6 @@ function icon(name) {
 	const i = el('nui-icon');
 	i.setAttribute('name', name);
 	return i;
-}
-
-/**
- * An edge `+` control: a hit area spanning the table's whole edge, with the
- * visible button centred inside it.
- *
- * The button is the target and the band is the button — there is no separate
- * clickable strip that the pointer has to find first. That is the whole point:
- * a 1.5rem circle is a small target for a gesture that appends a row, and
- * making the target span the edge means the user aims at the *place* they want
- * the row, not at a small disc floating on the boundary line.
- *
- * The visible dot is a child so it can be centred without the button's own
- * transform doing a second job — the same one-property-one-job rule that decided
- * the zone's centering. `aria-label` on the button keeps the accessible name,
- * and the child is presentational.
- */
-function edgeButton(axis, label) {
-	const btn = el('button', `nte-edge-add nte-edge-add-${axis}`, {
-		type: 'button',
-		'aria-label': label,
-		title: label
-	});
-	const dot = el('span', 'nte-edge-add-dot');
-	dot.appendChild(icon(ICON_ADD));
-	btn.appendChild(dot);
-	return btn;
 }
 
 // ── Table geometry ────────────────────────────────────────────────────────────
@@ -210,11 +184,9 @@ function setupTableEditor(table, options = {}) {
 	overlay.appendChild(zone);
 	const colGrips = el('div', 'nte-col-grips');
 	const rowGrips = el('div', 'nte-row-grips');
-	const addRow = edgeButton('row', 'Add row');
-	const addCol = edgeButton('col', 'Add column');
 	const dropRowLine = el('div', 'nte-drop-line nte-drop-line-row');
 	const dropColLine = el('div', 'nte-drop-line nte-drop-line-col');
-	overlay.append(colGrips, rowGrips, addRow, addCol, dropRowLine, dropColLine);
+	overlay.append(colGrips, rowGrips, dropRowLine, dropColLine);
 	parent.appendChild(overlay);
 
 	const hadPosition = parent.style.position;
@@ -408,6 +380,19 @@ function setupTableEditor(table, options = {}) {
 	/**
 	 * Build one grip per selected row/column band, each spanning its whole band.
 	 *
+	/**
+	 * Build one grip per selected row/column band, each spanning it, plus the
+	 * matching DELETE control on the opposite side.
+	 *
+	 * Drag and delete sit at opposite ends of the same band: a column band's grip
+	 * is above the table and its delete is below, a row band's grip is left of the
+	 * table and its delete is right of it. They are the two things you can do to
+	 * a band, they are not equivalent in consequence — one rearranges, one
+	 * destroys — and putting them on opposite ends means neither is adjacent to
+	 * the other, so a stray click cannot reach the destructive one while aiming
+	 * for the drag. It also keeps the band visually bracketed by its two
+	 * affordances, which reads as "this whole band is the thing these act on".
+	 *
 	 * Called whenever the selection changes AND on every measure. Deriving the
 	 * grips from `range` rather than keeping a grip per row and toggling a class
 	 * is what makes them reliable: the class was being wiped by the rebuild at
@@ -424,17 +409,29 @@ function setupTableEditor(table, options = {}) {
 			const bottom = rows[band.to]?.getBoundingClientRect();
 			if (!top || !bottom) continue;
 			const single = band.from === band.to;
+			const label = single ? `Row ${band.from + 1}` : `Rows ${band.from + 1} to ${band.to + 1}`;
 			const grip = el('button', 'nte-row-grip', {
 				type: 'button',
 				'data-row-from': String(band.from),
 				'data-row-to': String(band.to),
-				'aria-label': single ? `Row ${band.from + 1}` : `Rows ${band.from + 1} to ${band.to + 1}`,
+				'aria-label': label,
 				title: 'Drag to move, click to select'
 			});
 			grip.appendChild(icon(ICON_DRAG));
 			grip.style.top = `${top.top - rect.top}px`;
 			grip.style.height = `${bottom.bottom - top.top}px`;
 			rowGrips.appendChild(grip);
+
+			const del = el('button', 'nte-row-del', {
+				type: 'button',
+				'data-row-del': String(band.from),
+				'aria-label': `Delete ${label.toLowerCase()}`,
+				title: 'Delete'
+			});
+			del.appendChild(icon(ICON_CLOSE));
+			del.style.top = `${top.top - rect.top}px`;
+			del.style.height = `${bottom.bottom - top.top}px`;
+			rowGrips.appendChild(del);
 		}
 
 		colGrips.textContent = '';
@@ -445,17 +442,34 @@ function setupTableEditor(table, options = {}) {
 				const right = cells[band.to]?.getBoundingClientRect();
 				if (!left || !right) continue;
 				const single = band.from === band.to;
+				const label = single ? `Column ${band.from + 1}` : `Columns ${band.from + 1} to ${band.to + 1}`;
 				const grip = el('button', 'nte-col-grip', {
 					type: 'button',
 					'data-col-from': String(band.from),
 					'data-col-to': String(band.to),
-					'aria-label': single ? `Column ${band.from + 1}` : `Columns ${band.from + 1} to ${band.to + 1}`,
+					'aria-label': label,
 					title: 'Drag to move, click to select'
 				});
 				grip.appendChild(icon(ICON_DRAG));
 				grip.style.left = `${left.left - rect.left}px`;
 				grip.style.width = `${right.right - left.left}px`;
 				colGrips.appendChild(grip);
+
+				const del = el('button', 'nte-col-del', {
+					type: 'button',
+					'data-col-del': String(band.from),
+					'aria-label': `Delete ${label.toLowerCase()}`,
+					title: 'Delete'
+				});
+				del.appendChild(icon(ICON_CLOSE));
+				// Only the HORIZONTAL extent is set here. The vertical position is
+				// CSS (`top: 100%`) — the delete hangs off the bottom of the table
+				// for the whole band, not at the band's own top edge. Writing `top`
+				// inline, as the drag grip does, overrode that and parked the delete
+				// control inside the table.
+				del.style.left = `${left.left - rect.left}px`;
+				del.style.width = `${right.right - left.left}px`;
+				colGrips.appendChild(del);
 			}
 		}
 	}
@@ -512,6 +526,27 @@ function setupTableEditor(table, options = {}) {
 		headerBtn.appendChild(el('span', 'nte-zone-label', { textContent: 'Header row' }));
 		zone.appendChild(headerBtn);
 
+		// Insert, relative to the SELECTION rather than to the end of the table.
+		// This is the whole reason these controls are here and not on the table's
+		// edges: an edge affordance can only mean "at the end". Plain inserts
+		// AFTER the selected band, Ctrl+click BEFORE it — one gesture, one
+		// modifier, rather than a second control for the same pair of operations.
+		zone.appendChild(el('span', 'nte-zone-sep'));
+		for (const [axis, text, iconName] of [
+			['row', 'Row', ICON_ADD],
+			['col', 'Column', ICON_ADD]
+		]) {
+			const btn = el('button', 'nte-zone-btn nte-zone-add', {
+				type: 'button',
+				'data-action-add': axis,
+				'aria-label': `Insert a ${text.toLowerCase()} after the selection — hold Ctrl to insert before`,
+				title: `Insert ${text.toLowerCase()} after selection · Ctrl-click to insert before`
+			});
+			btn.appendChild(icon(iconName));
+			btn.appendChild(el('span', 'nte-zone-label', { textContent: text }));
+			zone.appendChild(btn);
+		}
+
 		// No caption of what is selected. There was one here -- a quiet "3 x 2" --
 		// and it was a mistake twice over. It was information the user did not need,
 		// because the selection is already drawn in the table; and because the zone
@@ -536,6 +571,7 @@ function setupTableEditor(table, options = {}) {
 	/** A stable selector for a zone control, keyed by what the control does. */
 	function zoneKeyOf(node) {
 		if (node.dataset?.alignValue) return `[data-align-value="${node.dataset.alignValue}"]`;
+		if (node.dataset?.actionAdd) return `[data-action-add="${node.dataset.actionAdd}"]`;
 		if (node.hasAttribute?.('data-action-header')) return '[data-action-header]';
 		return null;
 	}
@@ -565,10 +601,17 @@ function setupTableEditor(table, options = {}) {
 	}
 
 	function insertColumn(at) {
+		// The header row gets a `th`, not a `td`. It used to get a `td` like every
+		// other row, which is invisible until you read the accessibility tree: the
+		// header row then parses as a mix of `rowheader` and plain `cell` instead
+		// of a run of `columnheader`s, and the theme styles `th` by tag, so the new
+		// column's heading rendered unbolded and unshaded next to its neighbours.
+		// A cell's tag is a property of the SECTION it sits in, not of the column
+		// it belongs to.
 		for (const tr of [table.tHead?.rows[0], ...bodyRows(table)].filter(Boolean)) {
-			const td = makeCell('td', '');
-			if (at >= 0 && tr.cells[at]) tr.insertBefore(td, tr.cells[at]);
-			else tr.appendChild(td);
+			const cell = makeCell(tr.parentElement === table.tHead ? 'th' : 'td', '');
+			if (at >= 0 && tr.cells[at]) tr.insertBefore(cell, tr.cells[at]);
+			else tr.appendChild(cell);
 		}
 		// A new column's alignment follows the one to its left, so a right-aligned
 		// number column grows to the right as right-aligned.
@@ -577,6 +620,62 @@ function setupTableEditor(table, options = {}) {
 		for (const tr of [table.tHead?.rows[0], ...bodyRows(table)].filter(Boolean)) {
 			tr.cells[at]?.setAttribute('data-align', align);
 		}
+	}
+
+	/**
+	 * Insert a row AT an index, rather than after one.
+	 *
+	 * `insertRow(after)` cannot express "before the first row": it takes an
+	 * index to insert AFTER, and at -1 it finds no reference row and appends to
+	 * the end instead. Insert-before-the-selection is half the toolbar's
+	 * contract, so the operation is stated in the form the callers need rather
+	 * than forced through the other one.
+	 */
+	function insertRowAt(index, cells = colCount(table)) {
+		const tbody = bodyOf();
+		const ref = tbody.rows[index] || null;
+		const tr = cloneRow(ref || tbody.rows[0], cells);
+		if (ref) tbody.insertBefore(tr, ref);
+		else tbody.appendChild(tr);
+		return tr;
+	}
+
+	/**
+	 * Insert a row or column adjacent to the selection.
+	 *
+	 * Plain click inserts AFTER the selected band, Ctrl+click BEFORE it — the
+	 * same gesture, one modifier apart, rather than two separate controls. The
+	 * insertion point is the selection, which is the whole reason this control
+	 * lives in the toolbar and not on the table's edge: an edge affordance can
+	 * only ever mean "at the end", so it cannot express "after the row I am
+	 * looking at".
+	 *
+	 * The new row/column is then SELECTED, not just inserted. The insertion point
+	 * is worth confirming, and a freshly selected band is also where the user is
+	 * about to type — the alternative is a new empty row that appears with no
+	 * indication of which one it is.
+	 */
+	function insertAtSelection(kind, before) {
+		if (!range) return;
+		if (kind === 'row') {
+			// The header is row -1 and there is nothing above it to insert before,
+			// so a before-insert on a selection touching the header lands at body
+			// row 0 rather than trying to create a row above thead.
+			const tr = insertRowAt(before ? Math.max(0, range.minRow) : range.maxRow + 1);
+			const index = bodyRows(table).indexOf(tr);
+			applyRange({ minRow: index, maxRow: index, minCol: 0, maxCol: colCount(table) - 1 });
+			emit('structure', { action: before ? 'insert-row-before' : 'insert-row-after', at: index });
+		} else {
+			const at = before ? Math.max(0, range.minCol) : range.maxCol + 1;
+			insertColumn(at);
+			applyRange({
+				minRow: hasHeader(table) ? -1 : 0,
+				maxRow: bodyRows(table).length - 1,
+				minCol: at, maxCol: at
+			});
+			emit('structure', { action: before ? 'insert-column-before' : 'insert-column-after', at });
+		}
+		refresh();
 	}
 
 	function deleteRow(tr) {
@@ -1213,8 +1312,20 @@ function setupTableEditor(table, options = {}) {
 		const alignBtnEl = e.target.closest('[data-align-value]');
 		if (alignBtnEl) { setAlign(alignBtnEl.dataset.alignValue); return; }
 		if (e.target.closest('[data-action-header]')) { refresh(toggleHeader()); return; }
-		if (e.target.closest('.nte-edge-add-row')) { insertRow(bodyRows(table).length - 1); emit('structure', { action: 'add-row' }); refresh(); return; }
-		if (e.target.closest('.nte-edge-add-col')) { insertColumn(colCount(table)); emit('structure', { action: 'add-column' }); refresh(); return; }
+		const addBtn = e.target.closest('[data-action-add]');
+		if (addBtn) { insertAtSelection(addBtn.dataset.actionAdd, e.ctrlKey); return; }
+		// Delete acts on the WHOLE band, not on one row or column of it: a handle
+		// covering three rows that removed only the first would be a lie about
+		// what it does, exactly as for the drag grip.
+		const delRow = e.target.closest('[data-row-del]');
+		if (delRow) {
+			const rows = bodyRows(table);
+			const tr = rows[Number(delRow.dataset.rowDel)];
+			if (tr) { deleteRow(tr); refresh(); }
+			return;
+		}
+		const delCol = e.target.closest('[data-col-del]');
+		if (delCol) { deleteColumn(Number(delCol.dataset.colDel)); refresh(); return; }
 	});
 	on(overlay, 'contextmenu', (e) => {
 		const grip = e.target.closest('[data-row-from], [data-col-from]');
@@ -1250,26 +1361,6 @@ function setupTableEditor(table, options = {}) {
 		// Grips are rebuilt from the selection, not toggled -- see buildGrips(). It
 		// runs on every measure, so a resize keeps a spanning grip sized correctly.
 		buildGrips();
-
-		// Edge buttons span their axis: the row button's hit area is the table's
-		// full width just below it, the column button's is the full height just
-		// right of it. The visible dot is centred by CSS, so there is no half-size
-		// to subtract here — that subtraction is what put these two mechanisms in
-		// competition in the first place, and one of them has to go. Centring
-		// belongs to the stylesheet now, which is why the button can be resized
-		// without position() knowing anything about it.
-		//
-		// The band is anchored to the table's edge and extends OUTWARD, into the
-		// margin the table already has. `nui-table` carries `margin-block-end:
-		// var(--nui-space)`, so the row band occupies real estate that exists
-		// precisely so something can sit under the table; a band that stopped at
-		// the edge would be a strip of page the user cannot click.
-		addRow.style.left = '0px';
-		addRow.style.width = `${rect.width}px`;
-		addRow.style.top = `${rect.height}px`;
-		addCol.style.left = `${rect.width}px`;
-		addCol.style.top = '0px';
-		addCol.style.height = `${rect.height}px`;
 	}
 
 	/**
@@ -1325,19 +1416,12 @@ function setupTableEditor(table, options = {}) {
 	 * rejected for, reintroduced through a number.
 	 */
 	const HOVER_MARGIN = 24;
-	function overChrome(x, y) {
-		const b = addRow.getBoundingClientRect();
-		if (x >= b.left && x <= b.right && y >= b.top && y <= b.bottom) return true;
-		const c = addCol.getBoundingClientRect();
-		return x >= c.left && x <= c.right && y >= c.top && y <= c.bottom;
-	}
 	function overTableOrChrome(x, y) {
 		const r = table.getBoundingClientRect();
 		if (x >= r.left - HOVER_MARGIN && x <= r.right + HOVER_MARGIN &&
 			y >= r.top - HOVER_MARGIN && y <= r.bottom + HOVER_MARGIN) return true;
 		const z = zone.getBoundingClientRect();
-		if (x >= z.left && x <= z.right && y >= z.top && y <= z.bottom) return true;
-		return overChrome(x, y);
+		return x >= z.left && x <= z.right && y >= z.top && y <= z.bottom;
 	}
 
 	on(document, 'pointerdown', (e) => {

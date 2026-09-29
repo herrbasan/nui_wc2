@@ -151,17 +151,18 @@ valid. Alignment becomes the delimiter row:
 | Action | Result |
 |--------|--------|
 | Hover a row / column | That row's and column's grips appear — only those two |
-| Click a cell | Select + edit; the top zone opens with alignment and header controls |
+| Click a cell | Select + edit; the top zone opens with alignment, header and insert controls |
 | **Drag across cells** | Selects the rectangle you swept — the primary way to select several cells |
 | <kbd>Shift</kbd>+click | Extend the selection into a range |
 | Click a row / column grip | Selects that whole row / column |
 | Toggle **Header row** | Moves the first row in and out of `<thead>`, converting its cells `td`↔`th`. Off means an ordinary body row — unbolded, unshaded — and the GFM export emits an empty header. |
+| **Insert Row / Column** | Inserts a row or column **after** the selected band, and selects it. <kbd>Ctrl</kbd>+click inserts **before** instead |
 | <kbd>Tab</kbd> / <kbd>Shift</kbd>+<kbd>Tab</kbd> | Walk cells; <kbd>Tab</kbd> past the last cell appends a row |
 | <kbd>Enter</kbd> | Move down a row |
 | Arrow keys | Move between cells; <kbd>ArrowUp</kbd> off the first body row reaches the header. Suppressed while text is selected |
 | <kbd>Esc</kbd> | Clear the selection |
 | Drag a grip | Reorder the row or column, with a drop line |
-| Click an edge `+` | Append a row (bottom) or column (right) |
+| Click a band's `×` | Delete that whole row band or column band |
 | Paste TSV | Grows the grid and fills it — spreadsheet paste works |
 
 Arrow keys move between cells, and are suppressed while text is selected so
@@ -204,15 +205,33 @@ beside the table, not above it, and the drop lines stay inside the table's own
 box, so a row selection keeps the close gap. The lift animates — a snap would
 read as a glitch at the moment the grip appeared.
 
-Grips and edge `+` controls are positional: they sit at their own row, column or
-edge. Each `+` is a **band spanning its whole axis** — the row button's hit area
-is the table's full width just below it, the column button's the full height just
-to its right. The band is exactly the table's own `margin-block-end` and not one
-pixel more, so it never overlaps what follows the table; a 0.875rem circular dot
-is centred inside it. You aim at the *place* you want the row or column, and the
-target is ~100× the dot's area. On hover the only change is a 1px
-`--color-highlight` rule spanning the band behind the dot; the dot's own surface
-does not change, so the rule is never obscured.
+Grips are positional: each sits at its own row or column, **outside** the table.
+A column band's grip is above the table, a row band's is to its left, and each
+band's delete `×` sits at the **opposite** end — a column's below the table, a
+row's to its right. Two reasons: a drag and a delete are not equivalent in
+consequence, so they should not be a click apart; and bracketing the band reads
+as "these act on this whole thing". The delete acts on the whole band for the
+same reason the drag does — a handle covering three rows that removed only the
+first would be lying.
+
+Deleting the **last** remaining row or column does not remove it: the cells are
+cleared instead, because a table with no body row has no height to hover and the
+editor would become unreachable.
+
+### Insert position
+
+Insert lives in the toolbar rather than on the table's edge because **position is
+the feature**. An edge affordance can only mean "at the end"; here the insertion
+point is the selection, so a plain click inserts after the band you are looking
+at and <kbd>Ctrl</kbd>+click inserts before it. One control, one modifier, both
+directions — rather than a second button for the mirror case.
+
+The new row or column is **selected** after insertion, not merely created: the
+insertion point is worth confirming, and the fresh selection is also where the
+user is about to type.
+
+Note for hosts: inserting a column into a table with a header row creates a `th`
+in `<thead>`, not a `td`. A cell's tag is a property of the section it sits in.
 
 The band is a real `<button>`, which means every state the theme paints for
 `button` has to be undone deliberately — `button:hover` fills with
