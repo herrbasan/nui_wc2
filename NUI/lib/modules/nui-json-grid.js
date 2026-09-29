@@ -712,11 +712,25 @@ export function setupJsonGrid(host, options = {}) {
 	 * contenteditable for the same reasons.
 	 */
 	function beginEdit(cell) {
-		if (state.editing === cell) return;
 		const path = parsePointer(cell.dataset.path || '');
+		if (state.editing?.dataset.path === cell.dataset.path) return;
 		const current = readAt(state.doc.structure, path);
 		if (current === null || typeof current === 'object') return;
 		closePanel();
+
+		// An editor open elsewhere is COMMITTED, not abandoned. The deferred blur
+		// commit would otherwise stand down — `state.editing` has already moved
+		// on — and silently discard the edit in progress.
+		//
+		// This commits, which re-renders and replaces every node in the grid. So
+		// the cell is re-resolved from the live DOM afterwards rather than carried
+		// through: the one handed in is detached by then, and building an editor
+		// inside a detached cell produces something that is never shown.
+		if (state.editing?._jgFinish) state.editing._jgFinish(true);
+		state.editing = null;
+		const target = host.querySelector(`td[data-path="${CSS.escape(toPointer(path))}"]`);
+		if (!target) return;
+		cell = target;
 
 		const editor = el('span', 'jg-scalar jg-editor');
 		editor.textContent = typeof current === 'string' ? current : String(current);
@@ -749,6 +763,7 @@ export function setupJsonGrid(host, options = {}) {
 		const finish = (save) => {
 			if (done) return;
 			done = true;
+			cell._jgFinish = null;
 			state.editing = null;
 			if (!save) { render(); return; }
 			// The format's own reader decides what the text means; the badge
@@ -757,6 +772,11 @@ export function setupJsonGrid(host, options = {}) {
 			if (!coerced.ok) { host.dataset.error = coerced.reason; render(); say(coerced.reason, true); return; }
 			commit(`set ${cell.dataset.path}`, (draft) => setAt(draft, path, coerced.value));
 		};
+		// Clicking straight from one cell to another blurs this editor, and the
+		// deferred blur commit below would stand down because `state.editing` has
+		// already moved on — silently DISCARDING the edit in progress. The next
+		// editor commits the previous one before it opens.
+		cell._jgFinish = finish;
 		editor.addEventListener('keydown', (e) => {
 			if (e.key === 'Enter') { e.preventDefault(); finish(true); }
 			if (e.key === 'Escape') { e.preventDefault(); finish(false); }
@@ -827,12 +847,13 @@ export function setupJsonGrid(host, options = {}) {
 		const menu = e.target.closest('[data-menu]');
 		if (menu) { openMenuPanel(menu, menu.dataset.menu, e); return; }
 
-		// A click on a NESTED leaf addresses that leaf, because every value cell
-		// carries its own pointer.
-		const leaf = e.target.closest('.jg-scalar');
-		if (!leaf || leaf.classList.contains('jg-empty')) return;
-		const cell = leaf.closest('td[data-path]');
-		if (cell) beginEdit(cell);
+		// The whole value cell is the target, not just the text in it. A short
+		// value is a few characters in a cell three hundred wide, and requiring a
+		// pixel-perfect hit on the characters is a target nobody can hit. The
+		// cell's own controls and add affordances are matched above and return
+		// first, so they keep their own clicks.
+		const leafCell = e.target.closest('td[data-path]:has(> .jg-leaf)');
+		if (leafCell) { beginEdit(leafCell); return; }
 	});
 
 	host.addEventListener('keydown', (e) => {

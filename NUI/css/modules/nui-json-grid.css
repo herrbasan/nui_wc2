@@ -107,7 +107,19 @@
 	padding-left: var(--nui-space);
 }
 
-/* A leaf: the value takes the room it needs, the controls keep their own. */
+/* A leaf: the value takes the room it needs, the controls keep their own.
+ *
+ * The whole CELL is the hit target, and that needs nothing here. A click on a
+ * cell's padding already has the cell as its target, so `beginEdit` is reached
+ * from anywhere in the cell without the cell's box being touched.
+ *
+ * An earlier version stretched the leaf over the cell with
+ * `position: absolute; inset: 0` and moved the cell's padding onto it. It worked,
+ * and it quietly REMOVED 12px from every row: an absolutely positioned leaf is
+ * out of flow, so it stopped contributing to the row's height, and the row fell
+ * back to being sized by the key and index cells instead of by the type chip.
+ * The grid got visibly tighter. A layout change to widen a hit target is the
+ * wrong instrument — a click handler is free and costs no space. */
 .jg-host .jg-leaf {
 	display: flex;
 	align-items: center;
@@ -318,7 +330,17 @@
  * highlight says "this is the active cell"; it does not say "this is the
  * keyboard focus", and a keyboard user still needs the latter. */
 .jg-host .jg-editor {
-	display: block;
+	/* Grows into whatever the type chip and options menu do not use, and no
+	   further — it is a flex child, not an overlay. `align-self: stretch` makes
+	   it fill the leaf's full HEIGHT as well, so the whole cell is the field and
+	   not just the twenty pixels the text happens to occupy. Its own
+	   `align-items: center` keeps the text optically centred inside that, which
+	   is what stopped the two from disagreeing about where the middle is. */
+	flex: 1 1 auto;
+	align-self: stretch;
+	min-width: 0;
+	display: flex;
+	align-items: center;
 	background: transparent;
 	cursor: text;
 	/* The editor is a contenteditable span carrying the SAME `.jg-scalar` class
