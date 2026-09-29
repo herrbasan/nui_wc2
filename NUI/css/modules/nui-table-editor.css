@@ -576,14 +576,6 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 	color: var(--text-color);
 }
 
-.nte-zone-info {
-	color: var(--text-color-dim);
-	white-space: nowrap;
-	font-size: var(--font-size-xsmall);
-	font-variant-numeric: tabular-nums;
-	padding-inline: var(--nui-space-quarter);
-}
-
 /* A11y: grips are icon-only, so the accessible name is the label, and the focus
    ring must be visible against the table surface. It uses the same neutral ring as
    the cell caret, so keyboard focus is one consistent signal across the component. */

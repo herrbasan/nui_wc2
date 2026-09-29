@@ -454,8 +454,6 @@ function setupTableEditor(table, options = {}) {
 		// Alignment is per column. A range spanning several columns is not itself a
 		// column, so the control reads the first and applies to all of them — which
 		// is what selecting a block of cells and pressing "align" means.
-		const cols = range.maxCol - range.minCol + 1;
-		const rows = range.maxRow - range.minRow + 1;
 		const align = cellAt(table, range.minRow, range.minCol)?.getAttribute('data-align') || 'left';
 
 		const seg = el('div', 'nte-seg', { role: 'group', 'aria-label': 'Column alignment' });
@@ -489,12 +487,18 @@ function setupTableEditor(table, options = {}) {
 		headerBtn.appendChild(el('span', 'nte-zone-label', { textContent: 'Header row' }));
 		zone.appendChild(headerBtn);
 
-		// A quiet caption of WHAT is selected, and only when it is more than one
-		// cell. "Cell R2 · C3" is noise; "3 × 2" is information.
-		if (rows * cols > 1) {
-			zone.appendChild(el('span', 'nte-zone-sep'));
-			zone.appendChild(el('span', 'nte-zone-info', { textContent: `${rows} × ${cols}` }));
-		}
+		// No caption of what is selected. There was one here -- a quiet "3 x 2" --
+		// and it was a mistake twice over. It was information the user did not need,
+		// because the selection is already drawn in the table; and because the zone
+		// is centred, a caption that only appears for multi-cell selections RESIZED
+		// the pill, which re-centred it and moved every control sideways. Measured:
+		// selecting a range grew the zone 53px and shifted Align centre 26px. The
+		// control the pointer was already travelling toward moved under it, so the
+		// toolbar fought the gesture that had just revealed it.
+		//
+		// The zone is now a fixed width. That is the general rule: a control surface
+		// must not reflow in response to the state it reports on, or reaching for a
+		// button becomes a moving target.
 
 		zone.classList.add('is-active');
 		overlay.classList.add('is-visible');

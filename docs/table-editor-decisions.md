@@ -542,10 +542,11 @@ floating surface that needs a defined edge. The toolbar now reads as chrome of
 the same weight as the rest of the library rather than as a special case.
 
 Verified: centre offset `0px` on a single-cell selection (239px zone) and on the
-widest possible zone — a whole-table selection carrying the "4 × 4" caption
-(292px) — across all four demo tables, including the one enhanced in place
-inside a different parent. Both stay clear of the table's top edge, so the
-column grips are not covered.
+widest case the zone could reach at the time — a whole-table selection carrying
+the "4 × 4" caption (292px) — across all four demo tables, including the one
+enhanced in place inside a different parent. Both stay clear of the table's top
+edge, so the column grips are not covered. (The caption is gone as of the
+section below; the zone is a fixed 239px.)
 
 ### A boundary test that lied, and what it cost
 
@@ -664,3 +665,46 @@ glitch at the moment a grip appeared, so `margin-bottom` joined the existing
 transition list. It is animated as a margin rather than a transform offset
 because the transform is already carrying the appear lift — the same one-property
 -one-job rule that decided the centering.
+
+## 2026-09-29 — The selection caption is gone; the toolbar no longer reflows
+
+**User: "the display of the selected cells in the toolbar is unnecessary i think.
+and it make the control jump."**
+
+Both halves of that were true, and the second is the more serious one. The
+toolbar carried a quiet `3 × 2` caption, rendered only when the selection covered
+more than one cell. Removing it fixed a jump that the centring change had made
+worse, and the measurement is why:
+
+| selection | zone width | Align centre button at |
+|---|---|---|
+| single cell | 239px | x=738 |
+| 3 × 2 range | **292px** | **x=712** |
+| single cell again | 239px | x=738 |
+
+**53px of width change, and 26px of lateral movement of the controls.** Because
+the zone is centred, growth is symmetrical, so every control slides sideways.
+The sequence is: click a cell, drag across more, and the toolbar you are reaching
+for slides out from under the pointer. The control surface was fighting the very
+gesture that had just revealed it — and it is a *worse* defect than the noise the
+caption was, because a jump is not something a user can learn to ignore.
+
+**The general rule this establishes: a control surface must not reflow in response
+to the state it reports on.** Status text, selection counts, result sizes — all of
+these belong somewhere that does not move the controls. A toolbar that changes
+width is not a toolbar with extra information, it is a toolbar with a moving
+target. The information was also redundant: the selection is already drawn in the
+table, in a colour chosen precisely to be the neutral answer to "what is under my
+hands".
+
+Measured after: the zone is **239px with Align centre at x=738 in all five
+cases** — single cell, a 3 × 2 range, back to single, header only, and a whole
+table. `children: 3` throughout: the alignment group, the separator, the header
+button. The dead `.nte-zone-info` CSS went with it.
+
+This is the component's own recurring shape one level up. The bugs in this file
+were two things believing they both owned a fact; this was one thing — the
+caption — changing the size of another thing, the control row, as a side effect
+of a fact only the caption cared about.
+
+
