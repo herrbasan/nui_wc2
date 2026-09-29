@@ -171,29 +171,43 @@ table[data-nui-table-editor],
 	--nte-on-text: var(--text-color);
 	--nte-drop-line: var(--text-color-dim);
 
-	/* --- EXPERIMENT: one colour per operation ---------------------------------
-	   Drag blue, delete red, insert green. The question being asked is whether
-	   colour makes the three operations clearer than the neutral greys do, so
-	   they are declared as TOKENS rather than painted into the rules. Nothing
-	   downstream needs changing, and reverting is deleting this block and
-	   pointing the three rules back at --nte-on-bg.
+	/* --- Colour: on the ACTION, never at rest ---------------------------------
+	   An experiment coloured the three operations permanently -- blue drag, red
+	   delete, green insert -- and the verdict was that it was far too loud. The
+	   idea survives in a weaker and better form:
 
-	   Two of the three are the theme's own colours so the experiment is about
-	   hue-carrying-meaning rather than about inventing a palette: blue is
-	   --color-highlight, exactly what a link and a primary action use, and red is
-	   --palette-alert, what nui-button[variant="danger"] uses. The theme has NO
-	   green -- it is a greyscale-plus-alert palette -- so the insert colour is
-	   the one genuinely new value here, named locally rather than borrowed. That
-	   asymmetry is itself part of what the experiment will show: blue and red
-	   will look like they belong to the library and green will look like a
-	   visitor. */
+	   **Hue is a warning, so it belongs to the moment of acting, not to the
+	   resting object.** A permanently blue handle is a blue thing sitting on the
+	   page whether or not you are touching it. A handle that goes blue while the
+	   pointer is on it says something instead: that pressing here does this
+	   specific thing. Nothing in the component is coloured at rest, so every
+	   colour on screen at any moment is one you caused.
 
-	--nte-grip-bg: var(--color-highlight);
-	--nte-grip-text: var(--color-white);
-	--nte-del-bg: var(--palette-alert);
-	--nte-del-text: var(--color-white);
-	--nte-add-bg: light-dark(rgb(34, 120, 60), rgb(45, 150, 75));
-	--nte-add-text: var(--color-white);
+	   Both hues are the theme's own -- --color-highlight, which is what a link
+	   and a primary action use, and --palette-alert, which is what
+	   nui-button[variant="danger"] uses. Nothing is invented, so the colours
+	   already mean "interactive" and "destructive" everywhere else in the
+	   library.
+
+	   The mixes are toward the band's OWN resting surface rather than toward
+	   white, so a hovered band is the same object a step brighter instead of a
+	   different object. That is the component's standing rule about colour --
+	   opaque, mixed toward the surface, never toward transparent -- applied to
+   a hover rather than to a selection. */
+	--nte-grip-hover: color-mix(in srgb, var(--color-highlight) 42%, var(--color-shade4));
+	--nte-del-hover: color-mix(in srgb, var(--palette-alert) 58%, var(--color-shade4));
+	/* The drop line is the drag band's colour, not a neutral: it appears only
+	   while a drag is in progress, and it is the same gesture continued. Tying
+	   the two is what explains the relation without a label -- the line is
+	   visibly the handle you are already holding. */
+	--nte-drop-line: var(--color-highlight);
+	/* The contrast edge for the drop line, mixed toward the scheme's own surface:
+	   light on dark, dark on light. Follows the line's hue rather than being a
+	   fixed white, so it reads as part of the same object. */
+	--nte-drop-line-edge: light-dark(
+		color-mix(in srgb, var(--color-highlight) 55%, var(--color-shade1)),
+		color-mix(in srgb, var(--color-highlight) 70%, var(--color-shade1))
+	);
 
 	/* One easing for the whole component. Chrome that appears with different
 	   curves in different places reads as several unrelated things; a shared
@@ -340,20 +354,16 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 	vertical-align: top;
 }
 
-/* EXPERIMENT: the two band operations take different colours -- blue for drag,
-   red for delete -- so they are split out of the shared surface above. They keep
-   everything else identical, including the border, because the question under
-   test is whether hue distinguishes them and not whether restyling them helps. */
+/* The two band operations share this surface and are NEUTRAL at rest. They are
+   split by class only so each can take its own hue on hover below; everything
+   else they have in common stays shared, so the only thing that changes is the
+   colour and the rest of the design cannot drift between them. */
 .nte-row-grip,
-.nte-col-grip {
-	background-color: var(--nte-grip-bg, var(--color-shade3));
-	color: var(--nte-grip-text, var(--text-color));
-}
-
+.nte-col-grip,
 .nte-row-del,
 .nte-col-del {
-	background-color: var(--nte-del-bg, var(--color-shade3));
-	color: var(--nte-del-text, var(--text-color));
+	background-color: var(--nte-on-bg, var(--color-shade3));
+	color: var(--nte-on-text, var(--text-color));
 }
 
 .nte-row-grip { cursor: grab; }
@@ -509,19 +519,24 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 	transform: rotate(90deg);
 }
 
-/* EXPERIMENT: hover LIGHTENS each colour rather than replacing it with the
-   neutral. A grey hover would wipe the hue out on the very frame the pointer
-   arrives, which would answer "does colour help?" with a no that the experiment
-   never asked. Each goes one step up its own hue; the shared neutral behaviour
-   is kept as the fallback for anyone who reverts the tokens. */
+/* Hover, and only hover, is where the hue lives.
+
+   Drag goes blue: the same blue as the drop line, so the handle you are holding
+   and the target it is offering are visibly one thing.
+
+   Delete goes red, and that is the one that earns its colour. A delete removes a
+   row or a column and there is no undo behind it in the component -- the event
+   is emitted and the host owns history. The hover is therefore the last moment
+   at which the user can be told what they are about to do, and it says it
+   without a word. */
 .nte-row-grip:hover,
 .nte-col-grip:hover {
-	background-color: color-mix(in srgb, var(--nte-grip-bg) 82%, var(--color-white));
+	background-color: var(--nte-grip-hover, var(--color-shade2));
 }
 
 .nte-row-del:hover,
 .nte-col-del:hover {
-	background-color: color-mix(in srgb, var(--nte-del-bg) 82%, var(--color-white));
+	background-color: var(--nte-del-hover, var(--color-shade2));
 }
 
 .nte-drop-line {
@@ -531,14 +546,20 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 	z-index: 30;
 }
 
+/* The drop line is drawn OVER the cells, so it needs a contrast edge or it
+   disappears into whatever fill it lands on. That edge used to be
+   `--color-white`, which is invisible in the light scheme -- the line was only
+   ever legible on dark. It is now mixed from the LINE'S OWN colour toward the
+   surface, so the outline works in both schemes and stays in the same hue family
+   as the thing it is outlining. */
 .nte-drop-line-row {
 	height: 2px;
-	box-shadow: 0 -1px 0 var(--color-white), 0 1px 0 var(--color-white);
+	box-shadow: 0 -1px 0 var(--nte-drop-line-edge), 0 1px 0 var(--nte-drop-line-edge);
 }
 
 .nte-drop-line-col {
 	width: 2px;
-	box-shadow: -1px 0 0 var(--color-white), 1px 0 0 var(--color-white);
+	box-shadow: -1px 0 0 var(--nte-drop-line-edge), 1px 0 0 var(--nte-drop-line-edge);
 }
 
 .nte-drop-line.is-visible {
@@ -746,33 +767,13 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 	color: var(--text-color);
 }
 
-/* EXPERIMENT: the insert controls carry the green token. Icon and label BOTH
-   inherit `color` from the button, so one declaration colours both -- which is
-   the point of the experiment, since the ask was text and icon together.
-
-   The TEXT takes the green, not white: these buttons have no fill, and white on
-   the dark zone's transparent interior is white on near-black -- it disappeared
-   completely, which the first screenshot caught. A filled control wants a
-   contrasting foreground; an unfilled one wants its own hue. The pill stays
-   transparent at rest so it does not read as "selected" in a row of outlined
-   controls, and fills with a tint of the same green on hover. */
-.nte-zone-add {
-	color: var(--nte-add-bg);
-}
-
-/* The ICON needs its own rule. `color` does not reach it: nui-theme.css sets
-   `nui-icon { color: var(--color-text) }`, and a class beats an inherited value
-   at any specificity, so the button's green produced a white `+` beside a green
-   "Row". Inheritance is the wrong instrument against an explicit declaration. */
-.nte-zone-add nui-icon,
-.nte-zone-add nui-icon svg {
-	color: var(--nte-add-bg);
-}
-
-.nte-zone-add:hover {
-	background-color: color-mix(in srgb, var(--nte-add-bg) 18%, transparent);
-	color: var(--nte-add-bg);
-}
+/* The insert controls are ordinary zone buttons and were left that way. The
+   experiment gave their text and icon a green and the verdict was that it cost
+   more than it paid: two more colours competing with the alignment group and the
+   header toggle for a row of the toolbar's attention, and dimmed text on a dark
+   zone reads as WEAKER rather than as a distinct operation. Nothing distinguishes
+   them here -- they differ from their neighbours by their icons and their labels,
+   which is the channel that was already working. */
 
 /* A11y: grips are icon-only, so the accessible name is the label, and the focus
    ring must be visible against the table surface. It uses the same neutral ring as
