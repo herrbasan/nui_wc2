@@ -1103,6 +1103,69 @@ component's capabilities do not exist. If that turns out to matter, the honest
 fix is a one-time coach mark dismissed on first successful band selection — not a
 permanent line, and not hover chrome.
 
+## 2026-09-29 — A new cell looked like a text input, and was dead
+
+**User: "I found a bug, a newly created cell/row has now input field."**
+
+The report named a *symptom* — an appearance — and the defect underneath was a
+missing attribute. The two were the same line of code.
+
+**Tab past the last cell produced a row you could not type into.** The new cells
+carried no `contenteditable` at all:
+
+```
+toolbar insert → <td data-align="left" data-selected data-active contenteditable="true"><br></td>
+Tab append     → <td data-align="left" data-selected data-active><br></td>
+```
+
+### Why it looked like an input field
+
+`moveFocus` still called `focusCell` on the new cell, so the browser put a caret
+in it. What the user got was therefore an **empty, bordered box with a blinking
+cursor in it** — which is a picture of a text input, drawn by a cell that was not
+one and could not be typed into. The appearance and the breakage came from the
+same missing line, which is why it read as a styling bug and was not one: every
+computed value was correct, the fill was the same neutral grey as any selected
+cell, the outline was the same hairline, and there was no overlay, no pseudo
+element and no focus ring. Searching for "input field" in the CSS finds nothing,
+and there is no `<input>` or `<textarea>` anywhere in the module.
+
+### The actual cause: editability was a side effect of measuring
+
+`refresh()` ends with a sweep that sets `contenteditable` on every cell. So
+editability was not a property of a cell — it was a side effect of the component
+re-measuring itself. Every path that happened to call `refresh()` after creating
+a cell produced an editable cell, and the one path that did not produced a dead
+one. Tab-append creates a row, selects it, focuses it, and never re-measures.
+
+That is the whole bug in one sentence: **a property of the thing was being
+maintained by an unrelated operation.** It is the same shape as the caption that
+resized the toolbar and the transform that double-counted the centring — one
+thing's invariant maintained somewhere else, correct until a path appeared that
+did not go through that somewhere else.
+
+Fixed at the root rather than the symptom: `makeEditable(cells)` is called by
+`insertRow`, `insertRowAt` and `insertColumn`, so every cell is editable because
+it was created, and a future fifth creation path cannot reintroduce this. The
+sweep in `refresh()` stays — it is still right for cells that arrive from a
+host's own markup — but it is no longer load-bearing for cells this component
+made.
+
+### Verified
+
+All four creation paths produce editable cells: Tab-append, toolbar insert,
+Ctrl-insert-before, and insert-column (body *and* header). Every cell in the
+table — 35 of them after a mixed sequence — carries `contenteditable="true"`,
+zero exceptions. Typing into a Tab-created row takes and reaches the GFM export.
+TSV paste that grows the grid leaves every new cell editable. Deleting a band
+leaves the remainder editable.
+
+The lesson, the third instance of it in this file, worth stating as a rule:
+**if a property belongs to an object, set it where the object is made. A sweep
+that happens to cover it today is a coincidence with a future path — and the
+future path is where the bug lives.**
+
+
 
 
 

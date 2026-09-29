@@ -590,6 +590,28 @@ function setupTableEditor(table, options = {}) {
 		return table.tBodies[0];
 	}
 
+	/**
+	 * A newly created cell must be editable, and it is the CREATION that has to
+	 * say so.
+	 *
+	 * Editability used to be applied by a sweep inside `refresh()` — a loop over
+	 * every cell that runs when the component re-measures. That made editability a
+	 * side effect of measuring, so any path that created a cell without also
+	 * re-measuring left it dead. Tab-appending a row is exactly such a path: the
+	 * row was created, selected and focused, but never refreshed, so its cells had
+	 * no `contenteditable` at all.
+	 *
+	 * The symptom read as a styling bug rather than a functional one: `focusCell`
+	 * still put a caret in the cell, so an empty bordered box with a blinking
+	 * cursor in it looked exactly like a text input — and typing into it did
+	 * nothing, because it was not editable. The look and the breakage came from
+	 * the same missing line.
+	 */
+	function makeEditable(cells) {
+		if (!editable) return;
+		for (const c of cells) c.setAttribute('contenteditable', 'true');
+	}
+
 	function insertRow(after, cells = colCount(table)) {
 		const tbody = bodyOf();
 		const template = tbody.rows[after] || tbody.rows[0];
@@ -597,6 +619,7 @@ function setupTableEditor(table, options = {}) {
 		const ref = tbody.rows[after];
 		if (after >= 0 && ref) tbody.insertBefore(tr, ref.nextSibling);
 		else tbody.appendChild(tr);
+		makeEditable(tr.cells);
 		return tr;
 	}
 
@@ -620,6 +643,12 @@ function setupTableEditor(table, options = {}) {
 		for (const tr of [table.tHead?.rows[0], ...bodyRows(table)].filter(Boolean)) {
 			tr.cells[at]?.setAttribute('data-align', align);
 		}
+		// Every row got a new cell at `at`, including rows that existed before
+		// this call, so editability is applied across the whole column rather than
+		// to the newly created one alone.
+		for (const tr of [table.tHead?.rows[0], ...bodyRows(table)].filter(Boolean)) {
+			if (tr.cells[at]) makeEditable([tr.cells[at]]);
+		}
 	}
 
 	/**
@@ -637,6 +666,7 @@ function setupTableEditor(table, options = {}) {
 		const tr = cloneRow(ref || tbody.rows[0], cells);
 		if (ref) tbody.insertBefore(tr, ref);
 		else tbody.appendChild(tr);
+		makeEditable(tr.cells);
 		return tr;
 	}
 
