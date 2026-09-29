@@ -1196,6 +1196,154 @@ The lesson, the third instance of it in this file, worth stating as a rule:
 that happens to cover it today is a coincidence with a future path — and the
 future path is where the bug lives.**
 
+## 2026-09-29 — Hue is a warning, so it belongs to the moment of acting
+
+**User, on the experiment that coloured the three operations permanently: "it's
+too loud visually .. so roll that back"**
+
+The rollback was to the *resting state*, not to the idea. A permanent blue drag
+handle is a blue thing sitting on the page whether or not anyone is touching it;
+there is no reading of that which is quiet. What the experiment had actually
+found was the right question — *what is this handle for?* — and the loudness came
+from answering it with a resting colour.
+
+The surviving form: **nothing in the component is coloured at rest.** A band sits
+on `--color-shade4`, and turns `--color-highlight` while the pointer is on it; a
+delete turns `--palette-alert` on hover. Both hues are the theme's own — the
+accent a link uses, the alert a `variant="danger"` button uses — so they already
+mean "interactive" and "destructive" everywhere else in the library, and nothing
+is invented to carry a new meaning.
+
+The rule this generalises to: **every colour on screen at any moment is one the
+user caused.** A resting hue is a standing claim on attention that nothing
+earned. Spend it on the moment of acting, and it becomes information.
+
+Both mixes go toward the band's own resting surface
+(`color-mix(in srgb, var(--color-highlight) 42%, var(--color-shade4))`) rather
+than toward white, so a hovered band reads as the same object one step brighter
+instead of a different object — the component's standing rule about colour
+(opaque, mixed toward the surface, never toward transparent) applied to a hover.
+
+## 2026-09-29 — The band and the grid are one line, or the joint is doubled
+
+Bands grew from 1rem to `--nte-band: 1.5rem` at the same time as their shadows
+came off, and the growth introduced a defect nobody asked for. `--border-thickness`
+is `thin`, which at dpr 1.5 computes to **0.666667px**. The grip draws that line
+on the edge that meets the table, and the table draws its own line in the same
+place, so the joint rendered at **1.33px** — a visibly heavier edge at exactly
+the one place the user is looking for the band to be continuous with the grid.
+
+The fix is to remove the grip's border on the meeting edge (`border-right: 0` on
+`.nte-row-grip`, `border-bottom: 0` on `.nte-col-grip`). The table's line is
+already there and is the correct weight, so the grip steps aside and lets it do
+the job. This is the same decision as the squared inner corner above it: **finish
+the joint instead of stopping halfway.** Two elements that abut are one edge, and
+one edge is drawn once.
+
+The same measurement produced the toolbar's gap. With a column band selected the
+zone is lifted clear of the col grip, which needed
+`margin-bottom: calc(var(--nte-band) + var(--nui-space-half))` — otherwise the
+toolbar sat on top of the handles. Verified at **8px with a band and 8px
+without**, so the lift moves the toolbar and does not reflow it.
+
+## 2026-09-29 — A token declared on the wrong element is a value that is absent
+
+No user report; the two tables in the harness simply did not match.
+
+`setupTableEditor(table, { chromeHost })` appends the overlay to the host, so for
+a table enhanced **in place** the grips, the zone and the drop lines are children
+of a plain `<div>` that is neither the `nui-table-editor` wrapper nor the table.
+The state tokens were declared on the wrapper and the table only. Every token on
+that chrome resolved to nothing and each rule fell back to its own default.
+
+The symptom was a component that looked like two different components. The bands
+read `--nte-on-bg` and fell back to `--color-shade3` (dark `rgb(60,60,60)`)
+instead of the intended `--color-shade4` (dark `rgb(80,80,80)`) — twenty points
+apart, plainly visible side by side. Less visibly, the zone's `transition`
+referenced `--nte-ease`, so the whole transition list was invalid and silently
+dropped, and the drop line lost its colour. The wrapped case was correct purely
+because its chrome happened to sit inside a token scope.
+
+`.nte-overlay` was added to the selector list, because the overlay is the one
+element that always contains every piece of chrome. The table stays in the list
+because the cells need these too.
+
+**A token declared on the wrong element does not resolve to the wrong value — it
+resolves to nothing, and the fallback hides the mistake.** A fallback is
+indistinguishable from a correct value unless you compare the two cases against
+each other, which is why the harness holds a table in each of the three
+arrangements for exactly this reason.
+
+## 2026-09-29 — Clicking outside clears the selection, including a band's
+
+**User: "A selection of a row or a columns stays when clicked outside the table"**
+
+Dismissal on an outside press already existed and was already committed
+(`3eace97`); the report was that it did not work for bands. Two independent
+causes, both of which had to go.
+
+### The clear returned before the grips were rebuilt
+
+`applyRange(null)` removes the cell highlight *above* its early return, so a cell
+selection cleared perfectly — it has no handles to leave behind. A row or column
+band owns a drag grip and a delete control, and both are **built from the range**.
+The clear was therefore only visibly broken for the selections that own visible
+chrome, which is exactly why it read as "the outside click does not work" rather
+than "the highlight is stale in one case".
+
+`buildGrips()` now runs in the null branch too. There is no flag to clear: the
+grips are derived, so a null range produces no bands, and the handles and the
+selection cannot disagree.
+
+### The drag could never end, and that killed the dismissal permanently
+
+This is the one worth keeping. `endDrag` was bound to `pointerup` on the
+**overlay**. Starting a drag runs `applyRange` → `position()` → `buildGrips()`,
+and `buildGrips` **replaces the grip the press arrived on** — so by the time the
+pointer was released, the element that would have received the release was
+detached from the tree and the event had no path up to the overlay.
+
+The only reason it ever worked was `overlay.setPointerCapture?.(e.pointerId)`,
+which retargets the whole pointer stream to the overlay and so delivered the
+release to a listener that was otherwise unreachable. **The drag's lifetime hung
+on an optional API silently doing a listener's job.** Where that call is missing
+or throws, `drag` never becomes null: `is-dragging` sticks, and because the
+outside-press dismissal opens with `if (drag) return`, every subsequent click
+outside the table stops clearing the selection — permanently, with nothing on
+screen to explain it.
+
+The drag now ends from the **document, in the capture phase**, beside the sweep
+gesture that already had to listen there for the same reason. One owner, on the
+one element that cannot be rebuilt mid-gesture.
+
+Two rules, both instances of things this log has already paid for:
+
+- **A gesture's teardown must not depend on an element the gesture can replace.**
+  Bind it where every event is guaranteed to arrive, or the gesture can outlive
+  its own release.
+- **An early return in a "set this state" function is a partial update.** The
+  function's job is to make the visible state match the model; returning before
+  the model is fully applied leaves the two disagreeing, and the disagreement
+  shows up in whatever had a second, derived representation.
+
+### Verified
+
+Row band, column band and single cell each clear completely on an outside press
+— selected cells, grips and delete controls all back to zero, in both directions
+— on the wrapped, in-place and headerless tables. A press *on* a grip or a delete
+correctly keeps the selection, because that is chrome and not outside. Drag
+reorder still commits with the teardown moved to the document, the band follows
+the row it moved, the drop line shows during the drag, `is-dragging` clears
+afterwards, and a band remains selectable afterwards.
+
+One rig note, because it nearly sent me after a phantom: dispatching the release
+at the grip captured *before* the press is not a gesture a real pointer can
+perform — the element is gone by then. The rig has to resolve the release target
+with `document.elementFromPoint` at that moment, which is what the browser
+hit-tests. The failing synthetic version reproduced the symptom exactly, and the
+faithful one did not.
+
+
 
 
 
