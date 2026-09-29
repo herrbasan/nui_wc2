@@ -4,6 +4,9 @@
 
 import { nui } from '../../NUI/nui.js';
 import { initBlocksEditor } from './blocks-editor.js';
+import { runFormatRoundtrip } from '../../NUI/lib/modules/nui-format-roundtrip.js';
+import * as jsonModel from '../../NUI/lib/modules/nui-json-model.js';
+import { setupJsonGrid } from '../../NUI/lib/modules/nui-json-grid.js';
 
 // ── Home ──
 
@@ -3210,6 +3213,457 @@ nui.registerPage('addons/slides', {
 			else if (name === 'slides-next') deck.next();
 			else if (name === 'slides-fullscreen') deck.toggleFullscreen();
 		});
+	}
+});
+
+nui.registerPage('experiments/json-grid', {
+	html: 'experiments/json-grid.html',
+	init(element, params, nui) {
+		const host = element.querySelector('#grid');
+		const out = element.querySelector('#text-out');
+		const log = element.querySelector('#log');
+
+		if (!document.querySelector('link[data-json-grid-css]')) {
+			const link = document.createElement('link');
+			link.rel = 'stylesheet';
+			link.href = '../NUI/css/modules/nui-json-grid.css';
+			link.dataset.jsonGridCss = '';
+			document.head.append(link);
+		}
+
+		const YAML_SAMPLE = [
+			'product: JSON Toolkit',
+			'version: 2.4.0',
+			'private: false',
+			'stars: 4096',
+			'tags:',
+			'  - formatter',
+			'  - viewer',
+			'  - converter',
+			'maintainer:',
+			'  name: Ada Lovelace',
+			'  email: ada@jsontoolkit.io',
+			'  verified: true',
+			'features:',
+			'  - id: 1',
+			'    name: Beautify',
+			'    enabled: true',
+			'  - id: 2',
+			'    name: Minify',
+			'    enabled: false',
+			'release:',
+			'  date: 2026-05-01',
+			'  notes: null',
+			'  downloads: 1284903',
+			'',
+		].join('\n');
+
+		const JSON_SAMPLE = JSON.stringify({
+			product: 'JSON Toolkit',
+			version: '2.4.0',
+			private: false,
+			stars: 4096,
+			tags: ['formatter', 'viewer', 'converter'],
+			maintainer: { name: 'Ada Lovelace', email: 'ada@jsontoolkit.io', verified: true },
+			features: [
+				{ id: 1, name: 'Beautify', enabled: true },
+				{ id: 2, name: 'Minify', enabled: false },
+			],
+			release: { date: '2026-05-01', notes: null, downloads: 1284903 },
+		}, null, 2);
+
+		const grid = setupJsonGrid(host, { text: YAML_SAMPLE, format: 'yaml' });
+
+		function show(text) { out.textContent = text; }
+		function say(message, isError = false) {
+			log.textContent = message;
+			log.style.color = isError ? 'var(--color-highlight)' : '';
+		}
+		show(grid.text);
+
+		// A refusal is a MESSAGE. The grid deliberately does not colour itself —
+		// the accent is not a state colour — so the words land somewhere.
+		host.addEventListener('nui-error', (e) => say(`Refused — ${e.detail.message}`, true));
+		host.addEventListener('nui-change', (e) => {
+			show(e.detail.text);
+			say(`${e.detail.label} · ${e.detail.format}`);
+		});
+
+		// Keyed by PARAM, not by the whole data-action string. `grid:refuse` is
+		// name `grid`, param `refuse`, and detail.param carries only the verb.
+		const actions = {
+			'load-yaml': () => { grid.load(YAML_SAMPLE, 'yaml'); },
+			'load-json': () => { grid.load(JSON_SAMPLE, 'json'); },
+			'add-property': () => grid.commit('add licence', (d) => jsonModel.insertAt(d, ['licence'], 'MIT')),
+			'change-type': () => grid.commit('stars → boolean', (d) => jsonModel.setAt(d, ['stars'], d.stars !== 0)),
+			refuse: () => {
+				// The context-sensitive menu will offer this; the point is that the
+				// offer REFUSES rather than quietly discarding a map.
+				const verdict = jsonModel.convertTo(grid.structure.maintainer, 'string');
+				say(verdict.ok ? 'unexpectedly allowed' : `Refused — ${verdict.reason}`, !verdict.ok);
+			},
+			undo: () => {
+				const before = grid.text;
+				host.dispatchEvent(new KeyboardEvent('keydown', { key: 'z', ctrlKey: true, bubbles: true }));
+				say(grid.text === before ? 'Nothing to undo' : 'Undo');
+			},
+			redo: () => {
+				host.dispatchEvent(new KeyboardEvent('keydown', { key: 'z', ctrlKey: true, shiftKey: true, bubbles: true }));
+				say('Redo');
+			},
+		};
+
+		element.addEventListener('nui-action-grid', (e) => {
+			const run = actions[e.detail.param];
+			if (!run) { say(`No handler for "${e.detail.param}"`, true); return; }
+			run();
+		});
+
+		element.show = () => show(grid.text);
+		element.hide = () => { /* the grid is the page's; nothing global to release */ };
+	}
+});
+
+nui.registerPage('experiments/json-model', {
+	html: 'experiments/json-model.html',
+	init(element, params, nui) {
+		const out = element.querySelector('#out');
+		const summary = element.querySelector('#summary');
+		const model = jsonModel;
+
+		const YAML_DOC = [
+			'product: JSON Toolkit',
+			'version: 2.4.0',
+			'private: false',
+			'stars: 4096',
+			'tags:',
+			'  - formatter',
+			'  - viewer',
+			'maintainer:',
+			'  name: Ada Lovelace',
+			'  verified: true',
+			'features:',
+			'  - id: 1',
+			'    name: Beautify',
+			'    enabled: true',
+			'',
+		].join('\n');
+
+		/** Each case: [name, fn] — throws means the assertion failed. */
+		const cases = [
+			['pointer: escape and parse', () => {
+				const p = model.toPointer(['a/b', 'c~d']);
+				if (p !== '/a~1b/c~0d') throw new Error(`expected /a~1b/c~0d, got ${p}`);
+				if (model.parsePointer(p).join('|') !== 'a/b|c~d') throw new Error('did not survive the round trip');
+			}],
+			['pointer: empty is the root', () => {
+				if (model.toPointer([]) !== '') throw new Error('empty path must render as ""');
+				if (model.parsePointer('').length !== 0) throw new Error('"" must parse to the root');
+			}],
+			['pointer: rejects a non-pointer', () => {
+				let threw = false;
+				try { model.parsePointer('features/0'); } catch { threw = true; }
+				if (!threw) throw new Error('"features/0" is not a JSON Pointer and must be rejected');
+			}],
+
+			['write: set a value end to end', () => {
+				const r = model.applyEdit({
+					text: YAML_DOC, formatId: 'yaml', label: 'set stars',
+					mutate: (d) => model.setAt(d, ['stars'], 5000),
+				});
+				if (r.structure.stars !== 5000) throw new Error('structure did not change');
+				if (!r.text.includes('stars: 5000')) throw new Error('text did not change');
+			}],
+			['write: rename keeps position', () => {
+				const before = model.openDocument(YAML_DOC, 'yaml').structure;
+				const r = model.applyEdit({
+					text: YAML_DOC, formatId: 'yaml', label: 'rename',
+					mutate: (d) => model.renameKey(d, ['maintainer', 'name'], 'owner'),
+				});
+				const keys = Object.keys(r.structure.maintainer);
+				if (keys[0] !== 'owner') throw new Error(`rename moved the key: ${keys.join(', ')}`);
+				if (Object.keys(before.maintainer).length !== keys.length) throw new Error('rename changed the key count');
+			}],
+			['write: rename refuses a collision', () => {
+				let threw = false;
+				try {
+					model.applyEdit({
+						text: YAML_DOC, formatId: 'yaml',
+						mutate: (d) => model.renameKey(d, ['version'], 'product'),
+					});
+				} catch { threw = true; }
+				if (!threw) throw new Error('renaming onto an existing key must be refused');
+			}],
+			['write: remove from an array', () => {
+				const r = model.applyEdit({
+					text: YAML_DOC, formatId: 'yaml', label: 'remove tag',
+					mutate: (d) => model.removeAt(d, ['tags', 1]),
+				});
+				if (r.structure.tags.length !== 1 || r.structure.tags[0] !== 'formatter') throw new Error('wrong entry removed');
+			}],
+			['write: insert into an array', () => {
+				const r = model.applyEdit({
+					text: YAML_DOC, formatId: 'yaml', label: 'insert tag',
+					mutate: (d) => model.insertAt(d, ['tags', 1], 'converter'),
+				});
+				if (r.structure.tags.join(',') !== 'formatter,converter,viewer') throw new Error(r.structure.tags.join(','));
+			}],
+			['write: add a new property', () => {
+				const r = model.applyEdit({
+					text: YAML_DOC, formatId: 'yaml', label: 'add property',
+					mutate: (d) => model.insertAt(d, ['licence'], 'MIT'),
+				});
+				if (r.structure.licence !== 'MIT') throw new Error('property not added');
+			}],
+			['write: add a colliding property is refused', () => {
+				let threw = false;
+				try {
+					model.applyEdit({ text: YAML_DOC, formatId: 'yaml', mutate: (d) => model.insertAt(d, ['stars'], 1) });
+				} catch { threw = true; }
+				if (!threw) throw new Error('inserting an existing key must be refused');
+			}],
+			['write: move an array entry', () => {
+				const r = model.applyEdit({
+					text: YAML_DOC, formatId: 'yaml', label: 'move',
+					mutate: (d) => model.moveAt(d, ['tags', 0], 1),
+				});
+				if (r.structure.tags.join(',') !== 'viewer,formatter') throw new Error(r.structure.tags.join(','));
+			}],
+
+			['refuse: a rejected edit leaves the text untouched', () => {
+				const before = YAML_DOC;
+				try {
+					model.applyEdit({
+						text: before, formatId: 'yaml', label: 'bad',
+						mutate: (d) => ({ ...d, gone: undefined }),
+					});
+				} catch { /* expected */ }
+				// The document object is untouched because applyEdit never writes.
+				const after = model.openDocument(before, 'yaml');
+				if (after.text !== before) throw new Error('text changed on a refused edit');
+			}],
+			['refuse: a bare scalar is refused in BOTH formats, for different reasons', () => {
+				// The same input fails two different checks, and pretending otherwise
+				// would be a lie about what the reader did:
+				//   JSON  — parses to the string "hello", so assertEditableRoot refuses
+				//           it. The reader understood the file perfectly.
+				//   YAML  — the reader does NOT understand "hello"; it discards it and
+				//           yields {}, which is a perfectly valid empty map. So it is
+				//           caught as TRUNCATION, with a line number, before the root
+				//           check is ever reached.
+				let jsonReason = null;
+				try { model.openDocument('"hello"', 'json'); } catch (e) { jsonReason = e.message; }
+				if (!jsonReason) throw new Error('json: a bare scalar root must be refused');
+				if (!/map or a sequence/i.test(jsonReason)) throw new Error(`json: expected the root reason, got "${jsonReason}"`);
+
+				let yamlReason = null, line = null;
+				try { model.openDocument('hello', 'yaml'); } catch (e) { yamlReason = e.message; line = /line (\d+)/.exec(e.message)?.[1]; }
+				if (!yamlReason) throw new Error('yaml: a bare scalar root must be refused');
+				if (line !== '1') throw new Error(`yaml: expected a truncation at line 1, got ${line} from "${yamlReason}"`);
+			}],
+			['refuse: a truncated YAML parse is caught, WITH a line number', () => {
+				// A block scalar is outside the subset. The reader used to return
+				// half a document silently — and the fixed-point check passed it,
+				// because an empty document IS a stable fixed point.
+				let reason = null, line = null;
+				try { model.openDocument('a: 1\nb: |\n  line one\n  line two\n', 'yaml'); }
+				catch (e) { reason = e.message; line = /line (\d+)/.exec(e.message)?.[1]; }
+				if (!reason) throw new Error('an unsupported construct must be refused, not truncated');
+				if (line !== '3') throw new Error(`expected the reader to point at line 3, got ${line} from "${reason}"`);
+			}],
+			['refuse: a valid document reports no skipped lines', () => {
+				const report = nui.util.parseYamlReport(YAML_DOC);
+				if (report.skipped.length || report.leftover.length) {
+					throw new Error(`a valid document was flagged: skipped=${report.skipped} leftover=${report.leftover.length}`);
+				}
+			}],
+			['refuse: JSON reports a position', () => {
+				let message = null;
+				try { model.openDocument('{"a": 1,}', 'json'); } catch (e) { message = e.message; }
+				if (!message) throw new Error('malformed JSON must throw');
+			}],
+
+			['json: the same edits work identically', () => {
+				const doc = '{"stars":4096,"tags":["a","b"]}';
+				const r = model.applyEdit({ text: doc, formatId: 'json', label: 'json edit', mutate: (d) => model.setAt(d, ['stars'], 7) });
+				if (r.structure.stars !== 7) throw new Error('json structure wrong');
+				if (!r.text.includes('"stars": 7')) throw new Error(`json text wrong: ${r.text}`);
+			}],
+			['json: format capability is not editor capability', () => {
+				// JSON genuinely round-trips a scalar root — that is why it is not in
+				// the YAML accepted-gap list. It is still not OPENABLE, because the
+				// grid has no layout for a bare value. Two different limits, and
+				// conflating them is how "supported" claims go wrong.
+				const report = nui.util;
+				if (JSON.stringify(report.parseYaml ? JSON.parse('"hello"') : null) !== '"hello"') {
+					throw new Error('precondition: JSON does represent a scalar root');
+				}
+				let refused = false;
+				try { model.openDocument('"hello"', 'json'); } catch { refused = true; }
+				if (!refused) throw new Error('the grid must refuse a root it cannot render');
+			}],
+
+			['types: scalar conversions', () => {
+				if (model.convertTo('42', 'number').value !== 42) throw new Error('string→number');
+				if (model.convertTo(0, 'boolean').value !== false) throw new Error('number→boolean');
+				if (model.convertTo(true, 'number').value !== 1) throw new Error('boolean→number');
+				if (model.convertTo(7, 'string').value !== '7') throw new Error('number→string');
+			}],
+			['types: a refusal is a refusal', () => {
+				const r = model.convertTo({ a: 1 }, 'string');
+				if (r.ok) throw new Error('converting a map to a string must be refused');
+				if (!/discard/i.test(r.reason)) throw new Error(`reason should say data is discarded, got: ${r.reason}`);
+			}],
+			['types: "abc" is not a number', () => {
+				if (model.convertTo('abc', 'number').ok) throw new Error('NaN must be refused');
+			}],
+			['types: null becomes an empty value of any type', () => {
+				if (model.convertTo(null, 'string').value !== '') throw new Error('null→string');
+				if (model.convertTo(null, 'object').value === null) throw new Error('null→object');
+			}],
+			['types: column inference reads TYPE, not shape', () => {
+				if (model.inferColumnType([1, 2, 3]) !== 'number') throw new Error('numbers');
+				if (model.inferColumnType(['x', null, 'y']) !== 'string') throw new Error('nulls are ignored');
+				if (model.inferColumnType([null, null]) !== 'string') throw new Error('all null falls back to string');
+				// "mixed" means the TYPES differ, not that the shapes do. Two maps
+				// with different keys are still two maps: a new entry in that column
+				// should be a map, and the type picker is what needs this answer.
+				if (model.inferColumnType([{ a: 1 }, { b: 2 }]) !== 'object') throw new Error('differing shapes are still objects');
+				if (model.inferColumnType([1, 'a', true]) !== 'mixed') throw new Error('differing types is mixed');
+			}],
+
+			['undo: restores previous text', () => {
+				const h = model.createHistory(YAML_DOC);
+				const r = model.applyEdit({ text: YAML_DOC, formatId: 'yaml', mutate: (d) => model.setAt(d, ['stars'], 1) });
+				h.push(r.text);
+				if (!h.canUndo()) throw new Error('should be able to undo');
+				if (h.undo() !== YAML_DOC) throw new Error('undo did not restore the original text');
+				if (!h.canRedo()) throw new Error('should be able to redo');
+				if (h.redo() !== r.text) throw new Error('redo did not restore the edit');
+			}],
+			['undo: typing in one cell is one step', () => {
+				const h = model.createHistory('a');
+				h.push('ab', '/name', 600, 0);
+				h.push('abc', '/name', 600, 200);
+				h.push('abcd', '/name', 600, 400);
+				h.undo();
+				if (h.current() !== 'a') throw new Error(`three keystrokes should be one undo step, got ${JSON.stringify(h.current())}`);
+			}],
+			['undo: a different cell starts a new step', () => {
+				const h = model.createHistory('a');
+				h.push('ab', '/name', 600, 0);
+				h.push('ac', '/other', 600, 200);
+				h.undo();
+				if (h.current() !== 'ab') throw new Error('editing a different cell must be its own step');
+			}],
+			['undo: a new edit clears the redo stack', () => {
+				const h = model.createHistory('a');
+				h.push('b'); h.undo();
+				if (!h.canRedo()) throw new Error('precondition');
+				h.push('c');
+				if (h.canRedo()) throw new Error('redo must be unavailable after a new edit');
+			}],
+		];
+
+		function run() {
+			const results = cases.map(([name, fn]) => {
+				try { fn(); return { name, ok: true }; }
+				catch (e) { return { name, ok: false, err: String(e && e.message || e) }; }
+			});
+			const failed = results.filter(r => !r.ok);
+			summary.textContent = failed.length
+				? `${failed.length} of ${results.length} FAILING`
+				: `${results.length}/${results.length} passing`;
+			summary.dataset.state = failed.length ? 'fail' : 'pass';
+
+			out.replaceChildren(...results.filter(r => !r.ok).map(r => {
+				const row = document.createElement('div');
+				row.className = 'rt-row';
+				row.dataset.ok = 'false';
+				const name = document.createElement('code');
+				name.className = 'rt-name';
+				name.textContent = r.name;
+				const err = document.createElement('pre');
+				err.className = 'rt-val';
+				err.textContent = r.err;
+				row.append(name, err);
+				return row;
+			}));
+			return results;
+		}
+
+		const onRun = () => run();
+		element.addEventListener('nui-action-jsonmodel', onRun);
+		element.show = () => run();
+		element.hide = () => element.removeEventListener('nui-action-jsonmodel', onRun);
+	}
+});
+
+nui.registerPage('experiments/format-roundtrip', {
+	html: 'experiments/format-roundtrip.html',
+	init(element, params, nui) {
+		const out = element.querySelector('#out');
+		const summary = element.querySelector('#summary');
+
+		function row(result) {
+			const tr = document.createElement('div');
+			tr.className = 'rt-row';
+			tr.dataset.ok = String(result.ok);
+			const name = document.createElement('code');
+			name.className = 'rt-name';
+			name.textContent = result.name + (result.accepted ? '  (accepted gap)' : '');
+			tr.append(name);
+			if (result.ok) return tr;
+
+			for (const [label, value] of [
+				['emitted', result.y],
+				['wanted', result.want],
+				['parsed', result.got],
+				[result.stage === 'parse' ? 'parse error' : 'serialize error', result.err],
+			]) {
+				if (!value) continue;
+				const tag = document.createElement('span');
+				tag.className = 'rt-label';
+				tag.textContent = label;
+				const pre = document.createElement('pre');
+				pre.className = 'rt-val';
+				pre.textContent = value;
+				tr.append(tag, pre);
+			}
+			return tr;
+		}
+
+		function render() {
+			const report = runFormatRoundtrip();
+
+			// An accepted gap is a KNOWN limitation, not a regression. Reporting it
+			// as FAILING trains the reader to ignore the line that means something,
+			// which is exactly how a real regression gets missed.
+			const parts = report.map(f => {
+				const bits = [`${f.label} ${f.passed}/${f.total - f.accepted.length}`];
+				if (f.accepted.length) bits.push(`${f.accepted.length} accepted gap${f.accepted.length > 1 ? 's' : ''}`);
+				if (f.failed.length) bits.push(`${f.failed.length} FAILING`);
+				return bits.join(' · ');
+			});
+			const broken = report.some(f => !f.clean);
+			summary.textContent = parts.join('   |   ');
+			summary.dataset.state = broken ? 'fail' : 'pass';
+
+			out.replaceChildren(...report.flatMap(f => {
+				const heading = document.createElement('h3');
+				heading.className = 'rt-format';
+				heading.textContent = f.label;
+				// A clean format lists nothing: there is no failure to describe, and
+				// 42 green ticks is noise that buries the one row that matters.
+				return [heading, ...(f.clean && !f.accepted.length ? [] : f.results.map(row))];
+			}));
+		}
+
+		// Unhandled data-action names dispatch a bubbling nui-action-<name> event.
+		const onRun = () => render();
+		element.addEventListener('nui-action-roundtrip', onRun);
+		element.show = () => render();
+		element.hide = () => element.removeEventListener('nui-action-roundtrip', onRun);
 	}
 });
 

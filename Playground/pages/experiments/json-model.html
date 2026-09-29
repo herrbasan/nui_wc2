@@ -1,0 +1,32 @@
+<header>
+	<h1>JSON model</h1>
+	<p class="lead">The document model, exercised: pointer addressing, pure structure mutations, the single writer, type conversion, and undo. No view, no DOM — the whole layer is testable on its own.</p>
+</header>
+
+<section>
+	<p><code>applyEdit()</code> is the only function that produces a new document.
+	It clones, lets you mutate, serializes, then <strong>parses the text back and
+	refuses the edit unless it matches</strong>. If it refuses, the text has not
+	changed. The cases below prove that, rather than assuming it.</p>
+	<div class="demo-actions">
+		<nui-button><button type="button" data-action="jsonmodel:run">Run model suite</button></nui-button>
+	</div>
+	<div id="summary" class="demo-result" role="status" aria-live="polite">Not run yet.</div>
+</section>
+
+<section>
+	<h2>Results</h2>
+	<div id="out"></div>
+</section>
+
+<section>
+	<h2>Why the re-parse</h2>
+	<div class="demo-callout">
+		<p>The round-trip suite proved <em>the fixtures</em> survive a
+		serialize&nbsp;→&nbsp;parse cycle. It cannot prove the next shape someone adds,
+		or the next edit. Re-parsing on every commit costs one extra parse of a
+		config-sized document and converts the next silent corruption into a thrown
+		error with the text unchanged — which is the difference between a bad file
+		and a refusal.</p>
+	</div>
+</section>

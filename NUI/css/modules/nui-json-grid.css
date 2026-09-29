@@ -1,0 +1,119 @@
+/* .jg-host — the grid view.
+ *
+ * Colours come entirely from the existing .hl-* syntax classes, so the grid and
+ * the code view read as the same document in the same vocabulary. This file owns
+ * LAYOUT only: hairlines, spacing, and the edit affordance.
+ *
+ * Border widths are --border-thickness, never a fixed px: chrome quantises
+ * border-width to whole device pixels, so a hardcoded 2px renders heavier than
+ * twice 1px. The same trap applies to calc() — --border-thickness is the keyword
+ * `thin`, and calc(thin * -1) is invalid and silently drops the declaration.
+ */
+
+.jg-host {
+	display: block;
+	overflow-x: auto;
+}
+
+.jg-host .jg-root {
+	border-collapse: collapse;
+	width: 100%;
+	font-family: monospace;
+	font-size: var(--font-size-small);
+}
+
+.jg-host .jg-root > thead > tr > th {
+	text-align: left;
+	font-weight: 400;
+	font-size: var(--font-size-xsmall);
+	color: var(--text-color-dim);
+	padding: var(--nui-space-half) var(--nui-space);
+	border-bottom: var(--border-thickness) solid var(--border-shade2);
+}
+
+.jg-host .jg-root > tbody > tr > td {
+	padding: var(--nui-space-half) var(--nui-space);
+	border-bottom: var(--border-thickness) solid var(--border-shade1);
+	vertical-align: top;
+}
+
+/* The index column is chrome, not data: the one column the user cannot edit. */
+.jg-host .jg-index {
+	text-align: right;
+	color: var(--text-color-dim);
+	font-size: var(--font-size-xsmall);
+	width: 1%;
+	white-space: nowrap;
+}
+
+.jg-host .jg-key {
+	white-space: nowrap;
+	width: 1%;
+}
+
+/* A nested sub-table: a hairline box, and nothing else gets one. The root grid
+   has no outer border, so the box reads as "this is a contained value". */
+.jg-host .jg-sub {
+	border: var(--border-thickness) solid var(--border-shade2);
+	border-collapse: collapse;
+}
+
+.jg-host .jg-sub > tbody > tr > td {
+	padding: calc(var(--nui-space-half) / 2) var(--nui-space);
+	vertical-align: top;
+}
+
+.jg-host .jg-sub-key {
+	white-space: nowrap;
+}
+
+.jg-host .jg-sub-index {
+	text-align: right;
+	color: var(--text-color-dim);
+	font-size: var(--font-size-xsmall);
+	padding-right: var(--nui-space);
+}
+
+/* A key this record does not have. Distinct from a null, which is a value. */
+.jg-host .jg-absent::after {
+	content: '\2014';
+	color: var(--text-color-dim);
+	opacity: 0.5;
+}
+
+.jg-host .jg-empty {
+	color: var(--text-color-dim);
+}
+
+/* A leaf is editable, so it must look like it. */
+.jg-host .jg-scalar {
+	cursor: text;
+	border-radius: var(--border-radius1);
+}
+
+.jg-host .jg-scalar:hover {
+	background: color-mix(in oklab, var(--color-shade2) 60%, transparent);
+}
+
+.jg-host td[data-editing='true'] {
+	padding: 0;
+}
+
+.jg-host .jg-input {
+	width: 100%;
+	min-width: 4rem;
+	font: inherit;
+	color: inherit;
+	background: var(--color-base);
+	border: var(--border-thickness) solid var(--color-highlight);
+	border-radius: var(--border-radius1);
+	padding: calc(var(--nui-space-half) / 2) var(--nui-space);
+}
+
+/* A refused edit leaves the document and the view completely alone.
+ *
+ * It deliberately does NOT outline itself. --color-highlight is the accent, and
+ * the accent is not a state colour: it answers "what is important", not "what
+ * went wrong". A refusal is a MESSAGE, so it goes out as an nui-error event and
+ * the host puts it in a banner — where words carry it, instead of a colour
+ * standing in for words that are not there. */

@@ -1,0 +1,47 @@
+<header>
+	<h1>JSON grid</h1>
+	<p class="lead">The value-shaped grid. The shape of a value decides how it renders: scalars inline, arrays of scalars as an indexed sub-table, objects as a key/value sub-table, and arrays of objects as the only shape that gets a header.</p>
+</header>
+
+<section>
+	<div class="demo-actions">
+		<nui-button><button type="button" data-action="grid:load-yaml">Load YAML</button></nui-button>
+		<nui-button><button type="button" data-action="grid:load-json">Load JSON</button></nui-button>
+		<nui-button><button type="button" data-action="grid:add-property">Add property</button></nui-button>
+		<nui-button><button type="button" data-action="grid:change-type">Change a type</button></nui-button>
+		<nui-button><button type="button" data-action="grid:refuse">Try a lossy type change</button></nui-button>
+		<nui-button><button type="button" data-action="grid:undo">Undo</button></nui-button>
+		<nui-button><button type="button" data-action="grid:redo">Redo</button></nui-button>
+	</div>
+	<div id="log" class="demo-result" role="status" aria-live="polite">Ready.</div>
+</section>
+
+<section>
+	<h2>Grid</h2>
+	<p>Click any coloured value to edit it. The type shown is the type the
+	<em>format's own reader</em> gives the text — the badge displays the meaning,
+	it does not constrain it. Type <code>4096</code> into a string cell and it
+	becomes a number, because the text is the truth.</p>
+	<div class="demo-area"><div id="grid"></div></div>
+</section>
+
+<section>
+	<h2>The text</h2>
+	<p>This is the document. The grid is a view of it, and every edit above
+	rewrote this text and re-read it. A structural edit re-serializes, so
+	formatting the YAML writer chose is what you get back — but nothing is ever
+	changed except through here.</p>
+	<pre id="text-out" class="demo-result"></pre>
+</section>
+
+<section>
+	<h2>What the grid is not</h2>
+	<div class="demo-callout">
+		<p>No grips, no selection chrome, no context menu, no <code>+</code>
+		affordances. <code>nui-table-editor</code> showed that chrome belongs on
+		selection, not on hover — so a grid at rest shows the resting state, and
+		the handles arrive with the next slice.</p>
+		<p>No Code/Tree/Table/Grid tabs either. The grid is the unit; the
+		four-view chrome is a host's concern until something needs the composite.</p>
+	</div>
+</section>

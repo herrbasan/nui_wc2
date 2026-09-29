@@ -1275,5 +1275,55 @@ background: var(--color-shade2);
 	border-block: var(--border-thickness) solid var(--border-shade2);
 }
 
+/* Experiment suite pages: experiments/format-roundtrip, experiments/json-model.
+   Both list cases with the same .rt-* parts, so the chrome is shared. */
+.page-suite .rt-format {
+        margin-block: var(--nui-space-double) var(--nui-space-half);
+        font-size: 1.1em;
+}
 
+.page-suite .rt-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: var(--nui-space-half);
+        padding-block: calc(var(--nui-space-half) / 2);
+        border-bottom: var(--border-thickness) solid var(--border-shade1);
+}
 
+.page-suite .rt-name {
+        flex: 0 0 auto;
+        min-width: 14rem;
+        font-size: 0.9em;
+}
+
+.page-suite .rt-row[data-ok='true'] .rt-name::before {
+        content: '\2713\00a0';
+        color: var(--color-shade5);
+}
+
+.page-suite .rt-row[data-ok='false'] .rt-name::before {
+        content: '\2717\00a0';
+        color: var(--color-highlight);
+}
+
+.page-suite .rt-label {
+        flex: 0 0 auto;
+        font-size: 0.75em;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--text-color-dim);
+}
+
+.page-suite .rt-val {
+        flex: 1 1 100%;
+        margin: 0;
+        white-space: pre-wrap;
+        word-break: break-all;
+        font-size: 0.85em;
+        color: var(--text-color-dim);
+}
+
+.page-suite #summary[data-state='pass'] { color: var(--color-shade5); }
+.page-suite #summary[data-state='fail'] { color: var(--color-highlight); }
+.page-suite #summary[data-state='idle'] { color: var(--text-color-dim); }

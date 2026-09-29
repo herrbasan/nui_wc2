@@ -1,0 +1,55 @@
+<header>
+	<h1>Format round-trip</h1>
+	<p class="lead">Property test for the format layer: for every shape the grid can put on screen, does the text survive a serialize&nbsp;→&nbsp;parse round trip — in <strong>every</strong> supported format?</p>
+</header>
+
+<section>
+	<p>The grid's text owns the document, so every structural edit is
+	<em>mutate&nbsp;→&nbsp;serialize&nbsp;→&nbsp;set text&nbsp;→&nbsp;parse&nbsp;→&nbsp;render</em>.
+	If a value cannot survive that cycle the editor corrupts the user's file
+	silently: no error, no exception, just a document that quietly stops matching
+	what the grid shows.</p>
+	<p>The same fixtures run against every registered format, because the grid
+	itself is format-agnostic — format enters at exactly two seams, parse and
+	serialize. <strong>A gap in one format is a gap in the editor</strong>, even
+	when the other format is clean.</p>
+</section>
+
+<section>
+	<div class="demo-actions">
+		<nui-button><button type="button" data-action="roundtrip:run">Run round-trip suite</button></nui-button>
+	</div>
+	<div id="summary" class="demo-result" role="status" aria-live="polite">Not run yet.</div>
+</section>
+
+<section>
+	<h2>Results</h2>
+	<div id="out"></div>
+</section>
+
+<section>
+	<h2>What the two formats actually are</h2>
+	<div class="demo-callout">
+		<p><strong>JSON is total.</strong> <code>JSON.parse</code> throws on malformed
+		input and reports a position; <code>JSON.stringify</code> round-trips every
+		value a grid can hold. Nothing there can fail — which is why the JSON column
+		shows no failures at all.</p>
+		<p><strong>YAML is a subset.</strong> It round-trips everything it emits, which
+		took four fixes to the parser in <code>NUI/nui.js</code> — all of them silent
+		corruption, none of them visible by reading the code. It does not support block
+		scalars (<code>|</code>, <code>&gt;</code>), flow <em>mappings</em>
+		(<code>{a: 1}</code>), anchors, multiple documents, tags, or date scalars.</p>
+		<p><strong>And it does not report errors.</strong> <code>parseYaml</code> is
+		best-effort: a line it cannot read ends a block, a bad indent yields
+		<code>null</code>, and it returns a partial structure instead of throwing. A
+		<code>try/catch</code> around it catches almost nothing. That is why
+		<code>verifyYaml()</code> exists — an editor cannot rely on a parse failure to
+		notice a broken document.</p>
+		<p><strong>One accepted gap, and it is format-specific.</strong> A bare scalar
+		root survives JSON (<code>"hello"</code> parses straight back) and is
+		unrepresentable in this YAML subset (<code>hello</code> reads as
+		<code>{}</code>). <code>assertEditableRoot()</code> rejects it in both, at the
+		editor's boundary, rather than the shared parser changing behaviour for every
+		markdown file that happens to have odd frontmatter.</p>
+	</div>
+</section>
