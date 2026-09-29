@@ -299,10 +299,39 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 .nte-overlay.is-dragging .nte-col-grip { cursor: grabbing; }
 
 /* The grip sits OUTSIDE the table's box, so the corner that would round toward
-   the table is squared off. */
+   the table is squared off.
+
+   Size is 20% larger than it was, and deliberately not bound to the table's
+   margin. The margin was a real budget, but it was the wrong one: the toolbar
+   above the table already floats over whatever is there, and a selection means
+   this table is the thing the user is working on. A handle squeezed to fit in
+   leftover whitespace is a worse handle. 20% on the thickness is 1.44x the
+   target area, which is the difference between "aimed at" and "reached for".
+
+   The handle also carries elevation now, and that is not decoration -- it is
+   what the size change made necessary. Once the chrome is allowed to overlap
+   content, elevation is the only thing saying "this is on top of that" rather
+   than "this belongs to that". It is the same two-part shadow the zone uses,
+   so the toolbar and the handles read as one family. */
+.nte-row-grip,
+.nte-row-del {
+	width: 1.2rem;
+}
+
+.nte-col-grip,
+.nte-col-del {
+	height: 1.05rem;
+}
+
+.nte-row-grip,
+.nte-col-grip,
+.nte-row-del,
+.nte-col-del {
+	box-shadow: 0 1px 2px var(--shadow-color), 0 4px 12px var(--shadow-color);
+}
+
 .nte-row-grip {
 	left: 0;
-	width: 1rem;
 	transform: translateX(-100%);
 	border-top-right-radius: 0;
 	border-bottom-right-radius: 0;
@@ -310,7 +339,6 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 
 .nte-col-grip {
 	top: 0;
-	height: 0.875rem;
 	transform: translateY(-100%);
 	border-bottom-left-radius: 0;
 	border-bottom-right-radius: 0;
@@ -335,6 +363,10 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
    rather than a colour: this component's standing rule is that editing state is
    answered with a neutral surface, and a delete hover is editing state.
 
+   Both are 20% larger than the table's margin can hold, and deliberately so --
+   see the sizing note above the row grip. They carry the same elevation for the
+   same reason.
+
    Placement uses the percentage form of the model above, so no inline `top` is
    written for the column delete: it hangs off the table's bottom edge for the
    whole band rather than at the band's own top. */
@@ -344,33 +376,57 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
    side is the one that goes, not the outer corners. */
 .nte-row-del {
 	left: 100%;
-	width: 1rem;
 	border-top-left-radius: 0;
 	border-bottom-left-radius: 0;
 }
 
 .nte-col-del {
 	top: 100%;
-	height: 0.875rem;
 	border-top-left-radius: 0;
 	border-top-right-radius: 0;
 }
 
-/* The handles are 0.875rem tall and the theme's icon is 1.2rem, so the glyph
-   overflows its own handle and reads as an empty box. The handle is sized by
-   feel, so the icon gives way. `margin`/`top` are reset because the theme's
-   `span > nui-icon` text-flow rule nudges an icon by -0.1rem, which is an error
-   when the icon is the sole content of a fixed-size box. */
+/* The handles were 0.875rem with a 1.2rem theme icon, which already overflowed.
+   The icon does NOT grow with the handle: the handle got bigger to be easier to
+   hit, and a glyph scaled to match would undo that by crowding the padding back
+   down. A 12px glyph in a 16.8px column handle has room to breathe, which is
+   what the extra size is for. */
 .nte-row-grip nui-icon,
 .nte-col-grip nui-icon,
 .nte-row-del nui-icon,
 .nte-col-del nui-icon {
 	width: 0.75rem;
 	height: 0.75rem;
-	display: block;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 	align-self: center;
 	margin: 0;
 	top: 0;
+}
+
+/* The <nui-icon> box centres perfectly, and the glyph inside it was still
+   3.33px low in all four handles. The `display: block` above centres the
+   CUSTOM ELEMENT as a flex child; it does nothing for the <svg> inside it, which
+   arrives from the sprite as `display: inline` with `vertical-align: baseline`
+   and therefore sits on the text baseline rather than in the middle of its
+   parent. Measured, not eyeballed: band centre 190.80, icon box 190.80, svg
+   194.13 -- exactly one line-box descent, in every handle. */
+.nte-row-grip nui-icon svg,
+.nte-col-grip nui-icon svg,
+.nte-row-del nui-icon svg,
+.nte-col-del nui-icon svg {
+	display: block;
+}
+
+/* The column drag glyph is rotated 90 degrees so it reads along the axis it
+   moves on: a vertical band's handle should look like it moves vertically, the
+   same way a horizontal one does. This is the only rotation in the component, so
+   it is stated rather than assumed -- and it applies to the GRIP only. The
+   delete is an action, not a direction, and an x that turns into a plus when you
+   rotate it would be actively misleading. */
+.nte-col-grip nui-icon {
+	transform: rotate(90deg);
 }
 
 .nte-row-grip:hover,
