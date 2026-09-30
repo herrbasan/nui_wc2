@@ -123,6 +123,10 @@ that path would have silently loaded it for any future `<nui-table-editor>`. The
 experiment page keeps running the renamed component at its route — ideas remain
 pickable, the namespace is clear.
 
+> **Superseded 2026-09-30:** the attempt was later removed from the Playground
+> entirely and archived. See "The failed attempt is archived" at the end of this
+> log. The reasoning above is why the rename was necessary at the time.
+
 ## 2026-09-28 — Fresh implementation, built whole (process deviation, declared)
 
 The process law above ("one task at a time", "every slice ends with a user
@@ -236,6 +240,9 @@ The abandoned attempt gave up the canonical route: its page is now
 (renamed via `git mv`, history preserved), and the fresh component owns
 `#page=experiments/table-editor`. Both remain reachable from the Experiments
 nav. The dropped attempt's code was not modified.
+
+> **Superseded 2026-09-30:** the dropped attempt is no longer in the Playground.
+> It now lives in `_Archive/dropped-table-editor/`.
 
 ## 2026-09-28 — UX reference: Blok, read hands-on
 
@@ -1422,6 +1429,63 @@ fails silently:
 The last one is this session's, and it is the reason the rest of the table has a
 column: each is a place where the code is right and *looks* wrong, and each cost
 a round trip to find.
+
+## 2026-09-30 — The failed attempt is archived
+
+**User: "we can retire the failed attempt (copy the files to _Archive, delete and
+remove it from the playground)"**
+
+The 2026-09-22 entry parked the one-shot attempt at
+`#page=experiments/dropped-table-editor` "for contrast", and it stayed there two
+days. Retiring it is a small deletion with a disproportionate reason to be
+recorded: **an abandoned implementation is not a reference.**
+
+### Why "kept for contrast" stopped being true
+
+The stated value of the page was to let future work pick ideas off it. But
+reading a failed implementation to understand the real one is *strictly worse*
+than reading this log, because the log says **why each decision went the other
+way** and the code cannot. A reader who opens the old file sees a
+working-looking component with no indication that its drag reorder crashes on
+index math — the very thing the current boundary arithmetic exists to prevent.
+The code does not record its own failure; only this log does.
+
+Worse, the hazard was not the file but the **one nav click**. This is a
+Playground, a document whose entire purpose is to be copied from. A second
+table-editor implementation sitting in it, in the same nav as the real one, is an
+invitation to build on the wrong thing — and the two are visually similar
+precisely because the fresh one was partly a response to it.
+
+### What was actually removed
+
+Three live files (`Playground/js/dropped-table-editor.js` 37 KB,
+`Playground/css/dropped-table-editor.css` 10 KB,
+`Playground/pages/experiments/dropped-table-editor.html` 3.6 KB), the nav entry,
+and the 96-line `registerPage` block that loaded them. All copied to
+`_Archive/dropped-table-editor/` first, with a README stating plainly that it is
+dead and must not be restored.
+
+### The rename mattered more than the archive, and still does
+
+Worth restating because it was a correctness fix rather than tidiness: NUI's dev
+auto-loader resolves `NUI/lib/modules/{tag}.js` for any addon element in the DOM.
+Had the old code stayed at that path, a future `<nui-table-editor>` would have
+silently loaded **the wrong implementation** — no error, just wrong behaviour.
+The files were never in the library tree, so today's risk was smaller, but the
+failure mode is worth remembering: **a name collision in an auto-loading library
+is not a name error, it is a silent substitution.**
+
+### Rule
+
+**Retire an abandoned implementation by moving it out of the tree, not by
+deprecating it in place.** Keep the *reasoning* in a dated log, where it is
+searchable and cannot be loaded; keep the *artifact* in `_Archive/`, where it is
+recoverable and unreachable. What must never survive is a dead implementation
+sitting one click from the live one.
+
+The historical entries above were left as written, with forward-pointers added —
+a log that gets rewritten when things change stops being a record of what was
+decided, and becomes only a record of what is currently true.
 
 
 

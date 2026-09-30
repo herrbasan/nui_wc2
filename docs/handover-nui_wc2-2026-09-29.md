@@ -35,7 +35,7 @@ cell* (0.14), and each step was a judgement only the user could make.
 | `documentation/addons/table-editor.md` | The API contract |
 | `Playground/pages/experiments/table-editor.html` | The demo — **start here** |
 | `docs/table-editor-decisions.md` | Full decision log, 2026-09-21 → 2026-09-29 |
-| `#page=experiments/dropped-table-editor` | The abandoned first attempt, kept for contrast |
+| `#page=experiments/dropped-table-editor` | REMOVED — the abandoned first attempt is archived at `_Archive/dropped-table-editor/`, no longer in the Playground |
 
 Everything is on `main` and pushed. `4274244` is the sign-off commit.
 

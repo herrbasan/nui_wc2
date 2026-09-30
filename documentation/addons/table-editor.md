@@ -3,8 +3,9 @@
 > **Status: complete.** Mechanism and interaction feel are both signed off. The
 > feel-check was closed by sampling the demo at
 > `#page=experiments/table-editor` — ten-plus rounds, every round finding real
-> defects. The abandoned first attempt remains at
-> `#page=experiments/dropped-table-editor` for contrast.
+> defects. This is the second attempt; the failed one-shot generation that
+> preceded it is archived at `_Archive/dropped-table-editor/`. The reasoning
+> behind every decision here lives in `docs/table-editor-decisions.md`.
 
 ## Setup
 

@@ -357,8 +357,7 @@ const navigationData = [
 			{ label: 'Table Editor', href: '#page=experiments/table-editor' },
 			{ label: 'Format Round-trip', href: '#page=experiments/format-roundtrip' },
 			{ label: 'JSON Model', href: '#page=experiments/json-model' },
-			{ label: 'JSON Grid', href: '#page=experiments/json-grid' },
-			{ label: 'Dropped Table Editor', href: '#page=experiments/dropped-table-editor' }
+			{ label: 'JSON Grid', href: '#page=experiments/json-grid' }
 		]
 	}
 ];
