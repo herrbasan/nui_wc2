@@ -1343,6 +1343,86 @@ with `document.elementFromPoint` at that moment, which is what the browser
 hit-tests. The failing synthetic version reproduced the symptom exactly, and the
 faithful one did not.
 
+## 2026-09-30 — The comments come out of the code
+
+**User: "The code contains a lot of documentation. I think this is the wrong place
+to do that. And it will run stale anyways, so please remove it and if you feel
+there is things to note, put them in the docs\table-editor-decisions.md"**
+
+Measured before cutting, which is the only way to argue about "a lot":
+**1813 lines, 605 of them comment lines (33%), 115 blocks.** The stylesheet was
+worse in proportion — 800 lines, 359 in comments (45%).
+
+The argument for removal is not taste, it is that the two places fail
+differently and neither has an alarm. A comment has no compile step and no
+review gate, so it decays silently: it describes a version of the code that no
+longer exists, and nothing reports the gap. In a file this size that is not a
+matter of *if*. And the decay is invisible precisely where it is most dangerous
+— the long comments explaining a subtle invariant are the ones that keep
+describing an earlier fix after the code moved on, and they read as authoritative
+precisely because they are long.
+
+### What stayed, and the rule for it
+
+Code keeps **only what a reader of that line cannot get from the line**:
+
+- Section dividers (`// ── Selection ──`) — orientation, zero maintenance.
+- One-line function labels where the name does not carry the meaning.
+- Constraints that are **invisible from the code** and would be violated silently:
+  `tbody.rows` is a live collection; the header row is index `-1`; the overlay is
+  not `aria-hidden`; a band's grips are rebuilt on every measure so listeners are
+  delegated.
+
+Everything else — the measurements, the post-mortems, the "this used to break
+because" narrative, the generalisations — moved here. **The reasoning is
+perishable in a way the constraint is not.** A comment that says why a decision
+was made is only true until the decision changes, and nobody notices when it does.
+The same text here is dated, so a stale claim is visible as a stale claim.
+
+### What the removal itself exposed
+
+Cutting prose out of a file that has been accumulating prose for a week surfaced
+two things that reading it never had:
+
+**1. Duplicated comment blocks — the file was contradicting itself.** The overlay
+positioning rationale appeared twice, verbatim, six lines apart (161–170). The
+`buildGrips` doc comment was *nested inside itself*: a `/**` opened, then another
+`/**` opened before the first had closed, so the first one's text was already
+inside a comment and the JSDoc structure was corrupt. Two prose blocks describing
+the same function in the same file, one of them malformed, is the endgame of
+in-code documentation with no owner — and it is the concrete argument for the
+move. A duplicated comment is not a style problem; it is two answers to "what
+does this do", and nothing in the build picks a winner.
+
+**2. The comment density was tracking the debugging, not the design.** The
+densest regions are exactly the ones that were hardest: pointer gestures,
+reorder arithmetic, paste offsets. That correlation is the point. Prose
+accumulates where the code fought back, which is where the *invariants* are — so
+the invariants were the one thing worth keeping in the source, and the war stories
+were the one thing worth throwing out.
+
+### The invariants, kept in the source because nothing else carries them
+
+These are the load-bearing facts that survive the move, each one a trap that
+fails silently:
+
+| Fact | Where | Silent failure if broken |
+|---|---|---|
+| `tbody.rows` / `tr.cells` are **live** collections | reorder, paste | `indexOf` resolves against a different snapshot than the element was inserted into → `-1` → an empty row that looks like a successful insert |
+| The header row is index **`-1`** | every coordinate function | every range, band and clamp is off by one row |
+| The overlay is **not** `aria-hidden` | setup | it holds the real toolbar; hiding it while focusable controls are inside is a contradiction the browser resolves by blocking the hiding — controls unreachable, console warning |
+| Grips are **rebuilt** on every measure | delegated `pointerdown` | a listener bound per grip is discarded on each resize, and leaks |
+| `setAttribute('textContent')` writes a **dead attribute** | `el()` | textContent is a DOM property; the element stays empty |
+| A cell's tag follows its **section**, not its column | `insertColumn` | the header row parses as mixed `rowheader`/`cell`, and the theme styles `th` by tag so the new heading renders unbolded |
+| Structural changes must **not** dismiss the selection | `refresh()` | the zone closes under the pointer and one operation becomes two |
+| Reorder re-anchors the range from **element references** | `endDrag` | a positional range left alone silently re-points at whatever now sits in those slots |
+| A refused clipboard write is **expected** | `copyBand` | the band copy already succeeded; a silent refusal looks like Ctrl+C did nothing |
+| One gesture's teardown must not live on an element that gesture rebuilds | `pointerup` on `document` | `drag` never clears, and `if (drag) return` kills the feature permanently |
+
+The last one is this session's, and it is the reason the rest of the table has a
+column: each is a place where the code is right and *looks* wrong, and each cost
+a round trip to find.
+
 
 
 

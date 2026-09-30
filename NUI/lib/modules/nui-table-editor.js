@@ -1,27 +1,16 @@
 import { nui } from '../../nui.js';
 
 /**
- * nui-table-editor
- *
- * Progressive enhancement for a native <table>. The table IS the model: no shadow
- * copy of the data, no wrapper element, so a host (rich-text, block editor) can
+ * nui-table-editor — progressive enhancement for a native <table>. The table IS
+ * the model: no shadow copy of the data, no wrapper element, so a host can
  * enhance a table in place and still serialize its own HTML cleanly.
  *
- * Two entry points, one implementation:
- *   setupTableEditor(table, options) -> { destroy, refresh, exportMarkdown }
- *     In-place enhancement. Used by hosts that own their own markup.
- *   <nui-table-editor><table>…</table></nui-table-editor>
- *     Thin wrapper for standalone / document-editor contexts. Creates a default
- *     table if none is slotted.
+ * setupTableEditor(table, options) -> { destroy, refresh, exportMarkdown }
+ * <nui-table-editor><table>…</table></nui-table-editor>
  *
- * At-rest law: zero permanent framing. The table looks like an ordinary table and
- * stays that way until the pointer or keyboard enters it. All panel-style controls
- * live in ONE overlay zone anchored above the table's top edge, growing upward,
- * capped at ~4rem, never displacing the table or the document. Positional affordances
- * (row/column grips, edge `+` buttons) sit at their own rows, columns and edges.
- *
- * Undo is host-owned: the component never keeps history, it emits `nui-change`
- * (detail.type: content | structure | align | header | reorder) and hosts snapshot.
+ * Undo is host-owned: the component emits `nui-change` (detail.type: content |
+ * structure | align | header | reorder) and hosts snapshot. Design rationale and
+ * the traps behind each invariant: docs/table-editor-decisions.md
  */
 
 // ── Markup helpers ────────────────────────────────────────────────────────────
@@ -158,28 +147,13 @@ function setupTableEditor(table, options = {}) {
 	const hostOwned = !!host;
 	const editable = options.editable !== false && !hostOwned;
 
-	// The overlay must anchor to the table without a wrapper, so it needs a
-	// positioned ancestor. Prefer the editor element (so a nui-table scroll
-	// container can still clip its own scrolling without clipping the chrome),
-	// else the table's parent. If that parent is not a positioning context we make
-	// it one and remember the exact original value for destroy().
-	// The overlay must anchor to the table without a wrapper, so it needs a
-	// positioned ancestor. Prefer the editor element (so a nui-table scroll
-	// container can still clip its own scrolling without clipping the chrome),
-	// else the table's parent. If that parent is not a positioning context we make
-	// it one and remember the exact original value for destroy().
 	const parent = options.chromeHost || table.parentElement;
 	// The stylesheet's in-place selectors key off this marker, so an enhanced table
 	// is styled the same whether it is slotted in <nui-table-editor> or enhanced
 	// inside someone else's document.
 	table.setAttribute('data-nui-table-editor', '');
-	// The overlay is NOT aria-hidden. It carries the real toolbar (role="toolbar",
-	// arrow-key navigable) and the edge +/- buttons, all of which must be reachable
-	// by keyboard and screen reader. Marking it aria-hidden while it holds focusable
-	// controls is a contradiction the browser resolves by blocking the hiding --
-	// so the controls stayed unreachable anyway, with a console warning. The zone
-	// hides itself via opacity/visibility when idle, which removes it from the
-	// accessibility tree on its own.
+	// NOT aria-hidden: this carries the real toolbar and the edge buttons, which
+	// must stay keyboard-reachable. The zone hides itself via opacity/visibility.
 	const overlay = el('div', 'nte-overlay');
 	const zone = el('div', 'nte-zone', { role: 'toolbar', 'aria-label': 'Table controls' });
 	overlay.appendChild(zone);
@@ -196,10 +170,10 @@ function setupTableEditor(table, options = {}) {
 
 	// ── Selection ──────────────────────────────────────────────────────────────
 	//
-	// ONE range is the whole model: { minRow, maxRow, minCol, maxCol }, where row -1
-	// is the header row. A single cell, a full row, a full column and a rectangle are
-	// all just ranges with equal bounds, so click, shift-click, drag-across and grip
-	// all land in the same place and there is no way for them to disagree.
+	// ONE range is the whole model: { minRow, maxRow, minCol, maxCol }, where row
+	// -1 is the header row. A single cell, a full row, a full column and a
+	// rectangle are all just ranges with equal bounds, so click, shift-click,
+	// drag-across and grip all land in the same place.
 
 	let range = null;
 	let activeCell = null;
@@ -209,9 +183,7 @@ function setupTableEditor(table, options = {}) {
 	// Set when a range gesture ends, consumed by the next click. See endGesture().
 	let suppressNextClick = false;
 	// focusin is a FocusEvent and carries NO shiftKey, yet it fires before click
-	// when a cell is clicked. Reading e.shiftKey there would always be undefined,
-	// silently resetting the anchor and collapsing every range to one cell. Shift is
-	// therefore tracked from the real keyboard events.
+	// when a cell is clicked. Shift is tracked from the real keyboard events.
 	let shiftHeld = false;
 	let contentTimer = null;
 	let destroyed = false;
@@ -244,9 +216,8 @@ function setupTableEditor(table, options = {}) {
 	}
 
 	function cellFromPoint(x, y) {
-		// The overlay is on top of the table, so elementFromPoint usually returns
-		// overlay chrome, never a cell. Hit-testing is done against the table's own
-		// geometry instead, which is immune to whatever is layered above it.
+		// The overlay sits on top of the table, so elementFromPoint returns chrome
+		// and never a cell. Hit-test the table's own geometry instead.
 		for (const tr of [table.tHead?.rows[0], ...bodyRows(table)].filter(Boolean)) {
 			if (y < tr.getBoundingClientRect().top || y > tr.getBoundingClientRect().bottom) continue;
 			for (const cell of tr.cells) {
@@ -272,17 +243,8 @@ function setupTableEditor(table, options = {}) {
 
 		if (!r) {
 			activeCell = null;
-			// The grips and the delete controls are BUILT FROM the range, so clearing
-			// the range has to rebuild them or they stay on screen. This branch used
-			// to return before buildGrips(), which meant a cell selection cleared
-			// perfectly -- it has no handles -- while a row or column band left its
-			// drag grip and its delete sitting there over a table with nothing
-			// selected. The clear looked broken only for the selections that own
-			// visible chrome, which is exactly the case worth noticing.
-			//
-			// Derive, do not toggle: buildGrips() reads `range` and produces no
-			// bands for a null one, so there is no flag to clear and no way for the
-			// handles and the selection to disagree.
+			// Grips and delete controls are BUILT from the range, so clearing must
+			// rebuild them or they stay on screen over an unselected table.
 			buildGrips();
 			updateZone();
 			return;
@@ -294,20 +256,10 @@ function setupTableEditor(table, options = {}) {
 			}
 		}
 
-		// A grip is shown for each contiguous BAND of fully covered rows, and
-		// likewise for columns. A band is one grip spanning all of it, not one
-		// grip per row: the selection is a single thing, and one handle says so
-		// with a smaller claim than N handles. It also cannot lie -- a grip that
-		// spans two rows moves those two rows, never just one.
-		// Grips are BUILT from the current selection rather than toggled. They used
-		// to be one per row with a class switched on and off, and position() --
-		// which runs at the end of every gesture -- wiped that class, so the grips
-		// blinked out on mouseup. Deriving them from `range` cannot drift from it.
-		//
-		// They are built HERE rather than only in position() because a selection
-		// can change without any gesture: a shift+click, a grip press, a keyboard
-		// walk. Rebuilding from the range wherever the range changes is what keeps
-		// "grip exists" and "band is selected" the same statement.
+		// A grip is shown for each contiguous BAND of fully covered rows, likewise
+		// for columns: one grip spanning the band, so it cannot claim more than the
+		// selection holds. BUILT from the range rather than toggled, because
+		// position() rebuilds on every measure and would wipe a toggled class.
 		buildGrips();
 
 		activeCell = cellAt(table, r.minRow, r.minCol) || null;
@@ -319,13 +271,7 @@ function setupTableEditor(table, options = {}) {
 		applyRange(null);
 	}
 
-	/**
-	 * Pull a range back inside the table. After a structural change a stored
-	 * range can point past the last row/column, and applying it as-is would mark
-	 * nothing while the zone still claimed a selection -- the panel stays open
-	 * over a highlight that is not there. The far end is clamped first so a
-	 * dragged/shifted range collapses toward the origin rather than inverting.
-	 */
+	/** Clamp a range inside the table; a structural change can leave it past the end. */
 	function clampRange(r) {
 		const lastRow = bodyRows(table).length - 1;
 		const lastCol = colCount(table) - 1;
@@ -349,12 +295,6 @@ function setupTableEditor(table, options = {}) {
 	// partly selected row is not a row, and a handle on it would claim more than
 	// the selection holds -- the same rule that withholds grips when the whole
 	// table is selected, applied continuously rather than as a special case.
-	//
-	// The result is a list of contiguous [from, to] bands, and a grip spans each
-	// one. Selection is a rectangle, so in practice a band is just the range
-	// clipped to the body rows; the list shape is kept because "every selected
-	// row gets its own handle" is the thing being replaced, and returning bands
-	// makes the alternative expressible without restructuring.
 
 	function selectedRowBands() {
 		if (!range) return [];
@@ -391,25 +331,10 @@ function setupTableEditor(table, options = {}) {
 	}
 
 	/**
-	 * Build one grip per selected row/column band, each spanning its whole band.
-	 *
-	/**
 	 * Build one grip per selected row/column band, each spanning it, plus the
-	 * matching DELETE control on the opposite side.
-	 *
-	 * Drag and delete sit at opposite ends of the same band: a column band's grip
-	 * is above the table and its delete is below, a row band's grip is left of the
-	 * table and its delete is right of it. They are the two things you can do to
-	 * a band, they are not equivalent in consequence — one rearranges, one
-	 * destroys — and putting them on opposite ends means neither is adjacent to
-	 * the other, so a stray click cannot reach the destructive one while aiming
-	 * for the drag. It also keeps the band visually bracketed by its two
-	 * affordances, which reads as "this whole band is the thing these act on".
-	 *
-	 * Called whenever the selection changes AND on every measure. Deriving the
-	 * grips from `range` rather than keeping a grip per row and toggling a class
-	 * is what makes them reliable: the class was being wiped by the rebuild at
-	 * the end of every gesture, so the grips blinked out on mouseup.
+	 * matching DELETE control on the opposite end. Drag and delete sit at opposite
+	 * ends so neither is a click from the other. Runs on every selection change AND
+	 * on every measure, so listeners must be delegated rather than bound per grip.
 	 */
 	function buildGrips() {
 		if (destroyed) return;
@@ -492,11 +417,8 @@ function setupTableEditor(table, options = {}) {
 	// ── Top zone: the single safe area for panel-style controls ────────────────
 
 	function updateZone() {
-		// The zone is rebuilt from scratch on every state change, which destroys
-		// whichever button had focus and drops focus to <body> -- so a keyboard
-		// user pressing one zone control loses their place entirely and Escape
-		// stops reaching anything. The control is identified by what it DOES, not
-		// by its element, so the same button can be found again in the new tree.
+		// The zone is rebuilt from scratch on every state change, so focus is
+		// restored by what the control DOES, not by element identity.
 		const focused = document.activeElement;
 		const refocus = zone.contains(focused) ? zoneKeyOf(focused) : null;
 		zone.textContent = '';
@@ -505,9 +427,8 @@ function setupTableEditor(table, options = {}) {
 			return;
 		}
 
-		// Alignment is per column. A range spanning several columns is not itself a
-		// column, so the control reads the first and applies to all of them — which
-		// is what selecting a block of cells and pressing "align" means.
+		// A range spanning several columns is not itself a column, so the
+		// control reads the first and applies to all of them.
 		const align = cellAt(table, range.minRow, range.minCol)?.getAttribute('data-align') || 'left';
 
 		const seg = el('div', 'nte-seg', { role: 'group', 'aria-label': 'Column alignment' });
@@ -541,11 +462,9 @@ function setupTableEditor(table, options = {}) {
 		headerBtn.appendChild(el('span', 'nte-zone-label', { textContent: 'Header row' }));
 		zone.appendChild(headerBtn);
 
-		// Insert, relative to the SELECTION rather than to the end of the table.
-		// This is the whole reason these controls are here and not on the table's
-		// edges: an edge affordance can only mean "at the end". Plain inserts
-		// AFTER the selected band, Ctrl+click BEFORE it — one gesture, one
-		// modifier, rather than a second control for the same pair of operations.
+		// Insert relative to the SELECTION, which is the whole reason these controls
+		// live here and not on the table's edges: an edge affordance can only mean
+		// "at the end". Plain inserts AFTER the band, Ctrl+click BEFORE it.
 		zone.appendChild(el('span', 'nte-zone-sep'));
 		for (const [axis, text, iconName] of [
 			['row', 'Row', ICON_ADD],
@@ -562,12 +481,8 @@ function setupTableEditor(table, options = {}) {
 			zone.appendChild(btn);
 		}
 
-		// Paste, offered only when a band has actually been copied. A clipboard
-		// button that is always present but usually inert is a control that has to
-		// be read before it can be used; one that appears the moment Ctrl+C works
-		// is the component reporting its own state. The copy lives in the
-		// component, so the button does not need the system clipboard permission
-		// to know whether it has anything to paste.
+		// Paste appears only once a band has been copied: a control that is always
+		// present but usually inert has to be read before it can be used.
 		if (copied) {
 			zone.appendChild(el('span', 'nte-zone-sep'));
 			const label = copied.kind === 'row' ? 'row' : 'column';
@@ -583,18 +498,9 @@ function setupTableEditor(table, options = {}) {
 			zone.appendChild(pasteBtn);
 		}
 
-		// No caption of what is selected. There was one here -- a quiet "3 x 2" --
-		// and it was a mistake twice over. It was information the user did not need,
-		// because the selection is already drawn in the table; and because the zone
-		// is centred, a caption that only appears for multi-cell selections RESIZED
-		// the pill, which re-centred it and moved every control sideways. Measured:
-		// selecting a range grew the zone 53px and shifted Align centre 26px. The
-		// control the pointer was already travelling toward moved under it, so the
-		// toolbar fought the gesture that had just revealed it.
-		//
-		// The zone is now a fixed width. That is the general rule: a control surface
-		// must not reflow in response to the state it reports on, or reaching for a
-		// button becomes a moving target.
+		// No caption of what is selected, and the zone is a fixed width: a control
+		// surface must not reflow in response to the state it reports on, or
+		// reaching for a button becomes a moving target.
 
 		zone.classList.add('is-active');
 		overlay.classList.add('is-visible');
@@ -627,23 +533,7 @@ function setupTableEditor(table, options = {}) {
 		return table.tBodies[0];
 	}
 
-	/**
-	 * A newly created cell must be editable, and it is the CREATION that has to
-	 * say so.
-	 *
-	 * Editability used to be applied by a sweep inside `refresh()` — a loop over
-	 * every cell that runs when the component re-measures. That made editability a
-	 * side effect of measuring, so any path that created a cell without also
-	 * re-measuring left it dead. Tab-appending a row is exactly such a path: the
-	 * row was created, selected and focused, but never refreshed, so its cells had
-	 * no `contenteditable` at all.
-	 *
-	 * The symptom read as a styling bug rather than a functional one: `focusCell`
-	 * still put a caret in the cell, so an empty bordered box with a blinking
-	 * cursor in it looked exactly like a text input — and typing into it did
-	 * nothing, because it was not editable. The look and the breakage came from
-	 * the same missing line.
-	 */
+	/** Editability is set where cells are CREATED, not swept in refresh(). */
 	function makeEditable(cells) {
 		if (!editable) return;
 		for (const c of cells) c.setAttribute('contenteditable', 'true');
@@ -661,13 +551,9 @@ function setupTableEditor(table, options = {}) {
 	}
 
 	function insertColumn(at) {
-		// The header row gets a `th`, not a `td`. It used to get a `td` like every
-		// other row, which is invisible until you read the accessibility tree: the
-		// header row then parses as a mix of `rowheader` and plain `cell` instead
-		// of a run of `columnheader`s, and the theme styles `th` by tag, so the new
-		// column's heading rendered unbolded and unshaded next to its neighbours.
-		// A cell's tag is a property of the SECTION it sits in, not of the column
-		// it belongs to.
+		// The header row gets a `th`, not a `td`. A cell's tag is a property of the
+		// SECTION it sits in: the theme styles `th` by tag, so a `td` there renders
+		// unbolded and unshaded next to its neighbours.
 		for (const tr of [table.tHead?.rows[0], ...bodyRows(table)].filter(Boolean)) {
 			const cell = makeCell(tr.parentElement === table.tHead ? 'th' : 'td', '');
 			if (at >= 0 && tr.cells[at]) tr.insertBefore(cell, tr.cells[at]);
@@ -689,13 +575,8 @@ function setupTableEditor(table, options = {}) {
 	}
 
 	/**
-	 * Insert a row AT an index, rather than after one.
-	 *
-	 * `insertRow(after)` cannot express "before the first row": it takes an
-	 * index to insert AFTER, and at -1 it finds no reference row and appends to
-	 * the end instead. Insert-before-the-selection is half the toolbar's
-	 * contract, so the operation is stated in the form the callers need rather
-	 * than forced through the other one.
+	 * Insert a row AT an index. `insertRow(after)` cannot express "before the
+	 * first row": at -1 it finds no reference row and appends to the end instead.
 	 */
 	function insertRowAt(index, cells = colCount(table)) {
 		const tbody = bodyOf();
@@ -708,19 +589,9 @@ function setupTableEditor(table, options = {}) {
 	}
 
 	/**
-	 * Insert a row or column adjacent to the selection.
-	 *
-	 * Plain click inserts AFTER the selected band, Ctrl+click BEFORE it — the
-	 * same gesture, one modifier apart, rather than two separate controls. The
-	 * insertion point is the selection, which is the whole reason this control
-	 * lives in the toolbar and not on the table's edge: an edge affordance can
-	 * only ever mean "at the end", so it cannot express "after the row I am
-	 * looking at".
-	 *
-	 * The new row/column is then SELECTED, not just inserted. The insertion point
-	 * is worth confirming, and a freshly selected band is also where the user is
-	 * about to type — the alternative is a new empty row that appears with no
-	 * indication of which one it is.
+	 * Insert a row or column adjacent to the selection, then SELECT it: the
+	 * insertion point is worth confirming, and a fresh band is where the user is
+	 * about to type.
 	 */
 	function insertAtSelection(kind, before) {
 		if (!range) return;
@@ -748,19 +619,12 @@ function setupTableEditor(table, options = {}) {
 	// ── Clipboard: copy a band, paste a copy of it ─────────────────────────────
 
 	/**
-	 * The copied band, or null.
+	 * The copied band, or null — the component's OWN clipboard.
 	 *
-	 * This is the component's own clipboard, deliberately separate from the
-	 * system one. A band is a STRUCTURE — a run of cells with an axis, an
-	 * alignment per column, a header — and a system clipboard only carries a flat
-	 * string. Round-tripping the band through text would lose the axis and the
-	 * alignment, and a "paste" that re-guessed them would paste something other
-	 * than what was copied.
-	 *
-	 * The system clipboard is still written, as TSV, because that is what makes
-	 * the copy useful OUTSIDE the editor: a column copied here pastes into a
-	 * spreadsheet intact. The two are not redundant — one is for this table, one
-	 * is for everything else.
+	 * A band is a STRUCTURE (a run of cells with an axis, an alignment per column,
+	 * a header); the system clipboard only carries a flat string, and a paste that
+	 * re-guessed the lost axis would paste something other than what was copied.
+	 * The system clipboard is still written, as TSV, for use OUTSIDE the editor.
 	 */
 	let copied = null;
 
@@ -785,8 +649,7 @@ function setupTableEditor(table, options = {}) {
 			for (let c = band.from; c <= band.to; c++) {
 				const col = [];
 				// The header is row -1 and is part of a column: copying a column and
-				// dropping its heading would leave a column with no label, which is
-				// not a copy of anything the user could see.
+				// dropping its heading would leave a column with no label.
 				if (hasHeader(table)) col.push(cellText(cellAt(table, -1, c)));
 				for (let r = 0; r < bodyRows(table).length; r++) col.push(cellText(cellAt(table, r, c)));
 				out.push(col);
@@ -810,10 +673,8 @@ function setupTableEditor(table, options = {}) {
 		// component's own paste handler reads it as one too.
 		const tsv = cells.map(row => row.join('\t')).join('\n');
 		navigator.clipboard?.writeText?.(tsv)?.catch?.(() => {
-			// Clipboard permission is not ours to assume. The band copy above has
-			// already succeeded and is what the paste button uses, so a refused
-			// system write costs the user the interop copy and nothing else. It is
-			// worth a line: a silent failure here would look like Ctrl+C did nothing.
+			// Permission is not ours to assume. The band copy already succeeded, so
+			// a refused system write costs the interop copy and nothing else.
 		});
 		emit('content', { action: 'copy-band', kind: band.kind, rows: cells.length });
 		updateZone();
@@ -821,31 +682,18 @@ function setupTableEditor(table, options = {}) {
 	}
 
 	/**
-	 * Insert a copy of the copied band adjacent to the current selection.
-	 *
-	 * `before` mirrors the insert buttons: plain pastes after the selection, Ctrl
-	 * pastes before it. The copied band keeps its own size, so copying a three-row
-	 * band pastes three rows — the band is the unit, not the single row under the
-	 * pointer.
+	 * Insert a copy of the copied band adjacent to the current selection. The
+	 * copied band keeps its own size, so copying three rows pastes three rows.
 	 */
 	function pasteBand(before) {
 		if (!copied || !range) return;
 		const n = copied.cells.length;
 		if (copied.kind === 'row') {
 			const at = before ? Math.max(0, range.minRow) : range.maxRow + 1;
-			// `insertRowAt` inserts AT `at`, so the new row's index IS `at` -- there
-			// is nothing to look up. The lookup that used to be here
-			// (`bodyRows(table).indexOf(insertRowAt(at))`) returned -1, because
-			// `tbody.rows` is a LIVE collection and re-reading it inside
-			// `indexOf` resolved against a different snapshot than the one the
-			// element was inserted into. The fill loop then indexed `bodyRows[-1]`,
-			// got undefined, and the paste silently produced an EMPTY row that
+			// `insertRowAt` inserts AT `at`, so the new row's index IS `at`. Never
+			// ask a live HTMLCollection where something is: the lookup that used
+			// to be here returned -1, and the paste produced an EMPTY row that
 			// looked exactly like a successful insert.
-			//
-			// This is the third time this file has been bitten by a live
-			// HTMLCollection (see the reorder re-anchor), and the lesson is now
-			// concrete: never ask a live collection where something is. Derive the
-			// position from the operation that put it there, or hold the element.
 			insertRowAt(at);
 			for (let i = 0; i < n; i++) {
 				const target = bodyRows(table)[at + i];
@@ -861,16 +709,13 @@ function setupTableEditor(table, options = {}) {
 			emit('structure', { action: 'paste-rows', at, count: n });
 		} else {
 			const at = before ? Math.max(0, range.minCol) : range.maxCol + 1;
-			// Every column is inserted first, then filled. Filling as we go would
-			// read the shifted grid and write each value one column further right
-			// than it belongs -- and since `copied.cells[i]` is indexed by the
-			// SOURCE column, the mismatch is silent: the paste appears to work and
-			// lands one column off with the wrong heading.
+			// Every column is inserted first, then filled. Filling as we go
+			// would read the shifted grid and write each value one column
+			// further right than it belongs.
 			for (let i = 0; i < n; i++) insertColumn(at + i);
 			for (let i = 0; i < n; i++) {
-				// A column copy includes the header, so its cells run one longer
-				// than the body rows. `cellAt` addresses row -1 for the header, so
-				// the offset is applied by index rather than by slicing.
+				// A column copy includes the header, so its cells run one
+				// longer than the body rows. `cellAt` addresses row -1 for the header.
 				copied.cells[i].forEach((text, k) => {
 					const r = hasHeader(table) ? k - 1 : k;
 					if (r < -1) return;
@@ -888,16 +733,10 @@ function setupTableEditor(table, options = {}) {
 	}
 
 	/**
-	 * Delete a BAND of rows, not one row. The handle spans the whole selection,
-	 * so a handle covering three rows that removed only the first would be a lie
-	 * about what it does — exactly as for the drag grip.
-	 *
-	 * A table must keep at least one body row: an empty tbody has no height to
-	 * hover, so the editor would become unreachable. Removing the whole selection
-	 * therefore CLEARS it rather than taking it away.
-	 *
-	 * The span is removed from the END backwards. Removing front-to-back would
-	 * shift every later index and delete the wrong rows — the classic symptom.
+	 * Delete a BAND, not one row: the handle spans the whole selection. A table
+	 * must keep one body row — an empty tbody has no height to hover — so
+	 * removing the whole selection CLEARS it. Removed end-backwards, or every
+	 * later index shifts and the wrong rows go.
 	 */
 	function deleteRows(from, to) {
 		const rows = bodyRows(table);
@@ -931,21 +770,17 @@ function setupTableEditor(table, options = {}) {
 
 	/**
 	 * Move the first row in and out of <thead>, converting its cells th<->td.
-	 *
-	 * Returns the row-index shift the move caused, so the caller can re-anchor a
-	 * selection onto the same CELLS: promoting a header promotes body row 0 (a
-	 * shift of -1, since the header is row -1), demoting drops it back into the
-	 * body (+1). Returning the shift rather than recomputing it at the call site
-	 * keeps the number next to the DOM change that causes it.
+	 * Returns the row-index shift, so the caller can re-anchor a selection onto
+	 * the same CELLS: promoting shifts the body up (-1), demoting drops it back
+	 * down (+1).
 	 */
 	function toggleHeader() {
 		const head = table.tHead;
 		if (head) {
 			// Turning the header OFF has to DEMOTE the cells, not just move the row.
-			// The theme styles `th` by tag, not by section: a <th> left sitting in
-			// <tbody> keeps the header's shading and weight, so relocating it alone
-			// is a silent no-op -- the DOM changes, the export changes, the screen
-			// does not. Off has to mean "an ordinary body row" and look like one.
+			// The theme styles `th` by tag, so a <th> left in <tbody> keeps the
+			// header's shading: the DOM changes, the export changes, the screen
+			// does not.
 			const first = head.rows[0];
 			for (const th of Array.from(first.cells)) {
 				const td = el('td', null, { 'data-align': th.getAttribute('data-align') || 'left' });
@@ -979,9 +814,9 @@ function setupTableEditor(table, options = {}) {
 	function setAlign(value) {
 		if (!range) return;
 		let changed = false;
-		// Alignment is a property of a COLUMN, so it is written down every row of
-		// each selected column — the header included, or the export and the render
-		// would disagree about the same column.
+		// Alignment is a property of a COLUMN, so it is written down every row
+		// of each selected column -- the header included, or the export and
+		// the render would disagree about the same column.
 		for (let col = range.minCol; col <= range.maxCol; col++) {
 			for (const tr of [table.tHead?.rows[0], ...bodyRows(table)].filter(Boolean)) {
 				const cell = tr.cells[col];
@@ -1001,16 +836,11 @@ function setupTableEditor(table, options = {}) {
 
 	function moveFocus(from, dr, dc, appendRow) {
 		const [r0, c0] = coordsOf(from);
-		// Row -1 is the header, so the body starts at 0 and the header must not be
-		// reachable by walking DOWN into it. r0 is used as-is and clamped at the
-		// top, not normalised to 0: doing that would make Enter from the header
-		// select the first body row instead of staying put.
+		// r0 is used as-is and clamped at the top, not normalised to 0:
+		// walking DOWN into the header must not select the first body row.
 		let r = r0;
 		let c = c0 + dc;
 		const cols = colCount(table);
-		// dr is the row axis and has to be applied. It used to be accepted and
-		// dropped, so Enter and the up/down arrows moved nothing at all while
-		// left/right worked -- the signature of a parameter that is never read.
 		if (dr) r += dr;
 		if (c >= cols) {
 			c = 0;
@@ -1064,12 +894,9 @@ function setupTableEditor(table, options = {}) {
 			hideZone();
 			return;
 		}
-		// Ctrl+C copies the BAND, but only when a whole row or column is selected
-		// AND no text is selected. A user highlighting a word inside a cell to copy
-		// it is doing ordinary text copy, and silently substituting a column copy
-		// for that would be the more surprising failure of the two. The band copy
-		// still writes to the system clipboard, so nothing is lost either way —
-		// but a selection that is not a band leaves the key alone entirely.
+		// Ctrl+C copies the BAND, but only when a whole row or column is
+		// selected AND no text is selected: highlighting a word to copy it is
+		// ordinary text copy, and overriding it is the more surprising failure.
 		if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
 			if (window.getSelection()?.toString()) return;
 			if (copyBand()) e.preventDefault();
@@ -1079,14 +906,10 @@ function setupTableEditor(table, options = {}) {
 		// otherwise they must stay available to the user's own cursor movement.
 		if (e.key.startsWith('Arrow') && !window.getSelection()?.toString()) {
 			const sel = window.getSelection();
-			// "At the edge" is decided per axis. Collapsing a clone range to the
-			// START of the cell contents makes it zero-length only when the caret
-			// already sits at the very start, which is the test for the horizontal
-			// axis. For the vertical axis that test is meaningless: a cell whose
-			// caret sits mid-text still measures non-zero, so Up/Down never fired
-			// and a vertical walk was impossible. Vertical movement is blocked only
-			// while text is actually selected, which the guard above already
-			// established, so it is always allowed.
+			// "At the edge" is decided PER AXIS. Collapsing a clone range to the
+			// START of the cell contents tests the horizontal axis only; for the
+			// vertical axis that test is meaningless, because a caret sitting
+			// mid-text still measures non-zero.
 			const horizontal = e.key === 'ArrowRight' || e.key === 'ArrowLeft';
 			const atEdge = !horizontal || (sel && sel.rangeCount && (() => {
 				const r = sel.getRangeAt(0).cloneRange();
@@ -1107,8 +930,8 @@ function setupTableEditor(table, options = {}) {
 		const cell = e.target.closest('th,td');
 		if (!cell || !table.contains(cell)) return;
 		const text = e.clipboardData?.getData('text/plain');
-		// Only a genuine spreadsheet/TSV payload is handled. A single-line paste
-		// stays a normal paste so inline formatting and URLs survive.
+		// Only a genuine spreadsheet/TSV payload is handled. A single-line
+		// paste stays a normal paste so inline formatting and URLs survive.
 		if (!text || (!text.includes('\t') && !text.includes('\n'))) return;
 		e.preventDefault();
 		const grid = text.replace(/\r/g, '').replace(/\n$/, '').split('\n').map(line => line.split('\t'));
@@ -1135,39 +958,18 @@ function setupTableEditor(table, options = {}) {
 
 	// ── Pointer ─────────────────────────────────────────────────────────────────
 	//
-	// There is deliberately no hover state for the grips. An earlier version
-	// revealed the row and column grip under the pointer, on the reasoning that
-	// one affordance is quieter than a grid of them -- but a grip appearing
-	// wherever the pointer merely passed is a signal about the POINTER, not
-	// about the selection, and on a table with many rows it still produced a
-	// running edge of handles as the pointer moved.
-	//
-	// A grip now appears only when that whole row or column is actually
-	// selected, which is the state it acts on. The grip is drawn from the same
-	// Because the grip is tied to the selection, it is derived from the same range
-	// as everything else (see applyRange), so it can never claim a row the
-	// selection does not contain -- and every fully covered row gets one, not
-	// just the first.
-	//
-	// The grips are still hit-testable while the overlay is hovered, so drag to
-	// reorder and click to select still work without a visible handle. What was
-	// removed is the appearance, not the capability.
+	// There is deliberately no hover state for the grips. A grip that appears
+	// wherever the pointer merely passed is a signal about the POINTER, not about
+	// the selection. A grip appears only when that whole row or column is
+	// selected -- derived from the same range as everything else, so it can never
+	// claim a row the selection does not contain.
 
 	let drag = null;
 
 	/**
-	 * Drop targets are BOUNDARIES, not items.
-	 *
-	 * The earlier version returned "the index of the row/column whose midpoint the
-	 * pointer is in" and drew the line at that item's FAR edge, but inserted the
-	 * element BEFORE that item. The line and the result therefore disagreed by one
-	 * whole slot: every drop landed one position short of where the line promised,
-	 * and dragging toward the start simply clamped to index 0 and did nothing.
-	 *
-	 * One boundary value now drives both. `n` means "n items lie above/left of the
-	 * pointer", so the line goes at the top of item[n] (or the table's far edge when
-	 * n === length), and the element is inserted at `n` in the array that exists
-	 * after it has been lifted out.
+	 * Drop targets are BOUNDARIES, not items: `n` means "n items lie above/left of
+	 * the pointer". One value drives both the line and the insertion, so they
+	 * cannot disagree by a slot.
 	 */
 	function rowBoundaryAt(clientY) {
 		const rows = bodyRows(table);
@@ -1222,18 +1024,14 @@ function setupTableEditor(table, options = {}) {
 		const rows = bodyRows(table);
 		const cells = headerRowEl(table)?.cells;
 		// A grip spans a BAND, so it acts on the band: a handle covering three
-		// rows that moved only the first would be a lie about what it does. The
-		// drag carries the whole range, and endDrag moves every element in it.
+		// rows that moved only the first would be a lie about what it does.
 		const items = kind === 'row'
 			? rows.slice(from, to + 1)
 			: Array.from(cells || []).slice(from, to + 1);
 		if (!items.length || !items[0]) return;
 
-		// Select FIRST, on press. Waiting for the click loses the selection twice
-		// over: the drag's own pointerup clears it, and a press that becomes a drag
-		// never delivers a click at all. Selecting on press means the band lights
-		// up under the pointer the instant it is grabbed -- which is also what
-		// tells the user they have hold of the whole band and not just a handle.
+		// Select FIRST, on press. A press that becomes a drag never delivers
+		// a click at all, so waiting for one loses the selection entirely.
 		if (kind === 'row') {
 			applyRange({ minRow: from, maxRow: to, minCol: 0, maxCol: colCount(table) - 1 });
 		} else {
@@ -1244,9 +1042,11 @@ function setupTableEditor(table, options = {}) {
 			});
 		}
 		drag = { kind, from, to, moved: false, startX: e.clientX, startY: e.clientY };
-		// Capture on the overlay, which is the element the move/up listeners live
-		// on. Capturing on the table would retarget events to an element that never
-		// sees them, and the drag would die the moment the pointer left the cell.
+		// Capture on the overlay so the pointer stream survives leaving the cell.
+		// This is an optimisation, NOT the teardown path: the drag ends from a
+		// document listener, because buildGrips() replaces the very grip this
+		// press arrived on and a release dispatched at it has no path to the
+		// overlay.
 		overlay.setPointerCapture?.(e.pointerId);
 		overlay.classList.add('is-dragging');
 		// Native image/text drag would hijack the pointer stream mid-gesture.
@@ -1288,17 +1088,13 @@ function setupTableEditor(table, options = {}) {
 
 		if (kind === 'row') {
 			const rows = bodyRows(table);
-			// The ELEMENT references are taken before the move, and the new
-			// selection is measured from them after it. A range is positional --
-			// {minRow, maxRow} are indices -- so leaving it alone after a reorder
-			// would silently re-point it at whatever now sits in those slots. The
-			// highlight would jump to a row the user never touched, reading as
-			// "this row changed" when in truth "this row moved, and here it is now".
+			// ELEMENT references taken before the move, selection measured from
+			// them after. A range is positional, so leaving it alone would
+			// re-point it at whatever now sits in those slots.
 			const band = rows.slice(from, from + size);
-			// The reference must come from the list WITHOUT the band. Taking it
-			// from the live list makes the target the dragged row itself whenever
-			// it moves toward the start, and insertBefore(el, el) is a silent
-			// no-op -- the row then refuses to move upward at all.
+			// The reference must come from the list WITHOUT the band: from the
+			// live list the target is the dragged row itself when it moves toward
+			// the start, and insertBefore(el, el) is a silent no-op.
 			const remaining = rows.filter((_, i) => i < from || i >= from + size);
 			const ref = remaining[toIndex] || null;
 			for (const tr of band) {
@@ -1310,8 +1106,8 @@ function setupTableEditor(table, options = {}) {
 			const after = bodyRows(table);
 			const first = after.indexOf(band[0]);
 			const last = after.indexOf(band[band.length - 1]);
-			// A moved band is still contiguous, so these are always in range; the
-			// check is here because a range pointing past the end would mark
+			// A moved band is still contiguous, so these are always in range;
+			// the check guards against a range past the end, which would mark
 			// nothing while the zone still claimed a selection.
 			if (first >= 0 && last - first + 1 === size) {
 				applyRange({ minRow: first, maxRow: last, minCol: 0, maxCol: colCount(table) - 1 });
@@ -1321,17 +1117,14 @@ function setupTableEditor(table, options = {}) {
 		}
 
 		const trs = [table.tHead?.rows[0], ...bodyRows(table)].filter(Boolean);
-		// BOTH ends of the band, per row, captured before the move. Probing only
-		// the first cell makes lo === hi for any band wider than one column, so
-		// the contiguity check below fails and the selection is silently left on
-		// the slots the band vacated -- which now hold different columns. The
-		// moved columns are elsewhere and the highlight does not travel with them.
+		// BOTH ends of the band, per row, captured before the move. Probing
+		// only the first cell makes lo === hi for any band wider than one
+		// column, and the selection is silently left on the vacated slots.
 		const bandCells = trs.map(tr => Array.from(tr.cells).slice(from, from + size));
 		for (const tr of trs) {
-			// The reference must be taken from the array WITHOUT the dragged
-			// cell. Splicing a copy of tr.cells leaves the live DOM untouched, so
-			// tr.cells[to] would still be the original element and the column
-			// would land one slot short of the line — every drag to the right.
+			// The reference must come from the array WITHOUT the dragged cells.
+			// Splicing a copy of tr.cells leaves the live DOM untouched, so
+			// tr.cells[to] would still be the original element.
 			const cells = Array.from(tr.cells);
 			const band = cells.slice(from, from + size);
 			const rest = cells.filter((_, i) => i < from || i >= from + size);
@@ -1344,9 +1137,7 @@ function setupTableEditor(table, options = {}) {
 		emit('reorder', { kind, from, to, size });
 
 		// Read each end cell's new index. `tr.cells` is a live HTMLCollection,
-		// which has no indexOf, so it is materialised into an array first -- the
-		// lookup below is on elements that have just been re-parented, and asking
-		// the collection itself threw and lost the re-anchored selection.
+		// which has no indexOf, so it is materialised into an array first.
 		const cellsNow = trs.map(tr => Array.from(tr.cells));
 		const firstPositions = bandCells.map((band, i) =>
 			band.length ? cellsNow[i].indexOf(band[0]) : -1);
@@ -1367,11 +1158,9 @@ function setupTableEditor(table, options = {}) {
 
 	// ── Gesture selection: press a cell, drag across cells, release ────────────
 	//
-	// The rule that makes this feel right: the gesture does NOT start on press, it
-	// starts when the pointer crosses into a DIFFERENT cell. A drag that stays
-	// inside one cell is the user selecting text, and it must stay text selection —
-	// otherwise you can no longer highlight a word in a cell, which is the single
-	// most ordinary thing anyone does in a table.
+	// The gesture does NOT start on press, it starts when the pointer crosses
+	// into a DIFFERENT cell. A drag that stays inside one cell is text
+	// selection, and must stay text selection.
 
 	on(table, 'pointerdown', (e) => {
 		if (e.button !== 0) return;
@@ -1410,36 +1199,14 @@ function setupTableEditor(table, options = {}) {
 
 		if (gesture) {
 			// SLOP: how far past the anchor cell's edge a drag may travel before it
-			// is read as a cell-range sweep rather than a text selection.
+			// is read as a cell-range sweep rather than a text selection. The hand
+			// travels past the glyphs it just covered, so the anchor cell is treated
+			// as larger than it renders.
 			//
-			// The two gestures genuinely conflict at the boundary: selecting text to
-			// the end of a cell and sweeping a range over cells are the same
-			// movement. Picking the cell range at the exact edge meant that
-			// overshooting a word by two pixels destroyed the text selection and
-			// selected cells instead -- which is not what anyone is trying to do
-			// when they drag across one word.
-			//
-			// The hand naturally travels past the glyphs it just covered, so the
-			// anchor cell is treated as larger than it renders, and a drag ending
-			// inside that margin is still a text selection.
-			//
-			// The margin is a FRACTION OF THE CELL, not a pixel count. A fixed
-			// number means two different things in a wide cell and a narrow one --
-			// 30px is a sixth of one and half of the other -- so the same gesture
-			// would be forgiving in some columns and broken in others, and it
-			// would not follow the user's font size at all.
-			//
-			// A fraction of the cell also gets BOTH axes right from one number,
-			// because cells are much wider than they are tall. On a 208x40 cell
-			// this is 29px of slack sideways -- the figure the user chose by feel --
-			// and only 6px vertically, which is the asymmetry actually wanted: a
-			// drag along a line of text overshoots sideways, while a small
-			// vertical tolerance stops an ordinary flick from becoming a range.
-			//
-			// Measured travel to the handoff is measured from wherever the drag
-			// started, not from the cell's edge: a press at the cell centre has
-			// 20px of cell below it, so it travels 20 + 6 = 26px down before the
-			// range takes over.
+			// A FRACTION OF THE CELL, not a pixel count: a fixed number means
+			// something different in a wide cell than a narrow one, and does not
+			// follow the user's font size. One number also gets both axes right --
+			// cells are far wider than tall, which is the asymmetry wanted.
 			const SLOP = 0.14;
 			const anchorCell = cellAt(table, gesture.anchor[0], gesture.anchor[1]);
 			if (!gesture.active && anchorCell) {
@@ -1469,10 +1236,8 @@ function setupTableEditor(table, options = {}) {
 		}
 
 		// Hover is a geometric question, not an enter/leave one: the grips sit OUTSIDE
-		// the table's box, so travelling onto one fires pointerleave on the table and
-		// any enter/leave logic would switch the chrome off exactly as the user
-		// reaches for it. The class still governs the edge buttons and the grips'
-		// pointer-events; the grips' VISIBILITY comes from the selection, not here.
+		// the table's box, so travelling onto one fires pointerleave and enter/leave
+		// would switch the chrome off as the user reaches for it.
 		const inside = overTableOrChrome(e.clientX, e.clientY);
 		const was = overlay.classList.contains('is-hovered');
 		overlay.classList.toggle('is-hovered', inside);
@@ -1485,34 +1250,18 @@ function setupTableEditor(table, options = {}) {
 		gesture = null;
 		table.style.userSelect = '';
 		if (!wasActive) return;
-		// A press that never crossed a cell boundary is an ordinary click; the click
-		// handler turns it into a single-cell selection. Once a cell boundary WAS
-		// crossed, the browser fires the follow-up click on the nearest common
-		// ancestor of the two cells — the table — which the click handler would read
-		// as "clicked outside a cell" and clear the very range just drawn. Latch it.
+		// Once a cell boundary WAS crossed, the browser fires the follow-up click on
+		// the nearest common ancestor -- the table -- which the click handler would
+		// read as "clicked outside a cell" and clear the range just drawn.
 		suppressNextClick = true;
 		position();
 	}
 
-	// The drag ends from the DOCUMENT, in the capture phase, for the same reason
-	// the sweep gesture does: a document listener sees the release whatever the
-	// pointer is over, and nothing that happens during the gesture can stop it.
-	//
-	// It used to end on the overlay, which only ever worked by accident. Starting
-	// a drag runs applyRange -> position() -> buildGrips(), and buildGrips REPLACES
-	// the grip the press arrived on -- so the element that would have received the
-	// release was already detached from the tree, and a release dispatched at it
-	// had no path up to the overlay. setPointerCapture was the only thing papering
-	// over that: it retargets the whole pointer stream to the overlay, so the real
-	// release arrived even though the element under the finger was gone.
-	//
-	// So the drag's lifetime hung on an optional API (`overlay.setPointerCapture?.`)
-	// silently doing the work of a listener. Where it is missing or throws, `drag`
-	// never becomes null: is-dragging sticks, and -- because the outside-press
-	// dismissal opens with `if (drag) return` -- every later click outside the
-	// table stops clearing the selection, permanently, with nothing on screen to
-	// say why. A drag that cannot end is not a cosmetic bug; it disables the way
-	// out. One owner, on the one element that cannot be rebuilt mid-gesture.
+	// The drag ends from the DOCUMENT, in the capture phase. It must not be bound to
+	// the overlay: buildGrips() replaces the very grip the press arrived on, so a
+	// release dispatched there has no path to that listener. It only ever worked
+	// because setPointerCapture retargeted the stream, and where that is missing
+	// `drag` never clears -- which kills outside-press dismissal permanently.
 	function endPointer() {
 		endDrag();
 		endGesture();
@@ -1626,17 +1375,12 @@ function setupTableEditor(table, options = {}) {
 	}
 
 	/**
-	 * Re-anchor the selection to still-valid cells and rebuild the chrome.
+	 * Re-anchor the selection to still-valid cells and rebuild the chrome. A
+	 * structural change must NOT dismiss it: the zone is the control surface for
+	 * the action just performed, so clearing the range closes the panel under the
+	 * pointer.
 	 *
-	 * A structural change must NOT dismiss the selection. The top zone is the
-	 * control surface for the action just performed, so clearing the range here
-	 * closes the panel under the pointer and turns one operation into two --
-	 * press a button, then find and rebuild the selection to press the next.
-	 *
-	 * `rowShift` re-anchors by row INDEX across a change that renumbers rows:
-	 * promoting a header shifts the body up by one (-1), demoting shifts it back
-	 * down (+1), so the same CELLS stay selected. Everything else (append, column
-	 * move) leaves the numbering alone and shifts by 0.
+	 * `rowShift` re-anchors by row INDEX across a change that renumbers rows.
 	 */
 	function refresh(rowShift = 0) {
 		if (range) {
@@ -1652,38 +1396,16 @@ function setupTableEditor(table, options = {}) {
 	on(window, 'resize', position);
 	on(window, 'scroll', position, true);
 	// A one-shot measure is not enough: the page is hidden when the component first
-	// connects (the router shows it later), so every coordinate would be 0,0 and stay
-	// there. Observing the table also covers font loading and column resizes, none of
-	// which fire a window resize.
+	// connects, so every coordinate would be 0,0 and stay there.
 	const resizeObserver = typeof ResizeObserver === 'function' ? new ResizeObserver(() => position()) : null;
 	resizeObserver?.observe(table);
-	// Hover tracking lives on the overlay, not the table: the overlay is a sibling
-	// that sits ON TOP, so once the pointer is over the table the events target the
-	// overlay. Bound to the table, the grips would never light up — a transparent
-	// element still swallows the pointer.
+	// Hover tracking lives on the overlay, not the table: the overlay sits ON TOP,
+	// so once the pointer is over the table the events target the overlay. Bound to
+	// the table, a transparent element still swallows the pointer.
 
 	/**
-	 * The grips deliberately sit OUTSIDE the table's box (a row grip is translated
-	 * -100% to the left, a column grip -100% upward). So the moment the pointer
-	 * travels onto its own chrome, the table fires `pointerleave` — and any hover
-	 * logic driven by enter/leave would switch the chrome off at the exact moment
-	 * the user reaches for it. Enter/leave cannot express "pointer is anywhere in
-	 * this table's neighbourhood", so the neighbourhood is tested geometrically.
-	 *
-	 * The edge bands are tested by their own geometry, not folded into the margin,
-	 * because they extend FURTHER than it: each is 1.5rem (24px) against a 24px
-	 * margin, so their far edge sits right on the boundary. With a margin-only
-	 * test the band would switch the chrome off at the exact moment the pointer
-	 * reached its far edge — the same failure enter/leave was rejected for,
-	 * reintroduced through a number.
-	 *
-	 * This margin answers ONE question — "is the pointer in the neighbourhood?",
-	 * which is about keeping the hover VISUAL alive while the pointer travels. It
-	 * is deliberately not the same test as `overOwnChrome` below, which answers a
-	 * different and stricter question: "did the user press on this table or
-	 * something of its own?" Those two were one number, and using 24px for both
-	 * meant a press anywhere in a 24px collar around the table — which is where a
-	 * user reaches to DISMISS — did nothing at all.
+	 * Is the pointer in the table's NEIGHBOURHOOD? Generous on purpose: this only
+	 * keeps the hover visual alive while the pointer travels toward the chrome.
 	 */
 	const HOVER_MARGIN = 24;
 	function overTableOrChrome(x, y) {
@@ -1699,19 +1421,10 @@ function setupTableEditor(table, options = {}) {
 	}
 
 	/**
-	 * Is the press on this table, or on chrome that belongs to it?
-	 *
-	 * Precise where `overTableOrChrome` is generous. The table itself, the zone,
-	 * and the band controls — each by its OWN rect, because the bands are the one
-	 * thing that genuinely lives outside the table's box. There is no collar here
-	 * and there must not be one: a collar is exactly the margin a user clicks to
-	 * dismiss, so a generous test makes the most natural dismissal the one that
-	 * does not work.
-	 *
-	 * The 1px tolerance is for the seam, not for a neighbourhood. The column
-	 * grip's edge meets the table's top border exactly, and sub-pixel rounding on
-	 * either side would otherwise make a press on the grip's own 1px border read
-	 * as a press off the table.
+	 * Did the press land on this table or its own chrome? STRICT, and deliberately
+	 * not the test above: there is no collar here, because a collar is exactly the
+	 * margin a user clicks to dismiss. The 1px tolerance is for the seam only, so a
+	 * press on a grip's own border does not read as a press off the table.
 	 */
 	function overOwnChrome(x, y) {
 		if (inRect(x, y, table.getBoundingClientRect())) return true;

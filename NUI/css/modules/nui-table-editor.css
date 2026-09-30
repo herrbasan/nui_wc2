@@ -1,8 +1,8 @@
 /* =============================================================================
    NUI TABLE EDITOR ADDON
-   Progressive enhancement for native tables.
-   At rest: an ordinary table, no framing, no chrome. Everything appears on
-   hover/focus and leaves again.
+   Progressive enhancement for native tables. At rest: an ordinary table, no
+   framing, no chrome.
+   Design rationale and the traps behind each value: docs/table-editor-decisions.md
    ============================================================================= */
 
 nui-table-editor {
@@ -12,22 +12,19 @@ nui-table-editor {
 	margin-block-end: var(--nui-space);
 }
 
-/* The table's own look is NOT restated here. nui-theme.css already styles
-   `table`, `th`, `td` globally, and `nui-table` adds the scroll container plus the
-   responsive card fallback. This addon adds only what editing requires on top of
-   that shared surface — it must never fork the table's appearance. */
+/* The table's own look is NOT restated here -- nui-theme.css styles `table`,
+   `th`, `td` globally. This addon adds only what editing requires. */
 
 nui-table-editor > nui-table {
 	position: relative;
-	/* The editor's grips sit just outside the table's own box; the scroll container
-	   would otherwise clip them. */
+	/* The grips sit just outside the table's box; the scroll container would
+	   otherwise clip them. */
 	overflow: visible;
 }
 
-/* `nui-table` collapses a table into stacked cards below 640px, which is right for
-   reading and wrong for editing: there is no column left to grip, and every grip
-   would point at nothing. The editor keeps the grid. An editor is an interaction
-   that only exists on a real grid, so the fallback is opted out of, not fought. */
+/* `nui-table` collapses a table into stacked cards below 640px, which is right
+   for reading and wrong for editing: there is no column left to grip. The editor
+   keeps the grid -- an editor only exists on a real grid. */
 @media (max-width: 640px) {
 	nui-table-editor nui-table table.nui-table-enhanced,
 	nui-table-editor nui-table table.nui-table-enhanced thead,
@@ -73,18 +70,15 @@ table[data-nui-table-editor] td[contenteditable] {
 	cursor: text;
 	min-width: 3rem;
 	/* The shared surface clips overflow with ellipsis, which is right for reading a
-	   long value and wrong for editing one: the text you are typing must be visible
-	   while you type it, and a wrapped cell must grow. */
+   long value and wrong for editing one: the text you are typing must be visible. */
 	overflow: visible;
 	text-overflow: clip;
 	overflow-wrap: break-word;
 }
 
 /* Alignment is an attribute, never an inline style: it must survive
-   serialization into GFM and back. These rules carry the actual `text-align` —
-   the block above only relaxes the shared surface's overflow, which is what makes
-   an edited cell wrap instead of ellipsing. Losing the property here is silent:
-   the attribute is set, the GFM export is right, and nothing on screen moves. */
+   serialization into GFM and back. Losing `text-align` here is silent -- the
+   attribute is set, the export is right, and nothing on screen moves. */
 nui-table-editor th[data-align="left"],
 nui-table-editor td[data-align="left"],
 nui-table-editor th[data-align="center"],
@@ -110,35 +104,10 @@ table[data-nui-table-editor] [data-align="right"] {
 }
 
 /* --- State tokens ---------------------------------------------------------------
-   Overridable on the element or a host scope.
-
-   `.nte-overlay` is in the selector because the chrome does NOT live inside the
-   table. `setupTableEditor(table, { chromeHost })` appends the overlay to the
-   host, so for an in-place enhanced table the grips, the zone and the drop lines
-   are children of a plain <div> that is neither the table nor the wrapper. The
-   tokens were declared on the table and the wrapper only, which left the chrome
-   in an enhanced-in-place table OUTSIDE their scope entirely: every token
-   resolved to nothing and each rule fell back to its own default.
-
-   The symptom was a component that looked like two different components. The
-   bands read `--nte-on-bg` and fell back to `--color-shade3` (dark 60) instead of
-   the intended `--color-shade4` (dark 80) -- 20 points apart, plainly visible
-   side by side. Less visibly, the zone's `transition` referenced `--nte-ease`,
-   so the whole transition list was invalid and silently dropped, and the drop
-   line lost its colour. The wrapper case was correct purely because its chrome
-   happened to sit inside a token scope.
-
-   The overlay is the one element that always contains every piece of chrome, so
-   it is the right scope to add. The table stays in the list because the cells
-   need these too.
-
-   The accent is spent on the SELECTION only. An earlier pass spent it on nothing —
-   selection and focus were both neutral surface steps, on the reasoning that the
-   accent belongs to links and primary action. Sampling overruled that: a neutral
-   fill reads as a tint, not as a selection. Selection is the component's primary
-   output, so it earns the one colour that means "the accent". Everything quieter —
-   caret ring, keyboard focus, grips, drop line — stays neutral, so the accent
-   never competes with itself. */
+   Overridable on the element or a host scope. `.nte-overlay` is in the selector
+   because `chromeHost` puts the chrome in a plain <div> that is neither the table
+   nor the wrapper: without it, every token resolved to nothing and each rule fell
+   back to its own default, which looked like two different components. */
 
 nui-table-editor,
 table[data-nui-table-editor],
@@ -149,18 +118,7 @@ table[data-nui-table-editor],
 	   loudest thing on the page.
 
 	   Opaque, mixed toward the SURFACE, never toward transparent: a low-alpha
-	   wash shifts hue depending on what sits underneath, and over the near-black
-	   dark surface a small amount of mid-blue collapses to a muddy grey-blue that
-	   reads as dirt rather than a colour. Mixing toward the surface keeps the
-	   result flat and predictable in both schemes.
-
-	   --color-shade5 is the neutral used, mixed toward the scheme's own surface.
-	   The colours are the user's, chosen by eye: 55,55,55 in dark and
-	   230,230,230 in light -- 17% and 16% of --color-shade5 into their own
-	   surface respectively. The two ratios are near-equal even though the results
-	   are not, because the dark surface is already close to the step being mixed
-	   in and the light one is not: the same percentage is a small move on a dark
-	   surface and a large one on a light one. */
+   wash shifts hue depending on what sits underneath. */
 	--nte-select-bg: light-dark(
 		color-mix(in srgb, var(--color-shade5) 16%, var(--color-shade1)),
 		color-mix(in srgb, var(--color-shade5) 17%, var(--color-shade2))
@@ -169,37 +127,20 @@ table[data-nui-table-editor],
 	--nte-active-ring: var(--text-color-dim);
 	--nte-on-bg: var(--color-shade4);
 	--nte-on-text: var(--text-color);
-	--nte-drop-line: var(--text-color-dim);
 
 	/* --- Colour: on the ACTION, never at rest ---------------------------------
-	   An experiment coloured the three operations permanently -- blue drag, red
-	   delete, green insert -- and the verdict was that it was far too loud. The
-	   idea survives in a weaker and better form:
+	   Nothing is coloured at rest, so every colour on screen is one the user
+	   caused. Hue is a warning and belongs to the moment of acting.
 
-	   **Hue is a warning, so it belongs to the moment of acting, not to the
-	   resting object.** A permanently blue handle is a blue thing sitting on the
-	   page whether or not you are touching it. A handle that goes blue while the
-	   pointer is on it says something instead: that pressing here does this
-	   specific thing. Nothing in the component is coloured at rest, so every
-	   colour on screen at any moment is one you caused.
-
-	   Both hues are the theme's own -- --color-highlight, which is what a link
-	   and a primary action use, and --palette-alert, which is what
-	   nui-button[variant="danger"] uses. Nothing is invented, so the colours
-	   already mean "interactive" and "destructive" everywhere else in the
-	   library.
-
-	   The mixes are toward the band's OWN resting surface rather than toward
-	   white, so a hovered band is the same object a step brighter instead of a
-	   different object. That is the component's standing rule about colour --
-	   opaque, mixed toward the surface, never toward transparent -- applied to
-   a hover rather than to a selection. */
+	   Both hues are the theme's own -- --color-highlight (a link, a primary action)
+	   and --palette-alert (nui-button[variant="danger"]) -- so they already mean
+	   "interactive" and "destructive" elsewhere in the library. Both mix toward
+	   the band's OWN resting surface, so a hovered band is the same object one
+	   step brighter rather than a different object. */
 	--nte-grip-hover: color-mix(in srgb, var(--color-highlight) 42%, var(--color-shade4));
 	--nte-del-hover: color-mix(in srgb, var(--palette-alert) 58%, var(--color-shade4));
-	/* The drop line is the drag band's colour, not a neutral: it appears only
-	   while a drag is in progress, and it is the same gesture continued. Tying
-	   the two is what explains the relation without a label -- the line is
-	   visibly the handle you are already holding. */
+	/* The drop line is the drag band's colour: it appears only while a drag is in
+	   progress, and it is the same gesture continued. */
 	--nte-drop-line: var(--color-highlight);
 	/* The contrast edge for the drop line, mixed toward the scheme's own surface:
 	   light on dark, dark on light. Follows the line's hue rather than being a
@@ -230,22 +171,16 @@ table[data-nui-table-editor] [data-selected] {
 }
 
 /* The caret cell is the one remaining ring, and it stays hairline: it says "the
-   keyboard is here", which is a quieter fact than "these cells are selected" and
-   should not outweigh it.
+   keyboard is here", which is a quieter fact than "these cells are selected".
 
-   The offset is what makes it ONE border. A cell already carries the grid's own
-   --border-shade3 line, and an outline at offset 0 is painted just outside it,
-   so the two stack into a double edge with a darker seam between them. Pulling
-   the ring inward by its own width lands it ON the grid line, where it
-   REPLACES that line rather than sitting beside it.
+   The offset is what makes it ONE border: an outline at offset 0 paints just
+   outside the grid's own line, so the two stack into a double edge with a
+   darker seam. Pulling the ring inward lands it ON the grid line, replacing it.
 
    The offset cannot be calc(var(--border-thickness) * -1): that token is the
-   keyword `thin`, and arithmetic on a keyword is invalid, so the declaration was
-   being dropped and the offset silently stayed at 0 -- the double border this
-   comment describes, present in the built component while claiming not to be.
-   The value below is the thin keyword's own resolved width at the usual device
-   ratios; the ring is hairline either way, so an approximation to the token is
-   correct where arithmetic on the token is not. */
+   keyword `thin`, and arithmetic on a keyword is invalid, so the declaration
+   was dropped and the offset stayed at 0. The value below approximates the
+   token's resolved width, which is correct where arithmetic on it is not. */
 nui-table-editor td[data-active],
 nui-table-editor th[data-active],
 table[data-nui-table-editor] [data-active] {
@@ -268,9 +203,9 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 	z-index: 20;
 	font-size: var(--font-size-small);
 	/* The column band's thickness, declared once. It is read by the band's own
-	   height and by the toolbar's clearance, and those two MUST agree: if the band
-	   grows and the clearance does not, the toolbar quietly drops until it is
-	   sitting on the table. One token, two consumers, no second place to update. */
+	   height and by the toolbar's clearance, and those two MUST agree: if the
+	   band grows and the clearance does not, the toolbar drops onto the table.
+	   One token, two consumers, no second place to update. */
 	--nte-band: 1.5rem;
 }
 
@@ -279,13 +214,9 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 	pointer-events: none;
 }
 
-/* Grips take the pointer whenever they exist: one is only built when the user
-   has selected the band it acts on, so there is no idle grip to be pointer-
-   inert. Tying them to `is-hovered` as well would mean a grip you can see but
-   cannot grab, whenever the pointer strayed off the table. */
-/* The delete controls take the pointer whenever they exist, on the same terms as
-   the grips: one is only built when the user has selected the band it acts on,
-   so there is no idle control that could sit invisible but clickable. */
+/* Grips and delete controls take the pointer whenever they exist: one is only
+   built when the user has selected the band it acts on, so there is no idle
+   control that could sit invisible but clickable. */
 .nte-row-grip,
 .nte-col-grip,
 .nte-row-del,
@@ -306,23 +237,15 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 }
 
 /* --- Grips and band controls -------------------------------------------------
-   The base `button` rule in nui-theme.css floors every button at 2rem square with
-   a highlight fill. These are affordances, not toolbar buttons: they must be
-   smaller than the smallest control and must not read as primary actions.
+   The base `button` rule in nui-theme.css floors every button at 2rem square
+   with a highlight fill. These are affordances, not toolbar buttons.
 
    Positioning model, stated once because four rules depend on it. The grip
-   containers are `position: absolute; inset: 0`, so they ARE the table's box --
-   the overlay is already sized to the table, so inset:0 makes them the same
-   rect. The handles inside are `position: absolute` and placed with `left`/`top`
-   plus a translate, so a `left`/`top` in px is measured from the table's edge and
-   a `100%` offset is the table's far edge.
-
-   This has to be said because the alternative does not work: with the containers
-   left `static`, a relatively positioned handle resolves `top: 100%` against the
-   CONTAINER's content box, which is sized by the handles themselves, not by the
-   table. The column delete then measured `top: 28px` and sat inside the table
-   rather than below it -- a percentage that looks right and lands nowhere
-   useful. */
+   containers are `position: absolute; inset: 0`, so they ARE the table's box, and
+   the handles inside are placed with left/top plus a translate. The containers
+   MUST NOT be left `static`: a relatively positioned handle would then resolve
+   `top: 100%` against a container sized by the handles themselves, and the
+   column delete would sit inside the table rather than below it. */
 
 .nte-row-grips,
 .nte-col-grips {
@@ -332,8 +255,7 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 }
 
 /* Grips are visible from birth: one is only ever built when there is a selected
-   band for it to act on, so there is no idle state for a grip to be in. The
-   shared surface below is what makes it look like a handle rather than a button. */
+   band for it to act on, so there is no idle state for a grip to be in. */
 .nte-row-grip,
 .nte-col-grip,
 .nte-row-del,
@@ -376,22 +298,18 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 /* The grip sits OUTSIDE the table's box, so the corner that would round toward
    the table is squared off.
 
-   Size is 20% larger than it was, and deliberately not bound to the table's
-   margin. The margin was a real budget, but it was the wrong one: the toolbar
-   above the table already floats over whatever is there, and a selection means
-   this table is the thing the user is working on. A handle squeezed to fit in
-   leftover whitespace is a worse handle. 20% on the thickness is 1.44x the
-   target area, which is the difference between "aimed at" and "reached for".
+   Size is 20% larger than it was, and deliberately NOT bound to the table's
+   margin: the toolbar above already floats over whatever is there, and a
+   selection means this table is what the user is working on. 20% on the
+   thickness is 1.44x the target area, which is the difference between "aimed
+   at" and "reached for".
 
-   The band deliberately carries NO shadow. The zone does, and the difference is
-   not an inconsistency: the zone floats over unrelated page content, so
-   elevation is the only thing saying "this is on top of that". The bands sit in
-   the table's immediate surround, which is empty -- so a shadow has nothing
-   useful to fall on except the table itself, and it fell there. The column
-   grip's shadow darkened the top row of the table and the delete's spilled onto
-   whatever sat below, so the handle looked like it was wearing a smudge rather
-   than sitting above the page. A solid surface against a solid table needs no
-   elevation to read as separate; the border is enough. */
+   The band deliberately carries NO shadow. The zone does, and that is not an
+   inconsistency: the zone floats over unrelated page content, so elevation is
+   the only thing saying "this is on top of that". The bands sit in the table's
+   immediate surround, which is empty -- a shadow has nothing to fall on except
+   the table itself, and it fell there. A solid surface against a solid table
+   needs no elevation to read as separate; the border is enough. */
 
 .nte-row-grip,
 .nte-row-del {
@@ -437,25 +355,17 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 /* --- Delete: the other end of each band ----------------------------------
    Drag and delete sit at OPPOSITE ends of the same band. A column band's grip
    is above the table and its delete is below; a row band's grip is to the left
-   and its delete is to the right. Three reasons, in order of weight:
+   and its delete is to the right. The reasons, in order of weight:
 
    1. They are not equivalent in consequence. One rearranges, one destroys, and
       putting a destructive control a pixel from a draggable one means a stray
       click can reach the wrong one.
-   2. It brackets the band. The two affordances at opposite ends read as "this
-      whole band is the thing they act on", which is what a single spanning grip
-      already claims.
-   3. It uses space that is empty. The band's other end is not occupied.
+   2. It brackets the band, reading as "this whole band is the thing they act on".
+   3. It uses space that is empty.
 
-   The surface is the grip's and is deliberately identical -- they act on the
-   same object, so they look like the same object. The GLYPH is the only
-   difference, drag bars against an x, and the hover is a neutral surface step
-   rather than a colour: this component's standing rule is that editing state is
-   answered with a neutral surface, and a delete hover is editing state.
-
-   Both are 20% larger than the table's margin can hold, and deliberately so --
-   see the sizing note above the row grip. They carry the same elevation for the
-   same reason.
+   The surface is the grip's and deliberately identical -- they act on the same
+   object. The GLYPH is the only difference, and the hover is a neutral surface
+   step: editing state is answered neutrally here.
 
    Placement uses the percentage form of the model above, so no inline `top` is
    written for the column delete: it hangs off the table's bottom edge for the
@@ -644,34 +554,21 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
    covering the handle hides the very thing the user is reaching for.
 
    The selector lives on the overlay because that is where the grips are: the zone
-   is a sibling, and no selector can reach a sibling's descendants from inside
-   the zone. `:has()` asks the question directly -- does a column grip exist --
-   rather than reading a class the JS maintains alongside the grips, so the
-   clearance cannot drift from the handles it exists for. That is the same rule
-   the component already follows by building grips FROM the selection instead of
-   toggling them.
-
-   Nothing else can enter this band: the drop lines span the table's own box, and
-   row grips sit to the LEFT of the table, not above it. Verified, not assumed.
+   is a sibling, and no selector reaches a sibling's descendants from inside the
+   zone. `:has()` asks whether a column grip EXISTS rather than reading a class
+   the JS maintains alongside them, so the clearance cannot drift from the handles
+   it exists for.
 
    The clearance is `band + the resting gap`, and the resting gap is the point:
-   the zone sits the SAME distance above a band as it sits above the bare table,
-   so the toolbar does not appear to jump when a handle arrives. A band
-   displaces it by exactly its own height and not one pixel more.
-
-   Both halves are one token, because they are one fact. They were written as
-   separate numbers and drifted: the band was widened to 1.05rem while the
-   clearance still said 0.875rem, and the toolbar dropped to a ~1px gap over the
-   table while showing 8px without one. One token, two consumers, no second place
-   to update. */
+   the zone sits the SAME distance above a band as above the bare table, so the
+   toolbar does not appear to jump when a handle arrives. Both halves are one
+   token because they are one fact -- written as two numbers, they drifted. */
 .nte-overlay:has(.nte-col-grip) .nte-zone {
 	margin-bottom: calc(var(--nte-band) + var(--nui-space-half));
 }
 
 /* Separator: a single hairline, inset from the edges so it reads as a division
-   inside the pill rather than a rule drawn across it. The inset tracks the zone's
-   padding -- at the old 3px it nearly touched the border, and against the new
-   hairline it would have read as a stray line rather than a division.
+   inside the pill rather than a rule drawn across it.
 
    `width` stays 1px on purpose: this is a RULE, not a measurement. A hairline that
    scaled with the user's font size would stop being a hairline. Box shadows below
