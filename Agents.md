@@ -181,6 +181,7 @@ Follow [W3C ARIA Authoring Practices Guide](https://www.w3.org/WAI/ARIA/apg/patt
 - State management libraries
 - CSS-in-JS
 - Custom pub/sub systems
+- Narration comments (restating what the adjacent code obviously does) — the code is the source; a mirroring comment is a stale second copy
 
 ## What to Prefer
 
@@ -189,6 +190,7 @@ Follow [W3C ARIA Authoring Practices Guide](https://www.w3.org/WAI/ARIA/apg/patt
 - Direct DOM manipulation
 - CSS Variables for dynamic styling
 - Browser-native APIs
+- Comments only for what code cannot express: rejected-approach history, non-obvious browser/API behavior, constraints
 
 ## CSS & Theming Guidelines
 - **NEVER invent CSS variables.**
