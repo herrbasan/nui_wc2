@@ -226,7 +226,6 @@ const dom = {
 	els: (s, c = document) => s instanceof NodeList || s instanceof Array ? [...s] : [...c.querySelectorAll(s)]
 };
 
-// Extend native prototypes for convenience
 if (typeof window !== 'undefined') {
 	['Element', 'Document', 'DocumentFragment'].forEach(t => {
 		if (!window[t]) return;
@@ -426,17 +425,14 @@ function upgradeAccessibility(element) {
 registerComponent('nui-button', (element) => {
 	let button = element.el('button');
 
-	// Auto-wrap: create inner <button> if missing (Proposal 2 Tier 1)
 	if (!button && config.debug !== false) {
 		button = document.createElement('button');
 		button.type = 'button';
 
-		// Precedence: explicit <button> > label attribute > textContent
 		const label = element.getAttribute('label');
 		if (element.children.length === 0 && label) {
 			button.textContent = label;
 		} else {
-			// Move existing children into the button
 			while (element.firstChild) {
 				button.appendChild(element.firstChild);
 			}
@@ -444,7 +440,6 @@ registerComponent('nui-button', (element) => {
 
 		element.appendChild(button);
 
-		// Copy variant-dependent attributes that might have been set on host
 		const variant = element.getAttribute('variant');
 		if (variant === 'icon' && !element.classList.contains('icon-only')) {
 			element.classList.add('icon-only');
@@ -914,7 +909,6 @@ registerComponent('nui-app', (element) => {
 	document.addEventListener('gesturechange', (e) => e.preventDefault());
 	document.addEventListener('gestureend', (e) => e.preventDefault());
 
-	// Validate child structure and warn for common LLM mistakes
 	if (config.debug !== false) {
 		const directChildren = [...element.children].filter(c => c.tagName.includes('-') || ['HEADER', 'NAV', 'MAIN', 'FOOTER'].includes(c.tagName));
 		const hasAppHeader = directChildren.some(c => c.tagName === 'NUI-APP-HEADER');
@@ -942,7 +936,6 @@ registerComponent('nui-app', (element) => {
 
 	function getSidebarWidth(sidebar) {
 		if (!sidebar) return 0;
-		// Get width from CSS custom property or computed style
 		const width = getComputedStyle(sidebar).width;
 		return parseFloat(width) || 240; // Default 240px (15rem)
 	}
@@ -965,7 +958,6 @@ registerComponent('nui-app', (element) => {
 		const sidebar = getSidebar(element, position);
 		if (!sidebar) return null;
 
-		// Unified behavior attribute: primary | secondary | manual
 		let behavior = sidebar.getAttribute('behavior') || 'auto';
 		
 		// Legacy support: behavior="manual" still works
@@ -978,7 +970,6 @@ registerComponent('nui-app', (element) => {
 			behavior = 'primary';
 		}
 
-		// Check for individual breakpoint override
 		const breakpointAttr = element.getAttribute('sidebar-breakpoint');
 		if (breakpointAttr && breakpointAttr !== 'auto') {
 			if (breakpointAttr === 'none' || breakpointAttr === 'false' || breakpointAttr === 'never') {
@@ -1015,21 +1006,17 @@ registerComponent('nui-app', (element) => {
 			}
 		}
 
-		// Hierarchical calculation
 		const contentMin = getContentMinWidth(element);
 		const thisWidth = getSidebarWidth(sidebar);
 
-		// Check if any sidebar has explicit behavior="primary"
 		const allSidebars = element.querySelectorAll('nui-sidebar');
 		const hasPrimary = Array.from(allSidebars).some(sb => {
 			const b = sb.getAttribute('behavior');
 			return b === 'primary' || sb.hasAttribute('favored');
 		});
 
-		// Determine effective behavior
 		let effectiveBehavior = behavior;
 		if (behavior === 'auto') {
-			// Auto-detect based on position and existence of primary
 			if (position === 'left' && !hasPrimary) {
 				effectiveBehavior = 'primary';
 			} else {
@@ -1038,13 +1025,10 @@ registerComponent('nui-app', (element) => {
 		}
 
 		if (effectiveBehavior === 'primary') {
-			// Primary: contentMin + myWidth
 			return cachedBreakpoint[position] = contentMin + thisWidth;
 		} else {
-			// Secondary (or fallback): find primary width
 			let primaryWidth = 0;
 			if (hasPrimary) {
-				// Find the primary sidebar
 				const primarySidebar = Array.from(allSidebars).find(sb => {
 					const b = sb.getAttribute('behavior');
 					return b === 'primary' || sb.hasAttribute('favored');
@@ -1053,11 +1037,9 @@ registerComponent('nui-app', (element) => {
 					primaryWidth = getSidebarWidth(primarySidebar);
 				}
 			}
-			// If no primary found, treat this as primary
 			if (primaryWidth === 0) {
 				return cachedBreakpoint[position] = contentMin + thisWidth;
 			}
-			// Secondary: contentMin + primaryWidth + myWidth
 			return cachedBreakpoint[position] = contentMin + primaryWidth + thisWidth;
 		}
 	}
@@ -1098,7 +1080,6 @@ registerComponent('nui-app', (element) => {
 			}
 		}
 
-		// Update menu toggle button state
 		const menuToggle = element.querySelector(`[data-action="toggle-sidebar:${position}"]`) || 
 			(position === 'left' ? element.querySelector('[data-action="toggle-sidebar"]') : null);
 			
@@ -1121,7 +1102,6 @@ registerComponent('nui-app', (element) => {
 			}
 		});
 
-		// Add nui-ready after first responsive state update (whether or not there are sidebars)
 		if (!element.classList.contains('nui-ready')) {
 			if (document.hidden) {
 				// rAF never fires in hidden/background tabs, and the anti-FOUC
@@ -1161,7 +1141,6 @@ registerComponent('nui-app', (element) => {
 
 	element.setAttribute('data-layout', 'app');
 
-	// Apply declarative attributes as CSS custom properties (override :root defaults)
 	const sidebarWidth = element.getAttribute('sidebar-width') || element.getAttribute('nui-vars-sidebar_width');
 	if (sidebarWidth) {
 		element.style.setProperty('--sidebar-width', sidebarWidth);
@@ -1262,10 +1241,7 @@ registerComponent('nui-sidebar', (element) => {
 			if (!app.classList.contains(`${prefix}-open`) || app.classList.contains(`${prefix}-forced`)) return;
 			const next = event.relatedTarget;
 			
-			// If focus moves to null (clicking on non-focusable area) or inside the sidebar, don't close
 			if (!next || element.contains(next)) return;
-			
-			// Close if focus moved specifically outside the sidebar
 			app.toggleSidebar?.(pos);
 		});
 	}
@@ -1687,13 +1663,10 @@ registerComponent('nui-link-list', (element) => {
 });
 
 registerComponent('nui-content', (element) => {
-	// nui-content is the positioning context for content area
-	// nui-main handles the scroll behavior
 	upgradeAccessibility(element);
 });
 
 registerComponent('nui-main', (element) => {
-	// nui-main is the scroll container for content
 	if (!element.hasAttribute('role')) {
 		element.setAttribute('role', 'main');
 	}
@@ -1813,14 +1786,12 @@ registerComponent('nui-card', (element) => {
 			}
 		});
 
-		// Accessible flip indication
 		const updateA11y = () => {
 			const isFlipped = element.hasAttribute('flipped');
 			element.setAttribute('aria-expanded', isFlipped);
 		};
 		updateA11y();
 
-		// Observer for 'flipped' attribute to keeping ARIA updated
 		const observer = new MutationObserver((mutations) => {
 			mutations.forEach(m => {
 				if (m.attributeName === 'flipped') {
@@ -1834,8 +1805,6 @@ registerComponent('nui-card', (element) => {
 	}
 
 	if (element.hasAttribute('interactive')) {
-		// Keyboard support for interactive cards, if they don't have a focusable link.
-		// Usually handled better via standard a tags.
 		const mainLink = element.querySelector('a.nui-card-link');
 		if (mainLink) {
 			// pure CSS handles the "cover" clickable area, we don't need JS delegation.
@@ -2072,7 +2041,6 @@ registerComponent('nui-dialog', (element) => {
 			const title = element.getAttribute('title') || '';
 			const hasTitle = element.hasAttribute('title');
 			
-			// Move children that are NOT the new <dialog> into a <main> wrapper
 			const main = document.createElement('main');
 			while (element.firstChild) {
 				main.appendChild(element.firstChild);
@@ -2194,7 +2162,6 @@ registerComponent('nui-tabs', (element) => {
 		tabList?.setAttribute('role', 'tablist');
 	}
 
-	// Auto-wrap: create <nav> if tabs has bare <button> children (Proposal 2 Tier 1)
 	if (!tabList && config.debug !== false) {
 		const bareButtons = [...element.children].filter(c => c.tagName === 'BUTTON' || c.tagName === 'A');
 		if (bareButtons.length > 0) {
@@ -2220,7 +2187,6 @@ registerComponent('nui-tabs', (element) => {
 		panels.forEach(p => p.setAttribute('role', 'tabpanel'));
 	}
 
-	// In fill mode, set panels to flex and fill available space
 	if (fillMode) {
 		panels.forEach(p => {
 			p.style.display = 'flex';
@@ -2252,7 +2218,6 @@ registerComponent('nui-tabs', (element) => {
 
 		if (!targetPanel) return;
 
-		// In fill mode, skip height animation - flex layout determines height
 		const fillMode = element.hasAttribute('fill');
 		const animate = shouldAnimate && !fillMode && !element.hasAttribute('no-animation') &&
 			!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -2284,7 +2249,6 @@ registerComponent('nui-tabs', (element) => {
 		targetTab.setAttribute('aria-selected', 'true');
 		targetTab.removeAttribute('tabindex');
 
-		// In fill mode, use display:flex; in normal mode use hidden=false
 		if (fillMode) {
 			targetPanel.style.display = 'flex';
 			targetPanel.style.flexDirection = 'column';
@@ -2476,7 +2440,6 @@ registerComponent('nui-details', (element) => {
 	const src = element.getAttribute('src');
 	const summaryText = element.getAttribute('summary') || '';
 
-	// Build the details structure
 	const detailsEl = document.createElement('details');
 	const summaryEl = document.createElement('summary');
 	if (summaryText) {
@@ -2532,12 +2495,10 @@ registerComponent('nui-details', (element) => {
 	}
 
 	if (isLazy) {
-		// Load only when user opens the details
 		detailsEl.addEventListener('toggle', () => {
 			if (detailsEl.open) loadContent();
 		}, { once: true });
 	} else {
-		// Load immediately (on upgrade)
 		loadContent();
 	}
 });
@@ -2548,14 +2509,11 @@ registerComponent('nui-table', (element) => {
 	const table = element.querySelector('table');
 	if (!table) return;
 
-	// Add enhanced class
 	table.classList.add('nui-table-enhanced');
 
-	// Get headers
 	const ths = Array.from(table.querySelectorAll('thead th'));
 	const headers = ths.map(th => th.textContent.trim());
 
-	// Process rows
 	const rows = Array.from(table.querySelectorAll('tbody tr'));
 	const totalCells = rows.reduce((sum, row) => sum + row.children.length, 0);
 	let tableCellIndex = 1;
@@ -2578,7 +2536,6 @@ registerComponent('nui-table', (element) => {
 // ################################# nui-slider COMPONENT
 
 registerComponent('nui-slider', (element) => {
-	// Find or create the native input
 	let input = element.el('input[type="range"]');
 	if (!input) {
 		input = dom.create('input', {
@@ -2590,7 +2547,6 @@ registerComponent('nui-slider', (element) => {
 	// Hide native input but keep it accessible
 	input.classList.add('nui-slider-native');
 
-	// Create visual elements
 	const track = dom.create('div', { class: 'nui-slider-track', target: element });
 	const fill = dom.create('div', { class: 'nui-slider-fill', target: track });
 	const thumb = dom.create('div', { class: 'nui-slider-thumb', target: track });
@@ -2601,7 +2557,6 @@ registerComponent('nui-slider', (element) => {
 		step: parseFloat(input.step) || 1
 	});
 
-	// Update visual position from input value
 	function updateVisuals() {
 		const { min, max } = getRange();
 		const value = parseFloat(input.value);
@@ -2610,17 +2565,14 @@ registerComponent('nui-slider', (element) => {
 		thumb.style.left = percent + '%';
 	}
 
-	// Set value from percentage
 	function setValueFromPercent(percent) {
 		const { min, max, step } = getRange();
 		let value = min + (percent * (max - min));
 
-		// Snap to step
 		if (step > 0) {
 			value = Math.round(value / step) * step;
 		}
 
-		// Clamp to range
 		value = Math.max(min, Math.min(max, value));
 
 		if (parseFloat(input.value) !== value) {
@@ -2650,14 +2602,12 @@ registerComponent('nui-slider', (element) => {
 		}
 	});
 
-	// Expose API on element
 	element.getValue = () => parseFloat(input.value);
 	element.setValue = (val) => {
 		input.value = val;
 		updateVisuals();
 	};
 
-	// Return cleanup function
 	return cleanup;
 });
 
@@ -2762,7 +2712,6 @@ function setupInputBehavior(element, input, config = {}) {
 	const { autoResize, showCount } = config;
 	let errorEl, countEl, clearBtn;
 
-	// Add search icon prefix for type="search" (as clickable button like clear button)
 	const isSearchInput = input.type === 'search';
 	if (isSearchInput) {
 		const searchBtn = dom.create('button', {
@@ -2773,7 +2722,6 @@ function setupInputBehavior(element, input, config = {}) {
 		element.insertBefore(searchBtn, input);
 	}
 	
-	// Cache computed styles for auto-resize (calculated once)
 	let cachedLineHeight, cachedPadding, cachedBorder;
 	if (autoResize) {
 		const style = getComputedStyle(input);
@@ -2966,7 +2914,6 @@ function setupCheckableBehavior(element, type) {
 		}));
 	});
 
-	// Expose checked property on the element for external access
 	Object.defineProperty(element, 'checked', {
 		get() { return input.checked; },
 		set(val) {
@@ -2998,13 +2945,11 @@ registerComponent('nui-input-group', (element) => {
 
 		input.addEventListener('blur', updateState);
 		input.addEventListener('input', () => {
-			// Clear error on typing
 			if (element.classList.contains('has-error') && input.validity.valid) {
 				element.classList.remove('has-error');
 			}
 		});
 
-		// Initial state
 		updateState();
 	}
 });
@@ -3015,7 +2960,6 @@ registerComponent('nui-input', (element) => {
 	let input = element.el('input');
 	if (!input && element.el('textarea')) return; // nui-textarea handles textarea
 
-	// Auto-wrap: create inner <input> if missing (Proposal 2 Tier 1)
 	if (!input && config.debug !== false) {
 		input = document.createElement('input');
 		const type = element.getAttribute('type') || 'text';
@@ -3028,7 +2972,6 @@ registerComponent('nui-input', (element) => {
 
 	if (!input) return;
 
-	// Pass through type attribute from nui-input to internal input
 	const inputType = element.getAttribute('type');
 	if (inputType) input.type = inputType;
 
@@ -3040,12 +2983,10 @@ registerComponent('nui-input', (element) => {
 registerComponent('nui-textarea', (element) => {
 	let textarea = element.el('textarea');
 
-	// Auto-wrap: create inner <textarea> if missing (Proposal 2 Tier 1)
 	if (!textarea && config.debug !== false) {
 		textarea = document.createElement('textarea');
 		const placeholder = element.getAttribute('placeholder');
 		if (placeholder) textarea.placeholder = placeholder;
-		// Move text content into textarea
 		if (element.textContent.trim()) {
 			textarea.textContent = element.textContent.trim();
 			element.textContent = '';
@@ -3082,11 +3023,9 @@ registerComponent('nui-tag-input', (element) => {
 	const isEditable = element.hasAttribute('editable');
 	const placeholder = element.getAttribute('placeholder') || 'Add tag...';
 
-	// Internal state
 	const tags = [];
 	let activeIdx = -1;
 
-	// Parse existing hidden inputs
 	element.els('input[type="hidden"]').forEach(inp => {
 		const val = inp.value?.trim();
 		if (val && !tags.some(t => t.value === val)) {
@@ -3094,7 +3033,6 @@ registerComponent('nui-tag-input', (element) => {
 		}
 	});
 
-	// Build DOM - tags container only focusable when there are tags to navigate
 	const container = dom.create('div', {
 		class: 'nui-tag-input-tags',
 		attrs: { role: 'listbox', 'aria-label': 'Selected tags' },
@@ -3103,7 +3041,6 @@ registerComponent('nui-tag-input', (element) => {
 	let input = null;
 	let nuiInput = null;
 
-	// Keyboard navigation for tags container
 	container.addEventListener('keydown', e => {
 		if (!tags.length) return;
 		const nav = { ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1 }[e.key];
@@ -3328,8 +3265,7 @@ const getMobileSelectModal = () => {
 registerComponent('nui-select', (element) => {
 	let select = element.el('select');
 
-	// Auto-wrap: create inner <select> if missing (Proposal 2 Tier 1)
-	// Only handles flat <option> children — warns for complex cases
+	// Auto-wrap: only flat <option> children; warns for complex cases.
 	if (!select && config.debug !== false) {
 		const options = element.querySelectorAll(':scope > option');
 		const optgroups = element.querySelectorAll(':scope > optgroup');
@@ -3376,7 +3312,6 @@ registerComponent('nui-select', (element) => {
 		console.warn(`[NUI] <nui-select> starts at a one-way prompt ("${explicitPlaceholderOpt.textContent.trim()}") but the inner <select> is not \`required\`, so once an option is picked the prompt is unreachable. Either make it a mandatory choice (add \`required\`, validated by validate()/submit) or give the none-state a real option — <option value="">— None —</option> — which the user can re-select.`);
 	}
 
-	// Extract label from parent nui-input-group or element attributes
 	const label = element.getAttribute('label') || 
 		select.getAttribute('aria-label') || 
 		element.closest('nui-input-group')?.querySelector('label')?.textContent?.trim() || 
@@ -3384,31 +3319,26 @@ registerComponent('nui-select', (element) => {
 	
 	element.dataset.label = label;
 
-	// Cache option->row mapping
 	const rowCache = new WeakMap();
 	let isOpen = false;
 
 	// Hide native select (styled via CSS)
 	select.tabIndex = -1;
 
-	// Build control button
 	const control = dom.create('button', {
 		class: 'nui-select-control',
 		attrs: { type: 'button' },
 		target: element
 	});
 
-	// Set aria-label on control if not already present
 	if (!control.hasAttribute('aria-label') && label) {
 		control.setAttribute('aria-label', label);
 	}
 
-	// Control inner content
 	let valueDisplay, previewTags, countBadge;
 	if (isMulti) {
 		const preview = dom.create('span', { class: 'nui-select-preview', target: control });
 		previewTags = dom.create('span', { class: 'nui-select-preview-tags', target: preview });
-		// Add placeholder text for multi-select
 		const placeholderSpan = dom.create('span', { 
 			class: 'nui-select-value is-placeholder', 
 			text: placeholder, 
@@ -3454,7 +3384,6 @@ registerComponent('nui-select', (element) => {
 		if (popup.matches(':popover-open')) popup.hidePopover();
 	};
 
-	// Tags section for multi-select
 	let tagInput = null;
 	if (isMulti) {
 		const tagsSection = dom.create('div', { class: 'nui-select-popup-tags', target: popup });
@@ -3469,7 +3398,6 @@ registerComponent('nui-select', (element) => {
 		});
 	}
 
-	// Search input
 	let searchInput = null;
 	if (isSearchable) {
 		const searchWrap = dom.create('div', { class: 'nui-select-search', target: popup });
@@ -3481,7 +3409,6 @@ registerComponent('nui-select', (element) => {
 		searchInput.addEventListener('input', () => filter(searchInput.value));
 	}
 
-	// Options list
 	const list = dom.create('div', { class: 'nui-select-options', target: popup });
 	const noResults = dom.create('div', { class: 'nui-select-no-results', text: 'No results', attrs: { hidden: '' }, target: list });
 
@@ -3542,7 +3469,6 @@ registerComponent('nui-select', (element) => {
 		const rightInset = pinned.right ?? '0px';
 		const spaceBelow = window.innerHeight - rect.bottom - POPUP_GAP;
 		const spaceAbove = rect.top - POPUP_GAP;
-		// Flip above only when there is meaningfully more room there.
 		const goAbove = spaceBelow < 300 && spaceAbove > spaceBelow;
 
 		element.classList.toggle('is-above', goAbove);
@@ -3589,7 +3515,6 @@ registerComponent('nui-select', (element) => {
 	let selectAllRowText = null;
 	let clearActionRow = null;
 
-	// Build option rows from native select
 	const buildOptions = () => {
 		list.els('.nui-select-option, .nui-select-group').forEach(el => el.remove());
 
@@ -3630,7 +3555,7 @@ registerComponent('nui-select', (element) => {
 			dom.create('span', { class: 'nui-select-option-check', target: selectAllRow });
 			selectAllRowText = dom.create('span', { class: 'nui-select-option-text', target: selectAllRow });
 			selectAllRow.onclick = e => { e.stopPropagation(); toggleAllVisible(); };
-			list.prepend(selectAllRow); // above the options, below nothing that matters
+			list.prepend(selectAllRow);
 		}
 
 		// A clear row is only rendered when clearing has a destination. For multi-select
@@ -3668,7 +3593,6 @@ registerComponent('nui-select', (element) => {
 	const findFirstSelectable = () =>
 		Array.from(select.options).find(o => !o.disabled);
 
-	// Options the user can currently act on: enabled, and not hidden by a search.
 	const visibleEnabledOptions = () =>
 		Array.from(select.options).filter(o => !o.disabled && !rowCache.get(o)?.hidden);
 
@@ -3697,7 +3621,6 @@ registerComponent('nui-select', (element) => {
 		}));
 	};
 
-	// Sync visual state with native select
 	const syncState = (dispatchChange = true) => {
 		// All selected options count — including value="" (a legitimate value).
 		// Exception: a disabled blank option is the explicit placeholder idiom;
@@ -3705,21 +3628,18 @@ registerComponent('nui-select', (element) => {
 		const selected = Array.from(select.selectedOptions)
 			.filter(o => !(o.value === '' && o.disabled));
 
-		// Update option rows
 		Array.from(select.options).forEach(opt => {
 			const row = rowCache.get(opt);
 			if (row) row.classList.toggle('is-selected', opt.selected && !(opt.value === '' && opt.disabled));
 		});
 
 		if (isMulti) {
-			// Sync tag input
 			if (tagInput?.addTag) {
 				const current = new Set(tagInput.getValues?.() || []);
 				const wanted = new Set(selected.map(o => o.value));
 				current.forEach(v => { if (!wanted.has(v)) tagInput.removeTag(v); });
 				selected.forEach(o => { if (!current.has(o.value)) tagInput.addTag(o.value, o.textContent); });
 			}
-			// Update preview
 			const placeholderSpan = previewTags.parentElement.querySelector('.nui-select-value');
 			previewTags.innerHTML = '';
 			if (selected.length) {
@@ -3755,7 +3675,6 @@ registerComponent('nui-select', (element) => {
 		}
 	};
 
-	// Pick an option
 	const pick = opt => {
 		if (opt.disabled) return;
 		if (isMulti) {
@@ -3776,7 +3695,6 @@ registerComponent('nui-select', (element) => {
 		}));
 	};
 
-	// Filter options
 	const filter = q => {
 		q = q.toLowerCase().trim();
 		let count = 0;
@@ -3787,7 +3705,6 @@ registerComponent('nui-select', (element) => {
 			row.hidden = !match;
 			if (match) count++;
 		});
-		// Show/hide groups
 		list.els('.nui-select-group').forEach(g => {
 			g.hidden = !Array.from(g.querySelectorAll('.nui-select-option')).some(r => !r.hidden);
 		});
@@ -3795,7 +3712,6 @@ registerComponent('nui-select', (element) => {
 		updateSelectAllRow(); // "all" is the visible set, so the filter changes it
 	};
 
-	// Open/close
 	const open = () => {
 		if (isOpen || select.disabled) return;
 
@@ -3805,7 +3721,6 @@ registerComponent('nui-select', (element) => {
 			return;
 		}
 
-		// Close all other open selects
 		openSelects.forEach(otherSelect => {
 			if (otherSelect !== element && otherSelect.close) {
 				otherSelect.close();
@@ -3818,23 +3733,19 @@ registerComponent('nui-select', (element) => {
 		showPopup();
 		trackViewport();
 
-		// Reset scroll position
 		list.scrollTop = 0;
 
 		// Place above/below and clamp to the viewport — only meaningful once shown
 		positionPopup();
 
-		// Make options focusable
 		const options = getVisibleOptions();
 		options.forEach(opt => opt.tabIndex = -1);
 
-		// Reset focus state
 		clearFocus();
 
 		if (isSearchable) {
 			searchInput.value = '';
 			filter('');
-			// Focus search input for immediate typing
 			queueMicrotask(() => searchInput.focus());
 		}
 		
@@ -3849,7 +3760,6 @@ registerComponent('nui-select', (element) => {
 		openSelects.add(element);
 		element.classList.add('is-open');
 
-		// Move elements
 		m.content.appendChild(list);
 		list.hidden = false;
 
@@ -3862,7 +3772,6 @@ registerComponent('nui-select', (element) => {
 
 		m.label.textContent = label;
 
-		// Multi-select tags
 		const desktopTags = popup.querySelector('.nui-select-popup-tags');
 		m.tags.innerHTML = '';
 		m.tags.hidden = !isMulti;
@@ -3909,7 +3818,6 @@ registerComponent('nui-select', (element) => {
 	const close = () => {
 		if (!isOpen) return;
 
-		// Check if we are in mobile mode
 		const mobileModal = getMobileSelectModal();
 		if (mobileModal.activeSelect === element) {
 			mobileModal.close();
@@ -3921,7 +3829,6 @@ registerComponent('nui-select', (element) => {
 		untrackViewport();
 		hidePopup();
 
-		// Clear focus state
 		clearFocus();
 		typeAheadString = '';
 		if (typeAheadTimeout) {
@@ -3936,7 +3843,6 @@ registerComponent('nui-select', (element) => {
 
 	const setValue = (value) => {
 		if (isMulti) {
-			// For multi-select, accept array or single value
 			const values = Array.isArray(value) ? value : value ? [value] : [];
 			const known = new Set(Array.from(select.options).map(o => o.value));
 			const unknown = values.filter(v => !known.has(v));
@@ -4052,7 +3958,6 @@ registerComponent('nui-select', (element) => {
 
 		mutateOptions(() => {
 			if (options.group) {
-				// Find or create optgroup
 				let group = Array.from(select.querySelectorAll('optgroup')).find(g => g.label === options.group);
 				if (!group) {
 					group = document.createElement('optgroup');
@@ -4108,7 +4013,6 @@ registerComponent('nui-select', (element) => {
 		mutateOptions(() => {
 			select.innerHTML = '';
 
-			// Add new items
 			items.forEach(item => {
 				assertItemShape(item);
 				if (typeof item === 'string') {
@@ -4175,7 +4079,6 @@ registerComponent('nui-select', (element) => {
 
 	let isLoading = false;
 
-	// Show loading state - displays loading text and disables
 	const showLoading = (loadingText = 'Loading...') => {
 		if (isLoading) return;
 		isLoading = true;
@@ -4206,17 +4109,13 @@ registerComponent('nui-select', (element) => {
 		element.dispatchEvent(new CustomEvent('nui-loaded', { bubbles: true }));
 	};
 
-	// Load options from an async function - handles all loading states
-	// Returns { data, error } after the async function resolves or rejects
 	const loadOptions = async (asyncFn) => {
 		showLoading();
 		try {
 			const result = await asyncFn();
-			// Assume result is an array of items - set them
 			if (Array.isArray(result)) {
 				setItems(result);
 			} else if (result && typeof result === 'object' && 'items' in result) {
-				// Support { items: [...] } format
 				setItems(result.items);
 			}
 			hideLoading();
@@ -4250,13 +4149,11 @@ registerComponent('nui-select', (element) => {
 		const options = getVisibleOptions();
 		if (!options.length) return;
 
-		// Clamp index
 		if (index < 0) index = 0;
 		if (index >= options.length) index = options.length - 1;
 
 		activeOptionIndex = index;
 
-		// Update tabindex and visual focus
 		options.forEach((opt, i) => {
 			opt.tabIndex = i === index ? 0 : -1;
 			opt.classList.toggle('is-focused', i === index);
@@ -4286,7 +4183,6 @@ registerComponent('nui-select', (element) => {
 		const options = getVisibleOptions();
 		const search = char.toLowerCase();
 
-		// First try from current position
 		let startIdx = activeOptionIndex + 1;
 		for (let i = 0; i < options.length; i++) {
 			const idx = (startIdx + i) % options.length;
@@ -4307,7 +4203,6 @@ registerComponent('nui-select', (element) => {
 		return -1;
 	};
 
-	// Control button keyboard handling
 	control.addEventListener('keydown', (e) => {
 		switch (e.key) {
 			case 'Enter':
@@ -4317,7 +4212,6 @@ registerComponent('nui-select', (element) => {
 					close();
 				} else {
 					open();
-					// If not searchable, focus first option
 					if (!isSearchable) {
 						const selected = list.querySelector('.nui-select-option.is-selected:not([hidden])');
 						if (selected) {
@@ -4334,7 +4228,6 @@ registerComponent('nui-select', (element) => {
 				e.preventDefault();
 				if (!isOpen) {
 					open();
-					// If not searchable, focus first option
 					if (!isSearchable) focusOption(0);
 				}
 				break;
@@ -4343,7 +4236,6 @@ registerComponent('nui-select', (element) => {
 				e.preventDefault();
 				if (!isOpen) {
 					open();
-					// If not searchable, focus last option
 					if (!isSearchable) {
 						const options = getVisibleOptions();
 						focusOption(options.length - 1);
@@ -4365,11 +4257,9 @@ registerComponent('nui-select', (element) => {
 				break;
 
 			default:
-				// Type-ahead when closed
 				if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
 					e.preventDefault();
 					if (!isOpen) open();
-					// If not searchable, jump to matching option
 					if (!isSearchable) {
 						const idx = getOptionIndexByChar(e.key);
 						if (idx >= 0) focusOption(idx);
@@ -4379,7 +4269,6 @@ registerComponent('nui-select', (element) => {
 		}
 	});
 
-	// Options list keyboard handling
 	list.addEventListener('keydown', (e) => {
 		const options = getVisibleOptions();
 		if (!options.length) return;
@@ -4393,7 +4282,6 @@ registerComponent('nui-select', (element) => {
 			case 'ArrowUp':
 				e.preventDefault();
 				if (activeOptionIndex <= 0 && isSearchable && searchInput) {
-					// Move focus to search input when at first option
 					clearFocus();
 					searchInput.focus();
 				} else {
@@ -4437,7 +4325,6 @@ registerComponent('nui-select', (element) => {
 				break;
 
 			case 'Tab':
-				// Close on tab, let default behavior move focus
 				close();
 				break;
 
@@ -4446,7 +4333,6 @@ registerComponent('nui-select', (element) => {
 				if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
 					e.preventDefault();
 
-					// Reset type-ahead after delay
 					if (typeAheadTimeout) clearTimeout(typeAheadTimeout);
 					typeAheadTimeout = setTimeout(() => {
 						typeAheadString = '';
@@ -4460,19 +4346,16 @@ registerComponent('nui-select', (element) => {
 		}
 	});
 
-	// Focus management for search input
 	if (searchInput) {
 		searchInput.addEventListener('keydown', (e) => {
 			switch (e.key) {
 				case 'ArrowDown':
 					e.preventDefault();
-					// Move focus to first option
 					focusOption(0);
 					break;
 
 				case 'ArrowUp':
 					e.preventDefault();
-					// Move focus to last option
 					{
 						const options = getVisibleOptions();
 						focusOption(options.length - 1);
@@ -4486,7 +4369,6 @@ registerComponent('nui-select', (element) => {
 					break;
 
 				case 'Tab':
-					// Tab from search moves to first option instead of closing
 					if (!e.shiftKey) {
 						e.preventDefault();
 						focusOption(0);
@@ -4502,7 +4384,6 @@ registerComponent('nui-select', (element) => {
 
 	const onOutsideClick = e => {
 		if (isOpen && !element.contains(e.target)) {
-			// Ignore if click is within mobile modal
 			const mobileModal = getMobileSelectModal();
 			if (mobileModal?.modal?.contains(e.target)) return;
 			close();
@@ -4510,7 +4391,6 @@ registerComponent('nui-select', (element) => {
 	};
 	document.addEventListener('click', onOutsideClick);
 
-	// Setup
 	element.classList.add(isMulti ? 'is-multi' : 'is-single');
 	if (select.disabled) {
 		element.classList.add('is-disabled');
@@ -4621,7 +4501,6 @@ registerComponent('nui-select', (element) => {
 	element.hideLoading = hideLoading;
 	element.loadOptions = loadOptions;
 
-	// Cleanup function
 	return () => {
 		openSelects.delete(element);
 		untrackViewport();
@@ -4771,13 +4650,11 @@ registerComponent('nui-sortable', (element) => {
 		// without this both would capture the same pointer.
 		if (item.closest('nui-sortable') !== element) return;
 
-		// Ignore if clicking an interactive element (unless it specifically IS the drag handle)
 		const interactive = e.target.closest('button, a, input, select, textarea, [data-action]');
 		if (interactive && !interactive.closest('.drag-handle')) {
 			return;
 		}
 
-		// If the item specifies a drag handle, ensure we clicked it
 		if (item.querySelector('.drag-handle') && !e.target.closest('.drag-handle')) {
 			return;
 		}
@@ -5424,8 +5301,6 @@ registerComponent('nui-popover', (element) => {
 			element.setAttribute('data-placement', pos);
 
 			if (isWide) {
-				// Horizontally centered across the content frame, but anchored vertically
-				// to the invoker element with the arrow pointing to the invoker.
 				const centerLeft = Math.max(frame.left + 8, Math.min(frame.left + (frame.width - box.width) / 2, frame.right - box.width - 8));
 				element.style.setProperty('position-area', `${pos} span-all`);
 				element.style.setProperty('justify-self', 'start');
@@ -5458,7 +5333,6 @@ registerComponent('nui-popover', (element) => {
 				}
 			}
 		} else {
-			// Fallback for browsers lacking CSS Anchor Positioning
 			const pos = placeAnchored(element, invoker, { ...placeOptions(), bounds: frame });
 			if (pos === 'center') placeAnchored(element, invoker, { ...placeOptions(), bounds: frame });
 		}
@@ -5984,8 +5858,6 @@ const dialogSystem = {
 			const target = options.target || document.body;
 			target.appendChild(dialog);
 
-			// Now it has been upgraded (or will be immediately)
-			// Return a custom object containing the resolution and references
 			resolve({
 				dialog: dialog,
 				main: dialog._mainEl || dialog.querySelector('main'),
@@ -5997,8 +5869,6 @@ const dialogSystem = {
 				})
 			});
 			
-			// Show it automatically or let user do it?
-			// Other dialogs show automatically:
 			if (options.modal !== false) {
 				dialog.showModal();
 			} else {
@@ -6073,7 +5943,6 @@ const dialogSystem = {
 
 			nativeDialog.addEventListener('close', () => resolve(), { once: true });
 
-			// Enter key submits the OK button
 			nativeDialog.addEventListener('keydown', (e) => {
 				if (e.key === 'Enter') {
 					e.preventDefault();
@@ -6113,7 +5982,6 @@ const dialogSystem = {
 
 			nativeDialog.addEventListener('close', () => resolve(false), { once: true });
 
-			// Enter key submits the OK button
 			nativeDialog.addEventListener('keydown', (e) => {
 				if (e.key === 'Enter') {
 					e.preventDefault();
@@ -6172,7 +6040,6 @@ const dialogSystem = {
 
 			nativeDialog.addEventListener('close', () => resolve(null), { once: true });
 
-			// Enter key submits on single-line inputs, not on textarea
 			nativeDialog.addEventListener('keydown', (e) => {
 				if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
 					e.preventDefault();
@@ -6228,7 +6095,6 @@ function parseUrl() {
 	const hash = location.hash.slice(1);
 	if (!hash) return null;
 
-	// If hash doesn't contain '=', it's an anchor link, not a route
 	if (!hash.includes('=')) return null;
 
 	const hashParams = new URLSearchParams(hash);
@@ -6254,7 +6120,6 @@ function executePageScript(wrapper, params) {
 	const scriptContent = scriptEl.textContent;
 	scriptEl.remove();
 
-	// Validate script has an init function
 	if (!scriptContent.includes('function init(') && !scriptContent.includes('init(')) {
 		console.warn('[NUI] Page script is missing an init(element, params, nui) function. Page scripts MUST define function init(element, params, nui) { ... }.', wrapper);
 	}
@@ -6287,22 +6152,17 @@ async function loadFragment(url, wrapper, params) {
 	// Strip Live Server injection (development only)
 	html = html.replace(/<!-- Code injected by live-server -->[\s\S]*?<\/script>/gi, '');
 
-	// Check if fragment uses nui-page as its root element
 	const trimmedHtml = html.trim();
 	const isNuiPageRoot = trimmedHtml.startsWith('<nui-page') || trimmedHtml.startsWith('<nui-page ');
 
 	if (isNuiPageRoot && wrapper.tagName.toLowerCase() === 'nui-page') {
-		// Fragment already has nui-page root, transfer classes and replace wrapper
 		const tempDiv = document.createElement('div');
 		tempDiv.innerHTML = html;
 		const fragmentPage = tempDiv.querySelector('nui-page');
 		
 		if (fragmentPage) {
-			// Transfer classes from wrapper to fragment's nui-page
 			wrapper.classList.forEach(cls => fragmentPage.classList.add(cls));
-			// Replace wrapper's content with fragment's children
 			wrapper.innerHTML = fragmentPage.innerHTML;
-			// Copy attributes
 			Array.from(fragmentPage.attributes).forEach(attr => {
 				if (attr.name !== 'class') {
 					wrapper.setAttribute(attr.name, attr.value);
@@ -6329,7 +6189,6 @@ function pageContent(type, id, params, options = {}) {
 	if (type === 'page') {
 		const basePath = options.basePath || '/pages';
 
-		// Check for registered page handler (nui.registerPage())
 		const registered = registeredFeatures.get(`page:${id}`);
 		if (registered) {
 			const fragmentPath = registered.html || `${id}.html`;
@@ -6416,7 +6275,6 @@ function createRouter(container, options = {}) {
 	}
 
 	function handleDeepLink(element, params) {
-		// Find the actual scroll container (nui-main in app mode)
 		const scrollContainer = container.closest('nui-main') || container.closest('nui-content')?.el('nui-main') || container;
 
 		if (params.id) {
@@ -6476,7 +6334,6 @@ function createRouter(container, options = {}) {
 			void element.offsetHeight;
 
 			const showPage = () => {
-				// Only focus content on navigation, not on initial page load
 				if (!isInitialLoad) {
 					showElement(element, params);
 				} else {
@@ -6515,14 +6372,11 @@ function createRouter(container, options = {}) {
 	function handleHashChange() {
 		const route = parseUrl();
 
-		// If parseUrl returns null, check if it's an anchor link (no route)
 		if (!route) {
 			const hash = location.hash.slice(1);
-			// If there's a hash but no route, it's an anchor link
 			if (hash) {
 				console.log('Anchor link detected:', hash);
 
-				// Immediately reset any body scroll that may have occurred
 				window.scrollTo(0, 0);
 				document.documentElement.scrollTop = 0;
 				document.body.scrollTop = 0;
@@ -6530,13 +6384,11 @@ function createRouter(container, options = {}) {
 				console.log('Body scrollTop AFTER reset:', document.body.scrollTop, 'documentElement scrollTop:', document.documentElement.scrollTop);
 				console.log('Window pageYOffset:', window.pageYOffset, 'scrollY:', window.scrollY);
 
-				// Find and scroll the content container
 				const target = document.getElementById(hash);
 				if (target) {
 					const contentScroll = document.querySelector('nui-main') ||
 						document.querySelector('nui-content');
 					if (contentScroll) {
-						// Calculate position relative to content container
 						const containerRect = contentScroll.getBoundingClientRect();
 						const targetRect = target.getBoundingClientRect();
 						const scrollOffset = targetRect.top - containerRect.top + contentScroll.scrollTop;
@@ -6544,11 +6396,9 @@ function createRouter(container, options = {}) {
 
 						requestAnimationFrame(() => {
 							contentScroll.scrollTo({ top: scrollOffset, behavior: 'smooth' });
-							// Remove hash from URL
 							history.replaceState(null, '', location.pathname + location.search);
 						});
 					} else {
-						// Fallback
 						target.scrollIntoView({ behavior: 'smooth', block: 'start' });
 						history.replaceState(null, '', location.pathname + location.search);
 					}
@@ -6556,7 +6406,6 @@ function createRouter(container, options = {}) {
 
 				return;
 			}
-			// Otherwise, no hash at all - navigate to default
 		}
 
 		navigate(route);
@@ -6567,58 +6416,47 @@ function createRouter(container, options = {}) {
 		if (!link) return;
 
 		const hash = link.getAttribute('href').slice(1);
-		// Skip if it's a route (contains '=')
 		if (hash.includes('=')) return;
 
 		console.log('Intercepted anchor click:', hash);
 		e.preventDefault();
 		e.stopPropagation();
 
-		// Find and scroll the content container
 		const target = document.getElementById(hash);
 		if (!target) {
 			console.log('Target not found:', hash);
 			return;
 		}
 
-		// Find the scrollable container from the link's context
 		let contentScroll = link.closest('nui-main');
 		console.log('Link closest nui-main:', contentScroll);
 
-		// If link is not inside nui-main, find the target's container
 		if (!contentScroll) {
 			contentScroll = target.closest('nui-main');
 			console.log('Target closest nui-main:', contentScroll);
 		}
 
-		// Last resort: find first visible nui-main
 		if (!contentScroll) {
 			contentScroll = document.querySelector('nui-main:not([hidden])');
 			console.log('querySelector nui-main:', contentScroll);
 		}
 
-		// Try without :not([hidden])
 		if (!contentScroll) {
 			contentScroll = document.querySelector('nui-main');
 			console.log('querySelector nui-main (any):', contentScroll);
 		}
 
 		if (contentScroll) {
-			// Immediately prevent any pending scroll
 			window.scrollTo(0, 0);
 
-			// Get positions
 			const containerRect = contentScroll.getBoundingClientRect();
 			const targetRect = target.getBoundingClientRect();
 
-			// Calculate absolute position within scrollable content
 			const scrollOffset = targetRect.top - containerRect.top + contentScroll.scrollTop;
 
-			// Use native smooth scroll
 			contentScroll.scrollTo({ top: scrollOffset, behavior: 'smooth' });
 		} else {
 			console.log('No content scroll container found');
-			// Fallback
 			target.scrollIntoView({ behavior: 'smooth', block: 'start' });
 		}
 	}
@@ -6932,7 +6770,6 @@ function enableDrag(target, callback, options = {}) {
 
 	target.addEventListener('pointerdown', handleDown);
 
-	// Return cleanup function that fully removes all listeners
 	return () => {
 		cleanup();
 		target.removeEventListener('pointerdown', handleDown);
@@ -7152,10 +6989,8 @@ export const nui = {
 				_loading.add(tag);
 
 				try {
-					// Inject CSS
 					if (map.css) ensureStylesheet(map.css);
 
-					// Dynamic import JS
 					const jsPath = `${nuiBasePath}/${map.js}`;
 					await import(jsPath);
 
@@ -7177,10 +7012,8 @@ export const nui = {
 				});
 			}
 
-			// Initial scan
 			checkAndAutoLoad(document);
 
-			// Ongoing observer
 			new MutationObserver((mutations) => {
 				for (const m of mutations) {
 					for (const node of m.addedNodes) {
@@ -7197,9 +7030,8 @@ export const nui = {
 			}).observe(document.documentElement, { childList: true, subtree: true });
 		}
 
-		// Resolve ready promise so consumers can await nui.ready()
 		_readyResolve();
-		_readyResolve = null; // Release closure
+		_readyResolve = null;
 	},
 
 	registerFeature(name, initFn) {
@@ -7280,9 +7112,7 @@ function parseLists(text) {
 		const item = isListItem(lines[i]);
 		if (!item) { out.push(lines[i]); i++; continue; }
 
-		// Parse one list starting here
 		const rootTag = item.ordered ? 'ol' : 'ul';
-		// Stack of open lists; each level tracks its own open <li>
 		const stack = [];
 		let html = '';
 
@@ -7306,12 +7136,11 @@ function parseLists(text) {
 
 			// Blank line: loose-list separator — may continue the list
 			if (trimmed === '') {
-				// Look ahead: does the list continue after the blank(s)?
 				let j = i;
 				while (j < lines.length && lines[j].trim() === '') j++;
 				const next = j < lines.length ? isListItem(lines[j]) : null;
-				if (next) { i = j; continue; }  // skip blanks, keep parsing
-				i = j;                          // skip blanks, list ends
+				if (next) { i = j; continue; }
+				i = j;
 				break;
 			}
 
@@ -7336,7 +7165,6 @@ function parseLists(text) {
 			} else {
 				// Same or lower indent: close deeper lists, then this level's <li>
 				while (stack.length > 1 && it.indent < stack[stack.length - 1].indent) closeList();
-				// Indent dropped below the root list — list is over
 				if (it.indent < stack[0].indent) break;
 				closeLi();
 			}
@@ -8762,7 +8590,6 @@ function markdownCore(md) {
 	// swallowing the rest of the document.
 	html = html.replace(/&lt;!--[\s\S]*?--&gt;/g, '');
 
-	// Simple tables
 	html = html.replace(/^[ \t]*\|(.+)\|\n[ \t]*\|([-:| ]+)\|\n((?:[ \t]*\|.+\|\n?)*)/gm, (match, header, sep, body) => {
 		// Split on unescaped pipes only: `\|` is a literal pipe inside a cell
 		// (GFM table escaping), never a column boundary. Unescaped after the split.
@@ -8775,10 +8602,8 @@ function markdownCore(md) {
 		return `<table class="nui-table"><thead><tr>${headCells}</tr></thead><tbody>${bodyRows}</tbody></table>`;
 	});
 
-	// Headers
 	html = html.replace(/^[ \t]*(#{1,6})\s+(.+)$/gm, (match, hashes, text) => `<h${hashes.length}>${text}</h${hashes.length}>`);
 
-	// Blockquotes
 	html = html.replace(/^[ \t]*(&gt;\s+.+(:?\n[ \t]*&gt;\s+.+)*)/gm, (match) => `<blockquote>${match.replace(/^[ \t]*&gt;\s+/gm, '')}</blockquote>`);
 
 	// Lists — line-based parser handling flat, loose (blank-line-separated) and
@@ -8786,13 +8611,11 @@ function markdownCore(md) {
 	// not fragment it into multiple one-item lists (issue #13).
 	html = parseLists(html);
 
-	// Horizontal rules
 	html = html.replace(/^[ \t]*(={3,})[ \t]*$/gm, '<hr class="equals">');
 	html = html.replace(/^[ \t]*(-{3,})[ \t]*$/gm, '<hr class="dash">');
 	html = html.replace(/^[ \t]*(\*{3,})[ \t]*$/gm, '<hr class="stars">');
 	html = html.replace(/^[ \t]*(_{3,})[ \t]*$/gm, '<hr>');
 
-	// Block separation
 	const blocks = html.split(/\n{2,}/);
 	const htmlBlocks = blocks.map(block => {
 		block = block.trim();
@@ -8803,7 +8626,6 @@ function markdownCore(md) {
 	});
 	html = htmlBlocks.join('\n');
 
-	// Inline elements
 	// Scheme-validate URLs before interpolating into attributes. Blocks javascript:, data:, vbscript: etc.
 	// Relative paths, #anchors, http(s), and mailto pass through; dangerous schemes render as plain text.
 	const safeUrl = (url) => {
@@ -8886,7 +8708,6 @@ util.setMarkdownImagePolicy = (fn) => { markdownImagePolicy = (typeof fn === 'fu
 let markdownImageRewrite = null;
 util.setMarkdownImageRewrite = (fn) => { markdownImageRewrite = (typeof fn === 'function') ? fn : null; };
 
-// Add to util for global access
 util.markdownToHtml = markdownToHtml;
 util.parseYaml = parseYaml;
 util.parseYamlReport = parseYamlReport;
@@ -8967,7 +8788,6 @@ class NuiMarkdown extends HTMLElement {
 				console.error(`[NuiMarkdown] Error fetching source: ${src}`, err);
 			}
 		} else {
-			// Read from <script type="text/markdown"> element
 			const mdScript = this.querySelector('script[type="text/markdown"]');
 			if (mdScript) {
 				rawText = mdScript.textContent.trim();
@@ -8983,7 +8803,7 @@ class NuiMarkdown extends HTMLElement {
 		this._metadata = fm ? fm.data : null;
 		this.innerHTML = markdownToHtml(rawText, { frontmatter: mode, base: this.base });
 		this._syncDocumentMarker();
-		this._processed = true; // Mark as processed so re-attach is free
+		this._processed = true;
 		util.enhanceSlideshows(this, this.getAttribute('slide-duration'));
 		util.enhancePlayers(this);
 		util.enhanceBrokenMedia(this);
@@ -9070,7 +8890,7 @@ class NuiMarkdown extends HTMLElement {
 		this._activeBuffer = '';
 
 		this.innerHTML = '';
-		this._syncDocumentMarker(); // fresh stream: clear any prior document state
+		this._syncDocumentMarker();
 		this._stableContainer = document.createElement('div');
 		this._stableContainer.className = 'nui-md-stable';
 		
