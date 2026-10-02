@@ -193,6 +193,17 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 	outline-offset: calc(var(--nui-space-eighth) * -0.5);
 }
 
+/* A range of several cells carries no ring at all -- neither the [data-active]
+   one nor the browser's. :focus-visible follows DOM focus, which after a
+   shift-click is the far cell of the range: a rect on an arbitrary member of a
+   filled block says nothing about where the range begins, and duplicates what
+   the fill already says. A single-cell selection is unaffected (it is never
+   flagged multi), and the keyboard walk always produces a single cell, so no
+   focus indicator is lost. */
+table[data-nui-table-editor][data-nte-multi] :is(th,td):focus-visible {
+	outline: none;
+}
+
 /* --- Overlay: one layer, positioned over the table, never in its flow. --- */
 
 .nte-overlay {

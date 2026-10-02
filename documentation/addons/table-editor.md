@@ -304,6 +304,15 @@ The one remaining ring is the **caret** — the cell holding the keyboard. It is
 hairline, at `--border-thickness`, and inset by the same amount so it sits on the
 grid line rather than floating inside the cell.
 
+It appears only when the selection **is** one cell. A range of several carries
+no ring: the fill already names the cells, and a rect on one member of that block
+claims a focus none of them holds alone. The browser's own `:focus-visible` is
+suppressed for the same reason — it follows DOM focus, which after a shift-click
+is the *far* cell of the range, so it would mark the opposite end from the anchor.
+Nothing is lost by this: the keyboard walk only ever produces a single-cell range
+and keeps its ring, and after <kbd>Escape</kbd> clears the selection the ring
+returns on its own, because DOM focus is still in that cell.
+
 Selection is the one state that carries the accent — it is the component's
 primary output, and a neutral fill read as a tint rather than a selection. The
 caret ring stays neutral so "these cells" and "the keyboard is here" remain two

@@ -1487,6 +1487,67 @@ The historical entries above were left as written, with forward-pointers added �
 a log that gets rewritten when things change stops being a record of what was
 decided, and becomes only a record of what is currently true.
 
+## 2026-10-02 — The caret ring belongs to one cell, and only to one
+
+**User: "If any cell select state it active (more then one cell), the focus rect
+of the previously active cell should reset."** The screenshot showed a single
+selected cell, so the reported state was reproduced first rather than assumed.
+
+There were **two** rects, not one, and they were in different places:
+
+| rect | source | where it landed |
+|---|---|---|
+| stale caret | `[data-active]`, written by `applyRange` onto `cellAt(minRow, minCol)` | the range's **anchor** — the cell clicked first |
+| browser ring | `:focus-visible`, which a `contenteditable` cell matches whenever focused, mouse or keyboard | the cell clicked **last** |
+
+So a three-cell shift-click marked both ends of the range and none of the cells
+between. Measured on the first demo table, with real pointer input — the page has
+four tables and an unscoped query measures across all of them:
+
+| state | selected | `[data-active]` | rects painted |
+|---|---|---|---|
+| single click | 1 | 1 cell | 1 |
+| Tab → next cell | 1 | 1 cell | 1 |
+| shift-click, whole row | 4 | 1 cell (stale) | 2 |
+| shift-click, whole column | 3 | 1 cell (stale) | 2 |
+| Escape | 0 | none | 1 (`:focus-visible` alone) |
+
+**A ring is a claim about exactly one cell, and a range of several has no such
+cell.** The fill already names the members; a rect on one member of a filled block
+asserts "the keyboard is here" about a cell the keyboard is not on — it is on the
+far end, which is exactly where `:focus-visible` had already put a second rect.
+Three ways of saying "selected" was already ruled one too many in this log; the
+range outline went, and the caret ring now goes with it for multi-cell ranges.
+
+One flag, one condition. `applyRange` sets `data-nte-multi` on the table when the
+range spans more than one cell, and only a single-cell range is given
+`[data-active]`. The flag sits on the **table** because no cell can know how large
+the range it belongs to is — and CSS needs the same fact to suppress
+`:focus-visible`. A per-cell attribute could not express it, and a class the JS
+maintained separately from the range would be a second copy of the fact, which is
+the shape of most defect in this file.
+
+**Suppressing the browser's ring costs no accessibility affordance**, which is the
+part worth stating rather than assuming: multi-cell selection is reachable only by
+pointer — shift-click, drag gesture, grips — while the keyboard walk (Tab, arrows,
+Enter) always produces a single-cell range and keeps its ring. After Escape clears
+the selection the ring returns by itself, because DOM focus is still in that cell.
+Verified in all five states above, and the single-cell ring survives both the mouse
+and the Tab path.
+
+### Two measurement traps, both re-entered on purpose
+
+`getComputedStyle(cell).outlineWidth` is **not** a test for "is there a ring":
+Chrome computes it to `medium` even when `outline-style` is `none`, so filtering
+on width reported every cell in the table as ringed and the first fix appeared to
+have done nothing. The test is `outlineStyle`.
+
+This is the general shape the log keeps meeting — *which rule won* rather than
+*what did I write* — and the corollary here is that a probe must be re-read before
+its verdict is believed. Two of the intermediate readings in this fix were the rig,
+not the component.
+
+
 
 
 

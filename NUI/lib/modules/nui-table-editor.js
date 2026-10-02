@@ -246,6 +246,15 @@ function setupTableEditor(table, options = {}) {
 		table.querySelectorAll('[data-selected]').forEach(c => c.removeAttribute('data-selected'));
 		activeCell?.removeAttribute('data-active');
 
+		// A ring is ONE cell's claim, so a range spanning several carries none:
+		// its fill already names the cells, and a ring on the range's origin
+		// claimed a focus no single cell holds. The flag lives on the table
+		// because no cell knows how large the range it belongs to is, and the
+		// browser's own :focus-visible lands on whichever cell was clicked LAST
+		// -- the far end -- so CSS needs the same fact to suppress it.
+		const multi = !!r && (r.minRow !== r.maxRow || r.minCol !== r.maxCol);
+		table.toggleAttribute('data-nte-multi', multi);
+
 		if (!r) {
 			activeCell = null;
 			// Grips and delete controls are BUILT from the range, so clearing must
@@ -273,7 +282,7 @@ function setupTableEditor(table, options = {}) {
 		buildGrips();
 
 		activeCell = cellAt(table, r.minRow, r.minCol) || null;
-		activeCell?.setAttribute('data-active', '');
+		if (!multi) activeCell?.setAttribute('data-active', '');
 		updateZone();
 	}
 
@@ -1476,6 +1485,10 @@ function setupTableEditor(table, options = {}) {
 			// Restore the host's positioning only if we were the ones who set it.
 			if (positionWasSet) parent.style.position = hadPosition;
 			table.removeAttribute('data-nui-table-editor');
+			// The multi-cell flag ENABLES a suppression rather than merely marking
+			// state, so a stale one left on a re-enhanced table would suppress a
+			// ring it never earned.
+			table.removeAttribute('data-nte-multi');
 			delete table._nuiTableEditor;
 		}
 	};
