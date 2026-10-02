@@ -288,7 +288,7 @@ Overridable per element or host scope:
 
 | Token | Default | Controls |
 |-------|---------|----------|
-| `--nte-select-bg` | `color-mix(--color-highlight 18% / 24%, --color-shade1 / --color-shade2)` | Selected cell fill |
+| `--nte-select-bg` | `color-mix(--color-shade5 16% / 17%, --color-shade1 / --color-shade2)` | Selected cell fill |
 | `--nte-select-text` | `--text-color` | Text on a selected cell |
 | `--nte-active-ring` | `--text-color-dim` | Caret ring and keyboard focus |
 | `--nte-on-bg` | `--color-shade4` | Pressed toggle / selected grip |
@@ -313,30 +313,34 @@ Nothing is lost by this: the keyboard walk only ever produces a single-cell rang
 and keeps its ring, and after <kbd>Escape</kbd> clears the selection the ring
 returns on its own, because DOM focus is still in that cell.
 
-Selection is the one state that carries the accent — it is the component's
-primary output, and a neutral fill read as a tint rather than a selection. The
-caret ring stays neutral so "these cells" and "the keyboard is here" remain two
-different signals. To go back to a fully neutral scheme, override
-`--nte-select-bg` and `--nte-active-ring`; nothing else needs to change.
+The fill is a **neutral** surface step, not the accent. `--color-highlight` is
+reserved for links, primary action and affordances that announce a clickable
+target; editing state answers a different question — *what is under my hands* —
+and a table under edit must not become the loudest thing on the page. Colour
+appears only on **action**: the grip hover, the delete `×`, the drag drop line.
+The caret ring is neutral for the same reason, so "these cells" and "the keyboard
+is here" remain two different signals. To make the selection read louder,
+override `--nte-select-bg` alone — nothing else participates.
 
-> The text colour is **not** forced to white. The selection fill is an opaque
-> accent-tinted surface, so the theme text colour is already correct in both
-> schemes — 13.1:1 in light, 8.6:1 in dark. Forcing white would be the bug.
+> **Measured in both schemes** (forced with `color-scheme`, not inferred): the fill
+> is `rgb(55,55,55)` on a `rgb(40,40,40)` table in dark, and `rgb(230,230,230)` on a
+> `rgb(250,250,250)` table in light. The text on it is the untouched theme colour —
+> **9.54:1** dark, **13.42:1** light — so it is never forced to white. Forcing white
+> would be the bug.
 >
-> **Mix toward the surface, not toward `transparent`.** A low-alpha wash
-> (`color-mix(accent 10%, transparent)`) looks wrong, and the reason is worth
-> knowing: alpha compositing shifts the accent's channels by different amounts
-> depending on what is underneath, so over the near-black dark surface 10% of a
-> mid-blue collapses to a muddy grey-blue that reads as dirt on the table rather
-> than a colour. Mixing toward the surface keeps the hue and the contrast
-> predictable, and gives one flat colour per scheme that is unambiguously the
-> accent. The ratio is higher in dark (24% vs 18%) because a dark surface needs
-> more of the accent to register as a tint.
+> **The fill is deliberately a small step.** Against the table surface it measures
+> **1.24:1** dark and **1.19:1** light: a neutral fill sitting one step above its own
+> ground, not a block of colour. That is the price of spending the accent elsewhere,
+> and it is why the selection is *also* carried by the grips, the delete `×` and the
+> zone — a user who cannot see the fill still has three affordances lit up.
+>
+> **Mix toward the surface, never toward `transparent`.** A bare `--color-shadeN`
+> would be invisible in dark (the table surface *is* shade2 there) or too weak in
+> light. A low-alpha wash is worse still: alpha compositing shifts channels by
+> different amounts depending on what sits underneath, so the colour becomes an
+> outcome rather than a specification. Mixing a shade *into* the surface at a fixed
+> ratio gives one flat, opaque colour per scheme that can be stated in advance.
 
-> Selection uses an accent backdrop, not a neutral surface step: a shade-based
-> fill is either invisible in dark mode (the table surface *is* shade2 there) or
-> too weak to read as a selection in light.
->
 > The caret ring is declared with `--border-thickness`, not a fixed pixel value.
 > Chrome quantises border-width to whole **device** pixels, so at a 1.5 ratio a
 > `1px` border measures 0.667px — which is exactly what the theme's cell borders
