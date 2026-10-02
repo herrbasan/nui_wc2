@@ -154,7 +154,6 @@ table[data-nui-table-editor],
 	   curves in different places reads as several unrelated things; a shared
 	   ease-out makes them read as one. */
 	--nte-ease: cubic-bezier(0.2, 0, 0, 1);
-	--nte-dur: 140ms;
 }
 
 /* --- Selection & focus ------------------------------------------------------------
@@ -207,11 +206,6 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 	   band grows and the clearance does not, the toolbar drops onto the table.
 	   One token, two consumers, no second place to update. */
 	--nte-band: 1.5rem;
-}
-
-.nte-overlay.is-hovered {
-	/* Grips and edge buttons take the pointer only while the table is in play. */
-	pointer-events: none;
 }
 
 /* Grips and delete controls take the pointer whenever they exist: one is only
@@ -271,21 +265,15 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 	line-height: normal;
 	border: var(--border-thickness) solid var(--border-shade3);
 	border-radius: var(--border-radius2);
+	/* The two band operations share this surface and are NEUTRAL at rest. They
+	   are split by class only so each can take its own hue on hover below;
+	   everything else they have in common stays shared, so the colour is the only
+	   thing that differs and the rest of the design cannot drift between them. */
+	background-color: var(--nte-on-bg, var(--color-shade3));
+	color: var(--nte-on-text, var(--text-color));
 	transition: background-color 100ms var(--nte-ease);
 	appearance: none;
 	vertical-align: top;
-}
-
-/* The two band operations share this surface and are NEUTRAL at rest. They are
-   split by class only so each can take its own hue on hover below; everything
-   else they have in common stays shared, so the only thing that changes is the
-   colour and the rest of the design cannot drift between them. */
-.nte-row-grip,
-.nte-col-grip,
-.nte-row-del,
-.nte-col-del {
-	background-color: var(--nte-on-bg, var(--color-shade3));
-	color: var(--nte-on-text, var(--text-color));
 }
 
 .nte-row-grip { cursor: grab; }
@@ -675,7 +663,6 @@ table[data-nui-table-editor] :is(th,td):focus-visible {
 /* A11y: grips are icon-only, so the accessible name is the label, and the focus
    ring must be visible against the table surface. It uses the same neutral ring as
    the cell caret, so keyboard focus is one consistent signal across the component. */
-.nte-row-grip:focus-visible,
 .nte-row-grip:focus-visible,
 .nte-col-grip:focus-visible,
 .nte-row-del:focus-visible,

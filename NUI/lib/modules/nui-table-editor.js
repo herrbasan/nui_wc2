@@ -50,13 +50,17 @@ function headerRowEl(table) {
 	return table.tHead?.rows[0] || table.tBodies[0]?.rows[0] || null;
 }
 
+/** Header row (when present) then the body rows — the shape most operations walk. */
+function rowsOf(table) {
+	return [table.tHead?.rows[0], ...bodyRows(table)].filter(Boolean);
+}
+
 function hasHeader(table) {
 	return !!table.tHead?.rows[0];
 }
 
 function colCount(table) {
-	const rows = [headerRowEl(table), ...bodyRows(table)].filter(Boolean);
-	return rows.reduce((max, tr) => Math.max(max, tr.cells.length), 0);
+	return rowsOf(table).reduce((max, tr) => Math.max(max, tr.cells.length), 0);
 }
 
 function cellAt(table, r, c) {
@@ -218,8 +222,9 @@ function setupTableEditor(table, options = {}) {
 	function cellFromPoint(x, y) {
 		// The overlay sits on top of the table, so elementFromPoint returns chrome
 		// and never a cell. Hit-test the table's own geometry instead.
-		for (const tr of [table.tHead?.rows[0], ...bodyRows(table)].filter(Boolean)) {
-			if (y < tr.getBoundingClientRect().top || y > tr.getBoundingClientRect().bottom) continue;
+		for (const tr of rowsOf(table)) {
+			const rowRect = tr.getBoundingClientRect();
+			if (y < rowRect.top || y > rowRect.bottom) continue;
 			for (const cell of tr.cells) {
 				const r = cell.getBoundingClientRect();
 				if (x >= r.left && x <= r.right) return cell;
@@ -250,9 +255,14 @@ function setupTableEditor(table, options = {}) {
 			return;
 		}
 
+		// One rows array for the whole rectangle; cellAt() would rebuild it per cell.
+		const rows = rowsOf(table);
+		const rowBase = hasHeader(table) ? 1 : 0;
 		for (let row = r.minRow; row <= r.maxRow; row++) {
+			const tr = rows[row + rowBase];
+			if (!tr) continue;
 			for (let col = r.minCol; col <= r.maxCol; col++) {
-				cellAt(table, row, col)?.setAttribute('data-selected', '');
+				tr.cells[col]?.setAttribute('data-selected', '');
 			}
 		}
 
@@ -316,20 +326,6 @@ function setupTableEditor(table, options = {}) {
 		return [{ from: range.minCol, to: range.maxCol }];
 	}
 
-	function selectRow(index) {
-		const last = colCount(table) - 1;
-		if (last < 0) return;
-		applyRange({ minRow: index, maxRow: index, minCol: 0, maxCol: last });
-	}
-
-	function selectColumn(index) {
-		applyRange({
-			minRow: hasHeader(table) ? -1 : 0,
-			maxRow: bodyRows(table).length - 1,
-			minCol: index, maxCol: index
-		});
-	}
-
 	/**
 	 * Build one grip per selected row/column band, each spanning it, plus the
 	 * matching DELETE control on the opposite end. Drag and delete sit at opposite
@@ -338,11 +334,18 @@ function setupTableEditor(table, options = {}) {
 	 */
 	function buildGrips() {
 		if (destroyed) return;
+		const rowBands = selectedRowBands();
+		const colBands = selectedColBands();
+		if (rowGrips.firstChild) rowGrips.textContent = '';
+		if (colGrips.firstChild) colGrips.textContent = '';
+
+		// Nothing to draw: skip the layout read that would otherwise run on every scroll.
+		if (!rowBands.length && !colBands.length) return;
+
 		const rect = table.getBoundingClientRect();
 
-		rowGrips.textContent = '';
 		const rows = bodyRows(table);
-		for (const band of selectedRowBands()) {
+		for (const band of rowBands) {
 			const top = rows[band.from]?.getBoundingClientRect();
 			const bottom = rows[band.to]?.getBoundingClientRect();
 			if (!top || !bottom) continue;
@@ -373,10 +376,9 @@ function setupTableEditor(table, options = {}) {
 			rowGrips.appendChild(del);
 		}
 
-		colGrips.textContent = '';
 		const cells = headerRowEl(table)?.cells;
 		if (cells) {
-			for (const band of selectedColBands()) {
+			for (const band of colBands) {
 				const left = cells[band.from]?.getBoundingClientRect();
 				const right = cells[band.to]?.getBoundingClientRect();
 				if (!left || !right) continue;
@@ -503,7 +505,6 @@ function setupTableEditor(table, options = {}) {
 		// reaching for a button becomes a moving target.
 
 		zone.classList.add('is-active');
-		overlay.classList.add('is-visible');
 
 		// Put focus back on the control that had it, so pressing one zone button
 		// does not silently move the user out of the toolbar.
@@ -523,7 +524,6 @@ function setupTableEditor(table, options = {}) {
 		// A live selection keeps its panel: the controls apply to what is selected.
 		if (range) return;
 		zone.classList.remove('is-active');
-		overlay.classList.remove('is-visible');
 	}
 
 	// ── Structure operations ───────────────────────────────────────────────────
@@ -551,26 +551,27 @@ function setupTableEditor(table, options = {}) {
 	}
 
 	function insertColumn(at) {
+		const rows = rowsOf(table);
 		// The header row gets a `th`, not a `td`. A cell's tag is a property of the
 		// SECTION it sits in: the theme styles `th` by tag, so a `td` there renders
 		// unbolded and unshaded next to its neighbours.
-		for (const tr of [table.tHead?.rows[0], ...bodyRows(table)].filter(Boolean)) {
+		for (const tr of rows) {
 			const cell = makeCell(tr.parentElement === table.tHead ? 'th' : 'td', '');
 			if (at >= 0 && tr.cells[at]) tr.insertBefore(cell, tr.cells[at]);
 			else tr.appendChild(cell);
 		}
 		// A new column's alignment follows the one to its left, so a right-aligned
 		// number column grows to the right as right-aligned.
-		const neighbour = at > 0 ? cellAt(table, -1, at - 1) : null;
+		const neighbour = at > 0 ? rows[0]?.cells[at - 1] : null;
 		const align = neighbour?.getAttribute('data-align') || 'left';
-		for (const tr of [table.tHead?.rows[0], ...bodyRows(table)].filter(Boolean)) {
-			tr.cells[at]?.setAttribute('data-align', align);
-		}
 		// Every row got a new cell at `at`, including rows that existed before
-		// this call, so editability is applied across the whole column rather than
-		// to the newly created one alone.
-		for (const tr of [table.tHead?.rows[0], ...bodyRows(table)].filter(Boolean)) {
-			if (tr.cells[at]) makeEditable([tr.cells[at]]);
+		// this call, so alignment and editability are applied across the whole
+		// column rather than to the newly created one alone.
+		for (const tr of rows) {
+			const cell = tr.cells[at];
+			if (!cell) continue;
+			cell.setAttribute('data-align', align);
+			makeEditable([cell]);
 		}
 	}
 
@@ -639,10 +640,15 @@ function setupTableEditor(table, options = {}) {
 
 	function bandCells(band) {
 		const out = [];
+		const cols = colCount(table);
+		const rows = rowsOf(table);
+		const header = hasHeader(table);
+		const rowBase = header ? 1 : 0;
 		if (band.kind === 'row') {
 			for (let r = band.from; r <= band.to; r++) {
+				const tr = rows[r + rowBase];
 				const row = [];
-				for (let c = 0; c < colCount(table); c++) row.push(cellText(cellAt(table, r, c)));
+				for (let c = 0; c < cols; c++) row.push(cellText(tr?.cells[c]));
 				out.push(row);
 			}
 		} else {
@@ -650,8 +656,8 @@ function setupTableEditor(table, options = {}) {
 				const col = [];
 				// The header is row -1 and is part of a column: copying a column and
 				// dropping its heading would leave a column with no label.
-				if (hasHeader(table)) col.push(cellText(cellAt(table, -1, c)));
-				for (let r = 0; r < bodyRows(table).length; r++) col.push(cellText(cellAt(table, r, c)));
+				if (header) col.push(cellText(rows[0]?.cells[c]));
+				for (let r = rowBase; r < rows.length; r++) col.push(cellText(rows[r]?.cells[c]));
 				out.push(col);
 			}
 		}
@@ -664,9 +670,10 @@ function setupTableEditor(table, options = {}) {
 		const cells = bandCells(band);
 		// Alignment travels with the copy. A right-aligned number column pasted
 		// back as left-aligned is a copy with its meaning stripped off.
+		const alignRow = rowsOf(table)[0];
 		const align = [];
 		for (let c = 0; c < colCount(table); c++) {
-			align.push(cellAt(table, hasHeader(table) ? -1 : 0, c)?.getAttribute('data-align') || 'left');
+			align.push(alignRow?.cells[c]?.getAttribute('data-align') || 'left');
 		}
 		copied = { kind: band.kind, cells, align, from: band.from, to: band.to };
 		// TSV for the system clipboard: a spreadsheet reads it as a grid, and the
@@ -755,14 +762,15 @@ function setupTableEditor(table, options = {}) {
 	function deleteColumns(from, to) {
 		const cols = colCount(table);
 		const count = to - from + 1;
+		const rows = rowsOf(table);
 		if (count >= cols) {
-			for (const tr of [table.tHead?.rows[0], ...bodyRows(table)].filter(Boolean)) {
+			for (const tr of rows) {
 				for (let i = 0; i < tr.cells.length; i++) clearCell(tr.cells[i]);
 			}
 			emit('structure', { action: 'clear-columns', count });
 			return;
 		}
-		for (const tr of [table.tHead?.rows[0], ...bodyRows(table)].filter(Boolean)) {
+		for (const tr of rows) {
 			for (let i = to; i >= from; i--) tr.cells[i]?.remove();
 		}
 		emit('structure', { action: 'delete-columns', count });
@@ -817,8 +825,9 @@ function setupTableEditor(table, options = {}) {
 		// Alignment is a property of a COLUMN, so it is written down every row
 		// of each selected column -- the header included, or the export and
 		// the render would disagree about the same column.
+		const rows = rowsOf(table);
 		for (let col = range.minCol; col <= range.maxCol; col++) {
-			for (const tr of [table.tHead?.rows[0], ...bodyRows(table)].filter(Boolean)) {
+			for (const tr of rows) {
 				const cell = tr.cells[col];
 				if (cell && cell.getAttribute('data-align') !== value) {
 					cell.setAttribute('data-align', value);
@@ -1116,7 +1125,7 @@ function setupTableEditor(table, options = {}) {
 			return;
 		}
 
-		const trs = [table.tHead?.rows[0], ...bodyRows(table)].filter(Boolean);
+		const trs = rowsOf(table);
 		// BOTH ends of the band, per row, captured before the move. Probing
 		// only the first cell makes lo === hi for any band wider than one
 		// column, and the selection is silently left on the vacated slots.
@@ -1429,8 +1438,12 @@ function setupTableEditor(table, options = {}) {
 	function overOwnChrome(x, y) {
 		if (inRect(x, y, table.getBoundingClientRect())) return true;
 		if (inRect(x, y, zone.getBoundingClientRect())) return true;
-		for (const el of overlay.querySelectorAll('.nte-row-grip, .nte-col-grip, .nte-row-del, .nte-col-del')) {
-			if (inRect(x, y, el.getBoundingClientRect())) return true;
+		// Walk the two grip containers' children rather than parse a selector on
+		// every document press.
+		for (const container of [rowGrips, colGrips]) {
+			for (const handle of container.children) {
+				if (inRect(x, y, handle.getBoundingClientRect())) return true;
+			}
 		}
 		return false;
 	}
@@ -1442,8 +1455,6 @@ function setupTableEditor(table, options = {}) {
 		overlay.classList.remove('is-hovered');
 		hideZone();
 	}, true);
-	on(zone, 'pointerenter', () => zone.classList.add('is-pinned'));
-	on(zone, 'pointerleave', () => zone.classList.remove('is-pinned'));
 
 	position();
 
