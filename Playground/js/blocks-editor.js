@@ -3198,7 +3198,11 @@ export function initBlocksEditor(element, params, nui) {
 			if (btn.dataset.preview === mode) btn.setAttribute('state', 'active');
 			else btn.removeAttribute('state');
 		});
-		if (mode === 'inline') element.setAttribute('breakout', '');
+		// Full width is won on the CHILD, not on the page. The theme constrains
+		// `nui-page > *`, never `nui-page` itself, so an attribute on the wrapper
+		// reads as full-bleed and constrains nothing; .editor-workspace is the
+		// direct child the rule actually reaches.
+		if (mode === 'inline') workspace.setAttribute('breakout', '');
 		syncToOutputs();
 		applySplitPreference();
 	}

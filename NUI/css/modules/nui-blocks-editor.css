@@ -37,9 +37,13 @@
 	--be-chrome-badge-bg: light-dark(rgb(210, 215, 223), rgb(60, 60, 60));
 }
 
-/* When in Split View: breakout to full viewport width */
-nui-main > .content-page > .page-blocks-editor[breakout],
-.page-blocks-editor[breakout] {
+/* The page gutter. The wrapper is NOT the element the theme constrains: it
+   constrains `nui-page > *` and never `nui-page` itself, so the full width this
+   component needs is won on the child -- .editor-workspace carries `breakout`,
+   put there by setPreviewMode. An attribute here would read as full-bleed and
+   change nothing. max-width is kept so a host that puts this class on a child of
+   the page still gets it. */
+.page-blocks-editor {
 	max-width: 100%;
 	padding: var(--nui-space) var(--nui-space-double);
 }
@@ -142,7 +146,7 @@ nui-main > .content-page > .page-blocks-editor[breakout],
 		min-height: 0;
 	}
 
-	.page-blocks-editor[breakout]:has(.editor-workspace[data-preview-mode="inline"]) {
+	.page-blocks-editor:has(.editor-workspace[data-preview-mode="inline"]) {
 		display: flex;
 		flex-direction: column;
 		height: 100%;

@@ -42,7 +42,7 @@ Relevant locations:
 |---|---|
 | `NUI/css/nui-theme.css` | breakout padding no longer reset; `.maxwidth-container` standalone utility; section rhythm rules added |
 | `Playground/pages/components/page.html` | root div REMOVED — sections are now direct children; one section carries `breakout`; demonstrates the contract. **This page is the reference implementation — keep.** |
-| `Playground/js/blocks-editor.js` (~line 3201) | `element.querySelector('.page-blocks-editor')?.setAttribute('breakout','')` → `element.setAttribute('breakout','')` — needed IF blocks-editor.html drops its root div. **Untested. If not migrating blocks-editor now, revert this.** |
+| `Playground/js/blocks-editor.js` (~line 3201) | **Corrected 2026-10-02 — see §8.** Setting `breakout` on the page wrapper never worked: the theme constrains `nui-page > *`, never `nui-page`. It now goes on `.editor-workspace`, the real direct child. |
 | `documentation/components/page.md` | structure + breakout-gutter documented |
 | `documentation/guides/architecture-patterns.md` | has `.maxwidth-container` section — sync with final utility definition |
 
@@ -75,3 +75,46 @@ Committed earlier today (may be useful context): `2e85b9c` breakout-gutter fix, 
 4. Test blocks-editor (experiments) with the JS change from §3.
 5. Then — optionally, one page per commit — migrate remaining pages IF removing roots; otherwise roots stay as scoping hooks and no migration is needed at all.
 6. Update docs (`page.md`, `layout.md`, `architecture-patterns.md`), run `node scripts/update-docs.js` if component metadata changed, `node scripts/sync-storage-docs.mjs`, commit + push.
+
+## 8. Resolution 2026-10-02 — the blocks editor was the last page holding `breakout` on the wrong element
+
+**Symptom:** with the children-constraint in place, the editor and its preview sat in
+a 56rem (896px) column inside a container measuring 1229px — 269px of dead space to
+the right of the preview.
+
+**The bug was a difference of kind, not of target.** `setPreviewMode` set `breakout`
+on `element`, the `nui-page` wrapper, and the CSS read:
+
+```css
+nui-main > .content-page > .page-blocks-editor[breakout],
+.page-blocks-editor[breakout] { … }
+```
+
+The first selector states the intent — `.page-blocks-editor` is expected to be a
+CHILD of `.content-page`. The router puts `page-<slug>` on the `.content-page`
+element itself, so that selector never matched anything, and the second selector
+matched the wrapper, which the theme **never constrains**: the rule is
+`nui-page > *:not([breakout])`. An attribute on the wrapper reads as full-bleed and
+changes nothing. The constrained element was `.editor-workspace`, the real child.
+
+That is what §3's "untested" note was worth. The change recorded there moved the
+attribute from an element that did not exist — `element.querySelector('.page-blocks-editor')`
+found nothing and `?.` swallowed it — to one that is unconstrained. Both were wrong,
+in opposite directions, and neither was observable without measuring.
+
+**Fix:** the attribute goes on `workspace`, the direct child, because that is the
+only element the theme's rule can reach. The two CSS selectors that keyed off
+`[breakout]` on the wrapper now key off the page class alone; the wrapper-keyed
+`:has(.editor-workspace[…])` rules are unchanged.
+
+**Measured:** workspace 960px before, 1229px after, zero horizontal overflow, and
+`scrollHeight === clientHeight`, so the panes still own their own scrolling. Split
+still 58/58; a real divider drag moved canvas 676→451 and preview 441→666; Hide
+Preview and back to Side by Side both round-trip. The 56rem cap can only bind above
+an 896px container, so narrow viewports are unaffected by construction.
+
+`components/layout.html` was re-checked and is correct: its `nui-layout[breakout]`
+banner is a true direct child at 1221px while its siblings sit at 960px. The
+"banner not full-bleed" note in §6.4 is stale — the page root divs have since been
+removed, so §7.2 is done and §7.4 is this section.
+
