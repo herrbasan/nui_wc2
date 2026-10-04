@@ -7,12 +7,15 @@ nui-lightbox dialog {
     padding: 0;
     margin: auto;
     border: none;
-    max-width: 100dvw;
-    max-height: 100dvh;
-    width: 100dvw;
-    height: 100dvh;
+    /* 100dvw/100dvh INCLUDE the scrollbar, so the overlay overhung to the
+       right and left the page's own scrollbar showing beside it. The dialog's
+       containing block is the viewport box, which does not. */
+    max-width: 100%;
+    max-height: 100%;
+    width: 100%;
+    height: 100%;
     background: transparent;
-    color: var(--color-base);
+    color: var(--color-base, inherit);
     overflow: hidden;
 
     /* Animations */
@@ -131,9 +134,21 @@ nui-lightbox .nui-lightbox-nav:disabled {
 
 nui-lightbox .nui-lightbox-view {
     position: absolute;
-    inset: 0;
+    /* Horizontal room is the ARROWS' gutter: the view is what object-fit:contain
+       fits the image into, so insetting it is what keeps the arrows from lying
+       on the picture. Vertical inset is the consumer's business (it depends on
+       their toolbar and caption), so it stays 0 here. */
+    inset: 0 3.25rem;
     overflow: hidden;
     touch-action: pan-y;
+}
+
+/* The gutter exists exactly as long as the arrows do. Below 768px they are
+   hidden (see further down — swipe is the gesture there), so the room they
+   needed goes away with them; keeping it would just cost the picture 3.25rem
+   of width for nothing. */
+@media (max-width: 768px) {
+    nui-lightbox .nui-lightbox-view { inset: 0; }
 }
 
 nui-lightbox .nui-lightbox-track {
