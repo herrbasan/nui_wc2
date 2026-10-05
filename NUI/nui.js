@@ -4651,17 +4651,49 @@ function setupCalendarMode(element, { fromInput, toInput, presetSelect, emit, ap
 	const densityMap = new Map();
 	let maxDensity = 0;
 
-	// Preset rail first: it is the fastest path and the thing most users reach for.
-	const presetRail = dom.create('div', { class: 'nui-date-range-presets', target: panel });
+	// Left column: Calendar (navigation header + weekdays + day/month/year grid)
+	const calWrap = dom.create('div', { class: 'nui-date-range-cal-wrap', target: panel });
+
+	const gridHeader = dom.create('div', { class: 'nui-date-range-cal-header', target: calWrap });
+
+	const prevBtn = dom.fromHTML(
+		'<nui-button variant="icon"><button type="button" class="is-flip" aria-label="Previous page"><nui-icon name="chevron_right" decorative></nui-icon></button></nui-button>'
+	);
+	gridHeader.appendChild(prevBtn);
+
+	const monthLabel = dom.create('div', {
+		class: 'nui-date-range-month',
+		attrs: { 'aria-live': 'polite' },
+		target: gridHeader
+	});
+
+	const nextBtn = dom.fromHTML(
+		'<nui-button variant="icon"><button type="button" aria-label="Next page"><nui-icon name="chevron_right" decorative></nui-icon></button></nui-button>'
+	);
+	gridHeader.appendChild(nextBtn);
+
+	const weekdays = dom.create('div', { class: 'nui-date-range-weekdays', attrs: { role: 'row' }, target: calWrap });
+	const days = dom.create('div', {
+		class: 'nui-date-range-days',
+		attrs: { role: 'grid', 'aria-label': 'Choose a start and end date' },
+		target: calWrap
+	});
+
+	// Right column: Sidebar (Presets, Manual Range inputs, Cancel / Apply actions)
+	const sidebar = dom.create('div', { class: 'nui-date-range-sidebar', target: panel });
+
 	const presetButtons = new Map();
 	if (presetSelect) {
+		const presetGroup = dom.create('div', { class: 'nui-date-range-group', target: sidebar });
+		dom.create('span', { class: 'nui-date-range-group-title', content: 'Presets', target: presetGroup });
+		const presetList = dom.create('div', { class: 'nui-date-range-presets', target: presetGroup });
 		for (const opt of Array.from(presetSelect.options)) {
 			if (!opt.value) continue;
 			const btn = dom.create('button', {
 				class: 'nui-date-range-preset',
 				attrs: { type: 'button', 'data-value': opt.value },
 				content: opt.textContent,
-				target: presetRail
+				target: presetList
 			});
 			btn.addEventListener('click', () => {
 				applyPreset(opt.value);
@@ -4678,31 +4710,29 @@ function setupCalendarMode(element, { fromInput, toInput, presetSelect, emit, ap
 		}
 	}
 
-	// Controls bar: manual Start/End date inputs + Cancel / Apply actions.
-	const controlsBar = dom.create('div', { class: 'nui-date-range-controls', target: panel });
+	const rangeGroup = dom.create('div', { class: 'nui-date-range-group', target: sidebar });
+	dom.create('span', { class: 'nui-date-range-group-title', content: 'Range', target: rangeGroup });
 
-	const manualWrap = dom.create('div', { class: 'nui-date-range-manual', target: controlsBar });
-
-	const startField = dom.create('div', { class: 'nui-date-range-manual-field', target: manualWrap });
-	dom.create('label', { class: 'nui-date-range-manual-label', content: 'Start', target: startField });
+	const startField = dom.create('div', { class: 'nui-date-range-field', target: rangeGroup });
+	dom.create('label', { class: 'nui-date-range-field-label', content: 'From', target: startField });
 	const startInput = dom.create('input', {
 		class: 'nui-date-range-manual-input',
-		attrs: { type: 'date', 'aria-label': 'Start date' },
+		attrs: { type: 'date', 'aria-label': 'From date' },
 		target: startField
 	});
 
-	const endField = dom.create('div', { class: 'nui-date-range-manual-field', target: manualWrap });
-	dom.create('label', { class: 'nui-date-range-manual-label', content: 'End', target: endField });
+	const endField = dom.create('div', { class: 'nui-date-range-field', target: rangeGroup });
+	dom.create('label', { class: 'nui-date-range-field-label', content: 'To', target: endField });
 	const endInput = dom.create('input', {
 		class: 'nui-date-range-manual-input',
-		attrs: { type: 'date', 'aria-label': 'End date' },
+		attrs: { type: 'date', 'aria-label': 'To date' },
 		target: endField
 	});
 
 	if (minIso) { startInput.min = minIso; endInput.min = minIso; }
 	if (maxIso) { startInput.max = maxIso; endInput.max = maxIso; }
 
-	const actionsWrap = dom.create('div', { class: 'nui-date-range-actions', target: controlsBar });
+	const actionsWrap = dom.create('div', { class: 'nui-date-range-actions', target: sidebar });
 	const cancelBtn = dom.create('button', {
 		class: 'nui-date-range-btn nui-date-range-btn--cancel',
 		attrs: { type: 'button' },
@@ -4759,36 +4789,6 @@ function setupCalendarMode(element, { fromInput, toInput, presetSelect, emit, ap
 		toInput.value = draftTo;
 		commit();
 		popover.hide();
-	});
-
-	const gridWrap = dom.create('div', { class: 'nui-date-range-cal', target: panel });
-
-	// Built whole, not as an empty <nui-button> that gets a child afterwards: the
-	// component upgrades the moment it is in the DOM and auto-creates its own inner
-	// <button> in dev, so appending the real one afterwards leaves two buttons per side.
-	// The sprite carries no left chevron, so the shared one is mirrored in CSS rather
-	// than hand-adding an icon (the sprite is generated — never edited).
-	const prevBtn = dom.fromHTML(
-		'<nui-button variant="icon"><button type="button" class="is-flip" aria-label="Previous page"><nui-icon name="chevron_right" decorative></nui-icon></button></nui-button>'
-	);
-	gridWrap.appendChild(prevBtn);
-
-	const monthLabel = dom.create('div', {
-		class: 'nui-date-range-month',
-		attrs: { 'aria-live': 'polite' },
-		target: gridWrap
-	});
-
-	const nextBtn = dom.fromHTML(
-		'<nui-button variant="icon"><button type="button" aria-label="Next page"><nui-icon name="chevron_right" decorative></nui-icon></button></nui-button>'
-	);
-	gridWrap.appendChild(nextBtn);
-
-	const weekdays = dom.create('div', { class: 'nui-date-range-weekdays', attrs: { role: 'row' }, target: gridWrap });
-	const days = dom.create('div', {
-		class: 'nui-date-range-days',
-		attrs: { role: 'grid', 'aria-label': 'Choose a start and end date' },
-		target: gridWrap
 	});
 
 	const current = () => ({ from: fromInput.value, to: toInput.value });
@@ -4928,16 +4928,19 @@ function setupCalendarMode(element, { fromInput, toInput, presetSelect, emit, ap
 					target: days
 				});
 
+				btn.appendChild(dom.create('span', { class: 'nui-date-range-daynum', content: String(cell.day), target: btn }));
+
 				if (count > 0 && !cell.outside) {
 					const tier = getDensityTier(count);
 					btn.setAttribute('data-density', String(tier));
 					btn.setAttribute('data-count', String(count));
 					btn.setAttribute('title', `${fmtFull.format(parseIsoDate(cell.iso))}: ${count.toLocaleString()} pageviews`);
+					btn.appendChild(dom.create('span', {
+						class: 'nui-date-range-mark',
+						attrs: { 'data-density': String(tier) },
+						target: btn
+					}));
 				}
-
-				// The number is an element, not a text node: the range band is an absolutely
-				// positioned pseudo-element and would otherwise paint over the text.
-				btn.appendChild(dom.create('span', { class: 'nui-date-range-daynum', content: String(cell.day), target: btn }));
 				if (cell.outside) btn.classList.add('is-outside');
 				if (selected) btn.classList.add('is-selected');
 				if (previewed && !selected) btn.classList.add('is-preview');

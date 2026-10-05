@@ -2739,135 +2739,31 @@ nui-date-range.nui-date-range--calendar {
 
 .nui-date-range-panel {
 	display: flex;
-	flex-direction: column;
-	gap: var(--nui-space-half);
+	flex-direction: row;
+	align-items: stretch;
+	gap: var(--nui-space);
 	padding: var(--nui-space);
-	min-width: 18.5rem;
+	box-sizing: border-box;
 }
 
-/* Preset rail — the fast path, so it sits above the grid. */
-.nui-date-range-presets {
-	display: flex;
-	flex-wrap: wrap;
-	gap: var(--nui-space-half);
-}
-
-.nui-date-range-preset {
-	padding: calc(var(--nui-space-quarter) * 0.75) var(--nui-space-half);
-	background: transparent;
-	border: solid var(--border-thickness) var(--border-shade1);
-	border-radius: var(--border-radius1);
-	color: var(--text-color);
-	font: inherit;
-	font-size: var(--font-size-small);
-	cursor: pointer;
-	white-space: nowrap;
-}
-
-.nui-date-range-preset:hover {
-	background: var(--color-shade3);
-}
-
-.nui-date-range-preset.is-active {
-	background: var(--color-highlight);
-	border-color: var(--color-highlight);
-	color: light-dark(var(--color-white), var(--color-white));
-}
-
-/* Controls bar: manual inputs and confirmation actions */
-.nui-date-range-controls {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: var(--nui-space-half);
-	flex-wrap: wrap;
-	padding-bottom: var(--nui-space-half);
-	border-bottom: solid var(--border-thickness) var(--color-shade3);
-}
-
-.nui-date-range-manual {
-	display: flex;
-	align-items: center;
-	gap: var(--nui-space-quarter);
-}
-
-.nui-date-range-manual-field {
+/* Calendar Column: exactly fits 7 day columns with zero extra horizontal space */
+.nui-date-range-cal-wrap {
 	display: flex;
 	flex-direction: column;
-	gap: 2px;
+	gap: var(--nui-space-half);
+	width: calc(7 * var(--nui-date-range-day, 2.25rem));
+	flex-shrink: 0;
 }
 
-.nui-date-range-manual-label {
-	font-size: var(--font-size-xsmall);
-	color: var(--color-text-dim);
-	text-transform: uppercase;
-	letter-spacing: 0.05em;
-	line-height: 1;
-}
-
-.nui-date-range-manual-input {
-	height: var(--nui-space-double, 2rem);
-	width: 7.5rem;
-	padding: 0 var(--nui-space-quarter);
-	border: solid var(--border-thickness) var(--color-shade3);
-	border-radius: var(--border-radius1);
-	background: light-dark(var(--color-white), rgb(45, 45, 45));
-	color: var(--text-color);
-	font: inherit;
-	font-size: var(--font-size-small);
-	min-height: 0;
-}
-
-.nui-date-range-manual-input:focus-visible {
-	outline: 2px solid var(--color-highlight);
-	outline-offset: 1px;
-}
-
-.nui-date-range-actions {
-	display: flex;
-	align-items: flex-end;
-	gap: var(--nui-space-quarter);
-	margin-left: auto;
-}
-
-.nui-date-range-btn {
-	height: var(--nui-space-double, 2rem);
-	padding: 0 var(--nui-space-half);
-	border: solid var(--border-thickness) var(--color-shade3);
-	border-radius: var(--border-radius1);
-	background: transparent;
-	color: var(--text-color);
-	font: inherit;
-	font-size: var(--font-size-small);
-	cursor: pointer;
-	white-space: nowrap;
-}
-
-.nui-date-range-btn:hover {
-	background: var(--color-shade3);
-}
-
-.nui-date-range-btn--apply {
-	background: var(--color-highlight);
-	border-color: var(--color-highlight);
-	color: light-dark(var(--color-white), var(--color-white));
-	font-weight: 600;
-}
-
-.nui-date-range-btn--apply:hover {
-	background: var(--color-highlight-dim);
-}
-
-.nui-date-range-cal {
+.nui-date-range-cal-header {
 	display: grid;
 	grid-template-columns: auto 1fr auto;
 	align-items: center;
-	gap: var(--nui-space-half);
+	gap: var(--nui-space-quarter);
 }
 
 .nui-date-range-month {
 	text-align: center;
-	font-weight: 600;
 }
 
 .nui-date-range-nav-btn {
@@ -2879,6 +2775,10 @@ nui-date-range.nui-date-range--calendar {
 	cursor: pointer;
 	padding: var(--nui-space-quarter) var(--nui-space-half);
 	border-radius: var(--border-radius1);
+	display: inline-flex;
+	align-items: center;
+	gap: var(--nui-space-quarter);
+	transition: background 0.15s;
 }
 
 .nui-date-range-nav-btn:hover {
@@ -2896,14 +2796,30 @@ nui-date-range.nui-date-range--calendar {
 }
 
 /* The sprite has no left chevron; the shared one is mirrored for "previous month". */
-.nui-date-range-cal .is-flip nui-icon,
-.nui-date-range-cal .is-flip svg {
+.nui-date-range-cal-header .is-flip nui-icon,
+.nui-date-range-cal-header .is-flip svg {
 	transform: scaleX(-1);
 }
 
-.nui-date-range-weekdays,
+.nui-date-range-weekdays {
+	display: grid;
+	grid-template-columns: repeat(7, var(--nui-date-range-day, 2.25rem));
+	justify-content: start;
+}
+
+.nui-date-range-weekday {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: var(--nui-space-double, 2rem);
+	font-size: var(--font-size-xsmall);
+	font-weight: 600;
+	color: var(--color-text-dim);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
 .nui-date-range-days {
-	grid-column: 1 / -1;
 	display: grid;
 	grid-template-columns: repeat(7, var(--nui-date-range-day, 2.25rem));
 	justify-content: start;
@@ -2911,7 +2827,7 @@ nui-date-range.nui-date-range--calendar {
 
 .nui-date-range-days.is-months,
 .nui-date-range-days.is-years {
-	grid-template-columns: repeat(4, 1fr);
+	grid-template-columns: repeat(3, 1fr);
 	gap: var(--nui-space-quarter);
 }
 
@@ -2920,14 +2836,15 @@ nui-date-range.nui-date-range--calendar {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	height: calc(var(--nui-date-range-day, 2.25rem) * 1.25);
+	height: 3.1rem;
 	background: transparent;
-	border: solid var(--border-thickness) var(--color-shade2);
+	border: solid var(--border-thickness) var(--color-shade3);
 	border-radius: var(--border-radius1);
 	color: var(--text-color);
 	font: inherit;
 	font-size: var(--font-size-small);
 	cursor: pointer;
+	transition: background 0.15s, border-color 0.15s;
 }
 
 .nui-date-range-month-btn:hover,
@@ -2956,6 +2873,132 @@ nui-date-range.nui-date-range--calendar {
 	opacity: 0.45;
 }
 
+/* Sidebar Column: Presets, Manual Date Inputs, Actions */
+.nui-date-range-sidebar {
+	display: flex;
+	flex-direction: column;
+	gap: var(--nui-space-half);
+	width: 11.5rem;
+	padding-left: var(--nui-space);
+	border-left: solid var(--border-thickness) var(--color-shade3);
+	box-sizing: border-box;
+}
+
+.nui-date-range-group {
+	display: flex;
+	flex-direction: column;
+	gap: var(--nui-space-quarter);
+}
+
+.nui-date-range-group-title {
+	font-size: var(--font-size-xsmall);
+	font-weight: 600;
+	color: var(--color-text-dim);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	margin-bottom: 2px;
+}
+
+.nui-date-range-presets {
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+}
+
+.nui-date-range-preset {
+	display: flex;
+	align-items: center;
+	height: 1.85rem;
+	padding: 0 var(--nui-space-half);
+	background: transparent;
+	border: none;
+	border-radius: var(--border-radius1);
+	color: var(--text-color);
+	font: inherit;
+	font-size: var(--font-size-small);
+	cursor: pointer;
+	text-align: left;
+	justify-content: flex-start;
+	transition: background 0.15s, color 0.15s;
+}
+
+.nui-date-range-preset:hover {
+	background: var(--color-shade2);
+}
+
+.nui-date-range-preset.is-active {
+	background: var(--color-highlight);
+	color: light-dark(var(--color-white), var(--color-white));
+	font-weight: 600;
+}
+
+.nui-date-range-field {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.nui-date-range-field-label {
+	font-size: var(--font-size-xsmall);
+	color: var(--color-text-dim);
+}
+
+.nui-date-range-manual-input {
+	height: var(--nui-space-double, 2rem);
+	padding: 0 var(--nui-space-half);
+	border: solid var(--border-thickness) var(--color-shade3);
+	border-radius: var(--border-radius1);
+	background: light-dark(var(--color-white), rgb(45, 45, 45));
+	color: var(--text-color);
+	font: inherit;
+	font-size: var(--font-size-small);
+	min-height: 0;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.nui-date-range-manual-input:focus-visible {
+	outline: 2px solid var(--color-highlight);
+	outline-offset: 1px;
+}
+
+.nui-date-range-actions {
+	display: flex;
+	gap: var(--nui-space-quarter);
+	margin-top: auto;
+	padding-top: var(--nui-space-quarter);
+}
+
+.nui-date-range-btn {
+	flex: 1;
+	height: var(--nui-space-double, 2rem);
+	padding: 0 var(--nui-space-half);
+	border: solid var(--border-thickness) var(--color-shade3);
+	border-radius: var(--border-radius1);
+	background: transparent;
+	color: var(--text-color);
+	font: inherit;
+	font-size: var(--font-size-small);
+	cursor: pointer;
+	text-align: center;
+	transition: background 0.15s, border-color 0.15s;
+}
+
+.nui-date-range-btn:hover {
+	background: var(--color-shade3);
+}
+
+.nui-date-range-btn--apply {
+	background: var(--color-highlight);
+	border-color: var(--color-highlight);
+	color: light-dark(var(--color-white), var(--color-white));
+	font-weight: 600;
+}
+
+.nui-date-range-btn--apply:hover {
+	background: var(--color-highlight-dim);
+}
+
 .nui-date-range-weekday {
 	display: flex;
 	align-items: center;
@@ -2980,58 +3023,96 @@ nui-date-range.nui-date-range--calendar {
 	font-variant-numeric: tabular-nums;
 	cursor: pointer;
 	border-radius: var(--border-radius1);
+	transition: background 0.1s;
 }
 
-/* Traffic density shading (heatmap) */
-.nui-date-range-day[data-density="1"] {
-	background: light-dark(rgba(76, 132, 229, 0.12), rgba(76, 132, 229, 0.18));
+.nui-date-range-day:hover:not(.is-disabled):not(.is-selected) {
+	background: var(--color-shade2);
 }
 
-.nui-date-range-day[data-density="2"] {
-	background: light-dark(rgba(76, 132, 229, 0.25), rgba(76, 132, 229, 0.32));
+/* Traffic density mark (clean bottom pill/dot indicator — never mimics selection) */
+.nui-date-range-mark {
+	position: absolute;
+	bottom: 3px;
+	left: 50%;
+	transform: translateX(-50%);
+	border-radius: 2px;
+	background: var(--color-highlight);
+	pointer-events: none;
+	z-index: 2;
+	transition: width 0.15s, opacity 0.15s;
 }
 
-.nui-date-range-day[data-density="3"] {
-	background: light-dark(rgba(76, 132, 229, 0.42), rgba(76, 132, 229, 0.50));
+.nui-date-range-mark[data-density="1"] {
+	width: 4px;
+	height: 4px;
+	border-radius: 50%;
+	opacity: 0.45;
 }
 
-.nui-date-range-day[data-density="4"] {
-	background: light-dark(rgba(76, 132, 229, 0.65), rgba(76, 132, 229, 0.75));
+.nui-date-range-mark[data-density="2"] {
+	width: 6px;
+	height: 3px;
+	border-radius: 2px;
+	opacity: 0.75;
 }
 
-.nui-date-range-day[data-density="4"] .nui-date-range-daynum {
-	color: light-dark(var(--color-white), var(--color-white));
-	font-weight: 600;
+.nui-date-range-mark[data-density="3"] {
+	width: 10px;
+	height: 3px;
+	border-radius: 2px;
+	opacity: 0.95;
+}
+
+.nui-date-range-mark[data-density="4"] {
+	width: 15px;
+	height: 3px;
+	border-radius: 2px;
+	background: light-dark(rgb(76, 132, 229), rgb(110, 168, 255));
+	box-shadow: 0 0 3px var(--color-highlight);
+}
+
+.nui-date-range-day.is-selected .nui-date-range-mark {
+	background: light-dark(var(--color-white), var(--color-white));
+	opacity: 0.9;
 }
 
 /* Range selection and hover preview bands:
-   The preview band is translucent so the user clearly sees what they are projecting.
-   The committed range is translucent enough for density heat to show through underneath. */
+   The connecting ribbon is a soft translucent band.
+   The start and end caps are solid bold highlight with white text. */
 .nui-date-range-day.is-preview::before {
 	content: '';
 	position: absolute;
-	inset: 0;
-	background: light-dark(rgba(76, 132, 229, 0.28), rgba(76, 132, 229, 0.38));
+	inset: 2px 0;
+	background: light-dark(rgba(76, 132, 229, 0.18), rgba(76, 132, 229, 0.26));
 }
 
 .nui-date-range-day.is-selected::before {
 	content: '';
 	position: absolute;
-	inset: 0;
-	background: light-dark(rgba(67, 112, 191, 0.65), rgba(67, 112, 191, 0.65));
+	inset: 2px 0;
+	background: light-dark(rgba(76, 132, 229, 0.28), rgba(76, 132, 229, 0.38));
 }
 
 .nui-date-range-day.is-cap-start::before {
-	border-radius: var(--border-radius2) 0 0 var(--border-radius2);
+	border-radius: var(--border-radius1) 0 0 var(--border-radius1);
+	background: var(--color-highlight);
 }
 
 .nui-date-range-day.is-cap-end::before {
-	border-radius: 0 var(--border-radius2) var(--border-radius2) 0;
+	border-radius: 0 var(--border-radius1) var(--border-radius1) 0;
+	background: var(--color-highlight);
 }
 
-/* A one-day range is both ends; it needs a radius on all four corners. */
 .nui-date-range-day.is-cap-start.is-cap-end::before {
-	border-radius: var(--border-radius2);
+	border-radius: var(--border-radius1);
+	background: var(--color-highlight);
+}
+
+.nui-date-range-day.is-cap-start .nui-date-range-daynum,
+.nui-date-range-day.is-cap-end .nui-date-range-daynum {
+	color: light-dark(var(--color-white), var(--color-white));
+	font-weight: 700;
 }
 
 .nui-date-range-daynum {
@@ -3039,20 +3120,20 @@ nui-date-range.nui-date-range--calendar {
 	z-index: 2;
 }
 
-/* Today is a filled dot whether or not it falls in the range, so "where am I now" is
-   answerable at a glance. */
-.nui-date-range-day.is-today::after {
+/* Today: when unselected, an elegant ring around the date; when selected, inherits the band. */
+.nui-date-range-day.is-today:not(.is-cap-start):not(.is-cap-end)::after {
 	content: '';
 	position: absolute;
-	inset: 10%;
+	inset: 3px;
 	border-radius: 50%;
-	background: var(--color-highlight);
+	border: 1.5px solid var(--color-highlight);
+	pointer-events: none;
 	z-index: 1;
 }
 
-.nui-date-range-day.is-today .nui-date-range-daynum {
-	color: light-dark(var(--color-white), var(--color-white));
-	font-weight: 600;
+.nui-date-range-day.is-today:not(.is-cap-start):not(.is-cap-end) .nui-date-range-daynum {
+	color: var(--color-highlight);
+	font-weight: 700;
 }
 
 .nui-date-range-day.is-outside {
