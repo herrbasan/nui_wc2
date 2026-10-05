@@ -1,6 +1,6 @@
 {
 	"schemaVersion": 1,
-	"generated": "2026-09-28T20:06:08.218Z",
+	"generated": "2026-10-05T09:03:51.733Z",
 	"source": "Playground/pages/**",
 	"components": [
 		{
@@ -114,6 +114,21 @@
 			"page": "components/code",
 			"demoPath": "Playground/pages/components/code.html",
 			"docPath": "documentation/components/code.md"
+		},
+		{
+			"@context": "nui",
+			"@type": "Component",
+			"name": "nui-date-range",
+			"group": "forms",
+			"description": "Paired from/to native date inputs with an optional preset select, emitting one normalized nui-change event.",
+			"events": [
+				"nui-date-range-change"
+			],
+			"innerElement": "<input type=\"date\" data-nui-date-range=\"from\"> + <input type=\"date\" data-nui-date-range=\"to\">",
+			"imports": null,
+			"page": "components/date-range",
+			"demoPath": "Playground/pages/components/date-range.html",
+			"docPath": "documentation/components/date-range.md"
 		},
 		{
 			"@context": "nui",
@@ -1024,6 +1039,14 @@
 				},
 				{
 					"name": "nui-file-selected"
+				}
+			]
+		},
+		{
+			"component": "nui-date-range",
+			"events": [
+				{
+					"name": "nui-date-range-change"
 				}
 			]
 		},

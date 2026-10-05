@@ -316,6 +316,36 @@ If you MUST apply CSS (spacing on your own wrappers, very rare theming), use ONL
 
 📖 **Full docs:** [`documentation/components/input.md`](documentation/components/input.md)
 
+### nui-date-range
+
+Paired from/to native date inputs with an optional preset `<select>`. Emits one normalized `nui-change`.
+
+```html
+<!-- ✅ CORRECT — the preset select is a CHILD, not a sibling -->
+<nui-date-range size="small">
+    <nui-select placeholder="Range">
+        <select>
+            <option value="" selected>Custom</option>
+            <option value="today">Today</option>
+            <option value="7d">Last 7 days</option>
+            <option value="all">All time</option>
+        </select>
+    </nui-select>
+    <input type="date" data-nui-date-range="from" aria-label="From">
+    <input type="date" data-nui-date-range="to" aria-label="To">
+</nui-date-range>
+```
+
+| Presets | `today`, `yesterday`, `7d`, `30d`, `90d`, `all` — inclusive on both ends, so `7d` is today plus 6 days |
+|---|---|
+| Attributes | `size` (`"small"` = 2rem row — put it HERE, not on the child select), `min`, `max`, `now` (anchors presets to a fixed `YYYY-MM-DD`, for tests) |
+| Event | `nui-date-range-change` → `{ from, to, preset }` — `preset` is `''` for hand-entered ranges |
+| Methods | `.getValue()`, `.setValue({from,to,preset})`, `.clear()`, `.getPreset()`, `.setPreset(v)` |
+
+⚠️ **Three traps.** A sibling `<nui-select>` renders as a working dropdown that silently never fires — the component only searches its own children. The event is `nui-date-range-change`, **not** `nui-change`: a child `<nui-select>` fires its own `nui-change` (`{ values, labels, options }`) straight through this element, and one shared listener would receive both payloads. And an inverted range is clamped, not emitted: editing `from` past `to` pushes `to` up, so a reversed window (which would match nothing and look like a data outage) can never be observed.
+
+📖 **Full docs:** [`documentation/components/date-range.md`](documentation/components/date-range.md)
+
 ### nui-select
 
 ```html

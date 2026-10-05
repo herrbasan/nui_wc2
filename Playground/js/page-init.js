@@ -1388,6 +1388,20 @@ nui.registerPage('components/skip-links', {
 	}
 });
 
+nui.registerPage('components/date-range', {
+	html: 'components/date-range.html',
+	init(element, params, nui) {
+		const out = element.querySelector('#range-event-1');
+		const range = element.querySelector('#demo-range-1');
+		if (range && out) {
+			range.addEventListener('nui-date-range-change', (e) => {
+				const { from, to, preset } = e.detail;
+				out.textContent = `{ from: "${from}", to: "${to}", preset: "${preset}" }`;
+			});
+		}
+	}
+});
+
 nui.registerPage('components/slider', {
 	html: 'components/slider.html',
 	init(element, params, nui) {

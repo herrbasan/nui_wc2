@@ -105,6 +105,26 @@ registerValidator('missing inner elements', (root) => {
 	});
 });
 
+registerValidator('nui-date-range inputs', (root) => {
+	root.querySelectorAll('nui-date-range').forEach(el => {
+		['from', 'to'].forEach(side => {
+			if (el.querySelector(`input[data-nui-date-range="${side}"]`)) return;
+			warn(el, `<nui-date-range> is missing its "${side}" input.`, 'Add <input type="date" data-nui-date-range="from"> and <input type="date" data-nui-date-range="to"> as direct children. An <option value=""> in the preset select is NOT a from/to field — the component reads the two marked inputs only.');
+		});
+	});
+
+	// The most likely authoring slip: a preset <nui-select> placed NEXT TO the
+	// component instead of inside it. Nothing errors, the presets just never fire.
+	root.querySelectorAll('nui-date-range').forEach(el => {
+		if (el.querySelector('select')) return;
+		const sibling = el.previousElementSibling;
+		if (sibling?.matches('nui-select, nui-select > *') || sibling?.querySelector('select')) {
+			warn(sibling, 'This <nui-select> looks like a <nui-date-range> preset list but is a sibling of it, not a child.',
+				'Move the whole <nui-select> INSIDE <nui-date-range>. The component only looks for a <select> among its own children, so a sibling preset list renders and does nothing.');
+		}
+	});
+});
+
 registerValidator('nui-content child', (root) => {
 	root.querySelectorAll('nui-content').forEach(content => {
 		if (content.querySelector('nui-main')) return;

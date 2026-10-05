@@ -4509,6 +4509,172 @@ registerComponent('nui-select', (element) => {
 	};
 });
 
+// ################################# nui-date-range COMPONENT
+
+// Presets resolve against a supplied "now" so the component is testable and so a
+// host with a server-side clock can anchor to it via the `now` attribute. Presets are
+// inclusive on both ends: "Last 7 days" is today plus the 6 days before it.
+const DATE_RANGE_PRESETS = {
+	today: 0,
+	yesterday: 1,
+	'7d': 6,
+	'30d': 29,
+	'90d': 89
+};
+
+function toIsoDate(date) {
+	const y = date.getFullYear();
+	const m = String(date.getMonth() + 1).padStart(2, '0');
+	const d = String(date.getDate()).padStart(2, '0');
+	return `${y}-${m}-${d}`;
+}
+
+function parseIsoDate(value) {
+	const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || '').trim());
+	if (!m) return null;
+	const date = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+	// Reject impossible dates that Date would silently roll over (e.g. 2026-02-31).
+	if (date.getFullYear() !== Number(m[1]) || date.getMonth() !== Number(m[2]) - 1 || date.getDate() !== Number(m[3])) {
+		return null;
+	}
+	return date;
+}
+
+function shiftDays(date, days) {
+	const copy = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+	copy.setDate(copy.getDate() - days);
+	return copy;
+}
+
+registerComponent('nui-date-range', (element) => {
+	element.classList.add('nui-date-range');
+
+	const presetSelect = element.el('select');
+	const fromInput = element.el('[data-nui-date-range="from"]');
+	const toInput = element.el('[data-nui-date-range="to"]');
+
+	// A preset <nui-select> placed next to the component is the easiest mistake to make
+	// and the quietest: it renders as a working dropdown that never resolves anything,
+	// because the resolver only searches this element's own children.
+	if (!presetSelect) {
+		const stray = element.previousElementSibling;
+		if (stray?.matches?.('nui-select') && config.debug !== false) {
+			console.warn('[NUI] <nui-date-range> has no preset <select> child, but the <nui-select> before it looks like one. Move it INSIDE <nui-date-range> — a sibling preset list renders and does nothing.');
+		}
+	}
+
+	if (!fromInput || !toInput) {
+		if (config.debug !== false) {
+			console.warn('[NUI] <nui-date-range> needs two <input type="date"> children marked data-nui-date-range="from" and data-nui-date-range="to". Use:\n  <nui-date-range><input type="date" data-nui-date-range="from"><input type="date" data-nui-date-range="to"></nui-date-range>');
+		}
+		return;
+	}
+
+	const now = () => parseIsoDate(element.getAttribute('now')) || new Date();
+	const max = element.getAttribute('max') || '';
+	const min = element.getAttribute('min') || '';
+
+	if (max) toInput.max = max;
+	if (min) {
+		fromInput.min = min;
+		toInput.min = min;
+	}
+
+	// An inverted range is a data-entry slip, not a request — clamping the earlier
+	// field up to the later one keeps every emitted range well-formed instead of
+	// silently returning nothing.
+	const emit = (preset) => {
+		let from = fromInput.value;
+		let to = toInput.value;
+		if (from && to && from > to) {
+			if (document.activeElement === fromInput) {
+				to = from;
+				toInput.value = to;
+			} else {
+				from = to;
+				fromInput.value = from;
+			}
+		}
+		// `nui-date-range-change`, not `nui-change`: a preset <nui-select> is a child, and
+		// its own nui-change (detail { values, labels, options }) bubbles straight through
+		// this element. A shared name would hand consumers two incompatible payloads on one
+		// listener, and the inner one has no from/to at all.
+		element.dispatchEvent(new CustomEvent('nui-date-range-change', {
+			bubbles: true,
+			detail: { from, to, preset: preset || '' }
+		}));
+	};
+
+	// A hand-edited date is by definition outside the preset set, so the preset
+	// selection is cleared rather than left showing a range it no longer describes.
+	const clearPresetSelection = () => {
+		if (presetSelect && presetSelect.selectedIndex !== -1) {
+			const selected = presetSelect.options[presetSelect.selectedIndex];
+			if (selected && selected.value) presetSelect.selectedIndex = -1;
+		}
+	};
+
+	const applyPreset = (value) => {
+		if (!value) return false;
+		if (value === 'all') {
+			fromInput.value = '';
+			toInput.value = '';
+			return true;
+		}
+		const offset = DATE_RANGE_PRESETS[value];
+		if (offset === undefined) return false;
+		const today = now();
+		const from = value === 'yesterday' ? shiftDays(today, 1) : shiftDays(today, offset);
+		const to = value === 'yesterday' ? shiftDays(today, 1) : today;
+		fromInput.value = toIsoDate(from);
+		toInput.value = toIsoDate(to);
+		return true;
+	};
+
+	const onInput = () => { clearPresetSelection(); emit(''); };
+	fromInput.addEventListener('input', onInput);
+	toInput.addEventListener('input', onInput);
+	// change fires when a picker closes without firing input on some engines, and when
+	// the field is committed with the keyboard — without it the value can go stale.
+	fromInput.addEventListener('change', onInput);
+	toInput.addEventListener('change', onInput);
+
+	if (presetSelect) {
+		presetSelect.addEventListener('change', () => {
+			if (applyPreset(presetSelect.value)) emit(presetSelect.value);
+		});
+	}
+
+	// Honour values authored in markup on first connect, so a page can ship a
+	// pre-selected range without a script running before the element upgrades.
+	element.getValue = () => ({ from: fromInput.value, to: toInput.value });
+
+	element.setValue = ({ from = '', to = '', preset = '' } = {}) => {
+		if (preset && applyPreset(preset)) {
+			element.dispatchEvent(new CustomEvent('nui-date-range-change', {
+				bubbles: true,
+				detail: { from: fromInput.value, to: toInput.value, preset }
+			}));
+			return;
+		}
+		fromInput.value = from;
+		toInput.value = to;
+		clearPresetSelection();
+		element.dispatchEvent(new CustomEvent('nui-date-range-change', {
+			bubbles: true,
+			detail: { from, to, preset: '' }
+		}));
+	};
+
+	element.clear = () => element.setValue({});
+
+	if (presetSelect) element.getPreset = () => presetSelect.value;
+	if (presetSelect) element.setPreset = (value) => {
+		presetSelect.value = value;
+		presetSelect.dispatchEvent(new Event('change', { bubbles: true }));
+	};
+});
+
 // ################################# nui-sortable COMPONENT
 
 registerComponent('nui-sortable', (element) => {

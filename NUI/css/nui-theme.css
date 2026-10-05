@@ -2644,6 +2644,64 @@ nui-form-row>nui-button {
 }
 
 /* =============================================================================
+   NUI-DATE-RANGE - From/To Date Pair with Optional Preset Select
+   ============================================================================= */
+
+nui-date-range {
+	display: flex;
+	align-items: center;
+	gap: var(--nui-space-half);
+	flex-wrap: wrap;
+	/* A private row-height variable, resolved HERE and inherited by the children.
+	   The shared --nui-form-row-height cannot be used for this: a `size` on the child
+	   re-declares it in the child's own scope, so the select would read 2rem while the
+	   date inputs read 2.5rem. Nothing re-declares this one, so the pair stays even. */
+	--nui-date-range-height: var(--nui-form-row-height, 2.5rem);
+}
+
+/* Compact row — one attribute sizes the whole control. */
+nui-date-range[size="small"] {
+	--nui-date-range-height: var(--nui-space-double, 2rem);
+	font-size: var(--font-size-small);
+}
+
+nui-date-range>select,
+nui-date-range>nui-select,
+nui-date-range>nui-input,
+nui-date-range>input[type="date"] {
+	height: var(--nui-date-range-height);
+}
+
+/* Out-specifies the child's own [size] rule so a `size` authored on the child cannot
+   knock just that control out of line with its siblings. */
+nui-date-range>nui-select[size],
+nui-date-range>nui-input[size] {
+	height: var(--nui-date-range-height);
+	font-size: inherit;
+}
+
+/* The global bare-input rule further down pins min-height to 2.5rem, which overrides an
+   explicit height whenever this control sits in a compact row (an inherited 2rem
+   --nui-form-row-height, or size="small" here). Height is always set above, so the
+   floor can never win and is dropped unconditionally. */
+nui-date-range>input[type="date"] {
+	min-height: 0;
+}
+
+/* The separator is decorative: each input carries its own label, so exposing a
+   glyph between them would read as content with no meaning. */
+nui-date-range>.nui-date-range-sep {
+	color: var(--color-text-dim);
+	user-select: none;
+}
+
+nui-date-range>input[type="date"]:focus-visible {
+	outline: 2px solid var(--color-highlight);
+	outline-offset: 1px;
+	border-radius: var(--border-radius1);
+}
+
+/* =============================================================================
    NUI-INPUT - Text Input Component
    ============================================================================= */
 

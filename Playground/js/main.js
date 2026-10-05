@@ -288,6 +288,7 @@ const navigationData = [
 					{ label: 'Tag Input', href: '#page=components/tag-input' },
 					{ label: 'Select', href: '#page=components/select' },
 					{ label: 'Slider', href: '#page=components/slider' },
+					{ label: 'Date Range', href: '#page=components/date-range' },
 					{ label: 'Dropzone', href: '#page=components/dropzone' }
 				]
 			},
