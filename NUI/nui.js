@@ -4597,7 +4597,7 @@ function localeWeekStart(locale) {
  * two date inputs are hidden, not replaced, so clamping, the change event and the whole
  * public API are shared verbatim between the two modes.
  */
-function setupCalendarMode(element, { fromInput, toInput, presetSelect, emit, applyPreset }) {
+function setupCalendarMode(element, { fromInput, toInput, presetSelect, emit, resolvePreset, syncPresetSelection }) {
 	const locale = document.documentElement.lang || undefined;
 	const weekStart = localeWeekStart(locale);
 	const fmtFull = new Intl.DateTimeFormat(locale, { dateStyle: 'full' });
@@ -4644,10 +4644,18 @@ function setupCalendarMode(element, { fromInput, toInput, presetSelect, emit, ap
 	let hoverIso = '';
 	let pickingEnd = false;
 	let dragArmed = false;
-	// Snapshot taken when the panel opens so Escape or Cancel can put the old range back.
-	let beforeOpen = { from: '', to: '' };
+	// What the panel was holding when it opened, so a dismissal can put it back. This
+	// is the DISMISSAL TARGET, not the last commit: applying moves it forward, so the
+	// close handler that runs after an Apply re-applies the same range instead of
+	// reverting it. Anything that changes the committed value must move this too, or
+	// closing the panel silently undoes that change.
+	let beforeOpen = { from: '', to: '', preset: '' };
 	let draftFrom = fromInput.value;
 	let draftTo = toInput.value;
+	// The preset the DRAFT describes. Tracked separately from the select because the
+	// chips are the preset UI here: the hidden <select> is the value model, and a chip
+	// click must not move it before Apply.
+	let draftPreset = '';
 	const densityMap = new Map();
 	let maxDensity = 0;
 
@@ -4696,9 +4704,11 @@ function setupCalendarMode(element, { fromInput, toInput, presetSelect, emit, ap
 				target: presetList
 			});
 			btn.addEventListener('click', () => {
-				applyPreset(opt.value);
-				draftFrom = fromInput.value;
-				draftTo = toInput.value;
+				const range = resolvePreset(opt.value);
+				if (!range) return;
+				draftFrom = range.from;
+				draftTo = range.to;
+				draftPreset = opt.value;
 				pickingEnd = false;
 				hoverIso = '';
 				updateManualInputs();
@@ -4753,6 +4763,7 @@ function setupCalendarMode(element, { fromInput, toInput, presetSelect, emit, ap
 
 	startInput.addEventListener('change', () => {
 		draftFrom = startInput.value;
+		draftPreset = '';
 		if (draftFrom && draftTo && draftFrom > draftTo) {
 			draftTo = draftFrom;
 			endInput.value = draftTo;
@@ -4767,6 +4778,7 @@ function setupCalendarMode(element, { fromInput, toInput, presetSelect, emit, ap
 
 	endInput.addEventListener('change', () => {
 		draftTo = endInput.value;
+		draftPreset = '';
 		if (draftFrom && draftTo && draftFrom > draftTo) {
 			draftFrom = draftTo;
 			startInput.value = draftFrom;
@@ -4782,13 +4794,13 @@ function setupCalendarMode(element, { fromInput, toInput, presetSelect, emit, ap
 	cancelBtn.addEventListener('click', () => {
 		cancel();
 		popover.hide();
+		trigger.focus();
 	});
 
 	applyBtn.addEventListener('click', () => {
-		fromInput.value = draftFrom;
-		toInput.value = draftTo;
 		commit();
 		popover.hide();
+		trigger.focus();
 	});
 
 	const current = () => ({ from: fromInput.value, to: toInput.value });
@@ -5087,15 +5099,11 @@ function setupCalendarMode(element, { fromInput, toInput, presetSelect, emit, ap
 			}
 		}
 
-		// Preset chips reflect the draft range.
+		// Preset chips reflect the draft's preset. Matching on the VALUE MODEL instead
+		// meant calling applyPreset on the live inputs just to compare them — mutating
+		// the committed range from inside a repaint, once per chip per render.
 		presetButtons.forEach((btn, value) => {
-			const savedFrom = fromInput.value;
-			const savedTo = toInput.value;
-			applyPreset(value);
-			const match = fromInput.value === draftFrom && toInput.value === draftTo;
-			fromInput.value = savedFrom;
-			toInput.value = savedTo;
-			btn.classList.toggle('is-active', match);
+			btn.classList.toggle('is-active', value === draftPreset);
 		});
 
 		// Navigation limits for prev/next buttons.
@@ -5110,16 +5118,25 @@ function setupCalendarMode(element, { fromInput, toInput, presetSelect, emit, ap
 	function commit() {
 		fromInput.value = draftFrom;
 		toInput.value = draftTo;
+		syncPresetSelection(draftPreset);
+		// Apply closes the panel, and the close handler restores `beforeOpen`. That
+		// handler cannot tell "the user applied" from "the user clicked away", so the
+		// only thing that keeps an Apply from being undone is the target having moved
+		// forward to the range just committed.
+		beforeOpen = { from: draftFrom, to: draftTo, preset: draftPreset };
 		pickingEnd = false;
 		dragArmed = false;
 		hoverIso = '';
-		emit('');
+		emit(draftPreset);
 		render();
 	}
 
 	function selectDay(iso) {
 		if (minIso && iso < minIso) return;
 		if (maxIso && iso > maxIso) return;
+		// A hand-picked day is by definition outside the preset set, so the chips must
+		// stop claiming otherwise.
+		draftPreset = '';
 		if (!pickingEnd) {
 			draftFrom = iso;
 			draftTo = '';
@@ -5144,8 +5161,10 @@ function setupCalendarMode(element, { fromInput, toInput, presetSelect, emit, ap
 	function cancel() {
 		draftFrom = beforeOpen.from;
 		draftTo = beforeOpen.to;
+		draftPreset = beforeOpen.preset;
 		fromInput.value = beforeOpen.from;
 		toInput.value = beforeOpen.to;
+		syncPresetSelection(beforeOpen.preset);
 		pickingEnd = false;
 		dragArmed = false;
 		hoverIso = '';
@@ -5341,7 +5360,10 @@ function setupCalendarMode(element, { fromInput, toInput, presetSelect, emit, ap
 		if (e.newState === 'open') {
 			draftFrom = fromInput.value;
 			draftTo = toInput.value;
-			beforeOpen = { from: draftFrom, to: draftTo };
+			// The hidden <select> is the record of which preset the committed range came
+			// from, so it is where the draft's preset identity starts.
+			draftPreset = presetSelect ? presetSelect.value : '';
+			beforeOpen = { from: draftFrom, to: draftTo, preset: draftPreset };
 			pickingEnd = false;
 			dragArmed = false;
 			viewMode = 'days';
@@ -5354,9 +5376,13 @@ function setupCalendarMode(element, { fromInput, toInput, presetSelect, emit, ap
 	});
 
 	popover.addEventListener('nui-popover-close', () => {
-		// Outside click or dismiss restores previous committed range
+		// Fires for EVERY close, including a light dismiss on an outside click. The
+		// draft is discarded in all of them — the committed value never changes while
+		// the panel is open — but focus is NOT returned here: on an outside click the
+		// user aimed at something else, and stealing focus back to the trigger fights
+		// the click they just made. The three deliberate dismissals return focus
+		// themselves, where it belongs.
 		cancel();
-		trigger.focus();
 		render();
 	});
 
@@ -5366,12 +5392,17 @@ function setupCalendarMode(element, { fromInput, toInput, presetSelect, emit, ap
 		e.stopPropagation();
 		cancel();
 		popover.hide();
+		trigger.focus();
 	});
 
-	// Anything that changes the value from outside must repaint the grid.
+	// Anything that changes the value from outside must repaint the grid, and the
+	// committed range is now the draft — including its preset, or the chips would keep
+	// highlighting a preset the new range did not come from.
 	const repaint = () => {
 		draftFrom = fromInput.value;
 		draftTo = toInput.value;
+		draftPreset = presetSelect ? presetSelect.value : '';
+		beforeOpen = { from: draftFrom, to: draftTo, preset: draftPreset };
 		updateManualInputs();
 		render();
 	};
@@ -5467,37 +5498,47 @@ registerComponent('nui-date-range', (element) => {
 	// `change`, which lands right back on this element's own listener. Without it the
 	// clear re-enters itself forever.
 	let syncing = false;
-	const clearPresetSelection = () => {
+	// A programmatic write of the preset select is in progress, so the change event it
+	// provokes is ours and not the user's. Checked by the change listener below, which
+	// is the only reason `syncing` exists.
+	const syncPresetSelection = (value) => {
 		if (syncing || !presetSelect) return;
 		const selected = presetSelect.options[presetSelect.selectedIndex];
-		if (!selected || !selected.value) return;
+		const current = selected ? selected.value : '';
+		if (current === value) return;
 		syncing = true;
 		try {
 			const wrapper = presetSelect.closest('nui-select');
 			// A wrapped select owns its own visible label; writing the native value alone
 			// would clear it underneath and leave "Last 7 days" still on screen next to a
 			// hand-picked window. A bare <select> has no label to update.
-			if (wrapper?.setValue) wrapper.setValue('');
-			else presetSelect.selectedIndex = -1;
+			if (wrapper?.setValue) wrapper.setValue(value);
+			else presetSelect.value = value;
 		} finally {
 			syncing = false;
 		}
 	};
+	const clearPresetSelection = () => syncPresetSelection('');
 
-	const applyPreset = (value) => {
-		if (!value) return false;
-		if (value === 'all') {
-			fromInput.value = '';
-			toInput.value = '';
-			return true;
-		}
+	// Resolving a preset is pure: it answers what range the preset means without
+	// touching the store. Calendar mode needs that answer to fill a *draft* — a chip
+	// click is not a commit — and writing the store from here is what let an unapplied
+	// chip silently replace a committed range.
+	const resolvePreset = (value) => {
+		if (value === 'all') return { from: '', to: '' };
 		const offset = DATE_RANGE_PRESETS[value];
-		if (offset === undefined) return false;
+		if (offset === undefined) return null;
 		const today = now();
 		const from = value === 'yesterday' ? shiftDays(today, 1) : shiftDays(today, offset);
 		const to = value === 'yesterday' ? shiftDays(today, 1) : today;
-		fromInput.value = toIsoDate(from);
-		toInput.value = toIsoDate(to);
+		return { from: toIsoDate(from), to: toIsoDate(to) };
+	};
+
+	const applyPreset = (value) => {
+		const range = resolvePreset(value);
+		if (!range) return false;
+		fromInput.value = range.from;
+		toInput.value = range.to;
 		return true;
 	};
 
@@ -5511,6 +5552,10 @@ registerComponent('nui-date-range', (element) => {
 
 	if (presetSelect) {
 		presetSelect.addEventListener('change', () => {
+			// `syncing` marks a write we made ourselves (setPreset, syncPresetSelection).
+			// Those callers do the applying and the emitting; letting the event they
+			// caused reach here as well would commit and announce the same change twice.
+			if (syncing) return;
 			if (applyPreset(presetSelect.value)) emit(presetSelect.value);
 		});
 	}
@@ -5542,22 +5587,17 @@ registerComponent('nui-date-range', (element) => {
 
 	if (presetSelect) element.getPreset = () => presetSelect.value;
 	if (presetSelect) element.setPreset = (value) => {
-		// An unrecognised preset is ignored outright — same rule as applyPreset, and it
+		// An unrecognised preset is ignored outright — same rule as resolvePreset, and it
 		// has to be ignored BEFORE anything is written. Assigning an unknown value to a
 		// native select silently clears the selection, which would leave the wrapper
 		// showing a preset that no longer matches the range.
 		if (!Array.from(presetSelect.options).some(o => o.value === value)) return;
-		// Route through nui-select's own setter when there is one, for the same reason
-		// clearPresetSelection does: writing the native value leaves the wrapper's visible
-		// label showing the previous preset.
-		const wrapper = presetSelect.closest('nui-select');
-		if (wrapper?.setValue) {
-			syncing = true;
-			try { wrapper.setValue(value); } finally { syncing = false; }
-			return;
-		}
-		presetSelect.value = value;
-		presetSelect.dispatchEvent(new Event('change', { bubbles: true }));
+		if (!applyPreset(value)) return;
+		// The mutation is done here rather than delegated to the change event: that
+		// listener is the USER's path, and routing a programmatic write through it makes
+		// "who caused this" unanswerable.
+		syncPresetSelection(value);
+		emit(value);
 	};
 
 	// ##### CALENDAR MODE
@@ -5567,7 +5607,7 @@ registerComponent('nui-date-range', (element) => {
 	// above (getValue, setValue, clamping, the change event) is identical in both modes
 	// and a host that swaps modes mid-life does not lose state.
 	if (element.hasAttribute('calendar')) {
-		setupCalendarMode(element, { fromInput, toInput, presetSelect, emit, applyPreset });
+		setupCalendarMode(element, { fromInput, toInput, presetSelect, emit, resolvePreset, syncPresetSelection });
 	}
 });
 
