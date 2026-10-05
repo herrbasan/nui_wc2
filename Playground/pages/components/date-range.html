@@ -4,7 +4,7 @@
   "@type": "Component",
   "name": "nui-date-range",
   "group": "forms",
-  "description": "Paired from/to native date inputs with an optional preset select, emitting one normalized nui-change event.",
+  "description": "Paired from/to native date inputs with an optional preset select, emitting one normalized nui-date-range-change event.",
   "events": [
     "nui-date-range-change"
   ],
@@ -26,7 +26,7 @@
 <section>
 	<h2>Overview</h2>
 	<p>The <code>&lt;nui-date-range&gt;</code> component owns the reconciliation between a preset list and two hand-editable date fields, so a caller only handles one normalized <code>{ from, to, preset }</code> event.</p>
-	<p>It deliberately adds no calendar popup — the native picker is used as-is, which keeps it keyboard- and locale-correct for free.</p>
+	<p>It comes in two presentations: the default inline pair, which leans on the browser's native picker and stays keyboard- and locale-correct for free, and a <code>calendar</code> mode that swaps in a month grid. Both share one value store, so the behaviour below is identical in each.</p>
 </section>
 
 <section>
@@ -120,7 +120,11 @@
 
 <section>
 	<h2>Calendar Mode</h2>
-	<p>Add <code>calendar</code> and the two date inputs collapse into a single button showing the resolved range. Opening it gives a month grid — click a start then an end, or drag across the days. The preset <code>&lt;select&gt;</code> still drives the chips at the top of the panel; it is never removed from the value model.</p>
+	<p>Add <code>calendar</code> and the two date inputs collapse into a single button showing the resolved range. Opening it gives a month grid — click a start then an end, or drag across the days. The preset <code>&lt;select&gt;</code> still drives the chips in the sidebar; it is never removed from the value model.</p>
+
+	<h3>Nothing is committed until Apply</h3>
+	<p>Picking days, dragging, typing in the manual fields and clicking a chip all edit a <strong>draft</strong>. The committed range is untouched while the panel is open, and no event fires — which is exactly what makes <em>Cancel</em> possible, and means <code>getValue()</code> returns the committed range, not whatever you are trying out.</p>
+	<p>Closing by <em>Apply</em> commits and emits; closing by <em>Cancel</em>, <em>Escape</em> or a click outside discards. The preset selection travels with the draft, so a chip's identity survives into <code>detail.preset</code>, and picking days by hand clears it again.</p>
 
 	<h3>Try It</h3>
 	<div class="demo-container">
@@ -207,18 +211,11 @@
 				<td><code>getValue()</code></td>
 				<td>Returns <code>{ from, to }</code>, both <code>YYYY-MM-DD</code> strings or <code>''</code> when unbounded.</td>
 			</tr>
-			<tr>
-				<td><code>setValue({ from, to, preset })</code></td>
-				<td>Sets the range and emits <code>nui-change</code>. Passing <code>preset</code> resolves it against the current clock instead.</td>
-			</tr>
-			<tr>
-				<td><code>clear()</code></td>
-				<td>Empties both fields.</td>
-			</tr>
-			<tr>
-				<td><code>getPreset()</code> / <code>setPreset(v)</code></td>
-				<td>Read or drive the preset select. Only present when a <code>&lt;select&gt;</code> child exists.</td>
-			</tr>
+			<tr><td><code>setValue({ from, to, preset })</code></td><td>Sets the range and emits <code>nui-date-range-change</code>. Passing <code>preset</code> resolves it against the current clock instead.</td></tr>
+			<tr><td><code>clear()</code></td><td>Empties both fields.</td></tr>
+			<tr><td><code>getPreset()</code> / <code>setPreset(v)</code></td><td>Read or drive the preset select. Only present when a <code>&lt;select&gt;</code> child exists.</td></tr>
+			<tr><td><code>setDensity(map, opts)</code></td><td>Calendar mode only. Marks days by volume from <code>{ 'YYYY-MM-DD': n }</code>; <code>opts.max</code> overrides the normalisation ceiling. Drawn as a bar under the number, not a cell fill, so it can never be read as a selected range.</td></tr>
+			<tr><td><code>openCalendar()</code></td><td>Calendar mode only. Opens the panel programmatically.</td></tr>
 		</tbody>
 	</table>
 

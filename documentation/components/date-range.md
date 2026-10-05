@@ -22,8 +22,9 @@ attribute can be toggled without losing state.
 ## Calendar Mode
 
 Add the `calendar` attribute and the two date inputs collapse into a single button that
-shows the resolved range. Opening it gives a month grid: click a start then an end, or
-drag across the days. Preset chips sit above the grid.
+shows the resolved range. Opening it gives a two-column workstation panel: the month
+grid on the left, preset chips plus the manual range fields and the Apply / Cancel
+actions on the right.
 
 ```html
 <nui-date-range calendar>
@@ -46,6 +47,25 @@ remove the attribute without losing state.
 
 The panel is an `<nui-popover>`, so it is a top-layer element: no ancestor's
 `overflow: hidden` can clip it and no scroll container traps it.
+
+### Draft and commit
+
+**Nothing in the panel changes the value until Apply.** Picking days, dragging, typing
+into the manual fields and clicking a preset chip all edit a *draft*; the committed
+range is untouched the whole time and no `nui-date-range-change` fires. This is what
+makes Cancel possible — and it means `getValue()` returns the committed range while the
+panel is open, not whatever is currently being tried out.
+
+| Closing by | Draft |
+|------------|-------|
+| **Apply** | committed, emits `nui-date-range-change`, focus returns to the trigger |
+| **Cancel** | discarded, focus returns to the trigger |
+| **Escape** | discarded, focus returns to the trigger |
+| **clicking outside** | discarded, focus stays where you clicked |
+
+The preset selection travels with the draft, so a chip's identity survives Apply and
+comes back out as `detail.preset`; picking days by hand clears it again, for the same
+reason typing in the inline mode does.
 
 ### The range band
 
@@ -173,11 +193,11 @@ document.querySelector('nui-date-range').addEventListener('nui-date-range-change
 | Method | Parameters | Returns | Description |
 |--------|-----------|---------|-------------|
 | `getValue()` | – | `{ from, to }` | Current range. |
-| `setValue(opts)` | `{ from, to, preset }` | – | Sets the range and emits `nui-change`. Passing `preset` resolves it against the current clock instead. |
+| `setValue(opts)` | `{ from, to, preset }` | – | Sets the range and emits `nui-date-range-change`. Passing `preset` resolves it against the current clock instead. |
 | `clear()` | – | – | Empties both fields (equivalent to the `all` preset). |
 | `getPreset()` | – | `string` | Current preset value, or `''`. |
 | `setPreset(value)` | `string` | – | Selects a preset, resolves it, and emits. An unrecognised value is a complete no-op. |
-| `setDensity(data, opts)` | `object, object?` | – | Calendar mode only. Supplies a `{ 'YYYY-MM-DD': number }` density map (or array) to shade days as a traffic heatmap (`data-density="1..4"`). |
+| `setDensity(data, opts)` | `object, object?` | – | Calendar mode only. Supplies a `{ 'YYYY-MM-DD': number }` density map (or array) to mark days by traffic volume (`data-density="1..4"`, `opts.max` overrides the normalisation ceiling). Rendered as a small bar under the date number, **not** as a cell background — a filled cell would be indistinguishable from a selected range. |
 | `openCalendar()` | – | – | Calendar mode only. Opens the panel programmatically. |
 
 The preset methods are only installed when a `<select>` child is present. `setPreset()`

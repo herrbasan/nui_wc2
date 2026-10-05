@@ -1,6 +1,6 @@
 {
 	"schemaVersion": 1,
-	"generated": "2026-10-05T10:30:19.148Z",
+	"generated": "2026-10-05T16:54:03.502Z",
 	"source": "Playground/pages/**",
 	"components": [
 		{
@@ -120,7 +120,7 @@
 			"@type": "Component",
 			"name": "nui-date-range",
 			"group": "forms",
-			"description": "Paired from/to native date inputs with an optional preset select, emitting one normalized nui-change event.",
+			"description": "Paired from/to native date inputs with an optional preset select, emitting one normalized nui-date-range-change event.",
 			"events": [
 				"nui-date-range-change"
 			],
