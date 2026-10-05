@@ -4603,6 +4603,8 @@ function setupCalendarMode(element, { fromInput, toInput, presetSelect, emit, ap
 	const fmtFull = new Intl.DateTimeFormat(locale, { dateStyle: 'full' });
 	const fmtShort = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' });
 	const fmtLong = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', year: 'numeric' });
+	const fmtMonth = new Intl.DateTimeFormat(locale, { month: 'short' });
+	const fmtMonthLong = new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' });
 
 	const minIso = element.getAttribute('min') || '';
 	const maxIso = element.getAttribute('max') || '';
@@ -4637,6 +4639,18 @@ function setupCalendarMode(element, { fromInput, toInput, presetSelect, emit, ap
 
 	const panel = dom.create('div', { class: 'nui-date-range-panel', target: popover });
 
+	let viewYear, viewMonth;
+	let viewMode = 'days'; // 'days' | 'months' | 'years'
+	let hoverIso = '';
+	let pickingEnd = false;
+	let dragArmed = false;
+	// Snapshot taken when the panel opens so Escape or Cancel can put the old range back.
+	let beforeOpen = { from: '', to: '' };
+	let draftFrom = fromInput.value;
+	let draftTo = toInput.value;
+	const densityMap = new Map();
+	let maxDensity = 0;
+
 	// Preset rail first: it is the fastest path and the thing most users reach for.
 	const presetRail = dom.create('div', { class: 'nui-date-range-presets', target: panel });
 	const presetButtons = new Map();
@@ -4651,12 +4665,101 @@ function setupCalendarMode(element, { fromInput, toInput, presetSelect, emit, ap
 			});
 			btn.addEventListener('click', () => {
 				applyPreset(opt.value);
-				commit();
-				popover.hide();
+				draftFrom = fromInput.value;
+				draftTo = toInput.value;
+				pickingEnd = false;
+				hoverIso = '';
+				updateManualInputs();
+				const targetDate = parseIsoDate(draftTo) || parseIsoDate(draftFrom);
+				if (targetDate) showMonth(targetDate);
+				else render();
 			});
 			presetButtons.set(opt.value, btn);
 		}
 	}
+
+	// Controls bar: manual Start/End date inputs + Cancel / Apply actions.
+	const controlsBar = dom.create('div', { class: 'nui-date-range-controls', target: panel });
+
+	const manualWrap = dom.create('div', { class: 'nui-date-range-manual', target: controlsBar });
+
+	const startField = dom.create('div', { class: 'nui-date-range-manual-field', target: manualWrap });
+	dom.create('label', { class: 'nui-date-range-manual-label', content: 'Start', target: startField });
+	const startInput = dom.create('input', {
+		class: 'nui-date-range-manual-input',
+		attrs: { type: 'date', 'aria-label': 'Start date' },
+		target: startField
+	});
+
+	const endField = dom.create('div', { class: 'nui-date-range-manual-field', target: manualWrap });
+	dom.create('label', { class: 'nui-date-range-manual-label', content: 'End', target: endField });
+	const endInput = dom.create('input', {
+		class: 'nui-date-range-manual-input',
+		attrs: { type: 'date', 'aria-label': 'End date' },
+		target: endField
+	});
+
+	if (minIso) { startInput.min = minIso; endInput.min = minIso; }
+	if (maxIso) { startInput.max = maxIso; endInput.max = maxIso; }
+
+	const actionsWrap = dom.create('div', { class: 'nui-date-range-actions', target: controlsBar });
+	const cancelBtn = dom.create('button', {
+		class: 'nui-date-range-btn nui-date-range-btn--cancel',
+		attrs: { type: 'button' },
+		content: 'Cancel',
+		target: actionsWrap
+	});
+	const applyBtn = dom.create('button', {
+		class: 'nui-date-range-btn nui-date-range-btn--apply',
+		attrs: { type: 'button' },
+		content: 'Apply',
+		target: actionsWrap
+	});
+
+	function updateManualInputs() {
+		startInput.value = draftFrom || '';
+		endInput.value = draftTo || '';
+	}
+
+	startInput.addEventListener('change', () => {
+		draftFrom = startInput.value;
+		if (draftFrom && draftTo && draftFrom > draftTo) {
+			draftTo = draftFrom;
+			endInput.value = draftTo;
+		}
+		pickingEnd = false;
+		if (draftFrom) {
+			const d = parseIsoDate(draftFrom);
+			if (d) showMonth(d);
+			else render();
+		} else render();
+	});
+
+	endInput.addEventListener('change', () => {
+		draftTo = endInput.value;
+		if (draftFrom && draftTo && draftFrom > draftTo) {
+			draftFrom = draftTo;
+			startInput.value = draftFrom;
+		}
+		pickingEnd = false;
+		if (draftTo) {
+			const d = parseIsoDate(draftTo);
+			if (d) showMonth(d);
+			else render();
+		} else render();
+	});
+
+	cancelBtn.addEventListener('click', () => {
+		cancel();
+		popover.hide();
+	});
+
+	applyBtn.addEventListener('click', () => {
+		fromInput.value = draftFrom;
+		toInput.value = draftTo;
+		commit();
+		popover.hide();
+	});
 
 	const gridWrap = dom.create('div', { class: 'nui-date-range-cal', target: panel });
 
@@ -4666,7 +4769,7 @@ function setupCalendarMode(element, { fromInput, toInput, presetSelect, emit, ap
 	// The sprite carries no left chevron, so the shared one is mirrored in CSS rather
 	// than hand-adding an icon (the sprite is generated — never edited).
 	const prevBtn = dom.fromHTML(
-		'<nui-button variant="icon"><button type="button" class="is-flip" aria-label="Previous month"><nui-icon name="chevron_right" decorative></nui-icon></button></nui-button>'
+		'<nui-button variant="icon"><button type="button" class="is-flip" aria-label="Previous page"><nui-icon name="chevron_right" decorative></nui-icon></button></nui-button>'
 	);
 	gridWrap.appendChild(prevBtn);
 
@@ -4677,7 +4780,7 @@ function setupCalendarMode(element, { fromInput, toInput, presetSelect, emit, ap
 	});
 
 	const nextBtn = dom.fromHTML(
-		'<nui-button variant="icon"><button type="button" aria-label="Next month"><nui-icon name="chevron_right" decorative></nui-icon></button></nui-button>'
+		'<nui-button variant="icon"><button type="button" aria-label="Next page"><nui-icon name="chevron_right" decorative></nui-icon></button></nui-button>'
 	);
 	gridWrap.appendChild(nextBtn);
 
@@ -4688,16 +4791,9 @@ function setupCalendarMode(element, { fromInput, toInput, presetSelect, emit, ap
 		target: gridWrap
 	});
 
-	let viewYear, viewMonth;
-	let hoverIso = '';
-	let pickingStart = false;
-	let dragArmed = false;
-	// Snapshot taken when the panel opens so Escape can put the old range back.
-	let beforeOpen = { from: '', to: '' };
-
 	const current = () => ({ from: fromInput.value, to: toInput.value });
 
-	const anchorDate = () => parseIsoDate(toInput.value) || parseIsoDate(fromInput.value) || new Date();
+	const anchorDate = () => parseIsoDate(draftTo) || parseIsoDate(draftFrom) || parseIsoDate(toInput.value) || parseIsoDate(fromInput.value) || new Date();
 
 	// Paging into a month where every day is disabled is a dead end: the grid renders,
 	// nothing is selectable, and focus has nowhere to land. Clamp navigation to the
@@ -4705,8 +4801,16 @@ function setupCalendarMode(element, { fromInput, toInput, presetSelect, emit, ap
 	const monthIndex = (y, m) => y * 12 + m;
 	const firstMonth = minIso ? monthIndex(+minIso.slice(0, 4), +minIso.slice(5, 7) - 1) : -Infinity;
 	const lastMonth = maxIso ? monthIndex(+maxIso.slice(0, 4), +maxIso.slice(5, 7) - 1) : Infinity;
-	const canGoPrev = () => monthIndex(viewYear, viewMonth) > firstMonth;
-	const canGoNext = () => monthIndex(viewYear, viewMonth) < lastMonth;
+	const canGoPrev = () => {
+		if (viewMode === 'days') return monthIndex(viewYear, viewMonth) > firstMonth;
+		if (viewMode === 'months') return (!minIso || viewYear > +minIso.slice(0, 4));
+		return (!minIso || Math.floor(viewYear / 12) * 12 > +minIso.slice(0, 4));
+	};
+	const canGoNext = () => {
+		if (viewMode === 'days') return monthIndex(viewYear, viewMonth) < lastMonth;
+		if (viewMode === 'months') return (!maxIso || viewYear < +maxIso.slice(0, 4));
+		return (!maxIso || Math.floor(viewYear / 12) * 12 + 11 < +maxIso.slice(0, 4));
+	};
 
 	function showMonth(date) {
 		viewYear = date.getFullYear();
@@ -4714,9 +4818,19 @@ function setupCalendarMode(element, { fromInput, toInput, presetSelect, emit, ap
 		render();
 	}
 
-	const stepMonth = (delta) => {
-		if (delta < 0 ? !canGoPrev() : !canGoNext()) return;
-		showMonth(new Date(viewYear, viewMonth + delta, 1));
+	const stepNav = (delta) => {
+		if (viewMode === 'days') {
+			if (delta < 0 ? !canGoPrev() : !canGoNext()) return;
+			showMonth(new Date(viewYear, viewMonth + delta, 1));
+		} else if (viewMode === 'months') {
+			if (delta < 0 ? !canGoPrev() : !canGoNext()) return;
+			viewYear += delta;
+			render();
+		} else if (viewMode === 'years') {
+			if (delta < 0 ? !canGoPrev() : !canGoNext()) return;
+			viewYear += delta * 12;
+			render();
+		}
 	};
 
 	const inRange = (iso, from, to) => {
@@ -4732,105 +4846,256 @@ function setupCalendarMode(element, { fromInput, toInput, presetSelect, emit, ap
 		else triggerLabel.textContent = `${fmtShort.format(parseIsoDate(from))} – ${fmtLong.format(parseIsoDate(to))}`;
 	}
 
+	function getDensityTier(count) {
+		if (!count || count <= 0 || maxDensity <= 0) return 0;
+		const ratio = count / maxDensity;
+		if (ratio > 0.75) return 4;
+		if (ratio > 0.50) return 3;
+		if (ratio > 0.25) return 2;
+		return 1;
+	}
+
 	function render() {
-		const { from, to } = current();
-		const view = buildMonthGrid(viewYear, viewMonth, weekStart, locale);
-		monthLabel.textContent = view.label;
+		const from = draftFrom;
+		const to = draftTo;
 
-		// The grid is rebuilt wholesale, so the day that had focus is destroyed. Without
-		// putting focus back, it falls to <body> and every subsequent keypress — Escape,
-		// a second PageUp, another arrow — goes to the document and never reaches the
-		// grid, leaving the panel keyboard-dead after a single key.
+		// The grid is rebuilt wholesale, so the active element is destroyed. Without
+		// restoring focus, it falls to <body> and every subsequent keypress goes to the
+		// document instead of the panel, leaving it keyboard-dead.
 		const active = document.activeElement;
-		const refocusIso = active && days.contains(active) ? active.dataset.iso : null;
+		let refocusIso = null;
+		let refocusMonth = null;
+		let refocusYear = null;
+		if (active && days.contains(active)) {
+			if (viewMode === 'days') refocusIso = active.dataset.iso;
+			else if (viewMode === 'months') refocusMonth = active.dataset.month;
+			else if (viewMode === 'years') refocusYear = active.dataset.year;
+		}
 
-		weekdays.textContent = '';
-		view.weekdayLabels.forEach((label) => {
-			weekdays.appendChild(dom.create('span', {
-				class: 'nui-date-range-weekday',
-				attrs: { role: 'columnheader', 'aria-label': label },
-				content: label
-			}));
-		});
-
-		// While a range is half-picked the live preview runs from the armed start to
-		// wherever the pointer is, so a drag and a click show the same thing.
-		const previewTo = (pickingStart || dragArmed) && hoverIso ? hoverIso : to;
-
-		days.textContent = '';
-		view.cells.forEach((cell) => {
-			const selected = inRange(cell.iso, from, to);
-			const previewed = inRange(cell.iso, from, previewTo);
-			const isStart = cell.iso === from;
-			const isEnd = cell.iso === (to || from);
-
-			const btn = dom.create('button', {
-				class: 'nui-date-range-day',
-				attrs: {
-					type: 'button',
-					role: 'gridcell',
-					'data-iso': cell.iso,
-					tabindex: '-1',
-					'aria-label': fmtFull.format(parseIsoDate(cell.iso)),
-					'aria-selected': selected ? 'true' : 'false'
-				},
-				target: days
+		if (viewMode === 'days') {
+			const view = buildMonthGrid(viewYear, viewMonth, weekStart, locale);
+			monthLabel.textContent = '';
+			const navBtn = dom.create('button', {
+				class: 'nui-date-range-nav-btn',
+				attrs: { type: 'button', 'aria-label': 'Switch to month selection' },
+				content: view.label,
+				target: monthLabel
 			});
-			// The number is an element, not a text node: the range band is an absolutely
-			// positioned pseudo-element and would otherwise paint over the text.
-			btn.appendChild(dom.create('span', { class: 'nui-date-range-daynum', content: String(cell.day), target: btn }));
-			if (cell.outside) btn.classList.add('is-outside');
-			if (selected) btn.classList.add('is-selected');
-			if (previewed && !selected) btn.classList.add('is-preview');
-			if (isStart) btn.classList.add('is-start');
-			if (isEnd) btn.classList.add('is-end');
-			// Rounded caps only on the outer edges; interior days stay square so the
-			// range reads as one continuous bar rather than a row of pills.
-			if (selected && !(isStart && isEnd)) {
-				if (isStart) btn.classList.add('is-cap-start');
-				if (isEnd) btn.classList.add('is-cap-end');
-			}
-			if (cell.iso === todayIso) btn.classList.add('is-today');
-			const disabled = (minIso && cell.iso < minIso) || (maxIso && cell.iso > maxIso);
-			if (disabled) { btn.disabled = true; btn.classList.add('is-disabled'); }
-			if (cell.iso === (from || to || todayIso)) btn.setAttribute('tabindex', '0');
-		});
+			navBtn.addEventListener('click', () => {
+				viewMode = 'months';
+				render();
+				queueMicrotask(() => {
+					(days.querySelector(`[data-month="${viewMonth}"]`) || days.firstElementChild)?.focus();
+				});
+			});
 
-		if (!days.querySelector('[tabindex="0"]')) {
-			days.firstElementChild?.setAttribute('tabindex', '0');
+			weekdays.style.display = '';
+			days.classList.remove('is-months', 'is-years');
+
+			weekdays.textContent = '';
+			view.weekdayLabels.forEach((label) => {
+				weekdays.appendChild(dom.create('span', {
+					class: 'nui-date-range-weekday',
+					attrs: { role: 'columnheader', 'aria-label': label },
+					content: label
+				}));
+			});
+
+			// While a range is half-picked the live preview runs from the armed start to
+			// wherever the pointer is, so a drag and a click show the same preview.
+			const previewTo = pickingEnd && hoverIso ? hoverIso : to;
+			const pFrom = (pickingEnd && hoverIso && hoverIso < from) ? hoverIso : from;
+			const pTo = (pickingEnd && hoverIso && hoverIso < from) ? from : previewTo;
+
+			days.textContent = '';
+			view.cells.forEach((cell) => {
+				const selected = inRange(cell.iso, from, to);
+				const previewed = inRange(cell.iso, pFrom, pTo);
+				const isStart = cell.iso === (pickingEnd && hoverIso && hoverIso < from ? pFrom : from);
+				const isEnd = cell.iso === (pickingEnd ? pTo : (to || from));
+
+				const count = densityMap.get(cell.iso) || 0;
+				const btn = dom.create('button', {
+					class: 'nui-date-range-day',
+					attrs: {
+						type: 'button',
+						role: 'gridcell',
+						'data-iso': cell.iso,
+						tabindex: '-1',
+						'aria-label': `${fmtFull.format(parseIsoDate(cell.iso))}${count > 0 ? ` — ${count.toLocaleString()} pageviews` : ''}`,
+						'aria-selected': selected ? 'true' : 'false'
+					},
+					target: days
+				});
+
+				if (count > 0 && !cell.outside) {
+					const tier = getDensityTier(count);
+					btn.setAttribute('data-density', String(tier));
+					btn.setAttribute('data-count', String(count));
+					btn.setAttribute('title', `${fmtFull.format(parseIsoDate(cell.iso))}: ${count.toLocaleString()} pageviews`);
+				}
+
+				// The number is an element, not a text node: the range band is an absolutely
+				// positioned pseudo-element and would otherwise paint over the text.
+				btn.appendChild(dom.create('span', { class: 'nui-date-range-daynum', content: String(cell.day), target: btn }));
+				if (cell.outside) btn.classList.add('is-outside');
+				if (selected) btn.classList.add('is-selected');
+				if (previewed && !selected) btn.classList.add('is-preview');
+				if (isStart) btn.classList.add('is-start');
+				if (isEnd) btn.classList.add('is-end');
+				// Rounded caps only on the outer edges; interior days stay square so the
+				// range reads as one continuous bar rather than a row of pills.
+				if ((selected || previewed) && !(isStart && isEnd)) {
+					if (isStart) btn.classList.add('is-cap-start');
+					if (isEnd) btn.classList.add('is-cap-end');
+				}
+				if (cell.iso === todayIso) btn.classList.add('is-today');
+				const disabled = (minIso && cell.iso < minIso) || (maxIso && cell.iso > maxIso);
+				if (disabled) { btn.disabled = true; btn.classList.add('is-disabled'); }
+				if (cell.iso === (from || to || todayIso)) btn.setAttribute('tabindex', '0');
+			});
+
+			if (!days.querySelector('[tabindex="0"]')) {
+				days.firstElementChild?.setAttribute('tabindex', '0');
+			}
+
+			// Restore focus after the rebuild.
+			if (refocusIso) {
+				const same = days.querySelector(`[data-iso="${refocusIso}"]`);
+				if (same && !same.disabled) {
+					same.focus();
+				} else {
+					const wanted = parseIsoDate(refocusIso);
+					const counterpart = wanted && days.querySelector(
+						`[data-iso="${toIsoDate(new Date(viewYear, viewMonth, wanted.getDate()))}"]`
+					);
+					const fallback = (counterpart && !counterpart.disabled ? counterpart : null)
+						|| days.querySelector('.nui-date-range-day:not(.is-disabled)');
+					fallback?.focus();
+				}
+			}
+		} else if (viewMode === 'months') {
+			monthLabel.textContent = '';
+			const navBtn = dom.create('button', {
+				class: 'nui-date-range-nav-btn',
+				attrs: { type: 'button', 'aria-label': 'Switch to year selection' },
+				content: String(viewYear),
+				target: monthLabel
+			});
+			navBtn.addEventListener('click', () => {
+				viewMode = 'years';
+				render();
+				queueMicrotask(() => {
+					(days.querySelector(`[data-year="${viewYear}"]`) || days.firstElementChild)?.focus();
+				});
+			});
+
+			weekdays.style.display = 'none';
+			days.classList.add('is-months');
+			days.classList.remove('is-years');
+			days.textContent = '';
+
+			const mMin = minIso ? minIso.slice(0, 7) : '';
+			const mMax = maxIso ? maxIso.slice(0, 7) : '';
+
+			for (let m = 0; m < 12; m++) {
+				const mDate = new Date(viewYear, m, 1);
+				const mIsoPrefix = `${viewYear}-${String(m + 1).padStart(2, '0')}`;
+				const mBtn = dom.create('button', {
+					class: 'nui-date-range-month-btn',
+					attrs: {
+						type: 'button',
+						role: 'gridcell',
+						'data-month': String(m),
+						tabindex: m === (refocusMonth !== null ? Number(refocusMonth) : viewMonth) ? '0' : '-1',
+						'aria-label': fmtMonthLong.format(mDate)
+					},
+					content: fmtMonth.format(mDate),
+					target: days
+				});
+				if (m === viewMonth) mBtn.classList.add('is-active');
+				if ((mMin && mIsoPrefix < mMin) || (mMax && mIsoPrefix > mMax)) {
+					mBtn.disabled = true;
+					mBtn.classList.add('is-disabled');
+				}
+				mBtn.addEventListener('click', () => {
+					viewMonth = m;
+					viewMode = 'days';
+					render();
+					queueMicrotask(() => {
+						(days.querySelector('[tabindex="0"]') || days.querySelector('.nui-date-range-day:not(.is-disabled)'))?.focus();
+					});
+				});
+			}
+
+			if (refocusMonth !== null) {
+				const target = days.querySelector(`[data-month="${refocusMonth}"]`);
+				target?.focus();
+			}
+		} else if (viewMode === 'years') {
+			const startYear = Math.floor(viewYear / 12) * 12;
+			const endYear = startYear + 11;
+			monthLabel.textContent = '';
+			dom.create('span', {
+				class: 'nui-date-range-nav-title',
+				content: `${startYear} – ${endYear}`,
+				target: monthLabel
+			});
+
+			weekdays.style.display = 'none';
+			days.classList.add('is-years');
+			days.classList.remove('is-months');
+			days.textContent = '';
+
+			const yMin = minIso ? Number(minIso.slice(0, 4)) : -Infinity;
+			const yMax = maxIso ? Number(maxIso.slice(0, 4)) : Infinity;
+
+			for (let y = startYear; y <= endYear; y++) {
+				const yBtn = dom.create('button', {
+					class: 'nui-date-range-year-btn',
+					attrs: {
+						type: 'button',
+						role: 'gridcell',
+						'data-year': String(y),
+						tabindex: y === (refocusYear !== null ? Number(refocusYear) : viewYear) ? '0' : '-1',
+						'aria-label': String(y)
+					},
+					content: String(y),
+					target: days
+				});
+				if (y === viewYear) yBtn.classList.add('is-active');
+				if (y < yMin || y > yMax) {
+					yBtn.disabled = true;
+					yBtn.classList.add('is-disabled');
+				}
+				yBtn.addEventListener('click', () => {
+					viewYear = y;
+					viewMode = 'months';
+					render();
+					queueMicrotask(() => {
+						(days.querySelector('[tabindex="0"]') || days.querySelector('.nui-date-range-month-btn:not(.is-disabled)'))?.focus();
+					});
+				});
+			}
+
+			if (refocusYear !== null) {
+				const target = days.querySelector(`[data-year="${refocusYear}"]`);
+				target?.focus();
+			}
 		}
 
-		// Restore focus after the rebuild. When the day is not in the new grid (paging to
-		// another month) fall back to the same day-of-month there, then to the first
-		// enabled day — dropping focus to <body> would leave the panel keyboard-dead.
-		if (refocusIso) {
-			const same = days.querySelector(`[data-iso="${refocusIso}"]`);
-			if (same && !same.disabled) {
-				same.focus();
-			} else {
-				const wanted = parseIsoDate(refocusIso);
-				const counterpart = wanted && days.querySelector(
-					`[data-iso="${toIsoDate(new Date(viewYear, viewMonth, wanted.getDate()))}"]`
-				);
-				const fallback = (counterpart && !counterpart.disabled ? counterpart : null)
-					|| days.querySelector('.nui-date-range-day:not(.is-disabled)');
-				fallback?.focus();
-			}
-		}
-
-		// Preset chips reflect the live range. The comparison runs against throwaway
-		// values so the real inputs are never left in a preset's state.
+		// Preset chips reflect the draft range.
 		presetButtons.forEach((btn, value) => {
 			const savedFrom = fromInput.value;
 			const savedTo = toInput.value;
 			applyPreset(value);
-			const match = fromInput.value === savedFrom && toInput.value === savedTo;
+			const match = fromInput.value === draftFrom && toInput.value === draftTo;
 			fromInput.value = savedFrom;
 			toInput.value = savedTo;
 			btn.classList.toggle('is-active', match);
 		});
 
-		// Show the month limits rather than making them a silent no-op.
+		// Navigation limits for prev/next buttons.
 		prevBtn.toggleAttribute('disabled', !canGoPrev());
 		nextBtn.toggleAttribute('disabled', !canGoNext());
 		prevBtn.querySelector('button')?.toggleAttribute('disabled', !canGoPrev());
@@ -4840,53 +5105,76 @@ function setupCalendarMode(element, { fromInput, toInput, presetSelect, emit, ap
 	}
 
 	function commit() {
-		pickingStart = false;
+		fromInput.value = draftFrom;
+		toInput.value = draftTo;
+		pickingEnd = false;
 		dragArmed = false;
 		hoverIso = '';
 		emit('');
 		render();
 	}
 
-	function selectDay(iso, { close } = {}) {
+	function selectDay(iso) {
 		if (minIso && iso < minIso) return;
 		if (maxIso && iso > maxIso) return;
-		if (!pickingStart) {
-			fromInput.value = iso;
-			toInput.value = '';
-			pickingStart = true;
+		if (!pickingEnd) {
+			draftFrom = iso;
+			draftTo = '';
+			pickingEnd = true;
+			hoverIso = iso;
+			updateManualInputs();
 			render();
 			return;
 		}
-		// Second click. Order the pair rather than emitting a reversed range that
-		// matches nothing and reads as an empty result set.
-		if (iso < fromInput.value) {
-			toInput.value = fromInput.value;
-			fromInput.value = iso;
+		if (iso < draftFrom) {
+			draftTo = draftFrom;
+			draftFrom = iso;
 		} else {
-			toInput.value = iso;
+			draftTo = iso;
 		}
-		commit();
-		if (close !== false) popover.hide();
+		pickingEnd = false;
+		hoverIso = '';
+		updateManualInputs();
+		render();
 	}
 
 	function cancel() {
+		draftFrom = beforeOpen.from;
+		draftTo = beforeOpen.to;
 		fromInput.value = beforeOpen.from;
 		toInput.value = beforeOpen.to;
-		pickingStart = false;
+		pickingEnd = false;
 		dragArmed = false;
 		hoverIso = '';
+		updateManualInputs();
+		render();
 	}
 
-	// ---- pointer ----
-	//
-	// A press is only *armed* on pointerdown; it becomes a drag on the first real move.
-	// That split is what keeps a plain click from being handled twice, and it means the
-	// pointer is captured only once a drag exists — capturing on pointerdown would
-	// retarget the following `click` to the grid and lose the day entirely.
+	// ---- pointer & hover ----
 	let pressedIso = '';
 	let dragged = false;
 
+	days.addEventListener('pointerover', (e) => {
+		if (!pickingEnd || viewMode !== 'days') return;
+		const day = e.target.closest('.nui-date-range-day');
+		if (!day || day.disabled) return;
+		const iso = day.dataset.iso;
+		if (iso && iso !== hoverIso) {
+			hoverIso = iso;
+			const pFrom = hoverIso < draftFrom ? hoverIso : draftFrom;
+			const pTo = hoverIso < draftFrom ? draftFrom : hoverIso;
+			days.querySelectorAll('.nui-date-range-day').forEach(el => {
+				const cIso = el.dataset.iso;
+				const inPrev = cIso >= pFrom && cIso <= pTo;
+				el.classList.toggle('is-preview', inPrev);
+				el.classList.toggle('is-cap-start', inPrev && cIso === pFrom);
+				el.classList.toggle('is-cap-end', inPrev && cIso === pTo);
+			});
+		}
+	});
+
 	days.addEventListener('pointerdown', (e) => {
+		if (viewMode !== 'days') return;
 		const day = e.target.closest('.nui-date-range-day');
 		if (!day || day.disabled) return;
 		e.preventDefault();
@@ -4897,7 +5185,7 @@ function setupCalendarMode(element, { fromInput, toInput, presetSelect, emit, ap
 	});
 
 	days.addEventListener('pointermove', (e) => {
-		if (!dragArmed) return;
+		if (!dragArmed || viewMode !== 'days') return;
 		const day = document.elementFromPoint(e.clientX, e.clientY)?.closest?.('.nui-date-range-day');
 		const iso = day?.dataset.iso;
 		if (!iso || iso === hoverIso) return;
@@ -4906,27 +5194,24 @@ function setupCalendarMode(element, { fromInput, toInput, presetSelect, emit, ap
 			days.setPointerCapture?.(e.pointerId);
 		}
 		hoverIso = iso;
-		// A drag past the start would invert, so order the pair: the preview must never
-		// show a range running backwards.
 		if (pressedIso <= iso) {
-			fromInput.value = pressedIso;
-			toInput.value = iso;
+			draftFrom = pressedIso;
+			draftTo = iso;
 		} else {
-			fromInput.value = iso;
-			toInput.value = pressedIso;
+			draftFrom = iso;
+			draftTo = pressedIso;
 		}
+		updateManualInputs();
 		render();
 	});
 
 	days.addEventListener('pointerup', (e) => {
 		if (!dragArmed) return;
 		dragArmed = false;
-		// A press that never moved falls through to `click`, which arms the first half of
-		// the range — committing here would make every single click a one-day range.
 		if (!dragged) return;
 		days.releasePointerCapture?.(e.pointerId);
-		commit();
-		popover.hide();
+		updateManualInputs();
+		render();
 	});
 
 	days.addEventListener('pointercancel', () => {
@@ -4936,6 +5221,7 @@ function setupCalendarMode(element, { fromInput, toInput, presetSelect, emit, ap
 	});
 
 	days.addEventListener('click', (e) => {
+		if (viewMode !== 'days') return;
 		const day = e.target.closest('.nui-date-range-day');
 		if (!day || day.disabled) return;
 		selectDay(day.dataset.iso);
@@ -4944,61 +5230,120 @@ function setupCalendarMode(element, { fromInput, toInput, presetSelect, emit, ap
 	// ---- keyboard ----
 
 	days.addEventListener('keydown', (e) => {
-		const day = e.target.closest('.nui-date-range-day');
-		if (!day) return;
-		const cur = parseIsoDate(day.dataset.iso);
+		if (viewMode === 'days') {
+			const day = e.target.closest('.nui-date-range-day');
+			if (!day) return;
+			const cur = parseIsoDate(day.dataset.iso);
+			if (!cur) return;
 
-		const move = (delta) => {
-			e.preventDefault();
-			const next = new Date(cur.getFullYear(), cur.getMonth(), cur.getDate() + delta);
-			if (next.getMonth() !== viewMonth || next.getFullYear() !== viewYear) showMonth(next);
-			const target = days.querySelector(`[data-iso="${toIsoDate(next)}"]`);
-			if (target) {
-				days.querySelectorAll('[tabindex="0"]').forEach(n => n.setAttribute('tabindex', '-1'));
-				target.setAttribute('tabindex', '0');
-				target.focus();
+			const move = (delta) => {
+				e.preventDefault();
+				const next = new Date(cur.getFullYear(), cur.getMonth(), cur.getDate() + delta);
+				if (next.getMonth() !== viewMonth || next.getFullYear() !== viewYear) showMonth(next);
+				const target = days.querySelector(`[data-iso="${toIsoDate(next)}"]`);
+				if (target) {
+					days.querySelectorAll('[tabindex="0"]').forEach(n => n.setAttribute('tabindex', '-1'));
+					target.setAttribute('tabindex', '0');
+					target.focus();
+				}
+				if (pickingEnd) { hoverIso = toIsoDate(next); render(); }
+			};
+
+			switch (e.key) {
+				case 'ArrowLeft': move(-1); break;
+				case 'ArrowRight': move(1); break;
+				case 'ArrowUp': move(-7); break;
+				case 'ArrowDown': move(7); break;
+				case 'Home': move(-((cur.getDay() - weekStart + 7) % 7)); break;
+				case 'End': move(6 - ((cur.getDay() - weekStart + 7) % 7)); break;
+				case 'PageUp': e.preventDefault(); stepNav(-1); break;
+				case 'PageDown': e.preventDefault(); stepNav(1); break;
+				case 'Enter':
+				case ' ':
+					e.preventDefault();
+					selectDay(day.dataset.iso);
+					break;
 			}
-			if (pickingStart) { hoverIso = toIsoDate(next); render(); }
-		};
+			return;
+		}
 
-		switch (e.key) {
-			case 'ArrowLeft': move(-1); break;
-			case 'ArrowRight': move(1); break;
-			case 'ArrowUp': move(-7); break;
-			case 'ArrowDown': move(7); break;
-			case 'Home': move(-((cur.getDay() - weekStart + 7) % 7)); break;
-			case 'End': move(6 - ((cur.getDay() - weekStart + 7) % 7)); break;
-			case 'PageUp':
+		if (viewMode === 'months') {
+			const btn = e.target.closest('.nui-date-range-month-btn');
+			if (!btn) return;
+			const m = Number(btn.dataset.month);
+			const moveM = (delta) => {
 				e.preventDefault();
-				stepMonth(-1);
-				break;
-			case 'PageDown':
+				const nextM = Math.max(0, Math.min(11, m + delta));
+				const target = days.querySelector(`[data-month="${nextM}"]`);
+				if (target) {
+					days.querySelectorAll('[tabindex="0"]').forEach(n => n.setAttribute('tabindex', '-1'));
+					target.setAttribute('tabindex', '0');
+					target.focus();
+				}
+			};
+			switch (e.key) {
+				case 'ArrowLeft': moveM(-1); break;
+				case 'ArrowRight': moveM(1); break;
+				case 'ArrowUp': moveM(-4); break;
+				case 'ArrowDown': moveM(4); break;
+				case 'PageUp': e.preventDefault(); stepNav(-1); break;
+				case 'PageDown': e.preventDefault(); stepNav(1); break;
+				case 'Enter':
+				case ' ':
+					e.preventDefault();
+					btn.click();
+					break;
+			}
+			return;
+		}
+
+		if (viewMode === 'years') {
+			const btn = e.target.closest('.nui-date-range-year-btn');
+			if (!btn) return;
+			const y = Number(btn.dataset.year);
+			const startYear = Math.floor(viewYear / 12) * 12;
+			const moveY = (delta) => {
 				e.preventDefault();
-				stepMonth(1);
-				break;
-			case 'Enter':
-			case ' ':
-				e.preventDefault();
-				selectDay(day.dataset.iso);
-				break;
+				const nextY = Math.max(startYear, Math.min(startYear + 11, y + delta));
+				const target = days.querySelector(`[data-year="${nextY}"]`);
+				if (target) {
+					days.querySelectorAll('[tabindex="0"]').forEach(n => n.setAttribute('tabindex', '-1'));
+					target.setAttribute('tabindex', '0');
+					target.focus();
+				}
+			};
+			switch (e.key) {
+				case 'ArrowLeft': moveY(-1); break;
+				case 'ArrowRight': moveY(1); break;
+				case 'ArrowUp': moveY(-4); break;
+				case 'ArrowDown': moveY(4); break;
+				case 'PageUp': e.preventDefault(); stepNav(-1); break;
+				case 'PageDown': e.preventDefault(); stepNav(1); break;
+				case 'Enter':
+				case ' ':
+					e.preventDefault();
+					btn.click();
+					break;
+			}
+			return;
 		}
 	});
 
-	prevBtn.addEventListener('click', () => stepMonth(-1));
-	nextBtn.addEventListener('click', () => stepMonth(1));
+	prevBtn.addEventListener('click', () => stepNav(-1));
+	nextBtn.addEventListener('click', () => stepNav(1));
 
 	// ---- open / close ----
 
-	// The platform toggles the popover via `popovertarget`; these listeners only track
-	// state around it. Snapshot on open so Escape can undo a half-made pick.
 	popover.addEventListener('toggle', (e) => {
 		if (e.newState === 'open') {
-			beforeOpen = current();
-			pickingStart = false;
+			draftFrom = fromInput.value;
+			draftTo = toInput.value;
+			beforeOpen = { from: draftFrom, to: draftTo };
+			pickingEnd = false;
 			dragArmed = false;
+			viewMode = 'days';
+			updateManualInputs();
 			showMonth(anchorDate());
-			// The panel lives in the top layer; move focus in once it is actually open or
-			// the browser has not promoted it yet and the focus silently bounces back.
 			queueMicrotask(() => {
 				(days.querySelector('[tabindex="0"]') || days.querySelector('.nui-date-range-day'))?.focus();
 			});
@@ -5006,13 +5351,8 @@ function setupCalendarMode(element, { fromInput, toInput, presetSelect, emit, ap
 	});
 
 	popover.addEventListener('nui-popover-close', () => {
-		// Escape discards a half-finished pick and puts back what was there on open — a
-		// calendar that silently swallows a half-made selection is worse than one that
-		// does nothing at all.
-		if (pickingStart || dragArmed) {
-			cancel();
-			emit('');
-		}
+		// Outside click or dismiss restores previous committed range
+		cancel();
 		trigger.focus();
 		render();
 	});
@@ -5022,18 +5362,40 @@ function setupCalendarMode(element, { fromInput, toInput, presetSelect, emit, ap
 		e.preventDefault();
 		e.stopPropagation();
 		cancel();
-		emit('');
 		popover.hide();
 	});
 
 	// Anything that changes the value from outside must repaint the grid.
-	const repaint = () => render();
+	const repaint = () => {
+		draftFrom = fromInput.value;
+		draftTo = toInput.value;
+		updateManualInputs();
+		render();
+	};
 	element.addEventListener('nui-date-range-change', repaint);
 	fromInput.addEventListener('change', repaint);
 	toInput.addEventListener('change', repaint);
 
 	showMonth(anchorDate());
 	element.openCalendar = () => popover.show();
+
+	element.setDensity = (data, options) => {
+		densityMap.clear();
+		maxDensity = 0;
+		if (data && typeof data === 'object') {
+			const entries = Array.isArray(data)
+				? data.map(item => [item.date, Number(item.count || item.value || 0)])
+				: Object.entries(data).map(([k, v]) => [k, Number(v || 0)]);
+			for (const [date, count] of entries) {
+				if (date && count > 0) {
+					densityMap.set(date, count);
+					if (count > maxDensity) maxDensity = count;
+				}
+			}
+			if (options?.max) maxDensity = Number(options.max);
+		}
+		render();
+	};
 }
 
 registerComponent('nui-date-range', (element) => {
@@ -5172,6 +5534,8 @@ registerComponent('nui-date-range', (element) => {
 	};
 
 	element.clear = () => element.setValue({});
+
+	element.setDensity = () => {};
 
 	if (presetSelect) element.getPreset = () => presetSelect.value;
 	if (presetSelect) element.setPreset = (value) => {

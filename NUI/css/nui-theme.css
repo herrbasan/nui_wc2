@@ -2740,9 +2740,9 @@ nui-date-range.nui-date-range--calendar {
 .nui-date-range-panel {
 	display: flex;
 	flex-direction: column;
-	gap: var(--nui-space);
+	gap: var(--nui-space-half);
 	padding: var(--nui-space);
-	min-width: 17rem;
+	min-width: 18.5rem;
 }
 
 /* Preset rail — the fast path, so it sits above the grid. */
@@ -2774,6 +2774,90 @@ nui-date-range.nui-date-range--calendar {
 	color: light-dark(var(--color-white), var(--color-white));
 }
 
+/* Controls bar: manual inputs and confirmation actions */
+.nui-date-range-controls {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--nui-space-half);
+	flex-wrap: wrap;
+	padding-bottom: var(--nui-space-half);
+	border-bottom: solid var(--border-thickness) var(--color-shade3);
+}
+
+.nui-date-range-manual {
+	display: flex;
+	align-items: center;
+	gap: var(--nui-space-quarter);
+}
+
+.nui-date-range-manual-field {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.nui-date-range-manual-label {
+	font-size: var(--font-size-xsmall);
+	color: var(--color-text-dim);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	line-height: 1;
+}
+
+.nui-date-range-manual-input {
+	height: var(--nui-space-double, 2rem);
+	width: 7.5rem;
+	padding: 0 var(--nui-space-quarter);
+	border: solid var(--border-thickness) var(--color-shade3);
+	border-radius: var(--border-radius1);
+	background: light-dark(var(--color-white), rgb(45, 45, 45));
+	color: var(--text-color);
+	font: inherit;
+	font-size: var(--font-size-small);
+	min-height: 0;
+}
+
+.nui-date-range-manual-input:focus-visible {
+	outline: 2px solid var(--color-highlight);
+	outline-offset: 1px;
+}
+
+.nui-date-range-actions {
+	display: flex;
+	align-items: flex-end;
+	gap: var(--nui-space-quarter);
+	margin-left: auto;
+}
+
+.nui-date-range-btn {
+	height: var(--nui-space-double, 2rem);
+	padding: 0 var(--nui-space-half);
+	border: solid var(--border-thickness) var(--color-shade3);
+	border-radius: var(--border-radius1);
+	background: transparent;
+	color: var(--text-color);
+	font: inherit;
+	font-size: var(--font-size-small);
+	cursor: pointer;
+	white-space: nowrap;
+}
+
+.nui-date-range-btn:hover {
+	background: var(--color-shade3);
+}
+
+.nui-date-range-btn--apply {
+	background: var(--color-highlight);
+	border-color: var(--color-highlight);
+	color: light-dark(var(--color-white), var(--color-white));
+	font-weight: 600;
+}
+
+.nui-date-range-btn--apply:hover {
+	background: var(--color-highlight-dim);
+}
+
 .nui-date-range-cal {
 	display: grid;
 	grid-template-columns: auto 1fr auto;
@@ -2784,6 +2868,31 @@ nui-date-range.nui-date-range--calendar {
 .nui-date-range-month {
 	text-align: center;
 	font-weight: 600;
+}
+
+.nui-date-range-nav-btn {
+	background: transparent;
+	border: none;
+	color: var(--text-color);
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+	padding: var(--nui-space-quarter) var(--nui-space-half);
+	border-radius: var(--border-radius1);
+}
+
+.nui-date-range-nav-btn:hover {
+	background: var(--color-shade3);
+}
+
+.nui-date-range-nav-btn:focus-visible {
+	outline: 2px solid var(--color-highlight);
+	outline-offset: 1px;
+}
+
+.nui-date-range-nav-title {
+	font-weight: 600;
+	padding: var(--nui-space-quarter) var(--nui-space-half);
 }
 
 /* The sprite has no left chevron; the shared one is mirrored for "previous month". */
@@ -2798,6 +2907,53 @@ nui-date-range.nui-date-range--calendar {
 	display: grid;
 	grid-template-columns: repeat(7, var(--nui-date-range-day, 2.25rem));
 	justify-content: start;
+}
+
+.nui-date-range-days.is-months,
+.nui-date-range-days.is-years {
+	grid-template-columns: repeat(4, 1fr);
+	gap: var(--nui-space-quarter);
+}
+
+.nui-date-range-month-btn,
+.nui-date-range-year-btn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: calc(var(--nui-date-range-day, 2.25rem) * 1.25);
+	background: transparent;
+	border: solid var(--border-thickness) var(--color-shade2);
+	border-radius: var(--border-radius1);
+	color: var(--text-color);
+	font: inherit;
+	font-size: var(--font-size-small);
+	cursor: pointer;
+}
+
+.nui-date-range-month-btn:hover,
+.nui-date-range-year-btn:hover {
+	background: var(--color-shade3);
+}
+
+.nui-date-range-month-btn.is-active,
+.nui-date-range-year-btn.is-active {
+	background: var(--color-highlight);
+	border-color: var(--color-highlight);
+	color: light-dark(var(--color-white), var(--color-white));
+	font-weight: 600;
+}
+
+.nui-date-range-month-btn:focus-visible,
+.nui-date-range-year-btn:focus-visible {
+	outline: 2px solid var(--color-highlight);
+	outline-offset: -2px;
+}
+
+.nui-date-range-month-btn.is-disabled,
+.nui-date-range-year-btn.is-disabled {
+	color: var(--color-text-subtle, var(--color-text-dim));
+	cursor: not-allowed;
+	opacity: 0.45;
 }
 
 .nui-date-range-weekday {
@@ -2823,17 +2979,46 @@ nui-date-range.nui-date-range--calendar {
 	font-size: var(--font-size-small);
 	font-variant-numeric: tabular-nums;
 	cursor: pointer;
+	border-radius: var(--border-radius1);
 }
 
-/* The range is ONE continuous bar, not a row of pills: the band spans the full cell so
-   adjacent days meet seamlessly, and only the two outer ends are rounded. A radius on
-   every day would read as separate pills and the span would be unreadable. */
-.nui-date-range-day.is-preview::before,
+/* Traffic density shading (heatmap) */
+.nui-date-range-day[data-density="1"] {
+	background: light-dark(rgba(76, 132, 229, 0.12), rgba(76, 132, 229, 0.18));
+}
+
+.nui-date-range-day[data-density="2"] {
+	background: light-dark(rgba(76, 132, 229, 0.25), rgba(76, 132, 229, 0.32));
+}
+
+.nui-date-range-day[data-density="3"] {
+	background: light-dark(rgba(76, 132, 229, 0.42), rgba(76, 132, 229, 0.50));
+}
+
+.nui-date-range-day[data-density="4"] {
+	background: light-dark(rgba(76, 132, 229, 0.65), rgba(76, 132, 229, 0.75));
+}
+
+.nui-date-range-day[data-density="4"] .nui-date-range-daynum {
+	color: light-dark(var(--color-white), var(--color-white));
+	font-weight: 600;
+}
+
+/* Range selection and hover preview bands:
+   The preview band is translucent so the user clearly sees what they are projecting.
+   The committed range is translucent enough for density heat to show through underneath. */
+.nui-date-range-day.is-preview::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	background: light-dark(rgba(76, 132, 229, 0.28), rgba(76, 132, 229, 0.38));
+}
+
 .nui-date-range-day.is-selected::before {
 	content: '';
 	position: absolute;
 	inset: 0;
-	background: var(--color-highlight-dim);
+	background: light-dark(rgba(67, 112, 191, 0.65), rgba(67, 112, 191, 0.65));
 }
 
 .nui-date-range-day.is-cap-start::before {

@@ -177,6 +177,7 @@ document.querySelector('nui-date-range').addEventListener('nui-date-range-change
 | `clear()` | – | – | Empties both fields (equivalent to the `all` preset). |
 | `getPreset()` | – | `string` | Current preset value, or `''`. |
 | `setPreset(value)` | `string` | – | Selects a preset, resolves it, and emits. An unrecognised value is a complete no-op. |
+| `setDensity(data, opts)` | `object, object?` | – | Calendar mode only. Supplies a `{ 'YYYY-MM-DD': number }` density map (or array) to shade days as a traffic heatmap (`data-density="1..4"`). |
 | `openCalendar()` | – | – | Calendar mode only. Opens the panel programmatically. |
 
 The preset methods are only installed when a `<select>` child is present. `setPreset()`
