@@ -2825,6 +2825,21 @@ nui-date-range.nui-date-range--calendar {
 	justify-content: start;
 }
 
+/* Day mode absorbs whatever slack the sidebar column leaves, so the panel can be as
+   tall as its taller column without the shorter one ending in dead space. Row height
+   is a floor, not a fixed value: with no slack the cells stay square at 2.25rem, and
+   a few stray pixels of slack are absorbed as slightly taller cells rather than as a
+   gap under the grid. Month and year views keep their own fixed-height buttons, so
+   they are excluded — stretching those would distort the 3-column layout. */
+.nui-date-range-days:not(.is-months):not(.is-years) {
+	flex: 1;
+	grid-auto-rows: minmax(var(--nui-date-range-day, 2.25rem), 1fr);
+}
+
+.nui-date-range-days:not(.is-months):not(.is-years) .nui-date-range-day {
+	height: 100%;
+}
+
 .nui-date-range-days.is-months,
 .nui-date-range-days.is-years {
 	grid-template-columns: repeat(3, 1fr);
@@ -2852,10 +2867,15 @@ nui-date-range.nui-date-range--calendar {
 	background: var(--color-shade3);
 }
 
+/* Filled accent surfaces use --color-highlight-dim, not --color-highlight.
+   The two tokens are not interchangeable when white text sits on top: white on
+   --color-highlight is 3.66:1, which fails AA for text this size, while white on
+   --color-highlight-dim is 4.87:1. --color-highlight is the outline/ring/mark colour
+   and stays that way below. This is the same split the primary button uses. */
 .nui-date-range-month-btn.is-active,
 .nui-date-range-year-btn.is-active {
-	background: var(--color-highlight);
-	border-color: var(--color-highlight);
+	background: var(--color-highlight-dim);
+	border-color: var(--color-highlight-dim);
 	color: light-dark(var(--color-white), var(--color-white));
 	font-weight: 600;
 }
@@ -2878,7 +2898,8 @@ nui-date-range.nui-date-range--calendar {
 	display: flex;
 	flex-direction: column;
 	gap: var(--nui-space-half);
-	width: 11.5rem;
+	/* Wide enough for two columns of chips — see .nui-date-range-presets. */
+	width: 14.5rem;
 	padding-left: var(--nui-space);
 	border-left: solid var(--border-thickness) var(--color-shade3);
 	box-sizing: border-box;
@@ -2899,9 +2920,14 @@ nui-date-range.nui-date-range--calendar {
 	margin-bottom: 2px;
 }
 
+/* Two columns, not one. Stacked, five chips came to ~196px — taller than the calendar
+   beside them — and since the panel stretches both columns to the taller one, that
+   extra height surfaced as ~92px of empty panel under the last week row. Two columns
+   put the calendar back on top as the tallest column, which is what the layout wants:
+   the sidebar stretches to match and its actions pin to the bottom. */
 .nui-date-range-presets {
-	display: flex;
-	flex-direction: column;
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
 	gap: 3px;
 }
 
@@ -2919,6 +2945,12 @@ nui-date-range.nui-date-range--calendar {
 	cursor: pointer;
 	text-align: left;
 	justify-content: flex-start;
+	/* Grid tracks default to min-content minimum, so a long label ("Last 30 days")
+	   would refuse to shrink below its intrinsic width and push the track open. */
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 	transition: background 0.15s, color 0.15s;
 }
 
@@ -2927,7 +2959,7 @@ nui-date-range.nui-date-range--calendar {
 }
 
 .nui-date-range-preset.is-active {
-	background: var(--color-highlight);
+	background: var(--color-highlight-dim);
 	color: light-dark(var(--color-white), var(--color-white));
 	font-weight: 600;
 }
@@ -2989,14 +3021,17 @@ nui-date-range.nui-date-range--calendar {
 }
 
 .nui-date-range-btn--apply {
-	background: var(--color-highlight);
-	border-color: var(--color-highlight);
+	background: var(--color-highlight-dim);
+	border-color: var(--color-highlight-dim);
 	color: light-dark(var(--color-white), var(--color-white));
 	font-weight: 600;
 }
 
+/* Hover moves back UP the ramp, not down: the rest state is already the darker of the
+   two tokens, so dimming it again would have no token left to go to. */
 .nui-date-range-btn--apply:hover {
-	background: var(--color-highlight-dim);
+	background: var(--color-highlight);
+	border-color: var(--color-highlight);
 }
 
 .nui-date-range-weekday {
@@ -3096,17 +3131,17 @@ nui-date-range.nui-date-range--calendar {
 
 .nui-date-range-day.is-cap-start::before {
 	border-radius: var(--border-radius1) 0 0 var(--border-radius1);
-	background: var(--color-highlight);
+	background: var(--color-highlight-dim);
 }
 
 .nui-date-range-day.is-cap-end::before {
 	border-radius: 0 var(--border-radius1) var(--border-radius1) 0;
-	background: var(--color-highlight);
+	background: var(--color-highlight-dim);
 }
 
 .nui-date-range-day.is-cap-start.is-cap-end::before {
 	border-radius: var(--border-radius1);
-	background: var(--color-highlight);
+	background: var(--color-highlight-dim);
 }
 
 .nui-date-range-day.is-cap-start .nui-date-range-daynum,
@@ -3131,8 +3166,13 @@ nui-date-range.nui-date-range--calendar {
 	z-index: 1;
 }
 
+/* The number stays in the normal text colour and is marked by the ring plus weight,
+   NOT recoloured with the accent. Accent-as-text measured 3.21:1 on the light panel
+   and 4.35:1 on the dark one — both under AA — and neither accent token fixes both
+   schemes (--color-highlight-dim is 4.28:1 light but only 3.26:1 dark, since dark
+   wants a lighter colour and light wants a darker one). The ring already identifies
+   today unambiguously, so this is the one day number in the grid that stays legible. */
 .nui-date-range-day.is-today:not(.is-cap-start):not(.is-cap-end) .nui-date-range-daynum {
-	color: var(--color-highlight);
 	font-weight: 700;
 }
 
