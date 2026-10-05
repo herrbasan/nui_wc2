@@ -4607,10 +4607,25 @@ registerComponent('nui-date-range', (element) => {
 
 	// A hand-edited date is by definition outside the preset set, so the preset
 	// selection is cleared rather than left showing a range it no longer describes.
+	//
+	// The guard matters: nui-select's setValue('') ends by dispatching a bubbling
+	// `change`, which lands right back on this element's own listener. Without it the
+	// clear re-enters itself forever.
+	let syncing = false;
 	const clearPresetSelection = () => {
-		if (presetSelect && presetSelect.selectedIndex !== -1) {
-			const selected = presetSelect.options[presetSelect.selectedIndex];
-			if (selected && selected.value) presetSelect.selectedIndex = -1;
+		if (syncing || !presetSelect) return;
+		const selected = presetSelect.options[presetSelect.selectedIndex];
+		if (!selected || !selected.value) return;
+		syncing = true;
+		try {
+			const wrapper = presetSelect.closest('nui-select');
+			// A wrapped select owns its own visible label; writing the native value alone
+			// would clear it underneath and leave "Last 7 days" still on screen next to a
+			// hand-picked window. A bare <select> has no label to update.
+			if (wrapper?.setValue) wrapper.setValue('');
+			else presetSelect.selectedIndex = -1;
+		} finally {
+			syncing = false;
 		}
 	};
 
@@ -4670,6 +4685,20 @@ registerComponent('nui-date-range', (element) => {
 
 	if (presetSelect) element.getPreset = () => presetSelect.value;
 	if (presetSelect) element.setPreset = (value) => {
+		// An unrecognised preset is ignored outright — same rule as applyPreset, and it
+		// has to be ignored BEFORE anything is written. Assigning an unknown value to a
+		// native select silently clears the selection, which would leave the wrapper
+		// showing a preset that no longer matches the range.
+		if (!Array.from(presetSelect.options).some(o => o.value === value)) return;
+		// Route through nui-select's own setter when there is one, for the same reason
+		// clearPresetSelection does: writing the native value leaves the wrapper's visible
+		// label showing the previous preset.
+		const wrapper = presetSelect.closest('nui-select');
+		if (wrapper?.setValue) {
+			syncing = true;
+			try { wrapper.setValue(value); } finally { syncing = false; }
+			return;
+		}
 		presetSelect.value = value;
 		presetSelect.dispatchEvent(new Event('change', { bubbles: true }));
 	};

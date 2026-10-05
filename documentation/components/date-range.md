@@ -101,9 +101,12 @@ document.querySelector('nui-date-range').addEventListener('nui-date-range-change
 | `setValue(opts)` | `{ from, to, preset }` | – | Sets the range and emits `nui-change`. Passing `preset` resolves it against the current clock instead. |
 | `clear()` | – | – | Empties both fields (equivalent to the `all` preset). |
 | `getPreset()` | – | `string` | Current preset value, or `''`. |
-| `setPreset(value)` | `string` | – | Selects a preset, resolves it, and emits. |
+| `setPreset(value)` | `string` | – | Selects a preset, resolves it, and emits. An unrecognised value is a complete no-op. |
 
-The preset methods are only installed when a `<select>` child is present.
+The preset methods are only installed when a `<select>` child is present. `setPreset()`
+ignores a value that has no matching `<option>` **before writing anything** — assigning
+an unknown value to a native `<select>` silently clears its selection, which would
+leave the dropdown showing a preset that no longer matches the range on screen.
 
 ## Behaviour worth knowing
 
