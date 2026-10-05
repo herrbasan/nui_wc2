@@ -2795,10 +2795,23 @@ nui-date-range.nui-date-range--calendar {
 	padding: var(--nui-space-quarter) var(--nui-space-half);
 }
 
-/* The sprite has no left chevron; the shared one is mirrored for "previous month". */
-.nui-date-range-cal-header .is-flip nui-icon,
-.nui-date-range-cal-header .is-flip svg {
+/* The sprite has no left chevron; the shared one is mirrored for "previous month".
+
+   Only the nui-icon is mirrored, and that is load-bearing: listing the inner svg as
+   well mirrors the SAME glyph twice - once on the host element, once on the svg
+   nested inside it. Two flips are identity, so the "previous" arrow silently pointed
+   right anyway. `nui-icon svg` is width/height 100% of the host, so flipping the host
+   alone is enough. */
+.nui-date-range-cal-header .is-flip nui-icon {
 	transform: scaleX(-1);
+}
+
+/* nui-button sizes its icon at 1.2em, and these buttons inherit a 12.8px font, which
+   put the chevron at 15.4px beside 36px day cells. Pin it to the rem scale the rest of
+   the panel uses so it reads as a nav control rather than a stray glyph. */
+.nui-date-range-cal-header nui-icon {
+	width: 1.25rem;
+	height: 1.25rem;
 }
 
 .nui-date-range-weekdays {
