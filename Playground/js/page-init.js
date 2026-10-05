@@ -1399,6 +1399,15 @@ nui.registerPage('components/date-range', {
 				out.textContent = `{ from: "${from}", to: "${to}", preset: "${preset}" }`;
 			});
 		}
+
+		const cal = element.querySelector('#demo-range-cal');
+		const calOut = element.querySelector('#cal-value-1');
+		if (cal && calOut) {
+			cal.addEventListener('nui-date-range-change', (e) => {
+				const { from, to } = e.detail;
+				calOut.textContent = from && to ? `${from} → ${to}` : (from ? `${from} → (pick an end)` : '(nothing picked yet)');
+			});
+		}
 	}
 });
 

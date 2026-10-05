@@ -4546,6 +4546,496 @@ function shiftDays(date, days) {
 	return copy;
 }
 
+// ---- calendar grid helpers ----
+
+const MS_DAY = 86400000;
+
+const WEEKDAY_KEYS = ['short', 'short', 'short', 'short', 'short', 'short', 'short'];
+
+/**
+ * The 42 cells (6 weeks) of a month grid starting on `weekStart` (0=Sun..6=Sat).
+ * Padding days come from the neighbouring months so every month renders the same
+ * height and the range band never jumps row height as you page through months.
+ */
+function buildMonthGrid(year, month, weekStart, locale) {
+	const first = new Date(year, month, 1);
+	const lead = (first.getDay() - weekStart + 7) % 7;
+	const start = new Date(year, month, 1 - lead);
+	const daysInMonth = new Date(year, month + 1, 0).getDate();
+	const fmt = new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' });
+	return {
+		label: fmt.format(first),
+		weekdayLabels: Array.from({ length: 7 }, (_, i) =>
+			new Intl.DateTimeFormat(locale, { weekday: WEEKDAY_KEYS[i] }).format(new Date(2024, 0, 7 + i))),
+		cells: Array.from({ length: 42 }, (_, i) => {
+			const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+			return {
+				iso: toIsoDate(d),
+				day: d.getDate(),
+				outside: d.getMonth() !== month
+			};
+		}),
+		daysInMonth
+	};
+}
+
+/** Resolve the locale's first-day-of-week, clamped to the handful ICU actually returns. */
+function localeWeekStart(locale) {
+	try {
+		const part = new Intl.Locale(locale).get?.('weekInfo')?.firstDay;
+		return typeof part === 'number' ? Math.min(6, Math.max(0, part - 1)) : 1;
+	} catch {
+		return 1; // ISO: Monday
+	}
+}
+
+/**
+ * Calendar mode for `<nui-date-range calendar>`: a trigger showing the resolved range,
+ * opening a popover with a month grid and a preset rail.
+ *
+ * Built on the same value store as the inline inputs rather than a parallel one — the
+ * two date inputs are hidden, not replaced, so clamping, the change event and the whole
+ * public API are shared verbatim between the two modes.
+ */
+function setupCalendarMode(element, { fromInput, toInput, presetSelect, emit, applyPreset }) {
+	const locale = document.documentElement.lang || undefined;
+	const weekStart = localeWeekStart(locale);
+	const fmtFull = new Intl.DateTimeFormat(locale, { dateStyle: 'full' });
+	const fmtShort = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' });
+	const fmtLong = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', year: 'numeric' });
+
+	const minIso = element.getAttribute('min') || '';
+	const maxIso = element.getAttribute('max') || '';
+	const todayIso = toIsoDate(new Date());
+
+	element.classList.add('nui-date-range--calendar');
+	fromInput.hidden = true;
+	toInput.hidden = true;
+
+	const triggerLabel = dom.create('span', { class: 'nui-date-range-value', target: element });
+	const trigger = dom.create('button', {
+		class: 'nui-date-range-trigger',
+		attrs: {
+			type: 'button',
+			id: `nui-date-range-trigger-${generateId()}`,
+			'aria-label': 'Choose date range'
+		},
+		target: element
+	});
+	trigger.append(
+		dom.create('nui-icon', { attrs: { name: 'calendar', decorative: 'true' } }),
+		triggerLabel
+	);
+
+	// <nui-popover> finds its invoker via `for`, and wires `popovertarget` on it — the
+	// platform owns the open/close toggle, so nothing here may call show() from a click
+	// handler or the panel would open and immediately close again.
+	const popover = dom.create('nui-popover', {
+		attrs: { 'aria-label': 'Date range', for: trigger.id },
+		target: element
+	});
+
+	const panel = dom.create('div', { class: 'nui-date-range-panel', target: popover });
+
+	// Preset rail first: it is the fastest path and the thing most users reach for.
+	const presetRail = dom.create('div', { class: 'nui-date-range-presets', target: panel });
+	const presetButtons = new Map();
+	if (presetSelect) {
+		for (const opt of Array.from(presetSelect.options)) {
+			if (!opt.value) continue;
+			const btn = dom.create('button', {
+				class: 'nui-date-range-preset',
+				attrs: { type: 'button', 'data-value': opt.value },
+				content: opt.textContent,
+				target: presetRail
+			});
+			btn.addEventListener('click', () => {
+				applyPreset(opt.value);
+				commit();
+				popover.hide();
+			});
+			presetButtons.set(opt.value, btn);
+		}
+	}
+
+	const gridWrap = dom.create('div', { class: 'nui-date-range-cal', target: panel });
+
+	// Built whole, not as an empty <nui-button> that gets a child afterwards: the
+	// component upgrades the moment it is in the DOM and auto-creates its own inner
+	// <button> in dev, so appending the real one afterwards leaves two buttons per side.
+	// The sprite carries no left chevron, so the shared one is mirrored in CSS rather
+	// than hand-adding an icon (the sprite is generated — never edited).
+	const prevBtn = dom.fromHTML(
+		'<nui-button variant="icon"><button type="button" class="is-flip" aria-label="Previous month"><nui-icon name="chevron_right" decorative></nui-icon></button></nui-button>'
+	);
+	gridWrap.appendChild(prevBtn);
+
+	const monthLabel = dom.create('div', {
+		class: 'nui-date-range-month',
+		attrs: { 'aria-live': 'polite' },
+		target: gridWrap
+	});
+
+	const nextBtn = dom.fromHTML(
+		'<nui-button variant="icon"><button type="button" aria-label="Next month"><nui-icon name="chevron_right" decorative></nui-icon></button></nui-button>'
+	);
+	gridWrap.appendChild(nextBtn);
+
+	const weekdays = dom.create('div', { class: 'nui-date-range-weekdays', attrs: { role: 'row' }, target: gridWrap });
+	const days = dom.create('div', {
+		class: 'nui-date-range-days',
+		attrs: { role: 'grid', 'aria-label': 'Choose a start and end date' },
+		target: gridWrap
+	});
+
+	let viewYear, viewMonth;
+	let hoverIso = '';
+	let pickingStart = false;
+	let dragArmed = false;
+	// Snapshot taken when the panel opens so Escape can put the old range back.
+	let beforeOpen = { from: '', to: '' };
+
+	const current = () => ({ from: fromInput.value, to: toInput.value });
+
+	const anchorDate = () => parseIsoDate(toInput.value) || parseIsoDate(fromInput.value) || new Date();
+
+	// Paging into a month where every day is disabled is a dead end: the grid renders,
+	// nothing is selectable, and focus has nowhere to land. Clamp navigation to the
+	// months that actually contain selectable days.
+	const monthIndex = (y, m) => y * 12 + m;
+	const firstMonth = minIso ? monthIndex(+minIso.slice(0, 4), +minIso.slice(5, 7) - 1) : -Infinity;
+	const lastMonth = maxIso ? monthIndex(+maxIso.slice(0, 4), +maxIso.slice(5, 7) - 1) : Infinity;
+	const canGoPrev = () => monthIndex(viewYear, viewMonth) > firstMonth;
+	const canGoNext = () => monthIndex(viewYear, viewMonth) < lastMonth;
+
+	function showMonth(date) {
+		viewYear = date.getFullYear();
+		viewMonth = date.getMonth();
+		render();
+	}
+
+	const stepMonth = (delta) => {
+		if (delta < 0 ? !canGoPrev() : !canGoNext()) return;
+		showMonth(new Date(viewYear, viewMonth + delta, 1));
+	};
+
+	const inRange = (iso, from, to) => {
+		if (!from) return false;
+		const end = to || from;
+		return iso >= from && iso <= end;
+	};
+
+	function syncTriggerLabel() {
+		const { from, to } = current();
+		if (!from) triggerLabel.textContent = 'All time';
+		else if (!to || from === to) triggerLabel.textContent = fmtLong.format(parseIsoDate(from));
+		else triggerLabel.textContent = `${fmtShort.format(parseIsoDate(from))} – ${fmtLong.format(parseIsoDate(to))}`;
+	}
+
+	function render() {
+		const { from, to } = current();
+		const view = buildMonthGrid(viewYear, viewMonth, weekStart, locale);
+		monthLabel.textContent = view.label;
+
+		// The grid is rebuilt wholesale, so the day that had focus is destroyed. Without
+		// putting focus back, it falls to <body> and every subsequent keypress — Escape,
+		// a second PageUp, another arrow — goes to the document and never reaches the
+		// grid, leaving the panel keyboard-dead after a single key.
+		const active = document.activeElement;
+		const refocusIso = active && days.contains(active) ? active.dataset.iso : null;
+
+		weekdays.textContent = '';
+		view.weekdayLabels.forEach((label) => {
+			weekdays.appendChild(dom.create('span', {
+				class: 'nui-date-range-weekday',
+				attrs: { role: 'columnheader', 'aria-label': label },
+				content: label
+			}));
+		});
+
+		// While a range is half-picked the live preview runs from the armed start to
+		// wherever the pointer is, so a drag and a click show the same thing.
+		const previewTo = (pickingStart || dragArmed) && hoverIso ? hoverIso : to;
+
+		days.textContent = '';
+		view.cells.forEach((cell) => {
+			const selected = inRange(cell.iso, from, to);
+			const previewed = inRange(cell.iso, from, previewTo);
+			const isStart = cell.iso === from;
+			const isEnd = cell.iso === (to || from);
+
+			const btn = dom.create('button', {
+				class: 'nui-date-range-day',
+				attrs: {
+					type: 'button',
+					role: 'gridcell',
+					'data-iso': cell.iso,
+					tabindex: '-1',
+					'aria-label': fmtFull.format(parseIsoDate(cell.iso)),
+					'aria-selected': selected ? 'true' : 'false'
+				},
+				target: days
+			});
+			// The number is an element, not a text node: the range band is an absolutely
+			// positioned pseudo-element and would otherwise paint over the text.
+			btn.appendChild(dom.create('span', { class: 'nui-date-range-daynum', content: String(cell.day), target: btn }));
+			if (cell.outside) btn.classList.add('is-outside');
+			if (selected) btn.classList.add('is-selected');
+			if (previewed && !selected) btn.classList.add('is-preview');
+			if (isStart) btn.classList.add('is-start');
+			if (isEnd) btn.classList.add('is-end');
+			// Rounded caps only on the outer edges; interior days stay square so the
+			// range reads as one continuous bar rather than a row of pills.
+			if (selected && !(isStart && isEnd)) {
+				if (isStart) btn.classList.add('is-cap-start');
+				if (isEnd) btn.classList.add('is-cap-end');
+			}
+			if (cell.iso === todayIso) btn.classList.add('is-today');
+			const disabled = (minIso && cell.iso < minIso) || (maxIso && cell.iso > maxIso);
+			if (disabled) { btn.disabled = true; btn.classList.add('is-disabled'); }
+			if (cell.iso === (from || to || todayIso)) btn.setAttribute('tabindex', '0');
+		});
+
+		if (!days.querySelector('[tabindex="0"]')) {
+			days.firstElementChild?.setAttribute('tabindex', '0');
+		}
+
+		// Restore focus after the rebuild. When the day is not in the new grid (paging to
+		// another month) fall back to the same day-of-month there, then to the first
+		// enabled day — dropping focus to <body> would leave the panel keyboard-dead.
+		if (refocusIso) {
+			const same = days.querySelector(`[data-iso="${refocusIso}"]`);
+			if (same && !same.disabled) {
+				same.focus();
+			} else {
+				const wanted = parseIsoDate(refocusIso);
+				const counterpart = wanted && days.querySelector(
+					`[data-iso="${toIsoDate(new Date(viewYear, viewMonth, wanted.getDate()))}"]`
+				);
+				const fallback = (counterpart && !counterpart.disabled ? counterpart : null)
+					|| days.querySelector('.nui-date-range-day:not(.is-disabled)');
+				fallback?.focus();
+			}
+		}
+
+		// Preset chips reflect the live range. The comparison runs against throwaway
+		// values so the real inputs are never left in a preset's state.
+		presetButtons.forEach((btn, value) => {
+			const savedFrom = fromInput.value;
+			const savedTo = toInput.value;
+			applyPreset(value);
+			const match = fromInput.value === savedFrom && toInput.value === savedTo;
+			fromInput.value = savedFrom;
+			toInput.value = savedTo;
+			btn.classList.toggle('is-active', match);
+		});
+
+		// Show the month limits rather than making them a silent no-op.
+		prevBtn.toggleAttribute('disabled', !canGoPrev());
+		nextBtn.toggleAttribute('disabled', !canGoNext());
+		prevBtn.querySelector('button')?.toggleAttribute('disabled', !canGoPrev());
+		nextBtn.querySelector('button')?.toggleAttribute('disabled', !canGoNext());
+
+		syncTriggerLabel();
+	}
+
+	function commit() {
+		pickingStart = false;
+		dragArmed = false;
+		hoverIso = '';
+		emit('');
+		render();
+	}
+
+	function selectDay(iso, { close } = {}) {
+		if (minIso && iso < minIso) return;
+		if (maxIso && iso > maxIso) return;
+		if (!pickingStart) {
+			fromInput.value = iso;
+			toInput.value = '';
+			pickingStart = true;
+			render();
+			return;
+		}
+		// Second click. Order the pair rather than emitting a reversed range that
+		// matches nothing and reads as an empty result set.
+		if (iso < fromInput.value) {
+			toInput.value = fromInput.value;
+			fromInput.value = iso;
+		} else {
+			toInput.value = iso;
+		}
+		commit();
+		if (close !== false) popover.hide();
+	}
+
+	function cancel() {
+		fromInput.value = beforeOpen.from;
+		toInput.value = beforeOpen.to;
+		pickingStart = false;
+		dragArmed = false;
+		hoverIso = '';
+	}
+
+	// ---- pointer ----
+	//
+	// A press is only *armed* on pointerdown; it becomes a drag on the first real move.
+	// That split is what keeps a plain click from being handled twice, and it means the
+	// pointer is captured only once a drag exists — capturing on pointerdown would
+	// retarget the following `click` to the grid and lose the day entirely.
+	let pressedIso = '';
+	let dragged = false;
+
+	days.addEventListener('pointerdown', (e) => {
+		const day = e.target.closest('.nui-date-range-day');
+		if (!day || day.disabled) return;
+		e.preventDefault();
+		pressedIso = day.dataset.iso;
+		hoverIso = pressedIso;
+		dragged = false;
+		dragArmed = true;
+	});
+
+	days.addEventListener('pointermove', (e) => {
+		if (!dragArmed) return;
+		const day = document.elementFromPoint(e.clientX, e.clientY)?.closest?.('.nui-date-range-day');
+		const iso = day?.dataset.iso;
+		if (!iso || iso === hoverIso) return;
+		if (!dragged) {
+			dragged = true;
+			days.setPointerCapture?.(e.pointerId);
+		}
+		hoverIso = iso;
+		// A drag past the start would invert, so order the pair: the preview must never
+		// show a range running backwards.
+		if (pressedIso <= iso) {
+			fromInput.value = pressedIso;
+			toInput.value = iso;
+		} else {
+			fromInput.value = iso;
+			toInput.value = pressedIso;
+		}
+		render();
+	});
+
+	days.addEventListener('pointerup', (e) => {
+		if (!dragArmed) return;
+		dragArmed = false;
+		// A press that never moved falls through to `click`, which arms the first half of
+		// the range — committing here would make every single click a one-day range.
+		if (!dragged) return;
+		days.releasePointerCapture?.(e.pointerId);
+		commit();
+		popover.hide();
+	});
+
+	days.addEventListener('pointercancel', () => {
+		dragArmed = false;
+		dragged = false;
+		render();
+	});
+
+	days.addEventListener('click', (e) => {
+		const day = e.target.closest('.nui-date-range-day');
+		if (!day || day.disabled) return;
+		selectDay(day.dataset.iso);
+	});
+
+	// ---- keyboard ----
+
+	days.addEventListener('keydown', (e) => {
+		const day = e.target.closest('.nui-date-range-day');
+		if (!day) return;
+		const cur = parseIsoDate(day.dataset.iso);
+
+		const move = (delta) => {
+			e.preventDefault();
+			const next = new Date(cur.getFullYear(), cur.getMonth(), cur.getDate() + delta);
+			if (next.getMonth() !== viewMonth || next.getFullYear() !== viewYear) showMonth(next);
+			const target = days.querySelector(`[data-iso="${toIsoDate(next)}"]`);
+			if (target) {
+				days.querySelectorAll('[tabindex="0"]').forEach(n => n.setAttribute('tabindex', '-1'));
+				target.setAttribute('tabindex', '0');
+				target.focus();
+			}
+			if (pickingStart) { hoverIso = toIsoDate(next); render(); }
+		};
+
+		switch (e.key) {
+			case 'ArrowLeft': move(-1); break;
+			case 'ArrowRight': move(1); break;
+			case 'ArrowUp': move(-7); break;
+			case 'ArrowDown': move(7); break;
+			case 'Home': move(-((cur.getDay() - weekStart + 7) % 7)); break;
+			case 'End': move(6 - ((cur.getDay() - weekStart + 7) % 7)); break;
+			case 'PageUp':
+				e.preventDefault();
+				stepMonth(-1);
+				break;
+			case 'PageDown':
+				e.preventDefault();
+				stepMonth(1);
+				break;
+			case 'Enter':
+			case ' ':
+				e.preventDefault();
+				selectDay(day.dataset.iso);
+				break;
+		}
+	});
+
+	prevBtn.addEventListener('click', () => stepMonth(-1));
+	nextBtn.addEventListener('click', () => stepMonth(1));
+
+	// ---- open / close ----
+
+	// The platform toggles the popover via `popovertarget`; these listeners only track
+	// state around it. Snapshot on open so Escape can undo a half-made pick.
+	popover.addEventListener('toggle', (e) => {
+		if (e.newState === 'open') {
+			beforeOpen = current();
+			pickingStart = false;
+			dragArmed = false;
+			showMonth(anchorDate());
+			// The panel lives in the top layer; move focus in once it is actually open or
+			// the browser has not promoted it yet and the focus silently bounces back.
+			queueMicrotask(() => {
+				(days.querySelector('[tabindex="0"]') || days.querySelector('.nui-date-range-day'))?.focus();
+			});
+		}
+	});
+
+	popover.addEventListener('nui-popover-close', () => {
+		// Escape discards a half-finished pick and puts back what was there on open — a
+		// calendar that silently swallows a half-made selection is worse than one that
+		// does nothing at all.
+		if (pickingStart || dragArmed) {
+			cancel();
+			emit('');
+		}
+		trigger.focus();
+		render();
+	});
+
+	popover.addEventListener('keydown', (e) => {
+		if (e.key !== 'Escape') return;
+		e.preventDefault();
+		e.stopPropagation();
+		cancel();
+		emit('');
+		popover.hide();
+	});
+
+	// Anything that changes the value from outside must repaint the grid.
+	const repaint = () => render();
+	element.addEventListener('nui-date-range-change', repaint);
+	fromInput.addEventListener('change', repaint);
+	toInput.addEventListener('change', repaint);
+
+	showMonth(anchorDate());
+	element.openCalendar = () => popover.show();
+}
+
 registerComponent('nui-date-range', (element) => {
 	element.classList.add('nui-date-range');
 
@@ -4702,6 +5192,16 @@ registerComponent('nui-date-range', (element) => {
 		presetSelect.value = value;
 		presetSelect.dispatchEvent(new Event('change', { bubbles: true }));
 	};
+
+	// ##### CALENDAR MODE
+	//
+	// Opt-in via the `calendar` attribute. The two date inputs stay exactly where they
+	// are and keep holding the value — they are hidden, not replaced, so every code path
+	// above (getValue, setValue, clamping, the change event) is identical in both modes
+	// and a host that swaps modes mid-life does not lose state.
+	if (element.hasAttribute('calendar')) {
+		setupCalendarMode(element, { fromInput, toInput, presetSelect, emit, applyPreset });
+	}
 });
 
 // ################################# nui-sortable COMPONENT

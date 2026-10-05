@@ -119,6 +119,79 @@
 </section>
 
 <section>
+	<h2>Calendar Mode</h2>
+	<p>Add <code>calendar</code> and the two date inputs collapse into a single button showing the resolved range. Opening it gives a month grid — click a start then an end, or drag across the days. The preset <code>&lt;select&gt;</code> still drives the chips at the top of the panel; it is never removed from the value model.</p>
+
+	<h3>Try It</h3>
+	<div class="demo-container">
+		<nui-date-range id="demo-range-cal" calendar>
+			<nui-select placeholder="Range">
+				<select>
+					<option value="" selected>Custom</option>
+					<option value="today">Today</option>
+					<option value="yesterday">Yesterday</option>
+					<option value="7d">Last 7 days</option>
+					<option value="30d">Last 30 days</option>
+					<option value="all">All time</option>
+				</select>
+			</nui-select>
+			<input type="date" data-nui-date-range="from" aria-label="From">
+			<input type="date" data-nui-date-range="to" aria-label="To">
+		</nui-date-range>
+		<div class="drag-value-display">
+			Value: <code id="cal-value-1">(nothing picked yet)</code>
+		</div>
+	</div>
+
+	<nui-code>
+		<script type="example" data-lang="html">
+<nui-date-range calendar>
+    <nui-select placeholder="Range">
+        <select>
+            <option value="" selected>Custom</option>
+            <option value="7d">Last 7 days</option>
+            <option value="all">All time</option>
+        </select>
+    </nui-select>
+    <input type="date" data-nui-date-range="from" aria-label="From">
+    <input type="date" data-nui-date-range="to" aria-label="To">
+</nui-date-range>
+		</script>
+	</nui-code>
+
+	<h3>Bounded by the data</h3>
+	<p><code>min</code> and <code>max</code> disable days outside the window and clamp month paging to the months that still contain selectable days — paging into a fully disabled month would be a dead end where focus has nowhere to land.</p>
+
+	<h3>Try It</h3>
+	<div class="demo-container">
+		<nui-date-range id="demo-range-bounded" calendar min="2026-09-16" max="2026-10-05">
+			<nui-select placeholder="Range">
+				<select>
+					<option value="" selected>Custom</option>
+					<option value="7d">Last 7 days</option>
+				</select>
+			</nui-select>
+			<input type="date" data-nui-date-range="from" aria-label="From">
+			<input type="date" data-nui-date-range="to" aria-label="To">
+		</nui-date-range>
+	</div>
+
+	<h3>Keyboard</h3>
+	<table class="nui-table nui-table--api">
+		<thead>
+			<tr><th>Key</th><th>Action</th></tr>
+		</thead>
+		<tbody>
+			<tr><td><code>← → ↑ ↓</code></td><td>Move one day / one week. Never lands on a disabled day.</td></tr>
+			<tr><td><code>Home</code> / <code>End</code></td><td>Start / end of the week.</td></tr>
+			<tr><td><code>PageUp</code> / <code>PageDown</code></td><td>Previous / next month, clamped to the selectable range.</td></tr>
+			<tr><td><code>Enter</code> / <code>Space</code></td><td>Pick the start, then the end.</td></tr>
+			<tr><td><code>Escape</code></td><td>Discards a half-made pick and restores the range from when the panel opened. Focus returns to the trigger.</td></tr>
+		</tbody>
+	</table>
+</section>
+
+<section>
 	<h2>Component API</h2>
 
 	<h3>Methods</h3>

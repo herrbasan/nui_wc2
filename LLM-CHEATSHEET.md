@@ -318,7 +318,7 @@ If you MUST apply CSS (spacing on your own wrappers, very rare theming), use ONL
 
 ### nui-date-range
 
-Paired from/to native date inputs with an optional preset `<select>`. Emits one normalized `nui-change`.
+Paired from/to native date inputs with an optional preset `<select>`. Emits one normalized `nui-date-range-change`.
 
 ```html
 <!-- ✅ CORRECT — the preset select is a CHILD, not a sibling -->
@@ -334,13 +334,18 @@ Paired from/to native date inputs with an optional preset `<select>`. Emits one 
     <input type="date" data-nui-date-range="from" aria-label="From">
     <input type="date" data-nui-date-range="to" aria-label="To">
 </nui-date-range>
+
+<!-- ✅ calendar mode: SAME markup + `calendar` → button + month grid in an nui-popover -->
+<nui-date-range calendar min="2026-09-16" max="2026-10-05"> …same children… </nui-date-range>
 ```
 
 | Presets | `today`, `yesterday`, `7d`, `30d`, `90d`, `all` — inclusive on both ends, so `7d` is today plus 6 days |
 |---|---|
-| Attributes | `size` (`"small"` = 2rem row — put it HERE, not on the child select), `min`, `max`, `now` (anchors presets to a fixed `YYYY-MM-DD`, for tests) |
+| Attributes | `calendar` (month-grid popover), `size` (`"small"` = 2rem row — put it HERE, not on the child select), `min`, `max`, `now` (anchors presets to a fixed `YYYY-MM-DD`, for tests) |
 | Event | `nui-date-range-change` → `{ from, to, preset }` — `preset` is `''` for hand-entered ranges |
-| Methods | `.getValue()`, `.setValue({from,to,preset})`, `.clear()`, `.getPreset()`, `.setPreset(v)` |
+| Methods | `.getValue()`, `.setValue({from,to,preset})`, `.clear()`, `.getPreset()`, `.setPreset(v)`, `.openCalendar()` (calendar mode) |
+
+Calendar mode **hides** the two date inputs rather than replacing them, so both modes share the same clamping, event and API. Click a start then an end, or drag; a backwards pick is ordered, not rejected. Keyboard: arrows, `Home`/`End`, `PageUp`/`PageDown` (clamped to months that still have selectable days), `Enter`/`Space`, `Escape` (discards a half-pick, restores the pre-open range, focus returns to the trigger). The range draws as ONE continuous band with rounded outer ends, not a row of pills.
 
 ⚠️ **Three traps.** A sibling `<nui-select>` renders as a working dropdown that silently never fires — the component only searches its own children. The event is `nui-date-range-change`, **not** `nui-change`: a child `<nui-select>` fires its own `nui-change` (`{ values, labels, options }`) straight through this element, and one shared listener would receive both payloads. And an inverted range is clamped, not emitted: editing `from` past `to` pushes `to` up, so a reversed window (which would match nothing and look like a data outage) can never be observed.
 

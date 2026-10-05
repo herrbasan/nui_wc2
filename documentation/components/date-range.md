@@ -3,7 +3,8 @@
 ## Design Philosophy
 
 `nui-date-range` pairs two native `<input type="date">` fields with an optional preset
-select, and emits one normalized `nui-change` event whenever the range changes.
+select, and emits one normalized `nui-date-range-change` event whenever the range
+changes.
 
 It exists because "which window am I looking at" is the first question every reporting
 and analytics surface has to answer, and every app otherwise rebuilds the same three
@@ -11,10 +12,83 @@ pieces: a preset list, two date fields, and the reconciliation between them. The
 component owns that reconciliation so a caller only ever handles
 `{ from, to, preset }`.
 
-**It is not a calendar widget.** The browser's own date picker is used as-is: the
-component adds no popup, no grid, and no overlay. That keeps it keyboard- and
-locale-correct for free and means it has no positioning or focus-trap surface to get
-wrong. If you need a visual calendar, that is a different component.
+**Two presentations, one value store.** The default is the inline pair of native date
+fields — no popup, no grid, no positioning to get wrong, and the browser's own picker
+stays keyboard- and locale-correct for free. Add the `calendar` attribute and those
+same two fields become a button and a month grid. The inputs are hidden rather than
+replaced, so every behaviour below is shared verbatim between the modes and the
+attribute can be toggled without losing state.
+
+## Calendar Mode
+
+Add the `calendar` attribute and the two date inputs collapse into a single button that
+shows the resolved range. Opening it gives a month grid: click a start then an end, or
+drag across the days. Preset chips sit above the grid.
+
+```html
+<nui-date-range calendar>
+    <nui-select placeholder="Range">
+        <select>
+            <option value="" selected>Custom</option>
+            <option value="7d">Last 7 days</option>
+            <option value="all">All time</option>
+        </select>
+    </nui-select>
+    <input type="date" data-nui-date-range="from" aria-label="From">
+    <input type="date" data-nui-date-range="to" aria-label="To">
+</nui-date-range>
+```
+
+**The two date inputs stay in the DOM and keep holding the value** — calendar mode
+hides them, it does not replace them. Clamping, `nui-date-range-change`, `getValue`,
+`setValue` and the preset list are the same code in both modes, and a host can add or
+remove the attribute without losing state.
+
+The panel is an `<nui-popover>`, so it is a top-layer element: no ancestor's
+`overflow: hidden` can clip it and no scroll container traps it.
+
+### The range band
+
+The selected span is **one continuous bar**, not a row of pills. Each day's band spans
+the full cell so neighbours meet without a seam, and only the two outer ends are
+rounded — a radius on every day would make the span unreadable. The endpoints are
+marked by their rounded ends; today is a filled dot whether or not it falls in the
+range, so "where am I now" is answerable at a glance.
+
+### Bounded calendars
+
+`min` and `max` disable days outside the window, and month paging is **clamped to the
+months that still contain selectable days**. Paging into a fully disabled month is a
+dead end: the grid renders, nothing is selectable, and keyboard focus has nowhere to
+land. The nav buttons disable at the limits rather than making them a silent no-op.
+
+```html
+<nui-date-range calendar min="2026-09-16" max="2026-10-05"> … </nui-date-range>
+```
+
+### Keyboard
+
+| Key | Action |
+|-----|--------|
+| `←` `→` | Move one day |
+| `↑` `↓` | Move one week |
+| `Home` / `End` | Start / end of the week |
+| `PageUp` / `PageDown` | Previous / next month, clamped to the selectable range |
+| `Enter` / `Space` | Pick the start, then the end |
+| `Escape` | Discard a half-made pick, restore what was there on open, return focus to the trigger |
+
+The grid is a roving-tabindex composite: exactly one day is in the tab order at a time
+and the arrows move within it. Focus is **restored across every re-render** — the grid
+is rebuilt wholesale, so without that the focused day would be destroyed, focus would
+fall to `<body>`, and every subsequent keypress (Escape, a second `PageUp`, another
+arrow) would go to the document instead of the panel, leaving it keyboard-dead after a
+single key.
+
+### Selection
+
+A backwards drag or a backwards second click is **ordered, not rejected** — the pair
+comes out `min → max`. A reversed window matches nothing and reads as an empty result
+set, which is a worse outcome than quietly swapping the ends.
 
 ## Declarative Usage
 
@@ -68,9 +142,10 @@ preset before the library knows about it.
 
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
+| `calendar` | boolean | – | Renders the calendar popover instead of the inline date inputs. |
 | `size` | string | – | `"small"` puts the whole control on the 2rem compact row. |
-| `min` | string | – | Sets `min` on both inputs. |
-| `max` | string | – | Sets `max` on the `to` input. |
+| `min` | string | – | Sets `min` on both inputs; in calendar mode, disables earlier days. |
+| `max` | string | – | Sets `max` on the `to` input; in calendar mode, disables later days. |
 | `now` | string | – | Anchors preset resolution to this `YYYY-MM-DD` date instead of the system clock. For deterministic rendering and tests. |
 
 ## Events
@@ -102,6 +177,7 @@ document.querySelector('nui-date-range').addEventListener('nui-date-range-change
 | `clear()` | – | – | Empties both fields (equivalent to the `all` preset). |
 | `getPreset()` | – | `string` | Current preset value, or `''`. |
 | `setPreset(value)` | `string` | – | Selects a preset, resolves it, and emits. An unrecognised value is a complete no-op. |
+| `openCalendar()` | – | – | Calendar mode only. Opens the panel programmatically. |
 
 The preset methods are only installed when a `<select>` child is present. `setPreset()`
 ignores a value that has no matching `<option>` **before writing anything** — assigning
