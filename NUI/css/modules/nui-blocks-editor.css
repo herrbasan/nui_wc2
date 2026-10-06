@@ -50,16 +50,33 @@ nui-blocks-editor {
 
 /* The only toolbar on the page, and it is inside the scrolling canvas column by
    design — nothing is pinned, so no vertical space is held for controls that are
-   set once and then left alone. */
+   set once and then left alone.
+   Two deliberate rows, not a free wrap: the canvas column is narrow, and letting
+   three groups wrap under space-between produced ragged, order-dependent
+   placement. Row 1 is identity (title) left, actions right; row 2 gives the
+   preview switcher the full width. */
 nui-blocks-editor .editor-blocks-header {
-	display: flex;
-	justify-content: space-between;
+	display: grid;
+	grid-template-columns: 1fr auto;
+	grid-template-areas:
+		'title actions'
+		'mode mode';
 	align-items: center;
-	flex-wrap: wrap;
 	gap: var(--nui-space-half) var(--nui-space);
 }
 
+nui-blocks-editor .editor-blocks-header .editor-card-title {
+	grid-area: title;
+}
+
+nui-blocks-editor .editor-blocks-header [data-be="preview-switcher"],
+nui-blocks-editor .editor-blocks-header #editor-preview-switcher {
+	grid-area: mode;
+	justify-self: stretch;
+}
+
 nui-blocks-editor .editor-actions {
+	grid-area: actions;
 	display: flex;
 	align-items: center;
 	gap: var(--nui-space-half);
