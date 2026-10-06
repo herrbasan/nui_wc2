@@ -3334,11 +3334,12 @@ function initBlocksEditor(element, nui) {
 			if (btn.dataset.preview === mode) btn.setAttribute('state', 'active');
 			else btn.removeAttribute('state');
 		});
-		// Full width is won on the CHILD, not on the page. The theme constrains
-		// `nui-page > *`, never `nui-page` itself, so an attribute on the wrapper
-		// reads as full-bleed and constrains nothing; .editor-workspace is the
-		// direct child the rule actually reaches.
-		if (mode === 'inline') workspace.setAttribute('breakout', '');
+		// Full width is won on the CHILD of nui-page, never the page. The theme
+		// constrains `nui-page > *`, never `nui-page` itself, so the attribute goes
+		// on THIS element — the host places it (or a wrapper) directly in the page.
+		// An attribute on the inner workspace would read as full-bleed and
+		// constrain nothing, because the workspace is never a page child.
+		if (mode === 'inline') element.setAttribute('breakout', '');
 		syncToOutputs();
 		applySplitPreference();
 	}

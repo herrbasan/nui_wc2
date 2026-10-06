@@ -43,6 +43,22 @@ render, so the UI can never disagree with the document.
 | `no-frontmatter` | boolean | Removes the frontmatter summary card (metadata is still kept in the document) |
 | `preview` | `inline` (default) / `hidden` / `window` | Initial preview mode |
 
+### Full-width placement
+
+The theme constrains `nui-page > *`, so to let the editor use the whole page
+width, the element (or its wrapper) must sit **directly** under `nui-page` —
+`setPreviewMode` puts the `breakout` attribute on the component itself when the
+inline preview is active. A host that nests it deeper adds `breakout` to its
+own direct page child:
+
+```html
+<nui-page>
+    <section breakout>
+        <nui-blocks-editor></nui-blocks-editor>
+    </section>
+</nui-page>
+```
+
 ## Programmatic API
 
 ```javascript
