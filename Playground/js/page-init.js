@@ -3,7 +3,7 @@
 // Generated on 2026-05-20
 
 import { nui } from '../../NUI/nui.js';
-import { initBlocksEditor } from './blocks-editor.js';
+import '../../NUI/lib/modules/nui-blocks-editor.js';
 import { runFormatRoundtrip } from '../../NUI/lib/modules/nui-format-roundtrip.js';
 import * as jsonModel from '../../NUI/lib/modules/nui-json-model.js';
 import { setupJsonGrid } from '../../NUI/lib/modules/nui-json-grid.js';
@@ -4064,7 +4064,15 @@ nui.registerPage('experiments/html-standards', {
 nui.registerPage('experiments/blocks-editor', {
 	html: 'experiments/blocks-editor.html',
 	init(element, params, nui) {
-		initBlocksEditor(element, params, nui);
+		// The editor itself is the <nui-blocks-editor> addon; this page only
+		// wires the Playground demo documents into it.
+		const editor = element.querySelector('nui-blocks-editor');
+		const btnDemo = element.querySelector('[data-load-demo]');
+		const btnBlog = element.querySelector('[data-load-blog]');
+		btnDemo?.addEventListener('click', () =>
+			editor.loadUrl('pages/experiments/md-blocks-demo.md', ['../../images/', 'images/']));
+		btnBlog?.addEventListener('click', () =>
+			editor.loadUrl('pages/experiments/blog-the-ghost-in-the-agent.md'));
 	}
 });
 

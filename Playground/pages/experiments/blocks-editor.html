@@ -1,99 +1,17 @@
-<!-- Main Editor Layout -->
-	<div class="editor-workspace" data-preview-mode="inline">
-		<!-- Visual Canvas Pane -->
-		<div class="editor-canvas-pane" id="pane-canvas">
-			<!-- The only toolbar, and it scrolls away with the sections. Nothing is pinned:
-			     the preview controls are set-and-forget, and a fixed bar would hold vertical
-			     space for something used once a session. -->
-			<div class="editor-blocks-header">
-				<div class="editor-card-title">
-					<nui-icon name="layers"></nui-icon>
-					<span>Blocks</span>
-				</div>
-				<nui-button-container variant="segmented" id="editor-preview-switcher">
-					<nui-button state="active" data-preview="inline"><button type="button">Side by Side</button></nui-button>
-					<nui-button data-preview="hidden"><button type="button">Hide Preview</button></nui-button>
-					<nui-button data-preview="window"><button type="button">Own Window</button></nui-button>
-				</nui-button-container>
-				<div class="editor-actions">
-					<nui-button variant="outline" size="small" id="btn-load-sample">
-						<button type="button">Load Demo</button>
-					</nui-button>
-					<nui-button variant="outline" size="small" id="btn-load-blog">
-						<button type="button">Load Blog Post</button>
-					</nui-button>
-					<nui-button variant="primary" size="small" id="btn-copy-md">
-						<button type="button">Copy Markdown</button>
-					</nui-button>
-				</div>
-			</div>
+<header>
+	<h1>Blocks Editor</h1>
+	<p class="lead">Visual editor for MD-Blocks documents — <code>&lt;nui-blocks-editor&gt;</code> addon.</p>
+</header>
 
-			<!-- Frontmatter Bar -->
-			<div class="editor-card editor-frontmatter-card">
-				<div class="editor-card-header">
-					<div class="editor-card-title">
-					<nui-icon name="article"></nui-icon>
-						<span>Document Metadata (Frontmatter)</span>
-					</div>
-				<nui-button variant="ghost" id="btn-edit-frontmatter">
-						<button type="button">Edit Meta</button>
-					</nui-button>
-				</div>
-				<div class="editor-frontmatter-summary" id="frontmatter-summary">
-					<span class="meta-item"><strong>Title:</strong> <span data-meta-title>Untitled Document</span></span>
-					<span class="meta-chips" data-meta-chips></span>
-				</div>
-			</div>
-
-			<!-- Slides / Deck Chrome Panel (Hidden in Webpage mode) -->
-			<div class="editor-card editor-chrome-card" id="editor-chrome-panel" style="display: none;">
-				<div class="editor-card-header">
-					<div class="editor-card-title">
-					<nui-icon name="view_column"></nui-icon>
-						<span>Repeating Deck Chrome (<code>repeat=header|footer</code>)</span>
-					</div>
-				</div>
-				<div class="editor-chrome-body">
-					<div class="chrome-slot" data-slot="header">
-						<div class="chrome-slot-label">Header Chrome:</div>
-						<input type="text" class="nui-native-input" id="chrome-header-input" placeholder="e.g. Acme Corp · Quarterly Review">
-					</div>
-					<div class="chrome-slot" data-slot="footer">
-						<div class="chrome-slot-label">Footer Chrome:</div>
-						<input type="text" class="nui-native-input" id="chrome-footer-input" placeholder="e.g. Confidential · 2026">
-					</div>
-				</div>
-			</div>
-
-			<!-- Top Add Section Strip -->
-			<div class="editor-add-strip add-top">
-				<button type="button" class="add-icon-btn add-top" id="btn-add-section-top" title="Add Section at Top">
-					<nui-icon name="add_circle"></nui-icon>
-				</button>
-			</div>
-
-			<!-- Sections Container -->
-			<nui-sortable class="editor-sections-container" id="editor-sections-container">
-				<!-- Dynamically rendered sections go here -->
-		</nui-sortable>
-
-			<!-- Bottom Add Section Strip -->
-			<div class="editor-add-strip add-bottom">
-				<button type="button" class="add-icon-btn add-bottom" id="btn-add-section-bottom" title="Add Section">
-					<nui-icon name="add_circle"></nui-icon>
-				</button>
-			</div>
-		</div>
-
-		<!-- Split divider: drag to re-proportion the canvas and preview panes -->
-		<div class="editor-split-handle" id="editor-split-handle" role="separator"
-			aria-orientation="vertical" aria-label="Resize editor and preview panes"
-			aria-valuemin="0" aria-valuemax="100" aria-valuenow="58" tabindex="0"
-			title="Drag to resize · double-click to reset"></div>
-
-		<!-- Live Preview Pane -->
-		<div class="editor-preview-pane" id="pane-preview">
-			<nui-markdown id="live-markdown-preview" frontmatter="collapsed"></nui-markdown>
-		</div>
-		</div>
+<section>
+	<div class="demo-actions" style="margin-bottom: var(--nui-space);">
+		<nui-button variant="outline" size="small" data-load-demo>
+			<button type="button">Load Demo</button>
+		</nui-button>
+		<nui-button variant="outline" size="small" data-load-blog>
+			<button type="button">Load Blog Post</button>
+		</nui-button>
 	</div>
+
+	<nui-blocks-editor></nui-blocks-editor>
+</section>

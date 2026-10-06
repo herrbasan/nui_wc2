@@ -1,32 +1,161 @@
-// NUI MD-Blocks Visual Editor
-// Supports Webpages, Documents, and Slideshows
+// NUI Blocks Editor addon — <nui-blocks-editor>
+// Visual editor for MD-Blocks documents: sections, blocks, columns, vars,
+// frontmatter, live preview (inline / hidden / own window). The component owns
+// its full UI; hosts load and serialize documents through the API below.
+//
+// Attributes (all optional, absence = fully featured):
+//   no-preview      — remove the preview pane, split divider and switcher
+//   no-frontmatter  — remove the frontmatter card (doc still keeps its metadata)
+//   preview         — initial mode: "inline" (default) | "hidden" | "window"
+//
+// API (after connect):
+//   load(markdown | docModel)  — replace the document (text or parsed model)
+//   loadUrl(url, rebase?)      — fetch a markdown document and load it
+//   serialize()                — document as md-blocks text
+//   destroy()                  — release window listeners / preview window
+// Events:
+//   nui-change (bubbles) — detail { doc, markdown }, fired on every edit sync
+//
+// Requires the host to link css/modules/nui-blocks-editor.css (addon rule:
+// JS import AND CSS link). The editor never fetches or persists anything on
+// its own — load/serialize is the whole storage contract.
 
-import '../../NUI/lib/modules/nui-rich-text.js';
+import { nui } from '../../nui.js';
+import './nui-list.js';
+import './nui-media-player.js';
+import './nui-rich-text.js';
 
-export function initBlocksEditor(element, params, nui) {
+// Workspace markup, generated per instance. IDs become data-be attributes so
+// two editors can coexist on one page; the popover trigger (resolved by id
+// document-wide) is the one place that still needs a real id, namespaced by
+// the instance uid.
+const WORKSPACE_MARKUP = (cfg) => `
+	<div class="editor-workspace" data-preview-mode="${cfg.preview}">
+		<div class="editor-canvas-pane" data-be="pane-canvas">
+			<div class="editor-blocks-header">
+				<div class="editor-card-title">
+					<nui-icon name="layers"></nui-icon>
+					<span>Blocks</span>
+				</div>
+				${cfg.previewHidden ? '' : `
+				<nui-button-container variant="segmented" data-be="preview-switcher">
+					<nui-button state="active" data-preview="inline"><button type="button">Side by Side</button></nui-button>
+					<nui-button data-preview="hidden"><button type="button">Hide Preview</button></nui-button>
+					<nui-button data-preview="window"><button type="button">Own Window</button></nui-button>
+				</nui-button-container>`}
+				<div class="editor-actions">
+					<nui-button variant="primary" size="small" data-be="copy-md">
+						<button type="button">Copy Markdown</button>
+					</nui-button>
+				</div>
+			</div>
+
+			${cfg.frontmatter ? `
+			<div class="editor-card editor-frontmatter-card">
+				<div class="editor-card-header">
+					<div class="editor-card-title">
+						<nui-icon name="article"></nui-icon>
+						<span>Document Metadata (Frontmatter)</span>
+					</div>
+					<nui-button variant="ghost" data-be="edit-frontmatter">
+						<button type="button">Edit Meta</button>
+					</nui-button>
+				</div>
+				<div class="editor-frontmatter-summary" data-be="frontmatter-summary">
+					<span class="meta-item"><strong>Title:</strong> <span data-meta-title>Untitled Document</span></span>
+					<span class="meta-chips" data-meta-chips></span>
+				</div>
+			</div>` : ''}
+
+			<div class="editor-card editor-chrome-card" data-be="chrome-panel" style="display: none;">
+				<div class="editor-card-header">
+					<div class="editor-card-title">
+						<nui-icon name="view_column"></nui-icon>
+						<span>Repeating Deck Chrome (<code>repeat=header|footer</code>)</span>
+					</div>
+				</div>
+				<div class="editor-chrome-body">
+					<div class="chrome-slot" data-slot="header">
+						<div class="chrome-slot-label">Header Chrome:</div>
+						<input type="text" class="nui-native-input" data-be="chrome-header" placeholder="e.g. Acme Corp · Quarterly Review">
+					</div>
+					<div class="chrome-slot" data-slot="footer">
+						<div class="chrome-slot-label">Footer Chrome:</div>
+						<input type="text" class="nui-native-input" data-be="chrome-footer" placeholder="e.g. Confidential · 2026">
+					</div>
+				</div>
+			</div>
+
+			<div class="editor-add-strip add-top">
+				<button type="button" class="add-icon-btn add-top" data-be="add-section-top" title="Add Section at Top">
+					<nui-icon name="add_circle"></nui-icon>
+				</button>
+			</div>
+
+			<nui-sortable class="editor-sections-container" data-be="sections-container"></nui-sortable>
+
+			<div class="editor-add-strip add-bottom">
+				<button type="button" class="add-icon-btn add-bottom" data-be="add-section-bottom" title="Add Section">
+					<nui-icon name="add_circle"></nui-icon>
+				</button>
+			</div>
+		</div>
+
+		${cfg.previewHidden ? '' : `
+		<div class="editor-split-handle" data-be="split-handle" role="separator"
+			aria-orientation="vertical" aria-label="Resize editor and preview panes"
+			aria-valuemin="0" aria-valuemax="100" aria-valuenow="58" tabindex="0"
+			title="Drag to resize · double-click to reset"></div>
+
+		<div class="editor-preview-pane" data-be="pane-preview">
+			<nui-markdown data-be="live-preview" frontmatter="collapsed"></nui-markdown>
+		</div>`}
+	</div>
+`;
+
+function initBlocksEditor(element, nui) {
 	const { util } = nui;
 
+	// Configuration — attributes read once at init; the element does not react
+	// to attribute changes after connect.
+	const cfg = {
+		previewHidden: element.hasAttribute('no-preview'),
+		frontmatter: !element.hasAttribute('no-frontmatter'),
+		preview: element.getAttribute('preview') || 'inline'
+	};
+	if (cfg.previewHidden) cfg.preview = 'hidden';
+
+	// Popover triggers are resolved by id document-wide, so they carry an
+	// instance-unique prefix.
+	const uid = element.dataset.beUid ||= 'be' + Math.random().toString(36).slice(2, 8);
+
+	// One-time markup. Pages cache their wrapper, but a fresh editor element
+	// always builds its own workspace.
+	if (!element.dataset.beReady) {
+		element.innerHTML = WORKSPACE_MARKUP(cfg);
+		element.dataset.beReady = '1';
+	}
+
 	// Elements
-	const chromeHeaderInput = element.querySelector('#chrome-header-input');
-	const chromeFooterInput = element.querySelector('#chrome-footer-input');
-	const sectionsContainer = element.querySelector('#editor-sections-container');
-	const btnAddSecTop = element.querySelector('#btn-add-section-top');
-	const btnAddSecBottom = element.querySelector('#btn-add-section-bottom');
-	const btnLoadSample = element.querySelector('#btn-load-sample');
-	const btnLoadBlog = element.querySelector('#btn-load-blog');
-	const btnCopyMd = element.querySelector('#btn-copy-md');
-	const previewSwitcher = element.querySelector('#editor-preview-switcher');
-	const paneCanvas = element.querySelector('#pane-canvas');
+	const be = (name) => element.querySelector(`[data-be="${name}"]`);
+	const chromeHeaderInput = be('chrome-header');
+	const chromeFooterInput = be('chrome-footer');
+	const sectionsContainer = be('sections-container');
+	const btnAddSecTop = be('add-section-top');
+	const btnAddSecBottom = be('add-section-bottom');
+	const btnCopyMd = be('copy-md');
+	const previewSwitcher = be('preview-switcher');
+	const paneCanvas = be('pane-canvas');
 	const workspace = element.querySelector('.editor-workspace');
-	const livePreview = element.querySelector('#live-markdown-preview');
-	const btnEditFrontmatter = element.querySelector('#btn-edit-frontmatter');
+	const livePreview = be('live-preview');
+	const btnEditFrontmatter = be('edit-frontmatter');
 	const metaTitleDisplay = element.querySelector('[data-meta-title]');
 	const metaChips = element.querySelector('[data-meta-chips]');
 
 	// Current State
 	let currentDoc = createDefaultDoc();
 	let isSyncing = false;
-	let previewMode = 'inline';
+	let previewMode = cfg.previewHidden ? 'hidden' : cfg.preview;
 	let previewWindow = null;
 
 	function createDefaultDoc() {
@@ -964,7 +1093,7 @@ export function initBlocksEditor(element, params, nui) {
 			// Section options live behind the pen, not as permanent dropdowns — the
 			// template decides which options exist. The pen carries an id because the panel
 			// is wired to it by `for`, and the platform does the toggling.
-			const optsTriggerId = `section-opts-trigger-${sIdx}`;
+			const optsTriggerId = `section-opts-trigger-${uid}-${sIdx}`;
 			const optsBtn = createNuiIconButton('edit', 'Section options');
 			optsBtn.id = optsTriggerId;
 			controlsGroup.appendChild(optsBtn);
@@ -3180,6 +3309,10 @@ export function initBlocksEditor(element, params, nui) {
 				util.enhancePlayers?.(livePreview);
 			}
 			renderPreviewWindow(html);
+			element.dispatchEvent(new CustomEvent('nui-change', {
+				detail: { doc: currentDoc, markdown: md },
+				bubbles: true
+			}));
 		} finally {
 			isSyncing = false;
 		}
@@ -3190,6 +3323,9 @@ export function initBlocksEditor(element, params, nui) {
 	// put away (hidden), or in its own window. When it is not inline the divider has
 	// nothing to divide, so the canvas takes the full width on its own.
 	function setPreviewMode(mode) {
+		// no-preview locks the editor to the hidden preview; a mode the layout
+		// cannot hold would be a lie on every render.
+		if (cfg.previewHidden) mode = 'hidden';
 		if (mode === 'window' && !ensurePreviewWindow()) return;
 		previewMode = mode;
 		if (mode !== 'window') closePreviewWindow();
@@ -3335,7 +3471,7 @@ export function initBlocksEditor(element, params, nui) {
 	// width the canvas gets (the preview takes the rest). Only the DRAG measures the live
 	// canvas rect — everything else works from the stored percentage, so the value never
 	// depends on when a handler happened to run relative to layout.
-	const splitHandle = element.querySelector('#editor-split-handle');
+	const splitHandle = be('split-handle');
 	const SPLIT_DEFAULT_PCT = 58;
 	// Below this, a pane is too narrow to edit a 3-column structure in.
 	const SPLIT_MIN_PANE_PX = 320;
@@ -3458,7 +3594,8 @@ export function initBlocksEditor(element, params, nui) {
 	// sidebar transition runs — so a window listener sees one transient width, and the
 	// applied value would be left describing a layout that no longer exists. The observer
 	// fires on every step of that change, re-clamping against each one.
-	new ResizeObserver(applySplitPreference).observe(workspace);
+	const resizeObserver = new ResizeObserver(applySplitPreference);
+	resizeObserver.observe(workspace);
 	applySplitPreference();
 
 	btnCopyMd?.addEventListener('click', async () => {
@@ -3502,16 +3639,6 @@ export function initBlocksEditor(element, params, nui) {
 			});
 		}
 	}
-
-	// The demo md is written for the md-blocks demo PAGE (served from
-	// pages/experiments/), so its media paths carry a ../../ prefix. The editor
-	// canvas and live preview resolve against Playground/index.html — same base
-	// the faux media library uses. Rebase on load; every media path in the file
-	// is uniformly prefixed. The blog post's paths are already base-relative.
-	btnLoadSample?.addEventListener('click', () =>
-		loadDocument('pages/experiments/md-blocks-demo.md', ['../../images/', 'images/']));
-	btnLoadBlog?.addEventListener('click', () =>
-		loadDocument('pages/experiments/blog-the-ghost-in-the-agent.md'));
 
 	// ── NUI Helpers ──
 	function createNuiIconButton(iconName, title, onClick, extraClass = '') {
@@ -3575,11 +3702,52 @@ export function initBlocksEditor(element, params, nui) {
 			.replace(/"/g, '&quot;');
 	}
 
-	// Initial render. Side-by-side is the default surface — setPreviewMode also carries
-	// the breakout attribute the split layout needs, so pre-setting the attribute in the
-	// markup would not be enough on its own.
+	// ── Public API ──
+	// load() accepts md-blocks text or an already-parsed doc model. The model
+	// branch clones: the caller's object must not be aliased by editor state.
+	element.load = (input) => {
+		if (typeof input === 'string') {
+			currentDoc = normalizeDoc(util.parseBlocks(input));
+		} else {
+			if (!input || typeof input !== 'object') {
+				throw new TypeError('nui-blocks-editor.load: markdown string or parsed doc model required');
+			}
+			currentDoc = normalizeDoc(structuredClone(input));
+		}
+		renderVisualEditor();
+		syncToOutputs();
+	};
+	element.loadUrl = (url, rebase = null) => loadDocument(url, rebase);
+	element.serialize = () => util.serializeBlocks(currentDoc);
+	element.destroy = () => {
+		window.removeEventListener('focus', revertIfPreviewWindowGone);
+		resizeObserver?.disconnect();
+		closePreviewWindow();
+		element.dataset.beReady = '';
+	};
+
+	// Initial render. setPreviewMode carries the breakout attribute the split
+	// layout needs, so pre-setting the attribute in the markup is not enough.
 	renderVisualEditor();
 	syncToOutputs();
-	setPreviewMode('inline');
+	setPreviewMode(previewMode);
 }
+
+class NuiBlocksEditor extends HTMLElement {
+	async connectedCallback() {
+		if (this._initialized) return;
+		this._initialized = true;
+		await nui.ready();
+		initBlocksEditor(this, nui);
+	}
+
+	disconnectedCallback() {
+		this.destroy?.();
+		this._initialized = false;
+	}
+}
+
+customElements.define('nui-blocks-editor', NuiBlocksEditor);
+
+export { NuiBlocksEditor };
 

@@ -1,9 +1,9 @@
 /* ============================================================================
-   NUI Blocks Editor Addon (.page-blocks-editor / nui-blocks-editor)
+   NUI Blocks Editor Addon (nui-blocks-editor / nui-blocks-editor)
    ============================================================================ */
 
 /* Standard page view: uses standard nui-page max-width */
-.page-blocks-editor {
+nui-blocks-editor {
 	width: 100%;
 	box-sizing: border-box;
 
@@ -43,7 +43,7 @@
    put there by setPreviewMode. An attribute here would read as full-bleed and
    change nothing. max-width is kept so a host that puts this class on a child of
    the page still gets it. */
-.page-blocks-editor {
+nui-blocks-editor {
 	max-width: 100%;
 	padding: var(--nui-space) var(--nui-space-double);
 }
@@ -51,7 +51,7 @@
 /* The only toolbar on the page, and it is inside the scrolling canvas column by
    design — nothing is pinned, so no vertical space is held for controls that are
    set once and then left alone. */
-.page-blocks-editor .editor-blocks-header {
+nui-blocks-editor .editor-blocks-header {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
@@ -59,14 +59,14 @@
 	gap: var(--nui-space-half) var(--nui-space);
 }
 
-.page-blocks-editor .editor-actions {
+nui-blocks-editor .editor-actions {
 	display: flex;
 	align-items: center;
 	gap: var(--nui-space-half);
 }
 
 /* Workspace: one column by default, two when the preview is inline. */
-.page-blocks-editor .editor-workspace {
+nui-blocks-editor .editor-workspace {
 	display: block;
 	width: 100%;
 }
@@ -76,7 +76,7 @@
    writes one number and the layout recomputes from it. The divider is a real grid track
    rather than an overlay: an absolutely positioned handle would have to guess where the
    gap centre sits, which drifts as the theme's spacing changes. */
-.page-blocks-editor .editor-workspace[data-preview-mode="inline"] {
+nui-blocks-editor .editor-workspace[data-preview-mode="inline"] {
 	display: grid;
 	grid-template-columns: minmax(0, calc(var(--be-split, 58) * 1%)) auto minmax(0, 1fr);
 	gap: var(--nui-space);
@@ -86,8 +86,8 @@
 
 /* With the preview hidden or in its own window there is no second column and nothing to
    divide, so the canvas simply takes the full width. */
-.page-blocks-editor .editor-workspace:not([data-preview-mode="inline"]) .editor-preview-pane,
-.page-blocks-editor .editor-workspace:not([data-preview-mode="inline"]) .editor-split-handle {
+nui-blocks-editor .editor-workspace:not([data-preview-mode="inline"]) .editor-preview-pane,
+nui-blocks-editor .editor-workspace:not([data-preview-mode="inline"]) .editor-split-handle {
 	display: none;
 }
 
@@ -95,7 +95,7 @@
    swappable part is the ::before: the target has to stay pointer-sized while what you
    SEE is a line, and one element cannot be both. Hover and focus thicken the line rather
    than recolouring a fat bar — same reason. */
-.page-blocks-editor .editor-workspace[data-preview-mode="inline"] .editor-split-handle {
+nui-blocks-editor .editor-workspace[data-preview-mode="inline"] .editor-split-handle {
 	display: block;
 	align-self: stretch;
 	position: relative;
@@ -106,7 +106,7 @@
 	background: none;
 }
 
-.page-blocks-editor .editor-split-handle::before {
+nui-blocks-editor .editor-split-handle::before {
 	content: '';
 	position: absolute;
 	top: 0;
@@ -119,16 +119,16 @@
 	transition: background 0.15s ease, width 0.15s ease, margin-left 0.15s ease;
 }
 
-.page-blocks-editor .editor-split-handle:hover::before,
-.page-blocks-editor .editor-split-handle:focus-visible::before,
-.page-blocks-editor .editor-split-handle.dragging::before {
+nui-blocks-editor .editor-split-handle:hover::before,
+nui-blocks-editor .editor-split-handle:focus-visible::before,
+nui-blocks-editor .editor-split-handle.dragging::before {
 	width: 4px;
 	margin-left: -2px;
 	background: var(--color-highlight);
 }
 
 /* The line is the focus indicator, so no box is drawn around the whole hitbox. */
-.page-blocks-editor .editor-split-handle:focus-visible {
+nui-blocks-editor .editor-split-handle:focus-visible {
 	outline: none;
 }
 
@@ -146,7 +146,7 @@
 		min-height: 0;
 	}
 
-	.page-blocks-editor:has(.editor-workspace[data-preview-mode="inline"]) {
+	nui-blocks-editor:has(.editor-workspace[data-preview-mode="inline"]) {
 		display: flex;
 		flex-direction: column;
 		height: 100%;
@@ -159,13 +159,13 @@
 		padding-inline: 0;
 	}
 
-	.page-blocks-editor:has(.editor-workspace[data-preview-mode="inline"]) .editor-workspace {
+	nui-blocks-editor:has(.editor-workspace[data-preview-mode="inline"]) .editor-workspace {
 		flex: 1;
 		min-height: 0;
 	}
 
-	.page-blocks-editor .editor-workspace[data-preview-mode="inline"] > .editor-canvas-pane,
-	.page-blocks-editor .editor-workspace[data-preview-mode="inline"] > .editor-preview-pane {
+	nui-blocks-editor .editor-workspace[data-preview-mode="inline"] > .editor-canvas-pane,
+	nui-blocks-editor .editor-workspace[data-preview-mode="inline"] > .editor-preview-pane {
 		overflow-y: auto;
 		/* The horizontal value is not cosmetic. A full-bleed section
 		   (`.nui-variant-bleed` — `preset=band:bleed` and friends) pulls itself out by
@@ -189,31 +189,31 @@
 	   the document from the divider. Worth knowing: at 16px the bleed's -16px margin eats
 	   the padding exactly, so a full-bleed section now starts flush with the pane's own
 	   left edge rather than 16px inside it. */
-	.page-blocks-editor .editor-workspace[data-preview-mode="inline"] > .editor-preview-pane {
+	nui-blocks-editor .editor-workspace[data-preview-mode="inline"] > .editor-preview-pane {
 		padding-left: var(--nui-space);
 	}
 
 	/* The canvas is a flex column, so without this its cards would SHRINK to fit the now
 	   bounded pane instead of overflowing it: the cards would squash and there would be
 	   nothing left to scroll. */
-	.page-blocks-editor .editor-workspace[data-preview-mode="inline"] > .editor-canvas-pane > * {
+	nui-blocks-editor .editor-workspace[data-preview-mode="inline"] > .editor-canvas-pane > * {
 		flex-shrink: 0;
 	}
 }
 
 @media (max-width: 1100px) {
 	/* Below this width the panes stack, so there is nothing left to drag. */
-	.page-blocks-editor .editor-workspace[data-preview-mode="inline"] {
+	nui-blocks-editor .editor-workspace[data-preview-mode="inline"] {
 		grid-template-columns: 1fr;
 	}
 
-	.page-blocks-editor .editor-workspace[data-preview-mode="inline"] .editor-split-handle {
+	nui-blocks-editor .editor-workspace[data-preview-mode="inline"] .editor-split-handle {
 		display: none;
 	}
 }
 
 /* Canvas Area: locked min-width so 3-column structures remain editable */
-.page-blocks-editor .editor-canvas-pane {
+nui-blocks-editor .editor-canvas-pane {
 	display: flex;
 	flex-direction: column;
 	gap: var(--nui-space-half);
@@ -223,24 +223,24 @@
 /* ...except with the inline preview, where the divider owns the width: a locked floor
    would sit permanently above the dragged value and the handle would stop tracking the
    pointer. The drag carries its own minimum instead (SPLIT_MIN_PANE_PX). */
-.page-blocks-editor .editor-workspace[data-preview-mode="inline"] .editor-canvas-pane {
+nui-blocks-editor .editor-workspace[data-preview-mode="inline"] .editor-canvas-pane {
 	min-width: 0;
 }
 
-.page-blocks-editor .editor-card {
+nui-blocks-editor .editor-card {
 	background: var(--be-section-bg);
 	border: 1px solid var(--be-section-border);
 	border-radius: var(--border-radius2);
 	padding: var(--nui-space-half) var(--nui-space);
 }
 
-.page-blocks-editor .editor-card-header {
+nui-blocks-editor .editor-card-header {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
 }
 
-.page-blocks-editor .editor-card-title {
+nui-blocks-editor .editor-card-title {
 	display: flex;
 	align-items: center;
 	gap: var(--nui-space-half);
@@ -249,33 +249,33 @@
 	color: var(--text-color);
 }
 
-.page-blocks-editor .editor-frontmatter-summary {
+nui-blocks-editor .editor-frontmatter-summary {
 	font-size: var(--font-size-small);
 	color: var(--text-color-dim);
 }
 
 /* Slides Chrome Panel */
-.page-blocks-editor .editor-chrome-body {
+nui-blocks-editor .editor-chrome-body {
 	display: flex;
 	flex-direction: column;
 	gap: var(--nui-space-half);
 	margin-top: var(--nui-space-half);
 }
 
-.page-blocks-editor .chrome-slot {
+nui-blocks-editor .chrome-slot {
 	display: flex;
 	align-items: center;
 	gap: var(--nui-space-half);
 }
 
-.page-blocks-editor .chrome-slot-label {
+nui-blocks-editor .chrome-slot-label {
 	font-size: var(--font-size-xsmall);
 	min-width: 7rem;
 	font-weight: 500;
 	color: var(--text-color-dim);
 }
 
-.page-blocks-editor .nui-native-input {
+nui-blocks-editor .nui-native-input {
 	flex: 1;
 	background: var(--be-well-bg);
 	color: var(--text-color);
@@ -291,7 +291,7 @@
    first item in a list, `.add-bottom` for every strip hanging off the item
    above it. The modifier is on both the strip and the button. */
 
-.page-blocks-editor .editor-add-strip .add-icon-btn {
+nui-blocks-editor .editor-add-strip .add-icon-btn {
 	position: relative;
 	z-index: 1;
 	width: 100%;
@@ -308,48 +308,48 @@
 	transition: all 0.15s;
 }
 
-.page-blocks-editor .editor-add-strip .add-icon-btn nui-icon {
+nui-blocks-editor .editor-add-strip .add-icon-btn nui-icon {
 	padding: var(--nui-space-quarter);
 }
 
-.page-blocks-editor .editor-add-strip .add-icon-btn:hover {
+nui-blocks-editor .editor-add-strip .add-icon-btn:hover {
 	color: var(--color-highlight);
 	opacity: 1;
 }
 
 /* Edge line — hover only. Drawn on the side facing the block the strip acts
    on: an `add-top` strip sits above a block, so its line runs along the bottom. */
-.page-blocks-editor .editor-add-strip .add-icon-btn.add-top:hover {
+nui-blocks-editor .editor-add-strip .add-icon-btn.add-top:hover {
 	border-bottom: solid 0.2rem var(--color-highlight);
 }
 
-.page-blocks-editor .editor-add-strip .add-icon-btn.add-bottom:hover {
+nui-blocks-editor .editor-add-strip .add-icon-btn.add-bottom:hover {
 	border-top: solid 0.2rem var(--color-highlight);
 }
 
-.page-blocks-editor .editor-add-strip.section-divider {
+nui-blocks-editor .editor-add-strip.section-divider {
 	
 }
 
-.page-blocks-editor .editor-add-strip.section-divider::before {
+nui-blocks-editor .editor-add-strip.section-divider::before {
 	background: var(--be-section-border);
 }
 
 /* Section Card */
-.page-blocks-editor .editor-sections-container {
+nui-blocks-editor .editor-sections-container {
 	display: flex;
 	flex-direction: column;
 	gap: var(--nui-space);
 }
 
-.page-blocks-editor .editor-section-card {
+nui-blocks-editor .editor-section-card {
 	background: var(--be-section-bg);
 	border: 1px solid var(--be-section-border);
 	border-radius: var(--border-radius2);
 	overflow: hidden;
 }
 
-.page-blocks-editor .section-card-header {
+nui-blocks-editor .section-card-header {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
@@ -362,7 +362,7 @@
 
 /* Template chip — the section's current function (Hero / Band), derived from
    its preset + content shape, never stored. */
-.page-blocks-editor .section-template-chip {
+nui-blocks-editor .section-template-chip {
 	font-size: var(--font-size-xsmall);
 	text-transform: uppercase;
 	letter-spacing: 0.05em;
@@ -383,7 +383,7 @@
    itself: it is the largest box of the cover's ratio that fits the preview's
    bounding (container-query units), centered — a letterboxed but ratio-true
    representation of what will be rendered, caption ghost included. */
-.page-blocks-editor .editor-media-card.editor-cover .media-frame {
+nui-blocks-editor .editor-media-card.editor-cover .media-frame {
 	display: block;
 	position: absolute;
 	top: 50%;
@@ -395,19 +395,19 @@
 	aspect-ratio: 16 / 9;
 	width: min(100cqw, 100cqh * 16 / 9);
 }
-.page-blocks-editor .editor-media-card.editor-cover.editor-cover-square .media-frame {
+nui-blocks-editor .editor-media-card.editor-cover.editor-cover-square .media-frame {
 	aspect-ratio: 1 / 1;
 	width: min(100cqw, 100cqh);
 }
-.page-blocks-editor .editor-media-card.editor-cover.editor-cover-banner .media-frame {
+nui-blocks-editor .editor-media-card.editor-cover.editor-cover-banner .media-frame {
 	aspect-ratio: 16 / 5;
 	width: min(100cqw, 100cqh * 16 / 5);
 }
-.page-blocks-editor .editor-media-card.editor-cover.editor-cover-strip .media-frame {
+nui-blocks-editor .editor-media-card.editor-cover.editor-cover-strip .media-frame {
 	aspect-ratio: 16 / 3;
 	width: min(100cqw, 100cqh * 16 / 3);
 }
-.page-blocks-editor .editor-media-card.editor-cover .media-frame img {
+nui-blocks-editor .editor-media-card.editor-cover .media-frame img {
 	width: 100%;
 	height: 100%;
 	max-width: none;
@@ -418,10 +418,10 @@
 /* Cover caption ghost: the caption overlays the frame's bottom (same scrim as
    the renderer) so thin ratios honestly show how little image remains visible.
    Read-only; the caption is edited in the field below. */
-.page-blocks-editor .editor-media-card .frame-caption {
+nui-blocks-editor .editor-media-card .frame-caption {
 	display: none;
 }
-.page-blocks-editor .editor-media-card.editor-cover .frame-caption {
+nui-blocks-editor .editor-media-card.editor-cover .frame-caption {
 	display: block;
 	position: absolute;
 	bottom: 0;
@@ -435,24 +435,24 @@
 	overflow: hidden;
 	max-height: 100%;
 }
-.page-blocks-editor .editor-media-card.editor-cover .frame-caption h1,
-.page-blocks-editor .editor-media-card.editor-cover .frame-caption h2,
-.page-blocks-editor .editor-media-card.editor-cover .frame-caption h3 {
+nui-blocks-editor .editor-media-card.editor-cover .frame-caption h1,
+nui-blocks-editor .editor-media-card.editor-cover .frame-caption h2,
+nui-blocks-editor .editor-media-card.editor-cover .frame-caption h3 {
 	font-size: 1.2rem;
 	margin: 0 0 var(--nui-space-quarter);
 }
-.page-blocks-editor .editor-media-card.editor-cover .frame-caption p {
+nui-blocks-editor .editor-media-card.editor-cover .frame-caption p {
 	margin: 0;
 	font-size: var(--font-size-small);
 }
-.page-blocks-editor .media-frame {
+nui-blocks-editor .media-frame {
 	position: relative;
 }
 
 /* Section options rows (behind the gear, inside the nui-popover bubble). Only the rows
    are styled here — the bubble's dark surface, radius, shadow and arrow belong to the
    component, and these rows inherit its text colour rather than the page's. */
-.page-blocks-editor nui-popover .section-opts-row {
+nui-blocks-editor nui-popover .section-opts-row {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
@@ -460,19 +460,19 @@
 	font-size: var(--font-size-small);
 }
 
-.page-blocks-editor nui-popover .section-opts-row + .section-opts-row {
+nui-blocks-editor nui-popover .section-opts-row + .section-opts-row {
 	margin-top: var(--nui-space-half);
 }
 
 /* An unmodelled section preset (a profile's own family) is shown, not managed —
    the token is preserved verbatim, so it is displayed as a token, not as prose. */
-.page-blocks-editor nui-popover .section-opts-static {
+nui-blocks-editor nui-popover .section-opts-static {
 	font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
 	font-size: var(--font-size-xsmall);
 	opacity: 0.9;
 }
 
-.page-blocks-editor nui-popover .section-opts-note {
+nui-blocks-editor nui-popover .section-opts-note {
 	margin: var(--nui-space-half) 0 0;
 	max-width: 18rem;
 	font-size: var(--font-size-xsmall);
@@ -480,14 +480,14 @@
 	opacity: 0.65;
 }
 
-.page-blocks-editor .section-opts-row input[type="checkbox"] {
+nui-blocks-editor .section-opts-row input[type="checkbox"] {
 	width: 1rem;
 	height: 1rem;
 	accent-color: var(--color-highlight);
 	cursor: pointer;
 }
 
-.page-blocks-editor .section-title-group {
+nui-blocks-editor .section-title-group {
 	display: flex;
 	align-items: center;
 	gap: var(--nui-space-half);
@@ -495,7 +495,7 @@
 	min-width: 0;
 }
 
-.page-blocks-editor .drag-handle {
+nui-blocks-editor .drag-handle {
 	color: var(--text-color);
 	opacity: 0.6;
 	cursor: grab;
@@ -506,8 +506,8 @@
 	transition: opacity 0.15s;
 }
 
-.page-blocks-editor .section-idx-badge,
-.page-blocks-editor .block-idx-badge {
+nui-blocks-editor .section-idx-badge,
+nui-blocks-editor .block-idx-badge {
 	background: none;
 	color: var(--text-color);
 	opacity: 0.6;
@@ -523,7 +523,7 @@
 	transition: opacity 0.15s;
 }
 
-.page-blocks-editor .section-label-input {
+nui-blocks-editor .section-label-input {
 	background: transparent;
 	border: none;
 	border-bottom: 1px transparent dashed;
@@ -542,27 +542,27 @@
 	transition: opacity 0.15s, background 0.15s;
 }
 
-.page-blocks-editor .section-label-input:focus {
+nui-blocks-editor .section-label-input:focus {
 	outline: none;
 	background: var(--be-well-bg);
 	border-bottom-color: var(--color-highlight);
 	opacity: 1;
 }
 
-.page-blocks-editor .section-controls-group {
+nui-blocks-editor .section-controls-group {
 	display: flex;
 	align-items: center;
 	gap: var(--nui-space-quarter);
 }
 
-.page-blocks-editor .section-controls-group nui-button,
-.page-blocks-editor .block-header-right nui-button {
+nui-blocks-editor .section-controls-group nui-button,
+nui-blocks-editor .block-header-right nui-button {
 	opacity: 0.6;
 	transition: opacity 0.15s;
 }
 
 /* Block Header Preset Select: quiet text at rest without button chrome, reveals on hover */
-.page-blocks-editor .block-card-header nui-select .nui-select-control {
+nui-blocks-editor .block-card-header nui-select .nui-select-control {
 	background: transparent;
 	border: 1px solid transparent;
 	color: var(--text-color);
@@ -571,72 +571,72 @@
 	transition: opacity 0.15s, background 0.15s, border-color 0.15s;
 }
 
-.page-blocks-editor .block-card-header nui-select:hover .nui-select-control,
-.page-blocks-editor .block-card-header nui-select:focus-within .nui-select-control,
-.page-blocks-editor .block-card-header nui-select.is-open .nui-select-control {
+nui-blocks-editor .block-card-header nui-select:hover .nui-select-control,
+nui-blocks-editor .block-card-header nui-select:focus-within .nui-select-control,
+nui-blocks-editor .block-card-header nui-select.is-open .nui-select-control {
 	background: var(--be-well-bg);
 	border-color: var(--be-well-border);
 	opacity: 1;
 }
 
-.page-blocks-editor .block-card-header nui-select .nui-select-arrow {
+nui-blocks-editor .block-card-header nui-select .nui-select-arrow {
 	opacity: 0.45;
 	transition: opacity 0.15s;
 }
 
-.page-blocks-editor .block-card-header nui-select:hover .nui-select-arrow {
+nui-blocks-editor .block-card-header nui-select:hover .nui-select-arrow {
 	opacity: 1;
 }
 
 /* Hover reveals: quiet at rest (0.6), lifts to 0.85 on header hover, 1.0 on direct hover/focus */
-.page-blocks-editor .section-card-header:hover .drag-handle,
-.page-blocks-editor .section-card-header:hover .section-idx-badge,
-.page-blocks-editor .section-card-header:hover .section-label-input,
-.page-blocks-editor .section-card-header:hover .section-controls-group nui-button,
-.page-blocks-editor .block-card-header:hover .drag-handle,
-.page-blocks-editor .block-card-header:hover .block-idx-badge,
-.page-blocks-editor .block-card-header:hover .block-header-right nui-button {
+nui-blocks-editor .section-card-header:hover .drag-handle,
+nui-blocks-editor .section-card-header:hover .section-idx-badge,
+nui-blocks-editor .section-card-header:hover .section-label-input,
+nui-blocks-editor .section-card-header:hover .section-controls-group nui-button,
+nui-blocks-editor .block-card-header:hover .drag-handle,
+nui-blocks-editor .block-card-header:hover .block-idx-badge,
+nui-blocks-editor .block-card-header:hover .block-header-right nui-button {
 	opacity: 0.85;
 }
 
-.page-blocks-editor .section-card-header .drag-handle:hover,
-.page-blocks-editor .section-card-header .section-label-input:hover,
-.page-blocks-editor .section-card-header .section-label-input:focus,
-.page-blocks-editor .section-controls-group nui-button:hover,
-.page-blocks-editor .section-controls-group nui-button:focus-within,
-.page-blocks-editor .block-card-header .drag-handle:hover,
-.page-blocks-editor .block-card-header .block-header-right nui-button:hover,
-.page-blocks-editor .block-card-header .block-header-right nui-button:focus-within {
+nui-blocks-editor .section-card-header .drag-handle:hover,
+nui-blocks-editor .section-card-header .section-label-input:hover,
+nui-blocks-editor .section-card-header .section-label-input:focus,
+nui-blocks-editor .section-controls-group nui-button:hover,
+nui-blocks-editor .section-controls-group nui-button:focus-within,
+nui-blocks-editor .block-card-header .drag-handle:hover,
+nui-blocks-editor .block-card-header .block-header-right nui-button:hover,
+nui-blocks-editor .block-card-header .block-header-right nui-button:focus-within {
 	opacity: 1;
 }
 
 /* Rotated icon button helpers (using available sprite icons) */
-.page-blocks-editor nui-button.icon-rotate-up nui-icon {
+nui-blocks-editor nui-button.icon-rotate-up nui-icon {
 	transform: rotate(-90deg);
 	display: inline-flex;
 }
 
-.page-blocks-editor nui-button.icon-rotate-down nui-icon {
+nui-blocks-editor nui-button.icon-rotate-down nui-icon {
 	transform: rotate(90deg);
 	display: inline-flex;
 }
 
 /* Section Content */
-.page-blocks-editor .section-content-body {
+nui-blocks-editor .section-content-body {
 	padding: var(--nui-space-half);
 	display: flex;
 	flex-direction: column;
 	gap: var(--nui-space-half);
 }
 
-.page-blocks-editor .section-nodes-list {
+nui-blocks-editor .section-nodes-list {
 	display: flex;
 	flex-direction: column;
 	gap: var(--nui-space-half);
 }
 
 /* Block Cards */
-.page-blocks-editor .editor-block-card {
+nui-blocks-editor .editor-block-card {
 	background: var(--be-block-body-bg);
 	border: 1px solid var(--be-block-border);
 	border-radius: var(--border-radius1);
@@ -647,8 +647,8 @@
    drag handle — core restricts the gesture to the handle, so editing text or
    using selects inside a card never starts a drag). Strip the theme's
    list-row chrome: the card classes own surface, radius and padding. */
-.page-blocks-editor nui-sortable-item.editor-section-card,
-.page-blocks-editor nui-sortable-item.editor-block-card {
+nui-blocks-editor nui-sortable-item.editor-section-card,
+nui-blocks-editor nui-sortable-item.editor-block-card {
 	display: block;
 	padding: 0;
 	gap: 0;
@@ -656,13 +656,13 @@
 
 /* Keyboard drag on a full card: the tint is the state signal, the scale is
    noise (same call as the media thumb rail). */
-.page-blocks-editor nui-sortable-item.editor-section-card[data-keyboard-drag="true"],
-.page-blocks-editor nui-sortable-item.editor-block-card[data-keyboard-drag="true"] {
+nui-blocks-editor nui-sortable-item.editor-section-card[data-keyboard-drag="true"],
+nui-blocks-editor nui-sortable-item.editor-block-card[data-keyboard-drag="true"] {
 	background: var(--color-highlight);
 	transform: none;
 }
 
-.page-blocks-editor .block-card-header {
+nui-blocks-editor .block-card-header {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
@@ -672,7 +672,7 @@
 	gap: var(--nui-space-half);
 }
 
-.page-blocks-editor .block-header-left {
+nui-blocks-editor .block-header-left {
 	display: flex;
 	align-items: center;
 	gap: var(--nui-space-quarter);
@@ -680,41 +680,41 @@
 	min-width: 0;
 }
 
-.page-blocks-editor .block-header-right {
+nui-blocks-editor .block-header-right {
 	display: flex;
 	align-items: center;
 	gap: 2px;
 }
 
-.page-blocks-editor .block-card-body {
+nui-blocks-editor .block-card-body {
 	background: var(--be-block-body-bg);
 	padding: var(--nui-space-half);
 }
 
 /* Rich Text inside block */
-.page-blocks-editor .block-card-body nui-rich-text {
+nui-blocks-editor .block-card-body nui-rich-text {
 	display: block;
 	width: 100%;
 }
 
-.page-blocks-editor .block-card-body nui-rich-text .nui-rich-text-container {
+nui-blocks-editor .block-card-body nui-rich-text .nui-rich-text-container {
 	border: none;
 	border-radius: 0;
 }
 
-.page-blocks-editor .block-card-body nui-rich-text .nui-rich-text-toolbar {
+nui-blocks-editor .block-card-body nui-rich-text .nui-rich-text-toolbar {
 	background: var(--be-well-bg);
 	border-bottom: 1px solid var(--be-well-border);
 	padding: var(--nui-space-quarter);
 }
 
-.page-blocks-editor .block-card-body nui-rich-text .nui-rich-text-editor {
+nui-blocks-editor .block-card-body nui-rich-text .nui-rich-text-editor {
 	background: var(--be-block-body-bg);
 	padding: var(--nui-space-half);
 	min-height: 4rem;
 }
 
-.page-blocks-editor .block-raw-textarea {
+nui-blocks-editor .block-raw-textarea {
 	width: 100%;
 	min-height: 6rem;
 	box-sizing: border-box;
@@ -729,7 +729,7 @@
 	resize: vertical;
 }
 
-.page-blocks-editor .block-raw-textarea:focus {
+nui-blocks-editor .block-raw-textarea:focus {
 	outline: none;
 	border-color: var(--color-highlight);
 }
@@ -743,21 +743,21 @@
    every width, and the rail's `flex: 0 0 40%` goes with the row it belonged to.
    The rail is a nui-sortable: drag order IS the image order, the first item is the lead.
    Tiles follow the old n000b blocks editor: [index cell | image], no chrome padding. The
-   picker dialog renders outside `.page-blocks-editor`, so its rules are namespaced but
+   picker dialog renders outside `nui-blocks-editor`, so its rules are namespaced but
    unscoped. */
-.page-blocks-editor .media-block-body {
+nui-blocks-editor .media-block-body {
 	display: flex;
 	flex-direction: column;
 	gap: var(--nui-space-half);
 }
 
-.page-blocks-editor .media-body-row {
+nui-blocks-editor .media-body-row {
 	display: flex;
 	flex-direction: column;
 	gap: var(--nui-space-half);
 }
 
-.page-blocks-editor .media-preview {
+nui-blocks-editor .media-preview {
 	/* Size containment means this box has NO intrinsic height, so something has to give
 	   it one. In the row layout that was the flex stretch against the row's height;
 	   stacked, it comes from a ratio with a floor and a ceiling — the ceiling because the
@@ -780,7 +780,7 @@
 	overflow: hidden;
 }
 
-.page-blocks-editor .media-frame {
+nui-blocks-editor .media-frame {
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -788,14 +788,14 @@
 	min-height: 0;
 }
 
-.page-blocks-editor .media-frame img {
+nui-blocks-editor .media-frame img {
 	display: block;
 	max-width: 100%;
 	max-height: 100%;
 	object-fit: contain;
 }
 
-.page-blocks-editor .media-empty {
+nui-blocks-editor .media-empty {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -805,7 +805,7 @@
 	font-size: var(--font-size-xsmall);
 }
 
-.page-blocks-editor .media-controls {
+nui-blocks-editor .media-controls {
 	position: absolute;
 	top: var(--nui-space-half);
 	right: var(--nui-space-half);
@@ -817,27 +817,27 @@
    guarantee nothing. Fixed overlay grammar (same logic as the cover caption
    scrim): dark translucent chip, faint light border, white icon — readable on
    any image, in light or dark theme. */
-.page-blocks-editor .media-controls nui-button[variant="icon"] button {
+nui-blocks-editor .media-controls nui-button[variant="icon"] button {
 	background: rgb(40 40 40 / 0.8);
 	border: 1px solid rgb(255 255 255 / 0.2);
 	border-radius: var(--border-radius1);
 	color: #fff;
 }
 
-.page-blocks-editor .media-controls nui-button[variant="icon"] button:hover {
+nui-blocks-editor .media-controls nui-button[variant="icon"] button:hover {
 	background: rgb(70 70 70 / 0.85);
 	color: #fff;
 	fill: #fff;
 }
 
-.page-blocks-editor .media-side {
+nui-blocks-editor .media-side {
 	flex: none;
 	min-width: 0;
 	display: flex;
 	flex-direction: column;
 }
 
-.page-blocks-editor nui-sortable.media-thumbs {
+nui-blocks-editor nui-sortable.media-thumbs {
 	flex: 1 1 auto;
 	min-height: 0;
 	display: grid;
@@ -853,11 +853,11 @@
 }
 
 /* Media Player Block: sortable track list rail and live preview player */
-.page-blocks-editor .player-body-row {
+nui-blocks-editor .player-body-row {
 	min-height: 18rem;
 }
 
-.page-blocks-editor .player-preview {
+nui-blocks-editor .player-preview {
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -871,7 +871,7 @@
 	background: #000;
 }
 
-.page-blocks-editor .player-frame {
+nui-blocks-editor .player-frame {
 	width: 100%;
 	height: 100%;
 	display: flex;
@@ -879,21 +879,21 @@
 	justify-content: center;
 }
 
-.page-blocks-editor .player-frame nui-media-player {
+nui-blocks-editor .player-frame nui-media-player {
 	width: 100%;
 	max-width: 100%;
 }
 
-.page-blocks-editor .player-frame nui-media-player[type="video"] {
+nui-blocks-editor .player-frame nui-media-player[type="video"] {
 	height: 100%;
 	max-height: 100%;
 }
 
-.page-blocks-editor .player-frame nui-media-player[type="audio"] {
+nui-blocks-editor .player-frame nui-media-player[type="audio"] {
 	max-width: 90%;
 }
 
-.page-blocks-editor nui-sortable.player-track-list {
+nui-blocks-editor nui-sortable.player-track-list {
 	flex: 1 1 auto;
 	min-height: 0;
 	display: flex;
@@ -906,29 +906,29 @@
 	overflow-y: auto;
 }
 
-.page-blocks-editor .player-side-actions {
+nui-blocks-editor .player-side-actions {
 	flex: none;
 	display: flex;
 	gap: var(--nui-space-half);
 	margin-top: var(--nui-space-quarter);
 }
 
-.page-blocks-editor .player-side-actions nui-button {
+nui-blocks-editor .player-side-actions nui-button {
 	flex: 1;
 }
 
-.page-blocks-editor .player-side-actions nui-button button {
+nui-blocks-editor .player-side-actions nui-button button {
 	width: 100%;
 	justify-content: center;
 	gap: var(--nui-space-quarter);
 }
 
-.page-blocks-editor .player-side-actions nui-icon {
+nui-blocks-editor .player-side-actions nui-icon {
 	width: 1.1rem;
 	height: 1.1rem;
 }
 
-.page-blocks-editor nui-sortable-item.player-track-item {
+nui-blocks-editor nui-sortable-item.player-track-item {
 	display: flex;
 	align-items: center;
 	gap: var(--nui-space-half);
@@ -943,7 +943,7 @@
 	transition: background 0.15s ease, border-color 0.15s ease;
 }
 
-.page-blocks-editor nui-sortable-item.player-track-item .handle {
+nui-blocks-editor nui-sortable-item.player-track-item .handle {
 	flex: none;
 	display: inline-flex;
 	align-items: center;
@@ -957,14 +957,14 @@
 	font-weight: 600;
 }
 
-.page-blocks-editor nui-sortable-item.player-track-item nui-icon {
+nui-blocks-editor nui-sortable-item.player-track-item nui-icon {
 	flex: none;
 	width: 1.25rem;
 	height: 1.25rem;
 	color: var(--text-color-dim);
 }
 
-.page-blocks-editor nui-sortable-item.player-track-item .track-title {
+nui-blocks-editor nui-sortable-item.player-track-item .track-title {
 	flex: 1;
 	min-width: 0;
 	overflow: hidden;
@@ -973,18 +973,18 @@
 	text-align: left;
 }
 
-.page-blocks-editor nui-sortable-item.player-track-item:hover {
+nui-blocks-editor nui-sortable-item.player-track-item:hover {
 	border-color: var(--be-accent);
 	background: light-dark(var(--color-shade2), var(--color-shade3));
 }
 
-.page-blocks-editor nui-sortable-item.player-track-item.selected {
+nui-blocks-editor nui-sortable-item.player-track-item.selected {
 	border-color: var(--color-highlight);
 	background: light-dark(var(--color-shade3), var(--color-shade4));
 	font-weight: 500;
 }
 
-.page-blocks-editor nui-sortable-item.player-track-item.selected nui-icon {
+nui-blocks-editor nui-sortable-item.player-track-item.selected nui-icon {
 	color: var(--color-highlight);
 }
 
@@ -994,8 +994,8 @@
    keeps the same tile size as the rows above it. The tile is an elevated
    plate on the recessed rail: defined border, drop shadow, image area darker
    than the rail it sits on (n000b contrast grammar: shading, not strokes). */
-.page-blocks-editor nui-sortable-item.media-thumb,
-.page-blocks-editor nui-sortable[data-layout="grid"] nui-sortable-item.media-thumb {
+nui-blocks-editor nui-sortable-item.media-thumb,
+nui-blocks-editor nui-sortable[data-layout="grid"] nui-sortable-item.media-thumb {
 	position: relative;
 	aspect-ratio: 16 / 9;
 	display: flex;
@@ -1012,7 +1012,7 @@
 	box-shadow: 0 1px 3px var(--shadow-color);
 }
 
-.page-blocks-editor .media-thumb img {
+nui-blocks-editor .media-thumb img {
 	flex: 1 1 auto;
 	min-width: 0;
 	display: block;
@@ -1021,22 +1021,22 @@
 	object-fit: cover;
 }
 
-.page-blocks-editor .media-thumb.selected {
+nui-blocks-editor .media-thumb.selected {
 	border-color: color-mix(in srgb, var(--be-block-header-bg) 70%, transparent);
 }
 
-.page-blocks-editor .media-thumb.selected .handle {
+nui-blocks-editor .media-thumb.selected .handle {
 	background: color-mix(in srgb, var(--be-block-header-bg) 70%, transparent);
 }
 
 /* The theme's keyboard-drag state scales the item up (scale(1.02)); on a tiny
    16:9 tile that growth is pure visual noise, and the tile already lifts via
    the dragged state's shadow. */
-.page-blocks-editor nui-sortable-item.media-thumb[data-keyboard-drag="true"] {
+nui-blocks-editor nui-sortable-item.media-thumb[data-keyboard-drag="true"] {
 	transform: none;
 }
 
-.page-blocks-editor .media-thumb .handle {
+nui-blocks-editor .media-thumb .handle {
 	flex: 0 0 1.25rem;
 	display: flex;
 	align-items: center;
@@ -1049,23 +1049,23 @@
 /* Small viewports: the 60/40 row gets too cramped — stack the rail below the
    preview instead. Same breakpoint as the split-view collapse above. */
 @media (max-width: 1100px) {
-	.page-blocks-editor .media-body-row {
+	nui-blocks-editor .media-body-row {
 		flex-direction: column;
 		height: auto;
 	}
 
-	.page-blocks-editor .media-preview {
+	nui-blocks-editor .media-preview {
 		flex: 0 0 10rem;
 	}
 
-	.page-blocks-editor .media-side {
+	nui-blocks-editor .media-side {
 		flex: 0 0 auto;
 	}
 }
 
 /* Media library picker. Rows use nui-list's own image-item variant (index |
    image | name | data column); these rules only tune density and typography.
-   The dialog renders in the top layer, outside .page-blocks-editor, so the
+   The dialog renders in the top layer, outside nui-blocks-editor, so the
    scope is the container class. */
 .media-library .nui-list-image-item {
 	height: 3.5rem;
@@ -1119,7 +1119,7 @@
 	font-size: var(--font-size-xsmall);
 }
 
-.page-blocks-editor .columns-flex-row {
+nui-blocks-editor .columns-flex-row {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 	gap: var(--nui-space-half);
@@ -1128,7 +1128,7 @@
 	border-radius: 0 0 var(--border-radius1) var(--border-radius1);
 }
 
-.page-blocks-editor .column-slot {
+nui-blocks-editor .column-slot {
 	background: var(--be-column-slot-bg);
 	border: 1px solid var(--be-column-slot-border);
 	border-radius: var(--border-radius1);
@@ -1139,7 +1139,7 @@
 	min-width: 0;
 }
 
-.page-blocks-editor .col-nodes-list {
+nui-blocks-editor .col-nodes-list {
 	display: flex;
 	flex-direction: column;
 	gap: var(--nui-space-quarter);
@@ -1147,21 +1147,21 @@
 
 /* Column slot style row — the slot's own preset (mb:col preset=). Compact,
    right in the slot's top edge; the select stretches to the slot's width. */
-.page-blocks-editor .col-style-row {
+nui-blocks-editor .col-style-row {
 	display: flex;
 	align-items: center;
 	gap: var(--nui-space-quarter);
 	padding: 0 var(--nui-space-quarter);
 }
 
-.page-blocks-editor .col-style-row nui-select {
+nui-blocks-editor .col-style-row nui-select {
 	flex: 1 1 auto;
 	min-width: 0;
 }
 
 /* ── Frontmatter Summary Chips ──────────────────────────────────────────── */
 
-.page-blocks-editor .meta-chips {
+nui-blocks-editor .meta-chips {
 	display: inline-flex;
 	flex-wrap: wrap;
 	align-items: center;
@@ -1169,7 +1169,7 @@
 	margin-left: var(--nui-space-half);
 }
 
-.page-blocks-editor .meta-chip {
+nui-blocks-editor .meta-chip {
 	background: var(--be-well-bg);
 	border: 1px solid var(--be-well-border);
 	border-radius: var(--border-radius1);
@@ -1564,12 +1564,12 @@
    The type is fixed at creation and visible from the body editor. When a style
    token is REFUSED the same span carries the reason (`.is-error`), so the field
    can keep what was typed and still say why nothing was written. */
-.page-blocks-editor .block-style-label {
+nui-blocks-editor .block-style-label {
 	font-size: var(--font-size-xsmall);
 	color: var(--text-color-dim);
 	white-space: nowrap;
 }
-.page-blocks-editor .block-style-label.is-error {
+nui-blocks-editor .block-style-label.is-error {
 	color: var(--palette-alert);
 	white-space: normal;
 }
@@ -1579,7 +1579,7 @@
    section title field: quiet text at rest with a dashed underline hint, chrome
    revealed on hover, the full field on focus — monospace because it holds a token,
    not prose. */
-.page-blocks-editor .block-preset-input {
+nui-blocks-editor .block-preset-input {
 	flex: 0 1 16rem;
 	min-width: 9rem;
 	font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
@@ -1597,13 +1597,13 @@
 	transition: opacity 0.15s, background 0.15s;
 }
 
-.page-blocks-editor .block-card-header:hover .block-preset-input,
-.page-blocks-editor .col-style-row:hover .block-preset-input {
+nui-blocks-editor .block-card-header:hover .block-preset-input,
+nui-blocks-editor .col-style-row:hover .block-preset-input {
 	opacity: 0.85;
 }
 
-.page-blocks-editor .block-preset-input:hover,
-.page-blocks-editor .block-preset-input:focus {
+nui-blocks-editor .block-preset-input:hover,
+nui-blocks-editor .block-preset-input:focus {
 	outline: none;
 	background: var(--be-well-bg);
 	border-bottom-color: var(--color-highlight);
@@ -1612,16 +1612,16 @@
 
 /* Invalid wins even under focus: a refused token says so on the underline,
    the reason sits in the Style: label. */
-.page-blocks-editor .block-preset-input.is-invalid,
-.page-blocks-editor .block-preset-input.is-invalid:hover,
-.page-blocks-editor .block-preset-input.is-invalid:focus {
+nui-blocks-editor .block-preset-input.is-invalid,
+nui-blocks-editor .block-preset-input.is-invalid:hover,
+nui-blocks-editor .block-preset-input.is-invalid:focus {
 	border-bottom-color: var(--palette-alert);
 	color: var(--palette-alert);
 }
 
 /* Icon badge row (preset=image:icon): the icon is a block attribute (§4.2),
    edited beside the prose, never inside the RTE. */
-.page-blocks-editor .icon-badge-row {
+nui-blocks-editor .icon-badge-row {
 	display: flex;
 	align-items: center;
 	gap: var(--nui-space-half);
@@ -1630,7 +1630,7 @@
 	border-bottom: 1px solid var(--be-well-border);
 }
 
-.page-blocks-editor .icon-badge-thumb {
+nui-blocks-editor .icon-badge-thumb {
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -1644,14 +1644,14 @@
 	color: var(--text-color-dim);
 }
 
-.page-blocks-editor .icon-badge-thumb img {
+nui-blocks-editor .icon-badge-thumb img {
 	width: 100%;
 	height: 100%;
 	object-fit: cover;
 }
 
 /* Link block: the body is exactly one Markdown link — two fields, no RTE. */
-.page-blocks-editor .link-block-body {
+nui-blocks-editor .link-block-body {
 	display: flex;
 	gap: var(--nui-space-half);
 }
@@ -1659,48 +1659,48 @@
 /* Prose RTE: no image insertion. An image line at the top of a block body
    structurally retypes it as media (§4.2) — images live in media blocks or
    in the icon= attribute, never inline in prose. */
-.page-blocks-editor .block-card-body nui-rich-text nui-button[data-command="insertImage"] {
+nui-blocks-editor .block-card-body nui-rich-text nui-button[data-command="insertImage"] {
 	display: none;
 }
 
 /* Var block: a named set of key-value pairs, serialized as one fenced json
    object. The name lives in the header; pairs are key | value | remove rows. */
-.page-blocks-editor .var-name-input {
+nui-blocks-editor .var-name-input {
 	flex: 0 1 auto;
 	max-width: 12rem;
 	font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
 }
 
-.page-blocks-editor .var-pairs {
+nui-blocks-editor .var-pairs {
 	display: flex;
 	flex-direction: column;
 	gap: var(--nui-space-quarter);
 }
 
-.page-blocks-editor .var-pair {
+nui-blocks-editor .var-pair {
 	display: grid;
 	grid-template-columns: minmax(6rem, 10rem) 1fr auto;
 	gap: var(--nui-space-quarter);
 	align-items: center;
 }
 
-.page-blocks-editor .var-pair .var-key {
+nui-blocks-editor .var-pair .var-key {
 	font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
 }
 
-.page-blocks-editor .var-pairs > nui-button {
+nui-blocks-editor .var-pairs > nui-button {
 	align-self: flex-start;
 	margin-top: var(--nui-space-quarter);
 }
 
 /* Raw JSON fallback (legacy scalar/array payloads): an unparsable draft is
    marked, not written — a json fence must never hold invalid JSON. */
-.page-blocks-editor .var-raw.invalid {
+nui-blocks-editor .var-raw.invalid {
 	border-color: var(--palette-alert);
 }
 
 /* Scalar var (plain value= attribute, no fence): one line, monospace — the
    JSON fallback textarea would dwarf a value like `12`. */
-.page-blocks-editor .var-scalar-input {
+nui-blocks-editor .var-scalar-input {
 	font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
 }
