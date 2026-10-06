@@ -59,6 +59,17 @@ own direct page child:
 </nui-page>
 ```
 
+### Spacing contract
+
+The component ships with **no horizontal padding**. Spacing to the surrounding
+layout is the integrator's decision: the host page's gutter alone positions the
+editor, so it aligns with the host's own headers, buttons and text. Full-bleed
+sections (`preset=band:bleed`) cancel `--nui-space` of the *page* gutter — that
+is the renderer's contract with the page, not with this component. A host that
+wants extra clearance wraps the component and pads the wrapper. Vertical
+padding (`--nui-space`) is kept inside the panes as breathing room above the
+toolbar and below the last section, which no host layout provides.
+
 ## Programmatic API
 
 ```javascript
