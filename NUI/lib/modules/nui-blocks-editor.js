@@ -2996,14 +2996,17 @@ function initBlocksEditor(element, nui) {
 				type: 'block',
 				_type: 'media',
 				attrs: { id: generateId('b') },
-				nodes: [{ type: 'md', lines: ['![Alt text](images/nui_1.webp)', '', 'Figure caption text.'] }]
+				nodes: [{ type: 'md', lines: ['', 'Figure caption text.'] }]
 			};
 		} else if (type === 'media-player') {
+			// Empty start: the block shows its "No media track yet" state and the
+			// host picker fills it. A mock URL seed shipped Playground content
+			// into real documents.
 			newNode = {
 				type: 'block',
 				_type: 'player',
 				attrs: { id: generateId('b'), kind: 'video', preset: 'player' },
-				nodes: [{ type: 'md', lines: ['[Flower Bloom (Clip)](https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4)'] }]
+				nodes: [{ type: 'md', lines: [''] }]
 			};
 		} else if (type === 'link-cta') {
 			newNode = {
@@ -3336,7 +3339,7 @@ function initBlocksEditor(element, nui) {
 			vars: [],
 			nodes: [
 				hero
-					? { type: 'block', attrs: { id: generateId('b') }, nodes: [{ type: 'md', lines: ['![Hero image](images/nui_1.webp)', '', '## Hero Title', '', 'Supporting tagline or call to action.'] }] }
+					? { type: 'block', attrs: { id: generateId('b') }, nodes: [{ type: 'md', lines: ['', '', '## Hero Title', '', 'Supporting tagline or call to action.'] }] }
 					: { type: 'block', attrs: { id: generateId('b') }, nodes: [{ type: 'md', lines: ['## New Section Heading', '', 'Add blocks or prose here.'] }] }
 			]
 		};
