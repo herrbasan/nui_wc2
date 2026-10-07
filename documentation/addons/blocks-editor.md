@@ -80,8 +80,13 @@ editor.load(docModel);                       // or a parsed doc model (cloned)
 editor.loadUrl(url, rebasePair?)             // fetch + load (host decides sources)
 const md = editor.serialize();               // document as md-blocks text
 editor.openMediaLibrary = pickerFn;          // optional: host media browse (see Media)
+editor.resolveThumb = thumbFn;              // optional: src -> preview URL
 editor.destroy();                            // release window listeners / preview window
 ```
+
+`nui.components.mediaLibrary(items, opts)` is the picker's own browser, exported
+for hosts that have a file store and want the dialog for free — see
+[Media](#what-the-editor-owns).
 
 ### Events
 
@@ -99,20 +104,42 @@ editor.destroy();                            // release window listeners / previ
   structurally on load and never converted. Every block carries a style select
   with an escape hatch (`Custom preset…`) validating against the spec grammar
   `family[:modifier[:variant]]`, so documents carrying profile tokens open without loss.
+  A hero section is the one case where the type is not read off the block alone: a
+  `preset=cover` section types its own sole block as media, because a fresh hero
+  has no media yet and an empty body would otherwise derive as prose. The signal
+  is the section's own preset, so it survives a reload (`_type` is session-only).
 - **Media** — lead-image preview, sortable thumb rail (drag-out removes), media
-  library picker dialog. **The built-in library is a demo** (Playground mock:
-  `images/nui_*.webp`, sample URLs). A host with a real file story replaces the
-  picker before the first media pick:
+  library picker dialog. **The addon ships no media of its own**: with no hook
+  assigned the picker opens to a named empty state, not a silent empty list. A host
+  assigns the picker before the first media pick:
 
   ```javascript
   editor.openMediaLibrary = async ({ multiple = true, filterType = null } = {}) => {
       // host-native browse (OS dialog, FS Access API, CMS library …)
-      // return [] when cancelled, else [{ src, label }] entries
+      // return [] when cancelled, else [{ src, label, thumb }] entries
   };
   ```
 
-  The `src` values the picker returns are written verbatim into the document,
-  so the host decides whether they are paths, URLs or session object URLs.
+  `filterType` narrows the set per call site: `'image'` for media figures,
+  `'player'` for audio/video tracks, `null` for the icon badge.
+
+  The addon also exports the browser itself, so a host with a file store supplies
+  the *set* rather than writing a dialog:
+
+  ```javascript
+  editor.openMediaLibrary = (opts) => nui.components.mediaLibrary(myItems, opts);
+  ```
+
+  `nui.components.mediaLibrary(items, { multiple, filterType })` returns the
+  picked `[{ src, label }]` entries, or `[]` when cancelled. Items are
+  `{ id, label, src, thumb, type, variants }`; `type` is `'image' | 'audio' |
+  'video' | 'file'` and drives the `filterType` split.
+
+  `src` values are written verbatim into the document, so the host decides whether
+  they are paths, URLs or session object URLs. Thumbnails are a separate hook —
+  `editor.resolveThumb = async (src) => urlOrNull` — because a stored full-size
+  path may have no cheap preview URL (FS handles, CMS stores). Without it the raw
+  `src` is used; a thumb that fails to load leaves the named file-icon state.
 - **Frontmatter** — shape-driven structured editor (strings, dates, numbers,
   booleans, tag lists, maps, entry tables) plus a raw YAML mode with round-trip parsing.
 - **Preview** — inline split (draggable divider, keyboard resizable), hidden, or
@@ -121,5 +148,7 @@ editor.destroy();                            // release window listeners / previ
 ## Demo
 
 Playground: `#page=experiments/blocks-editor` — the page wires its demo
-documents into the component with `loadUrl()`, demonstrating exactly the
-host-side integration a project writes.
+documents into the component with `loadUrl()` and supplies the media library
+(130 Playground-relative plates plus sample audio/video) via `openMediaLibrary`
+and `resolveThumb`, demonstrating exactly the host-side integration a project
+writes. The addon itself carries none of that data.

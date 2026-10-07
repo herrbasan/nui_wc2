@@ -2525,111 +2525,49 @@ function initBlocksEditor(element, nui) {
 		return node._type;
 	}
 
-	// Shared media picker — the host's override point. The built-in library
-	// below is the Playground demo (static serve, no real file listing); a host
-	// with a real file story assigns `element.openMediaLibrary = fn` BEFORE the
-	// first media pick. Contract: same signature and return shape —
-	//   async ({ multiple = true, filterType = null } = {}) → [{ src, label }]
-	// or [] when cancelled. The editor never persists what the picker returns;
-	// srcs are written verbatim into the markdown.
+	// Shared media picker. The host's override point: assigning
+	// `element.openMediaLibrary` replaces this. Contract:
+	//   async ({ multiple = true, filterType = null } = {}) → [{ src, label, thumb }]
+	// or [] when cancelled. `thumb` is optional and only feeds the picker tile.
+	// The editor never persists what the picker returns; srcs are written verbatim
+	// into the markdown, so the host decides paths vs URLs vs object URLs.
+	//
+	// With no hook assigned the picker opens EMPTY and says so. A shipped addon has
+	// no media to offer — the previous built-in list was 130 Playground-relative
+	// paths baked into the module, which is demo data in library code and resolves
+	// to nothing in any host but this repo's Playground. A host that wants a
+	// browser assigns the hook; the Playground demo does exactly that.
 	const openMediaLibrary = (opts = {}) =>
 		typeof element.openMediaLibrary === 'function'
 			? element.openMediaLibrary(opts)
-			: defaultMediaLibrary(opts);
+			: emptyMediaLibrary(opts);
 
-	// Built-in demo library. The Playground is served statically, so there is no
-	// way to list a folder — the set is derived from two naming rules instead of a
-	// 126-entry manifest. Renaming either folder breaks tiles loudly in the picker.
-	const AUDIO_ICON_THUMB = `data:image/svg+xml;utf8,${encodeURIComponent(`
-		<svg xmlns="http://www.w3.org/2000/svg" width="160" height="90" viewBox="0 0 160 90" fill="none">
-			<rect width="160" height="90" rx="4" fill="#242830"/>
-			<circle cx="80" cy="45" r="24" fill="#1e2229"/>
-			<path d="M78 35v14.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V40h6V35h-8z" fill="#4a9eff"/>
-		</svg>
-	`)}`;
-
-	const VIDEO_ICON_THUMB = `data:image/svg+xml;utf8,${encodeURIComponent(`
-		<svg xmlns="http://www.w3.org/2000/svg" width="160" height="90" viewBox="0 0 160 90" fill="none">
-			<rect width="160" height="90" rx="4" fill="#242830"/>
-			<circle cx="80" cy="45" r="24" fill="#1e2229"/>
-			<path d="M74 37l16 8-16 8V37z" fill="#3dd68c"/>
-		</svg>
-	`)}`;
-
-	const MEDIA_LIBRARY = [
-		{
-			id: 'video-flower',
-			label: 'Flower Bloom (Clip)',
-			collection: 'Sample Videos',
-			variants: 'mp4 · 1080p',
-			type: 'video',
-			src: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
-			thumb: VIDEO_ICON_THUMB
-		},
-		{
-			id: 'audio-play-11',
-			label: 'Herrbasan — Play 11',
-			collection: 'Sample Music',
-			variants: 'mp3 · 320k',
-			type: 'audio',
-			src: 'https://herrbasan.com/files/Misc/herrbasan_Play_11.mp3',
-			thumb: AUDIO_ICON_THUMB
-		},
-		{
-			id: 'audio-brattle',
-			label: 'Herrbasan — Brattle',
-			collection: 'Sample Music',
-			variants: 'mp3 · 320k',
-			type: 'audio',
-			src: 'https://herrbasan.com/files/Misc/herrbasan_Brattle.mp3',
-			thumb: AUDIO_ICON_THUMB
-		},
-		{
-			id: 'audio-t-rex',
-			label: 'T-Rex Roar (Effect)',
-			collection: 'Sound Effects',
-			variants: 'mp3 · FX',
-			type: 'audio',
-			src: 'https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3',
-			thumb: AUDIO_ICON_THUMB
-		},
-		...Array.from({ length: 8 }, (_, i) => ({
-			id: `nui-${i + 1}`,
-			label: `NUI plate ${i + 1}`,
-			collection: 'NUI plates',
-			variants: 'webp',
-			type: 'image',
-			src: `images/nui_${i + 1}.webp`,
-			thumb: `images/nui_${i + 1}.webp`
-		})),
-		...Array.from({ length: 118 }, (_, i) => {
-			const n = String(i + 1).padStart(3, '0');
-			return {
-				id: n,
-				label: `Plate ${n}`,
-				collection: 'Random Picts',
-				variants: '160p · 1080p',
-				type: 'image',
-				src: `images/Random_Picts/1080p/${n}.webp`,
-				thumb: `images/Random_Picts/160p/${n}.webp`
-			};
-		})
-	];
-
-	// A block only stores the full-size path, so previews fall back to it. Library
-	// entries resolve to their 160p sibling — strip and picker stay cheap.
-	function libThumb(src) {
-		return MEDIA_LIBRARY.find(m => m.src === src)?.thumb ?? src;
+	// No library configured: an explicit empty state, not a silent zero-height list.
+	// `filterType` still picks the title so the host sees which pick failed to wire.
+	async function emptyMediaLibrary({ multiple = true, filterType = null } = {}) {
+		const title = filterType === 'player' ? (multiple ? 'Insert Audio / Video' : 'Choose Media Track')
+			: multiple ? 'Insert Media' : 'Choose Icon';
+		const note = document.createElement('div');
+		note.className = 'media-library-empty';
+		note.innerHTML = `
+			<nui-icon name="image"></nui-icon>
+			<p>No media library is wired.</p>
+			<p class="media-library-empty-hint">Assign <code>element.openMediaLibrary</code> to browse one.</p>
+		`;
+		const { dialog, result } = await nui.components.dialog.page(title, note, { contentScroll: false });
+		dialog.style.cssText = '--space-page-maxwidth: 720px;';
+		await result;
+		return [];
 	}
 
 	// Thumbnails are the HOST's business: a path-backed src may have no cheap
 	// URL (FS handles, CMS stores), so a host assigns resolveThumb(src) → URL
-	// (async) or null. The element itself falls back to a file icon — a rail of
-	// named tiles beats broken images. The demo library keeps its 160p map.
+	// (async) or null. Without one the src is used as-is, and a failed load leaves
+	// the named file-icon state — a rail of named tiles beats broken images.
 	async function buildThumb(src) {
 		const url = typeof element.resolveThumb === 'function'
 			? await element.resolveThumb(src)
-			: libThumb(src);
+			: src;
 		if (url) {
 			const img = document.createElement('img');
 			img.src = url;
@@ -2645,10 +2583,16 @@ function initBlocksEditor(element, nui) {
 		return icon;
 	}
 
-	// Shared media library picker. Returns the picked entries ([{ src, label }])
-	// or [] when cancelled. `multiple` switches the list between set picking
-	// (media blocks) and single picking (the icon badge).
-	async function defaultMediaLibrary({ multiple = true, filterType = null } = {}) {
+	// The media library dialog — the nui-list browse UI over a HOST-supplied set.
+	// A host that wants this exact browser assigns it rather than writing one:
+	//   element.openMediaLibrary = ({ multiple, filterType }) =>
+	//     nui.components.mediaLibrary(items, { multiple, filterType })
+	// `filterType` narrows the set the way the three call sites need: 'image' for
+	// media figures, 'player' for audio/video tracks, null for the icon badge.
+	// Returns the picked entries ([{ src, label }]) or [] when cancelled.
+	// `multiple` switches the list between set picking (media blocks) and single
+	// picking (the icon badge).
+	async function mediaLibrary(items, { multiple = true, filterType = null } = {}) {
 		const container = document.createElement('div');
 		container.className = 'media-library';
 		container.style.cssText = 'flex: 1; min-height: 0; display: flex; flex-direction: column;';
@@ -2688,10 +2632,10 @@ function initBlocksEditor(element, nui) {
 		};
 
 		const libraryData = filterType === 'player'
-			? MEDIA_LIBRARY.filter(m => m.type === 'audio' || m.type === 'video')
+			? items.filter(m => m.type === 'audio' || m.type === 'video')
 			: filterType === 'image'
-			? MEDIA_LIBRARY.filter(m => m.type !== 'audio' && m.type !== 'video')
-			: MEDIA_LIBRARY;
+			? items.filter(m => m.type !== 'audio' && m.type !== 'video')
+			: items;
 
 		// The dialog has to finish layout before the list can measure a row, or the
 		// list collapses to a zero-height container and renders nothing.
@@ -2726,6 +2670,7 @@ function initBlocksEditor(element, nui) {
 		await result;
 		return picked;
 	}
+	nui.components.mediaLibrary = mediaLibrary;
 
 	function renderLibraryRow(item) {
 		// Four columns, in the order nui-list's image-item variant expects:

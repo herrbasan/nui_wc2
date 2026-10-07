@@ -1144,6 +1144,34 @@ nui-blocks-editor .media-thumb .handle {
 	font-size: var(--font-size-xsmall);
 }
 
+/* No media library wired. The addon ships no media, so an unwired host gets this
+   rather than a zero-height list that looks like a rendering failure. */
+.media-library-empty {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: var(--nui-space-half);
+	min-height: 12rem;
+	padding: var(--nui-space-double);
+	text-align: center;
+	color: var(--text-color-dim);
+}
+
+.media-library-empty nui-icon {
+	font-size: 2.5rem;
+	opacity: 0.6;
+}
+
+.media-library-empty p {
+	margin: 0;
+}
+
+.media-library-empty-hint code {
+	font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+	font-size: var(--font-size-small);
+}
+
 nui-blocks-editor .columns-flex-row {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
