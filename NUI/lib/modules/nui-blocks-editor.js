@@ -3450,8 +3450,11 @@ function initBlocksEditor(element, nui) {
 				win.document.head.appendChild(style.cloneNode(true));
 			}
 			const layout = win.document.createElement('style');
+			// Mirror the inline preview's reading layout: centered column at the
+			// theme's max width, page gutter padding — not edge-to-edge markup.
 			layout.textContent = 'body{margin:0;background:var(--color-base,#fff)}'
-				+ '#preview-root{padding:var(--nui-space,1rem);container:doc / inline-size}';
+				+ '#preview-root{padding:var(--nui-space,1rem);container:doc / inline-size}'
+				+ '#preview-root>*{max-width:var(--space-page-maxwidth,56rem);margin-inline:auto;}';
 			win.document.head.appendChild(layout);
 
 			previewWindow = win;
