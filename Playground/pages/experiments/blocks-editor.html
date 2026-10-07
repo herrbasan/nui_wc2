@@ -15,3 +15,36 @@
 
 	<nui-blocks-editor></nui-blocks-editor>
 </section>
+
+<section>
+	<h2>What this page wires</h2>
+	<p>
+		The addon ships <strong>no media of its own</strong>. Everything a host supplies is
+		wired in <code>Playground/js/page-init.js</code>, which makes this page the integration
+		example rather than just a demo.
+	</p>
+
+	<nui-code>
+		<script type="example" data-lang="javascript"><!-- The two hooks, and nothing else. -->
+editor.openMediaLibrary = ({ multiple, filterType }) =>
+	nui.components.mediaLibrary(DEMO_MEDIA_LIBRARY, { multiple, filterType });
+
+// One src, two renditions: 160p for the rail, the stored 1080p for the frame.
+editor.resolveThumb = async (src, size = 'thumb') =>
+	size === 'thumb' ? (thumbs.get(src) || src) : src;</script>
+	</nui-code>
+
+	<div class="demo-callout">
+		<strong>Without these</strong> the media picker opens to a named empty state
+		(&ldquo;No media library is wired&rdquo;) rather than a silent empty list — an
+		unfinished integration should look like one.
+		<code>resolveThumb</code> is additive: a single-argument resolver keeps working and
+		serves both sizes identically. Returning <code>null</code> falls back to the stored
+		<code>src</code>.
+	</div>
+
+	<p>
+		<a href="../documentation/addons/blocks-editor.md">Full addon documentation</a> —
+		the picker contract, the size ladder, and the hero-section typing rule.
+	</p>
+</section>

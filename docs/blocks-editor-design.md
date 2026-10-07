@@ -16,6 +16,11 @@ Spec reference: md-blocks v1.3 (locked), `D:\Work\_GIT\md-blocks\md-blocks-spec.
 - Rationale: text-as-model = authorable (LLMs/humans), diffable, runtime-free.
   Restriction = the speed mechanism (consumption/editing/exchange). Not a phase to grow out of.
 
+**Spec reference note (2026-10-07):** the header cites
+`D:\Work\_GIT\md-blocks\md-blocks-spec.md`. The spec now also lives in MCP storage at
+`documentation/md-blocks/md-blocks-spec.md` (v1.5, locked) with its decisions in
+`documentation/md-blocks/BRIEF.md` — storage is the canonical copy.
+
 ## Editing levels
 
 - Editor works at **two levels: sections and blocks**.
@@ -46,6 +51,15 @@ No preset dropdown.
   section whose whole content is one media block. A normal section filled with a single
   media block IS a hero — same structure, same treatment. The UI can never disagree with
   the document.
+- **A cover section TYPES its own sole block** (settled 2026-10-07). Block type is otherwise
+  derived structurally from the body, but a fresh hero has no image yet and an empty body
+  derives as prose — the hero arrived as a text card. The section's `preset=cover` is durable
+  file state, so it decides: one non-chrome node in a cover section IS a media block.
+  This has to be the section rather than a `_type` stamp, because `_type` is session-only and
+  never serialized — a stamp would be right until the first reload, then prose again.
+  Resolved BEFORE the `_type` cache, or the cache freezes `prose` for the session.
+  Implementation: `isHeroMediaBlock(node, container)` guards on `vars` (sections carry them,
+  columns don't) so a column's single block is never caught by it.
 
 - Band+inverted: `preset=band:inverted` (spec §5.1 already blesses "fully inverted theme"
   as a renderer treatment of band).
@@ -280,6 +294,39 @@ it gets the meaning above instead of deletion:
 6. **Editor placement** — md-blocks Agents.md: the editor is meant to be a **nui addon**
    (peer of nui-slides), not Playground-only (`Playground/js/blocks-editor.js`, ~2380 lines).
    Move to `NUI/lib/modules/nui-blocks-editor.js` when the architecture settles.
+   **Done 2026-10-06** — it is `<nui-blocks-editor>` at `NUI/lib/modules/nui-blocks-editor.js`
+   + `NUI/css/modules/nui-blocks-editor.css`. The media library moved with it and then back
+   out again: see "The addon ships no media" below.
+
+## The addon ships no media (settled 2026-10-07)
+
+The library shipped inside the addon for its first day: 130 entries of
+Playground-relative paths baked into the module. Harmless here, meaningless anywhere else —
+demo data in library code. It also made the host-override seam look finished when it was not.
+
+- **The addon ships the browser, not the media.** `nui.components.mediaLibrary(items, opts)`
+  is the nui-list dialog over a host-supplied set, so a host with a file store supplies
+  `items` instead of writing a dialog.
+- **No hook ⇒ a named empty state**, not a silent empty list. "No media library is wired"
+  reads as an unfinished integration; a zero-height list reads as a rendering bug.
+- **The demo owns its data.** `Playground/js/page-init.js` holds `DEMO_MEDIA_LIBRARY` and
+  wires `openMediaLibrary` + `resolveThumb`, so the Playground page *is* the integration
+  example it was always meant to be.
+
+## One src, two sizes (settled 2026-10-07)
+
+`resolveThumb(src)` answered one question — "give me a cheap URL" — so the media frame
+inherited the rail's answer and rendered a 160×90 plate at 160×90 in a ~700px preview.
+Measured, not assumed: the frame's `naturalWidth` was 160 while the live preview pane
+beside it showed 1920 for the same block.
+
+- **`resolveThumb(src, size)`**, where `size` is what the CALLER needs: `'thumb'` for the
+  rail tile and icon badge, `'full'` for the frame, click-to-preview, and the player frame
+  (which needs the playable file, not a poster).
+- **Additive, not a rename.** A single-argument host keeps working and serves both sizes
+  identically — it keeps choosing the small one, which is that host's own answer.
+- **Returning `null` is never fatal.** The caller falls back to the stored `src`, so
+  declining a size degrades to the real file rather than to nothing.
 
 ## Build order (agreed)
 
@@ -306,4 +353,10 @@ it gets the meaning above instead of deletion:
    caption ghost with the renderer's scrim (a strip honestly shows it's mostly
    caption). Gotcha recorded: the base `.media-frame img { max-height: 20rem }`
    clamp silently capped cover fills — overrides must clear inherited clamps.
+   **2026-10-07**: new media/player blocks start EMPTY. They used to seed
+   `images/nui_1.webp` and the Playground's flower.mp4 — mock demo content that
+   landed in real documents. For the hero template that seed was also load-bearing:
+   its image line was the only thing making the block a media block, so removing it
+   turned every new hero into prose. Empty start is right; the hero needed the
+   section-level typing rule above.
 4. Parser architecture — range-anchored parse (decides editor save architecture)

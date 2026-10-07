@@ -957,6 +957,15 @@ Hover/focus help text only — **non-interactive by contract**. For a panel of c
 
 † **nui-table-editor is new and feel-checked** — mechanics and interaction feel are both signed off. It enhances a native `<table>` in place (`setupTableEditor(table)`) or wraps one (`<nui-table-editor><table>…`). Inside a `contenteditable` host it adds UI only and never takes over editability or keys. See [table-editor.md](documentation/addons/table-editor.md).
 
+‡ **nui-blocks-editor ships NO media and NO media library.** With no host hook the picker opens a named empty state; the 130-entry mock library that once lived in the module is gone. A host supplies both hooks before the first pick:
+
+```javascript
+editor.openMediaLibrary = async ({ multiple, filterType }) => [/* { src, label, thumb } */];
+editor.resolveThumb = async (src, size = 'thumb') => url;  // 'thumb' | 'full'
+```
+
+`resolveThumb`'s `size` is what the CALLER needs — `'thumb'` for the rail tile and icon badge, `'full'` for the frame and the player. A single-argument host still works and serves both sizes the same way. Want the dialog instead of writing one? `nui.components.mediaLibrary(items, opts)` is the picker itself. See [blocks-editor.md](documentation/addons/blocks-editor.md).
+
 ---
 
 ## Built-in `data-action` Handlers

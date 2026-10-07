@@ -165,6 +165,7 @@ for hosts that have a file store and want the dialog for free — see
 
 Playground: `#page=experiments/blocks-editor` — the page wires its demo
 documents into the component with `loadUrl()` and supplies the media library
-(130 Playground-relative plates plus sample audio/video) via `openMediaLibrary`
-and `resolveThumb`, demonstrating exactly the host-side integration a project
-writes. The addon itself carries none of that data.
+(130 items: 8 NUI plates, 118 Random Picts, and 4 sample audio/video tracks)
+via `openMediaLibrary` and `resolveThumb`, demonstrating exactly the host-side
+integration a project writes. The addon itself carries none of that data, and
+the page's "What this page wires" section names the two hooks.
