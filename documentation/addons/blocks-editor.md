@@ -79,6 +79,7 @@ editor.load('# Hello\n\nmd-blocks text');   // load from markdown text
 editor.load(docModel);                       // or a parsed doc model (cloned)
 editor.loadUrl(url, rebasePair?)             // fetch + load (host decides sources)
 const md = editor.serialize();               // document as md-blocks text
+editor.openMediaLibrary = pickerFn;          // optional: host media browse (see Media)
 editor.destroy();                            // release window listeners / preview window
 ```
 
@@ -99,9 +100,19 @@ editor.destroy();                            // release window listeners / previ
   with an escape hatch (`Custom preset…`) validating against the spec grammar
   `family[:modifier[:variant]]`, so documents carrying profile tokens open without loss.
 - **Media** — lead-image preview, sortable thumb rail (drag-out removes), media
-  library picker dialog. **The library inside the module is the Playground mock**
-  (`images/nui_*.webp`, sample URLs) — hosts with a real library will want to
-  replace `MEDIA_LIBRARY`/`openMediaLibrary` in `NUI/lib/modules/nui-blocks-editor.js`.
+  library picker dialog. **The built-in library is a demo** (Playground mock:
+  `images/nui_*.webp`, sample URLs). A host with a real file story replaces the
+  picker before the first media pick:
+
+  ```javascript
+  editor.openMediaLibrary = async ({ multiple = true, filterType = null } = {}) => {
+      // host-native browse (OS dialog, FS Access API, CMS library …)
+      // return [] when cancelled, else [{ src, label }] entries
+  };
+  ```
+
+  The `src` values the picker returns are written verbatim into the document,
+  so the host decides whether they are paths, URLs or session object URLs.
 - **Frontmatter** — shape-driven structured editor (strings, dates, numbers,
   booleans, tag lists, maps, entry tables) plus a raw YAML mode with round-trip parsing.
 - **Preview** — inline split (draggable divider, keyboard resizable), hidden, or

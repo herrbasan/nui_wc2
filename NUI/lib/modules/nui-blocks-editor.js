@@ -2473,8 +2473,20 @@ function initBlocksEditor(element, nui) {
 		return node._type;
 	}
 
-	// Mock media library. The Playground is served statically, so there is no way
-	// to list a folder — the set is derived from two naming rules instead of a
+	// Shared media picker — the host's override point. The built-in library
+	// below is the Playground demo (static serve, no real file listing); a host
+	// with a real file story assigns `element.openMediaLibrary = fn` BEFORE the
+	// first media pick. Contract: same signature and return shape —
+	//   async ({ multiple = true, filterType = null } = {}) → [{ src, label }]
+	// or [] when cancelled. The editor never persists what the picker returns;
+	// srcs are written verbatim into the markdown.
+	const openMediaLibrary = (opts = {}) =>
+		typeof element.openMediaLibrary === 'function'
+			? element.openMediaLibrary(opts)
+			: defaultMediaLibrary(opts);
+
+	// Built-in demo library. The Playground is served statically, so there is no
+	// way to list a folder — the set is derived from two naming rules instead of a
 	// 126-entry manifest. Renaming either folder breaks tiles loudly in the picker.
 	const AUDIO_ICON_THUMB = `data:image/svg+xml;utf8,${encodeURIComponent(`
 		<svg xmlns="http://www.w3.org/2000/svg" width="160" height="90" viewBox="0 0 160 90" fill="none">
@@ -2561,7 +2573,7 @@ function initBlocksEditor(element, nui) {
 	// Shared media library picker. Returns the picked entries ([{ src, label }])
 	// or [] when cancelled. `multiple` switches the list between set picking
 	// (media blocks) and single picking (the icon badge).
-	async function openMediaLibrary({ multiple = true, filterType = null } = {}) {
+	async function defaultMediaLibrary({ multiple = true, filterType = null } = {}) {
 		const container = document.createElement('div');
 		container.className = 'media-library';
 		container.style.cssText = 'flex: 1; min-height: 0; display: flex; flex-direction: column;';
@@ -3735,11 +3747,26 @@ function initBlocksEditor(element, nui) {
 }
 
 class NuiBlocksEditor extends HTMLElement {
-	async connectedCallback() {
+	constructor() {
+		super();
+		// The public API arrives only after `nui.ready()` resolves, but a host
+		// calling load() on a freshly created element — before or after append —
+		// is the natural pattern. Calls before init queue here and replay once
+		// the real methods exist — the API never "does not exist yet".
+		this._beQueue = [];
+		this.load = (input) => this._beQueue.push(input);
+	}
+
+	connectedCallback() {
 		if (this._initialized) return;
 		this._initialized = true;
-		await nui.ready();
-		initBlocksEditor(this, nui);
+		(async () => {
+			await nui.ready();
+			delete this.load;
+			initBlocksEditor(this, nui);
+			for (const input of this._beQueue) this.load(input);
+			this._beQueue = null;
+		})();
 	}
 
 	disconnectedCallback() {
