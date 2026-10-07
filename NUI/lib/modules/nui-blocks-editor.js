@@ -1596,7 +1596,13 @@ function initBlocksEditor(element, nui) {
 		}
 
 		function showInFrame(image) {
-			frame.innerHTML = `<img src="${escapeHtml(image.src)}" alt="${escapeHtml(image.alt)}">`;
+			frame.innerHTML = '';
+			buildThumb(image.src).then(node => {
+				if (frame.isConnected) {
+					node.classList?.add('media-frame-img');
+					frame.prepend(node);
+				}
+			});
 			frame.appendChild(frameCaption);
 			// Selection follows the frame: the clicked tile's number cell lights
 			// up. The next commit repaints and selection returns to the lead.
@@ -1608,8 +1614,19 @@ function initBlocksEditor(element, nui) {
 		function paint() {
 			const lead = images[0];
 			frame.innerHTML = lead
-				? `<img src="${escapeHtml(lead.src)}" alt="${escapeHtml(lead.alt)}">`
+				? ''
 				: `<div class="media-empty"><nui-icon name="image"></nui-icon><span>No image yet</span></div>`;
+			if (lead) {
+				// The frame shows the FULL image, but the src may still need the
+				// host's resolution (paths are not URLs). A failed resolution
+				// leaves the named empty state, not a broken img.
+				buildThumb(lead.src).then(node => {
+					if (frame.isConnected && images[0] === lead) {
+						node.classList?.add('media-frame-img');
+						frame.prepend(node);
+					}
+				});
+			}
 			frame.appendChild(frameCaption);
 			const captionMd = captionLines.join('\n').trim();
 			frameCaption.innerHTML = captionMd ? util.markdownToHtml(captionMd) : '';
@@ -1626,14 +1643,8 @@ function initBlocksEditor(element, nui) {
 				handle.textContent = String(i + 1);
 
 				li.append(handle);
-				// buildThumb resolves through the host (may await a blob URL);
-				// eager load — the rail is a small fixed grid and lazy images
-				// inside a freshly built scroller can miss the intersection
-				// callback and stay pending forever.
-				buildThumb(im.src).then(node => {
-					if (node.tagName === 'IMG') node.loading = 'eager';
-					li.append(node);
-				});
+				// buildThumb resolves through the host (may await a blob URL).
+				buildThumb(im.src).then(node => li.append(node));
 
 				strip.appendChild(li);
 			});
@@ -1856,13 +1867,22 @@ function initBlocksEditor(element, nui) {
 			commit();
 		}
 
-		function showInFrame(track) {
+		async function showInFrame(track) {
 			const ext = (track.src.split('?')[0].split('#')[0].split('.').pop() || '').toLowerCase();
 			const isVideo = ['mp4', 'webm', 'mov', 'm4v', 'ogv'].includes(ext);
 			const tag = isVideo ? 'video' : 'audio';
+			// The media element needs a URL, not a stored path — same host
+			// resolution as the image frame (resolveThumb; a host with no
+			// cheap URL gets the icon state, never a silently dead player).
+			const url = typeof element.resolveThumb === 'function'
+				? await element.resolveThumb(track.src)
+				: track.src;
 			const posterAttr = isVideo && track.poster ? ` poster="${escapeHtml(track.poster)}"` : '';
-
-			frame.innerHTML = `<nui-media-player type="${tag}"><${tag} controls playsinline preload="metadata" src="${escapeHtml(track.src)}"${posterAttr}></${tag}></nui-media-player>`;
+			if (!url) {
+				frame.innerHTML = `<div class="media-empty"><nui-icon name="${isVideo ? 'smart_display' : 'music_note'}"></nui-icon><span>${escapeHtml(track.title || track.src)}</span></div>`;
+			} else {
+				frame.innerHTML = `<nui-media-player type="${tag}"><${tag} controls playsinline preload="metadata" src="${escapeHtml(url)}"${posterAttr}></${tag}></nui-media-player>`;
+			}
 
 			strip.querySelectorAll('.player-track-item.selected').forEach(t => t.classList.remove('selected'));
 			const activeItem = strip.querySelectorAll('nui-sortable-item.player-track-item')[tracks.indexOf(track)];
@@ -2584,7 +2604,9 @@ function initBlocksEditor(element, nui) {
 			const img = document.createElement('img');
 			img.src = url;
 			img.alt = '';
-			img.loading = 'lazy';
+			// eager, deliberately: lazy images appended into freshly built
+			// scrollers can miss the intersection callback and never load.
+			img.loading = 'eager';
 			return img;
 		}
 		const icon = document.createElement('nui-icon');
