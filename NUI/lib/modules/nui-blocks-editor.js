@@ -3354,7 +3354,7 @@ function initBlocksEditor(element, nui) {
 	btnAddSecBottom?.addEventListener('click', () => openSectionTemplateDialog());
 
 	// ── Two-Way Sync ──
-	function syncToOutputs() {
+	function syncToOutputs({ emit = true } = {}) {
 		if (isSyncing) return;
 		isSyncing = true;
 		try {
@@ -3366,7 +3366,10 @@ function initBlocksEditor(element, nui) {
 				util.enhancePlayers?.(livePreview);
 			}
 			renderPreviewWindow(html);
-			element.dispatchEvent(new CustomEvent('nui-change', {
+			// load() syncs outputs (preview, window) but does NOT announce a
+			// change: loading a document is not editing it. Hosts debounce
+			// nui-change into autosave — a load echo would mark files dirty.
+			if (emit) element.dispatchEvent(new CustomEvent('nui-change', {
 				detail: { doc: currentDoc, markdown: md },
 				bubbles: true
 			}));
@@ -3773,7 +3776,7 @@ function initBlocksEditor(element, nui) {
 			currentDoc = normalizeDoc(structuredClone(input));
 		}
 		renderVisualEditor();
-		syncToOutputs();
+		syncToOutputs({ emit: false });
 	};
 	element.loadUrl = (url, rebase = null) => loadDocument(url, rebase);
 	element.serialize = () => util.serializeBlocks(currentDoc);
