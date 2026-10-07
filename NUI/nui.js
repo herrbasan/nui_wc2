@@ -9367,7 +9367,15 @@ function mbSafeDest(dest) {
 // a silently dropped attribute (see mdRejectedMedia). Returns `{ url }` (null
 // when the attribute was absent) or `{ rejected }` with the marker HTML.
 function mbMediaUrl(rawDest, alt) {
-	const verdict = mbSafeDest(rawDest);
+	let verdict = mbSafeDest(rawDest);
+	// Host trust override (setMarkdownMediaTrust): a DESKTOP shell renders the
+	// user's own documents from the user's own disk — a drive path here is a
+	// file the user picked, not an injection. The vouching happens BEFORE the
+	// refusal becomes a marker; the fn returns a usable destination or null.
+	if (verdict.refused && typeof markdownMediaTrust === 'function') {
+		const dest = markdownMediaTrust(String(rawDest == null ? '' : rawDest).trim());
+		if (dest) verdict = { dest };
+	}
 	if (verdict.refused) return { rejected: mdRejectedMedia(verdict.refused, rawDest, alt) };
 	let url = verdict.dest;
 	if (!url) return { url: null };
@@ -9730,10 +9738,18 @@ function markdownCore(md) {
 
 	// Scheme-validate URLs before interpolating into attributes. Blocks javascript:, data:, vbscript: etc.
 	// Relative paths, #anchors, http(s), and mailto pass through; dangerous schemes render as plain text.
+	// The host trust override (setMarkdownMediaTrust) can vouch for a refused
+	// destination — a desktop shell rendering the user's own disk uses it for
+	// drive paths, which are files the user picked, not injections.
 	const safeUrl = (url) => {
 		const trimmed = url.trim();
 		const scheme = trimmed.match(/^([a-z][a-z0-9+.-]*):/i);
-		return (scheme && !/^(https?|mailto)$/i.test(scheme[1])) ? null : trimmed;
+		if (!scheme || /^(https?|mailto)$/i.test(scheme[1])) return trimmed;
+		if (typeof markdownMediaTrust === 'function') {
+			const dest = markdownMediaTrust(trimmed);
+			if (dest) return dest;
+		}
+		return null;
 	};
 	// Generated markup and URL attribute values are held as tokens so the emphasis
 	// passes below cannot reach into them: an underscore in a filename is not
@@ -9804,6 +9820,11 @@ function markdownCore(md) {
 // boolean. Null = allow everything safeUrl passes (previous behavior).
 let markdownImagePolicy = null;
 util.setMarkdownImagePolicy = (fn) => { markdownImagePolicy = (typeof fn === 'function') ? fn : null; };
+// Host trust override for otherwise-refused destinations (drive paths in a
+// desktop shell). Called with the raw destination; returns a sanitized
+// destination to proceed with, or null/undefined to keep the refusal.
+let markdownMediaTrust = null;
+util.setMarkdownMediaTrust = (fn) => { markdownMediaTrust = (typeof fn === 'function') ? fn : null; };
 // App-level markdown image rewrite: fn(url) → rewritten url or null. Runs
 // before the policy check; lets the app canonicalize host aliases (e.g. all
 // known spellings of a storage origin → one same-origin proxy path).
