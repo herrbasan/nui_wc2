@@ -799,6 +799,17 @@ nui-blocks-editor .media-frame img {
 	object-fit: contain;
 }
 
+/* The frame's image goes through the host resolver (resolveThumb), so it can
+   arrive as the icon node when a host declines — same contract as the rail. */
+nui-blocks-editor .media-frame .media-thumb-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+	opacity: 0.6;
+}
+
 nui-blocks-editor .media-empty {
 	display: flex;
 	flex-direction: column;
