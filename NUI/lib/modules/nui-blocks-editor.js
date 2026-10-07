@@ -1165,10 +1165,12 @@ function initBlocksEditor(element, nui) {
 			return nodeCard;
 		}
 
-		// Leaf Block — the type is fixed: chosen in the insert palette, derived
-		// structurally on load (blockType), never switched afterwards. The type
-		// owns the body editor and the style list.
-		const bType = blockType(node);
+		// Leaf Block — the type is fixed: chosen in the insert palette, declared by a
+		// hero section, or derived structurally on load (blockType), never switched
+		// afterwards. The type owns the body editor and the style list. The container
+		// is passed because a cover section types its own sole block — that is a
+		// property of the pair, not of the block alone.
+		const bType = blockType(node, parentContainer);
 		if (bType === 'media') {
 			nodeCard.classList.add('editor-media-card');
 			renderMediaBlockNode(nodeCard, node, parentContainer, nodeIdx);
@@ -2456,6 +2458,11 @@ function initBlocksEditor(element, nui) {
 	// image (list) is a Media block (§4.2), everything else is Prose. Derived
 	// once and cached on the node (`_type`, session-only, never serialized) so
 	// raw-mode edits don't silently retype a block mid-session.
+	//
+	// The cache is why the hero case needed more than a derivation: an empty body
+	// has no structure to read, and the cache would then hold `prose` for the rest
+	// of the session. Structural derivation says what a block's OWN body makes it;
+	// a cover section says what its content is for. Both are file state.
 	const LINK_BODY_RE = /^\[([^\]]*)\]\(([^)\s]*)\)$/;
 
 	function parseLinkBody(text) {
@@ -2485,7 +2492,25 @@ function initBlocksEditor(element, nui) {
 		return parsePlayerBlock(getBlockText(node).split('\n')).tracks.length > 0;
 	}
 
-	function blockType(node) {
+	// A hero section holds exactly one media block — the editor rule, enforced by the
+	// canvas giving a hero no add-strips so there can never be a second one. The
+	// section's `preset=cover` is durable in the file, while a fresh hero block has no
+	// media yet and so nothing for the structural derivation below to read: an empty
+	// body derives as prose and the hero arrives as a text card. So a cover section's
+	// sole block is media BY the section's declaration. This is also what makes the type
+	// survive a reload — `_type` is session-only and never reaches the document.
+	function isHeroMediaBlock(node, container) {
+		// Sections carry `vars`; columns don't. A column's single block is not a hero's.
+		if (!container || !Array.isArray(container.vars)) return false;
+		const content = (container.nodes || []).filter(n => !(n.type === 'block' && (n.attrs?.repeat === 'header' || n.attrs?.repeat === 'footer')));
+		return content.length === 1 && content[0] === node && isHeroSection(container);
+	}
+
+	function blockType(node, container) {
+		// Resolved before the cache: a cover section whose only block reads as prose is
+		// exactly the broken state this rule exists to prevent, and it must not be
+		// frozen in by a type derived while the body was still empty.
+		if (isHeroMediaBlock(node, container)) node._type = 'media';
 		if (node._type) return node._type;
 		if (isPlayerBlock(node)) node._type = 'player';
 		else {
