@@ -1625,12 +1625,15 @@ function initBlocksEditor(element, nui) {
 				handle.className = 'handle';
 				handle.textContent = String(i + 1);
 
-				const pic = document.createElement('img');
-				pic.src = libThumb(im.src);
-				pic.alt = '';
-				pic.loading = 'lazy';
-
-				li.append(handle, pic);
+				li.append(handle);
+				// buildThumb resolves through the host (may await a blob URL);
+				// eager load — the rail is a small fixed grid and lazy images
+				// inside a freshly built scroller can miss the intersection
+				// callback and stay pending forever.
+				buildThumb(im.src).then(node => {
+					if (node.tagName === 'IMG') node.loading = 'eager';
+					li.append(node);
+				});
 
 				strip.appendChild(li);
 			});
@@ -1964,9 +1967,8 @@ function initBlocksEditor(element, nui) {
 
 		function paintIconRow() {
 			const src = node.attrs?.icon || '';
-			iconThumb.innerHTML = src
-				? `<img src="${escapeHtml(libThumb(src))}" alt="">`
-				: '<nui-icon name="image"></nui-icon>';
+			iconThumb.innerHTML = src ? '' : '<nui-icon name="image"></nui-icon>';
+			if (src) buildThumb(src).then(node => iconThumb.append(node));
 			iconAlt.value = node.attrs?.alt || '';
 		}
 
@@ -2568,6 +2570,27 @@ function initBlocksEditor(element, nui) {
 	// entries resolve to their 160p sibling — strip and picker stay cheap.
 	function libThumb(src) {
 		return MEDIA_LIBRARY.find(m => m.src === src)?.thumb ?? src;
+	}
+
+	// Thumbnails are the HOST's business: a path-backed src may have no cheap
+	// URL (FS handles, CMS stores), so a host assigns resolveThumb(src) → URL
+	// (async) or null. The element itself falls back to a file icon — a rail of
+	// named tiles beats broken images. The demo library keeps its 160p map.
+	async function buildThumb(src) {
+		const url = typeof element.resolveThumb === 'function'
+			? await element.resolveThumb(src)
+			: libThumb(src);
+		if (url) {
+			const img = document.createElement('img');
+			img.src = url;
+			img.alt = '';
+			img.loading = 'lazy';
+			return img;
+		}
+		const icon = document.createElement('nui-icon');
+		icon.setAttribute('name', 'image');
+		icon.classList.add('media-thumb-icon');
+		return icon;
 	}
 
 	// Shared media library picker. Returns the picked entries ([{ src, label }])

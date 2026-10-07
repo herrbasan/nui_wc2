@@ -1025,6 +1025,16 @@ nui-blocks-editor .media-thumb img {
 	object-fit: cover;
 }
 
+/* Host-declined thumbnails (resolveThumb → null): the tile stays a named
+   file-icon tile instead of a broken image. */
+nui-blocks-editor .media-thumb .media-thumb-icon {
+	flex: 1 1 auto;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	opacity: 0.6;
+}
+
 nui-blocks-editor .media-thumb.selected {
 	border-color: color-mix(in srgb, var(--be-block-header-bg) 70%, transparent);
 }
