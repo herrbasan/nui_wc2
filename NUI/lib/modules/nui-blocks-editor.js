@@ -1354,6 +1354,11 @@ function initBlocksEditor(element, nui) {
 			// closing on the same value, must not reach out and take the focus back.
 			// The field only opens (and only then grabs focus) from a curated style.
 			if (val === CUSTOM_PRESET) { if (!hatchOpen) open(); return; }
+			// nui-select fires nui-change even when setValue() writes the value the
+			// select already holds (paint() does exactly that). Without this guard,
+			// settle() → paint() → setValue() → nui-change → settle() recurses to a
+			// stack overflow the moment a repaint re-asserts the current value.
+			if (val === current) return;
 			current = val;
 			onCommit(val);
 			settle();
