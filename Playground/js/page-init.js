@@ -4081,10 +4081,18 @@ nui.registerPage('experiments/blocks-editor', {
 		editor.openMediaLibrary = ({ multiple = true, filterType = null } = {}) =>
 			nui.components.mediaLibrary(DEMO_MEDIA_LIBRARY, { multiple, filterType });
 
-		// A block stores only the full-size path, so previews need the 160p sibling.
-		// Without this the rail requests twelve 1080p files to draw thumbnails.
+		// A size ladder: the stored src is the 1080p file, the cheap rendition is
+		// its 160p sibling. The editor asks for the size it needs — 'full' for the
+		// frame that previews the document, 'thumb' for the rail and icon badge —
+		// so both come from one map. A host with a CMS that already knows its
+		// derivatives returns the same way.
+		//
+		// Thumb-only hosts keep working: the old single-argument signature ignored
+		// the size, so the frame falls back to whatever the host returns. Returning
+		// null for 'full' is safe too — the caller falls back to the stored src.
 		const thumbs = new Map(DEMO_MEDIA_LIBRARY.map(m => [m.src, m.thumb]));
-		editor.resolveThumb = async (src) => thumbs.get(src) || src;
+		editor.resolveThumb = async (src, size = 'thumb') =>
+			size === 'thumb' ? (thumbs.get(src) || src) : src;
 	}
 });
 

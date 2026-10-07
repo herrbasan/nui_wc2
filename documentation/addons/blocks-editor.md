@@ -80,7 +80,7 @@ editor.load(docModel);                       // or a parsed doc model (cloned)
 editor.loadUrl(url, rebasePair?)             // fetch + load (host decides sources)
 const md = editor.serialize();               // document as md-blocks text
 editor.openMediaLibrary = pickerFn;          // optional: host media browse (see Media)
-editor.resolveThumb = thumbFn;              // optional: src -> preview URL
+editor.resolveThumb = thumbFn;              // optional: (src, size) -> URL, size = 'thumb' | 'full'
 editor.destroy();                            // release window listeners / preview window
 ```
 
@@ -137,9 +137,25 @@ for hosts that have a file store and want the dialog for free — see
 
   `src` values are written verbatim into the document, so the host decides whether
   they are paths, URLs or session object URLs. Thumbnails are a separate hook —
-  `editor.resolveThumb = async (src) => urlOrNull` — because a stored full-size
-  path may have no cheap preview URL (FS handles, CMS stores). Without it the raw
-  `src` is used; a thumb that fails to load leaves the named file-icon state.
+  `editor.resolveThumb = async (src, size) => urlOrNull` — because a stored
+  full-size path may have no cheap preview URL (FS handles, CMS stores).
+
+  `size` is what the caller needs: `'thumb'` for the rail tile and the icon badge,
+  `'full'` for the frame, which previews the document and must show what the reader
+  gets. One src, two sizes:
+
+  ```javascript
+  editor.resolveThumb = async (src, size = 'thumb') =>
+      size === 'thumb' ? thumbFor(src) : fullFor(src);
+  ```
+
+  A host with a single rendition returns it for both. Returning `null` is never
+  fatal — the caller falls back to the stored `src`, so declining a size degrades
+  to the real file rather than to nothing. A single-argument resolver (ignoring
+  `size`) keeps working and simply serves both sizes the same way.
+
+  Library items carry `thumb` for the picker tile; it is optional and falls back
+  to `src`.
 - **Frontmatter** — shape-driven structured editor (strings, dates, numbers,
   booleans, tag lists, maps, entry tables) plus a raw YAML mode with round-trip parsing.
 - **Preview** — inline split (draggable divider, keyboard resizable), hidden, or

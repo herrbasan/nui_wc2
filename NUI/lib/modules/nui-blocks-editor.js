@@ -1604,7 +1604,9 @@ function initBlocksEditor(element, nui) {
 
 		function showInFrame(image) {
 			frame.innerHTML = '';
-			buildThumb(image.src).then(node => {
+			// 'full': the frame previews the document, so it shows what the reader
+			// gets. The rail tile clicked to get here is a thumbnail by design.
+			buildThumb(image.src, 'full').then(node => {
 				if (frame.isConnected) {
 					node.classList?.add('media-frame-img');
 					frame.prepend(node);
@@ -1625,9 +1627,10 @@ function initBlocksEditor(element, nui) {
 				: `<div class="media-empty"><nui-icon name="image"></nui-icon><span>No image yet</span></div>`;
 			if (lead) {
 				// The frame shows the FULL image, but the src may still need the
-				// host's resolution (paths are not URLs). A failed resolution
-				// leaves the named empty state, not a broken img.
-				buildThumb(lead.src).then(node => {
+				// host's resolution (paths are not URLs). A host with a size ladder
+				// returns the full rendition here and a thumbnail in the rail below —
+				// same src, two sizes, which is why the resolver takes the size.
+				buildThumb(lead.src, 'full').then(node => {
 					if (frame.isConnected && images[0] === lead) {
 						node.classList?.add('media-frame-img');
 						frame.prepend(node);
@@ -1650,8 +1653,9 @@ function initBlocksEditor(element, nui) {
 				handle.textContent = String(i + 1);
 
 				li.append(handle);
+				// The rail is a strip of small tiles: 'thumb' is what belongs here.
 				// buildThumb resolves through the host (may await a blob URL).
-				buildThumb(im.src).then(node => li.append(node));
+				buildThumb(im.src, 'thumb').then(node => li.append(node));
 
 				strip.appendChild(li);
 			});
@@ -1878,11 +1882,11 @@ function initBlocksEditor(element, nui) {
 			const ext = (track.src.split('?')[0].split('#')[0].split('.').pop() || '').toLowerCase();
 			const isVideo = ['mp4', 'webm', 'mov', 'm4v', 'ogv'].includes(ext);
 			const tag = isVideo ? 'video' : 'audio';
-			// The media element needs a URL, not a stored path — same host
-			// resolution as the image frame (resolveThumb; a host with no
-			// cheap URL gets the icon state, never a silently dead player).
+			// The media element needs the PLAYABLE file, not a poster: the frame is
+			// a live player, so a size ladder must hand over the real rendition
+			// (resolveThumb(src, 'full')), not the small one.
 			const url = typeof element.resolveThumb === 'function'
-				? await element.resolveThumb(track.src)
+				? (await element.resolveThumb(track.src, 'full')) || track.src
 				: track.src;
 			const posterAttr = isVideo && track.poster ? ` poster="${escapeHtml(track.poster)}"` : '';
 			if (!url) {
@@ -2561,12 +2565,20 @@ function initBlocksEditor(element, nui) {
 	}
 
 	// Thumbnails are the HOST's business: a path-backed src may have no cheap
-	// URL (FS handles, CMS stores), so a host assigns resolveThumb(src) → URL
-	// (async) or null. Without one the src is used as-is, and a failed load leaves
-	// the named file-icon state — a rail of named tiles beats broken images.
-	async function buildThumb(src) {
+	// URL (FS handles, CMS stores), so a host assigns resolveThumb(src, size) →
+	// URL (async) or null. Without one the src is used as-is, and a failed load
+	// leaves the named file-icon state — a rail of named tiles beats broken images.
+	//
+	// `size` is what the CALLER needs, not what the host happens to hold: 'thumb'
+	// for a rail tile or the icon badge (a 160p plate is right there and wasteful
+	// in the frame), 'full' for the frame, which previews the document and must
+	// show what the reader gets. A host with one rendition returns it for both;
+	// one with a size ladder — the demo's 160p/1080p pair, a CMS's derivatives —
+	// picks by name. Returning null is never fatal: the caller falls back to the
+	// stored src, so declining a size degrades to the real file, not to nothing.
+	async function buildThumb(src, size = 'thumb') {
 		const url = typeof element.resolveThumb === 'function'
-			? await element.resolveThumb(src)
+			? (await element.resolveThumb(src, size)) || src
 			: src;
 		if (url) {
 			const img = document.createElement('img');
@@ -2689,11 +2701,13 @@ function initBlocksEditor(element, nui) {
 
 		// nui-list calls `update` when it binds a row to a data index, so off-screen
 		// rows never request a bitmap. The variant fades the thumb in via `.loaded`.
+		// `thumb` is the host's cheap rendition; a host with one file only sets src,
+		// and the tile shows that rather than requesting nothing.
 		const img = el.querySelector('img');
 		el.update = () => {
 			img.classList.remove('loaded');
 			img.onload = () => img.classList.add('loaded');
-			img.src = item.thumb;
+			img.src = item.thumb || item.src;
 			if (img.complete) img.classList.add('loaded');
 		};
 		return el;
