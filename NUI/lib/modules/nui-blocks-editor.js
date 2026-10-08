@@ -10,7 +10,8 @@
 //
 // API (after connect):
 //   load(markdown | docModel)  — replace the document (text or parsed model)
-//   loadUrl(url, rebase?)      — fetch a markdown document and load it
+//   loadUrl(url)                — fetch a markdown document and load it; its relative
+//                                  paths resolve against that URL in every preview
 //   serialize()                — document as md-blocks text
 //   destroy()                  — release window listeners / preview window
 // Events:
@@ -154,6 +155,14 @@ function initBlocksEditor(element, nui) {
 
 	// Current State
 	let currentDoc = createDefaultDoc();
+	// Where the loaded document lives. Its relative image paths resolve against THIS,
+	// the same rule every real viewer applies (GitHub, VS Code, nui-markdown[src]).
+	// Without it the preview resolved against the PAGE, so a document authored with
+	// document-relative paths (`../../images/x.webp`) showed broken images here while
+	// rendering correctly everywhere else — and the old fix for that, rewriting the
+	// text on load, quietly rewrote the document's own portable paths into page-relative
+	// ones, so the first save committed paths no other renderer could resolve.
+	let docBase = null;
 	let isSyncing = false;
 	let previewMode = cfg.previewHidden ? 'hidden' : cfg.preview;
 	let previewWindow = null;
@@ -3351,7 +3360,12 @@ function initBlocksEditor(element, nui) {
 		isSyncing = true;
 		try {
 			const md = util.serializeBlocks(currentDoc);
-			const html = util.markdownToHtml(md);
+			// `base` makes the RENDER resolve the document's own relative paths. It does
+			// not touch `md` — the serialized markdown keeps the paths as authored, so
+			// saving preserves a document that still renders in GitHub, VS Code and a
+			// bare <nui-markdown src>. The pop-out inherits the same resolved URLs from
+			// this one render instead of re-resolving against its own blank page.
+			const html = util.markdownToHtml(md, { base: docBase });
 			if (livePreview) {
 				livePreview.innerHTML = html;
 				util.enhanceSlideshows?.(livePreview);
@@ -3700,12 +3714,14 @@ function initBlocksEditor(element, nui) {
 		}
 	});
 
-	async function loadDocument(url, rebase = null) {
+	async function loadDocument(url) {
 		try {
 			const res = await fetch(url);
 			if (!res.ok) throw new Error(`HTTP ${res.status}`);
-			let text = await res.text();
-			if (rebase) text = text.replaceAll(rebase[0], rebase[1]);
+			const text = await res.text();
+			// Resolved against the page, because the document may be addressed
+			// page-relative ("pages/...") exactly as the fetch above was.
+			docBase = new URL(url, location.href).href;
 			currentDoc = normalizeDoc(util.parseBlocks(text));
 			renderVisualEditor();
 			syncToOutputs();
@@ -3801,7 +3817,7 @@ function initBlocksEditor(element, nui) {
 		renderVisualEditor();
 		syncToOutputs({ emit: false });
 	};
-	element.loadUrl = (url, rebase = null) => loadDocument(url, rebase);
+	element.loadUrl = (url) => loadDocument(url);
 	element.serialize = () => util.serializeBlocks(currentDoc);
 	element.destroy = () => {
 		window.removeEventListener('focus', revertIfPreviewWindowGone);

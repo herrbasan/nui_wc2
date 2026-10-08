@@ -77,12 +77,28 @@ const editor = document.querySelector('nui-blocks-editor');
 
 editor.load('# Hello\n\nmd-blocks text');   // load from markdown text
 editor.load(docModel);                       // or a parsed doc model (cloned)
-editor.loadUrl(url, rebasePair?)             // fetch + load (host decides sources)
+editor.loadUrl(url)                         // fetch + load (host decides sources)
 const md = editor.serialize();               // document as md-blocks text
 editor.openMediaLibrary = pickerFn;          // optional: host media browse (see Media)
 editor.resolveThumb = thumbFn;              // optional: (src, size) -> URL, size = 'thumb' | 'full'
 editor.destroy();                            // release window listeners / preview window
 ```
+
+### Media paths are relative to the document, never to the page
+
+`loadUrl(url)` records where the document lives, and every preview — the split view and
+the pop-out — resolves the document's relative image paths against **that URL**. This is
+the rule GitHub, VS Code and `<nui-markdown src>` already apply, so a document edited here
+renders identically everywhere else.
+
+It matters that the base is applied to the *render*, not to the text. `serialize()` returns
+the paths exactly as authored, so loading and saving a document round-trips without
+rewriting them. There is deliberately no way to rebase paths on the way in: rewriting the
+source to suit one viewer is what silently produces a document no other viewer can resolve.
+
+**Absolute paths are not supported** — a drive path like `D:/Work/.../shot.png` is refused
+by the renderer and does not load in a VS Code preview either. They are also the one form
+that cannot survive being moved to another machine. Use a path relative to the document.
 
 `nui.components.mediaLibrary(items, opts)` is the picker's own browser, exported
 for hosts that have a file store and want the dialog for free — see

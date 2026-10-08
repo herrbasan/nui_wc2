@@ -4070,7 +4070,7 @@ nui.registerPage('experiments/blocks-editor', {
 		const btnDemo = element.querySelector('[data-load-demo]');
 		const btnBlog = element.querySelector('[data-load-blog]');
 		btnDemo?.addEventListener('click', () =>
-			editor.loadUrl('pages/experiments/md-blocks-demo.md', ['../../images/', 'images/']));
+			editor.loadUrl('pages/experiments/md-blocks-demo.md'));
 		btnBlog?.addEventListener('click', () =>
 			editor.loadUrl('pages/experiments/blog-the-ghost-in-the-agent.md'));
 
