@@ -6476,8 +6476,16 @@ nui-markdown p > img {
    Bleed is excluded: it exists precisely to cancel this inset, so constraining it would
    undo the variant that asked to escape. So is `cover`: the section's own ratio spacer
    shares a grid cell with the media, so a measure on the media would cap the image at the
-   reading width while the spacer still fills the section — the cover stops covering. */
-nui-markdown.nui-md-document :is(
+   reading width while the spacer still fills the section — the cover stops covering.
+
+   Deliberately NOT scoped to `nui-markdown`. The blocks-editor's pop-out preview writes
+   the rendered HTML into a bare container in another window — custom elements are
+   registered per window, so the node cannot be moved across — and that HTML carries the
+   block classes but no `nui-markdown` host. Gating on the host element gave the pop-out
+   a different measure from the split view, which is the one thing a preview must not do.
+   The block classes only exist in a structured document, so the gate was buying nothing
+   except that divergence. */
+:is(
 	.nui-blocks-section:not(.nui-preset-cover) > *:not(.nui-variant-bleed),
 	.nui-md-frontmatter-details
 ) {

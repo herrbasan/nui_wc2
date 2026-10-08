@@ -3438,12 +3438,40 @@ function initBlocksEditor(element, nui) {
 			for (const style of document.querySelectorAll('style')) {
 				win.document.head.appendChild(style.cloneNode(true));
 			}
+
+			// Host-level custom properties travel with the HTML. A stylesheet copy alone
+			// is not enough: a host that retunes a token does it on the element it owns —
+			// the Playground sets `--space-page-maxwidth: 60rem` on <nui-app>, overriding
+			// the theme's 56rem — and an element's inline style is not something the popup
+			// inherits, because the popup has no such element. Without this the pop-out
+			// silently fell back to the theme default and its measure disagreed with the
+			// split view by exactly the host's override. Only `--` properties are copied:
+			// the rest of an app shell's inline style is layout for a layout the popup
+			// does not have.
+			const host = document.querySelector('nui-app');
+			const tokens = host?.style;
+			if (tokens) {
+				for (let i = 0; i < tokens.length; i++) {
+					const prop = tokens.item(i);
+					if (prop.startsWith('--')) win.document.body.style.setProperty(prop, tokens.getPropertyValue(prop));
+				}
+			}
+
 			const layout = win.document.createElement('style');
-			// Mirror the inline preview's reading layout: centered column at the
-			// theme's max width, page gutter padding — not edge-to-edge markup.
+			// The pop-out must look like the inline preview it replaced, so it gets the
+			// SAME measure the split view gets — and no measure of its own. Constraining
+			// the container (`#preview-root > *`) is the model the theme rejects: it caps
+			// the surface, so a band shrinks down to the reading width instead of spanning
+			// it. The theme's block rules already hold the CONTENT, so this only supplies
+			// what the popup owns: the page background and the `doc` container the
+			// rendered document's own @container rules measure against.
+			//
+			// Horizontal padding is zero, matching the split pane and the demo page. A
+			// gutter here would inset the document's edges, and an inset edge is exactly
+			// what stops a band from reading as a band. The theme's block rules hold the
+			// text instead, so the document needs no help to stay readable.
 			layout.textContent = 'body{margin:0;background:var(--color-base,#fff)}'
-				+ '#preview-root{padding:var(--nui-space,1rem);container:doc / inline-size}'
-				+ '#preview-root>*{max-width:var(--space-page-maxwidth,56rem);margin-inline:auto;}';
+				+ '#preview-root{padding:var(--nui-space,1rem) 0;container:doc / inline-size}';
 			win.document.head.appendChild(layout);
 
 			previewWindow = win;

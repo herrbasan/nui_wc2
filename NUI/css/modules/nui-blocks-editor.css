@@ -187,9 +187,11 @@ nui-blocks-editor .editor-split-handle:focus-visible {
 		/* No horizontal padding. Spacing to the surrounding layout is the INTEGRATOR'S
 		   decision — the host page already carries its gutter, and a component that adds
 		   its own indents the editor against the host's header, buttons and text.
-		   Full-bleed sections (preset=band:bleed) cancel --nui-space of the page gutter;
-		   that is the renderer's contract with the PAGE, not with this component. A host
-		   that wants extra clearance wraps the component and pads the wrapper.
+		   Horizontal padding here would also inset the previewed document's edges, and an
+		   inset edge is what stops a band from reading as a band; the theme's block rules
+		   hold the CONTENT to a readable measure, so the pane needs no gutter to do that
+		   job. The pop-out preview (nui-blocks-editor.js) mirrors this exactly, so the two
+		   preview modes render identically.
 		   Vertical padding stays: it is the only breathing room above the toolbar and
 		   below the last section, and no host layout provides it. */
 		overflow-x: hidden;
