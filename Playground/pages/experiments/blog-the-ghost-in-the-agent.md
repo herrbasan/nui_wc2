@@ -30,11 +30,11 @@ Published July 25, 2026
 <!-- mb:/block -->
 
 <!-- mb:block preset=player kind=audio -->
-[Listen to this article](tts/the-ghost-in-the-agent_2026-08-10.mp3)
+[Listen to this article](../../tts/the-ghost-in-the-agent_2026-08-10.mp3)
 <!-- mb:/block -->
 
 <!-- mb:block preset=image:hero kind=image -->
-![A bedsheet ghost costume draped over a small exposed box of amber gears with a crank](images/the-ghost-in-the-agent_hero.webp)
+![A bedsheet ghost costume draped over a small exposed box of amber gears with a crank](../../images/the-ghost-in-the-agent_hero.webp)
 <!-- mb:/block -->
 
 There's a genre of video and book making the rounds — the "AI agents escape and destroy us" genre. The entries are interchangeable: a named protagonist — call it Agent 127 — a three-act structure, a researcher at a prestigious university who sees the data but can't interpret it, a president who tries to pull the plug and fails. Slick, well-told, compelling.

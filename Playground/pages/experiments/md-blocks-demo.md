@@ -6,8 +6,22 @@ tags:
   - markdown
   - md-blocks
   - nui
-summary: "A sample MD-Blocks document rendered by nui-markdown."
+summary: A sample MD-Blocks document rendered by nui-markdown.
 ---
+
+<!-- mb:section id=sec-dsilf label=Hero preset=cover:banner -->
+
+<!-- mb:block id=b-l06kv -->
+![Gemini_Generated_Image_akihtdakihtdakih.png](../../../assets/Gemini_Generated_Image_akihtdakihtdakih.png)
+
+## Hero Title
+
+Supporting tagline or call to action.
+<!-- mb:/block -->
+
+---
+
+<!-- mb:block id=b-i7mgx -->
 
 # MD-Blocks Sample
 
@@ -17,12 +31,14 @@ comments. Today `nui-markdown` renders it as plain Markdown — the comments are
 support lands in the `nui-blocks` renderer, the same source becomes sections, columns, and media
 blocks.
 
+<!-- mb:/block -->
+
 <!-- mb:block id=opening preset=lead label="Opening statement" -->
 A `block` is the unit an editor moves, presents, and names. Plain unannotated Markdown needs
 no block at all — it is chunked by one deterministic rule, identically in every tool.
 <!-- mb:/block -->
 
-<!-- mb:block id=hero preset=image:hero:bleed label="Hero plate" -->
+<!-- mb:block id=hero label="Hero plate" -->
 ![NUI artwork — plate 1](../../images/nui_1.webp)
 
 Everything after that first image is the block's caption, in ordinary Markdown.
@@ -34,9 +50,13 @@ Everything after that first image is the block's caption, in ordinary Markdown.
 
 ---
 
+<!-- mb:block id=b-m4o0r -->
+
 # Two Columns of Text
 
 A fundamental layout requirement is parallel reading columns: side-by-side narrative, comparisons, or multi-column editorial prose without cards or decorative chrome.
+
+<!-- mb:/block -->
 
 <!-- mb:columns id=two-col-text weights=[1,1] label="Two columns of text" -->
 <!-- mb:col label="First column" -->
@@ -56,9 +76,13 @@ When renderers fail or encounter unknown presets, they degrade gracefully to pla
 
 ---
 
+<!-- mb:block id=b-pc6su -->
+
 # Text Flow with Floated Images
 
 Editorial layouts often wrap prose around a key illustration. The authored Markdown is simply an image followed by ordinary paragraphs — 100% valid CommonMark that degrades to a standard image-and-caption stack in raw viewers.
+
+<!-- mb:/block -->
 
 <!-- mb:block id=story-left preset=image:left label="Image left text wrap" -->
 ![NUI artwork — plate 5](../../images/nui_5.webp)
@@ -90,32 +114,38 @@ For author portraits, icon badges, or compact vignette plates, appending `:small
 Renderers that do not implement `:small` cleanly fall back to the standard `image:left` 40% width, while standard CommonMark tools render it as an ordinary image stack. Full degradation at every layer.
 <!-- mb:/block -->
 
+<!-- mb:block id=b-dk8u1 -->
+
 ### Inline Icons & Feature Badges
 
 Icons belong to the directive, not the prose. With `preset=image:icon` the asset is referenced by an `icon=` attribute, so generic previews show clean headings and paragraphs — the entire directive vanishes instead of leaving a stray image line.
 
-<!-- mb:block id=feat-runtime preset=image:icon icon=../../images/icons/bolt.svg alt="Zero build overhead" label="Runtime feature" -->
+<!-- mb:/block -->
+
+<!-- mb:block id=feat-runtime preset=image:icon icon="../../images/icons/bolt.svg" alt="Zero build overhead" label="Runtime feature" -->
 ### Zero Build Overhead
 Native web components execute directly in modern browsers without compilation steps, bundlers, or toolchain dependencies.
 <!-- mb:/block -->
 
-<!-- mb:block id=feat-fallback preset=image:icon icon=../../images/icons/shield.svg alt="Graceful fallback" label="Graceful degradation" -->
+<!-- mb:block id=feat-fallback preset=image:icon icon="../../images/icons/shield.svg" alt="Graceful fallback" label="Graceful degradation" -->
 ### Graceful Fallback Everywhere
 No renderer support is required. The directive disappears, the heading and paragraphs stay, and nothing in the document looks broken.
 <!-- mb:/block -->
 
 <!-- mb:columns id=icon-columns weights=[1,1] label="Icon cards" -->
-<!-- mb:col preset=card label="Blocks" -->
-<!-- mb:block preset=image:icon icon=../../images/icons/blocks.svg alt="Blocks" -->
+<!-- mb:col preset=card label=Blocks -->
+<!-- mb:block preset=image:icon icon="../../images/icons/blocks.svg" alt=Blocks -->
 ### Structure as blocks
 Sections, blocks and columns as movable units.
 <!-- mb:/block -->
-<!-- mb:col preset=card label="Columns" -->
-<!-- mb:block preset=image:icon icon=../../images/icons/columns.svg alt="Columns" -->
+<!-- mb:col preset=card label=Columns -->
+<!-- mb:block preset=image:icon icon="../../images/icons/columns.svg" alt=Columns -->
 ### Parallel reading
 Side-by-side prose without decorative chrome.
 <!-- mb:/block -->
 <!-- mb:/columns -->
+
+<!-- mb:block id=b-ai49f -->
 
 An image authored **directly inside a heading** also scales to the heading's font size — an inline affordance for enhanced document and slide renderers, at the cost of looking wrong in generic previews:
 
@@ -123,16 +153,23 @@ An image authored **directly inside a heading** also scales to the heading's fon
 
 Prefer the `icon=` attribute form above whenever the same document has to read well on GitHub.
 
+<!-- mb:/block -->
+
 ---
 
 <!-- mb:section id=split preset=band:bleed label="Two-column section" -->
+
 <!-- mb:var name=seconds value=12 -->
+
+<!-- mb:block id=b-k5y4o -->
 
 # A useful split
 
 The `---` above opened a second section; this one is annotated `preset=band` — a section that sits on a different surface from the page (slightly darker in light mode, slightly lighter in dark mode). It also carries
 its own named data — `seconds`, set to 12. Vars belong to the section they appear in. There is
 no document-level var: document data lives in the frontmatter.
+
+<!-- mb:/block -->
 
 <!-- mb:columns id=story-split weights=[1,1] label="Story and facts" -->
 <!-- mb:col label="The story" -->
@@ -159,16 +196,24 @@ never reordered by CSS alone.
 **Note:** the label word is authored here, not injected by the preset.
 <!-- mb:/columns -->
 
+<!-- mb:block id=b-3gegq -->
+
 The column region ended above. This trailing paragraph is part of this section's ordinary
 unannotated Markdown run.
 
+<!-- mb:/block -->
+
 ---
+
+<!-- mb:block id=b-vre8q -->
 
 # Galleries & Collections
 
 A block that starts with a list of images is a gallery — one movable unit. Clicking any image opens it in the lightbox.
 
 ### 1. Responsive Grid (`preset=gallery`)
+
+<!-- mb:/block -->
 
 <!-- mb:block id=gallery-grid kind=image preset=gallery label="Image grid" -->
 - ![NUI artwork — plate 3](../../images/nui_3.webp)
@@ -179,7 +224,11 @@ A block that starts with a list of images is a gallery — one movable unit. Cli
 **Plate sequence.** Default gallery renders as a responsive auto-fit grid. Click to inspect in lightbox.
 <!-- mb:/block -->
 
+<!-- mb:block id=b-g6isg -->
+
 ### 2. Featured / Editorial (`preset=gallery:featured`)
+
+<!-- mb:/block -->
 
 <!-- mb:block id=gallery-featured kind=image preset=gallery:featured label="Featured gallery" -->
 - ![NUI artwork — plate 1](../../images/nui_1.webp)
@@ -190,7 +239,11 @@ A block that starts with a list of images is a gallery — one movable unit. Cli
 **Featured layout.** The first image is highlighted prominently as the lead plate, with companion shots grouped in a balanced sub-grid below.
 <!-- mb:/block -->
 
+<!-- mb:block id=b-o17za -->
+
 ### 3. Even Row (`preset=gallery:row`)
+
+<!-- mb:/block -->
 
 <!-- mb:block id=gallery-row kind=image preset=gallery:row label="Gallery row" -->
 - ![NUI artwork — plate 3](../../images/nui_3.webp)
@@ -200,7 +253,11 @@ A block that starts with a list of images is a gallery — one movable unit. Cli
 **Contained banner row.** A single horizontal row that divides the full width equally without overflow or scrollbars.
 <!-- mb:/block -->
 
+<!-- mb:block id=b-dwfvo -->
+
 ### 4. Editorial Mosaic (`preset=gallery:mosaic`)
+
+<!-- mb:/block -->
 
 <!-- mb:block id=gallery-mosaic kind=image preset=gallery:mosaic label="Mosaic gallery" -->
 - ![NUI artwork — plate 6](../../images/nui_6.webp)
@@ -212,13 +269,21 @@ A block that starts with a list of images is a gallery — one movable unit. Cli
 
 ---
 
+<!-- mb:block id=b-jnjae -->
+
 # Visual Structures & Patterns
+
+<!-- mb:/block -->
 
 <!-- mb:block preset=lead -->
 Every presentation or publication needs more than just paragraphs. MD-Blocks provides high-impact visual patterns using standard CommonMark authoring.
 <!-- mb:/block -->
 
+<!-- mb:block id=b-m7ee7 -->
+
 ## Key Metrics
+
+<!-- mb:/block -->
 
 <!-- mb:columns id=metrics weights=[1,1,1] label="Impact metrics" -->
 <!-- mb:col preset=card:stat label="Metric 1" -->
@@ -235,7 +300,11 @@ Pure browser-native execution
 Everything you need to author
 <!-- mb:/columns -->
 
+<!-- mb:block id=b-uz8zq -->
+
 ## Editorial Process
+
+<!-- mb:/block -->
 
 <!-- mb:block id=timeline preset=list:steps label="Authoring workflow" -->
 1. **Draft in CommonMark** — Write plain paragraphs, headings, and images naturally. No layout distractions.
@@ -243,7 +312,11 @@ Everything you need to author
 3. **Render Everywhere** — Enjoy clean generic previews in GitHub/VS Code or rich interactive layouts in NUI.
 <!-- mb:/block -->
 
+<!-- mb:block id=b-ici71 -->
+
 ## Notable Thoughts
+
+<!-- mb:/block -->
 
 <!-- mb:block id=dijkstra preset=card:quote label="Dijkstra Quote" -->
 > "Simplicity is prerequisite for reliability."
@@ -251,7 +324,11 @@ Everything you need to author
 > — Edsger W. Dijkstra
 <!-- mb:/block -->
 
+<!-- mb:block id=b-tj8ab -->
+
 ## Architecture Guidelines
+
+<!-- mb:/block -->
 
 <!-- mb:columns weights=[1,1] label="Dos and Donts" -->
 <!-- mb:col preset=card:good label="Best practices" -->
@@ -260,7 +337,7 @@ Everything you need to author
 - Guessable `family:modifier` presets
 - Graceful degradation on all devices
 - Direct DOM binding with no build step
-<!-- mb:col preset=card:danger label="Anti-patterns" -->
+<!-- mb:col preset=card:danger label=Anti-patterns -->
 ### Avoid
 - Horizontal scrollbars in document flow
 - Proprietary tag extensions (`<my-component>`)
@@ -273,6 +350,8 @@ Everything you need to author
 <!-- mb:/block -->
 
 ---
+
+<!-- mb:block id=b-cqmhk -->
 
 # Table Presentations
 
@@ -290,6 +369,8 @@ Standard Markdown tables often default to heavy, boxy spreadsheets. With simple 
 
 No heavy backgrounds or vertical grid lines — only subtle horizontal dividers for clean readability.
 
+<!-- mb:/block -->
+
 <!-- mb:block id=table-clean-demo preset=table:clean label="Clean table" -->
 | Name | Type | Description |
 |---|---|---|
@@ -298,9 +379,13 @@ No heavy backgrounds or vertical grid lines — only subtle horizontal dividers 
 | `columns` | Layout | Responsive multi-column container |
 <!-- mb:/block -->
 
+<!-- mb:block id=b-j1igf -->
+
 ### 3. Data-Driven Column Widths (`preset=table:clean:fit`)
 
 The authored header names are long (`Number of Items`, `Syntactic Classification`, `Detailed Architectural Purpose`), but the data in the first two columns is short (`1`, `Container`). With `preset=table:clean:fit`, columns are sized strictly by their data cells. Headers display as much text as fits with an ellipsis, and hovering any clipped header reveals the full title in a `nui-tooltip`.
+
+<!-- mb:/block -->
 
 <!-- mb:block id=table-fit-demo preset=table:clean:fit label="Data-fit table" -->
 | Number of Items | Syntactic Classification | Detailed Architectural Purpose |
@@ -312,9 +397,13 @@ The authored header names are long (`Number of Items`, `Syntactic Classification
 | 5 | Scoped Data | Document or section variable carrying typed key-value data |
 <!-- mb:/block -->
 
+<!-- mb:block id=b-t2vwc -->
+
 ### 4. Specification Sheet (`preset=table:specs`)
 
 Headers are hidden; column 1 acts as a bold, muted label for key/value specifications.
+
+<!-- mb:/block -->
 
 <!-- mb:block id=table-specs-demo preset=table:specs label="Specification sheet" -->
 | Property | Value |
@@ -325,20 +414,33 @@ Headers are hidden; column 1 acts as a bold, muted label for key/value specifica
 | Fallback Fidelity | 100% Readable |
 <!-- mb:/block -->
 
+<!-- mb:block id=b-v2lv7 -->
+
 ## Structured data
 
 A var may carry its payload in a fenced code block instead of a `value=` attribute. The marker
 and its fence are a single lexical unit: nothing may be inserted between them.
 
+<!-- mb:/block -->
+
 <!-- mb:var name=slideshow -->
 ```json
-{ "loop": false, "secondsPerSlide": 12 }
+{
+  "loop": false,
+  "secondsPerSlide": 12
+}
 ```
+
+<!-- mb:block id=b-hts20 -->
 
 This is the section's second var. Names must be unique within a section, but the same name in
 another section would be a completely different var.
 
+<!-- mb:/block -->
+
 ---
+
+<!-- mb:block id=b-94u5j -->
 
 # Video & Audio — Inline Playback
 
@@ -349,13 +451,19 @@ player, a list of links becomes a playlist, and a linked image becomes the video
 
 ### Video with poster (`preset=player`)
 
+<!-- mb:/block -->
+
 <!-- mb:block id=demo-video kind=video preset=player label="Video with poster" -->
 [![NUI artwork — plate 8](../../images/nui_8.webp)](https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4)
 
 **MDN flower clip.** The linked image is the player's poster; this paragraph is the caption.
 <!-- mb:/block -->
 
+<!-- mb:block id=b-wax7y -->
+
 ### Audio (`preset=player`)
+
+<!-- mb:/block -->
 
 <!-- mb:block id=demo-audio kind=audio preset=player label="Single audio track" -->
 [MDN sample — T-Rex roar](https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3)
@@ -363,7 +471,11 @@ player, a list of links becomes a playlist, and a linked image becomes the video
 A single audio link renders as an inline player with its caption below.
 <!-- mb:/block -->
 
+<!-- mb:block id=b-dq72t -->
+
 ### Playlist (list form)
+
+<!-- mb:/block -->
 
 <!-- mb:block id=demo-playlist kind=audio preset=player label="Audio playlist" -->
 - [T-Rex roar](https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3)
@@ -374,7 +486,11 @@ A flat list of media links is one block in list form — the player loads the fi
 the list switches it.
 <!-- mb:/block -->
 
+<!-- mb:block id=b-96g7o -->
+
 ### The default stays a reference
+
+<!-- mb:/block -->
 
 <!-- mb:block id=demo-film-link kind=video label="Plain media link" -->
 [Watch the flower video](https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4)
