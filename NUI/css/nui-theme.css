@@ -6455,6 +6455,37 @@ nui-markdown p > img {
 	display: block;
 	margin-bottom: var(--nui-space-double);
 }
+
+/* The page contract, replicated inside the document. `nui-page` already splits the two:
+   a breakout child fills the container while `.maxwidth-container` holds the content to a
+   readable measure. A section needs the same split, because a section's BACKGROUND is its
+   surface — that is what makes `band` read as a band. Constrain the section itself and the
+   band shrinks down to the measure along with the text; leave the content unconstrained and
+   a paragraph runs the full width of the viewport. So the measure lands on the section's
+   children: the surface spans the container, the text does not.
+
+   The gutter defaults to 0 because the host container already carries the page's own
+   `--nui-space-double` inset — adding another here would double it. Raise it when the
+   container has no padding of its own; set the margin token to 0 for flush-left text.
+
+   The selector lists both levels on purpose. Section children are the common case, but
+   the frontmatter disclosure hangs off the MAIN — document chrome, not section content —
+   so a section-only rule left it spanning the container while every paragraph beneath it
+   sat on the measure. It is content either way.
+
+   Bleed is excluded: it exists precisely to cancel this inset, so constraining it would
+   undo the variant that asked to escape. So is `cover`: the section's own ratio spacer
+   shares a grid cell with the media, so a measure on the media would cap the image at the
+   reading width while the spacer still fills the section — the cover stops covering. */
+nui-markdown.nui-md-document :is(
+	.nui-blocks-section:not(.nui-preset-cover) > *:not(.nui-variant-bleed),
+	.nui-md-frontmatter-details
+) {
+	max-width: var(--nui-md-content-maxwidth, var(--space-page-maxwidth));
+	margin-inline: var(--nui-md-content-margin, auto);
+	padding-inline: var(--nui-md-content-gutter, 0);
+	box-sizing: border-box;
+}
 .nui-blocks-section:last-child,
 .nui-blocks-block:last-child,
 .nui-blocks-columns:last-child {
@@ -7411,10 +7442,14 @@ nui-markdown :is(h1, h2, h3, h4, h5, h6) img {
 	}
 }
 
-/* Bleed variant: expands flush to the edge of the container, cancelling side padding */
+/* Bleed variant: expands flush to the edge of the container, cancelling side padding.
+   The cancelled amount is a token, not a literal `--nui-space`: bleed can only escape an
+   inset the HOST applied, so the host states how much it inset by and bleed cancels
+   exactly that. It defaults to 0 — a container with no inset of its own is already flush,
+   and cancelling a padding that is not there pushed the variant 16px past the edge. */
 .nui-variant-bleed {
-	margin-inline: calc(-1 * var(--nui-space));
-	width: calc(100% + (2 * var(--nui-space)));
+	margin-inline: calc(-1 * var(--nui-md-bleed, 0px));
+	width: calc(100% + (2 * var(--nui-md-bleed, 0px)));
 	max-width: none;
 	border-radius: 0 !important;
 	box-sizing: border-box;
@@ -7425,10 +7460,10 @@ nui-markdown :is(h1, h2, h3, h4, h5, h6) img {
 	width: 100%;
 }
 .nui-blocks-media.nui-variant-bleed figcaption {
-	padding-inline: var(--nui-space);
+	padding-inline: calc(var(--nui-space) + var(--nui-md-bleed, 0px));
 }
 .nui-blocks-section.nui-variant-bleed {
-	padding-inline: var(--nui-space);
+	padding-inline: calc(var(--nui-space) + var(--nui-md-bleed, 0px));
 }
 .nui-md-frontmatter-field {
 	display: grid;
