@@ -1487,7 +1487,7 @@ function initBlocksEditor(element, nui) {
 		// Everything after the images is the caption.
 		const captionBlock = document.createElement('div');
 		captionBlock.className = 'media-caption';
-		const richTextEl = document.createElement('nui-rich-text');
+		const richTextEl = createRichText();
 		const rawTextArea = document.createElement('textarea');
 		rawTextArea.className = 'block-raw-textarea';
 		rawTextArea.spellcheck = false;
@@ -1760,7 +1760,7 @@ function initBlocksEditor(element, nui) {
 
 		const captionBlock = document.createElement('div');
 		captionBlock.className = 'media-caption';
-		const richTextEl = document.createElement('nui-rich-text');
+		const richTextEl = createRichText();
 		const rawTextArea = document.createElement('textarea');
 		rawTextArea.className = 'block-raw-textarea';
 		rawTextArea.spellcheck = false;
@@ -1894,10 +1894,10 @@ function initBlocksEditor(element, nui) {
 			// The media element needs the PLAYABLE file, not a poster: the frame is
 			// a live player, so a size ladder must hand over the real rendition
 			// (resolveThumb(src, 'full')), not the small one.
-			const url = typeof element.resolveThumb === 'function'
+			const url = resolveDocUrl(typeof element.resolveThumb === 'function'
 				? (await element.resolveThumb(track.src, 'full')) || track.src
-				: track.src;
-			const posterAttr = isVideo && track.poster ? ` poster="${escapeHtml(track.poster)}"` : '';
+				: track.src);
+			const posterAttr = isVideo && track.poster ? ` poster="${escapeHtml(resolveDocUrl(track.poster))}"` : '';
 			if (!url) {
 				frame.innerHTML = `<div class="media-empty"><nui-icon name="${isVideo ? 'smart_display' : 'music_note'}"></nui-icon><span>${escapeHtml(track.title || track.src)}</span></div>`;
 			} else {
@@ -2028,7 +2028,7 @@ function initBlocksEditor(element, nui) {
 			syncIconRow();
 		}
 
-		const richTextEl = document.createElement('nui-rich-text');
+		const richTextEl = createRichText();
 		const rawTextArea = document.createElement('textarea');
 		rawTextArea.className = 'block-raw-textarea';
 		rawTextArea.spellcheck = false;
@@ -2573,6 +2573,32 @@ function initBlocksEditor(element, nui) {
 		return [];
 	}
 
+	// The same resolution markdownToHtml applies, for the URLs the editor builds
+	// ITSELF — thumbnails, the frame, players. Passing `base` to the renderer covers
+	// the preview pane and nothing else: a raw `../../images/x.webp` handed to an
+	// <img> in this page resolves against the PAGE, not the document, so every
+	// document-relative image broke in the canvas while rendering fine beside it.
+	// `/`-rooted, absolute-scheme and fragment destinations are left alone, matching
+	// the renderer rule for rule — one definition of "relative", not two.
+	function resolveDocUrl(url) {
+		if (!docBase || !url) return url;
+		if (/^[a-z][a-z0-9+.-]*:/i.test(url) || url.startsWith('/') || url.startsWith('#')) return url;
+		try {
+			return new URL(url, docBase).href;
+		} catch (e) {
+			return url;
+		}
+	}
+
+	// Every rich-text editor the canvas builds needs the document base, so an image
+	// in a block's prose resolves against the document and not the page. Set before
+	// the element is inserted, because it renders on upgrade.
+	function createRichText() {
+		const el = document.createElement('nui-rich-text');
+		if (docBase) el.setAttribute('base', docBase);
+		return el;
+	}
+
 	// Thumbnails are the HOST's business: a path-backed src may have no cheap
 	// URL (FS handles, CMS stores), so a host assigns resolveThumb(src, size) →
 	// URL (async) or null. Without one the src is used as-is, and a failed load
@@ -2586,9 +2612,11 @@ function initBlocksEditor(element, nui) {
 	// picks by name. Returning null is never fatal: the caller falls back to the
 	// stored src, so declining a size degrades to the real file, not to nothing.
 	async function buildThumb(src, size = 'thumb') {
-		const url = typeof element.resolveThumb === 'function'
+		// The host is asked with the AUTHORED src — its map is keyed by the stored
+		// path — and only the URL that reaches the DOM is resolved.
+		const url = resolveDocUrl(typeof element.resolveThumb === 'function'
 			? (await element.resolveThumb(src, size)) || src
-			: src;
+			: src);
 		if (url) {
 			const img = document.createElement('img');
 			img.src = url;

@@ -1250,7 +1250,11 @@ class NuiRichText extends HTMLElement {
 		// Delegate to core utility (deduplicated)
 		const util = window.nui?.util || (typeof nui !== 'undefined' ? nui.util : null);
 		if (util && util.markdownToHtml) {
-			return util.markdownToHtml(md);
+			// `base`, when set, is the URL this markdown came FROM — the same contract
+			// nui-markdown[base] uses. Without it an image in a block's prose resolved
+			// against the PAGE, so a document-relative path broke here while the
+			// rendered preview beside it showed the image correctly. Two hosts, one rule.
+			return util.markdownToHtml(md, { base: this.getAttribute('base') || undefined });
 		}
 		// Fallback for standalone use
 		return md;
