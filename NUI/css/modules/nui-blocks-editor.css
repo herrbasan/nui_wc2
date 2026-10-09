@@ -199,6 +199,15 @@ nui-blocks-editor .editor-split-handle:focus-visible {
 		padding: var(--nui-space) 0;
 	}
 
+	/* The canvas, unlike the preview, is a toolbox of cards — and its scrollbar sits
+	   at this pane's edge, right beside the divider. Without an inset the cards
+	   touch the scrollbar and the seam between editing surface and chrome
+	   disappears; the cards read as cut off at the middle of the screen. The inset
+	   is pane-internal, so the host's outer gutter stays the integrator's call. */
+	nui-blocks-editor .editor-workspace[data-preview-mode="inline"] > .editor-canvas-pane {
+		padding-inline: var(--nui-space);
+	}
+
 	/* The canvas is a flex column, so without this its cards would SHRINK to fit the now
 	   bounded pane instead of overflowing it: the cards would squash and there would be
 	   nothing left to scroll. */
