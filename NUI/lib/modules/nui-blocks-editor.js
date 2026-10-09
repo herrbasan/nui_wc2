@@ -2197,9 +2197,17 @@ function initBlocksEditor(element, nui) {
 		// closing brackets) replaces everything a bare textarea would need here.
 		codeEl.addEventListener('nui-change', commit);
 
+		let langCurrent = parsed.lang;
 		langWrap.addEventListener('nui-change', (e) => {
 			const val = e.detail?.values?.[0] ?? '';
-			langWrap.setValue(val);
+			// nui-select fires nui-change even when setValue() writes the value the
+			// select already holds (setValue dispatches unconditionally), so a
+			// setValue() in this handler is change → setValue(same) → change → …
+			// down to a stack overflow — the exact regression mountPresetControl's
+			// guard documents (d7f0a1b). The select's state already IS val when this
+			// fires, so there is nothing to write back; only real changes commit.
+			if (val === langCurrent) return;
+			langCurrent = val;
 			codeEl.lang = val;
 			commit();
 		});
@@ -3710,10 +3718,10 @@ function initBlocksEditor(element, nui) {
 			// what the popup owns: the page background and the `doc` container the
 			// rendered document's own @container rules measure against.
 			//
-			// Horizontal padding is zero, matching the split pane and the demo page. A
-			// gutter here would inset the document's edges, and an inset edge is exactly
-			// what stops a band from reading as a band. The theme's block rules hold the
-			// text instead, so the document needs no help to stay readable.
+			// Left padding is zero, matching the split pane and the demo page — bands
+			// span to the window edge. The right inset mirrors the split pane's preview:
+			// breathing room between the document and the window scrollbar, which is the
+			// popup's counterpart of the pane scrollbar (nui-blocks-editor.css).
 			layout.textContent = 'body{margin:0;background:var(--color-base,#fff)}'
 				// Host sheets travel into the popup wholesale, and app shells routinely
 				// lock the document (`html, body { overflow: hidden }` — their OWN
@@ -3722,7 +3730,7 @@ function initBlocksEditor(element, nui) {
 				// last and matches those selectors' specificity, so it overrides them
 				// without !important.
 				+ 'html,body{height:auto;overflow:visible}'
-				+ '#preview-root{padding:var(--nui-space,1rem) 0;container:doc / inline-size}';
+				+ '#preview-root{padding:var(--nui-space,1rem) calc(var(--nui-space,1rem) + var(--nui-space-half,0.5rem)) var(--nui-space,1rem) 0;container:doc / inline-size}';
 			win.document.head.appendChild(layout);
 
 			previewWindow = win;

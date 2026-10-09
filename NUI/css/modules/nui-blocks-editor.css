@@ -214,6 +214,15 @@ nui-blocks-editor .editor-split-handle:focus-visible {
 		padding-right: calc(var(--nui-space) + var(--nui-space-half));
 	}
 
+	/* The preview's scrollbar gets the same inset the canvas's does: one piece of
+	   chrome should read identically on both sides of the divider, and document
+	   text running flush into a scrollbar reads as a rendering fault, not a
+	   layout decision. The document's left edge stays at the pane edge — the
+	   grid gap separates it from the canvas, and bands span the pane. */
+	nui-blocks-editor .editor-workspace[data-preview-mode="inline"] > .editor-preview-pane {
+		padding-right: calc(var(--nui-space) + var(--nui-space-half));
+	}
+
 	/* The canvas is a flex column, so without this its cards would SHRINK to fit the now
 	   bounded pane instead of overflowing it: the cards would squash and there would be
 	   nothing left to scroll. */
