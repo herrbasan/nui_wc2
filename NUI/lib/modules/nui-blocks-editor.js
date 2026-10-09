@@ -3513,6 +3513,13 @@ function initBlocksEditor(element, nui) {
 			// what stops a band from reading as a band. The theme's block rules hold the
 			// text instead, so the document needs no help to stay readable.
 			layout.textContent = 'body{margin:0;background:var(--color-base,#fff)}'
+				// Host sheets travel into the popup wholesale, and app shells routinely
+				// lock the document (`html, body { overflow: hidden }` — their OWN
+				// scroll containers need it). In here there is no shell: the viewport
+				// IS the scroller, so the copy must not win. This style is appended
+				// last and matches those selectors' specificity, so it overrides them
+				// without !important.
+				+ 'html,body{height:auto;overflow:visible}'
 				+ '#preview-root{padding:var(--nui-space,1rem) 0;container:doc / inline-size}';
 			win.document.head.appendChild(layout);
 
