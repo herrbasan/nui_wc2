@@ -9677,15 +9677,54 @@ function _markdownToHtmlInner(md, options) {
 	return fmHtml + renderBlocks(parseBlocks(md));
 }
 
+// A fenced code block is a block boundary, and blank-line splitting alone cannot
+// see that. The fence tokenizer in markdownCore replaces each fence with a token,
+// but the token is then just text in whatever blank-line-delimited run contained
+// it — so `prose\n```js\ncode\n```\nmore prose` arrived at the block splitter as
+// ONE block and got wrapped whole: the fence ended up nested inside a <p>, and
+// the renderer emitted `<p><nui-code>…</nui-code><br> more prose</p>`. CommonMark
+// says a fence interrupts a paragraph and is never inside one. So the token is
+// pulled out as its own block, and the text on either side of it becomes the
+// blocks it actually was. Fences inside a list or a blockquote belong to those
+// containers and never reach this path.
+function splitFenceTokens(block) {
+	if (!/\uE000\d+\uE001/.test(block)) return [block];
+	const parts = [];
+	const re = /\uE000\d+\uE001/g;
+	let last = 0;
+	let m;
+	while ((m = re.exec(block)) !== null) {
+		const before = block.slice(last, m.index);
+		if (before.trim()) parts.push(before.trim());
+		parts.push(m[0]);
+		last = m.index + m[0].length;
+	}
+	const after = block.slice(last);
+	if (after.trim()) parts.push(after.trim());
+	return parts;
+}
+
 // Markdown -> HTML for a plain CommonMark leaf. Structure (MD-Blocks sections,
 // blocks, columns) is handled above this; by the time text reaches here it is
 // content only.
 function markdownCore(md) {
 	let html = md.trim().replace(/\r\n/g, '\n');
 	const codeBlocks = [];
-	html = html.replace(/^[ \t]*```(\w+)?\n([\s\S]*?)\n[ \t]*```/gm, (match, lang, code) => {
+	// CommonMark's fence rule, which the previous three-backtick-only pattern did not
+	// implement: a fence opened with N backticks is closed by a run of AT LEAST N,
+	// and the closing line carries no info string. Without it a code block whose
+	// content is itself a fence — a Markdown example, the most ordinary thing to put
+	// in documentation — closed on its own inner fence and rendered as garbage.
+	// `\1` is the opening run; the trailing `` `* `` absorbs any longer closing run.
+	// The newline before the closing run is OPTIONAL because an empty fenced block is
+	// written as ```lang then ``` on the next line, with no content between — CommonMark
+	// allows it, and requiring the newline made every empty fence fall through to the
+	// inline-code tokenizer and render as ``` `` <code>js</code> `` ```.
+	// Only the first word of the info string is the language; the rest is the author
+	// writing a title or attributes, which is content to preserve and not a language.
+	html = html.replace(/^[ \t]*(`{3,})([^\n`]*)\n([\s\S]*?)\n?[ \t]*\1`*[ \t]*$/gm, (match, fence, info, code) => {
 		const token = `\uE000${codeBlocks.length}\uE001`;
-		codeBlocks.push({ token, lang, code });
+		codeBlocks.push({ token, lang: info.trim().split(/\s+/)[0] || '', code });
 		return token;
 	});
 	html = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -9736,12 +9775,15 @@ function markdownCore(md) {
 	html = html.replace(/^[ \t]*(_{3,})[ \t]*$/gm, '<hr>');
 
 	const blocks = html.split(/\n{2,}/);
-	const htmlBlocks = blocks.map(block => {
-		block = block.trim();
-		if (!block) return '';
-		if (/^\uE000\d+\uE001$/.test(block)) return block;
-		if (/^<(h\d|ul|ol|pre|blockquote|table|hr|nui-code)/i.test(block)) return block;
-		return `<p>${block.replace(/\n/g, '<br>')}</p>`;
+	const htmlBlocks = blocks.flatMap(raw => {
+		const trimmed = raw.trim();
+		if (!trimmed) return [''];
+		return splitFenceTokens(trimmed).map(block => {
+			if (!block) return '';
+			if (/^\uE000\d+\uE001$/.test(block)) return block;
+			if (/^<(h\d|ul|ol|pre|blockquote|table|hr|nui-code)/i.test(block)) return block;
+			return `<p>${block.replace(/\n/g, '<br>')}</p>`;
+		});
 	});
 	html = htmlBlocks.join('\n');
 

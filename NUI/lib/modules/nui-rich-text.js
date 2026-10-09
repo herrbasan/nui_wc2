@@ -1363,11 +1363,37 @@ class NuiRichText extends HTMLElement {
             return text.replace(/\s+/g, ' '); 
         }
 
+        // Whitespace between two BLOCK boxes is layout, not content — the browser
+        // collapses it to nothing and so must the serializer. It was being emitted
+        // as a literal space, which is what broke fenced code on the round trip:
+        // `<p>a</p>\n<nui-code>…</nui-code>\n<p>b</p>` came back as
+        // `a\n\n \n```js\n…\n```\n b`, and re-parsing that put the fence inside a
+        // paragraph (and every pass added another empty fence). Adjacent to an
+        // inline box the same whitespace IS content — `<em>a</em> <em>b</em>` is
+        // two words — so the test is about the neighbours, not the node alone.
+        const BLOCK_TAGS = new Set(['p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+            'ul', 'ol', 'li', 'blockquote', 'pre', 'table', 'thead', 'tbody', 'tr',
+            'td', 'th', 'hr', 'figure', 'figcaption', 'section', 'article', 'aside',
+            'nav', 'nui-code', 'nui-table']);
+
+        const isBlock = (n) => n && n.nodeType === Node.ELEMENT_NODE && BLOCK_TAGS.has(n.tagName.toLowerCase());
+
+        function isLayoutWhitespace(textNode) {
+            if (textNode.textContent.trim() !== '') return false;
+            const prev = textNode.previousSibling;
+            const next = textNode.nextSibling;
+            // Only between boxes. A text node with no element neighbours at all is
+            // real content the author typed (a bare run of spaces in a paragraph).
+            return isBlock(prev) || isBlock(next);
+        }
+
         function walk(node, inPre = false) {
             let md = '';
             for (const child of node.childNodes) {
                 if (child.nodeType === Node.TEXT_NODE) {
-                    md += inPre ? child.textContent : renderText(child.textContent);
+                    if (inPre) { md += child.textContent; continue; }
+                    if (isLayoutWhitespace(child)) continue;
+                    md += renderText(child.textContent);
                 } else if (child.nodeType === Node.ELEMENT_NODE) {
                     const tag = child.tagName.toLowerCase();
                     const inner = walk(child, inPre || tag === 'pre');
@@ -1396,7 +1422,12 @@ class NuiRichText extends HTMLElement {
                             // Only trim trailing whitespace to preserve indentation, 
                             // replace any leftover copy buttons or icons that might have sneaked in
                             let cleanInner = inner.trimEnd();
-                            md += `\n\`\`\`${lang}\n${cleanInner}\n\`\`\`\n`; 
+                            // Two newlines, not one: a closing fence on its own line is
+                            // already unambiguous to a parser, but the authored source had
+                            // a blank line there and the round-trip's job is to put back what
+                            // was read. The trailing `.replace(/\n{3,}/g, '\n\n')` keeps a
+                            // fence that ends the block from growing one.
+                            md += `\n\`\`\`${lang}\n${cleanInner}\n\`\`\`\n\n`; 
                             break;
                         }
                         case 'nui-code': {
@@ -1413,7 +1444,7 @@ class NuiRichText extends HTMLElement {
                             } else {
                                 codeText = child.textContent;
                             }
-                            md += `\n\`\`\`${lang}\n${codeText}\n\`\`\`\n`; 
+                            md += `\n\`\`\`${lang}\n${codeText}\n\`\`\`\n\n`; 
                             break;
                         }
                         case 'a': {

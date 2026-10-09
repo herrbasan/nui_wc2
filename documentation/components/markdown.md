@@ -44,6 +44,8 @@ The built-in parser supports:
 - Images
 - HTML comments (removed, as in every other Markdown renderer)
 
+**Fenced code:** follows CommonMark's fence rule — a fence opened with N backticks is closed by a run of **at least** N, and the closing line carries no info string. So a code block can itself contain a fence, which is how a Markdown example is shown: `````md` wrapping a ```` ```js ```` block. Only the first word of the info string is treated as the language; the rest (a title, for instance) is preserved and ignored. A fence is always its own block and never nested in a paragraph, so a line after a closing fence renders as a paragraph whether or not a blank line separated them.
+
 **Comments:** an HTML comment is dropped from the output, matching GitHub, VS Code and Obsidian, where comments are invisible. This also means structured-comment formats — MD-Blocks directives such as `<!-- mb:block -->` — never reach the page: a structure-aware renderer consumes them from the source before calling the converter. A comment inside fenced or inline code is content and stays literal. An unterminated `<!--` is left visible rather than swallowing the rest of the document.
 
 **List notes:** Blank lines between items (loose lists) keep items in a single list. Indent a marker under an item to nest a sub-list. This holds for the streaming API too — chunks that split a list across `\n\n` boundaries are held in the live region until the list ends, so numbering never restarts mid-list.
