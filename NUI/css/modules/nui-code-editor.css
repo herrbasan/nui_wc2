@@ -65,6 +65,17 @@ nui-code-editor {
     line-height: inherit;
 }
 
+/* Empty-state hint. Drawn by CSS, never part of the value — the mirror of
+   nui-rich-text's `[data-placeholder]:empty::before`, so the two editors read as
+   one system, and the same shade5 every nui-input/nui-textarea placeholder uses.
+   `pointer-events: none` keeps the hint from swallowing the click that should
+   focus the field. */
+.nui-code-editor-input[data-placeholder]:empty::before {
+    content: attr(data-placeholder);
+    color: var(--color-shade5);
+    pointer-events: none;
+}
+
 /* Dark mode basic support */
 @media (prefers-color-scheme: dark) {
     .nui-code-editor-container {

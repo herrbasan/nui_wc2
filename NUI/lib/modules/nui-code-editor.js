@@ -11,15 +11,22 @@ class NuiCodeEditor extends HTMLElement {
         if (this.hasAttribute('data-initialized')) return;
         this.setAttribute('data-initialized', 'true');
 
-        // Extract content and clean bounding empty newlines usually present from HTML structure
-        const initialText = this.textContent;
-        this._value = initialText.replace(/^\n/, '').replace(/\n\s*$/, '');
-        
+        // The authored text IS the code, verbatim. It used to have a leading newline
+        // and a trailing newline-plus-indentation trimmed off, to spare an author who
+        // formatted the element across indented HTML lines from two phantom blank
+        // lines — but a component that silently edits its own content cannot be a
+        // code editor: a snippet that legitimately opens or closes with a blank line
+        // came back altered, and the caller never learned. Author flush instead.
+        this._value = this.textContent;
+
         while (this.firstChild) {
             this.removeChild(this.firstChild);
         }
 
-        this._lang = this.getAttribute('data-lang') || 'js';
+        // `data-lang` ABSENT means the documented default (js). An attribute that is
+        // present but EMPTY means no highlighting — a document may fence code with no
+        // info string at all, and colouring that as JavaScript invents tokens.
+        this._lang = this.hasAttribute('data-lang') ? this.getAttribute('data-lang') : 'js';
         this._showLines = this.getAttribute('data-line-numbers') !== 'false';
 
         this._container = document.createElement('div');
@@ -41,6 +48,12 @@ class NuiCodeEditor extends HTMLElement {
         this._editor.setAttribute('autocapitalize', 'off');
         this._editor.setAttribute('translate', 'no');
         this._editor.setAttribute('aria-label', this.getAttribute('aria-label') || 'Code Editor');
+        // Same contract as nui-rich-text's `placeholder`: a hint drawn by CSS while the
+        // field is empty, never part of the value. `renderBlock` leaves innerHTML empty
+        // for an empty value, so `:empty` is the whole mechanism.
+        if (this.hasAttribute('placeholder')) {
+            this._editor.setAttribute('data-placeholder', this.getAttribute('placeholder'));
+        }
 
         this._editorWrapper.appendChild(this._editor);
         this._container.appendChild(this._lines);
@@ -67,6 +80,21 @@ class NuiCodeEditor extends HTMLElement {
 
     set value(val) {
         this.renderBlock(val);
+    }
+
+    // data-lang was read once, on connect, and nothing could change it afterwards —
+    // so a host with a language picker (the blocks editor's code block has one) could
+    // display a language and not apply it. Re-highlighting here is what makes the
+    // control real; the caret goes to the end because the DOM the caret lived in has
+    // just been replaced, which is inherent to re-highlighting, not a choice.
+    get lang() {
+        return this._lang;
+    }
+
+    set lang(value) {
+        this._lang = value == null ? '' : String(value);
+        this.setAttribute('data-lang', this._lang);
+        if (this._editor) this.renderBlock(this._value);
     }
 
     handleInput() {
