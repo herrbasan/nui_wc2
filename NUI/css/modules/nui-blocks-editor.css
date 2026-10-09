@@ -203,9 +203,15 @@ nui-blocks-editor .editor-split-handle:focus-visible {
 	   at this pane's edge, right beside the divider. Without an inset the cards
 	   touch the scrollbar and the seam between editing surface and chrome
 	   disappears; the cards read as cut off at the middle of the screen. The inset
-	   is pane-internal, so the host's outer gutter stays the integrator's call. */
+	   is pane-internal, so the host's outer gutter stays the integrator's call.
+	   The scrollbar sits between two gaps and they should read equal: on its right
+	   it has the grid gap plus half the handle track to the visible line
+	   (var(--nui-space) + var(--nui-space-half)); the cards get the same on the
+	   left. The pane's own left edge keeps --nui-space — the host's wrap already
+	   carries the outer gutter there. */
 	nui-blocks-editor .editor-workspace[data-preview-mode="inline"] > .editor-canvas-pane {
-		padding-inline: var(--nui-space);
+		padding-left: var(--nui-space);
+		padding-right: calc(var(--nui-space) + var(--nui-space-half));
 	}
 
 	/* The canvas is a flex column, so without this its cards would SHRINK to fit the now
