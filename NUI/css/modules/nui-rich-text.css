@@ -285,7 +285,11 @@ nui-rich-text[fill] .nui-rich-text-editor {
 }
 .nui-rich-text-editor[data-placeholder]:empty:before {
     content: attr(data-placeholder);
-    color: var(--color-text-dim, #888);
+    /* shade5, the same token every other placeholder in NUI uses
+       (nui-input, nui-textarea) — and the same value as --color-text-subtle.
+       It was -dim (shade7, rgb 80) before, which measured 8:1 against the block
+       body: a hint that read as content rather than as chrome. */
+    color: var(--color-shade5);
     pointer-events: none;
     display: block;
 }

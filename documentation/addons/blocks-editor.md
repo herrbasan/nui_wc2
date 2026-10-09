@@ -13,7 +13,8 @@ This is an addon module. Load both the JS and CSS before use:
 ```
 
 The module registers the `<nui-blocks-editor>` element and imports its own addon
-dependencies (`nui-list`, `nui-media-player`, `nui-rich-text`) — but their CSS
+dependencies (`nui-list`, `nui-media-player`, `nui-rich-text`, `nui-code-editor`)
+— but their CSS
 must be linked by the host if those components render (the media library picker,
 player blocks, block caption editors). Core components need no imports.
 
@@ -112,11 +113,33 @@ for hosts that have a file store and want the dialog for free — see
 
 ## What the editor owns
 
+- **New blocks are created EMPTY.** The insert palette seeds no text into the
+  document. Seed text is indistinguishable from something the author wrote and it
+  survives every save — a stat card seeded `# 99.9% / System Uptime` does not read
+  as demo data on a live page, it reads as a claim the site is making. What the
+  seed bought was discoverability, and that is a display need: every block body now
+  carries an editor-chrome empty state (a placeholder on the rich-text and code
+  editors, field placeholders on a link, upload buttons on media, `Add pair` on a
+  var), so the hint survives without a character entering the file. One behaviour
+  for the Playground and for a deployed host — a demo that seeds and a host that
+  does not are not the same product, and the demo would stop being evidence for the
+  thing it is demoing. Prose-shaped blocks choose their hint from the style they are
+  wearing, so an empty `card:stat` and an empty paragraph say different things.
+  The one exception is a var's NAME, which spec §4.4 makes required and which is an
+  identifier rather than content.
+- **New sections are created empty too**, with no seeded `## Hero Title` /
+  `Supporting tagline` and no seeded `label`. A fresh hero is unaffected: a cover
+  section's SOLE block is typed as media from the section's own preset, so an empty
+  hero body arrives as a media block showing its upload empty state. Clearing a
+  section label deletes the attribute rather than writing `label=""` — an empty
+  string is not an absent one, and `mbFormatAttrs` would emit it. The title field
+  shows its `Section Title` placeholder instead, so the chrome never displays a
+  name the file does not carry.
 - **Sections** — add/delete/reorder (drag), label, template chip, per-section
   options (cover placement, aspect ratio tokens `cover:square/banner/strip`,
   band/bleed/inverted). Unmodelled profile presets are preserved verbatim, never rewritten.
 - **Blocks** — insert palette fixes a block's type at creation (prose, cards,
-  media figure, media player, link/CTA, table, columns, var). Types are derived
+  media figure, media player, link/CTA, table, code, columns, var). Types are derived
   structurally on load and never converted. Every block carries a style select
   with an escape hatch (`Custom preset…`) validating against the spec grammar
   `family[:modifier[:variant]]`, so documents carrying profile tokens open without loss.
@@ -124,6 +147,28 @@ for hosts that have a file store and want the dialog for free — see
   `preset=cover` section types its own sole block as media, because a fresh hero
   has no media yet and an empty body would otherwise derive as prose. The signal
   is the section's own preset, so it survives a reload (`_type` is session-only).
+- **Code** — a block whose body is exactly one fenced code block derives as the
+  code type, the same way a lone pipe table derives as a table. It is deliberately
+  **not** a preset family: fenced code is baseline CommonMark and carries no
+  directive, so the language lives in the fence's info string, not in an attribute.
+  Its body editor is `<nui-code-editor>` — the component built for this: it
+  highlights as you type, keeps its value as `textContent` (no HTML round-trip,
+  which is what corrupted fences inside a prose block), and brings line numbers,
+  auto-indent on Enter and closing brackets. A rich-text editor mangles code —
+  indentation, blank lines and `<` are all content — so the code type never uses
+  one. The language is a control in the **card header, beside Delete** — it is a
+  property of the block, and the header is where every other block-level property
+  lives; a control stranded above the code it describes reads as a form field the
+  block happens to contain. It inherits the header's borderless-at-rest select
+  styling. The list is plain text plus every token `nui-syntax-highlight` branches
+  on (js, ts, html, xml, css, json). That is the
+  complete set: any other language still fences, copies and round-trips, it just
+  renders unhighlighted. A document naming one still opens, with that token added
+  to the list. Selecting a language sets `nui-code-editor`'s `lang` property, which
+  re-highlights in place. There is
+  no style select beyond the unset state and the custom hatch, because there is no
+  `code` preset to offer. Two selects make the header too wide below ~360px, so the
+  code card's header wraps to two rows rather than clipping the style select.
 - **Media** — lead-image preview, sortable thumb rail (drag-out removes), media
   library picker dialog. **The addon ships no media of its own**: with no hook
   assigned the picker opens to a named empty state, not a silent empty list. A host

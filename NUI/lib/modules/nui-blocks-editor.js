@@ -22,6 +22,7 @@
 // its own — load/serialize is the whole storage contract.
 
 import { nui } from '../../nui.js';
+import './nui-code-editor.js';
 import './nui-list.js';
 import './nui-media-player.js';
 import './nui-rich-text.js';
@@ -1077,7 +1078,7 @@ function initBlocksEditor(element, nui) {
 			titleGroup.innerHTML = `
 				<span class="drag-handle"><nui-icon name="drag_indicator"></nui-icon></span>
 				<span class="section-idx-badge">${sIdx + 1}</span>
-				<input type="text" class="section-label-input" value="${escapeHtml(sec.attrs?.label || 'Section ' + (sIdx + 1))}" placeholder="Section Title">
+				<input type="text" class="section-label-input" value="${escapeHtml(sec.attrs?.label || '')}" placeholder="Section Title">
 			`;
 
 			// Template chip — the section's current function, derived from its state
@@ -1092,7 +1093,11 @@ function initBlocksEditor(element, nui) {
 			const labelInput = titleGroup.querySelector('.section-label-input');
 			labelInput.addEventListener('change', (e) => {
 				sec.attrs = sec.attrs || {};
-				sec.attrs.label = e.target.value;
+				// Empty is absent, not `label=""`: mbFormatAttrs writes an empty string
+				// out as `label=""`, so clearing the field would leave the noise it was
+				// meant to remove. Same rule as the style select.
+				if (e.target.value) sec.attrs.label = e.target.value;
+				else delete sec.attrs.label;
 				syncToOutputs();
 			});
 
@@ -1198,11 +1203,18 @@ function initBlocksEditor(element, nui) {
 			return nodeCard;
 		}
 
+		if (bType === 'code') {
+			nodeCard.classList.add('editor-code-card');
+			renderCodeBlockNode(nodeCard, node, parentContainer, nodeIdx);
+			return nodeCard;
+		}
+
 		// Table = prose-shaped body editor (the RTE roundtrips pipe tables and
-		// has row/column context ops), but its own style list.
+		// has row/column context ops), but its own style list. Its hint names the
+		// toolbar tool, because an empty table block has no rows to infer a shape from.
 		if (bType === 'table') {
 			nodeCard.classList.add('editor-table-card');
-			renderLeafBlockNode(nodeCard, node, parentContainer, nodeIdx, TABLE_PRESETS);
+			renderLeafBlockNode(nodeCard, node, parentContainer, nodeIdx, TABLE_PRESETS, 'Insert a table from the toolbar, or type a header row.');
 			return nodeCard;
 		}
 
@@ -1952,7 +1964,30 @@ function initBlocksEditor(element, nui) {
 		}
 	}
 
-	function renderLeafBlockNode(nodeCard, node, parentContainer, nodeIdx, presets = LEAF_PRESETS) {
+	// The empty-state hint for a prose-shaped block, chosen by the STYLE it is wearing
+// rather than by its type — an empty stat card and an empty paragraph are the same
+// editor and want different words. This is what the old seeds provided, minus the
+// part that reached the file.
+	const CARD_HINTS = {
+		stat: 'The number, then what it measures…',
+		note: 'Note text…',
+		warning: 'What to watch out for…',
+		quote: 'The quotation, and who said it…',
+		good: 'What to do…',
+		danger: 'What to avoid…'
+	};
+
+	function leafHint(node) {
+		const preset = String(node.attrs?.preset || '').toLowerCase();
+		const [family, modifier] = preset.split(':');
+		if (family === 'card') return CARD_HINTS[modifier] || 'Card text…';
+		if (family === 'list') return 'One step per line…';
+		if (family === 'image') return 'Text beside the icon…';
+		if (family === 'lead') return 'The one line that says what this is…';
+		return 'Write, or paste Markdown…';
+	}
+
+	function renderLeafBlockNode(nodeCard, node, parentContainer, nodeIdx, presets = LEAF_PRESETS, placeholder) {
 		// Toggle raw markdown / rich text mode
 		let isRawMode = false;
 
@@ -2028,7 +2063,7 @@ function initBlocksEditor(element, nui) {
 			syncIconRow();
 		}
 
-		const richTextEl = createRichText();
+		const richTextEl = createRichText(placeholder || leafHint(node));
 		const rawTextArea = document.createElement('textarea');
 		rawTextArea.className = 'block-raw-textarea';
 		rawTextArea.spellcheck = false;
@@ -2099,6 +2134,77 @@ function initBlocksEditor(element, nui) {
 
 		body.appendChild(textInput);
 		body.appendChild(urlInput);
+		nodeCard.appendChild(body);
+	}
+
+	// A code block is code, not prose: a rich-text editor mangles it (indentation,
+	// blank lines and `<` all mean something here), so the body is
+	// `<nui-code-editor>` — the component built for exactly this: it highlights as
+	// you type, keeps its value as `textContent` (no HTML round-trip, which is what
+	// corrupted fences in the prose editor), and gives line numbers, auto-indent on
+	// Enter and closing brackets for free. Only the language is a menu — the body is
+	// the author's, free text.
+	//
+	// No style list: the format has no `code` preset family, so there is nothing to
+	// offer and nothing to pick. `mountPresetControl` still renders the custom hatch,
+	// so a profile token that DOES exist on a code block can still be authored.
+	function renderCodeBlockNode(nodeCard, node, parentContainer, nodeIdx) {
+		const header = buildBlockHeader(node, parentContainer, nodeIdx, CODE_PRESETS);
+		nodeCard.appendChild(header);
+
+		const body = document.createElement('div');
+		body.className = 'block-card-body code-block-body';
+
+		const parsed = parseCodeBody(getBlockText(node)) || { lang: '', code: '' };
+
+		// A document may name a language this list does not curate (```rust, ```mermaid).
+		// setValue() throws on an unknown value rather than silently picking another one,
+		// so the document's own token joins the list — the editor opens what it reads.
+		const items = CODE_LANGS.some(l => l.value === parsed.lang) || !parsed.lang
+			? CODE_LANGS
+			: [...CODE_LANGS, { value: parsed.lang, label: parsed.lang }];
+
+		const langWrap = document.createElement('nui-select');
+		langWrap.setAttribute('size', 'small');
+		langWrap.setAttribute('aria-label', 'Code language');
+		langWrap.className = 'code-lang-select';
+		const fallback = document.createElement('select');
+		fallback.innerHTML = items.map(({ value, label }) =>
+			`<option value="${value}" ${value === parsed.lang ? 'selected' : ''}>${label}</option>`).join('');
+		langWrap.appendChild(fallback);
+		customElements.upgrade(langWrap);
+
+		// Beside Delete, not below it. The language is a property OF THE BLOCK, and
+		// the header is where every other block-level property lives — a control
+		// stranded above the code it describes reads as a form field the block
+		// happens to contain. It inherits the header's borderless-at-rest select
+		// styling for free: that rule is scoped to `.block-card-header nui-select`,
+		// not to a position, so moving it here is the whole trick.
+		const headerRight = header.querySelector('.block-header-right');
+		headerRight.insertBefore(langWrap, headerRight.querySelector('nui-button'));
+
+		const codeEl = document.createElement('nui-code-editor');
+		codeEl.setAttribute('data-lang', parsed.lang);
+		codeEl.setAttribute('aria-label', 'Code');
+		codeEl.setAttribute('placeholder', 'Code…');
+		codeEl.textContent = parsed.code;
+
+		const commit = () => {
+			setBlockText(node, serializeCodeBody(langWrap.getValue(), codeEl.value).join('\n'));
+			syncToOutputs();
+		};
+		// The code editor's own Tab handling (four spaces, auto-indent on Enter,
+		// closing brackets) replaces everything a bare textarea would need here.
+		codeEl.addEventListener('nui-change', commit);
+
+		langWrap.addEventListener('nui-change', (e) => {
+			const val = e.detail?.values?.[0] ?? '';
+			langWrap.setValue(val);
+			codeEl.lang = val;
+			commit();
+		});
+
+		body.appendChild(codeEl);
 		nodeCard.appendChild(body);
 	}
 
@@ -2499,6 +2605,49 @@ function initBlocksEditor(element, nui) {
 		return lines.length >= 2 && lines[0].trim().startsWith('|') && TABLE_DELIM_RE.test(lines[1].trim());
 	}
 
+	// ── Code blocks ──
+	// A code block's body is one fenced code block. Fenced code is baseline
+	// CommonMark and carries no directive of its own, so — like a table — the
+	// editor types it by the body's own shape, not by a preset family. There is
+	// deliberately no `code:` preset in the vocabulary: what a code block needs is
+	// its language, which the fence's info string already is.
+	//
+	// The fence is parsed and rebuilt rather than edited as raw text, because the
+	// two halves are different jobs: the info string is a small closed set of
+	// tokens the highlighter knows, and the body is arbitrary text the author owns
+	// byte for byte. Round-tripping through one textarea would put the language in
+	// the same free-text field as the code.
+	const CODE_FENCE_RE = /^(`{3,})([^\n`]*)\n([\s\S]*?)\n?\1`*$/;
+
+	function parseCodeBody(text) {
+		const m = String(text || '').trim().match(CODE_FENCE_RE);
+		return m ? { lang: m[2].trim().split(/\s+/)[0] || '', code: m[3] } : null;
+	}
+
+	// A block whose ENTIRE body is one fence. A prose block that merely contains a
+	// fence is prose — typing it as code would throw away the paragraphs around it.
+	function isCodeBody(text) {
+		return !!parseCodeBody(text);
+	}
+
+	// Indented code inside the fence is content and is preserved exactly; only the
+	// fence's own lines are added. Trailing newlines in the textarea are dropped so
+	// an empty body writes as ```lang\n``` rather than growing a blank line per save.
+	//
+	// The fence is grown past the longest backtick run in the body. A Markdown example
+	// contains backticks by definition, and a 3-backtick fence would be closed by the
+	// example's own — the block would then hold half a fence and re-parse as something
+	// else entirely. CommonMark's rule (closing run ≥ opening run) is also what the
+	// renderer implements, so both sides agree on which fence is which.
+	function serializeCodeBody(lang, code) {
+		const body = String(code ?? '').replace(/\s+$/, '');
+		const info = String(lang || '').trim();
+		let longest = 2;
+		for (const run of body.match(/`+/g) || []) longest = Math.max(longest, run.length);
+		const fence = '`'.repeat(Math.max(3, longest + 1));
+		return body ? [fence + info, body, fence] : [fence + info, fence];
+	}
+
 	function isPlayerBlock(node) {
 		const preset = String(node.attrs?.preset || '').toLowerCase();
 		if (preset !== 'player') return false;
@@ -2533,6 +2682,9 @@ function initBlocksEditor(element, nui) {
 			else if (family === 'table' && isTableBody(text)) node._type = 'table';
 			else if (isMediaBlock(node)) node._type = 'media';
 			else if (isTableBody(text)) node._type = 'table';
+			// Last, because it is the weakest claim: a body that is nothing but one
+			// fence is code, but a body that merely contains a fence is prose.
+			else if (isCodeBody(text)) node._type = 'code';
 			else node._type = 'prose';
 		}
 		return node._type;
@@ -2593,9 +2745,10 @@ function initBlocksEditor(element, nui) {
 	// Every rich-text editor the canvas builds needs the document base, so an image
 	// in a block's prose resolves against the document and not the page. Set before
 	// the element is inserted, because it renders on upgrade.
-	function createRichText() {
+	function createRichText(placeholder) {
 		const el = document.createElement('nui-rich-text');
 		if (docBase) el.setAttribute('base', docBase);
+		if (placeholder) el.setAttribute('placeholder', placeholder);
 		return el;
 	}
 
@@ -2777,6 +2930,30 @@ function initBlocksEditor(element, nui) {
 		{ value: 'player', label: 'Player: Auto' }
 	];
 
+	// Code blocks carry no style: the format has no `code` preset family, so the
+	// select offers only the unset state plus the custom hatch every style select
+	// ends with. The hatch stays because a profile can still put a token here.
+	const CODE_PRESETS = [
+		{ value: '', label: 'Code' }
+	];
+
+	// Every token nui-syntax-highlight.js branches on — five grammars, six tokens
+	// (`html`/`xml` share a branch, as do `js`/`javascript` and `ts`/`typescript`).
+	// The long aliases are deliberately absent: they highlight identically and one
+	// entry per language is what a picker is for. Everything else still fences and
+	// still copies — it just renders unhighlighted — so the menu is the set worth
+	// offering, not every language a reader might type. A language outside it is
+	// still accepted, and joins the list on load (see the render).
+	const CODE_LANGS = [
+		{ value: '', label: 'Plain text' },
+		{ value: 'js', label: 'JavaScript' },
+		{ value: 'ts', label: 'TypeScript' },
+		{ value: 'html', label: 'HTML' },
+		{ value: 'xml', label: 'XML' },
+		{ value: 'css', label: 'CSS' },
+		{ value: 'json', label: 'JSON' }
+	];
+
 	// Table blocks: the body is one pipe table; the style is the table's
 	// presentation (renderer variants in nui-theme.css). '' is the default
 	// full spreadsheet grid. `fit` only exists as clean:fit — column sizing by
@@ -2929,6 +3106,13 @@ function initBlocksEditor(element, nui) {
 							<span>Pipe table with presentation styles</span>
 						</div>
 					</div>
+					<div class="palette-item" data-type="code">
+						<div class="palette-icon"><nui-icon name="code"></nui-icon></div>
+						<div class="palette-text">
+							<strong>Code Block</strong>
+							<span>Fenced code with a language</span>
+						</div>
+					</div>
 				</div>
 			</div>
 			${!isInsideColumn ? `
@@ -2991,100 +3175,117 @@ function initBlocksEditor(element, nui) {
 		await result;
 	}
 
+	// Every new block starts EMPTY.
+	//
+	// Seed text is written into the DOCUMENT, where it is indistinguishable from
+	// something the author wrote and it survives every save. A stat card seeded
+	// `# 99.9% / System Uptime` does not read as demo data on a live page — it reads
+	// as a claim the site is making. The player block below was already fixed this
+	// way for exactly that reason; the rest were simply left behind.
+	//
+	// What the seed bought was discoverability — "what is this block for?" — and
+	// that is a DISPLAY need, not a storage need. Every block body here already has
+	// an editor-chrome empty state (a placeholder on the rich-text editor and the
+	// code editor, field placeholders on a link, upload buttons on media, `Add pair`
+	// on a var), so the hint survives without a single character entering the file.
+	// One behaviour for the Playground and for a deployed host: a demo that seeds and
+	// a host that does not are not the same product, and the demo would stop being
+	// evidence for the thing it is demoing.
 	function createAndInsertBlock(targetContainer, insertIdx, type) {
 		let newNode = null;
+		const emptyBody = () => [{ type: 'md', lines: [''] }];
+
 		if (type === 'prose') {
 			newNode = {
 				type: 'block',
 				attrs: { id: generateId('b') },
-				nodes: [{ type: 'md', lines: ['New paragraph. Edit this text.'] }]
+				nodes: emptyBody()
 			};
 		} else if (type === 'card-note') {
 			newNode = {
 				type: 'block',
 				attrs: { id: generateId('b'), preset: 'card:note' },
-				nodes: [{ type: 'md', lines: ['### Note Header', 'Important callout details here.'] }]
+				nodes: emptyBody()
 			};
 		} else if (type === 'card-warning') {
 			newNode = {
 				type: 'block',
 				attrs: { id: generateId('b'), preset: 'card:warning' },
-				nodes: [{ type: 'md', lines: ['### Warning', 'Be cautious when editing this state.'] }]
+				nodes: emptyBody()
 			};
 		} else if (type === 'card-stat') {
 			newNode = {
 				type: 'block',
 				attrs: { id: generateId('b'), preset: 'card:stat' },
-				nodes: [{ type: 'md', lines: ['# 99.9%', 'System Uptime'] }]
+				nodes: emptyBody()
 			};
 		} else if (type === 'media-figure') {
 			newNode = {
 				type: 'block',
 				_type: 'media',
 				attrs: { id: generateId('b') },
-				nodes: [{ type: 'md', lines: ['', 'Figure caption text.'] }]
+				nodes: emptyBody()
 			};
 		} else if (type === 'media-player') {
-			// Empty start: the block shows its "No media track yet" state and the
-			// host picker fills it. A mock URL seed shipped Playground content
-			// into real documents.
 			newNode = {
 				type: 'block',
 				_type: 'player',
 				attrs: { id: generateId('b'), kind: 'video', preset: 'player' },
-				nodes: [{ type: 'md', lines: [''] }]
+				nodes: emptyBody()
 			};
 		} else if (type === 'link-cta') {
 			newNode = {
 				type: 'block',
 				_type: 'link',
 				attrs: { id: generateId('b'), preset: 'link:cta' },
-				nodes: [{ type: 'md', lines: ['[Call to action](https://)'] }]
+				nodes: emptyBody()
 			};
 		} else if (type === 'table') {
 			newNode = {
 				type: 'block',
 				_type: 'table',
 				attrs: { id: generateId('b') },
-				nodes: [{ type: 'md', lines: [
-					'| Name | Value | Note |',
-					'|---|---|---|',
-					'| First | 1 | Edit me |',
-					'| Second | 2 | Edit me |'
-				] }]
+				nodes: emptyBody()
+			};
+		} else if (type === 'code') {
+			newNode = {
+				type: 'block',
+				_type: 'code',
+				attrs: { id: generateId('b') },
+				nodes: emptyBody()
 			};
 		} else if (type === 'columns-two') {
+			const emptyColumn = () => ({
+				attrs: {},
+				nodes: [{ type: 'block', attrs: { id: generateId('b') }, nodes: emptyBody() }]
+			});
 			newNode = {
 				type: 'columns',
 				attrs: { id: generateId('cols'), weights: [1, 1] },
-				cols: [
-					{
-						attrs: {},
-						nodes: [{ type: 'block', attrs: { id: generateId('b') }, nodes: [{ type: 'md', lines: ['Left column text.'] }] }]
-					},
-					{
-						attrs: {},
-						nodes: [{ type: 'block', attrs: { id: generateId('b') }, nodes: [{ type: 'md', lines: ['Right column text.'] }] }]
-					}
-				]
+				cols: [emptyColumn(), emptyColumn()]
 			};
 		} else if (type === 'columns-three') {
+			const emptyColumn = () => ({
+				attrs: {},
+				nodes: [{ type: 'block', attrs: { id: generateId('b') }, nodes: emptyBody() }]
+			});
 			newNode = {
 				type: 'columns',
 				attrs: { id: generateId('cols'), weights: [1, 1, 1] },
-				cols: [
-					{ attrs: {}, nodes: [{ type: 'block', attrs: { id: generateId('b') }, nodes: [{ type: 'md', lines: ['Column 1 text.'] }] }] },
-					{ attrs: {}, nodes: [{ type: 'block', attrs: { id: generateId('b') }, nodes: [{ type: 'md', lines: ['Column 2 text.'] }] }] },
-					{ attrs: {}, nodes: [{ type: 'block', attrs: { id: generateId('b') }, nodes: [{ type: 'md', lines: ['Column 3 text.'] }] }] }
-				]
+				cols: [emptyColumn(), emptyColumn(), emptyColumn()]
 			};
 		} else if (type === 'var') {
-			// Canonical form: name + fenced json object of key-value pairs.
+			// Canonical form: name + fenced json object of key-value pairs. The value
+			// starts empty — the pair editor shows an `Add pair` button and no rows, so
+			// `enabled: true` would be a fact about the document that nobody chose. The
+			// NAME is the exception: spec §4.4 makes it required, so an unnamed var cannot
+			// serialize at all. It is the identifier here, in the same category as the
+			// generated block id, not authored content.
 			newNode = {
 				type: 'var',
 				name: 'settings',
 				fenced: 'json',
-				value: { enabled: true }
+				value: {}
 			};
 		}
 
@@ -3360,14 +3561,15 @@ function initBlocksEditor(element, nui) {
 		if (!main) return;
 		main.sections = main.sections || [];
 		const hero = template === 'hero';
+		// Empty, for the same reason every block is (see createAndInsertBlock). A hero
+		// is unaffected by starting empty: `isHeroMediaBlock` types a cover section's
+		// SOLE block as media from the section's own preset, so an empty hero body
+		// arrives as a media block showing its upload empty state — which is what a
+		// fresh hero should be anyway, since it has no image yet.
 		const newSec = {
-			attrs: { id: generateId('sec'), label: hero ? 'Hero' : `Section ${main.sections.length + 1}` },
+			attrs: hero ? { id: generateId('sec'), preset: 'cover' } : { id: generateId('sec') },
 			vars: [],
-			nodes: [
-				hero
-					? { type: 'block', attrs: { id: generateId('b') }, nodes: [{ type: 'md', lines: ['', '', '## Hero Title', '', 'Supporting tagline or call to action.'] }] }
-					: { type: 'block', attrs: { id: generateId('b') }, nodes: [{ type: 'md', lines: ['## New Section Heading', '', 'Add blocks or prose here.'] }] }
-			]
+			nodes: [{ type: 'block', attrs: { id: generateId('b') }, nodes: [{ type: 'md', lines: [''] }] }]
 		};
 		if (hero) newSec.attrs.preset = 'cover';
 		if (typeof insertAt === 'number') {

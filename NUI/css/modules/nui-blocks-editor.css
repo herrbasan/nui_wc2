@@ -740,6 +740,40 @@ nui-blocks-editor .block-raw-textarea:focus {
 	border-color: var(--color-highlight);
 }
 
+/* Code block — the language control lives in the card header beside Delete and
+   inherits the header's borderless-at-rest select styling from the
+   `.block-card-header nui-select` rule; only its width is this type's. The body is
+   just the editor, which sizes as height:100%, so the card gives it a height. */
+nui-blocks-editor .code-block-body {
+	display: flex;
+	flex-direction: column;
+}
+
+/* The language select gives the header a second control, so its two halves no longer
+   fit side by side on a narrow card. The left group is `flex: 1` on a zero basis, so
+   flexbox makes room by shrinking it alone — the style select clipped while the header
+   still reported no overflow, which is the worst of both: no scrollbar, no wrap, just
+   a cut-off control. Pinning the left group to its content and allowing the row to
+   wrap makes the whole right group drop to a second line instead. Above the width
+   where the two fit, nothing here applies. */
+nui-blocks-editor .editor-code-card .block-card-header {
+	flex-wrap: wrap;
+	row-gap: var(--nui-space-quarter);
+}
+
+nui-blocks-editor .editor-code-card .block-header-left {
+	min-width: min-content;
+}
+
+nui-blocks-editor .editor-code-card .block-header-right nui-select.code-lang-select {
+	max-width: 9rem;
+}
+
+nui-blocks-editor .code-block-body nui-code-editor {
+	width: 100%;
+	height: 9rem;
+}
+
 /* Media block — image set + caption. Single column: the preview above, the thumbnail
    rail below. It was authored as preview-beside-rail on the reasoning that width is the
    plentiful axis in the canvas and height the scarce one — true only while the canvas
