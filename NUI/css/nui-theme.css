@@ -1626,6 +1626,17 @@ nui-app[data-layout="app"].sidebar-right-forced nui-sidebar[position="right"] {
 	transform: translateX(0);
 }
 
+/* Locked sidebar (host set sidebar-locked / sidebar-right-locked): fully out.
+   visibility, not display — the layout slot and the shell's geometry stay, and
+   the element leaves the tab order and the accessibility tree, so keyboard
+   focus cannot wander into a sidebar the host has taken away. */
+nui-app[data-layout="app"][sidebar-locked] nui-sidebar:not([position="right"]) {
+	visibility: hidden;
+}
+nui-app[data-layout="app"][sidebar-right-locked] nui-sidebar[position="right"] {
+	visibility: hidden;
+}
+
 /* Backdrops */
 nui-app[data-layout="app"].sidebar-open::before,
 nui-app[data-layout="app"].sidebar-right-open::after {

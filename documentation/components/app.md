@@ -137,6 +137,22 @@ Sets the width of all sidebars. This **overrides** the CSS `--sidebar-width` var
 
 ---
 
+### `sidebar-locked` / `sidebar-right-locked`
+
+Hands one sidebar entirely to the host: while the attribute is present the component makes **no** state decision for that side. Resize cannot re-derive the state or re-enable the toggle button, `toggleSidebar()` is a no-op, backdrop clicks and focus-in do nothing, and the sidebar is `visibility: hidden` (out of the tab order and the accessibility tree). Set the state classes you want *before* locking; they stay until the attribute is removed.
+
+Use case: a modal mode that owns the viewport (an editor, a presentation) must keep its sidebar gone no matter what the shell's responsive logic does.
+
+```js
+// Modal mode on:
+app.classList.add('sidebar-closed');
+app.setAttribute('sidebar-locked', '');
+// Modal mode off:
+app.removeAttribute('sidebar-locked');
+```
+
+---
+
 ## `<nui-app>` — Auto-Managed CSS Classes
 
 These classes are added/removed automatically by the component. You generally should NOT set them manually, but you CAN read them for styling or logic.
@@ -269,7 +285,7 @@ document.querySelector('nui-app').addEventListener('nui-sidebar-change', (e) => 
 
 | Method | Description |
 |--------|-------------|
-| `.toggleSidebar(position)` | Toggle a sidebar. `position` is `"left"` (default) or `"right"`. No-op if the sidebar is in forced state. |
+| `.toggleSidebar(position)` | Toggle a sidebar. `position` is `"left"` (default) or `"right"`. No-op if the sidebar is in forced state or locked (`sidebar-locked` / `sidebar-right-locked`). |
 | `.invalidateBreakpointCache()` | Force recalculation of all sidebar breakpoints. Call after dynamically changing sidebar content or attributes. |
 
 ```javascript

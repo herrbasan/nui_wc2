@@ -476,7 +476,7 @@ Calendar mode **hides** the two date inputs rather than replacing them, so both 
 </nui-app>
 ```
 
-| `<nui-app>` Attributes | `content-min-width="55rem"` (breakpoint trigger), `content-width="48rem"` (max content column width), `sidebar-width="18rem"` (overrides CSS var — **shared by BOTH left and right sidebars**; per-side widths are not supported), `sidebar-breakpoint="none"|"768px"` (override auto breakpoint — applies to BOTH sidebars; for per-side breakpoints, see Legacy Attributes below) |
+| `<nui-app>` Attributes | `content-min-width="55rem"` (breakpoint trigger), `content-width="48rem"` (max content column width), `sidebar-width="18rem"` (overrides CSS var — **shared by BOTH left and right sidebars**; per-side widths are not supported), `sidebar-breakpoint="none"|"768px"` (override auto breakpoint — applies to BOTH sidebars; for per-side breakpoints, see Legacy Attributes below), `sidebar-locked` / `sidebar-right-locked` (host owns that sidebar: resize/menu/focus change nothing, sidebar is `visibility: hidden`; set state classes before locking) |
 | `<nui-sidebar>` Attributes | `behavior="primary|secondary|auto|manual"` (breakpoint priority), `position="left|right"` |
 | Legacy `<nui-app>` Attributes | `nui-vars-sidebar_width`, `nui-vars-sidebar_force-breakpoint` (left only), `nui-vars-sidebar-right_force-breakpoint` (right only) — still honored. Use the per-side `*_force-breakpoint` variants when left and right need different breakpoints. The new `sidebar-width` attribute takes precedence and applies to both sidebars. |
 | `data-action` | `toggle-sidebar` (left), `toggle-sidebar:left`, `toggle-sidebar:right` |

@@ -1059,12 +1059,17 @@ registerComponent('nui-app', (element) => {
 		const sidebar = getSidebar(element, position);
 		if (!sidebar) return;
 
+		const prefix = position === 'right' ? 'sidebar-right' : 'sidebar';
+		// A locked sidebar belongs to the host (sidebar-locked / sidebar-right-locked):
+		// resize must not re-derive its state or re-enable its toggle button. The host
+		// set the classes it wants; they stay until the attribute is removed.
+		if (element.hasAttribute(`${prefix}-locked`)) return;
+
 		const breakpoint = getBreakpoint(element, position);
 		const viewportWidth = window.innerWidth;
 		const isForced = viewportWidth >= breakpoint;
 
 		let newState;
-		const prefix = position === 'right' ? 'sidebar-right' : 'sidebar';
 
 		if (isForced) {
 			element.classList.remove(`${prefix}-open`, `${prefix}-closed`);
@@ -1118,6 +1123,9 @@ registerComponent('nui-app', (element) => {
 	function toggleSidebar(element, position = 'left') {
 		const prefix = position === 'right' ? 'sidebar-right' : 'sidebar';
 		if (element.classList.contains(`${prefix}-forced`)) return;
+		// Locked: every toggle path (button, backdrop click, focus-in) funnels
+		// through here, so one guard makes the sidebar unreachable.
+		if (element.hasAttribute(`${prefix}-locked`)) return;
 		const isOpen = element.classList.toggle(`${prefix}-open`);
 		element.classList.toggle(`${prefix}-closed`, !isOpen);
 		dispatchSidebarEvent(position, isOpen ? 'open' : 'closed');
@@ -1168,6 +1176,7 @@ registerComponent('nui-app', (element) => {
 	element.addEventListener('click', (e) => {
 		['left', 'right'].forEach(pos => {
 			const prefix = pos === 'right' ? 'sidebar-right' : 'sidebar';
+			if (element.hasAttribute(`${prefix}-locked`)) return;
 			if (element.classList.contains(`${prefix}-open`) &&
 				!element.classList.contains(`${prefix}-forced`)) {
 				
