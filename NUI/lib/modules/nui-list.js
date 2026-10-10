@@ -589,29 +589,32 @@ function createList(element, options) {
 			// stay on screen and a "no matches" filter looks identical to "All".
 			clearChildren(list.container);
 			clearChildren(list.fixedList);
-			if (list.fixedList) list.fixedList.style.display = 'none';
+			if (list.fixedList && list.fixedList.style.display !== 'none') list.fixedList.style.display = 'none';
 			list.mode = 'normal';
 			return;
 		}
 
 		// Determine mode (normal vs fixed for large lists)
 		if (data.length < 1000 || list.env.isTouch) {
-			list.mode = 'normal';
-			list.fixedList.style.display = 'none';
-			list.setAttribute('data-mode', 'normal');
-
+			// The tick check: one scroll read, touch nothing else. The mode/style
+			// writes used to run on EVERY frame, invalidating style at 60fps on
+			// an idle list. They sit behind the dirty check now — data paths
+			// always call update(true), so mode switches still land.
 			list.scrollPos = Math.round(list.viewport.scrollTop);
-
-			// Log mode auto-scroll (from original implementation)
-			if (options.logmode && !list.scrollMute) {
-				if (list.viewport.scrollTop + list.viewport.offsetHeight > list.container.offsetHeight - (list.itemHeight + 1)) {
-					list.viewport.scrollTop = list.container.offsetHeight;
-					list.scrollPos = list.viewport.scrollTop;
-				}
-			}
 
 			// Only process if scroll changed or force - this is the key optimization!
 			if (list.scrollPos !== list.lastScrollPos || force) {
+				list.mode = 'normal';
+				if (list.fixedList.style.display !== 'none') list.fixedList.style.display = 'none';
+				if (list.getAttribute('data-mode') !== 'normal') list.setAttribute('data-mode', 'normal');
+
+				// Log mode auto-scroll (from original implementation)
+				if (options.logmode && !list.scrollMute) {
+					if (list.viewport.scrollTop + list.viewport.offsetHeight > list.container.offsetHeight - (list.itemHeight + 1)) {
+						list.viewport.scrollTop = list.container.offsetHeight;
+						list.scrollPos = list.viewport.scrollTop;
+					}
+				}
 
 				list.maxVis = Math.ceil(list.viewport.offsetHeight / list.itemHeight) + 10;
 				list.offSet = Math.floor(list.scrollPos / list.itemHeight) - 5;
@@ -649,15 +652,15 @@ function createList(element, options) {
 				list.lastScrollProz = -1;
 			}
 		} else {
-			// Fixed mode for large lists
-			list.mode = 'fixed';
-			list.fixedList.style.display = 'block';
-			list.setAttribute('data-mode', 'fixed');
-			
+			// Fixed mode for large lists — mode writes sit behind the dirty check
+			// below, same contract as normal mode: idle frames only read.
 			const scrollRange = list.container.offsetHeight - list.viewport.offsetHeight;
 			list.scrollProz = scrollRange > 0 ? list.scrollPos / scrollRange : 0;
 			
 			if (list.scrollProz !== list.lastScrollProz || force) {
+				list.mode = 'fixed';
+				if (list.fixedList.style.display !== 'block') list.fixedList.style.display = 'block';
+				if (list.getAttribute('data-mode') !== 'fixed') list.setAttribute('data-mode', 'fixed');
 				list.maxVis = Math.ceil(list.viewport.offsetHeight / list.itemHeight) || 10;
 				list.offSet = Math.round(list.scrollProz * list.filtered.length);
 				if (list.offSet < 0) list.offSet = 0;
