@@ -13,6 +13,11 @@ import { nui } from '../../nui.js';
 
 // ################################# COMPONENT FACTORY
 
+// Doze mode: stop the render loop after this many quiet frames. Wake events
+// (scroll, wheel, resize, data mutation, visibility) restart it instantly;
+// the scroll event fires before the frame paints, so wake latency is zero.
+const LIST_IDLE_FRAMES = 20;
+
 function createList(element, options) {
 	const list = element;
 	
@@ -41,6 +46,8 @@ function createList(element, options) {
 	list.cleanedUp = false;
 	list.mode = 'normal';
 	list.scrollMute = false;
+	list.idleFrames = 0;      // quiet frames since the last render pass (doze mode)
+	list.loopRunning = false; // rAF chain active? (false = dozing)
 	
 	// Options
 	list.options = options;
@@ -82,6 +89,7 @@ function createList(element, options) {
 	
 	// Setup event listeners
 	list.viewport.addEventListener('scroll', () => {
+		wake();
 		list.scrollPos = list.viewport.scrollTop;
 		const scrollRange = list.container.offsetHeight - list.viewport.offsetHeight;
 		list.scrollProz = scrollRange > 0 ? list.scrollPos / scrollRange : 0;
@@ -90,6 +98,7 @@ function createList(element, options) {
 	if (list.fixedList) {
 		list.fixedList.addEventListener('wheel', (e) => {
 			e.preventDefault();
+			wake();
 			list.viewport.scrollTop += e.deltaY;
 			list.scrollPos = list.viewport.scrollTop;
 		}, { passive: false });
@@ -98,6 +107,7 @@ function createList(element, options) {
 	// Log mode: register wheel event for scrollMute
 	if (options.logmode) {
 		registerEvent(list.container, 'wheel', () => {
+			wake();
 			if (!list.scrollMute) {
 				clearTimeout(list.scrollMuteTimeout);
 				list.scrollMute = true;
@@ -106,7 +116,7 @@ function createList(element, options) {
 		}, { passive: true });
 	}
 
-	registerEvent(window, 'resize', () => resize());
+	registerEvent(window, 'resize', () => { resize(); wake(); });
 	registerEvent(list.container, 'click', containerClick);
 	if (list.fixedList) {
 		registerEvent(list.fixedList, 'click', containerClick);
@@ -119,8 +129,10 @@ function createList(element, options) {
 		}
 	}
 	
-	// Height checking interval
-	list.checkHeight_interval = setInterval(checkHeight, 300);
+	// Height checking pulse — slow on purpose: covers un-signaled drift
+	// (late fonts, async item content). Everything fast wakes the loop via
+	// events instead. Runs whether dozing or not; checkHeight skips hidden.
+	list.checkHeight_interval = setInterval(checkHeight, 1000);
 	
 	// Intersection observer for visibility
 	list.observer = new IntersectionObserver((entries) => {
@@ -128,7 +140,7 @@ function createList(element, options) {
 			log('List is Visible');
 			list.eventCallback({ target: list, type: 'visibility', value: true });
 			list.stop = false;
-			loop();
+			wake();
 			resize(0);
 		} else {
 			log('List is Hidden');
@@ -153,7 +165,7 @@ function createList(element, options) {
 			return;
 		}
 		update(true);
-		loop();
+		wake();
 	}
 	requestAnimationFrame(tryInitialRender);
 
@@ -587,10 +599,16 @@ function createList(element, options) {
 			// If a filter/search yields zero matches, clear both containers and
 			// drop out of fixed mode. Otherwise the previous (unfiltered) rows
 			// stay on screen and a "no matches" filter looks identical to "All".
-			clearChildren(list.container);
-			clearChildren(list.fixedList);
-			if (list.fixedList && list.fixedList.style.display !== 'none') list.fixedList.style.display = 'none';
-			list.mode = 'normal';
+			// Gated on force-or-children: repeated idle ticks find nothing to
+			// clear and must not keep the dozing loop awake forever.
+			if (force || list.container.firstChild || (list.fixedList && list.fixedList.firstChild)) {
+				clearChildren(list.container);
+				clearChildren(list.fixedList);
+				if (list.fixedList && list.fixedList.style.display !== 'none') list.fixedList.style.display = 'none';
+				list.mode = 'normal';
+				list.idleFrames = 0;
+				wake();
+			}
 			return;
 		}
 
@@ -604,6 +622,8 @@ function createList(element, options) {
 
 			// Only process if scroll changed or force - this is the key optimization!
 			if (list.scrollPos !== list.lastScrollPos || force) {
+				list.idleFrames = 0;
+				wake();
 				list.mode = 'normal';
 				if (list.fixedList.style.display !== 'none') list.fixedList.style.display = 'none';
 				if (list.getAttribute('data-mode') !== 'normal') list.setAttribute('data-mode', 'normal');
@@ -658,6 +678,8 @@ function createList(element, options) {
 			list.scrollProz = scrollRange > 0 ? list.scrollPos / scrollRange : 0;
 			
 			if (list.scrollProz !== list.lastScrollProz || force) {
+				list.idleFrames = 0;
+				wake();
 				list.mode = 'fixed';
 				if (list.fixedList.style.display !== 'block') list.fixedList.style.display = 'block';
 				if (list.getAttribute('data-mode') !== 'fixed') list.setAttribute('data-mode', 'fixed');
@@ -1034,9 +1056,20 @@ function createList(element, options) {
 	}
 	
 	function loop() {
-		if (list.stop) return;
+		if (list.stop) { list.loopRunning = false; return; }
 		update();
+		list.idleFrames++;
+		if (list.idleFrames >= LIST_IDLE_FRAMES) { list.loopRunning = false; return; }  // doze
 		requestAnimationFrame(loop);
+	}
+
+	function wake() {
+		if (list.stop) return;
+		list.idleFrames = 0;
+		if (!list.loopRunning) {
+			list.loopRunning = true;
+			requestAnimationFrame(loop);
+		}
 	}
 }
 
