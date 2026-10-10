@@ -2556,9 +2556,18 @@ registerComponent('nui-slider', (element) => {
 	// Hide native input but keep it accessible
 	input.classList.add('nui-slider-native');
 
-	const track = dom.create('div', { class: 'nui-slider-track', target: element });
-	const fill = dom.create('div', { class: 'nui-slider-fill', target: track });
-	const thumb = dom.create('div', { class: 'nui-slider-thumb', target: track });
+	// Idempotent build: setup re-runs when a host moves the element after its
+	// first upgrade (app shells reparent whole subtrees at boot). disconnected-
+	// Callback already fired the previous cleanup, so re-attaching is safe —
+	// but blindly rebuilding would stack a second track.
+	let track = element.el('.nui-slider-track');
+	if (!track) {
+		track = dom.create('div', { class: 'nui-slider-track', target: element });
+		dom.create('div', { class: 'nui-slider-fill', target: track });
+		dom.create('div', { class: 'nui-slider-thumb', target: track });
+	}
+	const fill = track.el('.nui-slider-fill');
+	const thumb = track.el('.nui-slider-thumb');
 
 	const getRange = () => ({
 		min: parseFloat(input.min) || 0,
@@ -2617,7 +2626,16 @@ registerComponent('nui-slider', (element) => {
 		updateVisuals();
 	};
 
-	return cleanup;
+	return () => {
+		cleanup();
+		input.removeEventListener('input', updateVisuals);
+	};
+}, (element) => {
+	// Reset init guard so re-connection re-attaches drag listeners after DOM
+	// moves (same treatment as nui-app: disconnectedCallback strips the
+	// listeners via the cleanup above; without the reset the guard would
+	// silence every reconnect forever).
+	element._nui_initialized = false;
 });
 
 // ################################# nui-banner COMPONENT
