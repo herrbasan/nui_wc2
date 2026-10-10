@@ -32,7 +32,7 @@ render, so the UI can never disagree with the document.
 ## Declarative usage
 
 ```html
-<!-- Fully featured, default document -->
+<!-- Fully featured, opens on an empty document — the host loads content via load()/loadUrl() -->
 <nui-blocks-editor></nui-blocks-editor>
 ```
 

@@ -169,6 +169,12 @@ function initBlocksEditor(element, nui) {
 	let previewWindow = null;
 
 	function createDefaultDoc() {
+		// EMPTY, not a demo. Hosts load() real documents, and the editor renders
+		// whatever it holds at connect time — a default with image references
+		// fired requests for artwork that exists nowhere near the host's
+		// document (broken-image 404s on every edit session, resolved against
+		// the host's doc dir AND the app page). The showcase lives in the
+		// Playground, which loads it explicitly.
 		return {
 			frontmatter: { title: 'Untitled Document' },
 			mains: [
@@ -176,44 +182,13 @@ function initBlocksEditor(element, nui) {
 					attrs: {},
 					sections: [
 						{
-							attrs: { id: 'sec-1', label: 'Hero', preset: 'cover' },
+							attrs: { id: 'sec-1' },
 							vars: [],
 							nodes: [
 								{
 									type: 'block',
 									attrs: { id: 'block-1' },
-									nodes: [
-										{
-											type: 'md',
-											lines: [
-												'![NUI artwork — plate 1](images/nui_1.webp)',
-												'',
-												'# Welcome to NUI Blocks',
-												'',
-												'A visual editor for **MD-Blocks** documents.'
-											]
-										}
-									]
-								}
-							]
-						},
-						{
-							attrs: { id: 'sec-2', label: 'Section 2', preset: 'band' },
-							vars: [],
-							nodes: [
-								{
-									type: 'block',
-									attrs: { id: 'block-2', preset: 'lead' },
-									nodes: [
-										{
-											type: 'md',
-											lines: [
-												'## Sections and blocks',
-												'',
-												'Sections group content — a section can wear a colored **band** or become a **hero** with a media background. Blocks are the movable units inside.'
-											]
-										}
-									]
+									nodes: [{ type: 'md', lines: [''] }]
 								}
 							]
 						}

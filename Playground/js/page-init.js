@@ -4074,6 +4074,11 @@ nui.registerPage('experiments/blocks-editor', {
 		btnBlog?.addEventListener('click', () =>
 			editor.loadUrl('pages/experiments/blog-the-ghost-in-the-agent.md'));
 
+		// Open onto the showcase: the component's own default is an EMPTY
+		// document (a demo default fired its image references inside every
+		// real host), so the demo is loaded here, where it belongs.
+		editor.loadUrl('pages/experiments/md-blocks-demo.md');
+
 		// The media browser, wired the way a host wires it — the addon ships the
 		// nui-list browse UI, this page supplies the set to browse. The addon has no
 		// media of its own: these paths are Playground-relative and mean nothing
