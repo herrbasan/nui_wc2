@@ -247,10 +247,8 @@ function createComponent(tagName, setupFn, cleanupFn) {
 			if (typeof c === 'function') this._c = c;
 		}
 		disconnectedCallback() {
-			if (this._originalAttributeMethods) {
-				Object.assign(this, this._originalAttributeMethods);
-				delete this._originalAttributeMethods;
-			}
+			// Attribute proxies live on `this` itself (no external references) and
+			// must survive detach/re-attach in virtual-scroll recyclers.
 			this._c?.();
 			cleanupFn?.(this);
 		}
@@ -1282,10 +1280,6 @@ registerComponent('nui-code', (element) => {
 
 	setupCodeBlock(element, pre, codeBlock, codeBlock.textContent);
 	element._nui_code_ready = true;
-}, (element) => {
-	const copyButton = element.el('.nui-code-copy');
-	if (copyButton) copyButton.remove();
-	delete element._nui_code_ready;
 });
 
 // Load a module stylesheet once, addressed by its NUI-relative path. Keyed with an
@@ -1333,6 +1327,8 @@ function setupCodeBlock(element, pre, codeBlock, rawText) {
 
 		// The spans this module emits are coloured by a stylesheet of its own, which
 		// nothing loaded: highlighting markup appeared with zero colours, looking
+		// The spans this module emits are coloured by a stylesheet of its own, which
+		// nothing loaded: highlighting markup appeared with zero colours, looking
 		// exactly like the component was not used at all. Load the pair together.
 		ensureStylesheet('css/modules/nui-syntax-highlight.css');
 
@@ -1365,10 +1361,6 @@ function setupCodeBlock(element, pre, codeBlock, rawText) {
 			console.warn('[NUI] <nui-code> syntax highlighting unavailable. The module NUI/lib/modules/nui-syntax-highlight.js was not found. Code will display without highlighting. Copy the lib/modules/ directory alongside nui.js.', err.message || err);
 		}
 	});
-
-	return () => {
-		copyButton.remove();
-	};
 }
 
 // ################################# nui-link-list COMPONENT
@@ -8012,8 +8004,752 @@ const util = {
 			isSafari: /^((?!chrome|android).)*safari/i.test(navigator.userAgent),
 			isFF: navigator.userAgent.toLowerCase().indexOf('firefox') > -1,
 		};
+	},
+
+	virtualScroll(container, options) {
+		return createVirtualScroll(container, options);
 	}
 };
+
+// ################################# VIRTUAL SCROLL (Variable-Height Detached-Element Recycler)
+//
+// Variable-height virtual scroller ported from LLM-Gateway-Chat (Virtual Scroll v2).
+// Unlike nui-list (uniform row height, data-driven templates), this virtualizes
+// arbitrary, variable-height DOM elements (cards, rich markdown messages, code
+// blocks, expandable panels) without destroying element identity or state:
+//
+//   1. Activation threshold (default 30): below threshold, items stay in normal
+//      flow with zero stage overhead.
+//   2. Explicit stage height + detached-element recycling: items are measured once
+//      in natural flow (capturing CSS margins + container rowGap into slot.spacing
+//      before inline margin zeroing), then positioned absolutely inside a
+//      `.nui-vs-stage` with explicit pixel height. Off-screen items are detached
+//      via removeChild (fully out of the browser layout tree) and re-attached on
+//      demand.
+//   3. Binary search visible range: O(log n + visible) per scroll pass with zero
+//      per-frame Set allocation.
+//   4. Cascade decoupling: slot.offset is updated in data on all slots below a
+//      change, but style.top is written ONLY to attached elements; detached slots
+//      receive fresh style.top when re-attached.
+//   5. Reactive rAF height frame loop (wake/sleep): measures attached slots in a
+//      strict READ phase before the WRITE phase, smoothly cascading animated or
+//      streaming height changes and sleeping after 30 idle frames (~0.5s).
+//   6. Scroll anchoring: height changes or deletions fully above the viewport
+//      adjust scrollTop so visible content never jumps.
+//   7. Hidden-container immunity: never measures while clientHeight === 0; flags
+//      staleness and reconciles via ResizeObserver when visible again.
+
+const VS_DEFAULT_MARGIN = 200;
+const VS_DEFAULT_THRESHOLD = 30;
+const VS_IDLE_FRAMES = 30;
+const VS_EPSILON = 0.5;
+
+function _vsFirstVisibleIndex(slots, above) {
+	let lo = 0;
+	let hi = slots.length - 1;
+	let ans = slots.length;
+	while (lo <= hi) {
+		const mid = (lo + hi) >> 1;
+		if (slots[mid].offset + slots[mid].height >= above) {
+			ans = mid;
+			hi = mid - 1;
+		} else {
+			lo = mid + 1;
+		}
+	}
+	return ans;
+}
+
+function createVirtualScroll(container, options) {
+	container = typeof container === 'string' ? document.el(container) : container;
+	if (!container) {
+		throw new Error('[NUI] virtualScroll: container element is required.');
+	}
+
+	if (container._nuiVirtualScroll && options === undefined) {
+		return container._nuiVirtualScroll;
+	}
+	if (container._nuiVirtualScroll) {
+		container._nuiVirtualScroll.destroy();
+	}
+
+	const opts = options || {};
+	const state = {
+		active: false,
+		pendingActivation: false,
+		slots: [],
+		totalHeight: 0,
+		stage: null,
+		attached: new Set(),
+		pinned: new Set(),
+		rafId: null,
+		loopId: null,
+		idleFrames: 0,
+		resizeTimer: null,
+		settleTimer: null,
+		measuredWidth: 0,
+		staleMeasurements: false,
+		gap: 0,
+		margin: opts.margin !== undefined ? Number(opts.margin) : VS_DEFAULT_MARGIN,
+		threshold: opts.threshold !== undefined ? Number(opts.threshold) : VS_DEFAULT_THRESHOLD,
+		itemSelector: opts.items || null,
+		align: typeof opts.align === 'function' ? opts.align : null
+	};
+
+	function collectNaturalItems() {
+		if (state.itemSelector) {
+			return Array.from(container.querySelectorAll(state.itemSelector)).filter(el => !state.stage || !state.stage.contains(el));
+		}
+		return Array.from(container.children).filter(el => !el.classList.contains('nui-vs-stage'));
+	}
+
+	function applyHorizontalPos(el) {
+		const mode = (state.align && state.align(el)) || el.dataset.vsAlign || 'stretch';
+		if (mode === 'right') {
+			el.style.right = '0';
+			el.style.left = 'auto';
+		} else if (mode === 'left') {
+			el.style.left = '0';
+			el.style.right = 'auto';
+		} else {
+			el.style.left = '0';
+			el.style.right = '0';
+		}
+	}
+
+	function clearItemInlineStyles(el) {
+		el.style.position = '';
+		el.style.top = '';
+		el.style.left = '';
+		el.style.right = '';
+		el.style.marginTop = '';
+		el.style.marginBottom = '';
+		delete el._vsIndex;
+		delete el._vsHeight;
+		delete el._vsOffset;
+	}
+
+	function isPinned(el) {
+		return state.pinned.has(el) ||
+			el.dataset.vsPinned === 'true' ||
+			el.dataset.isStreaming === 'true' ||
+			(document.activeElement && document.activeElement !== document.body && el.contains(document.activeElement));
+	}
+
+	function updateVisible() {
+		if (!state.active || !state.stage) return;
+		if (container.clientHeight === 0) return;
+
+		const stageTop = state.stage.offsetTop || 0;
+		const viewTop = Math.max(0, container.scrollTop - stageTop);
+		const viewBottom = viewTop + container.clientHeight;
+		const above = viewTop - state.margin;
+		const below = viewBottom + state.margin;
+
+		const slots = state.slots;
+		const first = _vsFirstVisibleIndex(slots, above);
+		let last = first - 1;
+		for (let i = first; i < slots.length; i++) {
+			if (slots[i].offset <= below) last = i;
+			else break;
+		}
+
+		for (const el of state.attached) {
+			if (isPinned(el)) continue;
+			const idx = el._vsIndex;
+			if (idx < first || idx > last) {
+				state.stage.removeChild(el);
+				state.attached.delete(el);
+			}
+		}
+
+		for (let i = first; i <= last; i++) {
+			const slot = slots[i];
+			if (!state.attached.has(slot.el)) {
+				slot.el.style.top = slot.offset + 'px';
+				state.stage.appendChild(slot.el);
+				state.attached.add(slot.el);
+			}
+		}
+
+		for (const slot of slots) {
+			const el = slot.el;
+			if (!state.attached.has(el) && isPinned(el)) {
+				el.style.top = slot.offset + 'px';
+				state.stage.appendChild(el);
+				state.attached.add(el);
+			}
+		}
+	}
+
+	function wake() {
+		if (!state.active) return;
+		state.idleFrames = 0;
+		if (state.loopId !== null) return;
+		state.loopId = requestAnimationFrame(onFrame);
+	}
+
+	function onFrame() {
+		if (!state.active || !state.stage) {
+			state.loopId = null;
+			return;
+		}
+		if (container.clientHeight === 0) {
+			state.loopId = null;
+			state.staleMeasurements = true;
+			return;
+		}
+
+		// READ phase: all measurements before any style write
+		const scrollTop = container.scrollTop;
+		const stageTop = state.stage.offsetTop || 0;
+		const viewTop = scrollTop - stageTop;
+		let firstDirty = -1;
+		let anchorDelta = 0;
+
+		for (let i = 0; i < state.slots.length; i++) {
+			const slot = state.slots[i];
+			if (!state.attached.has(slot.el)) continue;
+			const h = slot.el.getBoundingClientRect().height + slot.spacing;
+			if (Math.abs(h - slot.height) > VS_EPSILON) {
+				if (slot.offset + slot.height <= viewTop) {
+					anchorDelta += (h - slot.height);
+				}
+				slot.height = h;
+				slot.el._vsHeight = h;
+				if (firstDirty === -1) firstDirty = i;
+			}
+		}
+
+		// WRITE phase
+		if (firstDirty !== -1) {
+			let offset = state.slots[firstDirty].offset;
+			for (let i = firstDirty; i < state.slots.length; i++) {
+				const s = state.slots[i];
+				s.offset = offset;
+				s.el._vsOffset = offset;
+				s.el._vsIndex = i;
+				if (state.attached.has(s.el)) {
+					s.el.style.top = offset + 'px';
+				}
+				offset += s.height;
+			}
+			state.totalHeight = offset;
+			state.stage.style.height = offset + 'px';
+			if (anchorDelta !== 0) {
+				container.scrollTop = scrollTop + anchorDelta;
+			}
+			updateVisible();
+			state.idleFrames = 0;
+		} else {
+			state.idleFrames++;
+		}
+
+		if (state.idleFrames >= VS_IDLE_FRAMES) {
+			state.loopId = null;
+			return;
+		}
+		state.loopId = requestAnimationFrame(onFrame);
+	}
+
+	function onScroll() {
+		if (!state.active) return;
+		wake();
+		if (state.rafId) return;
+		state.rafId = requestAnimationFrame(() => {
+			state.rafId = null;
+			updateVisible();
+		});
+	}
+
+	function onInteract() {
+		if (state.active) wake();
+	}
+
+	const resizeObserver = new ResizeObserver(() => {
+		if (state.resizeTimer) clearTimeout(state.resizeTimer);
+		state.resizeTimer = setTimeout(() => {
+			state.resizeTimer = null;
+			if (container.clientHeight === 0) {
+				if (state.active) state.staleMeasurements = true;
+				return;
+			}
+			if (state.pendingActivation && !state.active) {
+				activate();
+				return;
+			}
+			if (!state.active) return;
+			if (container.clientWidth === state.measuredWidth && !state.staleMeasurements) return;
+			recalc();
+		}, 150);
+	});
+	resizeObserver.observe(container);
+
+	container.addEventListener('scroll', onScroll, { passive: true });
+	container.addEventListener('click', onInteract, { passive: true });
+	container.addEventListener('keydown', onInteract, { passive: true });
+	container.addEventListener('focusin', onInteract, { passive: true });
+
+	function activate() {
+		if (state.active) {
+			recalc();
+			return true;
+		}
+
+		const elements = collectNaturalItems();
+		if (elements.length === 0 || elements.length < state.threshold) {
+			state.pendingActivation = false;
+			return false;
+		}
+
+		if (container.clientHeight === 0) {
+			state.pendingActivation = true;
+			return false;
+		}
+
+		// READ phase in natural flow: capture gap, margins, and visual heights
+		const gap = parseFloat(getComputedStyle(container).rowGap) || 0;
+		const slots = [];
+		let offset = 0;
+
+		for (let i = 0; i < elements.length; i++) {
+			const el = elements[i];
+			const cs = getComputedStyle(el);
+			const marginTop = parseFloat(cs.marginTop) || 0;
+			const marginBottom = parseFloat(cs.marginBottom) || 0;
+			const spacing = marginTop + marginBottom + gap;
+			const height = el.getBoundingClientRect().height + spacing;
+			el._vsHeight = height;
+			el._vsOffset = offset;
+			el._vsIndex = i;
+			slots.push({ el, height, offset, spacing });
+			offset += height;
+		}
+
+		// WRITE phase: create stage and absolutize slots
+		const stage = document.createElement('div');
+		stage.className = 'nui-vs-stage vs-stage';
+		stage.style.height = offset + 'px';
+
+		for (const slot of slots) {
+			const el = slot.el;
+			el.style.position = 'absolute';
+			el.style.top = slot.offset + 'px';
+			el.style.marginTop = '0';
+			el.style.marginBottom = '0';
+			applyHorizontalPos(el);
+			stage.appendChild(el);
+		}
+
+		container.appendChild(stage);
+
+		state.slots = slots;
+		state.totalHeight = offset;
+		state.stage = stage;
+		state.gap = gap;
+		state.attached = new Set(elements);
+		state.active = true;
+		state.pendingActivation = false;
+		state.measuredWidth = container.clientWidth;
+		state.staleMeasurements = false;
+
+		updateVisible();
+		wake();
+		return true;
+	}
+
+	function activateWhenReady(delay = 100, onDone = null) {
+		if (state.settleTimer) clearTimeout(state.settleTimer);
+		state.settleTimer = setTimeout(() => {
+			state.settleTimer = null;
+			requestAnimationFrame(() => {
+				activate();
+				if (typeof onDone === 'function') onDone();
+			});
+		}, delay);
+	}
+
+	function recalc() {
+		if (!state.active || !state.stage) {
+			return activate();
+		}
+		if (container.clientHeight === 0) {
+			state.staleMeasurements = true;
+			return false;
+		}
+
+		const scrollTop = container.scrollTop;
+		const stageTop = state.stage.offsetTop || 0;
+		const viewTop = scrollTop - stageTop;
+		let anchorDelta = 0;
+
+		// Re-attach all slots and reset to natural flow inside stage for measurement
+		for (const slot of state.slots) {
+			const el = slot.el;
+			el.style.position = '';
+			el.style.top = '';
+			el.style.left = '';
+			el.style.right = '';
+			el.style.marginTop = '';
+			el.style.marginBottom = '';
+			if (!state.attached.has(el)) {
+				state.stage.appendChild(el);
+				state.attached.add(el);
+			}
+		}
+
+		let offset = 0;
+		for (let i = 0; i < state.slots.length; i++) {
+			const slot = state.slots[i];
+			const oldOffset = slot.offset;
+			const oldHeight = slot.height;
+			const el = slot.el;
+			const cs = getComputedStyle(el);
+			const marginTop = parseFloat(cs.marginTop) || 0;
+			const marginBottom = parseFloat(cs.marginBottom) || 0;
+			const spacing = marginTop + marginBottom + state.gap;
+			const height = el.getBoundingClientRect().height + spacing;
+			if (oldHeight > 0 && oldOffset + oldHeight <= viewTop) {
+				anchorDelta += (height - oldHeight);
+			}
+			el._vsHeight = height;
+			el._vsOffset = offset;
+			el._vsIndex = i;
+			slot.spacing = spacing;
+			slot.height = height;
+			slot.offset = offset;
+			offset += height;
+		}
+
+		for (const slot of state.slots) {
+			const el = slot.el;
+			el.style.position = 'absolute';
+			el.style.top = slot.offset + 'px';
+			el.style.marginTop = '0';
+			el.style.marginBottom = '0';
+			applyHorizontalPos(el);
+		}
+
+		state.totalHeight = offset;
+		state.stage.style.height = offset + 'px';
+		if (anchorDelta !== 0) {
+			container.scrollTop = Math.max(0, scrollTop + anchorDelta);
+		}
+		state.measuredWidth = container.clientWidth;
+		state.staleMeasurements = false;
+
+		updateVisible();
+		wake();
+		return true;
+	}
+
+	function append(el) {
+		if (!(el instanceof HTMLElement)) {
+			throw new Error('[NUI] virtualScroll.append: HTMLElement is required.');
+		}
+
+		if (!state.active) {
+			container.appendChild(el);
+			if (collectNaturalItems().length >= state.threshold) {
+				activate();
+			}
+			return el;
+		}
+
+		const offset = state.totalHeight;
+		el.style.position = 'absolute';
+		el.style.top = offset + 'px';
+		applyHorizontalPos(el);
+		state.stage.appendChild(el);
+
+		if (container.clientHeight === 0) {
+			el.style.marginTop = '0';
+			el.style.marginBottom = '0';
+			el._vsIndex = state.slots.length;
+			state.slots.push({ el, height: 0, offset, spacing: state.gap });
+			state.attached.add(el);
+			state.staleMeasurements = true;
+			return el;
+		}
+
+		const cs = getComputedStyle(el);
+		const spacing = (parseFloat(cs.marginTop) || 0) + (parseFloat(cs.marginBottom) || 0) + state.gap;
+		el.style.marginTop = '0';
+		el.style.marginBottom = '0';
+
+		const height = el.getBoundingClientRect().height + spacing;
+		el._vsHeight = height;
+		el._vsOffset = offset;
+		el._vsIndex = state.slots.length;
+		state.slots.push({ el, height, offset, spacing });
+		state.attached.add(el);
+		state.totalHeight = offset + height;
+		state.stage.style.height = state.totalHeight + 'px';
+
+		updateVisible();
+		wake();
+		return el;
+	}
+
+	function remove(target) {
+		const match = typeof target === 'function' ? target : (el) => el === target;
+
+		if (!state.active) {
+			const items = collectNaturalItems();
+			let removedCount = 0;
+			items.forEach((el, idx) => {
+				if (match(el, idx)) {
+					el.remove();
+					state.pinned.delete(el);
+					removedCount++;
+				}
+			});
+			return removedCount;
+		}
+
+		const removed = [];
+		const remaining = [];
+		for (let i = 0; i < state.slots.length; i++) {
+			const s = state.slots[i];
+			if (match(s.el, i)) removed.push(s);
+			else remaining.push(s);
+		}
+
+		if (removed.length === 0) return 0;
+
+		const scrollTop = container.scrollTop;
+		const stageTop = state.stage.offsetTop || 0;
+		const viewTop = scrollTop - stageTop;
+		let removedAbove = 0;
+
+		for (const s of removed) {
+			if (s.offset + s.height <= viewTop) {
+				removedAbove += s.height;
+			}
+			if (state.attached.has(s.el)) {
+				state.stage.removeChild(s.el);
+				state.attached.delete(s.el);
+			}
+			state.pinned.delete(s.el);
+			clearItemInlineStyles(s.el);
+		}
+
+		state.slots = remaining;
+
+		if (state.slots.length === 0) {
+			deactivate();
+			return removed.length;
+		}
+
+		let offset = 0;
+		for (let i = 0; i < state.slots.length; i++) {
+			const s = state.slots[i];
+			s.offset = offset;
+			s.el._vsOffset = offset;
+			s.el._vsIndex = i;
+			if (state.attached.has(s.el)) {
+				s.el.style.top = offset + 'px';
+			}
+			offset += s.height;
+		}
+		state.totalHeight = offset;
+		state.stage.style.height = offset + 'px';
+
+		if (removedAbove > 0) {
+			container.scrollTop = Math.max(0, scrollTop - removedAbove);
+		}
+
+		updateVisible();
+		return removed.length;
+	}
+
+	function pin(el) {
+		if (!el) return;
+		state.pinned.add(el);
+		if (state.active) updateVisible();
+	}
+
+	function unpin(el) {
+		if (!el) return;
+		state.pinned.delete(el);
+		if (state.active) updateVisible();
+	}
+
+	function scrollToIndex(index, { align = 'start', behavior = 'auto' } = {}) {
+		if (!state.active) {
+			const items = collectNaturalItems();
+			const target = items[index];
+			if (target) target.scrollIntoView({ block: align, behavior });
+			return;
+		}
+		if (index < 0 || index >= state.slots.length) return;
+		const slot = state.slots[index];
+		const stageTop = state.stage.offsetTop || 0;
+		let targetTop = stageTop + slot.offset;
+		if (align === 'center') {
+			targetTop = stageTop + slot.offset - (container.clientHeight - slot.height) / 2;
+		} else if (align === 'end') {
+			targetTop = stageTop + slot.offset - container.clientHeight + slot.height;
+		}
+		container.scrollTo({ top: Math.max(0, targetTop), behavior });
+		updateVisible();
+		wake();
+	}
+
+	function scrollToBottom(behavior = 'auto') {
+		container.scrollTo({ top: container.scrollHeight, behavior });
+		if (state.active) {
+			updateVisible();
+			wake();
+		}
+	}
+
+	function deactivate() {
+		if (state.rafId) { cancelAnimationFrame(state.rafId); state.rafId = null; }
+		if (state.loopId !== null) { cancelAnimationFrame(state.loopId); state.loopId = null; }
+		if (state.resizeTimer) { clearTimeout(state.resizeTimer); state.resizeTimer = null; }
+		if (state.settleTimer) { clearTimeout(state.settleTimer); state.settleTimer = null; }
+		state.pendingActivation = false;
+
+		if (state.active && state.stage) {
+			const frag = document.createDocumentFragment();
+			for (const slot of state.slots) {
+				clearItemInlineStyles(slot.el);
+				frag.appendChild(slot.el);
+			}
+			state.stage.replaceWith(frag);
+		}
+
+		state.active = false;
+		state.stage = null;
+		state.slots = [];
+		state.attached.clear();
+		state.totalHeight = 0;
+	}
+
+	function clear() {
+		if (state.active) {
+			deactivate();
+		}
+		const items = collectNaturalItems();
+		for (const el of items) el.remove();
+		state.pinned.clear();
+	}
+
+	function setItems(elements = [], { preserveScroll = false } = {}) {
+		const prevScroll = preserveScroll ? container.scrollTop : 0;
+		clear();
+		const frag = document.createDocumentFragment();
+		for (const el of elements) {
+			if (el instanceof HTMLElement) frag.appendChild(el);
+		}
+		container.appendChild(frag);
+		if (elements.length >= state.threshold) {
+			activate();
+		}
+		if (preserveScroll && prevScroll > 0) {
+			container.scrollTop = prevScroll;
+			if (state.active) updateVisible();
+		}
+	}
+
+	function destroy() {
+		deactivate();
+		resizeObserver.disconnect();
+		container.removeEventListener('scroll', onScroll);
+		container.removeEventListener('click', onInteract);
+		container.removeEventListener('keydown', onInteract);
+		container.removeEventListener('focusin', onInteract);
+		if (container._nuiVirtualScroll === controller) {
+			delete container._nuiVirtualScroll;
+		}
+	}
+
+	const controller = {
+		activate,
+		activateWhenReady,
+		deactivate,
+		recalc,
+		refresh: recalc,
+		wake,
+		append,
+		remove,
+		clear,
+		setItems,
+		pin,
+		unpin,
+		scrollToIndex,
+		scrollToBottom,
+		destroy,
+		get isVirtual() { return state.active; },
+		get count() { return state.active ? state.slots.length : collectNaturalItems().length; },
+		get attachedCount() { return state.active ? state.attached.size : collectNaturalItems().length; },
+		get totalHeight() { return state.active ? state.totalHeight : container.scrollHeight; },
+		get items() { return state.active ? state.slots.map(s => s.el) : collectNaturalItems(); },
+		get slots() { return state.slots; }
+	};
+
+	container._nuiVirtualScroll = controller;
+
+	if (opts.autoActivate !== false && collectNaturalItems().length >= state.threshold) {
+		if (opts.settleDelay > 0) {
+			activateWhenReady(opts.settleDelay);
+		} else {
+			activate();
+		}
+	}
+
+	return controller;
+}
+
+registerComponent('nui-virtual-scroll', (element) => {
+	element.classList.add('nui-virtual-scroll');
+
+	const getOptions = () => ({
+		threshold: element.hasAttribute('threshold') ? Number(element.getAttribute('threshold')) : VS_DEFAULT_THRESHOLD,
+		margin: element.hasAttribute('margin') ? Number(element.getAttribute('margin')) : VS_DEFAULT_MARGIN,
+		items: element.getAttribute('items') || null,
+		autoActivate: false
+	});
+
+	const ctrl = createVirtualScroll(element, getOptions());
+
+	element.vs = ctrl;
+	element.activate = () => ctrl.activate();
+	element.activateWhenReady = (delay, onDone) => ctrl.activateWhenReady(delay, onDone);
+	element.deactivate = () => ctrl.deactivate();
+	element.recalc = () => ctrl.recalc();
+	element.refresh = () => ctrl.recalc();
+	element.wake = () => ctrl.wake();
+	element.appendItem = (el) => ctrl.append(el);
+	element.appendItems = (els) => {
+		for (const el of els) ctrl.append(el);
+	};
+	element.removeItem = (target) => ctrl.remove(target);
+	element.clear = () => ctrl.clear();
+	element.setItems = (els, opts) => ctrl.setItems(els, opts);
+	element.pin = (el) => ctrl.pin(el);
+	element.unpin = (el) => ctrl.unpin(el);
+	element.scrollToIndex = (index, opts) => ctrl.scrollToIndex(index, opts);
+	element.scrollToBottom = (behavior) => ctrl.scrollToBottom(behavior);
+	element.getItems = () => ctrl.items;
+
+	Object.defineProperties(element, {
+		isVirtual: { get: () => ctrl.isVirtual, configurable: true },
+		itemCount: { get: () => ctrl.count, configurable: true },
+		attachedCount: { get: () => ctrl.attachedCount, configurable: true }
+	});
+
+	requestAnimationFrame(() => {
+		if (element.isConnected) ctrl.activate();
+	});
+
+	return () => {
+		ctrl.destroy();
+	};
+}, (element) => {
+	element._nui_initialized = false;
+});
 
 const dropzoneFactory = {
 	create(zones, callback, target) {
@@ -8039,6 +8775,9 @@ const componentsApi = {
 	dropzone: dropzoneFactory,
 	linkList: {
 		create: createLinkList
+	},
+	virtualScroll: {
+		create: createVirtualScroll
 	},
 	icon: iconSystem
 };
@@ -8107,6 +8846,7 @@ export const nui = {
 				'nui-file-tree':    { js: 'lib/modules/nui-file-tree.js',    css: 'css/modules/nui-file-tree.css' },
 				'nui-file-icon':    { js: 'lib/modules/nui-file-icon.js',    css: 'css/modules/nui-file-icon.css' },
 				'nui-file-list':    { js: 'lib/modules/nui-file-list.js',    css: 'css/modules/nui-file-list.css' },
+				'nui-notepad':      { js: 'lib/modules/nui-notepad.js',      css: 'css/modules/nui-notepad.css' },
 			};
 
 			const _loading = new Set();

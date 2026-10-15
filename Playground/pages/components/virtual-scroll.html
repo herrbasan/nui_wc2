@@ -1,0 +1,85 @@
+<script type="application/ld+json">
+{
+  "@context": "nui",
+  "@type": "Component",
+  "name": "nui-virtual-scroll",
+  "group": "layout",
+  "description": "Variable-height detached-element virtual scroller with binary-search windowing, reactive height cascade, and scroll anchoring.",
+  "events": [],
+  "innerElement": null,
+  "imports": null
+}
+</script>
+
+<nui-details summary="LLM Guide - nui-virtual-scroll" src="../documentation/components/virtual-scroll.md" lazy>
+</nui-details>
+
+<header>
+	<h1>Virtual Scroll (Variable Height)</h1>
+	<p class="lead">Detached-element recycler for arbitrary variable-height DOM items — preserves component state, cascades live height changes at 60fps, and anchors scroll position when off-screen items resize or delete.</p>
+</header>
+
+<section>
+	<h2>Interactive Recycler Demo</h2>
+	<p>Unlike uniform-row virtual lists, <code>&lt;nui-virtual-scroll&gt;</code> (and <code>nui.util.virtualScroll</code>) measures arbitrary variable-height elements once in natural flow, stages them with an explicit pixel height, and detaches off-screen nodes via <code>removeChild</code> so only the visible viewport window stays in the browser's layout tree.</p>
+
+	<div class="demo-area">
+		<div class="demo-actions" style="display: flex; flex-wrap: wrap; gap: var(--nui-space-half); align-items: center; margin-bottom: var(--nui-space);">
+			<nui-button variant="primary"><button type="button" data-vs-action="seed-300">Load 300 Mixed Items</button></nui-button>
+			<nui-button variant="outline"><button type="button" data-vs-action="seed-15">Load 15 Items (Below Threshold)</button></nui-button>
+			<nui-button variant="outline"><button type="button" data-vs-action="append">Append Item</button></nui-button>
+			<nui-button variant="outline"><button type="button" data-vs-action="grow-above">Grow Item Above Viewport</button></nui-button>
+			<nui-button variant="outline"><button type="button" data-vs-action="remove-above">Delete Item Above Viewport</button></nui-button>
+			<nui-button variant="outline"><button type="button" data-vs-action="jump-middle">Jump to #150</button></nui-button>
+			<nui-button variant="outline"><button type="button" data-vs-action="jump-bottom">Jump to Bottom</button></nui-button>
+		</div>
+
+		<div class="demo-result" id="vs-telemetry" style="display: flex; flex-wrap: wrap; gap: var(--nui-space-double); margin-bottom: var(--nui-space); font-size: var(--font-size-small); color: var(--text-color-dim);">
+			<span>Mode: <strong data-stat="mode">-</strong></span>
+			<span>Total Items: <strong data-stat="total">0</strong></span>
+			<span>Attached in DOM: <strong data-stat="attached">0</strong></span>
+			<span>Stage Height: <strong data-stat="height">0px</strong></span>
+			<span>Scroll Top: <strong data-stat="scroll">0px</strong></span>
+		</div>
+
+		<div class="demo-chrome" style="padding: 0;">
+			<nui-virtual-scroll id="demo-vs" threshold="30" margin="200" style="height: 32rem; padding: var(--nui-space);">
+			</nui-virtual-scroll>
+		</div>
+	</div>
+
+	<nui-code>
+		<script type="example" data-lang="html">
+<!-- Declarative element: activates automatically once child count >= threshold (default 30) -->
+<nui-virtual-scroll id="feed" threshold="30" margin="200" style="height: 32rem; gap: var(--nui-space);">
+	<nui-card>Variable-height card 1...</nui-card>
+	<nui-card>Variable-height card 2...</nui-card>
+</nui-virtual-scroll>
+		</script>
+	</nui-code>
+</section>
+
+<section>
+	<h2>Programmatic Utility (<code>nui.util.virtualScroll</code>)</h2>
+	<p>Attach the same variable-height recycler to any existing scrollable container without changing its tag name:</p>
+
+	<nui-code>
+		<script type="example" data-lang="js">
+const vs = nui.util.virtualScroll(containerEl, {
+	items: '.chat-message',   // optional selector (default: direct children)
+	threshold: 30,            // skip staging below 30 items
+	margin: 200               // px overscan above and below viewport
+});
+
+// Append new variable-height element (auto-activates when crossing threshold)
+vs.append(messageEl);
+
+// Exempt an actively streaming element from detachment
+vs.pin(streamingEl);
+vs.unpin(streamingEl);
+
+// Remove by element reference or predicate (automatically anchors scrollTop)
+vs.remove(el => el.dataset.exchangeId === id);
+		</script>
+	</nui-code>
+</section>

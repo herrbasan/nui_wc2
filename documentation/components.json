@@ -1,6 +1,6 @@
 {
 	"schemaVersion": 1,
-	"generated": "2026-10-05T16:54:03.502Z",
+	"generated": "2026-10-15T07:34:11.155Z",
 	"source": "Playground/pages/**",
 	"components": [
 		{
@@ -464,6 +464,19 @@
 			"page": "components/tooltip",
 			"demoPath": "Playground/pages/components/tooltip.html",
 			"docPath": "documentation/components/tooltip.md"
+		},
+		{
+			"@context": "nui",
+			"@type": "Component",
+			"name": "nui-virtual-scroll",
+			"group": "layout",
+			"description": "Variable-height detached-element virtual scroller with binary-search windowing, reactive height cascade, and scroll anchoring.",
+			"events": [],
+			"innerElement": null,
+			"imports": null,
+			"page": "components/virtual-scroll",
+			"demoPath": "Playground/pages/components/virtual-scroll.html",
+			"docPath": "documentation/components/virtual-scroll.md"
 		}
 	],
 	"addons": [
@@ -650,6 +663,24 @@
 			"page": "addons/menu",
 			"demoPath": "Playground/pages/addons/menu.html",
 			"docPath": "documentation/addons/menu.md"
+		},
+		{
+			"@context": "nui",
+			"@type": "Component",
+			"name": "nui-notepad",
+			"group": "data",
+			"description": "Spatial desk and post-it wall for workshop.notepad (commitments, step punch-lists, upcoming dates, and context-tagged pins).",
+			"events": [
+				"nui-notepad-mutate"
+			],
+			"innerElement": null,
+			"imports": {
+				"js": "NUI/lib/modules/nui-notepad.js",
+				"css": "NUI/css/modules/nui-notepad.css"
+			},
+			"page": "addons/notepad",
+			"demoPath": "Playground/pages/addons/notepad.html",
+			"docPath": "documentation/addons/notepad.md"
 		},
 		{
 			"@context": "nui",
@@ -1305,6 +1336,14 @@
 			"events": [
 				{
 					"name": "nui-menu-action"
+				}
+			]
+		},
+		{
+			"component": "nui-notepad",
+			"events": [
+				{
+					"name": "nui-notepad-mutate"
 				}
 			]
 		},

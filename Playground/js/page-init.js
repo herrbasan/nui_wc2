@@ -4,6 +4,7 @@
 
 import { nui } from '../../NUI/nui.js';
 import '../../NUI/lib/modules/nui-blocks-editor.js';
+import '../../NUI/lib/modules/nui-notepad.js';
 import { runFormatRoundtrip } from '../../NUI/lib/modules/nui-format-roundtrip.js';
 import * as jsonModel from '../../NUI/lib/modules/nui-json-model.js';
 import { setupJsonGrid } from '../../NUI/lib/modules/nui-json-grid.js';
@@ -4098,6 +4099,244 @@ nui.registerPage('experiments/blocks-editor', {
 		const thumbs = new Map(DEMO_MEDIA_LIBRARY.map(m => [m.src, m.thumb]));
 		editor.resolveThumb = async (src, size = 'thumb') =>
 			size === 'thumb' ? (thumbs.get(src) || src) : src;
+	}
+});
+
+nui.registerPage('addons/notepad', {
+	html: 'addons/notepad.html',
+	async init(element) {
+		const board = element.querySelector('#notepad-lab');
+		if (!board) return;
+
+		const [snapRes, item13Res, item23Res] = await Promise.all([
+			fetch('pages/experiments/notepad-snapshot.json'),
+			fetch('pages/experiments/notepad-item-13.json'),
+			fetch('pages/experiments/notepad-item-23.json')
+		]);
+		const snapshot = await snapRes.json();
+		const item13 = await item13Res.json();
+		const item23 = await item23Res.json();
+
+		// Enrich the fixture set slightly so all step checklists & notes are tangible in the UX lab
+		const extraItems = [
+			item13,
+			item23,
+			{
+				id: 15,
+				type: 'task',
+				title: 'DEMO: Update lecture 3 charts for rerun',
+				due: '2026-12-01',
+				status: 'open',
+				owner: 'david',
+				context: 'teaching',
+				notes: 'Before winter semester block starts',
+				steps: [
+					{ done: false, text: 're-render depth-gradient chart in dark palette' },
+					{ done: false, text: 'export SVG + PNG plates for slide deck' }
+				]
+			},
+			{
+				id: 24,
+				type: 'task',
+				title: 'DEMO: Curate watchlist for Hartl corpus',
+				due: '2026-10-19',
+				status: 'open',
+				owner: 'machine',
+				context: 'research',
+				steps: [
+					{ done: false, text: 're-scan watchlist feeds' },
+					{ done: false, text: 'cluster new papers by empirical vs polemic' },
+					{ done: false, text: 'flag top 3 candidates for pin promotion' },
+					{ done: false, text: 'update corpus manifest' }
+				]
+			},
+			{
+				id: 10,
+				type: 'idea',
+				title: 'DEMO: Pin — decide hero style for research notes',
+				owner: 'david',
+				context: 'blog',
+				notes: 'pick up at next blog session',
+				ref: ['blog/images/hero-prompts.md']
+			},
+			{
+				id: 12,
+				type: 'idea',
+				title: 'DEMO: Pin — long-title variant to check how post-it wrapping behaves with a generous wording that overflows a small card',
+				owner: 'david',
+				context: 'arena',
+				ref: ['https://github.com/herrbasan/mcp_server']
+			}
+		];
+
+		board.load(snapshot, extraItems);
+
+		element.addEventListener('click', (e) => {
+			const btn = e.target.closest('[data-np-demo]');
+			if (!btn) return;
+			if (btn.dataset.npDemo === 'fixture') {
+				board.load(snapshot, extraItems);
+			} else if (btn.dataset.npDemo === 'bulk') {
+				const contexts = ['arena', 'blog', 'teaching', 'research', 'infrastructure', 'nspeech', 'raum'];
+				const bulk = [...extraItems];
+				for (let i = 1; i <= 110; i++) {
+					const ctx = contexts[i % contexts.length];
+					const isTask = i % 3 !== 0;
+					const owner = i % 4 === 0 ? 'machine' : 'david';
+					const dueOffset = (i % 15) - 3;
+					const dueDay = String(Math.max(1, Math.min(28, 12 + dueOffset))).padStart(2, '0');
+					bulk.push({
+						id: 1000 + i,
+						type: isTask ? 'task' : 'idea',
+						title: isTask
+							? `[#${i}] Verify ${ctx} pipeline stage & variable card height`
+							: `[#${i}] Observation on ${ctx} latency and token budget behavior across long multi-turn runs`,
+						due: isTask && i % 2 === 0 ? `2026-10-${dueDay}` : null,
+						status: i % 11 === 0 ? 'done' : 'open',
+						owner,
+						context: ctx,
+						notes: i % 2 === 0 ? `Note for item #${i} in #${ctx} — variable height body line.` : null,
+						steps: isTask ? Array.from({ length: (i % 4) + 1 }, (_, sIdx) => ({
+							done: sIdx === 0 && i % 2 === 0,
+							text: `Step ${sIdx + 1}: check ${ctx} invariant and record metrics`
+						})) : undefined,
+						ref: i % 5 === 0 ? [`docs/${ctx}/spec-${i}.md`] : []
+					});
+				}
+				board._mode = 'list';
+				board._ownerFilter = 'both';
+				board.load(snapshot, bulk);
+			}
+		});
+	}
+});
+
+nui.registerPage('components/virtual-scroll', {
+	html: 'components/virtual-scroll.html',
+	init(element, params, nui) {
+		const scroller = element.querySelector('#demo-vs');
+		if (!scroller) return;
+
+		const statMode = element.querySelector('[data-stat="mode"]');
+		const statTotal = element.querySelector('[data-stat="total"]');
+		const statAttached = element.querySelector('[data-stat="attached"]');
+		const statHeight = element.querySelector('[data-stat="height"]');
+		const statScroll = element.querySelector('[data-stat="scroll"]');
+
+		const SAMPLE_BODIES = [
+			'Short status update — single-line note with minimal height.',
+			'Medium project card: includes a multi-sentence summary describing how detached-element recycling keeps off-screen nodes out of the browser layout tree while preserving their DOM identity and listeners.',
+			'Tall technical item with expandable details and code:\n```js\nconst vs = nui.util.virtualScroll(container, { threshold: 30, margin: 200 });\nvs.append(card);\n```\nRe-attaching is instant because `<nui-markdown>` and `<nui-code>` guard against re-parsing.',
+			' punch-list card:\n- Measure natural height + CSS margins once\n- Stage with explicit pixel height (`flex-shrink: 0`)\n- Binary-search visible window (`O(log n + visible)`)\n- Cascade `style.top` only on attached elements\n- Anchor `scrollTop` when items above viewport resize or delete'
+		];
+
+		let nextId = 1;
+
+		function buildCard(index) {
+			const card = document.createElement('nui-card');
+			card.dataset.itemId = String(index);
+			const variant = index % SAMPLE_BODIES.length;
+
+			const head = document.createElement('div');
+			head.style.cssText = 'display: flex; justify-content: space-between; align-items: center; gap: var(--nui-space);';
+			const title = document.createElement('strong');
+			title.textContent = `Item #${index}`;
+			const badge = document.createElement('nui-badge');
+			badge.setAttribute('variant', variant === 2 ? 'primary' : variant === 3 ? 'success' : 'info');
+			badge.textContent = variant === 0 ? 'Compact' : variant === 1 ? 'Medium' : variant === 2 ? 'Code + Details' : 'Checklist';
+			head.append(title, badge);
+
+			const md = document.createElement('nui-markdown');
+			const script = document.createElement('script');
+			script.type = 'text/markdown';
+			script.textContent = SAMPLE_BODIES[variant];
+			md.appendChild(script);
+
+			card.append(head, md);
+
+			if (variant === 2 || variant === 3) {
+				const details = document.createElement('nui-details');
+				details.setAttribute('summary', 'Toggle variable-height expansion (tests 60fps cascade)');
+				const body = document.createElement('p');
+				body.style.marginTop = 'var(--nui-space-half)';
+				body.textContent = 'Expanded content! The reactive rAF height loop measures this height change during the frame read phase and cascades all offsets below it without layout thrashing.';
+				details.appendChild(body);
+				card.appendChild(details);
+			}
+
+			return card;
+		}
+
+		function updateStats() {
+			if (!scroller.vs) return;
+			statMode.textContent = scroller.isVirtual ? 'Virtualized (.nui-vs-stage)' : 'Normal Flow (< threshold)';
+			statTotal.textContent = String(scroller.itemCount);
+			statAttached.textContent = String(scroller.attachedCount);
+			statHeight.textContent = `${Math.round(scroller.vs.totalHeight)}px`;
+			statScroll.textContent = `${Math.round(scroller.scrollTop)}px`;
+		}
+
+		function seed(count) {
+			nextId = 1;
+			const items = [];
+			for (let i = 0; i < count; i++) {
+				items.push(buildCard(nextId++));
+			}
+			scroller.setItems(items);
+			requestAnimationFrame(updateStats);
+		}
+
+		scroller.addEventListener('scroll', () => requestAnimationFrame(updateStats), { passive: true });
+		scroller.addEventListener('click', () => setTimeout(updateStats, 60));
+
+		element.addEventListener('click', (e) => {
+			const btn = e.target.closest('[data-vs-action]');
+			if (!btn) return;
+			const action = btn.dataset.vsAction;
+
+			if (action === 'seed-300') {
+				seed(300);
+			} else if (action === 'seed-15') {
+				seed(15);
+			} else if (action === 'append') {
+				scroller.appendItem(buildCard(nextId++));
+				scroller.scrollToBottom('smooth');
+				requestAnimationFrame(updateStats);
+			} else if (action === 'grow-above') {
+				if (scroller.scrollTop < 300) {
+					scroller.scrollToIndex(20, { align: 'start' });
+				}
+				const all = scroller.getItems();
+				const first = all[0];
+				if (first) {
+					// Temporarily attach or mutate first item above viewport and re-measure
+					const extra = document.createElement('p');
+					extra.style.cssText = 'padding: var(--nui-space); background: var(--color-shade3); border-radius: var(--border-radius1);';
+					extra.textContent = `Grew item #${first.dataset.itemId} above viewport at ${new Date().toLocaleTimeString()} — scroll anchoring kept your viewport stationary!`;
+					first.appendChild(extra);
+					scroller.recalc();
+					updateStats();
+				}
+			} else if (action === 'remove-above') {
+				if (scroller.scrollTop < 300) {
+					scroller.scrollToIndex(20, { align: 'start' });
+				}
+				const all = scroller.getItems();
+				if (all.length > 0) {
+					scroller.removeItem(all[0]);
+					updateStats();
+				}
+			} else if (action === 'jump-middle') {
+				scroller.scrollToIndex(Math.min(149, scroller.itemCount - 1), { align: 'center', behavior: 'smooth' });
+				setTimeout(updateStats, 350);
+			} else if (action === 'jump-bottom') {
+				scroller.scrollToBottom('smooth');
+				setTimeout(updateStats, 350);
+			}
+		});
+
+		seed(300);
+		element.show = () => requestAnimationFrame(updateStats);
 	}
 });
 

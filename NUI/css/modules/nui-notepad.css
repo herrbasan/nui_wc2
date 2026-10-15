@@ -1,0 +1,741 @@
+/* =============================================================================
+   NUI NOTEPAD ADDON
+   Tonal hierarchy from nui-blocks-editor (shades, not border-in-border).
+   Context-driven UX from nui-table-editor (zero chrome at rest, 0px size change
+   on select, floating context toolbar above the active card).
+   ============================================================================= */
+
+nui-notepad {
+	display: block;
+	width: 100%;
+	box-sizing: border-box;
+
+	/* Tonal ladder — softened card-to-lane contrast with subtle border + elevation */
+	--np-lane-bg: light-dark(rgb(230, 233, 239), rgb(42, 42, 42));
+	--np-lane-header-bg: light-dark(rgb(218, 222, 230), rgb(52, 52, 52));
+	--np-card-bg: light-dark(rgb(244, 246, 250), rgb(33, 33, 33));
+	--np-card-hover-bg: light-dark(rgb(249, 250, 253), rgb(37, 37, 37));
+	--np-pin-bg: light-dark(rgb(239, 242, 247), rgb(36, 36, 36));
+	--np-well-bg: light-dark(rgb(235, 238, 244), rgb(27, 27, 27));
+	--np-card-border: light-dark(rgb(224, 228, 235), rgb(44, 44, 44));
+	--np-card-shadow: 0 2px 5px light-dark(rgba(0, 0, 0, 0.07), rgba(0, 0, 0, 0.35));
+
+	/* Selection & context toolbar tokens (from nui-table-editor) */
+	--np-active-ring: var(--text-color-dim);
+	--np-on-bg: var(--color-shade4);
+	--np-del-hover: color-mix(in srgb, var(--palette-alert) 58%, var(--color-shade4));
+
+	/* Urgency accents (square left edge only) */
+	--np-urgent: var(--palette-alert-hi);
+	--np-soon: var(--palette-mark-hi);
+	--np-ease: cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* Reset NUI global bare element defaults inside nui-notepad so theme form rules
+   (width: 100%, min-height: 2.5rem) never distort compact toolbar controls.
+   `nui-notepad :where(button)` has specificity (0,0,1), beating theme's `button`
+   (0,0,1) by source order while yielding to all class rules (.nui-select-control,
+   .nui-clear-btn, .nui-input-icon, .np-*). */
+nui-notepad :where(button) {
+	min-width: 0;
+	min-height: 0;
+	line-height: 1.4;
+	white-space: normal;
+	justify-content: flex-start;
+	text-align: left;
+	background-color: transparent;
+	color: var(--text-color);
+	border: none;
+	padding: 0;
+}
+
+nui-notepad .np-shell {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--nui-space) * 1.5);
+}
+
+/* ── Quiet Top Bar (Tonal wells, gracious breathing room) ─────────────────── */
+
+nui-notepad .np-TopBar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--nui-space);
+}
+
+nui-notepad .np-TopControls {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--nui-space);
+}
+
+nui-notepad .np-Seg {
+	display: inline-flex;
+	align-items: center;
+	gap: 2px;
+	padding: 3px;
+	background-color: var(--np-well-bg);
+	border-radius: var(--border-radius2);
+}
+
+nui-notepad button.np-SegBtn {
+	appearance: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: 2rem;
+	padding: 0 calc(var(--nui-space) * 0.85);
+	background-color: transparent;
+	color: var(--text-color-dim);
+	border: 0;
+	border-radius: var(--border-radius1);
+	font: inherit;
+	font-size: var(--font-size-small);
+	cursor: pointer;
+	white-space: nowrap;
+	transition: background-color 120ms var(--np-ease), color 120ms var(--np-ease);
+}
+
+nui-notepad button.np-SegBtn:hover {
+	background-color: var(--np-lane-bg);
+	color: var(--text-color);
+}
+
+nui-notepad button.np-SegBtn[aria-pressed="true"] {
+	background-color: var(--np-on-bg);
+	color: var(--text-color);
+	font-weight: 500;
+}
+
+/* Upcoming Dates Strip (right side of TopBar) */
+nui-notepad .np-DatesStrip {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--nui-space-half);
+}
+
+nui-notepad button.np-DatePill {
+	appearance: none;
+	display: inline-flex;
+	align-items: center;
+	gap: var(--nui-space-half);
+	height: 2.15rem;
+	padding: 0 var(--nui-space);
+	background: var(--np-well-bg);
+	border-radius: var(--border-radius2);
+	font: inherit;
+	font-size: var(--font-size-small);
+	color: var(--text-color);
+	cursor: pointer;
+	white-space: nowrap;
+	transition: background 120ms var(--np-ease);
+}
+
+nui-notepad button.np-DatePill:hover {
+	background: var(--np-lane-bg);
+}
+
+nui-notepad button.np-DatePill nui-icon {
+	width: 0.95rem;
+	height: 0.95rem;
+	color: var(--text-color-dim);
+}
+
+nui-notepad .np-DateWhen {
+	color: var(--text-color-dim);
+	font-size: var(--font-size-xsmall);
+}
+
+/* ── Swimlanes Grid & Gracious Tonal Columns ─────────────────────────────── */
+
+nui-notepad .np-SwimlanesGrid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(21rem, 1fr));
+	gap: calc(var(--nui-space) * 1.5);
+	align-items: start;
+}
+
+nui-notepad .np-Swimlane {
+	background: var(--np-lane-bg);
+	border-radius: var(--border-radius2);
+	overflow: visible;
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+nui-notepad .np-LaneHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	background: var(--np-lane-header-bg);
+	padding: calc(var(--nui-space) * 0.85) calc(var(--nui-space) * 1.25);
+	border-top-left-radius: var(--border-radius2);
+	border-top-right-radius: var(--border-radius2);
+	user-select: none;
+}
+
+nui-notepad .np-LaneName {
+	font-size: var(--font-size-small);
+	font-weight: 600;
+	letter-spacing: 0.02em;
+	color: var(--text-color);
+	opacity: 0.85;
+}
+
+nui-notepad .np-LaneCount {
+	font-size: var(--font-size-small);
+	color: var(--text-color-dim);
+	opacity: 0.55;
+}
+
+nui-notepad .np-LaneBody {
+	padding: calc(var(--nui-space) * 1.1) calc(var(--nui-space) * 1.15) var(--nui-space-half);
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--nui-space) * 0.85);
+}
+
+/* ── Minimalist Add Strip (Exact nui-blocks-editor .editor-add-strip) ─────── */
+
+nui-notepad .np-AddStrip {
+	padding: var(--nui-space-quarter) calc(var(--nui-space) * 1.15) var(--nui-space-half);
+}
+
+nui-notepad button.np-AddIconBtn {
+	position: relative;
+	z-index: 1;
+	width: 100%;
+	background: none;
+	border: none;
+	color: var(--text-color-dim);
+	opacity: 0.22;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	padding: var(--nui-space-quarter) 0;
+	border-top: solid 0.15rem transparent;
+	border-radius: 0;
+	transition: opacity 0.15s var(--np-ease), color 0.15s var(--np-ease), border-color 0.15s var(--np-ease);
+}
+
+nui-notepad button.np-AddIconBtn nui-icon {
+	width: 1.35rem;
+	height: 1.35rem;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+nui-notepad button.np-AddIconBtn:hover,
+nui-notepad button.np-AddIconBtn:focus-visible {
+	color: var(--color-highlight);
+	opacity: 1;
+	border-top-color: var(--color-highlight);
+}
+
+/* Inline Composer (when add_circle is clicked) */
+nui-notepad .np-InlineComposer {
+	background: var(--np-card-bg);
+	padding: var(--nui-space) calc(var(--nui-space) * 1.15);
+	border-radius: var(--border-radius1);
+	display: flex;
+	flex-direction: column;
+	gap: var(--nui-space-half);
+	outline: var(--border-thickness) solid var(--np-active-ring);
+}
+
+nui-notepad input.np-ComposerInput {
+	width: 100%;
+	min-height: 0;
+	box-sizing: border-box;
+	background: transparent;
+	border: none;
+	color: var(--text-color);
+	font: inherit;
+	font-size: var(--font-size-base);
+	outline: none;
+	padding: 0;
+}
+
+nui-notepad input.np-ComposerInput::placeholder {
+	color: var(--color-text-muted);
+}
+
+nui-notepad .np-ComposerBar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--nui-space-half);
+}
+
+/* ── Cards (Gracious Paddings, Subtle Border + Drop-Shadow, 0px Size Change) ─ */
+
+nui-notepad .np-Card {
+	position: relative;
+	background: var(--np-card-bg);
+	border: var(--border-thickness) solid var(--np-card-border);
+	box-shadow: var(--np-card-shadow);
+	border-radius: var(--border-radius1);
+	padding: calc(var(--nui-space) * 1.05) calc(var(--nui-space) * 1.25);
+	display: flex;
+	flex-direction: column;
+	gap: var(--nui-space-half);
+	cursor: pointer;
+	transition: background-color 120ms var(--np-ease), border-color 120ms var(--np-ease), box-shadow 120ms var(--np-ease);
+}
+
+nui-notepad .np-Card:hover {
+	background: var(--np-card-hover-bg);
+}
+
+nui-notepad .np-Card[data-type="idea"] {
+	background: var(--np-pin-bg);
+}
+
+nui-notepad .np-Card[data-type="idea"]:hover {
+	background: var(--np-card-hover-bg);
+}
+
+/* Square left accent edge (border-radius: 0 on accented left edge) */
+nui-notepad .np-Card[data-tone="overdue"] {
+	border-left: 3px solid var(--np-urgent);
+	border-top-left-radius: 0;
+	border-bottom-left-radius: 0;
+}
+
+nui-notepad .np-Card[data-tone="soon"] {
+	border-left: 3px solid var(--np-soon);
+	border-top-left-radius: 0;
+	border-bottom-left-radius: 0;
+}
+
+nui-notepad .np-Card[data-done="true"] {
+	opacity: 0.45;
+}
+
+/* Selected state: hairline ring inward (outline-offset: -1px) — zero box-size change! */
+nui-notepad .np-Card[data-selected="true"] {
+	background: var(--np-card-bg);
+	outline: var(--border-thickness) solid var(--np-active-ring);
+	outline-offset: -1px;
+	cursor: default;
+	z-index: 20;
+}
+
+/* Card Header Row: Title + Right-aligned Due Text */
+nui-notepad .np-CardHeadRow {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--nui-space);
+}
+
+nui-notepad .np-CardTitle {
+	font-size: var(--font-size-base);
+	font-weight: 600;
+	line-height: 1.45;
+	color: var(--text-color);
+	margin: 0;
+	flex: 1;
+	min-width: 0;
+	overflow-wrap: break-word;
+	outline: none;
+}
+
+nui-notepad .np-Card[data-type="idea"] .np-CardTitle {
+	font-weight: 500;
+}
+
+nui-notepad .np-Card[data-selected="true"] .np-CardTitle {
+	cursor: text;
+}
+
+nui-notepad .np-Card[data-done="true"] .np-CardTitle {
+	text-decoration: line-through;
+}
+
+nui-notepad .np-DueText {
+	font-size: var(--font-size-small);
+	font-weight: 500;
+	white-space: nowrap;
+	color: var(--text-color-dim);
+	flex-shrink: 0;
+}
+
+nui-notepad .np-DueText[data-tone="overdue"] {
+	color: light-dark(var(--palette-alert), var(--palette-alert-hi));
+}
+
+nui-notepad .np-DueText[data-tone="soon"] {
+	color: light-dark(var(--palette-mark), var(--palette-mark-hi));
+}
+
+nui-notepad .np-CardNotes {
+	font-size: var(--font-size-small);
+	color: var(--text-color-dim);
+	line-height: 1.5;
+	margin: 0;
+	outline: none;
+	overflow-wrap: break-word;
+}
+
+nui-notepad .np-Card[data-selected="true"] .np-CardNotes {
+	cursor: text;
+}
+
+nui-notepad .np-CardNotes:empty::before {
+	content: attr(data-placeholder);
+	color: var(--color-text-muted);
+}
+
+/* ── Steps (Gracious, Tonal Wells, Zero Borders) ─────────────────────────── */
+
+nui-notepad .np-StepsList {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	margin-top: var(--nui-space-quarter);
+}
+
+nui-notepad .np-StepRow {
+	display: flex;
+	align-items: baseline;
+	gap: var(--nui-space-half);
+	padding: calc(var(--nui-space-quarter) * 1.35) var(--nui-space-half);
+	margin: 0 calc(var(--nui-space-half) * -1);
+	border-radius: var(--border-radius1);
+	color: var(--text-color-dim);
+	font-size: var(--font-size-small);
+	line-height: 1.45;
+	cursor: pointer;
+	transition: background 100ms var(--np-ease), color 100ms var(--np-ease);
+}
+
+nui-notepad .np-StepRow:hover {
+	background: var(--np-well-bg);
+	color: var(--text-color);
+}
+
+nui-notepad button.np-StepToggle {
+	appearance: none;
+	width: 1.1rem;
+	height: 1.1rem;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	color: var(--color-text-muted);
+	cursor: pointer;
+	font-size: 0.85rem;
+}
+
+nui-notepad .np-StepText {
+	flex: 1;
+	min-width: 0;
+	outline: none;
+	overflow-wrap: break-word;
+}
+
+nui-notepad .np-StepRow[data-done="true"] .np-StepText {
+	color: var(--color-text-muted);
+	text-decoration: line-through;
+}
+
+nui-notepad .np-StepRow[data-next="true"] {
+	background: var(--np-well-bg);
+	color: var(--text-color);
+}
+
+nui-notepad .np-StepRow[data-next="true"] button.np-StepToggle {
+	color: var(--text-color);
+}
+
+/* ── Floating Context Toolbar (Exact nui-table-editor .nte-zone geometry) ── */
+
+nui-notepad .np-ContextZone {
+	position: absolute;
+	bottom: 100%;
+	left: 0;
+	right: 0;
+	width: fit-content;
+	max-width: calc(100vw - 2rem);
+	margin-inline: auto;
+	margin-bottom: var(--nui-space-half);
+	display: flex;
+	align-items: center;
+	flex-wrap: nowrap;
+	gap: var(--nui-space-eighth);
+	padding: calc(var(--nui-space-eighth) * 3);
+	background-color: var(--color-base);
+	border: var(--border-thickness) solid var(--border-shade2);
+	border-radius: var(--border-radius3);
+	box-shadow: 0 2px 4px var(--shadow-color), 0 6px 16px var(--shadow-color);
+	z-index: 35;
+}
+
+nui-notepad .np-ContextZone[data-flip="below"] {
+	bottom: auto;
+	top: 100%;
+	margin-bottom: 0;
+	margin-top: var(--nui-space-half);
+}
+
+nui-notepad .np-ZoneSep {
+	width: 1px;
+	height: 1.1rem;
+	margin: 0 var(--nui-space-quarter);
+	background-color: var(--border-shade2);
+	flex: none;
+}
+
+nui-notepad button.np-ZoneBtn {
+	appearance: none;
+	flex: none;
+	width: auto;
+	min-width: 0;
+	min-height: 0;
+	height: 1.85rem;
+	padding: 0 var(--nui-space-half);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.35rem;
+	background-color: transparent;
+	color: var(--text-color-dim);
+	border: 0;
+	border-radius: var(--border-radius2);
+	cursor: pointer;
+	font: inherit;
+	font-size: var(--font-size-small);
+	line-height: 1;
+	white-space: nowrap;
+	transition: background-color 100ms var(--np-ease), color 100ms var(--np-ease);
+}
+
+nui-notepad button.np-ZoneBtn nui-icon {
+	width: 0.95rem;
+	height: 0.95rem;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+}
+
+nui-notepad button.np-ZoneBtn nui-icon svg {
+	display: block;
+}
+
+nui-notepad button.np-ZoneBtn:hover {
+	background-color: var(--color-shade2);
+	color: var(--text-color);
+}
+
+nui-notepad button.np-ZoneBtn[data-danger="true"]:hover {
+	background-color: var(--np-del-hover);
+	color: var(--text-color);
+}
+
+/* Hidden native date picker anchored inside the Due button */
+nui-notepad input.np-HiddenDate {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	min-height: 0;
+	padding: 0;
+	margin: 0;
+	opacity: 0;
+	pointer-events: none;
+	border: 0;
+}
+
+nui-notepad .np-RefsRow {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--nui-space-quarter);
+	margin-top: var(--nui-space-quarter);
+}
+
+nui-notepad .np-RefChip {
+	font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+	font-size: var(--font-size-xsmall);
+	padding: 2px var(--nui-space-half);
+	background: var(--np-well-bg);
+	color: var(--text-color-dim);
+	border-radius: var(--border-radius1);
+}
+
+/* =============================================================================
+   DESK (BENTO) & FOCUS MODES
+   ============================================================================= */
+
+nui-notepad .np-BentoLayout {
+	display: grid;
+	grid-template-columns: 1.25fr 1fr;
+	gap: calc(var(--nui-space) * 1.5);
+	align-items: start;
+}
+
+@media (max-width: 960px) {
+	nui-notepad .np-BentoLayout {
+		grid-template-columns: 1fr;
+	}
+}
+
+nui-notepad .np-IndexGrid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+	gap: calc(var(--nui-space) * 0.85);
+}
+
+nui-notepad .np-PinWall {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(15.5rem, 1fr));
+	gap: calc(var(--nui-space) * 0.85);
+}
+
+nui-notepad .np-FocusDeck {
+	display: grid;
+	grid-template-columns: minmax(20rem, 1fr) 1.35fr;
+	gap: calc(var(--nui-space) * 1.5);
+	align-items: start;
+}
+
+@media (max-width: 920px) {
+	nui-notepad .np-FocusDeck {
+		grid-template-columns: 1fr;
+	}
+}
+
+nui-notepad .np-StageQueue {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--nui-space-half);
+	padding: var(--nui-space-half) calc(var(--nui-space) * 1.15) var(--nui-space);
+}
+
+nui-notepad button.np-QueuePill {
+	appearance: none;
+	background: var(--np-well-bg);
+	color: var(--text-color-dim);
+	font: inherit;
+	font-size: var(--font-size-small);
+	padding: var(--nui-space-quarter) var(--nui-space-half);
+	border-radius: var(--border-radius1);
+	cursor: pointer;
+}
+
+nui-notepad button.np-QueuePill[aria-current="true"] {
+	background: var(--np-card-bg);
+	color: var(--text-color);
+	font-weight: 600;
+}
+
+/* =============================================================================
+   LIST MODE (nui-list-style filter/sort/search header + nui-virtual-scroll)
+   ============================================================================= */
+
+nui-notepad .np-ListPanel {
+	width: 100%;
+}
+
+nui-notepad .np-ListHeader {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--nui-space);
+	padding: calc(var(--nui-space) * 0.85) calc(var(--nui-space) * 1.25);
+	background: var(--np-lane-header-bg);
+	border-top-left-radius: var(--border-radius2);
+	border-top-right-radius: var(--border-radius2);
+}
+
+nui-notepad .np-ListHeaderLeft {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--nui-space-half);
+}
+
+nui-notepad .np-ListHeaderLeft nui-select[size="small"] {
+	min-width: 9rem;
+}
+
+nui-notepad button.np-SortDirBtn {
+	appearance: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	height: 2rem;
+	padding: 0;
+	background: light-dark(var(--color-white), var(--color-shade3));
+	border: solid var(--border-thickness) var(--color-shade4);
+	border-radius: var(--border-radius2);
+	color: var(--color-text);
+	cursor: pointer;
+	transition: background-color 0.15s, border-color 0.15s;
+	box-sizing: border-box;
+}
+
+nui-notepad button.np-SortDirBtn:hover {
+	background: light-dark(var(--color-shade2), var(--color-shade4));
+	border-color: var(--color-shade5);
+}
+
+nui-notepad button.np-SortDirBtn nui-icon {
+	width: 1rem;
+	height: 1rem;
+	transition: transform 0.2s var(--np-ease);
+}
+
+nui-notepad button.np-SortDirBtn.up nui-icon {
+	transform: rotate(-90deg);
+}
+
+nui-notepad button.np-SortDirBtn.down nui-icon {
+	transform: rotate(90deg);
+}
+
+nui-notepad .np-ListHeaderRight {
+	display: flex;
+	align-items: center;
+	gap: var(--nui-space);
+	flex: 1 1 18rem;
+	max-width: 28rem;
+	justify-content: flex-end;
+}
+
+nui-notepad .np-ListHeaderRight nui-input {
+	flex: 1;
+	--nui-form-row-height: 2rem;
+	height: 2rem;
+	min-height: 2rem;
+	font-size: var(--font-size-small);
+}
+
+nui-notepad .np-ListHeaderRight .np-LaneCount {
+	white-space: nowrap;
+}
+
+nui-notepad .np-ListViewport {
+	max-height: 36rem;
+	padding: calc(var(--nui-space) * 1.1) calc(var(--nui-space) * 1.15) var(--nui-space-half);
+	gap: calc(var(--nui-space) * 0.85);
+}
+
+nui-notepad .np-ListEmpty {
+	padding: var(--nui-space-double);
+	text-align: center;
+	color: var(--text-color-dim);
+	font-size: var(--font-size-small);
+}
+
+
+

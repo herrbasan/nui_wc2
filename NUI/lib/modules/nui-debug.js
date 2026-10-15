@@ -158,7 +158,8 @@ registerValidator('addon CSS loaded', (root) => {
 		'nui-wizard': 'nui-wizard.css', 'nui-menu': 'nui-menu.css',
 		'nui-context-menu': 'nui-context-menu.css', 'nui-rich-text': 'nui-rich-text.css',
 		'nui-file-tree': 'nui-file-tree.css',
-		'nui-file-list': 'nui-file-list.css'
+		'nui-file-list': 'nui-file-list.css',
+		'nui-notepad': 'nui-notepad.css'
 	};
 	const loaded = new Set();
 	for (const sheet of document.styleSheets) {

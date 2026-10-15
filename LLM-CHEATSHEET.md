@@ -924,6 +924,29 @@ Hover/focus help text only — **non-interactive by contract**. For a panel of c
 
 📖 **Full docs:** [`documentation/components/sortable.md`](documentation/components/sortable.md)
 
+### nui-virtual-scroll (`nui.util.virtualScroll`)
+
+Variable-height detached-element recycler (core — no addon imports needed). Measures arbitrary variable-height items in natural flow, stages them with explicit pixel height once item count reaches `threshold` (default `30`), and detaches off-screen elements via `removeChild` while preserving DOM identity, listeners, and component state.
+
+```html
+<nui-virtual-scroll id="feed" threshold="30" margin="200" style="height: 32rem;">
+  <nui-card>Variable-height item 1...</nui-card>
+  <nui-card>Variable-height item 2...</nui-card>
+</nui-virtual-scroll>
+```
+
+```javascript
+// Or attach to any existing scrollable container:
+const vs = nui.util.virtualScroll(containerEl, { items: '.chat-message', threshold: 30, margin: 200 });
+vs.append(el);
+vs.remove(el => el.dataset.exchangeId === id); // anchors scrollTop if removed above viewport
+vs.pin(streamingEl);                           // exempt from detachment while off-screen
+```
+| Attributes | `threshold="30"`, `margin="200"`, `items=".selector"` |
+| Methods | `.appendItem(el)`, `.setItems(els, { preserveScroll })`, `.removeItem(el\|fn)`, `.pin(el)`, `.unpin(el)`, `.scrollToIndex(i, opts)`, `.scrollToBottom()`, `.getItems()`, `.recalc()`, `.wake()` |
+
+📖 **Full docs:** [`documentation/components/virtual-scroll.md`](documentation/components/virtual-scroll.md)
+
 ---
 
 ## Addons (Require Explicit Import)
@@ -944,8 +967,9 @@ Hover/focus help text only — **non-interactive by contract**. For a panel of c
 | nui-file-tree | `NUI/lib/modules/nui-file-tree.js` | `NUI/css/modules/nui-file-tree.css` |
 | nui-slides | `NUI/lib/modules/nui-slides.js` | `NUI/css/modules/nui-slides.css` |
 | nui-graph | `NUI/lib/modules/nui-graph.js` | `NUI/css/modules/nui-graph.css` |
+| nui-notepad | `NUI/lib/modules/nui-notepad.js` | `NUI/css/modules/nui-notepad.css` |
 | nui-table-editor † | `NUI/lib/modules/nui-table-editor.js` | `NUI/css/modules/nui-table-editor.css` |
-| nui-blocks-editor † | `NUI/lib/modules/nui-blocks-editor.js` | `NUI/css/modules/nui-blocks-editor.css` |
+| nui-blocks-editor ‡ | `NUI/lib/modules/nui-blocks-editor.js` | `NUI/css/modules/nui-blocks-editor.css` |
 
 ```html
 <!-- Example: nui-list -->
@@ -953,7 +977,7 @@ Hover/focus help text only — **non-interactive by contract**. For a panel of c
 <script type="module" src="NUI/lib/modules/nui-list.js"></script>
 ```
 
-📖 **Addon docs:** [`documentation/addons/`](documentation/addons/) — list.md, lightbox.md, code-editor.md, media-player.md, wizard.md, menu.md, context-menu.md, rich-text.md, app-window.md, file-tree.md, slides.md, graph.md, table-editor.md, blocks-editor.md
+📖 **Addon docs:** [`documentation/addons/`](documentation/addons/) — list.md, lightbox.md, code-editor.md, media-player.md, wizard.md, menu.md, context-menu.md, rich-text.md, app-window.md, file-tree.md, slides.md, graph.md, notepad.md, table-editor.md, blocks-editor.md
 
 † **nui-table-editor is new and feel-checked** — mechanics and interaction feel are both signed off. It enhances a native `<table>` in place (`setupTableEditor(table)`) or wraps one (`<nui-table-editor><table>…`). Inside a `contenteditable` host it adds UI only and never takes over editability or keys. See [table-editor.md](documentation/addons/table-editor.md).
 

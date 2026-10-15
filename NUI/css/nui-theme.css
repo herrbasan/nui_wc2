@@ -7651,3 +7651,25 @@ nui-notification-log .nui-notification-empty {
 color: var(--text-color-dim);
 padding: var(--nui-space) 0;
 }
+
+/* ################################# VIRTUAL SCROLL (nui-virtual-scroll) */
+/* Detached-element recycler for variable-height items.
+   `flex-direction: column` prevents adjacent vertical margin collapse in normal
+   flow so Tier 0 (unstaged) and Tier 1 (staged) produce identical total heights.
+   `flex-shrink: 0` on `.nui-vs-stage` prevents flex containers from compressing
+   the explicit stage height and breaking native scrollbars. */
+
+nui-virtual-scroll {
+	display: flex;
+	flex-direction: column;
+	overflow-y: auto;
+	position: relative;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.nui-vs-stage {
+	position: relative;
+	width: 100%;
+	flex-shrink: 0;
+}

@@ -112,11 +112,13 @@ No imports needed. Available after loading `nui.js`.
 
 **Interaction**
 - [Sortable](#page=components/sortable) — Drag-and-drop reordering with FLIP animations and touch/mouse/keyboard support.
+- [Virtual Scroll](#page=components/virtual-scroll) — Variable-height detached-element recycler (`<nui-virtual-scroll>` and `nui.util.virtualScroll`) with binary-search windowing, reactive height cascade, and scroll anchoring.
 
 ### Addons — Explicit Import Required
 
 These modules require loading additional JS (and often CSS). Each doc lists the exact import tags.
 
+- [Blocks Editor](#page=experiments/blocks-editor) — Visual editor for MD-Blocks documents: sections, blocks, columns, named vars, frontmatter, and live preview.
 - [Code Editor](#page=addons/code-editor) — Editable code input with real-time syntax highlighting, auto-indent, and line numbers.
 - [Context Menu](#page=addons/context-menu) — Programmatic floating popup menus with submenus and keyboard navigation.
 - [File List](#page=addons/file-list) — File rows with type icons, status badges and per-row actions; upload staging or document library, with optional drag reordering.
@@ -126,8 +128,10 @@ These modules require loading additional JS (and often CSS). Each doc lists the 
 - [List](#page=addons/list) — Virtualized scroller with integrated search, sort, filter. Renders only visible items for large datasets.
 - [Media Player](#page=addons/media-player) — Custom-skinnable video/audio player wrapper over native media elements.
 - [Menu](#page=addons/menu) — Application-style menubar with dropdowns, nested submenus, and full keyboard navigation.
+- [Notepad](#page=addons/notepad) — Spatial desk, project swimlanes, focus workbench, and virtualized all-items list for `workshop.notepad` (commitments, step punch-lists, upcoming dates, and context-tagged pins).
 - [Rich Text](#page=addons/rich-text) — Lightweight WYSIWYG editor with toolbar for basic formatting, links, tables, and images.
 - [Slides](#page=addons/slides) — Presentation profile for MD-Blocks documents: one slide per section, fixed canvas scaling, repeating chrome.
+- [Table Editor](#page=experiments/table-editor) — Progressive-enhancement in-place editor for native `<table>` elements with GFM pipe-table export.
 - [Wizard](#page=addons/wizard) — Multi-step wizard with progression navigation, validation, and layout modes.
 - [App Window](#page=addons/app-window) — Programmatic window chrome for Electron frameless windows.
 

@@ -311,7 +311,8 @@ const navigationData = [
 					{ label: 'Tabs', href: '#page=components/tabs' },
 					{ label: 'Accordion', href: '#page=components/accordion' },
 					{ label: 'Details', href: '#page=components/details' },
-					{ label: 'Sortable', href: '#page=components/sortable' }
+					{ label: 'Sortable', href: '#page=components/sortable' },
+					{ label: 'Virtual Scroll', href: '#page=components/virtual-scroll' }
 				]
 			},
 			{
@@ -342,6 +343,7 @@ const navigationData = [
 			{ label: 'List', href: '#page=addons/list' },
 			{ label: 'Media Player', href: '#page=addons/media-player' },
 			{ label: 'Menu', href: '#page=addons/menu' },
+			{ label: 'Notepad', href: '#page=addons/notepad' },
 			{ label: 'Rich-Text', href: '#page=addons/rich-text' },
 			{ label: 'Slides', href: '#page=addons/slides' },
 			{ label: 'Wizard', href: '#page=addons/wizard' }

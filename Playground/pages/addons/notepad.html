@@ -1,0 +1,63 @@
+<script type="application/ld+json">
+{
+	"@context": "nui",
+	"@type": "Component",
+	"name": "nui-notepad",
+	"group": "data",
+	"description": "Spatial desk and post-it wall for workshop.notepad (commitments, step punch-lists, upcoming dates, and context-tagged pins).",
+	"events": ["nui-notepad-mutate"],
+	"innerElement": null,
+	"imports": {
+		"js": "NUI/lib/modules/nui-notepad.js",
+		"css": "NUI/css/modules/nui-notepad.css"
+	}
+}
+</script>
+
+<nui-details summary="LLM Guide - nui-notepad" src="../documentation/addons/notepad.md" lazy>
+</nui-details>
+
+<header>
+	<h1>Notepad</h1>
+	<p class="lead">Project swimlanes, spatial desk, focus workbench, and virtualized all-items list for <code>workshop.notepad</code> — neutral surfaces, crisp square left accent bars, and in-place step/card editing.</p>
+</header>
+
+<section breakout>
+	<div class="demo-actions" style="display: flex; flex-wrap: wrap; gap: var(--nui-space-half); margin-bottom: var(--nui-space);">
+		<nui-button variant="outline"><button type="button" data-np-demo="fixture">Standard Fixture (12 items)</button></nui-button>
+		<nui-button variant="outline"><button type="button" data-np-demo="bulk">Stress Test Virtual List (120 variable-height items)</button></nui-button>
+	</div>
+	<nui-notepad id="notepad-lab"></nui-notepad>
+</section>
+
+<section>
+	<h2>Setup &amp; Host Integration</h2>
+	<p><code>&lt;nui-notepad&gt;</code> follows the host-owns-storage contract: pass a <code>workshop.notepad</code> snapshot (and optional full item records or lazy detail resolver) to <code>load()</code>, and listen for <code>nui-notepad-mutate</code> to persist edits.</p>
+
+	<nui-code>
+		<script type="example" data-lang="html">
+<link rel="stylesheet" href="NUI/css/modules/nui-notepad.css">
+<script type="module" src="NUI/lib/modules/nui-notepad.js"><\/script>
+
+<nui-notepad id="my-notepad" mode="swimlanes" owner="david"></nui-notepad>
+		</script>
+	</nui-code>
+
+	<nui-code>
+		<script type="example" data-lang="js">
+const notepad = element.querySelector('#my-notepad');
+
+notepad.setItemResolver(async (id) => {
+	const res = await fetch(`/api/notepad/items/${id}`);
+	return res.ok ? res.json() : null;
+});
+
+notepad.load(snapshot, fullItems);
+
+notepad.addEventListener('nui-notepad-mutate', (e) => {
+	const { action, id, ...payload } = e.detail;
+	// action: 'step-toggle' | 'complete' | 'promote' | 'remove' | 'add'
+});
+		</script>
+	</nui-code>
+</section>
