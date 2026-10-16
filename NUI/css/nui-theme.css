@@ -6514,9 +6514,18 @@ nui-markdown p > img {
    block-level cards, `pre`, `blockquote`, list markers and the `.nui-blocks-var`
    definition all sat flush to their own edge (nui_wc2#74). A section's own padding
    (`band`, `bleed`) is what insets bare content in practice; this token stays at 0
-   until a host raises it. */
+   until a host raises it.
+
+   Lists are excluded outright, and the `:where()` arm above is NOT enough for them:
+   a list's indent comes from the UA stylesheet, and an author declaration beats the UA
+   whatever its specificity — so zeroing it here flattened the markers of any list that
+   was a direct child of a section, i.e. a list in an unannotated root-level run (the
+   spec's *implicit block*, §6.1), while the same list inside a `mb:block` kept its
+   indent because the gutter landed on the block. Declaring the indent globally here
+   was the obvious repair and the wrong one: `ul`/`ol` are everywhere in NUI (menus,
+   lists, trees, nav), so it indented the whole library. The gutter steps aside instead.*/
 :where(:is(
-	.nui-blocks-section:not(.nui-preset-cover) > *:not(.nui-variant-bleed),
+	.nui-blocks-section:not(.nui-preset-cover) > *:not(.nui-variant-bleed):not(ul):not(ol),
 	.nui-md-frontmatter-details
 )) {
 	padding-inline: var(--nui-md-content-gutter, 0);
