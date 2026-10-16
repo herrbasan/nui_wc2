@@ -235,7 +235,22 @@ nui-main section {
 	min-height: 400px;
 }
 
-
+/* The MD-Blocks demo's <nui-markdown> is a `breakout` child, so it sits OUTSIDE the page's
+   own `.maxwidth-container` and has to state the same column geometry itself. The measure
+   already matches (the container's 960px and the document's `--space-page-maxwidth` are the
+   same source); these two tokens supply the rest, and both are the renderer's designed
+   host hooks:
+     --nui-md-content-gutter — the inset the container gets from its own padding. At 0 the
+       document's only inset is the `margin-inline: auto` slack around its measure, which
+       collapses to ~0 whenever the content area is as narrow as the measure itself — which
+       is exactly where `nui-app content-min-width="60rem"` puts it once the sidebar docks.
+     --nui-md-content-margin — alignment. `.maxwidth-container` is flush left in the content
+       area, not centred, so the default `auto` would float the document ~112px right of the
+       page's own text column. */
+.page-md-blocks nui-markdown {
+	--nui-md-content-gutter: var(--nui-space-double);
+	--nui-md-content-margin: 0;
+}
 
 /* Icon page styles */
 .page-icon .icon-demo {
