@@ -6496,41 +6496,45 @@ nui-markdown p > img {
    a different measure from the split view, which is the one thing a preview must not do.
    The block classes only exist in a structured document, so the gate was buying nothing
    except that divergence. */
-/* Geometry only: the measure and its centering. Kept at full specificity so
-   nothing incidental overrides the reading width. */
-:is(
-	.nui-blocks-section:not(.nui-preset-cover) > *:not(.nui-variant-bleed),
-	.nui-md-frontmatter-details
-) {
-	max-width: var(--nui-md-content-maxwidth, var(--space-page-maxwidth));
+/* ── The document column ────────────────────────────────────────────────
+   Four axes, deliberately on DIFFERENT elements so none can overwrite another. That
+   separation is the whole point: `padding` holds one value, so while the inset and a
+   component's own padding lived on the same element exactly one could ever win — and
+   every time the loser changed, the bug moved. A card flush to its own edge (#74),
+   then flattened list markers, then a card missing the column inset: one collision
+   seen from three sides.
+
+     inset      → the SECTION's padding-inline    so a child keeps its own padding
+     measure    → the children's max-width       how wide the column is
+     alignment  → the children's margin-inline   centred vs flush
+     component  → a card's own padding           untouched, nothing competes
+
+   The measure token names the column INCLUDING its gutter, the way a host's
+   `--space-page-maxwidth` counts its own padding — so a child's width is the measure
+   less both gutters. At the default gutter of 0 that is the token itself, which is
+   what keeps every existing host pixel-identical. */
+.nui-blocks-section:not(.nui-preset-cover) {
+	/* `max`, not `+`: the gutter and a section's own inset are two answers to the SAME
+	   question — "how far in does this surface's content sit?" — so they resolve to the
+	   larger. Adding them would inset a band 32+16 where the column wants 32, putting its
+	   text 16px off every other block. This is the same collision as before, one level
+	   up: the section's padding, not a child's. */
+	padding-inline: max(var(--nui-md-content-gutter, 0px), var(--nui-md-section-inset, 0px));
+}
+:is(.nui-blocks-section:not(.nui-preset-cover) > *:not(.nui-variant-bleed)) {
+	max-width: calc(var(--nui-md-content-maxwidth, var(--space-page-maxwidth)) - 2 * var(--nui-md-content-gutter, 0px));
 	margin-inline: var(--nui-md-content-margin, auto);
 	box-sizing: border-box;
 }
-/* The gutter is a FALLBACK inset for a container that carries none of its own, so
-   it must lose to any element that defines its own horizontal padding — wrapped in
-   `:where()` its specificity is 0, which is the mechanism that makes it a fallback.
-   Stated at full specificity it was (0,3,0) and beat every element and single-class
-   rule it landed on, REPLACING `padding-left/right` rather than adding to it:
-   block-level cards, `pre`, `blockquote`, list markers and the `.nui-blocks-var`
-   definition all sat flush to their own edge (nui_wc2#74). A section's own padding
-   (`band`, `bleed`) is what insets bare content in practice; this token stays at 0
-   until a host raises it.
-
-   Lists are excluded outright, because the `:where()` arm above is NOT enough for
-   them. A list's marker indent comes from the UA stylesheet, and an author declaration
-   beats the UA whatever its specificity — so zeroing `padding-inline` here also erased
-   `padding-inline-start`, and any list that was a direct child of a section lost its
-   markers. That is a list in an unannotated root-level run — the spec's *implicit
-   block* (§6.1). The same list inside a `mb:block` kept its indent, because there the
-   gutter landed on the block, not the list. Declaring the indent globally was the
-   obvious repair and the wrong one: `ul`/`ol` are everywhere in NUI (menus,
-   link-lists, trees, nav), so it indented the whole library. The gutter steps aside
-   instead, and lists keep whatever padding they already had. */
-:where(:is(
-	.nui-blocks-section:not(.nui-preset-cover) > *:not(.nui-variant-bleed):not(ul):not(ol),
-	.nui-md-frontmatter-details
-)) {
+/* The frontmatter disclosure hangs off the MAIN, not a section — document chrome — so
+   no section carries the inset for it and it states its own. It owns no horizontal
+   padding, so nothing competes: its box is one gutter wider than the column on each
+   side and its text still lands on the column. */
+.nui-md-frontmatter-details {
+	max-width: var(--nui-md-content-maxwidth, var(--space-page-maxwidth));
+	margin-inline: var(--nui-md-content-margin, auto);
 	padding-inline: var(--nui-md-content-gutter, 0);
+	box-sizing: border-box;
 }
 .nui-blocks-section:last-child,
 .nui-blocks-block:last-child,
@@ -6990,7 +6994,12 @@ nui-markdown p > img {
    Full-viewport bands are a site-level concern (a class on the site's stylesheet),
    never part of the document. */
 .nui-preset-band {
-	padding: var(--nui-space);
+	/* The band's own inset JOINS the document gutter instead of replacing it. The section
+	   rule owns `padding-inline` now, so the band states its contribution as a variable;
+	   a plain `padding:` here would be the same collision one level up, silently erasing
+	   the gutter. (Bleed still overrides padding-inline outright — that is its job.) */
+	padding-block: var(--nui-space);
+	--nui-md-section-inset: var(--nui-space);
 	background: light-dark(var(--color-shade3), var(--color-shade2));
 	color: var(--text-color);
 }
@@ -7575,7 +7584,11 @@ nui-markdown :is(h1, h2, h3, h4, h5, h6) img {
 	padding-inline: calc(var(--nui-space) + var(--nui-md-bleed, 0px));
 }
 .nui-blocks-section.nui-variant-bleed {
-	padding-inline: calc(var(--nui-space) + var(--nui-md-bleed, 0px));
+	/* Bleed keeps its own inset (--nui-space plus the cancelled amount) but can no longer
+	   fall BELOW the document gutter: a section is not a block, so "escaping the inset"
+	   would just misalign its content against every other block in the document. Same
+	   collision, third instance — a variant rule silently replacing the inset. */
+	padding-inline: max(calc(var(--nui-space) + var(--nui-md-bleed, 0px)), var(--nui-md-content-gutter, 0px));
 }
 .nui-md-frontmatter-field {
 	display: grid;

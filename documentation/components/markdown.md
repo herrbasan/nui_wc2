@@ -205,6 +205,37 @@ got the desktop layout at every width, since a viewport query cannot see a conta
   will get the widest layout. Put `container: doc / inline-size` on your own wrapper to
   opt in.
 
+## Document Column Geometry
+
+A structured document renders as a **column**, and the host tunes it with three custom
+properties. Each names one axis, and they are deliberately applied to *different*
+elements so that none can overwrite another — `padding` holds a single value, so an inset
+and a component's own padding cannot both live on the same element:
+
+| Custom property | Axis | Default |
+|---|---|---|
+| `--nui-md-content-maxwidth` | the column width, **including** its gutters | `--space-page-maxwidth` |
+| `--nui-md-content-gutter` | the inset between the container edge and the column | `0` |
+| `--nui-md-content-margin` | alignment — `auto` centres the column, `0` makes it flush left | `auto` |
+
+The inset and the measure reach the content through the document's own structure, never
+through a block's padding, so a card's or a quote's own padding is never in competition
+with them: the card's **box** lands on the column and its content sits inside it.
+
+Set `--nui-md-content-gutter` when you place `<nui-markdown>` outside the element that
+normally supplies the page's inset — a `breakout` child, for example, or any container
+with no padding of its own. **Raise it, because at `0` the column's only inset is the
+slack `margin-inline: auto` leaves around the measure, and that slack collapses to nothing
+as soon as the container is as narrow as the measure.** Leave it at `0` when the container
+already has padding, or the document will be inset twice.
+
+Set `--nui-md-content-margin: 0` to align with a container that is flush left rather than
+centred — otherwise the column floats to the middle of the container and stops matching
+the page's own text.
+
+Internally a section may contribute its own inset (a `band` does); the two resolve to the
+larger of the pair, so a section can never pull its content off the column.
+
 ## Programmatic Usage
 
 ### Dynamic Assignment
