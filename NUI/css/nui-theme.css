@@ -6541,16 +6541,52 @@ nui-markdown p > img {
 .nui-blocks-columns:last-child {
 	margin-bottom: 0;
 }
-/* The section boundary drawn as a rule — opt-in (`show-breaks` on nui-markdown, or
-   markdownToHtml({ separators: true })). A break is structure, not content (§4.1), so
-   it is off unless asked for; with it on, a reading view shows where one slide/page
-   ends and the next begins — what a generic preview has always shown, since it cannot
-   see the directive and renders the `---` as an <hr>. A surface renderer never sees it:
-   the rule is a sibling of the sections, not a slide. */
+/* The MD-Blocks section boundary, opt-in (nui_wc2#75): a LABELLED, numbered divider —
+   "Slide 3 of 12" — between sections. It is an AUTHORING aid, not reading furniture, so
+   it is off unless asked for (`show-breaks` on nui-markdown, or
+   markdownToHtml(md, { separators: true | 'Section' })): an author writing a deck can see
+   where the slides split without counting `---` in the source. A bare rule would only say
+   a break is somewhere; the number is the useful part, and it names the surface it
+   INTRODUCES. The label rides in `data-label` + `::after`, so it never enters the
+   document's own text, and the divider is a sibling of the sections, so a surface
+   renderer never meets it.
+
+   Geometry: the BOX carries the measure and the alignment (like the frontmatter
+   disclosure), and the rule itself is a pseudo-element inset by the gutter — so the line
+   spans exactly the content column, in a centred host as well as a flush one. A
+   `border-top` on the box could not do that: it would sit at the box edge, one gutter
+   wider than the column on each side. The label is placed BELOW the rule rather than
+   overlapping it, so no background has to be painted behind it — `--color-base` is not
+   the surface every host draws on (the Playground's is the page background), and a
+   knockout in the wrong colour is worse than no knockout. */
 .nui-blocks-separator {
+	position: relative;
+	height: 0;
 	border: none;
+	max-width: var(--nui-md-content-maxwidth, var(--space-page-maxwidth));
+	margin-inline: var(--nui-md-content-margin, auto);
+	margin-block: var(--nui-space-double);
+}
+.nui-blocks-separator::before {
+	content: '';
+	position: absolute;
+	left: var(--nui-md-content-gutter, 0);
+	right: var(--nui-md-content-gutter, 0);
+	top: 0;
 	border-top: solid var(--border-thickness) var(--border-shade2);
-	margin: var(--nui-space-double) 0;
+}
+.nui-blocks-separator::after {
+	content: attr(data-label);
+	position: absolute;
+	left: 50%;
+	top: 0;
+	transform: translateX(-50%);
+	margin-top: var(--nui-space-quarter);
+	color: var(--text-color-dim);
+	font-size: var(--font-size-small);
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	white-space: nowrap;
 }
 
 /* Columns: the count comes from the number of `col` markers and is carried on

@@ -10428,10 +10428,22 @@ function mbRenderMain(main) {
 		? `<${name} class="nui-blocks-chrome nui-blocks-chrome-${name}">${chrome[name].map(mbRenderBlock).join('\n')}</${name}>`
 		: '';
 	const open = mbOpenTag('main', 'nui-blocks-main', main.attrs);
-	// Section boundary drawn as a rule, opt-in (markdownToHtml({ separators: true }) or
-	// the host's `show-breaks`). The <hr> is a SIBLING of the sections, never a child, so
-	// a surface renderer that collects sections (nui-slides) does not treat it as a slide.
-	const body = sections.map(mbRenderSection).join(_mdSeparators ? '\n<hr class="nui-blocks-separator">\n' : '\n');
+	// The section boundary, opt-in (markdownToHtml({ separators: true|'Section' }) or the
+	// host's `show-breaks`). It is a LABELLED divider — "Slide 3 of 12" — not a bare rule:
+	// the point is an author scanning the rendered page for where slides split, and a plain
+	// rule only says a break is somewhere. The label names the surface it INTRODUCES, so a
+	// reader meets "Slide 2" and then slide 2. It is a SIBLING of the sections, never a
+	// child, so a surface renderer that collects sections (nui-slides) cannot mistake it for
+	// a slide. The text rides in an attribute + `::after` so it never enters the document's
+	// own textContent.
+	const noun = _mdSeparatorNoun;
+	const total = sections.length;
+	const body = sections.map((s, i) => {
+		const html = mbRenderSection(s);
+		if (!noun || i === total - 1) return html;
+		const label = fmEscape(`${noun} ${i + 2} of ${total}`);
+		return `${html}\n<hr class="nui-blocks-separator" data-label="${label}" aria-label="${label}">`;
+	}).join('\n');
 	return `${open}>${slot('header')}${body}${slot('footer')}</main>`;
 }
 
@@ -10465,14 +10477,19 @@ function markdownToHtml(md, options) {
 	// an exception mid-render must not leak one document's base into the next.
 	const prevBase = _mdDocBase;
 	_mdDocBase = options.base || null;
-	const prevSep = _mdSeparators;
-	_mdSeparators = options.separators === true;
+	const prevSep = _mdSeparatorNoun;
+	// `true` means the unit MD-Blocks already implies — a section IS a slide to a slideshow
+	// renderer — while a string names it for a document that is not a deck, so a blog post
+	// does not get labelled "Slide 4 of 9". Anything else leaves the divider off entirely.
+	_mdSeparatorNoun = options.separators === true ? 'Slide'
+		: (typeof options.separators === 'string' && options.separators.trim()) ? options.separators.trim()
+			: null;
 	let out;
 	try {
 		out = _markdownToHtmlInner(md, options);
 	} finally {
 		_mdDocBase = prevBase;
-		_mdSeparators = prevSep;
+		_mdSeparatorNoun = prevSep;
 	}
 	return out;
 }
@@ -10482,10 +10499,10 @@ function markdownToHtml(md, options) {
 // else. markdownCore reads it — see the comment above.
 let _mdDocBase = null;
 
-// Draw the section boundary as a rule. A break is structure, not content (§4.1), so
-// this is off unless asked for — markdownToHtml({ separators: true }), or the host's
-// `show-breaks` attribute. Threaded the same way as _mdDocBase (one synchronous render).
-let _mdSeparators = false;
+// The noun for the opt-in section dividers, or null when they are off (nui_wc2#75). A
+// break is structure, not content (§4.1), so the dividers are off unless asked for. Set by
+// markdownToHtml for one synchronous render, threaded the same way as _mdDocBase.
+let _mdSeparatorNoun = null;
 
 function _markdownToHtmlInner(md, options) {
 	if (typeof md !== 'string' || !md.trim()) return '';
@@ -10816,9 +10833,11 @@ class NuiMarkdown extends HTMLElement {
 		this.innerHTML = markdownToHtml(rawText, {
 			frontmatter: mode,
 			base: this.base,
-			// Opt-in: draw each section boundary as a rule (`show-breaks`). Off by
-			// default — a break is structure, not content (§4.1).
+			// Opt-in: label each section boundary (`show-breaks`, or `show-breaks="Section"`
+			// to name the unit). Off by default — a break is structure, not content (§4.1).
 			separators: this.hasAttribute('show-breaks')
+				? ((this.getAttribute('show-breaks') || '').trim() || true)
+				: false
 		});
 		this._syncDocumentMarker();
 		this._processed = true;
