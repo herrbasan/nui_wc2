@@ -351,6 +351,56 @@ Everything you need to author
 
 ---
 
+<!-- mb:section id=card-variants label="Card variants" -->
+
+<!-- mb:block id=cards-intro -->
+
+# Card Variants
+
+Every `card` treatment the spec defines, each authored as a **block-level** card — a direct
+child of the section. That is the shape the content-measure rule and the card's own padding
+have to survive together; `note` and `warning` share one treatment, so the label word that
+tells a reader which is which is authored in the Markdown and never injected by the preset.
+
+<!-- mb:/block -->
+
+<!-- mb:block id=card-base preset=card label="Card — base" -->
+**Base.** The neutral surface: a hairline border, a translucent lift of the text colour, and
+nothing else. `preset=card`.
+<!-- mb:/block -->
+
+<!-- mb:block id=card-note preset=card:note label="Card — note" -->
+**Note.** A left accent bar and the accent tint — the contextual callout treatment.
+`preset=card:note`.
+<!-- mb:/block -->
+
+<!-- mb:block id=card-warning preset=card:warning label="Card — warning" -->
+**Warning.** The same rule and shape as the note card. `preset=card:warning`.
+<!-- mb:/block -->
+
+<!-- mb:block id=card-stat preset=card:stat label="Card — stat" -->
+# 100%
+**CommonMark**
+A centered KPI: one large figure over a label. `preset=card:stat`.
+<!-- mb:/block -->
+
+<!-- mb:block id=card-quote preset=card:quote label="Card — quote" -->
+> "Simplicity is prerequisite for reliability."
+>
+> — Edsger W. Dijkstra
+<!-- mb:/block -->
+
+<!-- mb:block id=card-good preset=card:good label="Card — good" -->
+**Good.** A recommendation surface — top border in the highlight colour. `preset=card:good`.
+<!-- mb:/block -->
+
+<!-- mb:block id=card-danger preset=card:danger label="Card — danger" -->
+**Danger.** The anti-pattern surface — top border in a muted shade, slightly de-emphasised.
+`preset=card:danger`.
+<!-- mb:/block -->
+
+---
+
 <!-- mb:block id=b-cqmhk -->
 
 # Table Presentations

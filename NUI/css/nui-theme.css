@@ -6496,14 +6496,30 @@ nui-markdown p > img {
    a different measure from the split view, which is the one thing a preview must not do.
    The block classes only exist in a structured document, so the gate was buying nothing
    except that divergence. */
+/* Geometry only: the measure and its centering. Kept at full specificity so
+   nothing incidental overrides the reading width. */
 :is(
 	.nui-blocks-section:not(.nui-preset-cover) > *:not(.nui-variant-bleed),
 	.nui-md-frontmatter-details
 ) {
 	max-width: var(--nui-md-content-maxwidth, var(--space-page-maxwidth));
 	margin-inline: var(--nui-md-content-margin, auto);
-	padding-inline: var(--nui-md-content-gutter, 0);
 	box-sizing: border-box;
+}
+/* The gutter is a FALLBACK inset for a container that carries none of its own, so
+   it must lose to any element that defines its own horizontal padding — wrapped in
+   `:where()` its specificity is 0, which is the mechanism that makes it a fallback.
+   Stated at full specificity it was (0,3,0) and beat every element and single-class
+   rule it landed on, REPLACING `padding-left/right` rather than adding to it:
+   block-level cards, `pre`, `blockquote`, list markers and the `.nui-blocks-var`
+   definition all sat flush to their own edge (nui_wc2#74). A section's own padding
+   (`band`, `bleed`) is what insets bare content in practice; this token stays at 0
+   until a host raises it. */
+:where(:is(
+	.nui-blocks-section:not(.nui-preset-cover) > *:not(.nui-variant-bleed),
+	.nui-md-frontmatter-details
+)) {
+	padding-inline: var(--nui-md-content-gutter, 0);
 }
 .nui-blocks-section:last-child,
 .nui-blocks-block:last-child,
