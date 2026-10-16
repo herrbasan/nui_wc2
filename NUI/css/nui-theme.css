@@ -6551,18 +6551,25 @@ nui-markdown p > img {
    document's own text, and the divider is a sibling of the sections, so a surface
    renderer never meets it.
 
-   Geometry: the BOX carries the measure and the alignment (like the frontmatter
-   disclosure), and the rule itself is a pseudo-element inset by the gutter — so the line
-   spans exactly the content column, in a centred host as well as a flush one. A
-   `border-top` on the box could not do that: it would sit at the box edge, one gutter
-   wider than the column on each side. The label is placed BELOW the rule rather than
-   overlapping it, so no background has to be painted behind it — `--color-base` is not
-   the surface every host draws on (the Playground's is the page background), and a
-   knockout in the wrong colour is worse than no knockout. */
+   Geometry: the BOX carries the measure, the alignment and the label's line (like the
+   frontmatter disclosure), and the rule itself is a pseudo-element inset by the gutter —
+   so the line spans exactly the content column, in a centred host as well as a flush
+   one. A `border-top` on the box could not do that: it would sit at the box edge, one
+   gutter wider than the column on each side. The label is placed BELOW the rule rather
+   than overlapping it, so no background has to be painted behind it — `--color-base` is
+   not the surface every host draws on (the Playground's is the page background), and a
+   knockout in the wrong colour is worse than no knockout. The label is in flow and the
+   rule is not: that is what makes the boundary reserve its own vertical band. */
 .nui-blocks-separator {
 	position: relative;
-	height: 0;
 	border: none;
+	/* No `height: 0` here. An absolutely positioned label in a zero-height box is placed
+	   in the gap the NEXT section's own margins also use, so a heading wide enough to
+	   reach the centre of the column was painted under the label (nui_wc2#79). */
+	/* Chromium's UA stylesheet sets `overflow: hidden` on hr, which clips the
+	   absolutely positioned ::before rule away — the separator then renders as empty
+	   space (nui_wc2#78). */
+	overflow: visible;
 	max-width: var(--nui-md-content-maxwidth, var(--space-page-maxwidth));
 	margin-inline: var(--nui-md-content-margin, auto);
 	margin-block: var(--nui-space-double);
@@ -6577,14 +6584,15 @@ nui-markdown p > img {
 }
 .nui-blocks-separator::after {
 	content: attr(data-label);
-	position: absolute;
-	left: 50%;
-	top: 0;
-	transform: translateX(-50%);
-	margin-top: var(--nui-space-quarter);
+	display: block;
+	/* Padding, not margin: a child's top margin collapses through this borderless box
+	   and escapes as the separator's own margin, which would put the label back on the
+	   rule line. */
+	padding-top: var(--nui-space-quarter);
 	color: var(--text-color-dim);
 	font-size: var(--font-size-small);
 	letter-spacing: 0.08em;
+	text-align: center;
 	text-transform: uppercase;
 	white-space: nowrap;
 }
