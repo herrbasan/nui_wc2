@@ -401,6 +401,29 @@ A centered KPI: one large figure over a label. `preset=card:stat`.
 
 ---
 
+<!-- mb:section id=narration label="Narration" -->
+
+<!-- mb:block id=narration-intro -->
+
+# Narration
+
+A block marked `preset=narration` is **delivery text**: spoken, not shown. A surface renderer
+(a deck) withholds it and hands the words to the speech channel; this reading view surfaces it,
+labelled and set apart, because dropping it would be less than a generic preview shows. Any number
+may sit in one section, and source order is delivery order.
+
+<!-- mb:/block -->
+
+<!-- mb:block id=narration-line-1 preset=narration label="First beat" -->
+Simplicity is prerequisite for reliability. Register a speech function to get a control on this block.
+<!-- mb:/block -->
+
+<!-- mb:block id=narration-line-2 preset=narration label="Second beat" -->
+A second line, delivered after the first — the same section carries both.
+<!-- mb:/block -->
+
+---
+
 <!-- mb:block id=b-cqmhk -->
 
 # Table Presentations

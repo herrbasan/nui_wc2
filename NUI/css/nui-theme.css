@@ -6526,6 +6526,17 @@ nui-markdown p > img {
 .nui-blocks-columns:last-child {
 	margin-bottom: 0;
 }
+/* The section boundary drawn as a rule — opt-in (`show-breaks` on nui-markdown, or
+   markdownToHtml({ separators: true })). A break is structure, not content (§4.1), so
+   it is off unless asked for; with it on, a reading view shows where one slide/page
+   ends and the next begins — what a generic preview has always shown, since it cannot
+   see the directive and renders the `---` as an <hr>. A surface renderer never sees it:
+   the rule is a sibling of the sections, not a slide. */
+.nui-blocks-separator {
+	border: none;
+	border-top: solid var(--border-thickness) var(--border-shade2);
+	margin: var(--nui-space-double) 0;
+}
 
 /* Columns: the count comes from the number of `col` markers and is carried on
    data-cols; authored `weights` arrive as an inline grid-template-columns, which
@@ -6764,6 +6775,61 @@ nui-markdown p > img {
 	border-left: 4px solid var(--color-highlight);
 	background: light-dark(var(--color-shade2), var(--color-shade1));
 	border-radius: var(--border-radius1);
+}
+/* Delivery text (spec §5.2): spoken, not shown. A READING renderer surfaces it —
+   labelled and set apart — because dropping it would make the reading view lossier
+   than a generic preview, which cannot see the directive and shows the words as prose.
+   The label is a ::before so the block's own text stays verbatim: it never enters
+   textContent, which is exactly what a delivery function is handed. */
+.nui-preset-narration {
+	position: relative;
+	padding: var(--nui-space);
+	border-left: 3px solid var(--border-shade3);
+	border-radius: 0 var(--border-radius1) var(--border-radius1) 0;
+	background: color-mix(in srgb, var(--text-color) 4%, transparent);
+	color: var(--text-color-dim);
+	font-style: italic;
+}
+.nui-preset-narration::before {
+	content: "Narration";
+	display: block;
+	font-style: normal;
+	font-size: var(--font-size-small);
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: var(--text-color-dim);
+	margin-bottom: var(--nui-space-quarter);
+}
+.nui-preset-narration > :last-child {
+	margin-bottom: 0;
+}
+/* The delivery control exists only when a speech function is registered
+   (util.setMarkdownSpeech) — the button is created by the enhancement pass, never in
+   the markup, so an unregistered profile shows a narration block with no affordance. */
+.nui-narration-control {
+	position: absolute;
+	top: var(--nui-space-half);
+	right: var(--nui-space-half);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	height: 2rem;
+	padding: 0;
+	border: solid var(--border-thickness) var(--border-shade2);
+	border-radius: 50%;
+	background: var(--color-shade2);
+	color: var(--text-color);
+	cursor: pointer;
+}
+.nui-narration-control:hover,
+.nui-narration-control:focus-visible {
+	border-color: var(--color-highlight);
+	color: var(--color-highlight);
+}
+.nui-narration-control nui-icon {
+	width: 1.15rem;
+	height: 1.15rem;
 }
 /* A card is a surface that has to work on the page AND inside a contrasting region
    (a `dark` section, a column). A fixed shade cannot do both: `--color-base` is pure

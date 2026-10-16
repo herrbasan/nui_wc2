@@ -30,6 +30,13 @@ nui-slides {
 	--nui-slides-scale: 1;
 }
 
+/* Narration is delivery text (spec §5.2): a surface renderer delivers it, it does not
+   draw it. The words stay in the DOM — a delivery function reads them per slide — they
+   are simply not shown. */
+nui-slides .nui-preset-narration {
+	display: none;
+}
+
 /* The slide viewport houses the canvas and slides in normal page flow */
 .nui-slides-viewport {
 	display: block;

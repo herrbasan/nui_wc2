@@ -9867,7 +9867,7 @@ function mbParsePreset(value) {
 // Families the renderer knows how to treat. Anything else renders plain — valid
 // syntax, but the degradation contract (spec §5: "visible renderer diagnostic")
 // requires the unknown token to be reported, so each one warns once per session.
-const MB_KNOWN_PRESET_FAMILIES = new Set(['card', 'image', 'gallery', 'link', 'list', 'table', 'page-break', 'band', 'cover', 'lead', 'note', 'warning', 'cta', 'player']);
+const MB_KNOWN_PRESET_FAMILIES = new Set(['card', 'image', 'gallery', 'link', 'list', 'table', 'page-break', 'band', 'cover', 'lead', 'note', 'warning', 'cta', 'player', 'narration']);
 
 // ── Slideshow enhancement (gallery:slideshow) ──
 // A gallery figure marked `preset=gallery:slideshow` cycles its plates one at
@@ -10059,6 +10059,63 @@ function mbEnhanceBrokenMedia(root) {
 // Public entry point, same contract as util.enhancePlayers: consumers who inject
 // markdownToHtml output directly call this after injection.
 util.enhanceBrokenMedia = (root) => mbEnhanceBrokenMedia(root);
+
+// Delivery affordance for narration blocks (spec §5.2: "a profile with a speech
+// function registered may offer a control on the block"). The format owns no
+// playback — this is the seam. Register once with util.setMarkdownSpeech(fn):
+//   fn(text, blockEl, buttonEl) -> optional { stop() }, or a stop function.
+// The text handed over is the block's own words, verbatim: the "Narration" label is
+// a ::before (CSS content, never in textContent) and the button is excluded below.
+function mbNarrationText(el) {
+	let text = '';
+	for (const node of el.childNodes) {
+		if (node.nodeType === 1 && node.classList && node.classList.contains('nui-narration-control')) continue;
+		text += node.textContent || '';
+	}
+	return text.trim();
+}
+
+function mbEnhanceNarration(root) {
+	if (typeof markdownSpeech !== 'function') return [];
+	const cleanups = [];
+	root.querySelectorAll('.nui-preset-narration').forEach((el) => {
+		if (el.querySelector(':scope > .nui-narration-control')) return;
+		const btn = document.createElement('button');
+		btn.type = 'button';
+		btn.className = 'nui-narration-control';
+		btn.setAttribute('aria-label', 'Play narration');
+		btn.setAttribute('aria-pressed', 'false');
+		btn.innerHTML = '<nui-icon name="play"></nui-icon>';
+		let stop = null;
+		const onClick = () => {
+			if (stop) {
+				try { stop(); } catch (err) { console.warn('[nui-markdown] narration stop() failed:', err && err.message); }
+				stop = null;
+				btn.dataset.playing = 'false';
+				btn.setAttribute('aria-pressed', 'false');
+				btn.setAttribute('aria-label', 'Play narration');
+				btn.innerHTML = '<nui-icon name="play"></nui-icon>';
+				return;
+			}
+			const result = markdownSpeech(mbNarrationText(el), el, btn);
+			stop = (result && typeof result.stop === 'function') ? result.stop : (typeof result === 'function' ? result : null);
+			btn.dataset.playing = 'true';
+			btn.setAttribute('aria-pressed', 'true');
+			btn.setAttribute('aria-label', 'Stop narration');
+			btn.innerHTML = '<nui-icon name="pause"></nui-icon>';
+		};
+		btn.addEventListener('click', onClick);
+		el.prepend(btn);
+		cleanups.push(() => { btn.removeEventListener('click', onClick); btn.remove(); });
+	});
+	return cleanups;
+}
+
+// Public, self-managing entry point, same contract as util.enhancePlayers.
+util.enhanceNarration = (root) => {
+	if (root._narrationCleanups) root._narrationCleanups.forEach((fn) => fn());
+	root._narrationCleanups = mbEnhanceNarration(root);
+};
 
 // Public, self-managing entry point, same contract as util.enhanceSlideshows:
 // consumers who inject markdownToHtml output directly call this after injection.
@@ -10268,6 +10325,11 @@ function mbRenderBlock(block) {
 			extraAttrs = 'role="note"';
 		} else if (p.family === 'link' || p.family === 'cta') {
 			tag = 'nav';
+		} else if (p.family === 'narration') {
+			// Delivery text (spec §5.2): spoken, not shown. Authored as ordinary Markdown,
+			// mapped to an <aside> and classed so a surface profile can withhold it while a
+			// delivery function finds its words without a descriptor.
+			tag = 'aside';
 		}
 	}
 
@@ -10366,7 +10428,11 @@ function mbRenderMain(main) {
 		? `<${name} class="nui-blocks-chrome nui-blocks-chrome-${name}">${chrome[name].map(mbRenderBlock).join('\n')}</${name}>`
 		: '';
 	const open = mbOpenTag('main', 'nui-blocks-main', main.attrs);
-	return `${open}>${slot('header')}${sections.map(mbRenderSection).join('\n')}${slot('footer')}</main>`;
+	// Section boundary drawn as a rule, opt-in (markdownToHtml({ separators: true }) or
+	// the host's `show-breaks`). The <hr> is a SIBLING of the sections, never a child, so
+	// a surface renderer that collects sections (nui-slides) does not treat it as a slide.
+	const body = sections.map(mbRenderSection).join(_mdSeparators ? '\n<hr class="nui-blocks-separator">\n' : '\n');
+	return `${open}>${slot('header')}${body}${slot('footer')}</main>`;
 }
 
 function renderBlocks(doc) {
@@ -10399,11 +10465,14 @@ function markdownToHtml(md, options) {
 	// an exception mid-render must not leak one document's base into the next.
 	const prevBase = _mdDocBase;
 	_mdDocBase = options.base || null;
+	const prevSep = _mdSeparators;
+	_mdSeparators = options.separators === true;
 	let out;
 	try {
 		out = _markdownToHtmlInner(md, options);
 	} finally {
 		_mdDocBase = prevBase;
+		_mdSeparators = prevSep;
 	}
 	return out;
 }
@@ -10412,6 +10481,11 @@ function markdownToHtml(md, options) {
 // markdownToHtml for the duration of one synchronous render; null everywhere
 // else. markdownCore reads it — see the comment above.
 let _mdDocBase = null;
+
+// Draw the section boundary as a rule. A break is structure, not content (§4.1), so
+// this is off unless asked for — markdownToHtml({ separators: true }), or the host's
+// `show-breaks` attribute. Threaded the same way as _mdDocBase (one synchronous render).
+let _mdSeparators = false;
 
 function _markdownToHtmlInner(md, options) {
 	if (typeof md !== 'string' || !md.trim()) return '';
@@ -10640,6 +10714,12 @@ util.setMarkdownMediaTrust = (fn) => { markdownMediaTrust = (typeof fn === 'func
 let markdownImageRewrite = null;
 util.setMarkdownImageRewrite = (fn) => { markdownImageRewrite = (typeof fn === 'function') ? fn : null; };
 
+// Speech / delivery hook (spec §5.2). Optional, and the only gate on the narration
+// control: with no function registered, a narration block renders as plain text with
+// no affordance at all. The function owns playback; utilisation returns a stop handle.
+let markdownSpeech = null;
+util.setMarkdownSpeech = (fn) => { markdownSpeech = (typeof fn === 'function') ? fn : null; };
+
 util.markdownToHtml = markdownToHtml;
 util.parseYaml = parseYaml;
 util.parseYamlReport = parseYamlReport;
@@ -10733,12 +10813,19 @@ class NuiMarkdown extends HTMLElement {
 		const mode = this._renderMode();
 		const fm = FRONTMATTER_MODES.has(mode) ? parseFrontmatter(rawText) : null;
 		this._metadata = fm ? fm.data : null;
-		this.innerHTML = markdownToHtml(rawText, { frontmatter: mode, base: this.base });
+		this.innerHTML = markdownToHtml(rawText, {
+			frontmatter: mode,
+			base: this.base,
+			// Opt-in: draw each section boundary as a rule (`show-breaks`). Off by
+			// default — a break is structure, not content (§4.1).
+			separators: this.hasAttribute('show-breaks')
+		});
 		this._syncDocumentMarker();
 		this._processed = true;
 		util.enhanceSlideshows(this, this.getAttribute('slide-duration'));
 		util.enhancePlayers(this);
 		util.enhanceBrokenMedia(this);
+		util.enhanceNarration(this);
 
 		if (!this._lightboxBound) {
 			this._lightboxBound = true;
@@ -10849,6 +10936,7 @@ class NuiMarkdown extends HTMLElement {
 			this._processed = true; // Re-attach is free: connectedCallback must not re-parse the rendered DOM
 			this._syncDocumentMarker();
 			util.enhanceBrokenMedia(this);
+			util.enhanceNarration(this);
 		}
 	}
 
