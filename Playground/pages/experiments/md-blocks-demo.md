@@ -424,6 +424,21 @@ A second line, delivered after the first — the same section carries both.
 
 ---
 
+# A root-level list (implicit block)
+
+Unannotated Markdown at the top level of a section is one *implicit block* (§6.1) — no wrapper, no
+directive. It is emitted bare into the section, so its lists answer directly to the content-measure
+rule. Marker indentation here is a regression guard, not a style preference: a theme that zeroes
+`padding-inline` on the section's children also erases the UA's list indent, so the gutter has to
+step aside for lists rather than the theme declaring an indent for all of them.
+
+- A marker keeps its indent.
+- A nested list indents one more step:
+  - like this one.
+- Back to the outer level.
+
+---
+
 <!-- mb:block id=b-cqmhk -->
 
 # Table Presentations
