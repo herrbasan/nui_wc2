@@ -9,6 +9,30 @@ import { nui } from '../../nui.js';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+const TYPE_ICONS = {
+	task: 'task_alt',
+	idea: 'keep',
+	date: 'calendar',
+	contact: 'id_card'
+};
+
+const CONTEXT_HUES = {
+	personal: 342,
+	arena: 206,
+	infrastructure: 186,
+	nspeech: 152,
+	blog: 36,
+	teaching: 268,
+	research: 232,
+	raum: 115,
+	materna: 198,
+	'materna-bav': 198,
+	'materna-dok-tools': 198,
+	'materna-tremonia': 198
+};
+
+const HUE_PALETTE = [206, 36, 152, 268, 342, 186, 232, 115];
+
 function parseDayDiff(todayStr, dueStr) {
 	if (!todayStr || !dueStr) return null;
 	const t = Date.parse(todayStr + 'T00:00:00Z');
@@ -27,6 +51,14 @@ function formatDueBadge(todayStr, dueStr) {
 	if (diff <= 7) return { text: `in ${diff}d`, tone: 'soon' };
 	const [, m, day] = dueStr.split('-');
 	return { text: `${MONTHS[Number(m) - 1] || m} ${Number(day)}`, tone: 'normal' };
+}
+
+// "today" / "tomorrow" / "in Nd" — never a second copy of the date itself.
+function formatDateRelative(daysUntil) {
+	if (typeof daysUntil !== 'number' || Number.isNaN(daysUntil)) return null;
+	if (daysUntil === 0) return 'today';
+	if (daysUntil === 1) return 'tomorrow';
+	return `in ${daysUntil}d`;
 }
 
 function el(tag, className, text) {
@@ -60,8 +92,12 @@ class NuiNotepad extends HTMLElement {
 		this._snapshot = null;
 		this._itemsById = new Map();
 		this._itemResolver = null;
+		this._activeEditable = null;
 
 		this._onDocPointerDown = (e) => {
+			// Commit the focused in-place editor before any re-render detaches it —
+			// a detached contenteditable never fires blur, which would silently drop the edit.
+			this._flushActiveEdit();
 			if (!this.contains(e.target)) {
 				if (this._selectedId !== null || this._composerCtx !== null) {
 					this._selectedId = null;
@@ -82,6 +118,11 @@ class NuiNotepad extends HTMLElement {
 		};
 		document.addEventListener('pointerdown', this._onDocPointerDown, true);
 
+		this._onWinResize = () => {
+			if (this._mode === 'list') this._fitListViewport();
+		};
+		window.addEventListener('resize', this._onWinResize);
+
 		this._renderShell();
 	}
 
@@ -89,55 +130,78 @@ class NuiNotepad extends HTMLElement {
 		if (this._onDocPointerDown) {
 			document.removeEventListener('pointerdown', this._onDocPointerDown, true);
 		}
+		if (this._onWinResize) {
+			window.removeEventListener('resize', this._onWinResize);
+		}
 	}
 
 	setItemResolver(fn) {
 		this._itemResolver = fn;
 	}
 
+	_flushActiveEdit() {
+		const node = this._activeEditable;
+		this._activeEditable = null;
+		if (node && node.isConnected) node.blur();
+	}
+
+	_cleanStepsPayload(item) {
+		return (item.steps || []).filter(s => s.text && s.text.trim()).map(s => ({ done: Boolean(s.done), text: s.text.trim() }));
+	}
+
+	_syncStepCounts(item) {
+		const steps = item.steps || [];
+		item.stepsTotal = steps.length;
+		item.stepsDone = steps.filter(s => s.done).length;
+		const next = steps.find(s => !s.done && s.text);
+		item.nextStep = next ? next.text : null;
+		this._syncSnapshotItem(item);
+	}
+
+	_syncSnapshotItem(item) {
+		const snap = this._snapshot;
+		if (!snap || !item) return;
+		for (const key of ['contextOpen', 'overdue', 'dueSoon', 'openTasks', 'upcoming', 'recentIdeas', 'stalePins']) {
+			const rows = snap[key];
+			if (!Array.isArray(rows)) continue;
+			for (const row of rows) {
+				if (String(row.id) !== String(item.id)) continue;
+				for (const field of ['title', 'notes', 'body', 'context', 'due', 'status', 'when', 'recur', 'stepsTotal', 'stepsDone', 'nextStep', '_stale']) {
+					if (item[field] !== undefined) row[field] = item[field];
+				}
+			}
+		}
+	}
+
 	load(snapshot, fullItems = []) {
+		const prevById = new Map(this._itemsById);
 		this._snapshot = structuredClone(snapshot);
 		this._itemsById.clear();
+		this._prevById = prevById;
+
+		const staleIds = new Set((snapshot.stalePins || []).map(p => p.id));
 
 		for (const item of fullItems) {
-			this._itemsById.set(item.id, structuredClone(item));
+			const cloned = structuredClone(item);
+			if (Array.isArray(cloned.steps)) cloned._detailLoaded = true;
+			// Full rows still need derivation (daysUntil, step counts) — going straight
+			// into the map is why date pills rendered "Dec 8 · Dec 8".
+			this._ingest(cloned);
 		}
 
-		const ingest = (row, fallbackType) => {
-			const existing = this._itemsById.get(row.id) || {};
-			const merged = {
-				type: row.type || fallbackType || existing.type || 'idea',
-				status: row.status || existing.status || 'open',
-				owner: row.owner || existing.owner || 'david',
-				context: row.context ?? existing.context ?? null,
-				notes: row.notes ?? existing.notes ?? null,
-				body: existing.body ?? null,
-				ref: existing.ref ?? row.ref ?? [],
-				...existing,
-				...row
-			};
-			if (merged.type === 'task' && !Array.isArray(merged.steps)) {
-				const total = merged.stepsTotal || 0;
-				const doneCount = merged.stepsDone || 0;
-				const steps = [];
-				for (let i = 0; i < total; i++) {
-					const isNext = i === doneCount && merged.nextStep;
-					steps.push({
-						done: i < doneCount,
-						text: isNext ? merged.nextStep : `Step ${i + 1}`
-					});
-				}
-				merged.steps = steps;
-			}
-			this._itemsById.set(merged.id, merged);
-		};
+		for (const t of snapshot.overdue || []) this._ingest(t, 'task');
+		for (const t of snapshot.dueSoon || []) this._ingest(t, 'task');
+		for (const t of snapshot.openTasks || []) this._ingest(t, 'task');
+		for (const d of snapshot.upcoming || []) this._ingest(d, 'date');
+		for (const p of snapshot.recentIdeas || []) this._ingest(p, 'idea');
+		for (const p of snapshot.stalePins || []) this._ingest(p, 'idea');
+		this._prevById = null;
 
-		for (const t of snapshot.overdue || []) ingest(t, 'task');
-		for (const t of snapshot.dueSoon || []) ingest(t, 'task');
-		for (const t of snapshot.openTasks || []) ingest(t, 'task');
-		for (const d of snapshot.upcoming || []) ingest(d, 'date');
-		for (const p of snapshot.recentIdeas || []) ingest(p, 'idea');
-		for (const p of snapshot.stalePins || []) ingest(p, 'idea');
+		// fullItems merge over the summary rows — re-assert the stale flag last.
+		for (const id of staleIds) {
+			const item = this._itemsById.get(id);
+			if (item) item._stale = true;
+		}
 
 		if (!this._spotlightId) {
 			const firstTask = this._getFilteredTasks()[0];
@@ -145,6 +209,131 @@ class NuiNotepad extends HTMLElement {
 		}
 
 		this._render();
+	}
+
+	_computeDaysUntil(whenStr, recur, todayStr) {
+		if (!whenStr) return null;
+		const [wy, wm, wd] = String(whenStr).split('-').map(Number);
+		if (!wy || !wm || !wd) return null;
+		const today = String(todayStr || this._snapshot?.today || new Date().toISOString().slice(0, 10));
+		const [ty, tm, td] = today.split('-').map(Number);
+		const todayUtc = Date.UTC(ty, tm - 1, td);
+		if (Number.isNaN(todayUtc)) return null;
+		let year = wy;
+		if (recur === 'yearly') {
+			year = ty;
+			let targetUtc = Date.UTC(year, wm - 1, wd);
+			if (targetUtc < todayUtc) targetUtc = Date.UTC(year + 1, wm - 1, wd);
+			return Math.round((targetUtc - todayUtc) / 86400000);
+		}
+		const targetUtc = Date.UTC(year, wm - 1, wd);
+		return Math.round((targetUtc - todayUtc) / 86400000);
+	}
+
+	_ingest(raw, fallbackType) {
+		const existing = this._itemsById.get(raw.id) || {};
+		const merged = {
+			...existing,
+			...raw,
+			type: raw.type || fallbackType || existing.type || 'idea',
+			status: raw.status || existing.status || 'open',
+			owner: raw.owner || existing.owner || 'david',
+			context: raw.context ?? existing.context ?? null,
+			notes: raw.notes ?? existing.notes ?? null,
+			body: raw.body ?? existing.body ?? null,
+			ref: raw.ref ?? existing.ref ?? [],
+			attachments: raw.attachments || existing.attachments || [],
+			when: raw.when || existing.when || null,
+			recur: raw.recur || existing.recur || null,
+			daysUntil: raw.daysUntil ?? existing.daysUntil ?? null,
+			promotedTo: raw.promotedTo ?? existing.promotedTo ?? null,
+			phone: raw.phone || existing.phone || null,
+			email: raw.email || existing.email || null,
+			address: raw.address || existing.address || null,
+			_stale: raw._stale !== undefined ? Boolean(raw._stale) : Boolean(existing._stale)
+		};
+		if ((merged.type === 'date' || merged.when) && merged.daysUntil == null && merged.when) {
+			merged.daysUntil = this._computeDaysUntil(merged.when, merged.recur, this._snapshot?.today);
+		}
+
+		if (merged.type === 'task' && !Array.isArray(raw.steps)) {
+			const prev = this._prevById ? this._prevById.get(raw.id) : null;
+			// fullItems are ingested before the snapshot rows, so `existing` is often
+			// the resolved item — a later summary row must not degrade it back to
+			// nextStep-only.
+			const resolved = [existing, prev].find((src) => (
+				src &&
+				!src._stepsPartial &&
+				(src._detailLoaded || (Array.isArray(src.steps) && src.steps.length > 0)) &&
+				(!merged.stepsTotal || !src.stepsTotal || src.stepsTotal === merged.stepsTotal) &&
+				(merged.stepsDone == null || src.stepsDone == null || src.stepsDone === merged.stepsDone) &&
+				((src.nextStep || null) === (merged.nextStep || null))
+			));
+			if (resolved) {
+				merged.steps = resolved.steps;
+				merged._steps = resolved._steps || resolved.steps;
+				merged._stepsPartial = false;
+				merged._detailLoaded = Boolean(resolved._detailLoaded);
+				if (merged.body == null) merged.body = resolved.body ?? null;
+			} else if (merged.nextStep) {
+				// Summary-only row: show the one step we actually know about. Never invent
+				// "Step 2…N" labels — the count comes from stepsDone/stepsTotal.
+				merged.steps = [{ done: false, text: merged.nextStep }];
+				merged._steps = merged.steps;
+				merged._stepsPartial = true;
+			} else {
+				merged.steps = [];
+				merged._steps = [];
+				merged._stepsPartial = true;
+			}
+		}
+		if (merged.type === 'task') {
+			if (Array.isArray(merged.steps) && !merged._stepsPartial) {
+				merged._steps = merged.steps;
+				merged.stepsTotal = merged.steps.length;
+				merged.stepsDone = merged.steps.filter(s => s.done).length;
+				if (Array.isArray(existing.steps)) merged._detailLoaded = true;
+			}
+		}
+		this._itemsById.set(merged.id, merged);
+		return merged;
+	}
+
+	reconcileItem(tempId, serverItem) {
+		if (serverItem?.id == null) return null;
+		let existing = null;
+		for (const [key, item] of this._itemsById) {
+			if (String(key) === String(tempId)) {
+				existing = item;
+				this._itemsById.delete(key);
+				break;
+			}
+		}
+		const merged = this._ingest({ ...(existing || {}), ...serverItem, id: serverItem.id }, existing?.type);
+		if (String(this._selectedId) === String(tempId)) this._selectedId = serverItem.id;
+		if (String(this._spotlightId) === String(tempId)) this._spotlightId = serverItem.id;
+		this._render();
+		return merged;
+	}
+
+	// Host-view lifecycle hooks — the component owns no paint loop, so these
+	// only exist so hosts can activate/deactivate it uniformly with other views.
+	activate() {
+		if (this._mode === 'list') {
+			requestAnimationFrame(() => this._fitListViewport());
+		}
+	}
+
+	deactivate() {}
+
+	_fitListViewport() {
+		const dom = this._listViewDOM;
+		if (!dom || !dom.panel.isConnected || this._mode !== 'list') return;
+		const top = dom.panel.getBoundingClientRect().top;
+		if (top <= 0) return;
+		const avail = Math.max(360, Math.floor(window.innerHeight - top - 24));
+		dom.panel.style.setProperty('--np-list-panel-h', `${avail}px`);
+		dom.scroller.wake?.();
 	}
 
 	_matchesFilter(item) {
@@ -186,11 +375,12 @@ class NuiNotepad extends HTMLElement {
 	_getFilteredDates() {
 		const dates = [];
 		for (const item of this._itemsById.values()) {
-			if (item.type === 'date' && this._matchesFilter(item)) {
-				dates.push(item);
-			}
+			if (item.type !== 'date' || !this._matchesFilter(item)) continue;
+			// Past one-off dates are history, not "upcoming" — keep them out of the strip.
+			if (item.daysUntil == null || item.daysUntil < 0) continue;
+			dates.push(item);
 		}
-		dates.sort((a, b) => (a.daysUntil ?? 999) - (b.daysUntil ?? 999));
+		dates.sort((a, b) => a.daysUntil - b.daysUntil);
 		return dates;
 	}
 
@@ -201,24 +391,45 @@ class NuiNotepad extends HTMLElement {
 			const detail = await this._itemResolver(id);
 			if (detail) {
 				Object.assign(item, detail, { _detailLoaded: true });
+				if (item.type === 'task' && Array.isArray(item.steps)) {
+					item._steps = item.steps;
+					item._stepsPartial = false;
+					item.stepsTotal = item.steps.length;
+					item.stepsDone = item.steps.filter(s => s.done).length;
+					const next = item.steps.find(s => !s.done && s.text);
+					item.nextStep = next ? next.text : null;
+				}
 			}
 		}
 		return item;
 	}
 
 	_toggleStep(task, stepIndex) {
-		if (!Array.isArray(task.steps) || !task.steps[stepIndex]) return;
-		task.steps[stepIndex].done = !task.steps[stepIndex].done;
-		task.stepsDone = task.steps.filter(s => s.done).length;
-		task.stepsTotal = task.steps.length;
-		const next = task.steps.find(s => !s.done);
-		task.nextStep = next ? next.text : null;
-		if (task.stepsDone === task.stepsTotal && task.stepsTotal > 0) {
-			task.status = 'done';
+		const steps = task.steps || [];
+		if (!steps[stepIndex]) return;
+		// Summary-only rows carry just the known next step, whose real index is stepsDone.
+		const base = task._stepsPartial ? (task.stepsDone || 0) : 0;
+		const realIndex = base + stepIndex;
+		steps[stepIndex].done = !steps[stepIndex].done;
+		const nowDone = steps[stepIndex].done;
+		if (task._stepsPartial) {
+			task.stepsDone = Math.max(0, Math.min(task.stepsTotal || 0, (task.stepsDone || 0) + (nowDone ? 1 : -1)));
+			task.nextStep = nowDone ? null : steps[stepIndex].text;
 		} else {
-			task.status = 'open';
+			task.stepsDone = steps.filter(s => s.done).length;
+			task.stepsTotal = steps.length;
+			const next = steps.find(s => !s.done);
+			task.nextStep = next ? next.text : null;
 		}
-		this._emitMutate('step-toggle', { id: task.id, stepIndex, done: task.steps[stepIndex].done });
+		this._syncSnapshotItem(task);
+		this._emitMutate('step-toggle', {
+			id: task.id,
+			stepIndex: realIndex,
+			done: nowDone,
+			partialSteps: Boolean(task._stepsPartial),
+			steps: task._stepsPartial ? null : this._cleanStepsPayload(task),
+			status: task.status
+		});
 		this._render();
 	}
 
@@ -341,13 +552,14 @@ class NuiNotepad extends HTMLElement {
 			pill.type = 'button';
 			const [, m, day] = (d.when || '').split('-');
 			const dateStr = (m && day) ? `${MONTHS[Number(m) - 1]} ${Number(day)}` : d.when;
-			const relStr = d.daysUntil !== undefined ? `in ${d.daysUntil}d` : dateStr;
+			const relText = formatDateRelative(d.daysUntil);
+			const whenText = relText && relText !== dateStr ? `${dateStr} · ${relText}` : dateStr;
 			const calIcon = document.createElement('nui-icon');
 			calIcon.setAttribute('name', 'calendar');
 			pill.append(
 				calIcon,
 				el('span', null, this._cleanTitle(d.title)),
-				el('span', 'np-DateWhen', `${dateStr} · ${relStr}`)
+				el('span', 'np-DateWhen', whenText)
 			);
 			pill.addEventListener('click', () => {
 				this._selectedId = this._selectedId === d.id ? null : d.id;
@@ -393,6 +605,10 @@ class NuiNotepad extends HTMLElement {
 			for (const [tId, tLabel] of [['idea', 'Pin'], ['task', 'Task']]) {
 				const b = el('button', 'np-SegBtn', tLabel);
 				b.type = 'button';
+				b.dataset.type = tId;
+				const segIcon = document.createElement('nui-icon');
+				segIcon.setAttribute('name', this._typeIconName(tId));
+				b.prepend(segIcon);
 				b.setAttribute('aria-pressed', String(this._composerType === tId));
 				b.addEventListener('click', () => {
 					this._composerType = tId;
@@ -454,6 +670,21 @@ class NuiNotepad extends HTMLElement {
 		return (raw || '').replace(/^DEMO:\s*/i, '').replace(/^pin\s*[—–-]\s*/i, '');
 	}
 
+	_typeIconName(type) {
+		return TYPE_ICONS[type] || 'label';
+	}
+
+	_contextHue(ctx) {
+		const key = String(ctx ?? '');
+		if (Object.hasOwn(CONTEXT_HUES, key)) return CONTEXT_HUES[key];
+		if (!key) return HUE_PALETTE[0];
+		let hash = 0;
+		for (let i = 0; i < key.length; i++) {
+			hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
+		}
+		return HUE_PALETTE[hash % HUE_PALETTE.length];
+	}
+
 	_wakeVirtualScroll(el) {
 		el.closest('nui-virtual-scroll')?.wake?.();
 	}
@@ -465,6 +696,9 @@ class NuiNotepad extends HTMLElement {
 
 		const card = el('article', 'np-Card');
 		card.dataset.type = item.type;
+		if (item.context) {
+			card.style.setProperty('--ctx-hue', String(this._contextHue(item.context)));
+		}
 		if (dueInfo?.tone && item.status !== 'done') {
 			card.dataset.tone = dueInfo.tone;
 		}
@@ -489,59 +723,117 @@ class NuiNotepad extends HTMLElement {
 
 		// Header row: Exact same <h3> whether selected or not -> 0px layout shift!
 		const headRow = el('div', 'np-CardHeadRow');
+
+		const typeIcon = el('span', 'np-TypeIcon');
+		typeIcon.dataset.type = item.type;
+		typeIcon.title = item.type === 'idea' ? 'Pin' : item.type;
+		const typeIconGlyph = document.createElement('nui-icon');
+		typeIconGlyph.setAttribute('name', this._typeIconName(item.type));
+		typeIcon.appendChild(typeIconGlyph);
+
 		const titleEl = el('h3', 'np-CardTitle', this._cleanTitle(item.title));
 		if (isSelected) {
+			titleEl.dataset.editTitle = item.id;
 			titleEl.setAttribute('contenteditable', 'plaintext-only');
 			titleEl.setAttribute('spellcheck', 'false');
 			titleEl.addEventListener('input', () => {
-				item.title = titleEl.textContent.trim();
 				this._wakeVirtualScroll(card);
+			});
+			titleEl.addEventListener('focus', () => {
+				this._activeEditable = titleEl;
+			});
+			titleEl.addEventListener('blur', () => {
+				if (this._activeEditable === titleEl) this._activeEditable = null;
+				const next = titleEl.textContent.trim();
+				if (next && next !== item.title) {
+					item.title = next;
+					this._syncSnapshotItem(item);
+					this._emitMutate('update', { id: item.id, patch: { title: item.title } });
+				}
 			});
 			titleEl.addEventListener('keydown', (e) => {
 				if (e.key === 'Enter') {
 					e.preventDefault();
 					titleEl.blur();
 				} else if (e.key === 'Escape') {
+					titleEl.blur();
 					this._selectedId = null;
 					this._render();
 				}
 			});
 		}
+		headRow.appendChild(typeIcon);
 		headRow.appendChild(titleEl);
+
+		const headRight = el('div', 'np-CardHeadRight');
+		if (showContext && this._mode !== 'swimlanes' && item.context) {
+			headRight.appendChild(el('span', 'np-ContextBadge', `#${item.context}`));
+		}
+		if (item.type === 'task' && (item.stepsTotal || 0) > 0) {
+			const progress = el('span', 'np-StepProgress', `${item.stepsDone || 0}/${item.stepsTotal}`);
+			progress.dataset.complete = item.stepsDone === item.stepsTotal && item.stepsTotal > 0 ? 'true' : 'false';
+			headRight.appendChild(progress);
+		}
+
+		if (item._stale && item.status === 'open') {
+			const staleBadge = el('span', 'np-StaleBadge', 'stale');
+			staleBadge.title = 'Open for >60 days';
+			headRight.appendChild(staleBadge);
+		}
 
 		if (dueInfo) {
 			const stamp = el('span', 'np-DueText', dueInfo.text);
 			stamp.dataset.tone = dueInfo.tone;
-			headRow.appendChild(stamp);
+			headRight.appendChild(stamp);
 		} else if (item.type === 'date' && item.when) {
 			const [, m, day] = String(item.when).split('-');
 			const dateStr = (m && day) ? `${MONTHS[Number(m) - 1]} ${Number(day)}` : item.when;
-			const relStr = item.daysUntil !== undefined ? `${dateStr} · in ${item.daysUntil}d` : dateStr;
+			const relText = formatDateRelative(item.daysUntil);
+			const relStr = relText && relText !== dateStr ? `${dateStr} · ${relText}` : dateStr;
 			const stamp = el('span', 'np-DueText', relStr);
-			if (item.daysUntil !== undefined && item.daysUntil <= 3) stamp.dataset.tone = 'soon';
-			headRow.appendChild(stamp);
+			if (typeof item.daysUntil === 'number' && item.daysUntil <= 3) stamp.dataset.tone = 'soon';
+			headRight.appendChild(stamp);
 		}
-		if (showContext && item.context) {
-			headRow.appendChild(el('span', 'np-DueText', `#${item.context}`));
-		}
+		headRow.appendChild(headRight);
 		card.appendChild(headRow);
 
 		// Notes: Exact same <p> whether selected or not -> 0px layout shift!
-		if (item.notes || (isSelected && item._editingNote)) {
-			const noteEl = el('p', 'np-CardNotes', item.notes || '');
+		// Contact items have no notes field of their own — their subtitle is the
+		// joined contact channels, rendered read-only so editing cannot overwrite notes.
+		const contactLine = item.type === 'contact'
+			? [item.phone, item.email, item.address].filter(Boolean).join(' · ')
+			: '';
+		const editingNote = Boolean(isSelected && item._editingNote);
+		if (item.notes || editingNote || (!item.notes && contactLine)) {
+			const noteEl = el('p', 'np-CardNotes', item.notes || contactLine || '');
 			noteEl.dataset.placeholder = 'Add a note…';
-			if (isSelected) {
+			if (!item.notes && contactLine) {
+				noteEl.classList.add('np-CardContact');
+			} else if (isSelected) {
+				noteEl.dataset.editNotes = item.id;
 				noteEl.setAttribute('contenteditable', 'plaintext-only');
 				noteEl.setAttribute('spellcheck', 'false');
 				noteEl.addEventListener('input', () => {
-					item.notes = noteEl.textContent.trim() || null;
 					this._wakeVirtualScroll(card);
+				});
+				noteEl.addEventListener('focus', () => {
+					this._activeEditable = noteEl;
+				});
+				noteEl.addEventListener('blur', () => {
+					if (this._activeEditable === noteEl) this._activeEditable = null;
+					const next = noteEl.textContent.trim();
+					item._editingNote = false;
+					if (next === (item.notes || '')) return;
+					item.notes = next || null;
+					this._syncSnapshotItem(item);
+					this._emitMutate('update', { id: item.id, patch: { notes: item.notes } });
 				});
 				noteEl.addEventListener('keydown', (e) => {
 					if (e.key === 'Enter' && !e.shiftKey) {
 						e.preventDefault();
 						noteEl.blur();
 					} else if (e.key === 'Escape') {
+						noteEl.blur();
 						this._selectedId = null;
 						this._render();
 					}
@@ -572,19 +864,37 @@ class NuiNotepad extends HTMLElement {
 					});
 
 					const txt = el('span', 'np-StepText', st.text);
-					if (isSelected) {
+					if (isSelected && !item._stepsPartial) {
+						txt.dataset.editStep = String(idx);
 						txt.setAttribute('contenteditable', 'plaintext-only');
 						txt.setAttribute('spellcheck', 'false');
 						txt.addEventListener('click', (e) => e.stopPropagation());
 						txt.addEventListener('input', () => {
 							this._wakeVirtualScroll(card);
-							st.text = txt.textContent.trim();
+						});
+						txt.addEventListener('focus', () => {
+							this._activeEditable = txt;
+						});
+						txt.addEventListener('blur', () => {
+							if (this._activeEditable === txt) this._activeEditable = null;
+							const next = txt.textContent.trim();
+							if (next === (st.text || '')) return;
+							const hadText = Boolean(st.text && st.text.trim());
+							st.text = next;
+							item.steps[idx] = st;
+							this._syncStepCounts(item);
+							// An emptied step drops out of the payload (backend rejects empty
+							// step text), but the removal still has to reach the server.
+							if (next || hadText) {
+								this._emitMutate('update', { id: item.id, patch: { steps: this._cleanStepsPayload(item) } });
+							}
 						});
 						txt.addEventListener('keydown', (e) => {
 							if (e.key === 'Enter') {
 								e.preventDefault();
+								st.text = txt.textContent.trim();
 								item.steps.splice(idx + 1, 0, { done: false, text: '' });
-								item.stepsTotal = item.steps.length;
+								this._syncStepCounts(item);
 								this._render();
 								requestAnimationFrame(() => {
 									const allStepTexts = card.querySelectorAll('.np-StepText');
@@ -593,8 +903,12 @@ class NuiNotepad extends HTMLElement {
 							} else if (e.key === 'Backspace' && !txt.textContent.trim()) {
 								e.preventDefault();
 								item.steps.splice(idx, 1);
-								item.stepsTotal = item.steps.length;
-								item.stepsDone = item.steps.filter(s => s.done).length;
+								this._syncStepCounts(item);
+								this._emitMutate('update', { id: item.id, patch: { steps: this._cleanStepsPayload(item) } });
+								this._render();
+							} else if (e.key === 'Escape') {
+								txt.blur();
+								this._selectedId = null;
 								this._render();
 							}
 						});
@@ -613,11 +927,70 @@ class NuiNotepad extends HTMLElement {
 			}
 		}
 
-		// References (only shown when selected if present)
-		if (isSelected && item.ref && item.ref.length) {
+		// Body: long-form payload, delivered only by notepad.get. Shown once it has
+		// content, or while selected so an empty body can be authored in place.
+		const hasBody = item.body !== null && item.body !== undefined;
+		if ((isSelected && hasBody) || (!isSelected && item.body)) {
+			const bodyBox = el('div', 'np-CardBody');
+			bodyBox.appendChild(el('span', 'np-CardBodyLabel', 'BODY'));
+			const bodyText = el('div', 'np-CardBodyText', item.body || '');
+			bodyText.dataset.editBody = item.id;
+			bodyText.dataset.placeholder = 'Write the long form…';
+			if (isSelected) {
+				bodyText.setAttribute('contenteditable', 'plaintext-only');
+				bodyText.setAttribute('spellcheck', 'false');
+				bodyText.addEventListener('click', (e) => e.stopPropagation());
+				bodyText.addEventListener('input', () => {
+					this._wakeVirtualScroll(card);
+				});
+				bodyText.addEventListener('focus', () => {
+					this._activeEditable = bodyText;
+				});
+				bodyText.addEventListener('blur', () => {
+					if (this._activeEditable === bodyText) this._activeEditable = null;
+					const next = bodyText.textContent.trim();
+					if (next === (item.body || '')) return;
+					item.body = next || null;
+					this._syncSnapshotItem(item);
+					this._emitMutate('update', { id: item.id, patch: { body: item.body } });
+				});
+				bodyText.addEventListener('keydown', (e) => {
+					if (e.key === 'Escape') {
+						bodyText.blur();
+						this._selectedId = null;
+						this._render();
+					}
+				});
+			}
+			bodyBox.appendChild(bodyText);
+			card.appendChild(bodyBox);
+		}
+
+		// References & attachments (clickable)
+		const refsList = Array.isArray(item.ref) ? item.ref : [];
+		const attachments = Array.isArray(item.attachments) ? item.attachments : [];
+		if (isSelected && (refsList.length > 0 || attachments.length > 0)) {
 			const refsRow = el('div', 'np-RefsRow');
-			for (const r of item.ref) {
-				refsRow.appendChild(el('span', 'np-RefChip', r));
+			for (const r of refsList) {
+				const chip = /^(https?:\/\/|\/)/.test(r)
+					? el('a', 'np-RefChip np-RefChip--link', r)
+					: el('span', 'np-RefChip', r);
+				if (chip.tagName === 'A') {
+					chip.href = r;
+					chip.target = '_blank';
+					chip.rel = 'noopener';
+					chip.addEventListener('click', (e) => e.stopPropagation());
+				}
+				refsRow.appendChild(chip);
+			}
+			for (const att of attachments) {
+				const href = att.url || (att.ref && att.ref.startsWith('notepad:') ? '/api/notepad/files/' + att.ref.slice('notepad:'.length) : '#');
+				const chip = el('a', 'np-RefChip np-RefChip--link', `📎 ${att.name || att.ref || 'file'}`);
+				chip.href = href;
+				chip.target = '_blank';
+				chip.rel = 'noopener';
+				chip.addEventListener('click', (e) => e.stopPropagation());
+				refsRow.appendChild(chip);
 			}
 			card.appendChild(refsRow);
 		}
@@ -658,20 +1031,25 @@ class NuiNotepad extends HTMLElement {
 		if (item.type === 'idea') {
 			zone.appendChild(makeIconBtn('check_circle', 'To Task', () => this._promotePin(item)));
 		} else if (item.type === 'task') {
-			zone.appendChild(makeIconBtn('check_circle', item.status === 'done' ? 'Reopen' : 'Done', () => {
+			const doneBtn = makeIconBtn('check_circle', item.status === 'done' ? 'Reopen' : 'Done', () => {
 				item.status = item.status === 'done' ? 'open' : 'done';
 				this._selectedId = null;
-				this._emitMutate('complete', { id: item.id });
+				this._syncSnapshotItem(item);
+				this._emitMutate('complete', { id: item.id, status: item.status });
 				this._render();
-			}));
+			});
+			doneBtn.dataset.completeItem = item.id;
+			zone.appendChild(doneBtn);
 
 			zone.appendChild(el('span', 'np-ZoneSep'));
 
 			// Step adder button inside toolbar -> card stays 0px taller when merely selected!
 			zone.appendChild(makeIconBtn('add', 'Step', () => {
 				item.steps = item.steps || [];
-				item.steps.push({ done: false, text: 'New step' });
-				item.stepsTotal = item.steps.length;
+				// Empty text, not a "New step" placeholder string — a placeholder that
+				// lives in the DOM would be persisted verbatim by the next steps update.
+				item.steps.push({ done: false, text: '' });
+				this._syncStepCounts(item);
 				this._render();
 				requestAnimationFrame(() => {
 					const texts = this.querySelectorAll('.np-Card[data-selected="true"] .np-StepText');
@@ -695,8 +1073,11 @@ class NuiNotepad extends HTMLElement {
 			const hiddenDate = el('input', 'np-HiddenDate');
 			hiddenDate.type = 'date';
 			hiddenDate.value = item.due || '';
+			hiddenDate.dataset.dueInput = item.id;
 			hiddenDate.addEventListener('change', () => {
 				item.due = hiddenDate.value || null;
+				this._syncSnapshotItem(item);
+				this._emitMutate('update', { id: item.id, patch: { due: item.due } });
 				this._render();
 			});
 			const dueBtn = makeIconBtn('calendar', dueInfo ? dueInfo.text : 'Due', () => {
@@ -721,15 +1102,35 @@ class NuiNotepad extends HTMLElement {
 			}));
 		}
 
-		zone.appendChild(el('span', 'np-ZoneSep'));
+		if (item.body === null || item.body === undefined) {
+			zone.appendChild(el('span', 'np-ZoneSep'));
+			const bodyBtn = makeIconBtn('add', 'Body', () => {
+				item.body = '';
+				this._selectedId = item.id;
+				this._render();
+				requestAnimationFrame(() => {
+					this.querySelector(`[data-edit-body="${item.id}"]`)?.focus();
+				});
+			});
+			bodyBtn.dataset.addBody = item.id;
+			zone.appendChild(bodyBtn);
+		}
 
-		// Context cycle button (clean button, no native select stretching)
-		const contexts = this._snapshot?.contexts || ['arena', 'blog', 'teaching', 'general'];
-		zone.appendChild(makeIconBtn(null, `#${item.context || 'general'}`, () => {
-			const idx = contexts.indexOf(item.context);
-			item.context = contexts[(idx + 1) % contexts.length];
-			this._render();
-		}));
+		// Context cycle button (clean button, no native select stretching).
+		// Contacts have no context field — the backend rejects it for that type.
+		if (item.type !== 'contact') {
+			zone.appendChild(el('span', 'np-ZoneSep'));
+			const contexts = this._snapshot?.contexts || ['arena', 'blog', 'teaching', 'general'];
+			const ctxBtn = makeIconBtn(null, `#${item.context || 'general'}`, () => {
+				const idx = contexts.indexOf(item.context);
+				item.context = contexts[(idx + 1) % contexts.length];
+				this._syncSnapshotItem(item);
+				this._emitMutate('update', { id: item.id, patch: { context: item.context } });
+				this._render();
+			});
+			ctxBtn.dataset.contextCycle = item.id;
+			zone.appendChild(ctxBtn);
+		}
 
 		zone.appendChild(el('span', 'np-ZoneSep'));
 
@@ -801,6 +1202,7 @@ class NuiNotepad extends HTMLElement {
 		const grid = el('div', 'np-SwimlanesGrid');
 		for (const [ctx, items] of byContext.entries()) {
 			const lane = el('section', 'np-Swimlane');
+			lane.style.setProperty('--ctx-hue', String(this._contextHue(ctx)));
 
 			const head = el('div', 'np-LaneHeader');
 			head.append(
@@ -943,7 +1345,7 @@ class NuiNotepad extends HTMLElement {
 					const d = parseDayDiff(today, it.due);
 					if (d !== null) return d;
 				}
-				if (it.type === 'date' && it.daysUntil !== undefined) {
+				if (it.type === 'date' && typeof it.daysUntil === 'number') {
 					return it.daysUntil;
 				}
 				return it.type === 'task' ? 500 : 1000;
@@ -972,6 +1374,8 @@ class NuiNotepad extends HTMLElement {
 		}
 		this._syncListViewHeader();
 		this._updateListViewItems();
+		this._fitListViewport();
+		requestAnimationFrame(() => this._fitListViewport());
 	}
 
 	_createListViewDOM() {
@@ -1034,7 +1438,8 @@ class NuiNotepad extends HTMLElement {
 			{ value: '__all__', label: 'All Types' },
 			{ value: 'task', label: 'Tasks' },
 			{ value: 'idea', label: 'Pins' },
-			{ value: 'date', label: 'Dates' }
+			{ value: 'date', label: 'Dates' },
+			{ value: 'contact', label: 'Contacts' }
 		], this._listTypeFilter, (val) => {
 			if (this._listTypeFilter === val) return;
 			this._listTypeFilter = val;
