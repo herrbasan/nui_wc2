@@ -4062,20 +4062,14 @@ nui.registerPage('experiments/html-standards', {
 	}
 });
 
-// The MD-Blocks document demo is otherwise static; its one piece of wiring is the
-// narration delivery control (spec §5.2). Registering a speech function IS the whole
-// contract — `nui-markdown` then offers a play/stop button on every `preset=narration`
-// block as it renders, and hands over the block's words verbatim.
+// The MD-Blocks document demo is otherwise static. Narration (spec §5.2) is playable
+// out of the box: `nui-markdown` installs the browser's speech synthesis as the
+// standing delivery hook, so this page wires nothing. An app that owns a TTS service
+// replaces it with `nui.util.setMarkdownSpeech(fn)`; `setMarkdownSpeech(null)` removes
+// the control. `nui.util.browserSpeech` is exported for a wrapper that wants the
+// platform voice as its fallback.
 nui.registerPage('experiments/md-blocks', {
-	html: 'experiments/md-blocks.html',
-	init(element) {
-		if (!('speechSynthesis' in window)) return;
-		nui.util.setMarkdownSpeech((text) => {
-			speechSynthesis.cancel();
-			speechSynthesis.speak(new SpeechSynthesisUtterance(text));
-			return { stop: () => speechSynthesis.cancel() };
-		});
-	}
+	html: 'experiments/md-blocks.html'
 });
 
 nui.registerPage('experiments/blocks-editor', {

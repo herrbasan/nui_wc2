@@ -29,10 +29,17 @@
 		<h2>Live Presentation Deck</h2>
 		<p>The slide deck below is placed directly in the normal page flow. It includes an integrated toolbar for non-fullscreen navigation, swipe gesture support on touchscreens, and auto-scales cleanly to any width.</p>
 
-		<nui-slides id="demo-deck" toolbar base="1280x720">
+		<nui-slides id="demo-deck" toolbar notes narrate base="1280x720">
 			<nui-markdown src="pages/addons/slides-demo.md"></nui-markdown>
 		</nui-slides>
-	</section>
+		<p class="demo-callout">
+			Narration blocks (<code>preset=narration</code>) are <strong>delivery text</strong>:
+			the deck hides them on the slide, and the <code>notes</code> attribute surfaces the
+			current slide's narration underneath it — with a play control that reads it through
+			the same speech hook the block controls use. Without <code>notes</code> the words stay in
+			the DOM for a delivery profile and are never drawn. The same text is in
+			<code>nui-slide-change</code> as <code>detail.narration</code>.
+		</p>	</section>
 
 	<section>
 		<h2>Declarative Usage</h2>

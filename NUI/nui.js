@@ -10066,13 +10066,33 @@ util.enhanceBrokenMedia = (root) => mbEnhanceBrokenMedia(root);
 //   fn(text, blockEl, buttonEl) -> optional { stop() }, or a stop function.
 // The text handed over is the block's own words, verbatim: the "Narration" label is
 // a ::before (CSS content, never in textContent) and the button is excluded below.
+//
+// Verbatim does not mean `textContent`. That returns "slide,and" across a soft line
+// break (the renderer writes <br>, whose textContent is empty) and glues two
+// paragraphs into one word ("oneTwo"). A delivery function is handed the words as
+// they READ: block boundaries and <br> become line breaks, runs collapse, and only
+// then is the result trimmed. The words themselves are untouched.
+const MB_NARRATION_BLOCKS = new Set(['P', 'DIV', 'LI', 'UL', 'OL', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'BLOCKQUOTE', 'PRE', 'TABLE', 'TR', 'SECTION', 'ARTICLE', 'ASIDE', 'FIGURE', 'FIGCAPTION']);
+
 function mbNarrationText(el) {
-	let text = '';
-	for (const node of el.childNodes) {
-		if (node.nodeType === 1 && node.classList && node.classList.contains('nui-narration-control')) continue;
-		text += node.textContent || '';
-	}
-	return text.trim();
+	let out = '';
+	const push = (s) => { out += s; };
+	const walk = (node) => {
+		if (node.nodeType === 3) { push(node.nodeValue); return; }
+		if (node.nodeType !== 1) return;
+		if (node.classList && node.classList.contains('nui-narration-control')) return;
+		if (node.tagName === 'BR') { push('\n'); return; }
+		const block = MB_NARRATION_BLOCKS.has(node.tagName);
+		if (block) push('\n');
+		for (const child of node.childNodes) walk(child);
+		if (block) push('\n');
+	};
+	for (const child of el.childNodes) walk(child);
+	return out
+		.replace(/[ \t]+/g, ' ')
+		.replace(/ *\n */g, '\n')
+		.replace(/\n{3,}/g, '\n\n')
+		.trim();
 }
 
 function mbEnhanceNarration(root) {
@@ -10087,22 +10107,43 @@ function mbEnhanceNarration(root) {
 		btn.setAttribute('aria-pressed', 'false');
 		btn.innerHTML = '<nui-icon name="play"></nui-icon>';
 		let stop = null;
+		// A completion from an EARLIER play must not reset a LATER one: the browser
+		// synthesizer cancels the previous utterance when another starts, and that
+		// cancelled utterance's `done` settles a tick after the new one began.
+		let run = 0;
+
+		const idle = () => {
+			run++;
+			stop = null;
+			btn.dataset.playing = 'false';
+			btn.setAttribute('aria-pressed', 'false');
+			btn.setAttribute('aria-label', 'Play narration');
+			btn.innerHTML = '<nui-icon name="play"></nui-icon>';
+		};
+
 		const onClick = () => {
 			if (stop) {
 				try { stop(); } catch (err) { console.warn('[nui-markdown] narration stop() failed:', err && err.message); }
-				stop = null;
-				btn.dataset.playing = 'false';
-				btn.setAttribute('aria-pressed', 'false');
-				btn.setAttribute('aria-label', 'Play narration');
-				btn.innerHTML = '<nui-icon name="play"></nui-icon>';
+				idle();
 				return;
 			}
+			const mine = ++run;
 			const result = markdownSpeech(mbNarrationText(el), el, btn);
 			stop = (result && typeof result.stop === 'function') ? result.stop : (typeof result === 'function' ? result : null);
 			btn.dataset.playing = 'true';
 			btn.setAttribute('aria-pressed', 'true');
 			btn.setAttribute('aria-label', 'Stop narration');
-			btn.innerHTML = '<nui-icon name="pause"></nui-icon>';
+			// A square, not a pause glyph: this control stops from the beginning — it
+			// cannot resume — and in a toolbar it would otherwise read as a second
+			// playback control beside the deck's autoplay.
+			btn.innerHTML = '<nui-icon name="stop"></nui-icon>';
+			// Playback that ENDS on its own has to return the control to Play, or the
+			// button claims a voice that has already stopped. `done` is optional: a
+			// function returning only a stop handle keeps the old manual behaviour.
+			if (result && result.done && typeof result.done.then === 'function') {
+				const settle = () => { if (mine === run) idle(); };
+				result.done.then(settle, settle);
+			}
 		};
 		btn.addEventListener('click', onClick);
 		el.prepend(btn);
@@ -10116,6 +10157,118 @@ util.enhanceNarration = (root) => {
 	if (root._narrationCleanups) root._narrationCleanups.forEach((fn) => fn());
 	root._narrationCleanups = mbEnhanceNarration(root);
 };
+
+// Voice selection. The platform's own default is whatever happens to be first in
+// `getVoices()` — on Windows a 1990s SAPI voice, on macOS sometimes a novelty voice,
+// in Chrome whichever loaded first — so a narration read with no choice made sounds
+// like a system prompt rather than a presenter. The choice is made here instead:
+// language match first, then the quality markers platforms actually publish, then
+// known narrator voices, then locality (a local voice keeps working offline). The
+// platform's order is the final tie-break, so identical scores stay stable.
+const MB_VOICE_GOOD = [
+	[/\b(natural|neural)\b/i, 50],
+	[/\b(premium|enhanced)\b/i, 40],
+	[/^google\b/i, 30],
+	[/\b(aria|jenny|guy|sonia|libby|ryan|natasha|william|samantha|ava|allison|serena|daniel|karen|moira|tessa|zoe|alex)\b/i, 25],
+	// Legacy SAPI5/older engines expose a handful of voices that are markedly clearer
+	// than the rest of their set; naming them beats the platform's alphabetical order.
+	[/\b(zira|hazel|susan|eva)\b/i, 12]
+];
+const MB_VOICE_BAD = [
+	[/\b(compact|eloquence|espeak|pico|festival)\b/i, -80],
+	[/^(albert|bad news|bahh|bells|boing|bubbles|cellos|deranged|good news|hysterical|jester|organ|superstar|trinoids|whisper|zarvox|fred|ralph|junior)\b/i, -100],
+	[/\bdesktop\b/i, -20]
+];
+
+function mbSpeechLang() {
+	const doc = (typeof document !== 'undefined' && document.documentElement.lang) || '';
+	const nav = (typeof navigator !== 'undefined' && navigator.language) || '';
+	return String(doc || nav || 'en').toLowerCase();
+}
+
+// The best available voice for `lang`, or null to let the platform decide. Every voice
+// stays a candidate — penalties, never removal — so an unusual platform with nothing
+// but an awkward voice still speaks rather than failing.
+function mbPickVoice(lang) {
+	const synth = typeof window !== 'undefined' ? window.speechSynthesis : null;
+	const voices = synth ? synth.getVoices() : [];
+	const want = String(lang || mbSpeechLang()).toLowerCase();
+	const base = want.split('-')[0];
+	let best = null;
+	let bestScore = -Infinity;
+	voices.forEach((voice, index) => {
+		const name = voice.name || '';
+		const voiceLang = String(voice.lang || '').toLowerCase();
+		let score = -index * 0.01;
+		if (voiceLang === want) score += 100;
+		else if (voiceLang.split('-')[0] === base) score += 60;
+		else score -= 100;
+		for (const [re, points] of MB_VOICE_GOOD) if (re.test(name)) score += points;
+		for (const [re, points] of MB_VOICE_BAD) if (re.test(name)) score += points;
+		if (voice.localService) score += 5;
+		if (score > bestScore) { bestScore = score; best = voice; }
+	});
+	return best;
+}
+
+// The standing delivery implementation: the platform's own speech synthesis. No
+// endpoint, no configuration, and the voice the browser already has. It returns
+// `done` as well as `stop` so the control can reset when the voice finishes rather
+// than claiming to still be speaking.
+function mbBrowserSpeech(text) {
+	const synth = typeof window !== 'undefined' ? window.speechSynthesis : null;
+	if (!synth || typeof SpeechSynthesisUtterance !== 'function') {
+		throw new Error('[nui-markdown] browser speech is unavailable in this browser');
+	}
+	// One narration at a time: a deck advances, it does not queue. Cancelling also
+	// settles the previous block's `done`, which resets that block's button.
+	synth.cancel();
+	const utterance = new SpeechSynthesisUtterance(text);
+	// Voices can arrive after load (`voiceschanged`), so the choice is made at speak
+	// time, not at install time.
+	const voice = mbPickVoice();
+	if (voice) {
+		utterance.voice = voice;
+		utterance.lang = voice.lang;
+	}
+	let settle;
+	const done = new Promise((resolve) => { settle = resolve; });
+	const finish = () => settle();
+	utterance.onend = finish;
+	utterance.onerror = finish;
+	synth.speak(utterance);
+	return {
+		stop: () => { finish(); synth.cancel(); },
+		done
+	};
+}
+
+// Exported so an app can show or log the voice its narration will use, and so the
+// ranking is testable without speaking anything.
+util.pickSpeechVoice = (lang) => mbPickVoice(lang);
+
+// Exported so an app's TTS wrapper can fall back to it instead of reimplementing it:
+//   nui.util.setMarkdownSpeech((text) => endpoint ? myTts(text) : nui.util.browserSpeech(text));
+util.browserSpeech = mbBrowserSpeech;
+
+// The words of one narration block, as a consumer should read them. Exported because
+// there is more than one consumer (nui-slides, the chat app's delivery profile) and
+// two copies of this extractor will drift into two different scripts for the same
+// document.
+util.narrationText = (el) => mbNarrationText(el);
+
+// Speak an arbitrary script through the SAME delivery hook the narration controls use,
+// so a profile that offers its own play control (nui-slides' speaker notes) honours an
+// app's TTS endpoint instead of reaching past it to the browser. Returns the hook's
+// result ({ stop, done }, a stop function, or null) and null when nothing is registered.
+util.speakMarkdown = (text, blockEl, buttonEl) => {
+	if (typeof markdownSpeech !== 'function') return null;
+	return markdownSpeech(String(text || ''), blockEl || null, buttonEl || null);
+};
+
+// Whether a delivery hook is available at all — a play control should be offered only
+// when pressing it can do something.
+util.hasMarkdownSpeech = () => typeof markdownSpeech === 'function';
 
 // Public, self-managing entry point, same contract as util.enhanceSlideshows:
 // consumers who inject markdownToHtml output directly call this after injection.
@@ -10731,11 +10884,29 @@ util.setMarkdownMediaTrust = (fn) => { markdownMediaTrust = (typeof fn === 'func
 let markdownImageRewrite = null;
 util.setMarkdownImageRewrite = (fn) => { markdownImageRewrite = (typeof fn === 'function') ? fn : null; };
 
-// Speech / delivery hook (spec §5.2). Optional, and the only gate on the narration
-// control: with no function registered, a narration block renders as plain text with
-// no affordance at all. The function owns playback; utilisation returns a stop handle.
+// Speech / delivery hook (spec §5.2). Optional, and the only control over the narration
+// affordance: the standing value is the browser's own speech synthesis (installed just
+// below when the platform has it), an app with a TTS service replaces it with
+// util.setMarkdownSpeech(fn), and util.setMarkdownSpeech(null) removes the control
+// (print views, transcripts). A function may return a stop handle, { stop }, or
+// { stop, done } — `done` resolves when playback ends, so the button can reset.
 let markdownSpeech = null;
 util.setMarkdownSpeech = (fn) => { markdownSpeech = (typeof fn === 'function') ? fn : null; };
+
+// Install (or re-install) the standing default. Separate from module init because a
+// settings UI has to be able to come BACK to the default after replacing it — with
+// only setMarkdownSpeech(), "reset" would mean "turn narration off".
+function mbInstallDefaultSpeech() {
+	markdownSpeech = (typeof window !== 'undefined' && window.speechSynthesis && typeof SpeechSynthesisUtterance === 'function')
+		? mbBrowserSpeech
+		: null;
+	return markdownSpeech;
+}
+util.resetMarkdownSpeech = () => mbInstallDefaultSpeech();
+
+// Standing default, installed where the API exists: a narration block is playable out
+// of the box, with no host wiring at all.
+mbInstallDefaultSpeech();
 
 util.markdownToHtml = markdownToHtml;
 util.parseYaml = parseYaml;

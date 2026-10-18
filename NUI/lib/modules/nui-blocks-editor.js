@@ -1959,6 +1959,7 @@ function initBlocksEditor(element, nui) {
 		if (family === 'list') return 'One step per line…';
 		if (family === 'image') return 'Text beside the icon…';
 		if (family === 'lead') return 'The one line that says what this is…';
+		if (family === 'narration') return 'The words to speak, verbatim…';
 		return 'Write, or paste Markdown…';
 	}
 
@@ -2028,6 +2029,17 @@ function initBlocksEditor(element, nui) {
 			if (active) paintIconRow();
 		}
 
+		// Narration is delivery text (spec §5.2): spoken, not shown. The canvas is not a
+		// slide, so the words stay visible here — what the card has to say is that they
+		// will not be, because nothing in the text itself hints at it and an author who
+		// does not know the family would expect it to appear.
+		function syncDeliveryNote() {
+			const active = String(node.attrs?.preset || '').toLowerCase().split(':')[0] === 'narration';
+			deliveryNote.style.display = active ? '' : 'none';
+			if (active) nodeCard.dataset.delivery = 'true';
+			else delete nodeCard.dataset.delivery;
+		}
+
 		// icon=/alt= only mean something on the image:icon preset (§4.2). Leaving
 		// the style drops them — the file carries no dead attributes.
 		function onPresetChange(val) {
@@ -2036,6 +2048,7 @@ function initBlocksEditor(element, nui) {
 				delete node.attrs.alt;
 			}
 			syncIconRow();
+			syncDeliveryNote();
 		}
 
 		const richTextEl = createRichText(placeholder || leafHint(node));
@@ -2044,11 +2057,18 @@ function initBlocksEditor(element, nui) {
 		rawTextArea.spellcheck = false;
 		rawTextArea.style.display = 'none';
 
+		const deliveryNote = document.createElement('div');
+		deliveryNote.className = 'block-delivery-note';
+		deliveryNote.innerHTML = '<nui-icon name="mic"></nui-icon><span>Delivery text — spoken, not shown on the slide</span>';
+		deliveryNote.style.display = 'none';
+
+		body.appendChild(deliveryNote);
 		body.appendChild(iconRow);
 		body.appendChild(richTextEl);
 		body.appendChild(rawTextArea);
 		nodeCard.appendChild(body);
 		syncIconRow();
+		syncDeliveryNote();
 
 		const initialContent = getBlockText(node);
 		rawTextArea.value = initialContent;
@@ -2892,6 +2912,7 @@ function initBlocksEditor(element, nui) {
 	const LEAF_PRESETS = [
 		{ value: '', label: 'Standard Prose' },
 		{ value: 'lead', label: 'Lead Paragraph' },
+		{ value: 'narration', label: 'Narration (Delivery Text)' },
 		{ value: 'card:note', label: 'Card: Note' },
 		{ value: 'card:warning', label: 'Card: Warning' },
 		{ value: 'card:stat', label: 'Card: Stat' },
@@ -3040,6 +3061,13 @@ function initBlocksEditor(element, nui) {
 							<span>Paragraphs, headings, and lists</span>
 						</div>
 					</div>
+					<div class="palette-item" data-type="narration">
+						<div class="palette-icon"><nui-icon name="mic"></nui-icon></div>
+						<div class="palette-text">
+							<strong>Narration</strong>
+							<span>Spoken delivery text — not shown on the slide (preset=narration)</span>
+						</div>
+					</div>
 					<div class="palette-item" data-type="card-note">
 						<div class="palette-icon"><nui-icon name="info"></nui-icon></div>
 						<div class="palette-text">
@@ -3182,6 +3210,14 @@ function initBlocksEditor(element, nui) {
 			newNode = {
 				type: 'block',
 				attrs: { id: generateId('b') },
+				nodes: emptyBody()
+			};
+		} else if (type === 'narration') {
+			// Prose-shaped body, delivery role. The preset is the whole difference, so
+			// the palette creates a prose block wearing it rather than a new type.
+			newNode = {
+				type: 'block',
+				attrs: { id: generateId('b'), preset: 'narration' },
 				nodes: emptyBody()
 			};
 		} else if (type === 'card-note') {
@@ -3583,6 +3619,9 @@ function initBlocksEditor(element, nui) {
 				livePreview.innerHTML = html;
 				util.enhanceSlideshows?.(livePreview);
 				util.enhancePlayers?.(livePreview);
+				// Narration is playable by default (browser speech), but only through
+				// the enhancement pass — raw injected HTML carries no control.
+				util.enhanceNarration?.(livePreview);
 			}
 			renderPreviewWindow(html);
 			// load() syncs outputs (preview, window) but does NOT announce a

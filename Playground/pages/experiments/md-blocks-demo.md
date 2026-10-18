@@ -415,7 +415,7 @@ may sit in one section, and source order is delivery order.
 <!-- mb:/block -->
 
 <!-- mb:block id=narration-line-1 preset=narration label="First beat" -->
-Simplicity is prerequisite for reliability. Register a speech function to get a control on this block.
+Simplicity is prerequisite for reliability. The play button uses the browser's own voice out of the box — register a speech function to replace it.
 <!-- mb:/block -->
 
 <!-- mb:block id=narration-line-2 preset=narration label="Second beat" -->

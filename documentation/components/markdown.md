@@ -160,7 +160,7 @@ Right.
 | `<!-- mb:var name= value= -->` | **Surfaced as data.** Rendered as a `<dl class="nui-blocks-var">` data card at the position it was authored: the name in monospace, a `value=` scalar beside it, and a fenced `json`/`text` payload pretty-printed through `<nui-code>` (highlighted and copyable). A collection renderer reads `section.vars` and emits nothing here. |
 | Media block | A block whose **first node** is an image (including empty alt text `![](...)`), image list, or media link becomes `<figure>` + `<figcaption>`. Everything after the media is the caption. `kind` is inferred from the extension. |
 | `icon=` attribute | `preset=image:icon` with `icon=<path>` injects a decorative badge from the directive, so generic previews show clean prose with no stray image line. |
-| `preset=narration` | **Delivery text — spoken, not shown** (spec §5.2). The block renders as `<aside class="nui-blocks-block nui-preset-narration">`. A **reading** renderer surfaces it — labelled (a `::before`, so the block's own words stay verbatim in `textContent`) and set apart; a **surface** renderer withholds it (`nui-slides` hides it by CSS, while the words stay in the DOM for a delivery function to read per slide). Any number may sit in one section, and source order is delivery order. With a speech function registered the block gains a play/stop control — see *Narration and the Delivery Channel* below. |
+| `preset=narration` | **Delivery text — spoken, not shown** (spec §5.2). The block renders as `<aside class="nui-blocks-block nui-preset-narration">`. A **reading** renderer surfaces it — labelled (a `::before`, so the block's own words stay verbatim in `textContent`) and set apart; a **surface** renderer withholds it (`nui-slides` hides it by CSS, while the words stay in the DOM for a delivery function to read per slide). Any number may sit in one section, and source order is delivery order. The block carries a play/stop control by default, wired to the browser's own speech synthesis — see *Narration and the Delivery Channel* below. |
 | `preset=link` / `preset=link:cta` | An **action row**: the block is a `<nav>` and the links are its direct children (`<nav><a>…</a><a>…</a></nav>`). The Markdown list — or the single paragraph a lone link produces — is dropped, because the family owns the output element and the authored shape is not the output shape. Row spacing comes from the container's flex gap, so an action row is never announced as "list, 2 items". A block mixing prose with links is left as authored. |
 | `preset=gallery:slideshow` | A **rotating gallery**: the plates crossfade one at a time (default 5 s per plate, `slide-duration` attribute on `<nui-markdown>` overrides in ms). In a **cover section** this is the DEFAULT for a multi-plate gallery — `preset=gallery:row` is the explicit opt back into the static even row. Rotation is an enhanced-renderer layer, not spec law — without enhancement the list keeps its static even-row layout. Pause is built in (WCAG 2.2.2.2): a quiet toggle button, plus auto-pause on hover, focus-within, and offscreen; `prefers-reduced-motion` never auto-advances. A single plate is static, not a show. |
 | Refused media destination | A destination the trust boundary (§8: executable schemes, protocol-relative URLs, drive paths — plus `null` from `setMarkdownImagePolicy`) refuses **never becomes a request**. It renders as `<span class="nui-md-media-rejected">` holding the alt text, with the destination and reason on `data-refused-destination` / `data-refused-reason` and a `title`, plus a console warning. This is §7's *"renderer warning, source reference retained"*: a refusal has to be distinguishable from a mistyped path, which renders as an ordinary `<img>` and fails as a broken image. |
@@ -273,19 +273,31 @@ The two hooks are independent, and their effects differ in kind: a **rewrite** c
 
 ### Narration and the Delivery Channel
 
-A `preset=narration` block (spec §5.2) is **delivery text** — a TTS script, a read-aloud pass, a presenter's line. The format owns no playback, so wiring speech is another app-level hook, set once and forgotten:
+A `preset=narration` block (spec §5.2) is **delivery text** — a TTS script, a read-aloud pass, a presenter's line. The format owns no playback; the component ships a standing implementation so nothing has to be wired before it works:
+
+- **By default**, the play button speaks the block with the browser's **Web Speech API** (`speechSynthesis`). No endpoint, no configuration, no host wiring — where the API exists, a narration block is playable as soon as it renders. Only one block speaks at a time; starting another stops the first.
+- **The voice is chosen, not inherited.** The platform's first entry is often a dated SAPI voice or a novelty voice, so the picker ranks: document language (`<html lang>`, else `navigator.language`), then the quality markers platforms publish (`Natural`/`Neural`, `Premium`/`Enhanced`, Google voices), then known narrator names, then local voices (they keep working offline). `nui.util.pickSpeechVoice(lang?)` returns the same choice — useful for logging, or for an app that wants to apply it to its own engine call.
+- **Two voice families exist, and the host decides which you see.** `localService: true` is an on-device voice (Windows SAPI, macOS system voices); `false` is the browser's own cloud voice (Chrome's “Google …”, Edge's “… Online (Natural)”). An embedded Chromium — VS Code's built-in browser, WebView2 — exposes the on-device set only, so a list of nothing but “Microsoft …” is the host, not a missing feature. Full Edge adds hundreds of Natural voices; full Chrome adds Google voices when online.
+- **An app with a TTS service replaces it** — registering a function is the whole contract:
 
 ```javascript
-// fn(text, blockEl, buttonEl) -> optional { stop() }, or a stop function.
-// `text` is the block's own words, verbatim.
-nui.util.setMarkdownSpeech((text) => {
-  const utter = new SpeechSynthesisUtterance(text);
-  speechSynthesis.speak(utter);
-  return { stop: () => speechSynthesis.cancel() };
-});
+// fn(text, blockEl, buttonEl) -> { stop, done? } | stop function | null
+// `text` is the block's own words, verbatim. `done` is a Promise resolved when
+// playback ends; return it and the button resets to Play by itself.
+nui.util.setMarkdownSpeech((text) => myTtsEndpoint(text));
 ```
 
-With a function registered, each narration block gets a play/stop button, created by the enhancement pass (never in the markup — no markup is emitted until a function exists). The control's label — `"Narration"`, drawn with `::before` — is CSS content and never enters `textContent`, so the string handed to your function is exactly the authored words. Self-injectors of `markdownToHtml` output call `util.enhanceNarration(root)` after injection, the same contract as `util.enhancePlayers` and `util.enhanceBrokenMedia`; call it again after registering the function to attach controls to already-rendered documents.
+```javascript
+// Keep the platform voice as the fallback:
+nui.util.setMarkdownSpeech((text) =>
+  hasEndpoint() ? myTtsEndpoint(text) : nui.util.browserSpeech(text));
+```
+
+- **`setMarkdownSpeech(null)` removes the control** entirely (a print view, a transcript, an app that handles delivery elsewhere). **`nui.util.resetMarkdownSpeech()`** restores the built-in browser default — the way back after an app has replaced it.
+
+**The Playground demonstrates the app path.** Its right-hand settings pane (gear icon) lists the voices the browser reports, previews them and applies voice + rate — through `nui.util.setMarkdownSpeech`, the same seam an application uses for its own TTS service. Nothing in that pane is private to the demo: `Preview` auditions without applying, `Use voice` installs, `Reset to default` calls `resetMarkdownSpeech()`, and the choice persists in `localStorage`.
+
+With a speech function available, each narration block gets a play/stop button, created by the enhancement pass (never in the markup). The control's label — `"Narration"`, drawn with `::before` — is CSS content and never enters `textContent`, so the string handed to your function is exactly the authored words. Layout is words too: a `<br>` (a soft line break in the source) and a paragraph/list-item boundary arrive as a line break, so `slide,and` and `oneTwo` cannot happen; runs of spaces collapse and the result is trimmed. The same extractor is public as `nui.util.narrationText(el)` — `nui-slides` uses it for `narration()` and `nui-slide-change.detail.narration`, and an app should use it rather than reimplementing the walk. A caller that offers its OWN control speaks through `nui.util.speakMarkdown(text)` (invokes the registered hook, returns its `{ stop, done }`), and checks `nui.util.hasMarkdownSpeech()` before offering the control at all — that is exactly what `nui-slides`' speaker-notes strip does. Self-injectors of `markdownToHtml` output call `util.enhanceNarration(root)` after injection, the same contract as `util.enhancePlayers` and `util.enhanceBrokenMedia`; call it again after registering the function to attach controls to already-rendered documents.
 
 ### Streaming API for AI/LLM Applications
 

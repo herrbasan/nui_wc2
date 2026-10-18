@@ -721,6 +721,29 @@ nui-blocks-editor .block-card-body {
 	padding: var(--nui-space-half);
 }
 
+/* Narration (spec §5.2) is delivery text: spoken, not shown. The canvas is not the
+   slide, so the words stay editable here — but nothing in the words says they will
+   be withheld, so the card carries the fact instead. The left edge marks the block
+   at a glance while scrolling, where the header may be off-screen. */
+nui-blocks-editor .editor-block-card[data-delivery] {
+	border-left: 3px solid var(--border-shade3);
+}
+
+nui-blocks-editor .block-delivery-note {
+	display: flex;
+	align-items: center;
+	gap: var(--nui-space-quarter);
+	margin-bottom: var(--nui-space-half);
+	color: var(--text-color-dim);
+	font-size: var(--font-size-small);
+}
+
+nui-blocks-editor .block-delivery-note nui-icon {
+	width: 1rem;
+	height: 1rem;
+	flex: none;
+}
+
 /* Rich Text inside block */
 nui-blocks-editor .block-card-body nui-rich-text {
 	display: block;

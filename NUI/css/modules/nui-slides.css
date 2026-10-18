@@ -106,6 +106,87 @@ nui-slides:fullscreen .nui-slides-viewport {
 	color: var(--text-color);
 }
 
+/* Speaker notes (`notes` attribute): the current slide's narration, shown BELOW the
+   canvas instead of on it. Narration is delivery text (spec §5.2) — the audience
+   never sees it, the presenter reads it. Opt-in, because a deck in use is not a
+   rehearsal and the default surface stays clean. */
+.nui-slides-notes {
+	box-sizing: border-box;
+	width: 100%;
+	margin-top: var(--nui-space-half);
+	padding: var(--nui-space-half) var(--nui-space);
+	background: var(--color-shade1);
+	border: solid var(--border-thickness) var(--border-shade2);
+	border-radius: var(--border-radius1);
+	color: var(--text-color-dim);
+	font-size: var(--font-size-small);
+	text-align: start;
+}
+
+.nui-slides-notes[hidden] {
+	display: none;
+}
+
+.nui-slides-notes-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--nui-space-half);
+	margin-bottom: var(--nui-space-quarter);
+}
+
+.nui-slides-notes-label {
+	display: block;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: var(--text-color-dim);
+}
+
+.nui-slides-notes-head .nui-slides-notes-label {
+	margin-bottom: 0;
+}
+
+/* Play/stop for the slide's narration. It speaks through the markdown speech hook, so
+   it is a delivery control, not a preview: the same seam an app's TTS service plugs
+   into. Sized to the label's row, not to the slide. */
+.nui-slides-notes-play {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.75rem;
+	height: 1.75rem;
+	padding: 0;
+	flex: none;
+	border: solid var(--border-thickness) var(--border-shade2);
+	border-radius: 50%;
+	background: var(--color-shade2);
+	color: var(--text-color);
+	cursor: pointer;
+}
+
+.nui-slides-notes-play:hover,
+.nui-slides-notes-play:focus-visible {
+	border-color: var(--color-highlight);
+	color: var(--color-highlight);
+}
+
+.nui-slides-notes-play nui-icon {
+	width: 1rem;
+	height: 1rem;
+}
+
+.nui-slides-notes-text {
+	margin: 0;
+	white-space: pre-line;
+	font-style: italic;
+}
+
+/* Fullscreen is the audience view: no notes. */
+nui-slides:fullscreen .nui-slides-notes,
+:fullscreen .nui-slides-notes {
+	display: none;
+}
+
 /* Built-in optional toolbar (active when `toolbar` attribute is present) */
 /* In normal flow: sits OUTSIDE the slide container, below the viewport */
 .nui-slides-toolbar {
@@ -206,6 +287,52 @@ nui-slides:fullscreen .nui-slides-toolbar:hover {
 	white-space: nowrap;
 	min-width: 3rem;
 	text-align: center;
+}
+
+/* Section rule: navigation | delivery (autoplay, narration) | view (fullscreen,
+   settings). The rule carries the grouping, so the buttons themselves stay unlabelled. */
+.nui-slides-toolbar-sep {
+	flex: none;
+	width: 1px;
+	height: 1.25rem;
+	margin-inline: var(--nui-space-quarter);
+	background: var(--border-shade2);
+}
+
+/* Settings dialog. The dialog lives in the page, not inside the deck, so these rules
+   are scoped by the class the dialog content carries. */
+.nui-slides-settings {
+	display: flex;
+	flex-direction: column;
+	gap: var(--nui-space);
+	max-width: 26rem;
+}
+
+.nui-slides-settings-label {
+	display: flex;
+	justify-content: space-between;
+	gap: var(--nui-space-half);
+	font-size: var(--font-size-small);
+	font-weight: 600;
+}
+
+.nui-slides-settings-value {
+	font-weight: 400;
+	font-variant-numeric: tabular-nums;
+	color: var(--text-color-dim);
+}
+
+.nui-slides-settings-hint {
+	margin: 0;
+	font-size: var(--font-size-small);
+	color: var(--text-color-dim);
+	line-height: 1.5;
+}
+
+.nui-slides-settings nui-select,
+.nui-slides-settings nui-slider {
+	display: block;
+	width: 100%;
 }
 
 /* A focus ring on the deck is for the keyboard, never for a click or a slide advance. */

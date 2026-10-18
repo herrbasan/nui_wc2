@@ -24,6 +24,67 @@ nui-main section {
 	margin-bottom: var(--nui-space, 1rem);
 }
 
+/* Right-sidebar demo configuration (narration settings). Playground chrome, not a
+   component: the pane drives the same nui.util.setMarkdownSpeech seam an app would. */
+.demo-config {
+	display: flex;
+	flex-direction: column;
+	gap: var(--nui-space);
+	padding: var(--nui-space);
+}
+
+.demo-config h3 {
+	margin: 0;
+}
+
+.demo-config-hint,
+.demo-config-status {
+	margin: 0;
+	font-size: var(--font-size-small);
+	color: var(--color-text-muted);
+	line-height: 1.5;
+}
+
+.demo-config-status {
+	padding-top: var(--nui-space-half);
+	border-top: solid var(--border-thickness) var(--border-shade2);
+}
+
+.demo-config-field {
+	display: flex;
+	flex-direction: column;
+	gap: var(--nui-space-quarter);
+}
+
+.demo-config-label {
+	display: flex;
+	justify-content: space-between;
+	gap: var(--nui-space-half);
+	font-size: var(--font-size-small);
+	font-weight: 600;
+}
+
+.demo-config-value {
+	font-weight: 400;
+	font-variant-numeric: tabular-nums;
+	color: var(--color-text-muted);
+}
+
+.demo-config nui-select,
+.demo-config nui-slider {
+	display: block;
+	width: 100%;
+}
+
+.demo-config-actions {
+	display: flex;
+	gap: var(--nui-space-half);
+}
+
+.demo-config-actions nui-button {
+	flex: 1;
+}
+
 /* Demo area containers - for interactive examples */
 .demo-area {
 	margin-bottom: 1rem;

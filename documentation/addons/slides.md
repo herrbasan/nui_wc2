@@ -19,8 +19,11 @@ Key design principles:
 - **Surface, not scroll:** Slides do not scroll. The deck displays exactly one slide at a time and marks non-visible slides as `inert`, keeping assistive technologies and tab order focused on visible content.
 - **Chrome repetition:** Document chrome (headers, footers) is authored once on the MD-Blocks `main` scope with `repeat=header` or `repeat=footer`. `nui-slides` clones this chrome across all slides in that scope.
 - **Metadata stripping:** Frontmatter metadata (YAML) is automatically stripped from the visible slide surfaces so loose metadata disclosures do not pollute the slide canvas. The parsed object remains accessible via `nui-markdown.metadata` (e.g. used for deck `aria-label`).
-- **External toolbar & video-like fullscreen controls:** With `toolbar` (or `controls`), a sleek pill toolbar provides intuitive navigation (Previous, Next, slide counter, and Fullscreen toggle). In normal page flow, the toolbar is positioned outside the slide canvas directly beneath it, never obscuring slide content. In fullscreen mode, it floats at the bottom and smoothly reveals when the cursor approaches the bottom edge, matching standard video player control behavior.
+- **External toolbar & video-like fullscreen controls:** With `toolbar` (or `controls`), a pill toolbar sits directly under the slide canvas, in three labelled groups separated by rules — **navigation** (previous, counter, next), **delivery** (autoplay, narration) and **view** (fullscreen, settings). Autoplay shows play/pause; narration shows a voice-over icon and, while speaking, a **stop square** — a second pause glyph beside autoplay read as one control. In normal page flow the toolbar never obscures slide content; in fullscreen it floats at the bottom and reveals as the cursor approaches the bottom edge.
+- **Autoplay is advance, narration is speech — two controls, two states.** The play button starts/pauses automatic advancement; the speaker button speaks the current slide through the markdown speech hook. Pausing autoplay stops the flow (and any narration it started); the narration control stays independent, so a presenter can pause the timer and still re-hear a slide.
+- **Settings are behaviour, not presentation.** The gear opens a dialog that edits the same options `configure()` accepts: whether slides narrate themselves, how long to hold after speech (`narration-delay`, default 1 s), and how long a silent slide stays up (`dwell`, default 5 s). Attribute values are the initial defaults; the dialog edits the running deck.
 - **Derived metadata:** Slide numbering (`1 / 5`) is computed and attached dynamically at render time; it is never hardcoded in source markdown.
+- **Narration is delivery text (MD-Blocks spec §5.2):** blocks marked `preset=narration` are not drawn on the slide. They stay in the DOM, and the deck exposes them as data — `narration(index)` and `nui-slide-change.detail.narration` — so a delivery (TTS) profile can read the current slide's script. The optional `notes` attribute surfaces them below the canvas as speaker notes, never on the surface.
 - **Overflow reporting:** If content exceeds the slide canvas height, `nui-slides` logs a warning in the console and marks the slide with `data-overflow` rather than silently cropping content.
 
 When to Use:
@@ -72,7 +75,12 @@ Welcome to the presentation.
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `base` | string | `"1280x720"` | Logical canvas dimensions. Specify `"widthxheight"` (e.g. `"1280x720"` for 16:9, `"1024x768"` for 4:3) or a bare width (e.g. `"1600"` which implies 16:9). In page flow, the component automatically sets its aspect ratio to match. |
-| `toolbar` | boolean | _none_ | When present, renders a floating bottom toolbar for non-fullscreen mode with Previous, Next, counter, and Fullscreen toggle. Automatically hidden in fullscreen. (Alias: `controls`). |
+| `toolbar` | boolean | _none_ | When present, renders the control bar under the slide: navigation | autoplay, narration | fullscreen, settings. Automatically hidden in fullscreen. (Alias: `controls`). |
+| `notes` | boolean | _none_ | Shows the current slide's narration as speaker notes beneath the toolbar (never on the slide), with a play/stop control that speaks it through the markdown speech hook. Hidden in fullscreen, and hidden per slide when that slide has no narration. |
+| `narrate` | boolean | _none_ | Each slide speaks its own narration when it becomes current, and autoplay waits for that speech to finish before advancing. |
+| `autoplay` | boolean | _none_ | Starts playing on mount, and reflects the running state (the toolbar button toggles it). Stops at the last slide. |
+| `dwell` | number | `5` | Slide duration when there is no narration to wait for (clamped 0.5–60 s). |
+| `narration-delay` | number | `1` | Pause AFTER a narration finishes, before advancing (clamped 0–60 s; `0` advances as soon as the voice stops). |
 | `height` | string | _none_ | When set to `"fill"`, stretches to `height: 100%` of an explicit parent container. When set to `"viewport"`, stretches to `100dvh` for standalone presentation. Default is natural responsive page flow. |
 
 ### Keyboard Navigation
@@ -113,6 +121,7 @@ console.log(`Slide ${deck.current + 1} of ${deck.count}`);
 |----------|------|-------------|
 | `count` | `number` | Total number of slides in the deck. |
 | `current` | `number` | Zero-based index of the currently displayed slide. |
+| `options` | `object` | The running behaviour: `{ autoplay, narrate, dwell, narrationDelay }`. Read-only view — change it with `configure()`. |
 
 ### Methods
 
@@ -122,11 +131,91 @@ console.log(`Slide ${deck.current + 1} of ${deck.count}`);
 | `next()` | _none_ | Navigates to the next slide. |
 | `prev()` | _none_ | Navigates to the previous slide. |
 | `toggleFullscreen()` | _none_ | Toggles fullscreen presentation mode on the deck. |
-| `nui.components.slides.toggleFullscreen(el?)` | Factory | Programmatically toggle fullscreen mode on a deck. |
+| `configure(options)` | `{ narrate?, dwell?, narrationDelay?, autoplay? }` | Merges behaviour options and applies them live (changes restart the current slide's flow). Returns the resulting `options`. Attributes are the same values, so declarative and programmatic configuration cannot disagree. |
+| `narration(i?)` | `i: number` (default: current) | Returns that slide's narration blocks as an array of verbatim strings, in source order. The deck's delivery seam; `[]` when the slide has none or the index is out of range. |
+| `nui.components.slides.configure(options, el?)` | Factory | Programmatic configuration for the default (or a given) deck. |
 
 ### Events
 
 | Event | `detail` | Description |
 |-------|----------|-------------|
-| `nui-slide-change` | `{ index: number, count: number, section: HTMLElement }` | Dispatched whenever the active slide changes. |
+| `nui-slide-change` | `{ index, count, section, narration }` | Dispatched whenever the active slide changes. `narration` is the string array `narration(index)` returns, so a delivery profile does not have to scrape the DOM. |
+| `nui-slides-autoplay` | `{ playing: boolean }` | Dispatched when autoplay starts or stops — by the toolbar, by `configure()`, or because the deck reached its last slide. |
+| `nui-slides-options` | `{ options }` | Dispatched by `configure()` after the values are applied. |
 | `nui-slides-error` | `{ message: string }` | Dispatched if mounting fails (e.g. missing content or invalid markup). |
+
+## Autoplay & the settings dialog
+
+Two independent controls, one flow:
+
+```text
+slide becomes current
+        │
+        ├─ narrate?  → speak the slide's script
+        │              └─ wait for it to finish
+        │              └─ narration-delay (default 1 s)
+        │
+        └─ no narration → dwell (default 5 s)
+                 │
+                 └─ next slide ── (last slide: autoplay stops)
+```
+
+The toolbar's play button starts or pauses this flow. The narration button is separate: it
+speaks the current slide on demand, and pausing autoplay stops any speech it started but
+does not disable the control. Every navigation — by autoplay, keyboard, or `next()` —
+re-bases the flow on the slide that is now current, so a stale timer can never advance a
+slide the viewer already left.
+
+```html
+<nui-slides toolbar notes narrate dwell="4" narration-delay="1">
+    <nui-markdown src="deck.md"></nui-markdown>
+</nui-slides>
+```
+
+```javascript
+const deck = document.querySelector('nui-slides');
+deck.configure({ narrate: true, dwell: 2.5, narrationDelay: 1, autoplay: true });
+deck.options;   // { autoplay: true, narrate: true, dwell: 2.5, narrationDelay: 1 }
+```
+
+The gear button opens the same options in a dialog (narrate, pause after narration, slide duration);
+`Apply` calls `configure()`. The dialog edits the running deck — persistence is the
+host's decision, exactly as it is for the document itself.
+
+## Narration (delivery text)
+
+A block with `preset=narration` is **text the presentation delivers aloud** rather than
+content it shows (MD-Blocks spec §5.2). Source order is delivery order, and a section may
+carry any number of them:
+
+```markdown
+<!-- mb:block preset=narration -->
+The words to speak, verbatim.
+<!-- mb:/block -->
+```
+
+The deck never renders it on the slide. Four ways to reach it:
+
+```javascript
+// 1. Per-slide data (any slide)
+deck.narration(0);          // ["The words to speak, verbatim."]
+
+// 2. With the slide change (the delivery hook)
+deck.addEventListener('nui-slide-change', (e) => speak(e.detail.narration.join(' ')));
+
+// 3. The toolbar's narration button — speaks the current slide on demand
+//    <nui-slides toolbar>
+
+// 4. Speaker notes beneath the controls (authoring / rehearsal)
+//    <nui-slides toolbar notes>
+```
+
+The optional `notes` attribute writes the current slide's narration into a labelled
+`.nui-slides-notes` strip below the toolbar (the controls sit directly under the slide,
+the narration under them); it is removed in fullscreen and hidden when the slide has
+none. The strip carries a **play/stop control** — the same action as the toolbar's
+narration button — and it speaks the slide's narration, every block in source order,
+handed over as one script through the same hook as the per-block controls
+(`nui.util.setMarkdownSpeech`), so an application's TTS endpoint answers rather than a
+private player. Advancing a slide stops playback, and the text is verbatim — no
+typographic pass, no injected label in the string.

@@ -29,6 +29,16 @@ Every slide in this deck is composed inside an invariant $16:9$ canvas, scaled t
 **Zero Dependencies:** Rendered natively with `<nui-slides>` wrapping `<nui-markdown>`.
 <!-- mb:/block -->
 
+<!-- mb:block preset=narration -->
+Welcome. This deck is a single Markdown document — every section break you see is one slide,
+and the header and footer above and below were authored once, not once per slide.
+<!-- mb:/block -->
+
+<!-- mb:block preset=narration -->
+Nothing on this slide is drawn by a framework. What you see is the browser rendering
+the document it was handed.
+<!-- mb:/block -->
+
 ---
 
 # Architecture & Separation of Concerns
@@ -48,6 +58,11 @@ Every slide in this deck is composed inside an invariant $16:9$ canvas, scaled t
 - Non-visible slides made `inert` for A11y
 - Derived slide numbering and focus management
 <!-- mb:/columns -->
+
+<!-- mb:block preset=narration -->
+The document knows nothing about presentation. It knows sections, and a section is a slide
+because the deck says so — which is why the same file prints as a page without changing a word.
+<!-- mb:/block -->
 
 ---
 
@@ -71,6 +86,11 @@ Columns adapt cleanly within the fixed logical canvas:
 3. **Discrete Surfaces:** No accidental scrollbars or layout reflows.
 <!-- mb:/columns -->
 
+<!-- mb:block preset=narration -->
+The image and the columns are the same document constructs a page renderer sees — here they are
+composed inside the fixed canvas, so the layout is decided once and scales with it.
+<!-- mb:/block -->
+
 ---
 
 # Code & Design Tokens
@@ -90,6 +110,11 @@ deck.addEventListener('nui-slide-change', (e) => {
 
 <!-- mb:block preset=card:warning -->
 **Tip:** Use keyboard shortcuts (`ArrowRight`, `Space`, `ArrowLeft`, `Home`, `End`) or press **F** to present fullscreen.
+<!-- mb:/block -->
+
+<!-- mb:block preset=narration -->
+Code is a block like any other. The deck neither runs it nor rewrites it — the fence goes through
+the same highlighter the documentation pages use.
 <!-- mb:/block -->
 
 ---
@@ -112,4 +137,9 @@ One codebase scales seamlessly from mobile preview cards to 4K projector display
 
 <!-- mb:block preset=lead -->
 *Thank you for watching.*
+<!-- mb:/block -->
+
+<!-- mb:block preset=narration -->
+That is the whole idea: one Markdown file, presented as slides here and read as a page anywhere
+else. Thank you for watching.
 <!-- mb:/block -->

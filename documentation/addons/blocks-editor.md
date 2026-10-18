@@ -138,7 +138,7 @@ for hosts that have a file store and want the dialog for free — see
 - **Sections** — add/delete/reorder (drag), label, template chip, per-section
   options (cover placement, aspect ratio tokens `cover:square/banner/strip`,
   band/bleed/inverted). Unmodelled profile presets are preserved verbatim, never rewritten.
-- **Blocks** — insert palette fixes a block's type at creation (prose, cards,
+- **Blocks** — insert palette fixes a block's type at creation (prose, narration, cards,
   media figure, media player, link/CTA, table, code, columns, var). Types are derived
   structurally on load and never converted. Every block carries a style select
   with an escape hatch (`Custom preset…`) validating against the spec grammar
@@ -147,6 +147,15 @@ for hosts that have a file store and want the dialog for free — see
   `preset=cover` section types its own sole block as media, because a fresh hero
   has no media yet and an empty body would otherwise derive as prose. The signal
   is the section's own preset, so it survives a reload (`_type` is session-only).
+- **Narration** — a `preset=narration` block is delivery text (MD-Blocks spec §5.2):
+  spoken, not shown. It is prose-shaped, so the palette creates a Prose block wearing
+  the preset rather than a new type. The style select offers it, the empty hint reads
+  "The words to speak, verbatim…", and the card marks itself — a left accent edge and
+  a `Delivery text — spoken, not shown on the slide` line — because nothing in the
+  words themselves says the slide will withhold them. Several narrations per section
+  are legal (§5.2): source order is delivery order, and the editor does not “fix” them
+  to one per section. `nui-slides` reads them via `narration()` and
+  `nui-slide-change.detail.narration`.
 - **Code** — a block whose body is exactly one fenced code block derives as the
   code type, the same way a lone pipe table derives as a table. It is deliberately
   **not** a preset family: fenced code is baseline CommonMark and carries no

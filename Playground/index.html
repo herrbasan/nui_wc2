@@ -80,42 +80,40 @@
             </nui-sidebar>
 
             <nui-sidebar position="right" behavior="manual">
-                <div style="padding: var(--nui-space); display: flex; flex-direction: column; gap: var(--nui-space);">
-                    <h3 style="margin-top: 0;">Demo Configuration</h3>
-                    <p style="font-size: var(--font-size-small); color: var(--color-text-muted);">This right sidebar is a demonstration of the dual-sidebar layout feature. The controls below are non-functional placeholders.</p>
-                    
-                    <div style="margin-top: var(--nui-space);">
-                        <label style="font-weight: bold; font-size: var(--font-size-small); display: block; margin-bottom: var(--nui-space-half);">API Environment</label>
-                        <nui-select>
-                            <select>
-                                <option>Production</option>
-                                <option>Staging</option>
-                                <option>Development (Local)</option>
-                            </select>
-                        </nui-select>
+                <div class="demo-config" data-narration-settings>
+                    <h3>Narration voice</h3>
+                    <p class="demo-config-hint">Every <code>preset=narration</code> block is spoken by the browser. The library picks a sensible default; choose a voice here to override it for the whole demo.</p>
+
+                    <div class="demo-config-field">
+                        <label class="demo-config-label" for="tts-voice">Voice</label>
+                        <nui-select id="tts-voice" size="small"><select></select></nui-select>
+                        <p class="demo-config-hint" data-tts-note hidden></p>
                     </div>
 
-                    <div style="margin-top: var(--nui-space);">
-                        <label style="font-weight: bold; font-size: var(--font-size-small); display: block; margin-bottom: var(--nui-space-half);">Debugging Options</label>
-                        <nui-checkbox style="margin-bottom: var(--nui-space-half);">
-                            <input type="checkbox" id="demo-mock-data" checked>
-                            <label for="demo-mock-data">Use Mock Data</label>
-                        </nui-checkbox>
-                        <nui-checkbox style="margin-bottom: var(--nui-space-half);">
-                            <input type="checkbox" id="demo-verbose">
-                            <label for="demo-verbose">Verbose Logging</label>
-                        </nui-checkbox>
-                        <nui-checkbox>
-                            <input type="checkbox" id="demo-paint">
-                            <label for="demo-paint">Show Paint Rects</label>
-                        </nui-checkbox>
+                    <div class="demo-config-field">
+                        <label class="demo-config-label" for="tts-rate">
+                            <span>Rate</span>
+                            <span class="demo-config-value" data-tts-rate>1.00×</span>
+                        </label>
+                        <nui-slider>
+                            <input id="tts-rate" type="range" min="0.5" max="1.5" step="0.05" value="1">
+                        </nui-slider>
                     </div>
 
-                    <div style="margin-top: auto; padding-top: var(--nui-space-double);">
-                        <nui-button variant="primary" style="width: 100%;">
-                            <button type="button">Apply Settings</button>
+                    <div class="demo-config-actions">
+                        <nui-button variant="outline" size="small">
+                            <button type="button" data-tts-preview>Preview</button>
+                        </nui-button>
+                        <nui-button size="small">
+                            <button type="button" data-tts-apply>Use voice</button>
                         </nui-button>
                     </div>
+
+                    <nui-button variant="ghost" size="small">
+                        <button type="button" data-tts-reset>Reset to default</button>
+                    </nui-button>
+
+                    <p class="demo-config-status" data-tts-status aria-live="polite"></p>
                 </div>
             </nui-sidebar>
 

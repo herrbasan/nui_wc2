@@ -21,7 +21,10 @@
 //
 // Keyboard: Arrow/Page Up-Down, Space, Home/End, f for fullscreen.
 // Programmatic: nui.components.slides.show(i) / next() / prev().
-// Events: `nui-slide-change` { index, count, section }, `nui-slides-error` { message }.
+// Narration (spec §5.2): blocks with `preset=narration` are delivery text — hidden on
+// the slide, readable as data via `narration(i)` and `nui-slide-change.detail.narration`.
+// The `notes` attribute shows the current slide's narration below the canvas.
+// Events: `nui-slide-change` { index, count, section, narration }, `nui-slides-error` { message }.
 
 import { nui } from '../../nui.js';
 
@@ -34,7 +37,7 @@ const MOUNT_TIMEOUT_MS = 5000;
 const DEFAULT_BASE = [1280, 720];
 
 class NuiSlides extends HTMLElement {
-	static observedAttributes = ['base', 'toolbar', 'controls'];
+	static observedAttributes = ['base', 'toolbar', 'controls', 'notes', 'autoplay', 'narrate', 'dwell', 'narration-delay'];
 
 	attributeChangedCallback(name) {
 		if (name === 'base' && this._mounted) this._fit();
@@ -42,6 +45,68 @@ class NuiSlides extends HTMLElement {
 			if (this.hasAttribute('toolbar') || this.hasAttribute('controls')) this._buildToolbar();
 			else if (this._toolbar) { this._toolbar.remove(); this._toolbar = null; }
 		}
+		if (name === 'notes' && this._mounted) {
+			if (this.hasAttribute('notes')) this._buildNotes();
+			else if (this._notes) {
+				this._stopNarration();
+				this._notes.remove();
+				this._notes = null;
+				this._notesText = null;
+				this._notesPlay = null;
+			}
+		}
+		if (name === 'autoplay' && this._mounted) {
+			const want = this.hasAttribute('autoplay');
+			if (want !== this._autoPlaying) {
+				if (want) this._startAuto();
+				else this._stopAuto();
+			}
+			return;
+		}
+		if ((name === 'narrate' || name === 'dwell' || name === 'narration-delay') && this._mounted) {
+			this._updateToolbar();
+			// A change to the run's parameters applies from here on, not from the next
+			// slide: restarting the current slide's flow is what makes the dialog feel
+			// like a setting rather than a suggestion.
+			if (this._autoPlaying) this._restartFlow();
+		}
+	}
+
+	// Behaviour, not presentation. `autoplay` is both the initial state and the
+	// running state (the toolbar reflects it); `dwell` is the slide's own duration when
+	// there is nothing to say; `narrationDelay` is the pause AFTER a narration ends,
+	// before advancing. There is deliberately no "timed" mode: a slide that narrates
+	// always finishes its sentence first, which is what makes a narrated deck a deck
+	// rather than a slideshow with a voice-over being cut off.
+	get options() {
+		const seconds = (name, fallback, min) => {
+			// `Number(null)` is 0, which is a legal value for the narration gap — an
+			// absent attribute must be the fallback, not zero.
+			if (!this.hasAttribute(name)) return fallback;
+			const raw = Number(this.getAttribute(name));
+			return Number.isFinite(raw) && raw >= min && raw <= 60 ? raw : fallback;
+		};
+		return {
+			autoplay: !!this._autoPlaying,
+			narrate: this.hasAttribute('narrate'),
+			dwell: seconds('dwell', 5, 0.5),
+			narrationDelay: seconds('narration-delay', 1, 0)
+		};
+	}
+
+	configure(options = {}) {
+		if ('narrate' in options) this.toggleAttribute('narrate', !!options.narrate);
+		if ('dwell' in options) {
+			const dwell = Number(options.dwell);
+			this.setAttribute('dwell', String(Number.isFinite(dwell) ? Math.min(60, Math.max(0.5, dwell)) : 5));
+		}
+		if ('narrationDelay' in options) {
+			const delay = Number(options.narrationDelay);
+			this.setAttribute('narration-delay', String(Number.isFinite(delay) ? Math.min(60, Math.max(0, delay)) : 1));
+		}
+		if ('autoplay' in options) this.toggleAttribute('autoplay', !!options.autoplay);
+		this.dispatchEvent(new CustomEvent('nui-slides-options', { detail: { options: this.options } }));
+		return this.options;
 	}
 
 	// The canvas: a logical size the slide is composed in. `base="1280x720"` or a bare
@@ -84,6 +149,7 @@ class NuiSlides extends HTMLElement {
 			this._resize = new ResizeObserver(() => this._fit());
 			this._resize.observe(this._viewport);
 			this._fit();
+			if (this.hasAttribute('autoplay') && !this._autoPlaying) this._startAuto();
 			return;
 		}
 		if (this._started) return;
@@ -238,7 +304,9 @@ class NuiSlides extends HTMLElement {
 		this._mounted = true;
 		this._fit();
 		this._buildToolbar();
+		this._buildNotes();
 		this._show(0, { focus: false });
+		if (this.hasAttribute('autoplay')) this._startAuto();
 		this.setAttribute('ready', '');
 	}
 
@@ -305,6 +373,10 @@ class NuiSlides extends HTMLElement {
 			throw new Error('[nui-slides] show() called before the deck mounted.');
 		}
 		const target = Math.max(0, Math.min(this._sections.length - 1, i));
+		const changed = target !== this._current;
+		// A new slide ends the previous one's delivery: narration must not keep talking
+		// over the slide the viewer has moved to.
+		if (changed) this._stopNarration();
 		const section = this._sections[target];
 		this._sections.forEach((s, n) => {
 			if (n === target) {
@@ -319,58 +391,84 @@ class NuiSlides extends HTMLElement {
 		if (options.focus !== false) section.focus({ preventScroll: true });
 		this._reportOverflow(section);
 		this._updateToolbar();
+		// Narration is the delivery channel for THIS surface (spec §5.2): it is never
+		// drawn on the slide, but it is what a delivery profile reads when the slide
+		// becomes current, so it travels with the event rather than being scraped.
+		const narration = this.narration(target);
+		this._updateNotes(narration);
 		this.dispatchEvent(new CustomEvent('nui-slide-change', {
-			detail: { index: target, count: this._sections.length, section }
+			detail: { index: target, count: this._sections.length, section, narration }
 		}));
+		// A slide that just became current is what autoplay acts on — including one
+		// reached BY autoplay, which is why the flow is per slide and never a loop.
+		if (changed && this._autoPlaying) this._restartFlow();
 		return target;
 	}
 
+	// Three groups, two rules: navigation | delivery (autoplay, narration) | view
+	// (fullscreen, settings). A rule between each icon would say nothing about which
+	// controls belong together; the grouping is the information.
 	_buildToolbar() {
 		if (this._toolbar || (!this.hasAttribute('toolbar') && !this.hasAttribute('controls'))) return;
 		const nav = document.createElement('nav');
 		nav.className = 'nui-slides-toolbar';
 		nav.setAttribute('aria-label', 'Slide presentation controls');
 
-		const prevBtn = document.createElement('button');
-		prevBtn.type = 'button';
-		prevBtn.className = 'nui-slides-btn nui-slides-btn-prev';
-		prevBtn.setAttribute('aria-label', 'Previous slide');
-		prevBtn.title = 'Previous slide (Left Arrow)';
-		prevBtn.innerHTML = '<nui-icon name="chevron_right" style="transform: rotate(180deg)"></nui-icon>';
-		prevBtn.addEventListener('click', (e) => {
-			e.stopPropagation();
-			this.prev();
-		});
+		const makeBtn = (className, label, title, icon) => {
+			const btn = document.createElement('button');
+			btn.type = 'button';
+			btn.className = 'nui-slides-btn ' + className;
+			btn.setAttribute('aria-label', label);
+			btn.title = title;
+			btn.innerHTML = '<nui-icon name="' + icon + '"></nui-icon>';
+			nav.appendChild(btn);
+			return btn;
+		};
+		const makeSep = () => {
+			const sep = document.createElement('span');
+			sep.className = 'nui-slides-toolbar-sep';
+			sep.setAttribute('aria-hidden', 'true');
+			nav.appendChild(sep);
+		};
+
+		const prevBtn = makeBtn('nui-slides-btn-prev', 'Previous slide', 'Previous slide (Left Arrow)', 'chevron_right');
+		prevBtn.querySelector('nui-icon').style.transform = 'rotate(180deg)';
+		prevBtn.addEventListener('click', (e) => { e.stopPropagation(); this.prev(); });
 
 		const counter = document.createElement('span');
 		counter.className = 'nui-slides-toolbar-counter';
 		counter.setAttribute('aria-live', 'polite');
 		counter.textContent = (this._current >= 0 ? this._current + 1 : 1) + ' / ' + (this._sections ? this._sections.length : 1);
+		nav.appendChild(counter);
 
-		const nextBtn = document.createElement('button');
-		nextBtn.type = 'button';
-		nextBtn.className = 'nui-slides-btn nui-slides-btn-next';
-		nextBtn.setAttribute('aria-label', 'Next slide');
-		nextBtn.title = 'Next slide (Right Arrow or Space)';
-		nextBtn.innerHTML = '<nui-icon name="chevron_right"></nui-icon>';
-		nextBtn.addEventListener('click', (e) => {
+		const nextBtn = makeBtn('nui-slides-btn-next', 'Next slide', 'Next slide (Right Arrow or Space)', 'chevron_right');
+		nextBtn.addEventListener('click', (e) => { e.stopPropagation(); this.next(); });
+
+		makeSep();
+
+		const autoBtn = makeBtn('nui-slides-btn-autoplay', 'Start autoplay', 'Start autoplay', 'play');
+		autoBtn.setAttribute('aria-pressed', 'false');
+		autoBtn.addEventListener('click', (e) => {
 			e.stopPropagation();
-			this.next();
+			this.configure({ autoplay: !this._autoPlaying });
 		});
 
-		const fsBtn = document.createElement('button');
-		fsBtn.type = 'button';
-		fsBtn.className = 'nui-slides-btn nui-slides-btn-fullscreen';
-		fsBtn.setAttribute('aria-label', 'Toggle fullscreen presentation');
-		fsBtn.title = 'Toggle fullscreen (F)';
-		fsBtn.innerHTML = '<nui-icon name="fullscreen"></nui-icon>';
-		fsBtn.addEventListener('click', (e) => {
-			e.stopPropagation();
-			this.toggleFullscreen();
-		});
+		const narrBtn = makeBtn('nui-slides-btn-narration', 'Play narration', 'Play narration', 'record_voice_over');
+		narrBtn.setAttribute('aria-pressed', 'false');
+		narrBtn.addEventListener('click', (e) => { e.stopPropagation(); this._toggleNarration(); });
 
-		nav.append(prevBtn, counter, nextBtn, fsBtn);
+		makeSep();
+
+		const fsBtn = makeBtn('nui-slides-btn-fullscreen', 'Toggle fullscreen presentation', 'Toggle fullscreen (F)', 'fullscreen');
+		fsBtn.addEventListener('click', (e) => { e.stopPropagation(); this.toggleFullscreen(); });
+
+		const cfgBtn = makeBtn('nui-slides-btn-settings', 'Slide settings', 'Slide settings', 'settings');
+		cfgBtn.addEventListener('click', (e) => { e.stopPropagation(); this._openSettings(); });
+
 		this.append(nav);
+		// The toolbar sits directly under the slide; the notes strip keeps its place
+		// below it even when it was built first (a `toolbar` attribute added later).
+		if (this._notes) this.append(this._notes);
 		if (typeof customElements !== 'undefined' && customElements.upgrade) {
 			customElements.upgrade(nav);
 		}
@@ -378,8 +476,253 @@ class NuiSlides extends HTMLElement {
 		this._tbPrev = prevBtn;
 		this._tbNext = nextBtn;
 		this._tbFs = fsBtn;
+		this._tbAuto = autoBtn;
+		this._tbNarr = narrBtn;
 		this._tbCounter = counter;
 		this._updateToolbar();
+		this._setNarrationPlaying(!!this._narrationStop);
+	}
+
+	// Speaker notes: the slide's narration, below the canvas rather than on it. A
+	// presenter reads it; the audience never sees it — which is what makes this a
+	// surface renderer and not a reading one (spec §5.2). Opt-in with the `notes`
+	// attribute: an authoring aid is not a default, and the canonical render stays hidden.
+	_buildNotes() {
+		if (this._notes || !this.hasAttribute('notes')) return;
+		const box = document.createElement('div');
+		box.className = 'nui-slides-notes';
+		box.hidden = true;
+
+		const head = document.createElement('div');
+		head.className = 'nui-slides-notes-head';
+
+		const label = document.createElement('span');
+		label.className = 'nui-slides-notes-label';
+		label.textContent = 'Narration';
+
+		// The strip is a delivery control, not only a preview. It speaks through
+		// nui-markdown's hook (nui.util.speakMarkdown), so an app's TTS endpoint is what
+		// answers — a private player here would bypass exactly the integration the
+		// format's delivery channel exists for.
+		const play = document.createElement('button');
+		play.type = 'button';
+		play.className = 'nui-slides-notes-play';
+		play.setAttribute('aria-label', 'Play narration');
+		play.setAttribute('aria-pressed', 'false');
+		play.innerHTML = '<nui-icon name="play"></nui-icon>';
+		play.addEventListener('click', () => this._toggleNarration());
+
+		head.append(label, play);
+
+		const text = document.createElement('p');
+		text.className = 'nui-slides-notes-text';
+
+		box.append(head, text);
+		// Below the toolbar, always: the controls belong to the slide surface, the
+		// narration is what the presenter reads underneath them. Appending (rather than
+		// inserting after the viewport) lets _buildToolbar re-order a later toolbar in
+		// front of an existing strip.
+		this.append(box);
+		this._notes = box;
+		this._notesText = text;
+		this._notesPlay = play;
+		this._updateNotes();
+	}
+
+	_updateNotes(narration) {
+		if (!this._notes) return;
+		const lines = narration || this.narration(this._current);
+		this._notes.hidden = lines.length === 0;
+		if (this._notesText) this._notesText.textContent = lines.join('\n\n');
+		// No hook, no control: a button that cannot speak is worse than none.
+		if (this._notesPlay) this._notesPlay.hidden = !lines.length || !nui.util.hasMarkdownSpeech();
+	}
+
+	// One playing state, two controls: the notes strip's button and the toolbar's
+	// narration button are the same action, so they must never disagree. The speaking
+	// state is a STOP square, not a pause: the toolbar's play/pause belongs to
+	// autoplay, and two identical pause glyphs side by side read as one control.
+	_setNarrationPlaying(playing) {
+		const paint = (btn, idleIcon, labelIdle, labelPlaying) => {
+			if (!btn) return;
+			btn.dataset.playing = String(playing);
+			btn.setAttribute('aria-pressed', String(playing));
+			btn.setAttribute('aria-label', playing ? labelPlaying : labelIdle);
+			btn.title = playing ? labelPlaying : labelIdle;
+			btn.innerHTML = '<nui-icon name="' + (playing ? 'stop' : idleIcon) + '"></nui-icon>';
+		};
+		paint(this._notesPlay, 'play', 'Play narration', 'Stop narration');
+		paint(this._tbNarr, 'record_voice_over', 'Play narration', 'Stop narration');
+		this._updateToolbar();
+	}
+
+	_stopNarration() {
+		const stop = this._narrationStop;
+		this._narrationStop = null;
+		// Invalidate any pending completion before stopping: the stop itself may settle
+		// the utterance, and that settlement must not be treated as a fresh run.
+		this._narrationRun = (this._narrationRun || 0) + 1;
+		if (stop) {
+			try { stop(); } catch (err) { console.warn('[nui-slides] narration stop() failed:', err && err.message); }
+		}
+		this._setNarrationPlaying(false);
+	}
+
+	// Start a script and return a promise that settles when it ENDS or is stopped —
+	// null when the hook gave no completion signal, in which case a caller that wants
+	// to wait cannot and must fall back to the dwell.
+	_startNarrationLines(lines) {
+		this._stopNarration();
+		const text = (lines || []).join('\n\n').trim();
+		if (!text) return null;
+		const result = nui.util.speakMarkdown(text);
+		if (!result) return null;
+		this._narrationStop = typeof result.stop === 'function' ? result.stop
+			: typeof result === 'function' ? result : () => {};
+		this._narrationRun = (this._narrationRun || 0) + 1;
+		const mine = this._narrationRun;
+		this._setNarrationPlaying(true);
+		if (!result.done || typeof result.done.then !== 'function') return null;
+		const settle = () => { if (mine === this._narrationRun) this._stopNarration(); };
+		return result.done.then(settle, settle);
+	}
+
+	// One script per press, in source order: a slide's several narration blocks are
+	// delivery steps, and they are handed over as one text so any hook — browser voice
+	// or an app's endpoint — reads them in sequence without a chaining protocol.
+	_toggleNarration() {
+		if (this._narrationStop) { this._stopNarration(); return; }
+		this._startNarrationLines(this.narration(this._current));
+	}
+
+	// ── Autoplay ──
+	// Per-slide flow, never a loop: each slide gets one pass of (narrate → dwell →
+	// advance). Every navigation starts a new flow and invalidates the old one by
+	// token, so a manual next/prev during autoplay simply re-bases it, and no stale
+	// timer can advance a slide the viewer already left.
+	_restartFlow() {
+		if (!this._autoPlaying) return;
+		clearTimeout(this._autoTimer);
+		this._autoTimer = null;
+		this._flow = (this._flow || 0) + 1;
+		this._runSlideFlow(this._flow);
+	}
+
+	_runSlideFlow(token) {
+		if (!this._autoPlaying || token !== this._flow) return;
+		const opts = this.options;
+		const lines = this.narration(this._current);
+		const speak = opts.narrate && lines.length > 0 && nui.util.hasMarkdownSpeech();
+		// Two different pauses: after speech the slide has been READ, so a short gap is
+		// enough; a slide with nothing to say needs its own on-screen duration.
+		const holdMs = (speak ? opts.narrationDelay : opts.dwell) * 1000;
+
+		const advanceAfterDwell = () => {
+			if (!this._autoPlaying || token !== this._flow) return;
+			this._autoTimer = setTimeout(() => {
+				this._autoTimer = null;
+				if (!this._autoPlaying || token !== this._flow) return;
+				if (this._current >= this._sections.length - 1) { this.configure({ autoplay: false }); return; }
+				this._show(this._current + 1);   // _show re-bases the flow for the new slide
+			}, holdMs);
+		};
+
+		if (speak) {
+			const done = this._startNarrationLines(lines);
+			if (done) { done.then(advanceAfterDwell); return; }
+		}
+		advanceAfterDwell();
+	}
+
+	_startAuto() {
+		if (!this._sections || !this._sections.length) return;
+		this._autoPlaying = true;
+		this.setAttribute('autoplay', '');
+		if (this._current >= this._sections.length - 1) this._show(0);
+		else this._restartFlow();
+		this._updateToolbar();
+		this.dispatchEvent(new CustomEvent('nui-slides-autoplay', { detail: { playing: true } }));
+	}
+
+	_stopAuto() {
+		if (!this._autoPlaying) {
+			// Still reflect the attribute, so a configure({autoplay:false}) on an idle
+			// deck leaves the element truthful.
+			this.removeAttribute('autoplay');
+			this._updateToolbar();
+			return;
+		}
+		this._autoPlaying = false;
+		this.removeAttribute('autoplay');
+		clearTimeout(this._autoTimer);
+		this._autoTimer = null;
+		this._flow = (this._flow || 0) + 1;
+		this._stopNarration();
+		this._updateToolbar();
+		this.dispatchEvent(new CustomEvent('nui-slides-autoplay', { detail: { playing: false } }));
+	}
+
+	// Settings are behaviour, and the dialog edits exactly the options configure()
+	// accepts — there is no second, private set of knobs.
+	async _openSettings() {
+		const api = nui.components && nui.components.dialog;
+		if (!api || typeof api.page !== 'function') {
+			console.warn('[nui-slides] settings need the nui-dialog component.');
+			return;
+		}
+		const opts = this.options;
+		const html = `
+			<div class="nui-slides-settings">
+				<nui-checkbox>
+					<input type="checkbox" id="nui-slides-opt-narrate" data-slide-narrate ${opts.narrate ? 'checked' : ''}>
+					<label for="nui-slides-opt-narrate">Narrate each slide automatically</label>
+				</nui-checkbox>
+
+				<label class="nui-slides-settings-label" for="nui-slides-opt-gap">
+					<span>Pause after the narration</span>
+					<span class="nui-slides-settings-value" data-slide-gap>${opts.narrationDelay.toFixed(1)}s</span>
+				</label>
+				<nui-slider>
+					<input id="nui-slides-opt-gap" type="range" min="0" max="10" step="0.5" value="${opts.narrationDelay}">
+				</nui-slider>
+				<label class="nui-slides-settings-label" for="nui-slides-opt-dwell">
+					<span>Slide duration (no narration)</span>
+					<span class="nui-slides-settings-value" data-slide-dwell>${opts.dwell.toFixed(1)}s</span>
+				</label>
+				<nui-slider>
+					<input id="nui-slides-opt-dwell" type="range" min="0.5" max="15" step="0.5" value="${opts.dwell}">
+				</nui-slider>
+				<p class="nui-slides-settings-hint">Autoplay starts and pauses with the toolbar's play button, so these settings describe how it runs, not whether it runs.</p>
+			</div>`;
+		const { dialog, main, result } = await api.page('Slide settings', html, {
+			placement: 'center',
+			buttons: [
+				{ label: 'Cancel', value: 'cancel', type: 'outline' },
+				{ label: 'Apply', value: 'apply', type: 'primary' }
+			]
+		});
+		const scope = main || dialog;
+		const range = scope.querySelector('#nui-slides-opt-dwell');
+		const out = scope.querySelector('[data-slide-dwell]');
+		const gapRange = scope.querySelector('#nui-slides-opt-gap');
+		const gapOut = scope.querySelector('[data-slide-gap]');
+		const bind = (input, label) => {
+			if (!input || !label) return;
+			const paint = () => { label.textContent = Number(input.value).toFixed(1) + 's'; };
+			input.addEventListener('input', paint);
+			paint();
+		};
+		bind(range, out);
+		bind(gapRange, gapOut);
+
+		const answer = await result;
+		if (answer !== 'apply') return;
+		const narrate = scope.querySelector('[data-slide-narrate]');
+		this.configure({
+			narrate: !!(narrate && narrate.checked),
+			dwell: range ? Number(range.value) : opts.dwell,
+			narrationDelay: gapRange ? Number(gapRange.value) : opts.narrationDelay
+		});
 	}
 
 	_updateToolbar() {
@@ -389,6 +732,22 @@ class NuiSlides extends HTMLElement {
 		if (this._tbCounter) this._tbCounter.textContent = (cur + 1) + ' / ' + total;
 		if (this._tbPrev) this._tbPrev.disabled = cur <= 0;
 		if (this._tbNext) this._tbNext.disabled = cur >= total - 1;
+		if (this._tbAuto) {
+			const playing = !!this._autoPlaying;
+			this._tbAuto.setAttribute('aria-pressed', String(playing));
+			this._tbAuto.setAttribute('aria-label', playing ? 'Pause autoplay' : 'Start autoplay');
+			this._tbAuto.title = playing ? 'Pause autoplay' : 'Start autoplay';
+			this._tbAuto.innerHTML = '<nui-icon name="' + (playing ? 'pause' : 'play') + '"></nui-icon>';
+		}
+		if (this._tbNarr) {
+			// Disabled rather than hidden: the toolbar's shape must not change with the
+			// slide, and a slide without a script is a fact about the slide.
+			const available = this.narration(cur).length > 0 && nui.util.hasMarkdownSpeech();
+			this._tbNarr.disabled = !available;
+			this._tbNarr.title = available
+				? (this._narrationStop ? 'Stop narration' : 'Play narration')
+				: 'No narration on this slide';
+		}
 		if (this._tbFs) {
 			const isFs = document.fullscreenElement === this;
 			const icon = this._tbFs.querySelector('nui-icon');
@@ -412,6 +771,19 @@ class NuiSlides extends HTMLElement {
 
 	get count() { return this._sections ? this._sections.length : 0; }
 	get current() { return this._current; }
+
+	// Narration blocks are delivery text (spec §5.2): spoken, not shown. They stay in
+	// the DOM — the CSS hides them from the surface — and this is how a delivery
+	// profile reads them, in source order, verbatim. The extractor is nui-markdown's,
+	// not a copy: the button it injects is skipped, the label is CSS `content` (never
+	// text), and soft line breaks stay word separators.
+	narration(i = this._current) {
+		const section = (this._sections || [])[i];
+		if (!section) return [];
+		return Array.from(section.querySelectorAll('.nui-preset-narration'))
+			.map((el) => nui.util.narrationText(el))
+			.filter(Boolean);
+	}
 
 	show(i) { return this._show(i); }
 	next() { return this._show(this._current + 1); }
@@ -441,6 +813,13 @@ class NuiSlides extends HTMLElement {
 	}
 
 	disconnectedCallback() {
+		this._stopNarration();
+		// Timers do not survive the document they were started in; the `autoplay`
+		// attribute does, so a re-attach resumes rather than silently idles.
+		clearTimeout(this._autoTimer);
+		this._autoTimer = null;
+		this._flow = (this._flow || 0) + 1;
+		this._autoPlaying = false;
 		this._stopWatching();
 		if (this._resize) { this._resize.disconnect(); this._resize = null; }
 		if (this._onKey) { this.removeEventListener('keydown', this._onKey); this._onKey = null; }
@@ -451,6 +830,7 @@ class NuiSlides extends HTMLElement {
 		if (this._onFullscreenChange) { document.removeEventListener('fullscreenchange', this._onFullscreenChange); this._onFullscreenChange = null; }
 		if (this._fsTimer) { clearTimeout(this._fsTimer); this._fsTimer = null; }
 		if (this._toolbar) { this._toolbar.remove(); this._toolbar = null; }
+		if (this._notes) { this._notes.remove(); this._notes = null; this._notesText = null; }
 		// The rendered deck is left in place: a re-attach reuses it rather than cloning
 		// chrome and numbering the slides a second time.
 	}
@@ -464,7 +844,8 @@ if (typeof nui !== 'undefined' && nui) {
 		show: (i, el) => (el || document.querySelector('nui-slides')).show(i),
 		next: (el) => (el || document.querySelector('nui-slides')).next(),
 		prev: (el) => (el || document.querySelector('nui-slides')).prev(),
-		toggleFullscreen: (el) => (el || document.querySelector('nui-slides')).toggleFullscreen()
+		toggleFullscreen: (el) => (el || document.querySelector('nui-slides')).toggleFullscreen(),
+		configure: (options, el) => (el || document.querySelector('nui-slides')).configure(options)
 	};
 }
 

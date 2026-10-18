@@ -10,6 +10,7 @@
 
 		<div class="demo-callout">
 			<p><strong>Current state.</strong> Directive support is now active in <code>nui-markdown</code>. The document renders as structured MD-Blocks: sections separated by <code>---</code>, <code>mb:block</code> containers, <code>mb:columns</code>/<code>mb:col</code> grids, media blocks with figure/figcaption, repeating chrome slots, and <code>mb:var</code> data cards. YAML frontmatter renders as a collapsed metadata disclosure by default.</p>
+			<p><strong>Narration.</strong> Blocks with <code>preset=narration</code> are delivery text — spoken, not shown. Each one carries a play button wired to the browser's speech synthesis by default. The <strong>gear icon</strong> opens the narration settings pane: pick an installed voice, set the rate, preview it, then apply it to every narration block in the demo. It drives <code>nui.util.setMarkdownSpeech</code>, the same seam an app uses for its own TTS service.</p>
 		</div>
 	</section>
 
