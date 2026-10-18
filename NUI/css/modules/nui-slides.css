@@ -28,6 +28,8 @@ nui-slides {
 	--nui-slides-w: 1280px;
 	--nui-slides-h: 720px;
 	--nui-slides-scale: 1;
+	--nui-slides-font-base: 1.2rem;
+	--nui-slides-font-scale: 1;
 	/* A slide is a SURFACE, not a reading column. The page's content measure is a
 	   pagination concern — inside a fixed canvas it only produces empty margins, and a
 	   column layout ends up as a strip in the middle of a mostly blank slide. The
@@ -53,8 +55,8 @@ nui-slides[mode="dark"] {
    media takes what is LEFT. Without this a 16:9 image is sized by its width alone and
    overflows the canvas the moment the slide also carries a heading or a card.
 
-   Scoped to DIRECT children: media inside a column is sized by the column, which is
-   already within the canvas. */
+   Scoped to DIRECT children and column children: media inside a column is bounded by the
+   column's grid track so a tall illustration never pushes the column past the canvas. */
 nui-slides .nui-blocks-section > .nui-blocks-media {
 	display: flex;
 	flex-direction: column;
@@ -62,17 +64,196 @@ nui-slides .nui-blocks-section > .nui-blocks-media {
 	min-height: 0;
 }
 
-nui-slides .nui-blocks-section > .nui-blocks-media > p {
+nui-slides .nui-blocks-section > .nui-blocks-media > p,
+nui-slides .nui-blocks-col > .nui-blocks-media > p {
 	flex: 1 1 auto;
 	min-height: 0;
 	margin: 0;
 }
 
-nui-slides .nui-blocks-section > .nui-blocks-media img {
+nui-slides .nui-blocks-section > .nui-blocks-media img,
+nui-slides .nui-blocks-col > .nui-blocks-media img {
 	display: block;
 	width: 100%;
 	height: 100%;
+	max-height: 100%;
 	object-fit: contain;
+}
+
+nui-slides .nui-blocks-col > .nui-blocks-media {
+	display: flex;
+	flex-direction: column;
+	flex: 0 1 auto;
+	min-height: 0;
+	margin-bottom: 0;
+}
+
+nui-slides .nui-blocks-col > .nui-blocks-media:only-child {
+	flex: 1 1 auto;
+}
+
+/* Layer 2: Full-bleed plates (`preset=image:hero:bleed` or `mb:section preset=cover`).
+   In a slide deck the section is already a 16:9 canvas, so the page profile's aspect-ratio
+   spacer (`::before`) is suppressed and the media block fills the slide edge-to-edge. */
+nui-slides .nui-blocks-section.nui-preset-cover::before {
+	content: none;
+	display: none;
+}
+
+nui-slides .nui-blocks-section:not([data-layout]) > .nui-blocks-media.nui-variant-bleed,
+nui-slides .nui-blocks-section.nui-preset-cover:not([data-layout]) > .nui-blocks-media {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	max-width: none;
+	margin: 0;
+	z-index: 1;
+	display: flex;
+	flex-direction: column;
+}
+
+nui-slides .nui-blocks-section:not([data-layout]) > .nui-blocks-media.nui-variant-bleed > p,
+nui-slides .nui-blocks-section.nui-preset-cover:not([data-layout]) > .nui-blocks-media > p {
+	position: relative;
+	flex: 1 1 auto;
+	height: 100%;
+	min-height: 0;
+	margin: 0;
+}
+
+nui-slides .nui-blocks-section > .nui-blocks-media.nui-variant-bleed img,
+nui-slides .nui-blocks-section.nui-preset-cover:not(.nui-variant-contain) > .nui-blocks-media img,
+nui-slides .nui-blocks-col > .nui-blocks-media.nui-variant-bleed img,
+nui-slides .nui-blocks-media[data-fit="cover"] img {
+	object-fit: cover;
+	border-radius: 0;
+}
+
+nui-slides .nui-blocks-col > .nui-blocks-media.nui-variant-bleed img {
+	border-radius: var(--border-radius1);
+}
+
+nui-slides .nui-blocks-section:not([data-layout]) > :where(:not(.nui-blocks-media.nui-variant-bleed):not(.nui-blocks-chrome):not(.nui-slides-counter)) {
+	position: relative;
+	z-index: 2;
+}
+
+/* Layer 2: Anchored scrim overlay cards (`preset=card:scrim:<slot>`).
+   Allows placing a high-contrast caption/callout card over a hero or bleed plate
+   without writing a JSON coordinate map. Degrades in page renderers to a standard
+   scrim card in source order. */
+nui-slides .nui-blocks-section:not([data-layout]) > .nui-preset-card.nui-variant-scrim:is(
+	.nui-variant-bottom,
+	.nui-variant-bottom-left,
+	.nui-variant-bottom-right,
+	.nui-variant-top,
+	.nui-variant-top-left,
+	.nui-variant-top-right,
+	.nui-variant-center
+) {
+	position: absolute;
+	z-index: 3;
+	margin: 0;
+}
+
+nui-slides .nui-blocks-section:not([data-layout]) > .nui-preset-card.nui-variant-scrim.nui-variant-bottom {
+	inset-inline-start: var(--nui-space-double);
+	inset-block-end: var(--nui-space-double);
+	max-width: 62%;
+}
+
+nui-slides .nui-blocks-section:not([data-layout]) > .nui-preset-card.nui-variant-scrim.nui-variant-bottom-left {
+	inset-inline-start: var(--nui-space-double);
+	inset-block-end: var(--nui-space-double);
+	max-width: 48%;
+}
+
+nui-slides .nui-blocks-section:not([data-layout]) > .nui-preset-card.nui-variant-scrim.nui-variant-bottom-right {
+	inset-inline-end: var(--nui-space-double);
+	inset-block-end: var(--nui-space-double);
+	max-width: 48%;
+}
+
+nui-slides .nui-blocks-section:not([data-layout]) > .nui-preset-card.nui-variant-scrim.nui-variant-top {
+	inset-inline-start: var(--nui-space-double);
+	inset-block-start: var(--nui-space-double);
+	max-width: 62%;
+}
+
+nui-slides .nui-blocks-section:not([data-layout]) > .nui-preset-card.nui-variant-scrim.nui-variant-top-left {
+	inset-inline-start: var(--nui-space-double);
+	inset-block-start: var(--nui-space-double);
+	max-width: 48%;
+}
+
+nui-slides .nui-blocks-section:not([data-layout]) > .nui-preset-card.nui-variant-scrim.nui-variant-top-right {
+	inset-inline-end: var(--nui-space-double);
+	inset-block-start: var(--nui-space-double);
+	max-width: 48%;
+}
+
+nui-slides .nui-blocks-section:not([data-layout]):not([data-chrome="none"]):not([data-chrome="footer"]):has(> .nui-blocks-chrome-header) > .nui-preset-card.nui-variant-scrim:is(
+	.nui-variant-top,
+	.nui-variant-top-left,
+	.nui-variant-top-right
+) {
+	inset-block-start: calc(var(--nui-space-double) + 2.25rem);
+}
+
+nui-slides .nui-blocks-section:not([data-layout]) > .nui-preset-card.nui-variant-scrim.nui-variant-center {
+	inset-inline-start: 50%;
+	inset-block-start: 50%;
+	transform: translate(-50%, -50%);
+	width: min(64%, 44rem);
+}
+
+/* Layer 3: A slide carrying `layout` data is a CANVAS: no flow padding, no reading measure,
+   no default margins. Percentages in the layout map are therefore percentages of the slide
+   surface itself, and a block at 0/0/100/100 is a true bleed. */
+nui-slides .nui-blocks-section[data-layout] {
+	display: block;
+	padding: 0;
+}
+
+nui-slides .nui-blocks-section[data-layout] > * {
+	max-width: none;
+	margin-inline: 0;
+}
+
+nui-slides .nui-blocks-section[data-layout] > .nui-blocks-chrome-header {
+	padding: var(--nui-space-double) var(--nui-space-double) 0;
+}
+
+nui-slides .nui-blocks-section[data-layout] > .nui-blocks-chrome-footer {
+	position: absolute;
+	inset-inline: var(--nui-space-double);
+	inset-block-end: var(--nui-space-half);
+}
+
+/* Vars are section data, not content (spec §4.4). A surface renderer draws surfaces,
+   so the var card that a reading renderer shows is withheld here — the same rule as
+   narration, for the same reason. */
+nui-slides .nui-blocks-var {
+	display: none;
+}
+
+/* Chrome is the FRAME, not a layer of content: a full-bleed plate at z=1 must pass
+   BEHIND the header, not over it. The counter is the same case — derived chrome, added
+   last but still below any positive z. Both sit at 10; content that genuinely belongs
+   above the frame can still win with a larger number. */
+nui-slides .nui-blocks-section > .nui-blocks-chrome {
+	position: relative;
+	z-index: 10;
+}
+
+/* Per-slide chrome control (`mb:var name=chrome value=none|header|footer`) */
+nui-slides .nui-blocks-section[data-chrome="none"] > .nui-blocks-chrome,
+nui-slides .nui-blocks-section[data-chrome="none"] > .nui-slides-counter,
+nui-slides .nui-blocks-section[data-chrome="header"] > .nui-blocks-chrome-footer,
+nui-slides .nui-blocks-section[data-chrome="header"] > .nui-slides-counter,
+nui-slides .nui-blocks-section[data-chrome="footer"] > .nui-blocks-chrome-header {
+	display: none;
 }
 
 /* The grid itself spans the remaining height, so a two-column slide is a slice of the
@@ -83,7 +264,9 @@ nui-slides .nui-blocks-section > .nui-blocks-media img {
 nui-slides .nui-blocks-section > .nui-blocks-columns {
 	flex: 1 1 auto;
 	min-height: 0;
+	grid-template-rows: minmax(0, 1fr);
 	align-items: stretch;
+	gap: var(--nui-space-double);
 }
 
 nui-slides .nui-blocks-section > .nui-blocks-columns > .nui-blocks-col {
@@ -91,6 +274,14 @@ nui-slides .nui-blocks-section > .nui-blocks-columns > .nui-blocks-col {
 	flex-direction: column;
 	justify-content: safe center;
 	min-height: 0;
+}
+
+nui-slides .nui-blocks-section > .nui-blocks-columns > .nui-blocks-col:is(.nui-preset-top, .nui-variant-top) {
+	justify-content: flex-start;
+}
+
+nui-slides .nui-blocks-section > .nui-blocks-columns > .nui-blocks-col:is(.nui-preset-bottom, .nui-variant-bottom) {
+	justify-content: flex-end;
 }
 
 /* Narration is delivery text (spec §5.2): a surface renderer delivers it, it does not
@@ -349,7 +540,73 @@ nui-slides:fullscreen .nui-slides-toolbar:hover {
 	padding-inline: var(--nui-space-half);
 	white-space: nowrap;
 	min-width: 3rem;
+	width: auto;
+	height: 2rem;
+	border-radius: var(--border-radius2);
 	text-align: center;
+}
+
+/* Slide overview grid (toggled by clicking the counter or pressing G) */
+.nui-slides-overview {
+	position: absolute;
+	inset: 0;
+	z-index: 50;
+	box-sizing: border-box;
+	padding: var(--nui-space-double);
+	background: color-mix(in srgb, var(--color-base) 94%, transparent);
+	backdrop-filter: blur(10px);
+	-webkit-backdrop-filter: blur(10px);
+	overflow-y: auto;
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+	grid-auto-rows: min-content;
+	gap: var(--nui-space);
+	align-content: start;
+}
+
+.nui-slides-overview-card {
+	display: flex;
+	align-items: baseline;
+	gap: var(--nui-space-half);
+	padding: var(--nui-space);
+	background: var(--color-shade1);
+	border: solid var(--border-thickness) var(--border-shade2);
+	border-radius: var(--border-radius1);
+	color: var(--text-color);
+	font: inherit;
+	font-size: var(--font-size-small);
+	text-align: start;
+	cursor: pointer;
+	transition: border-color 120ms ease, background 120ms ease;
+}
+
+.nui-slides-overview-card:hover,
+.nui-slides-overview-card:focus-visible {
+	border-color: var(--color-highlight);
+	background: var(--color-shade2);
+	outline: none;
+}
+
+.nui-slides-overview-card.is-current {
+	border-color: var(--color-highlight);
+	background: color-mix(in srgb, var(--color-highlight) 12%, var(--color-shade1));
+	font-weight: 600;
+}
+
+.nui-slides-overview-num {
+	flex: none;
+	font-variant-numeric: tabular-nums;
+	font-weight: 700;
+	color: var(--color-highlight);
+	min-width: 1.5rem;
+}
+
+.nui-slides-overview-title {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 /* Section rule: navigation | delivery (autoplay, narration) | view (fullscreen,
@@ -434,7 +691,44 @@ nui-slides .nui-blocks-section {
 	overflow: hidden;
 	background: light-dark(#ffffff, #000000);
 	color: var(--text-color);
+	font-size: calc(var(--nui-slide-font-base, var(--nui-slides-font-base, 1.2rem)) * var(--nui-slides-font-scale, 1) * var(--nui-slide-font-scale, 1));
+	line-height: 1.5;
 	opacity: 0;
+}
+nui-slides .nui-blocks-section :is(h1) {
+	font-size: 2.2em;
+	line-height: 1.15;
+}
+nui-slides .nui-blocks-section :is(h2) {
+	font-size: 1.65em;
+	line-height: 1.2;
+}
+nui-slides .nui-blocks-section :is(h3) {
+	font-size: 1.25em;
+	line-height: 1.25;
+}
+nui-slides .nui-blocks-section :is(h4) {
+	font-size: 1.1em;
+	line-height: 1.3;
+}
+nui-slides .nui-blocks-section .nui-preset-lead p:first-of-type {
+	font-size: 1.22em;
+	line-height: 1.5;
+}
+nui-slides .nui-blocks-section .nui-preset-card.nui-variant-quote blockquote {
+	font-size: 1.15em;
+}
+nui-slides .nui-blocks-section .nui-preset-card.nui-variant-stat :is(h1, h2, h3) {
+	font-size: 2.5em;
+}
+nui-slides .nui-blocks-section .nui-preset-card.nui-variant-stat strong {
+	font-size: 1.05em;
+}
+nui-slides .nui-blocks-section .nui-preset-card.nui-variant-stat p {
+	font-size: 0.85em;
+}
+nui-slides .nui-blocks-section > .nui-blocks-chrome {
+	font-size: 1rem;
 }
 nui-slides .nui-blocks-section[data-current] {
 	opacity: 1;
@@ -466,11 +760,47 @@ nui-slides .nui-blocks-section > :last-child {
 	margin-bottom: 0;
 }
 
+/* Layer 1: Vertical & horizontal flow centering (`preset=center`, `preset=band`,
+   `preset=center:middle`, or `mb:var name=align value=center|middle`).
+   Auto margins on the first and last in-flow content nodes centre the content group
+   between the repeating header and footer while keeping the header pinned at the top
+   edge — and safely collapse to 0 if the slide is full. */
+nui-slides .nui-blocks-section:not([data-layout]):is(
+	.nui-preset-center,
+	.nui-preset-band,
+	.nui-variant-center,
+	.nui-variant-middle,
+	[data-align="center"],
+	[data-align="middle"]
+) > [data-flow-first] {
+	margin-top: auto;
+}
+
+nui-slides .nui-blocks-section:not([data-layout]):is(
+	.nui-preset-center,
+	.nui-preset-band,
+	.nui-variant-center,
+	.nui-variant-middle,
+	[data-align="center"],
+	[data-align="middle"]
+) > [data-flow-last] {
+	margin-bottom: auto;
+}
+
+nui-slides .nui-blocks-section:not([data-layout]):is(
+	.nui-variant-middle,
+	[data-align="middle"]
+) {
+	text-align: center;
+	align-items: center;
+}
+
 /* Content that does not fit cannot be scrolled to, so the deck marks the slide and
    says so in the console rather than cropping in silence. The mark stays subtle on
    purpose: a clipped slide may be on screen in front of an audience, and the console
    line — not a border — is where the severity belongs. */
-nui-slides .nui-blocks-section[data-overflow] {
+nui-slides .nui-blocks-section[data-overflow],
+nui-slides .nui-blocks-section [data-overflow] {
 	outline: 1px dashed var(--border-shade4);
 	outline-offset: calc(-1 * var(--nui-space-half));
 }
@@ -486,6 +816,7 @@ nui-slides .nui-slides-counter {
 	font-size: var(--font-size-small);
 	font-variant-numeric: tabular-nums;
 	pointer-events: none;
+	z-index: 10;
 }
 
 @media print {
@@ -498,21 +829,35 @@ nui-slides .nui-slides-counter {
 	nui-slides::after {
 		content: none;
 	}
-	/* A printed page is its own canvas — the screen scaling does not apply. */
+	.nui-slides-viewport {
+		aspect-ratio: auto;
+		max-height: none;
+		overflow: visible;
+		border: none;
+		box-shadow: none;
+	}
+	/* Keep the slide's aspect-ratio box so both flow and [data-layout] slides print
+	   with their composition intact rather than collapsing percentage boxes. */
 	nui-slides .nui-blocks-section {
-		position: static;
+		position: relative;
 		inset: auto;
-		width: auto;
+		width: 100%;
 		height: auto;
+		aspect-ratio: var(--nui-slides-aspect, 16 / 9);
 		transform: none;
 		opacity: 1;
-		overflow: visible;
+		overflow: hidden;
 		break-after: page;
+		page-break-after: always;
 	}
 	nui-slides .nui-blocks-section:last-child {
 		break-after: auto;
+		page-break-after: auto;
 	}
-	nui-slides .nui-slides-counter {
-		display: none;
+	nui-slides .nui-slides-counter,
+	.nui-slides-toolbar,
+	.nui-slides-notes,
+	.nui-slides-overview {
+		display: none !important;
 	}
 }

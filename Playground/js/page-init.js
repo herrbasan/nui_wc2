@@ -4079,6 +4079,17 @@ nui.registerPage('experiments/ai-atom-deck', {
 	html: 'experiments/ai-atom-deck.html'
 });
 
+// The slide-layout prototype: placement comes from an `mb:var name=layout` map, so the
+// page wires nothing beyond registering the fragment.
+nui.registerPage('experiments/slides-layout', {
+	html: 'experiments/slides-layout.html'
+});
+
+// The pattern catalogue — every common slide composition in one deck.
+nui.registerPage('experiments/slides-patterns', {
+	html: 'experiments/slides-patterns.html'
+});
+
 nui.registerPage('experiments/blocks-editor', {
 	html: 'experiments/blocks-editor.html',
 	init(element, params, nui) {

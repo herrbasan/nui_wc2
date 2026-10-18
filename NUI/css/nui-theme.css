@@ -6902,6 +6902,16 @@ nui-markdown p > img {
 	border-radius: var(--border-radius1);
 	background: color-mix(in srgb, var(--text-color) 5%, transparent);
 }
+/* A card that has to sit over an IMAGE. The default 5% tint is a lift on a known
+   surface and no surface at all over a photograph — contrast then depends on whatever
+   pixels happen to be behind it. A scrim paints (almost) the scheme's own surface, so
+   the normal text colour keeps its normal contrast, in light and dark alike. Profile
+   vocabulary: a renderer that does not know `scrim` draws an ordinary card. */
+.nui-preset-card.nui-variant-scrim {
+	background: color-mix(in srgb, var(--color-base) 92%, transparent);
+	-webkit-backdrop-filter: blur(6px);
+	backdrop-filter: blur(6px);
+}
 .nui-preset-card.nui-variant-warning,
 .nui-preset-card.nui-variant-note,
 .nui-preset-card.nui-variant-accent {
@@ -7358,6 +7368,9 @@ nui-markdown p > img {
 /* Gallery: image sequence or grid inside a media figure */
 .nui-blocks-media img {
 	transition: opacity 0.15s ease;
+}
+.nui-blocks-media[data-focal] img {
+	object-position: var(--nui-focal-x, 50%) var(--nui-focal-y, 50%);
 }
 /* A gallery image is only clickable when the lightbox addon is loaded — nui-markdown
    checks for it at click time. Gating the cursor on a root class the addon sets keeps

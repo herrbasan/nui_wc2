@@ -1,0 +1,52 @@
+<header>
+	<h1>Slide Layout</h1>
+	<p class="lead">A placement map for <code>nui-slides</code>: blocks are positioned on the slide surface, while the document stays ordinary Markdown.</p>
+</header>
+
+<section breakout>
+	<nui-slides id="layout-deck" toolbar notes narrate base="1280x720">
+		<nui-markdown src="pages/experiments/slides-layout.md"></nui-markdown>
+	</nui-slides>
+</section>
+
+<section>
+	<h2>How it is authored</h2>
+	<p>
+		A section carries an <code>mb:var name=layout</code> whose JSON payload maps a block
+		<strong>id</strong> to a rectangle in <strong>percentages of the slide surface</strong>,
+		origin top-left:
+	</p>
+
+	<nui-code>
+		<script type="example" data-lang="markdown"><!-- mb:var name=layout -->
+```json
+{
+  "prose":  { "x": 6,  "y": 12, "w": 48, "h": 76, "valign": "center" },
+  "figure": { "x": 58, "y": 10, "w": 36, "h": 80, "fit": "contain" }
+}
+```
+
+<!-- mb:block id=prose -->
+## 60 / 40, placed by ID
+
+Prose and heading stay together in one block and centre vertically via `"valign": "center"`.
+<!-- mb:/block --></script>
+	</nui-code>
+
+	<div class="demo-callout">
+		<p><strong>The rules.</strong> Every visible block needs an id and an area — the map is
+		all-or-nothing for its section, and an incomplete one falls back to flow with a console
+		message. Document order is the default paint order; an area may carry <code>z</code> when
+		reading order and paint order disagree, <code>valign</code> (<code>start|center|end</code>)
+		and <code>align</code> (<code>start|center|end</code>) for alignment inside the rectangle,
+		<code>fit</code> (<code>cover|contain</code>) for media blocks, and <code>mode</code>
+		(<code>light|dark</code>) for block-level colour scheme overrides.</p>
+		<p><strong>Invisible in generic Markdown previews when inline.</strong> Authoring the map as
+		<code>&lt;!-- mb:var name=layout value={...} --&gt;</code> keeps it inside the HTML comment,
+		so GitHub, VS Code and Obsidian previews show zero JSON code blocks.</p>
+		<p><strong>The frame stays on top.</strong> Header, footer and slide counter paint above
+		placed areas (z 10), so a full-bleed plate passes behind the header rather than hiding it;
+		<code>&lt;!-- mb:var name=chrome value=none --&gt;</code> suppresses chrome on title or
+		full-bleed slides.</p>
+	</div>
+</section>

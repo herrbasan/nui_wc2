@@ -1,0 +1,43 @@
+<header>
+	<h1>Slide Patterns</h1>
+	<p class="lead">Seventeen presentation compositions across three layout layers — keeping 95% of slides pure, map-free Markdown.</p>
+</header>
+
+<section breakout>
+	<nui-slides id="patterns-deck" toolbar notes narrate base="1280x720">
+		<nui-markdown src="pages/experiments/slides-patterns.md"></nui-markdown>
+	</nui-slides>
+</section>
+
+<section>
+	<h2>The Three-Layer Model</h2>
+
+	<table>
+		<thead>
+			<tr><th>Pattern</th><th>Layer</th><th>How it is built</th></tr>
+		</thead>
+		<tbody>
+			<tr><td>Title / Closing</td><td>Layer 1 (Flow)</td><td><code>mb:section preset=center</code> (or <code>center:middle</code>) + <code>mb:var name=chrome value=none</code></td></tr>
+			<tr><td>Section divider</td><td>Layer 1 (Columns)</td><td><code>mb:section preset=center</code> + <code>mb:columns weights=[1,3]</code></td></tr>
+			<tr><td>Plain flow / Code / Table</td><td>Layer 1 (Flow)</td><td>Ordinary Markdown and block presets in source order</td></tr>
+			<tr><td>Text 60 / Image 40 (&amp; mirror)</td><td>Layer 1 (Columns)</td><td><code>mb:columns weights=[3,2]</code> and <code>weights=[2,3]</code> — zero JSON, zero IDs</td></tr>
+			<tr><td>Agenda / Rail</td><td>Layer 1 (Columns)</td><td><code>mb:columns weights=[2,3]</code> / <code>[1,3]</code> with <code>mb:col preset=top</code> on the left rail</td></tr>
+			<tr><td>Quote</td><td>Layer 1 (Flow)</td><td><code>mb:section preset=center</code> + <code>preset=card:quote</code></td></tr>
+			<tr><td>Light slide in dark deck</td><td>Layer 1 (Flow)</td><td><code>mb:var name=mode value=light</code> + <code>preset=center</code></td></tr>
+			<tr><td>Full-bleed plate + caption</td><td>Layer 2 (Overlay)</td><td><code>preset=image:hero:bleed</code> + <code>preset=card:scrim:bottom-left</code> — zero JSON</td></tr>
+			<tr><td>AI Atom diagram + overlay</td><td>Layer 2 (Overlay)</td><td><code>preset=image:hero</code> + <code>preset=card:scrim:bottom</code> + <code>mode value=light</code> — zero JSON</td></tr>
+			<tr><td>Multi-box poster over image</td><td>Layer 3 (Map)</td><td><code>mb:var name=layout</code> with <code>z</code>, <code>fit: "cover"</code>, <code>valign</code>, and block-level <code>mode</code></td></tr>
+			<tr><td>Stats / Features / Gallery</td><td>Layer 1 (Flow/Cols)</td><td><code>mb:columns</code> and <code>preset=gallery:row</code></td></tr>
+		</tbody>
+	</table>
+
+	<div class="demo-callout">
+		<p><strong>Why three layers instead of putting everything in a JSON map.</strong> Fenced
+		<code>```json</code> blocks are visible in GitHub, VS Code and Obsidian Markdown previews,
+		and splitting a heading and its prose into separate <code>y</code>/<code>h</code> percentage
+		boxes causes text collisions whenever a heading wraps. Layer 1 (flow, columns, vertical
+		alignment) and Layer 2 (<code>image:hero:bleed</code> + <code>card:scrim:&lt;slot&gt;</code>)
+		express 16 of these 17 slides using only invisible HTML comments, reserving Layer 3
+		(<code>mb:var name=layout</code>) for genuinely freeform multi-box compositions.</p>
+	</div>
+</section>

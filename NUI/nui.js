@@ -9446,15 +9446,53 @@ function mbKindFromDest(dest) {
 // reinterpreted as a string (the validator reports it).
 function mbParseAttrs(text) {
 	const attrs = {};
-	MB_ATTR_RE.lastIndex = 0;
-	let m;
-	while ((m = MB_ATTR_RE.exec(text || '')) !== null) {
-		let value = m[2];
-		const c = value[0];
-		if (c === '"' || c === '[' || c === '{') {
-			try { value = JSON.parse(value); } catch { /* keep authored text */ }
+	const src = String(text || '');
+	let i = 0;
+	while (i < src.length) {
+		while (i < src.length && /\s/.test(src[i])) i++;
+		if (i >= src.length) break;
+		const km = src.slice(i).match(/^([a-z][a-z0-9_-]*)=/);
+		if (!km) {
+			while (i < src.length && !/\s/.test(src[i])) i++;
+			continue;
 		}
-		attrs[m[1]] = value;
+		const key = km[1];
+		i += km[0].length;
+		const start = i;
+		const c = src[i];
+		if (c === '"') {
+			i++;
+			while (i < src.length) {
+				if (src[i] === '\\') { i += 2; continue; }
+				if (src[i] === '"') { i++; break; }
+				i++;
+			}
+		} else if (c === '{' || c === '[') {
+			let depth = 0, inStr = false;
+			while (i < src.length) {
+				const ch = src[i];
+				if (inStr) {
+					if (ch === '\\') { i += 2; continue; }
+					if (ch === '"') inStr = false;
+				} else {
+					if (ch === '"') inStr = true;
+					else if (ch === '{' || ch === '[') depth++;
+					else if (ch === '}' || ch === ']') {
+						depth--;
+						if (depth === 0) { i++; break; }
+					}
+				}
+				i++;
+			}
+		} else {
+			while (i < src.length && !/\s/.test(src[i])) i++;
+		}
+		const raw = src.slice(start, i);
+		let value = raw;
+		if (c === '"' || c === '[' || c === '{') {
+			try { value = JSON.parse(raw); } catch { /* keep authored text */ }
+		}
+		attrs[key] = value;
 	}
 	return attrs;
 }
@@ -9842,7 +9880,8 @@ function mbRenderVar(node) {
 		const text = typeof node.value === 'string' ? node.value : JSON.stringify(node.value, null, 2);
 		body = `<nui-code><pre><code data-lang="${lang}">${fmEscape(text)}</code></pre></nui-code>`;
 	} else if (node.value !== undefined && node.value !== null) {
-		body = `<span class="nui-blocks-var-value">${fmEscape(String(node.value))}</span>`;
+		const text = typeof node.value === 'object' ? JSON.stringify(node.value) : String(node.value);
+		body = `<span class="nui-blocks-var-value">${fmEscape(text)}</span>`;
 	}
 	return `<dl class="nui-blocks-var" data-var="${fmEscape(node.name)}"><dt>${fmEscape(node.name)}</dt><dd>${body}</dd></dl>`;
 }
@@ -9867,7 +9906,7 @@ function mbParsePreset(value) {
 // Families the renderer knows how to treat. Anything else renders plain — valid
 // syntax, but the degradation contract (spec §5: "visible renderer diagnostic")
 // requires the unknown token to be reported, so each one warns once per session.
-const MB_KNOWN_PRESET_FAMILIES = new Set(['card', 'image', 'gallery', 'link', 'list', 'table', 'page-break', 'band', 'cover', 'lead', 'note', 'warning', 'cta', 'player', 'narration']);
+const MB_KNOWN_PRESET_FAMILIES = new Set(['card', 'image', 'gallery', 'link', 'list', 'table', 'page-break', 'band', 'cover', 'lead', 'note', 'warning', 'cta', 'player', 'narration', 'section', 'center', 'top', 'bottom']);
 
 // ── Slideshow enhancement (gallery:slideshow) ──
 // A gallery figure marked `preset=gallery:slideshow` cycles its plates one at
@@ -10437,7 +10476,14 @@ function mbRenderBlock(block) {
 		// image-grid treatment that has no meaning for a track list.
 		if (!playerWanted && (media.isList || (p && p.family === 'gallery'))) extra.push('nui-blocks-gallery');
 		if (playerWanted) extra.push('nui-blocks-player');
-		const open = mbOpenTag('figure', 'nui-blocks-block', block.attrs, extra.join(' '));
+		let focalAttrs = '';
+		const f = block.attrs && block.attrs.focal;
+		if (f && typeof f === 'object' && Number.isFinite(Number(f.x)) && Number.isFinite(Number(f.y))) {
+			const fx = Math.max(0, Math.min(1, Number(f.x)));
+			const fy = Math.max(0, Math.min(1, Number(f.y)));
+			focalAttrs = `data-focal="${fx},${fy}" style="--nui-focal-x:${(fx * 100).toFixed(1)}%;--nui-focal-y:${(fy * 100).toFixed(1)}%"`;
+		}
+		const open = mbOpenTag('figure', 'nui-blocks-block', block.attrs, extra.join(' '), focalAttrs);
 		if (playerWanted) {
 			const player = mbRenderPlayer(block, media, open);
 			// null = inapplicable (warned inside) — fall through to the plain

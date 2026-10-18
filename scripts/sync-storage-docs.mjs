@@ -6,7 +6,7 @@ import path from 'path';
 
 const REPO = 'd:/Work/_GIT/nui_wc2';
 const DEST = '//BADKID/Stuff/MCP_Storage/documentation/NUI';
-const DATE = '2026-09-26';
+const DATE = '2026-10-18';
 
 const groups = [
 	{ prefix: 'component', dir: 'documentation/components' },

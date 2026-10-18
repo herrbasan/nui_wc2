@@ -116,7 +116,7 @@ Which is why it doesn't work like software, and never will. Software has command
 ![Data in — model — data out](../images/atom-chart.webp)
 <!-- mb:/block -->
 
-<!-- mb:block preset=card overlay=bottom -->
+<!-- mb:block preset=card:scrim:bottom -->
 **data in, inference, data out** — every product, every "intelligent platform" is that one act, repeated and arranged. Nothing else is ever happening.
 <!-- mb:/block -->
 

@@ -37,10 +37,16 @@ const MOUNT_TIMEOUT_MS = 5000;
 const DEFAULT_BASE = [1280, 720];
 
 class NuiSlides extends HTMLElement {
-	static observedAttributes = ['base', 'toolbar', 'controls', 'notes', 'autoplay', 'narrate', 'dwell', 'narration-delay', 'mode'];
+	static observedAttributes = ['base', 'toolbar', 'controls', 'notes', 'autoplay', 'narrate', 'dwell', 'narration-delay', 'mode', 'font-size', 'font-scale'];
 
 	attributeChangedCallback(name) {
 		if (name === 'base' && this._mounted) this._fit();
+		if ((name === 'font-size' || name === 'font-scale') && this._mounted) {
+			this._applyTypography();
+			if (this._sections && this._sections[this._current]) {
+				this._reportOverflow(this._sections[this._current]);
+			}
+		}
 		if ((name === 'toolbar' || name === 'controls') && this._mounted) {
 			if (this.hasAttribute('toolbar') || this.hasAttribute('controls')) this._buildToolbar();
 			else if (this._toolbar) { this._toolbar.remove(); this._toolbar = null; }
@@ -87,11 +93,16 @@ class NuiSlides extends HTMLElement {
 			const raw = Number(this.getAttribute(name));
 			return Number.isFinite(raw) && raw >= min && raw <= 60 ? raw : fallback;
 		};
+		const scaleRaw = this.hasAttribute('font-scale') ? Number(this.getAttribute('font-scale')) : NaN;
+		const fontScale = Number.isFinite(scaleRaw) && scaleRaw >= 0.5 && scaleRaw <= 2.5 ? scaleRaw : 1;
+		const fontSize = (this.getAttribute('font-size') || '').trim() || null;
 		return {
 			autoplay: !!this._autoPlaying,
 			narrate: this.hasAttribute('narrate'),
 			dwell: seconds('dwell', 5, 0.5),
 			narrationDelay: seconds('narration-delay', 1, 0),
+			fontScale,
+			fontSize,
 			// `auto` follows the page's colour scheme; `light`/`dark` force one for the
 			// deck only. A deck drawn on light artwork must not invert with the host.
 			mode: ['light', 'dark'].includes(String(this.getAttribute('mode') || '').toLowerCase())
@@ -115,9 +126,67 @@ class NuiSlides extends HTMLElement {
 			const delay = Number(options.narrationDelay);
 			this.setAttribute('narration-delay', String(Number.isFinite(delay) ? Math.min(60, Math.max(0, delay)) : 1));
 		}
+		if ('fontScale' in options) {
+			const scale = Number(options.fontScale);
+			if (Number.isFinite(scale)) {
+				const clamped = Math.round(Math.min(2.5, Math.max(0.5, scale)) * 100) / 100;
+				if (clamped === 1) this.removeAttribute('font-scale');
+				else this.setAttribute('font-scale', String(clamped));
+			} else {
+				this.removeAttribute('font-scale');
+			}
+		}
+		if ('fontSize' in options) {
+			const size = options.fontSize == null ? '' : String(options.fontSize).trim();
+			if (size) this.setAttribute('font-size', size);
+			else this.removeAttribute('font-size');
+		}
 		if ('autoplay' in options) this.toggleAttribute('autoplay', !!options.autoplay);
+		this._applyTypography();
+		if (this._mounted && this._sections && this._sections[this._current]) {
+			this._reportOverflow(this._sections[this._current]);
+		}
 		this.dispatchEvent(new CustomEvent('nui-slides-options', { detail: { options: this.options } }));
 		return this.options;
+	}
+
+	// Normalise a base font-size token (`"20px"`, `"1.35rem"`, `"125%"`, or a bare number:
+	// `<= 4` = rem, `> 4` = px) into a CSS length string, or null if invalid.
+	_parseFontSize(raw) {
+		if (raw == null) return null;
+		const str = String(raw).trim();
+		if (!str) return null;
+		if (/^\d+(?:\.\d+)?(px|rem|em)$/i.test(str)) return str.toLowerCase();
+		if (/^\d+(?:\.\d+)?%$/.test(str)) {
+			const pct = parseFloat(str);
+			return (pct > 0 && pct <= 400) ? ((1.2 * pct) / 100).toFixed(3) + 'rem' : null;
+		}
+		const num = Number(str);
+		if (Number.isFinite(num) && num > 0) {
+			return num <= 4 ? num + 'rem' : num + 'px';
+		}
+		return null;
+	}
+
+	// Apply deck-level base font size (from `font-size` attribute or YAML frontmatter)
+	// and the user/deck font scale multiplier (`--nui-slides-font-scale`).
+	_applyTypography() {
+		const meta = (this._md && this._md.metadata) || {};
+		const slideMeta = (meta.slideshow && typeof meta.slideshow === 'object') ? meta.slideshow : {};
+		const rawBase = this.getAttribute('font-size')
+			|| meta['font-size'] || meta.fontSize
+			|| slideMeta['font-size'] || slideMeta.fontSize
+			|| null;
+		const baseCss = this._parseFontSize(rawBase);
+		if (baseCss) this.style.setProperty('--nui-slides-font-base', baseCss);
+		else this.style.removeProperty('--nui-slides-font-base');
+
+		let scale = this.options.fontScale;
+		if (!this.hasAttribute('font-scale')) {
+			const fmScale = Number(meta['font-scale'] ?? meta.fontScale ?? slideMeta['font-scale'] ?? slideMeta.fontScale);
+			if (Number.isFinite(fmScale) && fmScale >= 0.5 && fmScale <= 2.5) scale = fmScale;
+		}
+		this.style.setProperty('--nui-slides-font-scale', String(scale));
 	}
 
 	// The canvas: a logical size the slide is composed in. `base="1280x720"` or a bare
@@ -219,6 +288,12 @@ class NuiSlides extends HTMLElement {
 			return this._fail('the document has no sections — nothing to present.');
 		}
 		this._stopWatching();
+
+		// Placement is read from the section's own data BEFORE anything this renderer
+		// adds to a slide (the counter) could be mistaken for content.
+		this._applyTypography();
+		this._applyModes(sections);
+		this._applyLayouts(sections);
 
 		sections.forEach((section, i) => {
 			section.setAttribute('role', 'group');
@@ -353,6 +428,220 @@ class NuiSlides extends HTMLElement {
 		return sections;
 	}
 
+	// ── Per-slide configuration vars (mode, chrome, align, dwell/seconds) ──
+	// The deck's `mode` is the default; a section can override it with `mb:var name=mode`
+	// (`value=light` / `value=dark`). Colour mode is not just text colour: a section is a
+	// transparent surface over the deck's canvas, so forcing the scheme must also paint
+	// the slide's own surface — otherwise dark text would land on the deck's dark canvas.
+	// `--color-base` resolves under the section's own scheme, which is exactly the point.
+	//
+	// Additional section vars:
+	//   `mb:var name=chrome value=none|header|footer|all` — per-slide chrome & counter visibility
+	//   `mb:var name=align value=center|middle|start|end` — vertical/horizontal flow alignment
+	//   `mb:var name=dwell value=N` (or `name=seconds`)   — per-slide silent dwell duration (s)
+	_applyModes(sections) {
+		const readVar = (section, name) => {
+			const el = section.querySelector(`.nui-blocks-var[data-var="${name}"]`);
+			if (!el) return null;
+			el.hidden = true;
+			return String((el.querySelector('dd') || el).textContent || '').trim();
+		};
+
+		for (const section of sections) {
+			const rawMode = readVar(section, 'mode');
+			if (rawMode !== null) {
+				const value = rawMode.toLowerCase();
+				if (value !== 'light' && value !== 'dark') {
+					console.warn('[nui-slides] section mode must be `light` or `dark`; got "' + rawMode + '".');
+				} else {
+					section.style.colorScheme = value;
+					section.style.backgroundColor = 'var(--color-base)';
+					section.setAttribute('data-mode', value);
+				}
+			}
+
+			const rawChrome = readVar(section, 'chrome');
+			if (rawChrome !== null) {
+				const value = rawChrome.toLowerCase();
+				if (value === 'none' || value === 'off' || value === 'false') {
+					section.setAttribute('data-chrome', 'none');
+				} else if (value === 'header' || value === 'footer' || value === 'all') {
+					section.setAttribute('data-chrome', value);
+				} else {
+					console.warn('[nui-slides] section chrome must be `none`, `header`, `footer`, or `all`; got "' + rawChrome + '".');
+				}
+			}
+
+			const rawAlign = readVar(section, 'align');
+			if (rawAlign !== null) {
+				const value = rawAlign.toLowerCase();
+				if (['center', 'middle', 'start', 'end', 'top', 'bottom'].includes(value)) {
+					section.setAttribute('data-align', value === 'top' ? 'start' : value === 'bottom' ? 'end' : value);
+				} else {
+					console.warn('[nui-slides] section align must be `start`, `center`, `middle`, or `end`; got "' + rawAlign + '".');
+				}
+			}
+
+			const rawDwell = readVar(section, 'dwell') ?? readVar(section, 'seconds');
+			if (rawDwell !== null) {
+				const num = Number(rawDwell);
+				if (Number.isFinite(num) && num >= 0.5 && num <= 300) {
+					section.dataset.dwell = String(num);
+				} else {
+					console.warn('[nui-slides] section dwell/seconds must be a number between 0.5 and 300; got "' + rawDwell + '".');
+				}
+			}
+
+			const rawFontSize = readVar(section, 'font-size') ?? readVar(section, 'fontSize');
+			if (rawFontSize !== null) {
+				const parsed = this._parseFontSize(rawFontSize);
+				if (parsed) section.style.setProperty('--nui-slide-font-base', parsed);
+				else console.warn('[nui-slides] section font-size is invalid; got "' + rawFontSize + '".');
+			}
+
+			const rawFontScale = readVar(section, 'font-scale') ?? readVar(section, 'fontScale');
+			if (rawFontScale !== null) {
+				const num = Number(rawFontScale);
+				if (Number.isFinite(num) && num >= 0.5 && num <= 2.5) {
+					section.style.setProperty('--nui-slide-font-scale', String(num));
+				} else {
+					console.warn('[nui-slides] section font-scale must be between 0.5 and 2.5; got "' + rawFontScale + '".');
+				}
+			}
+		}
+	}
+
+	// ── Slide layout (a profile extension, not format vocabulary) ──
+	// Three layers compose without grammar changes:
+	//   Layer 1 (Flow & columns): plain Markdown, `mb:columns`, section `preset=center|band`,
+	//     column `preset=top|bottom`. First/last in-flow content nodes are marked with
+	//     `data-flow-first` / `data-flow-last` so centered sections can use `margin-block: auto`
+	//     while keeping `repeat=header` pinned at the top edge and `repeat=footer` at the bottom.
+	//   Layer 2 (Bleed plates & scrim overlays): `preset=image:hero:bleed` or `mb:section preset=cover`
+	//     fills the canvas (`inset: 0`), while `preset=card:scrim:<slot>` (`bottom`, `bottom-left`,
+	//     `bottom-right`, `top`, `top-left`, `top-right`, `center`) anchors an overlay card.
+	//   Layer 3 (Coordinate map): `mb:var name=layout` holding JSON (fenced or inline `value={...}`):
+	//     `{ "block-id": { "x": 0, "y": 0, "w": 60, "h": 100, "z"?: 2, "valign"?: "center", "align"?: "center", "fit"?: "cover", "mode"?: "dark" } }`
+	//     All-or-nothing per section: every visible content block needs an id AND an entry; an
+	//     incomplete map falls back to flow and logs why.
+	_applyLayouts(sections) {
+		const OVERLAY_SLOTS = [
+			'nui-variant-bottom', 'nui-variant-bottom-left', 'nui-variant-bottom-right',
+			'nui-variant-top', 'nui-variant-top-left', 'nui-variant-top-right', 'nui-variant-center'
+		];
+		const isFlowAnchored = (el) => {
+			if (el.classList.contains('nui-blocks-media') && el.classList.contains('nui-variant-bleed')) return true;
+			if (el.classList.contains('nui-preset-card') && el.classList.contains('nui-variant-scrim')) {
+				return OVERLAY_SLOTS.some((cls) => el.classList.contains(cls));
+			}
+			return false;
+		};
+
+		for (const section of sections) {
+			const varEl = section.querySelector('.nui-blocks-var[data-var="layout"]');
+			const content = Array.from(section.children).filter((el) =>
+				!el.classList.contains('nui-blocks-var') &&
+				!el.classList.contains('nui-preset-narration') &&
+				!el.classList.contains('nui-blocks-chrome') &&
+				!el.classList.contains('nui-slides-counter'));
+
+			const markFlow = () => {
+				const inFlow = content.filter((el) => !isFlowAnchored(el));
+				if (inFlow.length) {
+					inFlow[0].setAttribute('data-flow-first', '');
+					inFlow[inFlow.length - 1].setAttribute('data-flow-last', '');
+				}
+			};
+
+			if (!varEl) {
+				markFlow();
+				continue;
+			}
+			varEl.hidden = true;
+			const source = varEl.querySelector('code') || varEl.querySelector('.nui-blocks-var-value') || varEl.querySelector('dd') || varEl;
+			let spec;
+			try {
+				spec = JSON.parse(source.textContent || '');
+			} catch (err) {
+				console.warn('[nui-slides] layout var is not valid JSON — the section falls back to flow.',
+					err && err.message);
+				markFlow();
+				continue;
+			}
+			if (!spec || typeof spec !== 'object' || Array.isArray(spec)) {
+				console.warn('[nui-slides] layout var must be an object of id → { x, y, w, h }.');
+				markFlow();
+				continue;
+			}
+			if (!content.length) continue;
+
+			const noId = content.filter((el) => !el.id);
+			const missing = content.filter((el) => el.id && !spec[el.id]);
+			const unknown = Object.keys(spec).filter((id) => !content.some((el) => el.id === id));
+			if (noId.length || missing.length || unknown.length) {
+				console.warn('[nui-slides] layout ignored: ' +
+					(noId.length ? noId.length + ' block(s) have no id. ' : '') +
+					(missing.length ? 'no area for ' + missing.map((el) => '#' + el.id).join(', ') + '. ' : '') +
+					(unknown.length ? 'unknown id(s): ' + unknown.join(', ') + '. ' : '') +
+					'Falling back to flow.');
+				markFlow();
+				continue;
+			}
+
+			const number = (value, fallback) => Number.isFinite(Number(value)) ? Number(value) : fallback;
+			for (const el of content) {
+				const area = spec[el.id];
+				el.style.position = 'absolute';
+				el.style.left = number(area.x, 0) + '%';
+				el.style.top = number(area.y, 0) + '%';
+				el.style.width = number(area.w, 100) + '%';
+				el.style.height = number(area.h, 100) + '%';
+				el.style.margin = '0';
+				el.style.maxWidth = 'none';
+				el.style.boxSizing = 'border-box';
+				if (area.z !== undefined) el.style.zIndex = String(number(area.z, 0));
+
+				// Vertical alignment inside the placed rectangle (`start` | `center` | `end`)
+				if (area.valign) {
+					const v = String(area.valign).toLowerCase();
+					el.style.display = 'flex';
+					el.style.flexDirection = 'column';
+					el.style.justifyContent = (v === 'center' || v === 'middle') ? 'safe center'
+						: (v === 'end' || v === 'bottom') ? 'flex-end' : 'flex-start';
+				}
+
+				// Horizontal text alignment inside the placed rectangle (`start` | `center` | `end`)
+				if (area.align) {
+					const a = String(area.align).toLowerCase();
+					el.style.textAlign = (a === 'center' || a === 'middle') ? 'center'
+						: (a === 'end' || a === 'right') ? 'end' : 'start';
+				}
+
+				// Media fit (`cover` | `contain`) — explicit `area.fit` wins; `image:hero:bleed`
+				// defaults to `cover` when placed as a plate.
+				const fit = area.fit ? String(area.fit).toLowerCase()
+					: (el.classList.contains('nui-variant-bleed') ? 'cover' : null);
+				if (fit === 'cover' || fit === 'contain') {
+					el.dataset.fit = fit;
+					for (const mediaEl of el.querySelectorAll('img, video')) {
+						mediaEl.style.objectFit = fit;
+					}
+				}
+
+				// Block-level colour mode override (`light` | `dark`)
+				if (area.mode) {
+					const m = String(area.mode).toLowerCase();
+					if (m === 'light' || m === 'dark') {
+						el.style.colorScheme = m;
+						el.style.color = 'var(--text-color)';
+						el.setAttribute('data-mode', m);
+					}
+				}
+			}
+			section.setAttribute('data-layout', '');
+		}
+	}
+
 	// Unstructured Markdown: everything rendered becomes one slide.
 	_synthesise() {
 		const section = document.createElement('section');
@@ -446,10 +735,14 @@ class NuiSlides extends HTMLElement {
 		prevBtn.querySelector('nui-icon').style.transform = 'rotate(180deg)';
 		prevBtn.addEventListener('click', (e) => { e.stopPropagation(); this.prev(); });
 
-		const counter = document.createElement('span');
+		const counter = document.createElement('button');
+		counter.type = 'button';
 		counter.className = 'nui-slides-toolbar-counter';
 		counter.setAttribute('aria-live', 'polite');
+		counter.setAttribute('aria-label', 'Toggle slide overview (G)');
+		counter.title = 'Slide overview (G)';
 		counter.textContent = (this._current >= 0 ? this._current + 1 : 1) + ' / ' + (this._sections ? this._sections.length : 1);
+		counter.addEventListener('click', (e) => { e.stopPropagation(); this.toggleOverview(); });
 		nav.appendChild(counter);
 
 		const nextBtn = makeBtn('nui-slides-btn-next', 'Next slide', 'Next slide (Right Arrow or Space)', 'chevron_right');
@@ -586,7 +879,8 @@ class NuiSlides extends HTMLElement {
 		this._stopNarration();
 		const text = (lines || []).join('\n\n').trim();
 		if (!text) return null;
-		const result = nui.util.speakMarkdown(text);
+		const section = (this._sections || [])[this._current] || this;
+		const result = nui.util.speakMarkdown(text, section, this._tbNarr || this._notesPlay || null);
 		if (!result) return null;
 		this._narrationStop = typeof result.stop === 'function' ? result.stop
 			: typeof result === 'function' ? result : () => {};
@@ -622,11 +916,14 @@ class NuiSlides extends HTMLElement {
 	_runSlideFlow(token) {
 		if (!this._autoPlaying || token !== this._flow) return;
 		const opts = this.options;
+		const section = (this._sections || [])[this._current];
+		const slideDwell = section && section.dataset.dwell ? Number(section.dataset.dwell) : opts.dwell;
 		const lines = this.narration(this._current);
 		const speak = opts.narrate && lines.length > 0 && nui.util.hasMarkdownSpeech();
 		// Two different pauses: after speech the slide has been READ, so a short gap is
-		// enough; a slide with nothing to say needs its own on-screen duration.
-		const holdMs = (speak ? opts.narrationDelay : opts.dwell) * 1000;
+		// enough; a slide with nothing to say needs its own on-screen duration (per-slide
+		// `mb:var name=dwell|seconds` overrides the deck default).
+		const holdMs = (speak ? opts.narrationDelay : slideDwell) * 1000;
 
 		const advanceAfterDwell = () => {
 			if (!this._autoPlaying || token !== this._flow) return;
@@ -691,6 +988,14 @@ class NuiSlides extends HTMLElement {
 				<label class="nui-slides-settings-label" for="nui-slides-opt-mode">Colour mode</label>
 				<nui-select id="nui-slides-opt-mode" size="small"><select></select></nui-select>
 
+				<label class="nui-slides-settings-label" for="nui-slides-opt-font-scale">
+					<span>Font size boost</span>
+					<span class="nui-slides-settings-value" data-slide-font-scale>${Math.round(opts.fontScale * 100)}%</span>
+				</label>
+				<nui-slider>
+					<input id="nui-slides-opt-font-scale" type="range" min="0.7" max="2" step="0.05" value="${opts.fontScale}">
+				</nui-slider>
+
 				<label class="nui-slides-settings-label" for="nui-slides-opt-gap">
 					<span>Pause after the narration</span>
 					<span class="nui-slides-settings-value" data-slide-gap>${opts.narrationDelay.toFixed(1)}s</span>
@@ -724,6 +1029,20 @@ class NuiSlides extends HTMLElement {
 			]);
 			modeSelect.setValue(opts.mode);
 		}
+		const fontRange = scope.querySelector('#nui-slides-opt-font-scale');
+		const fontOut = scope.querySelector('[data-slide-font-scale]');
+		if (fontRange && fontOut) {
+			const paintFont = () => {
+				const val = Number(fontRange.value);
+				fontOut.textContent = Math.round(val * 100) + '%';
+				// Live preview on the slide behind the dialog
+				this.style.setProperty('--nui-slides-font-scale', String(val));
+				if (this._sections && this._sections[this._current]) {
+					this._reportOverflow(this._sections[this._current]);
+				}
+			};
+			fontRange.addEventListener('input', paintFont);
+		}
 		const range = scope.querySelector('#nui-slides-opt-dwell');
 		const out = scope.querySelector('[data-slide-dwell]');
 		const gapRange = scope.querySelector('#nui-slides-opt-gap');
@@ -738,11 +1057,18 @@ class NuiSlides extends HTMLElement {
 		bind(gapRange, gapOut);
 
 		const answer = await result;
-		if (answer !== 'apply') return;
+		if (answer !== 'apply') {
+			this._applyTypography();
+			if (this._sections && this._sections[this._current]) {
+				this._reportOverflow(this._sections[this._current]);
+			}
+			return;
+		}
 		const narrate = scope.querySelector('[data-slide-narrate]');
 		this.configure({
 			narrate: !!(narrate && narrate.checked),
 			mode: modeSelect && modeSelect.getValue ? modeSelect.getValue() : opts.mode,
+			fontScale: fontRange ? Number(fontRange.value) : opts.fontScale,
 			dwell: range ? Number(range.value) : opts.dwell,
 			narrationDelay: gapRange ? Number(gapRange.value) : opts.narrationDelay
 		});
@@ -781,15 +1107,93 @@ class NuiSlides extends HTMLElement {
 
 	// A slide that overflows cannot be scrolled — that is the point — so the renderer
 	// says so instead of cropping someone's content in silence. `data-overflow` is the
-	// hook for a surface treatment; the console line is the diagnosis.
+	// hook for a surface treatment; the console line is the diagnosis. Placed areas are
+	// checked individually as well, because an overflowing area at the top of a slide
+	// collides with its neighbours without increasing the section's own scrollHeight.
 	_reportOverflow(section) {
-		if (section.scrollHeight <= section.clientHeight + 1) return;
-		section.setAttribute('data-overflow', '');
-		if (this._overflowWarned.has(section)) return;
-		this._overflowWarned.add(section);
-		console.warn('[nui-slides] slide ' + (this._sections.indexOf(section) + 1) + ' of ' +
-			this._sections.length + ' is ' + (section.scrollHeight - section.clientHeight) +
-			'px taller than the slide — the content is being clipped.');
+		const idx = this._sections.indexOf(section) + 1;
+		const total = this._sections.length;
+		let anyOverflow = false;
+		if (section.scrollHeight > section.clientHeight + 1) {
+			anyOverflow = true;
+			section.setAttribute('data-overflow', '');
+			if (!this._overflowWarned.has(section)) {
+				this._overflowWarned.add(section);
+				console.warn('[nui-slides] slide ' + idx + ' of ' + total + ' is ' +
+					(section.scrollHeight - section.clientHeight) +
+					'px taller than the slide — the content is being clipped.');
+			}
+		}
+		if (section.hasAttribute('data-layout')) {
+			for (const el of section.children) {
+				if (!el.id || el.classList.contains('nui-blocks-media')) continue;
+				if (el.scrollHeight > el.clientHeight + 1) {
+					anyOverflow = true;
+					el.setAttribute('data-overflow', '');
+					section.setAttribute('data-overflow', '');
+					const key = section.id + '#' + el.id;
+					if (!this._overflowWarned.has(key)) {
+						this._overflowWarned.add(key);
+						console.warn('[nui-slides] slide ' + idx + ' of ' + total + ' area #' + el.id + ' is ' +
+							(el.scrollHeight - el.clientHeight) + 'px taller than its layout box.');
+					}
+				} else {
+					el.removeAttribute('data-overflow');
+				}
+			}
+		}
+		if (!anyOverflow) {
+			section.removeAttribute('data-overflow');
+		}
+	}
+
+	// Slide overview grid: quick navigation across the deck (triggered by clicking the
+	// toolbar counter or pressing `G`).
+	toggleOverview(force) {
+		if (!this._mounted || !this._sections || !this._viewport) return false;
+		const open = force !== undefined ? !!force : !this._overview;
+		if (!open) {
+			if (this._overview) { this._overview.remove(); this._overview = null; }
+			if (this._tbCounter) this._tbCounter.setAttribute('aria-expanded', 'false');
+			return false;
+		}
+		if (this._overview) return true;
+
+		const grid = document.createElement('div');
+		grid.className = 'nui-slides-overview';
+		grid.setAttribute('role', 'dialog');
+		grid.setAttribute('aria-label', 'Slide overview');
+
+		this._sections.forEach((sec, i) => {
+			const card = document.createElement('button');
+			card.type = 'button';
+			card.className = 'nui-slides-overview-card' + (i === this._current ? ' is-current' : '');
+			const num = document.createElement('span');
+			num.className = 'nui-slides-overview-num';
+			num.textContent = String(i + 1);
+
+			const titleEl = sec.querySelector('h1, h2, h3, h4, strong, p, figcaption');
+			const label = document.createElement('span');
+			label.className = 'nui-slides-overview-title';
+			label.textContent = (titleEl && titleEl.textContent.trim())
+				? titleEl.textContent.trim().slice(0, 72)
+				: (sec.id ? '#' + sec.id : 'Slide ' + (i + 1));
+
+			card.append(num, label);
+			card.addEventListener('click', (e) => {
+				e.stopPropagation();
+				this.toggleOverview(false);
+				this.show(i);
+			});
+			grid.appendChild(card);
+		});
+
+		this._viewport.appendChild(grid);
+		this._overview = grid;
+		if (this._tbCounter) this._tbCounter.setAttribute('aria-expanded', 'true');
+		const activeCard = grid.querySelector('.is-current');
+		if (activeCard) activeCard.focus({ preventScroll: true });
+		return true;
 	}
 
 	get count() { return this._sections ? this._sections.length : 0; }
@@ -820,7 +1224,19 @@ class NuiSlides extends HTMLElement {
 
 	_key(e) {
 		if (!this._mounted || e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) return;
-		if (e.target instanceof Element && e.target.closest(INTERACTIVE)) return;
+		if (e.key === 'Escape' && this._overview) {
+			e.preventDefault();
+			this.toggleOverview(false);
+			return;
+		}
+		if (e.target instanceof Element && e.target.closest(INTERACTIVE) && !e.target.closest('.nui-slides-overview')) return;
+
+		if (e.key === 'g' || e.key === 'G') {
+			e.preventDefault();
+			this.toggleOverview();
+			return;
+		}
+		if (this._overview) return;
 
 		if (e.key === 'f' || e.key === 'F') {
 			e.preventDefault();

@@ -19,18 +19,20 @@
 	</p>
 	<p>
 		What to watch: <code>preset=image</code> inside two columns, <code>preset=image:hero</code>
-		paired with <code>card overlay=bottom</code> (an attribute this renderer does not model),
+		paired with <code>preset=card:scrim:bottom</code> (anchored scrim overlay over the hero diagram),
 		and a narration block on every slide.
 	</p>
 	<div class="demo-callout">
-		<p><strong>Renderer result.</strong> 8/8 slides mount, all eight images load, every slide
-		has narration, and the blocks editor round-trips the file without loss — including
-		<code>overlay=bottom</code>, which it preserves even though it does not model it.</p>
+		<p><strong>Renderer result.</strong> 8/8 slides mount with zero overflow, all eight images
+		load, every slide has narration, and the blocks editor round-trips the file without loss.</p>
 		<p><strong>Mode.</strong> The deck is forced to <code>mode="light"</code>: its artwork is
 		drawn on light paper and must not invert with a dark host.</p>
-		<p><strong>Known gap.</strong> The spec does not define <code>overlay</code>, so the card on
-		slide 6 stacks under the hero image instead of covering its bottom edge. The slide still
-		fits — media takes the height the text leaves — but the composition is not the one the
-		deck asked for. Either the token becomes vocabulary or the deck must stop relying on it.</p>
+		<p><strong>Overlay via preset variant (Layer 2).</strong> Slide 6 pairs
+		<code>preset=image:hero</code> with <code>preset=card:scrim:bottom</code>. In page view
+		(<code>nui-markdown</code>) the unknown 3rd segment degrades gracefully to an ordinary
+		scrim card below the diagram; in <code>nui-slides</code> it anchors over the bottom edge
+		of the canvas with zero JSON and zero block IDs.
+		<strong>See <a href="#page=experiments/slides-patterns">Slide Patterns</a></strong> for all
+		three layout layers.</p>
 	</div>
 </section>
