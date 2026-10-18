@@ -28,6 +28,69 @@ nui-slides {
 	--nui-slides-w: 1280px;
 	--nui-slides-h: 720px;
 	--nui-slides-scale: 1;
+	/* A slide is a SURFACE, not a reading column. The page's content measure is a
+	   pagination concern — inside a fixed canvas it only produces empty margins, and a
+	   column layout ends up as a strip in the middle of a mostly blank slide. The
+	   measure token is the seam the theme already exposes, so the profile sets it here
+	   and the document column follows without a single document-side change. */
+	--nui-md-content-maxwidth: 100%;
+	--nui-md-content-gutter: var(--nui-space-double);
+}
+
+/* Forced colour mode (`mode`). `auto` is the absence of the attribute: the deck follows
+   the page. `light`/`dark` set color-scheme on the host, which the theme's
+   light-dark() tokens resolve against inside the deck — including the slide surfaces,
+   toolbar and notes. */
+nui-slides[mode="light"] {
+	color-scheme: light;
+}
+nui-slides[mode="dark"] {
+	color-scheme: dark;
+}
+
+/* A slide section is already an absolutely positioned flex column of canvas height (the
+   theme's surface rule). That is the geometry a surface needs: text keeps its own height,
+   media takes what is LEFT. Without this a 16:9 image is sized by its width alone and
+   overflows the canvas the moment the slide also carries a heading or a card.
+
+   Scoped to DIRECT children: media inside a column is sized by the column, which is
+   already within the canvas. */
+nui-slides .nui-blocks-section > .nui-blocks-media {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	min-height: 0;
+}
+
+nui-slides .nui-blocks-section > .nui-blocks-media > p {
+	flex: 1 1 auto;
+	min-height: 0;
+	margin: 0;
+}
+
+nui-slides .nui-blocks-section > .nui-blocks-media img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+}
+
+/* The grid itself spans the remaining height, so a two-column slide is a slice of the
+   surface rather than a strip floating in empty canvas. Columns stretch to that height
+   and centre their content: top-aligning leaves every slide's empty space in one band
+   at the bottom, which reads as a mistake rather than as composition. `safe` keeps an
+   overfull column from clipping at BOTH ends — it falls back to start alignment. */
+nui-slides .nui-blocks-section > .nui-blocks-columns {
+	flex: 1 1 auto;
+	min-height: 0;
+	align-items: stretch;
+}
+
+nui-slides .nui-blocks-section > .nui-blocks-columns > .nui-blocks-col {
+	display: flex;
+	flex-direction: column;
+	justify-content: safe center;
+	min-height: 0;
 }
 
 /* Narration is delivery text (spec §5.2): a surface renderer delivers it, it does not

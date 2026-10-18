@@ -4072,6 +4072,13 @@ nui.registerPage('experiments/md-blocks', {
 	html: 'experiments/md-blocks.html'
 });
 
+// A real teaching deck, copied in as a renderer fixture. No page logic: the deck is
+// `nui-slides` + `nui-markdown`, and the narration controls come from the same
+// standing speech hook.
+nui.registerPage('experiments/ai-atom-deck', {
+	html: 'experiments/ai-atom-deck.html'
+});
+
 nui.registerPage('experiments/blocks-editor', {
 	html: 'experiments/blocks-editor.html',
 	init(element, params, nui) {

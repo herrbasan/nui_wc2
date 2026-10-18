@@ -21,7 +21,9 @@ Key design principles:
 - **Metadata stripping:** Frontmatter metadata (YAML) is automatically stripped from the visible slide surfaces so loose metadata disclosures do not pollute the slide canvas. The parsed object remains accessible via `nui-markdown.metadata` (e.g. used for deck `aria-label`).
 - **External toolbar & video-like fullscreen controls:** With `toolbar` (or `controls`), a pill toolbar sits directly under the slide canvas, in three labelled groups separated by rules — **navigation** (previous, counter, next), **delivery** (autoplay, narration) and **view** (fullscreen, settings). Autoplay shows play/pause; narration shows a voice-over icon and, while speaking, a **stop square** — a second pause glyph beside autoplay read as one control. In normal page flow the toolbar never obscures slide content; in fullscreen it floats at the bottom and reveals as the cursor approaches the bottom edge.
 - **Autoplay is advance, narration is speech — two controls, two states.** The play button starts/pauses automatic advancement; the speaker button speaks the current slide through the markdown speech hook. Pausing autoplay stops the flow (and any narration it started); the narration control stays independent, so a presenter can pause the timer and still re-hear a slide.
-- **Settings are behaviour, not presentation.** The gear opens a dialog that edits the same options `configure()` accepts: whether slides narrate themselves, how long to hold after speech (`narration-delay`, default 1 s), and how long a silent slide stays up (`dwell`, default 5 s). Attribute values are the initial defaults; the dialog edits the running deck.
+- **Settings are behaviour, not presentation.** The gear opens a dialog that edits the same options `configure()` accepts: whether slides narrate themselves, how long to hold after speech (`narration-delay`, default 1 s), how long a silent slide stays up (`dwell`, default 5 s), and the deck's colour mode. Attribute values are the initial defaults; the dialog edits the running deck.
+- **A slide is a surface, not a reading column.** The page's content measure (`--nui-md-content-maxwidth`) is a pagination concern, so the deck resets it: sections, columns and media span the canvas instead of sitting as a narrow strip in the middle of it. Media takes the height the text leaves (`object-fit: contain`), and columns stretch to that height and centre their content — top-aligning piles a slide's slack into a single band at the bottom, which reads as a mistake rather than as composition.
+- **Forced colour mode.** `mode="light"` or `mode="dark"` sets `color-scheme` on the deck only, so artwork drawn on light paper does not invert with a dark host page (and vice versa). `auto` — the absence of the attribute — follows the page.
 - **Derived metadata:** Slide numbering (`1 / 5`) is computed and attached dynamically at render time; it is never hardcoded in source markdown.
 - **Narration is delivery text (MD-Blocks spec §5.2):** blocks marked `preset=narration` are not drawn on the slide. They stay in the DOM, and the deck exposes them as data — `narration(index)` and `nui-slide-change.detail.narration` — so a delivery (TTS) profile can read the current slide's script. The optional `notes` attribute surfaces them below the canvas as speaker notes, never on the surface.
 - **Overflow reporting:** If content exceeds the slide canvas height, `nui-slides` logs a warning in the console and marks the slide with `data-overflow` rather than silently cropping content.
@@ -81,6 +83,7 @@ Welcome to the presentation.
 | `autoplay` | boolean | _none_ | Starts playing on mount, and reflects the running state (the toolbar button toggles it). Stops at the last slide. |
 | `dwell` | number | `5` | Slide duration when there is no narration to wait for (clamped 0.5–60 s). |
 | `narration-delay` | number | `1` | Pause AFTER a narration finishes, before advancing (clamped 0–60 s; `0` advances as soon as the voice stops). |
+| `mode` | `auto` \| `light` \| `dark` | `auto` | Forces the deck's colour scheme. `auto` follows the page; the other values set `color-scheme` on the deck subtree, so slide surfaces, toolbar and notes all follow. |
 | `height` | string | _none_ | When set to `"fill"`, stretches to `height: 100%` of an explicit parent container. When set to `"viewport"`, stretches to `100dvh` for standalone presentation. Default is natural responsive page flow. |
 
 ### Keyboard Navigation
@@ -121,7 +124,7 @@ console.log(`Slide ${deck.current + 1} of ${deck.count}`);
 |----------|------|-------------|
 | `count` | `number` | Total number of slides in the deck. |
 | `current` | `number` | Zero-based index of the currently displayed slide. |
-| `options` | `object` | The running behaviour: `{ autoplay, narrate, dwell, narrationDelay }`. Read-only view — change it with `configure()`. |
+| `options` | `object` | The running behaviour: `{ autoplay, narrate, dwell, narrationDelay, mode }`. Read-only view — change it with `configure()`. |
 
 ### Methods
 
@@ -131,7 +134,7 @@ console.log(`Slide ${deck.current + 1} of ${deck.count}`);
 | `next()` | _none_ | Navigates to the next slide. |
 | `prev()` | _none_ | Navigates to the previous slide. |
 | `toggleFullscreen()` | _none_ | Toggles fullscreen presentation mode on the deck. |
-| `configure(options)` | `{ narrate?, dwell?, narrationDelay?, autoplay? }` | Merges behaviour options and applies them live (changes restart the current slide's flow). Returns the resulting `options`. Attributes are the same values, so declarative and programmatic configuration cannot disagree. |
+| `configure(options)` | `{ narrate?, dwell?, narrationDelay?, mode?, autoplay? }` | Merges behaviour options and applies them live (changes restart the current slide's flow; `mode` re-colours the deck). Returns the resulting `options`. Attributes are the same values, so declarative and programmatic configuration cannot disagree. |
 | `narration(i?)` | `i: number` (default: current) | Returns that slide's narration blocks as an array of verbatim strings, in source order. The deck's delivery seam; `[]` when the slide has none or the index is out of range. |
 | `nui.components.slides.configure(options, el?)` | Factory | Programmatic configuration for the default (or a given) deck. |
 
@@ -178,9 +181,21 @@ deck.configure({ narrate: true, dwell: 2.5, narrationDelay: 1, autoplay: true })
 deck.options;   // { autoplay: true, narrate: true, dwell: 2.5, narrationDelay: 1 }
 ```
 
-The gear button opens the same options in a dialog (narrate, pause after narration, slide duration);
+The gear button opens the same options in a dialog (narrate, colour mode, pause after narration, slide duration);
 `Apply` calls `configure()`. The dialog edits the running deck — persistence is the
 host's decision, exactly as it is for the document itself.
+
+### Why the format needs no new vocabulary for this
+
+"Fill the surface" and "force light mode" look like document facts, but they are not:
+the MD-Blocks format deliberately stores structure and leaves geometry to the renderer
+profile (§5, and the spec's own separation of format from profile). A section is already
+a surface; how much of that surface its content claims is the profile's decision. The
+seam is a CSS custom property, not an attribute — `--nui-md-content-maxwidth` on the
+deck — so the same document keeps the page's reading measure in a page renderer and
+fills the canvas in a deck. A document that truly needs to state layout intent has the
+existing hooks: frontmatter (document-wide) or `mb:var` (per section), both of which the
+format stores without interpreting.
 
 ## Narration (delivery text)
 

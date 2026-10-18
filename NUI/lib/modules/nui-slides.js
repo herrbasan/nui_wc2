@@ -37,7 +37,7 @@ const MOUNT_TIMEOUT_MS = 5000;
 const DEFAULT_BASE = [1280, 720];
 
 class NuiSlides extends HTMLElement {
-	static observedAttributes = ['base', 'toolbar', 'controls', 'notes', 'autoplay', 'narrate', 'dwell', 'narration-delay'];
+	static observedAttributes = ['base', 'toolbar', 'controls', 'notes', 'autoplay', 'narrate', 'dwell', 'narration-delay', 'mode'];
 
 	attributeChangedCallback(name) {
 		if (name === 'base' && this._mounted) this._fit();
@@ -70,6 +70,7 @@ class NuiSlides extends HTMLElement {
 			// like a setting rather than a suggestion.
 			if (this._autoPlaying) this._restartFlow();
 		}
+		if (name === 'mode' && this._mounted) this._updateToolbar();
 	}
 
 	// Behaviour, not presentation. `autoplay` is both the initial state and the
@@ -90,12 +91,22 @@ class NuiSlides extends HTMLElement {
 			autoplay: !!this._autoPlaying,
 			narrate: this.hasAttribute('narrate'),
 			dwell: seconds('dwell', 5, 0.5),
-			narrationDelay: seconds('narration-delay', 1, 0)
+			narrationDelay: seconds('narration-delay', 1, 0),
+			// `auto` follows the page's colour scheme; `light`/`dark` force one for the
+			// deck only. A deck drawn on light artwork must not invert with the host.
+			mode: ['light', 'dark'].includes(String(this.getAttribute('mode') || '').toLowerCase())
+				? String(this.getAttribute('mode')).toLowerCase()
+				: 'auto'
 		};
 	}
 
 	configure(options = {}) {
 		if ('narrate' in options) this.toggleAttribute('narrate', !!options.narrate);
+		if ('mode' in options) {
+			const mode = String(options.mode || '').toLowerCase();
+			if (mode === 'light' || mode === 'dark') this.setAttribute('mode', mode);
+			else this.removeAttribute('mode');
+		}
 		if ('dwell' in options) {
 			const dwell = Number(options.dwell);
 			this.setAttribute('dwell', String(Number.isFinite(dwell) ? Math.min(60, Math.max(0.5, dwell)) : 5));
@@ -677,6 +688,8 @@ class NuiSlides extends HTMLElement {
 					<input type="checkbox" id="nui-slides-opt-narrate" data-slide-narrate ${opts.narrate ? 'checked' : ''}>
 					<label for="nui-slides-opt-narrate">Narrate each slide automatically</label>
 				</nui-checkbox>
+				<label class="nui-slides-settings-label" for="nui-slides-opt-mode">Colour mode</label>
+				<nui-select id="nui-slides-opt-mode" size="small"><select></select></nui-select>
 
 				<label class="nui-slides-settings-label" for="nui-slides-opt-gap">
 					<span>Pause after the narration</span>
@@ -702,6 +715,15 @@ class NuiSlides extends HTMLElement {
 			]
 		});
 		const scope = main || dialog;
+		const modeSelect = scope.querySelector('#nui-slides-opt-mode');
+		if (modeSelect && modeSelect.setItems) {
+			modeSelect.setItems([
+				{ value: 'auto', label: 'Auto (follow the page)' },
+				{ value: 'light', label: 'Light' },
+				{ value: 'dark', label: 'Dark' }
+			]);
+			modeSelect.setValue(opts.mode);
+		}
 		const range = scope.querySelector('#nui-slides-opt-dwell');
 		const out = scope.querySelector('[data-slide-dwell]');
 		const gapRange = scope.querySelector('#nui-slides-opt-gap');
@@ -720,6 +742,7 @@ class NuiSlides extends HTMLElement {
 		const narrate = scope.querySelector('[data-slide-narrate]');
 		this.configure({
 			narrate: !!(narrate && narrate.checked),
+			mode: modeSelect && modeSelect.getValue ? modeSelect.getValue() : opts.mode,
 			dwell: range ? Number(range.value) : opts.dwell,
 			narrationDelay: gapRange ? Number(gapRange.value) : opts.narrationDelay
 		});

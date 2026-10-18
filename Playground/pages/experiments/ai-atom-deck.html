@@ -1,0 +1,36 @@
+<header>
+	<h1>AI Atom — Deck Fixture</h1>
+	<p class="lead">Step 1 of the teaching series, rendered by <code>nui-slides</code> — a real deck from another project, copied in to test the renderer against prose it was not written for.</p>
+</header>
+
+<section breakout>
+	<nui-slides id="ai-atom-deck" toolbar notes narrate mode="light" base="1280x720">
+		<nui-markdown src="pages/experiments/ai-atom/slides/01-the-floor.md"></nui-markdown>
+	</nui-slides>
+</section>
+
+<section>
+	<h2>The fixture</h2>
+	<p>
+		Source: <code>storage/teaching/AI_Atom/slides/01-the-floor.md</code>. The copy is verbatim
+		except for image links: the eight illustrations were downscaled to 1600&nbsp;px WebP
+		(~17&nbsp;MB of PNG became ~750&nbsp;KB) and <code>.png</code> was rewritten to
+		<code>.webp</code> in the markdown.
+	</p>
+	<p>
+		What to watch: <code>preset=image</code> inside two columns, <code>preset=image:hero</code>
+		paired with <code>card overlay=bottom</code> (an attribute this renderer does not model),
+		and a narration block on every slide.
+	</p>
+	<div class="demo-callout">
+		<p><strong>Renderer result.</strong> 8/8 slides mount, all eight images load, every slide
+		has narration, and the blocks editor round-trips the file without loss — including
+		<code>overlay=bottom</code>, which it preserves even though it does not model it.</p>
+		<p><strong>Mode.</strong> The deck is forced to <code>mode="light"</code>: its artwork is
+		drawn on light paper and must not invert with a dark host.</p>
+		<p><strong>Known gap.</strong> The spec does not define <code>overlay</code>, so the card on
+		slide 6 stacks under the hero image instead of covering its bottom edge. The slide still
+		fits — media takes the height the text leaves — but the composition is not the one the
+		deck asked for. Either the token becomes vocabulary or the deck must stop relying on it.</p>
+	</div>
+</section>
