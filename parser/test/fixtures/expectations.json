@@ -1,0 +1,121 @@
+{
+	"_note": "Real-world fixtures, copied from herrbasan/md-blocks unchanged. `source` records where each came from; the counts and probes lock what the parser must keep producing. Re-copy the file only with the md-blocks spec version, since the demos track it.",
+
+	"aurora-deck.md": {
+		"source": "md-blocks demo/aurora-deck.md (spec v1.10 slide deck)",
+		"clean": true,
+		"counts": { "mains": 1, "sections": 7, "markdown": 16, "blocks": 8, "columns": 3, "cols": 7, "vars": 2 },
+		"find": [
+			{ "path": "mains[0].sections", "key": "id", "value": "title-slide", "select": [{ "path": "preset", "expect": "band" }, { "path": "vars.length", "expect": 1 }] },
+			{ "path": "mains[0].sections[4].children", "key": "id", "value": "deck-gallery", "select": [{ "path": "kind", "expect": "image" }, { "path": "mediaForm", "expect": "list" }, { "path": "kindStamped", "expect": true }] },
+			{ "path": "mains[0].sections[3].children", "key": "type", "value": "columns", "select": [{ "path": "cols.length", "expect": 3 }] }
+		]
+	},
+
+	"handbook-excerpt.md": {
+		"source": "md-blocks demo/handbook-excerpt.md (spec v1.10 long-form)",
+		"clean": true,
+		"counts": { "mains": 1, "sections": 4, "markdown": 13, "blocks": 5, "columns": 2, "cols": 4, "vars": 1 }
+	},
+
+	"mara-voss-portfolio.md": {
+		"source": "md-blocks demo/mara-voss-portfolio.md (spec v1.10 portfolio)",
+		"clean": true,
+		"counts": { "mains": 1, "sections": 5, "markdown": 9, "blocks": 6, "columns": 1, "cols": 2, "vars": 2 }
+	},
+
+	"media.md": {
+		"source": "md-blocks demo/media.md — one block per media shape, each described in its own caption",
+		"clean": true,
+		"counts": { "mains": 1, "sections": 5, "markdown": 4, "blocks": 12, "columns": 1, "cols": 2, "vars": 0 },
+		"select": [{ "path": "mains[0].id", "expect": "media" }],
+		"find": [
+			{ "path": "mains[0].sections[0].children", "key": "id", "value": "cover", "select": [{ "path": "kind", "expect": "image" }, { "path": "mediaClass", "expect": "image" }, { "path": "kindStamped", "expect": true }, { "path": "focal.x", "expect": 0.5 }] },
+			{ "path": "mains[0].sections[0].children", "key": "repeat", "value": "header", "select": [{ "path": "mediaClass", "expect": null }] },
+			{ "path": "mains[0].sections[1].children", "key": "id", "value": "walkthrough", "select": [{ "path": "kind", "expect": "video" }, { "path": "mediaForm", "expect": "single" }, { "path": "kindStamped", "expect": false }] },
+			{ "path": "mains[0].sections[1].children", "key": "id", "value": "teaser", "select": [{ "path": "kind", "expect": "video" }, { "path": "mediaDest", "expect": "https://mdn.github.io/shared-assets/videos/friday.mp4" }] },
+			{ "path": "mains[0].sections[2].children", "key": "id", "value": "takes", "select": [{ "path": "kind", "expect": "audio" }, { "path": "mediaForm", "expect": "list" }] },
+			{ "path": "mains[0].sections[3].children", "key": "id", "value": "spec-sheet", "select": [{ "path": "kind", "expect": "file" }, { "path": "mediaClass", "expect": "link" }] },
+			{ "path": "mains[0].sections[3].children", "key": "id", "value": "stills", "select": [{ "path": "kind", "expect": "image" }, { "path": "mediaForm", "expect": "list" }] },
+			{ "path": "mains[0].sections[4].children[1].cols[0].children", "key": "id", "value": "col-still", "select": [{ "path": "kind", "expect": "image" }] },
+			{ "path": "mains[0].sections[4].children[1].cols[1].children", "key": "id", "value": "col-track", "select": [{ "path": "kind", "expect": "audio" }] }
+		]
+	},
+
+	"showcase.md": {
+		"source": "md-blocks demo/showcase.md — the tutorial document, every feature once",
+		"clean": true,
+		"counts": { "mains": 1, "sections": 8, "markdown": 25, "blocks": 13, "columns": 2, "cols": 5, "vars": 4 },
+		"find": [
+			{ "path": "mains[0].sections[4].children", "key": "id", "value": "writing-teaser", "select": [{ "path": "preset", "expect": "card:teaser" }, { "path": "teaser.dest", "expect": "https://example.com/aurora/writing/" }] },
+			{ "path": "mains[0].sections[4].children", "key": "id", "value": "linked-illustration", "select": [{ "path": "mediaClass", "expect": null }] },
+			{ "path": "mains[0].sections[2].children", "key": "id", "value": "project-gallery", "select": [{ "path": "kind", "expect": "image" }, { "path": "mediaForm", "expect": "list" }] },
+			{ "path": "mains[0].sections[5].children", "key": "preset", "value": "narration", "select": [{ "path": "mediaClass", "expect": null }] }
+		]
+	},
+
+	"testrun-a-deepseek.md": {
+		"source": "md-blocks _Archive/test-runs/a-deepseek.md (model authoring run, 2026-09)",
+		"clean": true,
+		"counts": { "mains": 1, "sections": 6, "markdown": 6, "blocks": 0 }
+	},
+
+	"testrun-a-llama.md": {
+		"source": "md-blocks _Archive/test-runs/a-llama.md",
+		"clean": true,
+		"counts": { "mains": 1, "sections": 7, "markdown": 7, "blocks": 0 }
+	},
+
+	"testrun-b-deepseek.md": {
+		"source": "md-blocks _Archive/test-runs/b-deepseek.md",
+		"clean": true,
+		"counts": { "mains": 1, "sections": 2, "markdown": 2, "blocks": 0 }
+	},
+
+	"testrun-b-llama.md": {
+		"source": "md-blocks _Archive/test-runs/b-llama.md",
+		"clean": true,
+		"counts": { "mains": 1, "sections": 1, "markdown": 1, "blocks": 0 }
+	},
+
+	"testrun-c-deepseek.md": {
+		"source": "md-blocks _Archive/test-runs/c-deepseek.md",
+		"clean": true,
+		"counts": { "mains": 1, "sections": 8, "markdown": 8, "blocks": 0 },
+		"diagnostics": [{ "severity": "info", "code": "no-structure", "line": 1 }]
+	},
+
+	"testrun-c-llama.md": {
+		"source": "md-blocks _Archive/test-runs/c-llama.md",
+		"clean": true,
+		"counts": { "mains": 1, "sections": 1, "markdown": 1, "blocks": 0 },
+		"diagnostics": [{ "severity": "info", "code": "no-structure", "line": 1 }]
+	},
+
+	"testrun-d-deepseek.md": {
+		"source": "md-blocks _Archive/test-runs/d-deepseek.md",
+		"clean": true,
+		"counts": { "mains": 1, "sections": 7, "markdown": 7, "blocks": 0 },
+		"diagnostics": [{ "severity": "info", "code": "no-structure", "line": 1 }]
+	},
+
+	"testrun-d-gemma.md": {
+		"source": "md-blocks _Archive/test-runs/d-gemma.md",
+		"clean": true,
+		"counts": { "mains": 1, "sections": 3, "markdown": 3, "blocks": 0 },
+		"diagnostics": [{ "severity": "info", "code": "no-structure", "line": 1 }]
+	},
+
+	"testrun-d-qwen.md": {
+		"source": "md-blocks _Archive/test-runs/d-qwen.md",
+		"clean": true,
+		"counts": { "mains": 1, "sections": 5, "markdown": 5, "blocks": 0 },
+		"diagnostics": [{ "severity": "info", "code": "no-structure", "line": 1 }]
+	},
+
+	"testrun-main-marker.md": {
+		"source": "md-blocks _Archive/test-runs/main-marker/runs.md — a report whose directive examples sit inside quotes and fences, so nothing may be recognised",
+		"clean": true,
+		"counts": { "mains": 1, "sections": 4, "markdown": 4, "blocks": 0 }
+	}
+}

@@ -28,7 +28,19 @@ Playground/
 │   ├── components/     # Core component demos (nui-button, nui-tabs, etc.)
 │   └── addons/         # Optional module demos
 └── js/main.js          # Navigation configuration
+
+parser/                 # MD-Blocks parser — DOM-free, zero-dependency, spec v1.10
+├── md-blocks.js        # UMD implementation (CJS + <script> + ESM wrapper)
+├── md-blocks.cjs       # CJS entry
+├── md-blocks.mjs       # ESM entry
+└── test/               # zero-dependency runner, §10 conformance, real-world fixtures
 ```
+
+> **The MD-Blocks parser lives in `parser/`, not in `nui.js`.** The format's contract is the
+> md-blocks repo (spec v1.10, §7 validation, §8 tree, §10 conformance); this repo holds the
+> implementation. It must stay DOM-free or Node and non-browser consumers cannot use it — a
+> browser-bound parser is how the format ended up with three that disagreed. Contract:
+> [`documentation/guides/md-blocks-parser.md`](documentation/guides/md-blocks-parser.md).
 
 > **There is no `nui.d.ts`, and there must not be one again.** It was retired on 2026-09-26. Hand-maintained type declarations cannot stay true for a zero-build vanilla-JS library: the file reached 928 lines while knowing nothing about `nui-popover`, `nui-sortable`, `nui-form-row`, `nui-graph`, the file addons, `select-all`/`clearable` or markdown frontmatter — and it declared both `registerFeature` and `registerType` with wrong handler signatures. Nothing consumed it (no `package.json`, no `tsconfig.json`, no `.ts` file, no `@ts-check` in the repo), so it was a fourth, contradictory copy of the API — and this project has no TypeScript anywhere. The machine-readable contract is `documentation/components.json`; the prose contract is `documentation/**/*.md`. If a TypeScript consumer ever needs declarations, **generate** them from `nui.js` — never reintroduce a hand-maintained file.
 
