@@ -7476,6 +7476,16 @@ function createRouter(container, options = {}) {
 		return `${type}:${id}`;
 	}
 
+	// Params are flat string maps assembled from the URL, so their ORDER is whatever the
+	// URL happened to list — not a change worth re-running `show()` for. Compare keys
+	// sorted, by key and value.
+	function routeParamsEqual(a, b) {
+		const ka = Object.keys(a || {});
+		const kb = Object.keys(b || {});
+		if (ka.length !== kb.length) return false;
+		return ka.every((k) => Object.prototype.hasOwnProperty.call(b, k) && a[k] === b[k]);
+	}
+
 	function hideElement(element) {
 		if (!element) return;
 		element.inert = true;
@@ -7586,6 +7596,24 @@ function createRouter(container, options = {}) {
 				detail: currentRoute
 			}));
 		} else {
+			// Same element, but `show()` is documented as running on EVERY navigation and
+			// `init()` once. This branch used to handle only the deep link, so switching
+			// records of one page (`#page=editor&id=A` → `&id=B`) moved the URL and left
+			// the page rendering the first record — no error, no event, silently stale
+			// (issue #66). It worked when you left the page and came back, which is the
+			// worst shape of a bug: it passes a hand test and fails the real flow.
+			//
+			// Re-run the hooks only when the params actually changed, so navigating to the
+			// SAME record twice cannot re-run a `show()` that is not idempotent.
+			if (!routeParamsEqual(params, currentRoute?.params)) {
+				element.show?.(params);
+				currentRoute = { type, id, params, element };
+
+				container.dispatchEvent(new CustomEvent('nui-route-change', {
+					bubbles: true,
+					detail: currentRoute
+				}));
+			}
 			handleDeepLink(element, params);
 		}
 	}

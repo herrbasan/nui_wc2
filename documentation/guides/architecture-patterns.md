@@ -141,6 +141,19 @@ When a fragment loads without a registered page, the router:
 
 The `init()` function runs once. `element.show()` and `element.hide()` are called on navigation.
 
+**"On navigation" includes a change of PARAMS only.** The route key is `type:id` — params are
+not part of it — so `#page=editor&id=A` → `#page=editor&id=B` reuses one cached element. That
+element still receives `show(params)` and the router still emits `nui-route-change`, because
+`init()` having run once is not a reason for the page to keep rendering record A. A
+navigation whose params are unchanged re-runs neither, so `show()` may assume it is being
+told about a change; keep per-record state in `show()` rather than in closure variables set
+during `init()`.
+
+This was a real defect until #66: the param-only branch called neither hook, so a record
+switch moved the URL and left the page on the previous record — no error, no event. It
+passed a hand test, because *leaving and returning* does change the element and therefore
+runs `show()`.
+
 ## Pattern 3: Hybrid Architecture
 
 **Philosophy:** Use the right tool for each view.

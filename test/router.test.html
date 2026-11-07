@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>NUI — router navigation contract</title>
+<style>
+	body { font: 14px/1.5 system-ui, sans-serif; margin: 2rem; max-width: 60rem; }
+	h1 { font-size: 1.2rem; }
+	#summary { padding: .75rem 1rem; border-radius: .5rem; margin: 1rem 0; font-weight: 600; }
+	#summary.pass { background: #e6f4ea; color: #14532d; }
+	#summary.fail { background: #fdecea; color: #7f1d1d; }
+	ol { padding-left: 1.5rem; }
+	li { margin: .35rem 0; }
+	li.pass::marker { color: #16a34a; }
+	li.fail { color: #b91c1c; }
+	code { background: #f1f3f4; padding: .1rem .3rem; border-radius: .25rem; }
+	#stage { border: 1px solid #ddd; min-height: 40px; }
+</style>
+</head>
+<body>
+<h1>Router — <code>init()</code> once, <code>show()</code> on every navigation</h1>
+<p>A cached page has to receive <code>show(params)</code> when the URL changes even though its
+element does not — that is what makes <code>#page=editor&amp;id=A</code> → <code>&amp;id=B</code>
+switch records. Before the fix the router moved the URL and left the page on the first
+record, with no error and no event (issue #66). Uses a registered route type so no
+fragment is fetched. Open through the dev server:
+<code>http://127.0.0.1:5500/test/router.test.html</code></p>
+<div id="summary">running…</div>
+<ol id="results"></ol>
+<div id="stage"></div>
+
+<script type="module">
+const { nui } = await import('../NUI/nui.js');
+
+const results = [];
+
+function check(name, fn) {
+	try {
+		const problem = fn();
+		if (problem) { results.push({ name, ok: false, detail: problem }); return; }
+		results.push({ name, ok: true, detail: '' });
+	} catch (err) {
+		results.push({ name, ok: false, detail: err && err.message ? err.message : String(err) });
+	}
+}
+
+const shows = [];
+const inits = [];
+
+// One route type, one element per `id` — exactly the shape `#page=<name>&id=<record>` has,
+// so the id stays out of the cache key and only `params` distinguish two records.
+nui.registerType('editor', (id, params, wrapper) => {
+	inits.push({ id, params });
+	wrapper.textContent = id;
+	wrapper.show = (p) => { shows.push({ id, params: p }); };
+});
+
+const settle = (ms = 260) => new Promise((r) => setTimeout(r, ms));
+
+// The router reads the hash when it starts, so seed one first.
+location.hash = '#editor=one&view=A';
+const container = document.getElementById('stage');
+const router = nui.createRouter(container, {});
+router.start();
+await settle();
+
+const changes = [];
+document.addEventListener('nui-route-change', (e) => changes.push(e.detail));
+
+const goto = async (hash) => { location.hash = hash; await settle(); };
+
+// ── the reported failure ────────────────────────────────────────────────────
+const showsBefore = shows.length;
+await goto('#editor=one&view=B');
+
+check('a param-only change runs show() on the cached page', () => {
+	const added = shows.slice(showsBefore);
+	return added.length === 1 ? null : `show() ran ${added.length} times`;
+});
+
+check('show() receives the NEW params', () => {
+	const last = shows[shows.length - 1];
+	return last && last.params && last.params.view === 'B' ? null : 'got ' + JSON.stringify(last && last.params);
+});
+
+check('the page element is reused, not rebuilt', () => {
+	return inits.length === 1 ? null : `the type handler ran ${inits.length} times (element was rebuilt)`;
+});
+
+check('a param-only change emits nui-route-change', () => {
+	const last = changes[changes.length - 1];
+	return last && last.params && last.params.view === 'B' ? null : `last detail: ${JSON.stringify(last && last.params)}`;
+});
+
+check('the router current route tracks the new params', () => {
+	const cur = router.current;
+	return cur && cur.params && cur.params.view === 'B' ? null : 'current is ' + JSON.stringify(cur && cur.params);
+});
+
+// ── the guard that keeps show() safe to trust ───────────────────────────────
+const beforeSame = shows.length;
+await goto('#editor=one&view=B');
+
+check('re-navigating to the same record does not re-run show()', () => {
+	const added = shows.length - beforeSame;
+	return added === 0 ? null : `show() ran ${added} more times on an unchanged route`;
+});
+
+const beforeOrder = shows.length;
+await goto('#editor=one&alpha=1&beta=2');
+await goto('#editor=one&beta=2&alpha=1');
+
+check('reordering the same params is not a change', () => {
+	const added = shows.length - beforeOrder;
+	return added === 1 ? null : `show() ran ${added} times across the reorder (expected 1)`;
+});
+
+// ── a different id is a different page ─────────────────────────────────────
+const beforeId = shows.length;
+await goto('#editor=two&view=A');
+
+check('a different id builds and shows its own element', () => {
+	return inits.length === 2 ? null : `expected 2 elements, the handler ran ${inits.length} times`;
+});
+
+check('switching id runs show() on the new element', () => {
+	return shows.length === beforeId + 1 ? null : `show() ran ${shows.length - beforeId} times`;
+});
+
+// ── init stays once per element ────────────────────────────────────────────
+await goto('#editor=one&view=C');
+await goto('#editor=two&view=B');
+
+check('init runs once per element, however many navigations', () => {
+	return inits.length === 2 ? null : `the type handler ran ${inits.length} times for 2 elements`;
+});
+
+check('each element kept its own identity across switches', () => {
+	const ids = [...container.children].map((c) => c.textContent.trim()).sort();
+	return ids.join(',') === 'one,two' ? null : 'container holds ' + ids.join(',');
+});
+
+// ── a type that never defines show() must not throw ───────────────────────
+nui.registerType('bare', (id, params, wrapper) => { wrapper.textContent = id; });
+await goto('#bare=x&a=1');
+
+check('a page without show() navigates without throwing', () => {
+	const el = [...container.children].find((c) => c.textContent.trim() === 'x');
+	return el ? null : 'the bare page disappeared after the param change';
+});
+await goto('#bare=x&a=2');
+
+check('and the router still emits the route change', () => {
+	const last = changes[changes.length - 1];
+	return last && last.params && last.params.a === '2' ? null : 'no detail for the bare type';
+});
+
+router.stop();
+
+// ── report ──────────────────────────────────────────────────────────────────
+const list = document.getElementById('results');
+for (const r of results) {
+	const li = document.createElement('li');
+	li.className = r.ok ? 'pass' : 'fail';
+	li.textContent = r.name + (r.detail ? ' — ' + r.detail : '');
+	list.appendChild(li);
+}
+const failed = results.filter((r) => !r.ok).length;
+const summary = document.getElementById('summary');
+summary.textContent = failed
+	? `${failed} of ${results.length} checks FAILED`
+	: `all ${results.length} checks passed`;
+summary.className = failed ? 'fail' : 'pass';
+globalThis.__regression = { total: results.length, failed, results };
+</script>
+</body>
+</html>
