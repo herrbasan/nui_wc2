@@ -166,7 +166,11 @@ nui-skip-links .skip-link {
 	left: 50%;
 	transform: translateX(-50%) translateY(-100%);
 	opacity: 0;
-	background: var(--color-highlight);
+	/* --color-highlight is the OUTLINE token: white on it is 3.66:1 and fails WCAG AA.
+	   A filled surface that carries text wants --color-highlight-dim (4.87:1) — the same
+	   split the primary button already uses. This is the one control a keyboard user
+	   cannot tab past without reading it (issue #73). */
+	background: var(--color-highlight-dim);
 	color: var(--color-white);
 	padding: var(--nui-space-half) var(--nui-space);
 	text-decoration: none;
@@ -183,6 +187,17 @@ nui-skip-links .skip-link:focus {
 	opacity: 1;
 	outline: 2px solid var(--color-white);
 	outline-offset: 2px;
+}
+
+/* `a:hover, a:focus { color: var(--color-highlight) }` sits LATER in this file and ties
+   on specificity with `nui-skip-links .skip-link`, so it won and repainted this label
+   blue — on a blue fill, roughly 1:1, i.e. invisible at the exact moment the skip link
+   is visible. State the colour here at higher specificity so the fill keeps white text
+   (4.87:1 on --color-highlight-dim). Issue #73 measured only the unfocused style. */
+nui-skip-links .skip-link:hover,
+nui-skip-links .skip-link:focus,
+nui-skip-links .skip-link:focus-visible {
+	color: var(--color-white);
 }
 
 /* Ensure focus is visible for keyboard users */
@@ -903,9 +918,12 @@ nui-button-container[mode="segmented"] nui-button:hover button {
 
 nui-button-container[variant="segmented"] nui-button[state="active"] button,
 nui-button-container[mode="segmented"] nui-button[state="active"] button {
-	background-color: var(--color-highlight);
+	/* Filled accent surface carrying white text: --color-highlight is the outline token
+	   and white on it is 3.66:1 (fails AA); --color-highlight-dim is 4.87:1. Same split
+	   as the date-range fix (1125a74) — see issue #73. */
+	background-color: var(--color-highlight-dim);
 	color: var(--color-white);
-	border-color: var(--color-highlight);
+	border-color: var(--color-highlight-dim);
 }
 
 /* nui-button enhancements - builds on base button styles */

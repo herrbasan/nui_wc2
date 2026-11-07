@@ -106,15 +106,17 @@ nui-wizard[busy]::after {
 }
 
 .nui-wizard-nav-step.active .nui-wizard-nav-number {
-	background-color: var(--color-highlight);
-	border-color: var(--color-highlight);
+	/* Filled accent + white numeral: --color-highlight-dim is 4.87:1, the outline token
+	   is 3.66:1 and fails AA (issue #73). */
+	background-color: var(--color-highlight-dim);
+	border-color: var(--color-highlight-dim);
 	color: #fff;
 	transform: scale(1.08);
 }
 
 .nui-wizard-nav-step.completed .nui-wizard-nav-number {
-	background-color: var(--color-highlight);
-	border-color: var(--color-highlight);
+	background-color: var(--color-highlight-dim);
+	border-color: var(--color-highlight-dim);
 	color: #fff;
 }
 

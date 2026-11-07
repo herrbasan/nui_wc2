@@ -404,6 +404,30 @@ Theme uses CSS `light-dark()` function for automatic contrast:
 - Minimum 4.5:1 contrast ratio for body text
 - Minimum 3:1 for large text and UI components
 
+### The accent split: fill vs. outline
+
+A **filled accent surface that carries text uses `--color-highlight-dim`, never `--color-highlight`.**
+
+| Token | Role | White text on it |
+|---|---|---|
+| `--color-highlight` | outline, ring, focus, marks, text on a plain surface | **3.66:1** — fails AA for body text |
+| `--color-highlight-dim` | a filled surface under text | **4.87:1** — passes AA |
+
+Using the outline token as a fill is a recurring mistake — the same 3.66:1 kept appearing in
+`nui-date-range` (fixed in `1125a74`), the segmented button's active state, the wizard's step
+number and `nui-skip-links` (#73). If a rule sets `background`/`background-color` to
+`--color-highlight` **and** `color: var(--color-white)`, it is wrong by default; reach for the dim
+token. `--color-highlight` stays correct for borders, outlines, and non-text fills.
+
+### A contrast check must measure the state the user sees
+
+A rule that hides an element (`opacity: 0`, `display: none`) until `:focus` cannot be verified by
+sweeping rendered text — the sweep skips it. `nui-skip-links` hid a **1.06:1** failure that way:
+`a:hover, a:focus { color: var(--color-highlight) }` sits later in `nui-theme.css` and ties on
+specificity with `nui-skip-links .skip-link`, so focusing the link repainted white text blue *on a
+blue fill*. Any component that is an `<a>` with a coloured fill must restate its `color` at higher
+specificity for `:hover` and `:focus`, and the check must focus it before measuring.
+
 ## Accessibility Testing Checklist
 
 ### Keyboard Navigation

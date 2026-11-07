@@ -206,9 +206,11 @@ If you MUST apply CSS (spacing on your own wrappers, very rare theming), use ONL
 ### Accent / Highlight
 | Variable | Use |
 |----------|-----|
-| `--color-highlight` | Primary accent (buttons, links, focus) |
-| `--color-highlight-dim` | Muted accent |
+| `--color-highlight` | Accent **outline / ring / focus / marks / accent text**. NOT a fill under text — white on it is 3.66:1 and fails AA |
+| `--color-highlight-dim` | The **fill** token: a solid accent surface carrying text (button fill, active segment, wizard step, skip link). White on it is 4.87:1 |
 | `--color-accent` | Alias for `--color-highlight` |
+
+⚠️ **Fill under text = `--color-highlight-dim`.** A rule that sets a `--color-highlight` background *and* white text is wrong by default: it has been the same 3.66:1 failure in `nui-date-range`, the segmented button's active state, the wizard step number and `nui-skip-links` (issue #73). Components that are an `<a>` with a coloured fill must also restate `color` for `:hover`/`:focus` at higher specificity — `a:hover, a:focus { color: var(--color-highlight) }` later in `nui-theme.css` wins a specificity tie.
 
 ### Typography
 | Variable | Value |
