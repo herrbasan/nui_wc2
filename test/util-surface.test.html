@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>NUI — public util surface</title>
+<style>
+	body { font: 14px/1.5 system-ui, sans-serif; margin: 2rem; max-width: 60rem; }
+	h1 { font-size: 1.2rem; }
+	#summary { padding: .75rem 1rem; border-radius: .5rem; margin: 1rem 0; font-weight: 600; }
+	#summary.pass { background: #e6f4ea; color: #14532d; }
+	#summary.fail { background: #fdecea; color: #7f1d1d; }
+	ol { padding-left: 1.5rem; }
+	li { margin: .35rem 0; }
+	li.pass::marker { color: #16a34a; }
+	li.fail { color: #b91c1c; }
+	code { background: #f1f3f4; padding: .1rem .3rem; border-radius: .25rem; }
+	.detail { color: #666; font-size: .9em; }
+</style>
+</head>
+<body>
+<h1>Public <code>nui.util</code> surface — compatibility checks</h1>
+<p>Checks that the names <code>nui.util</code> promises are present <em>and reachable</em>: every
+delegation is called, because a wrapper that forwards to a name the module never imported still
+<em>exists</em> as a function and only throws <code>ReferenceError</code> on invocation. Open through
+the dev server: <code>http://127.0.0.1:5500/test/util-surface.test.html</code></p>
+<div id="summary">running…</div>
+<ol id="results"></ol>
+
+<script type="module">
+// nui.js extends HTMLElement, so it cannot be imported in Node — these checks run in the
+// browser, beside the other browser harnesses.
+const { nui } = await import('../NUI/nui.js');
+const md = await import('../NUI/markdown.js');
+globalThis.__nui = nui;
+
+const results = [];
+
+function check(name, fn) {
+	try {
+		const problem = fn();
+		if (problem) { results.push({ name, ok: false, detail: problem }); return; }
+		results.push({ name, ok: true, detail: '' });
+	} catch (err) {
+		results.push({ name, ok: false, detail: err && err.message ? err.message : String(err) });
+	}
+}
+
+// Every name the public surface promises, and what it must be. This is the contract:
+// a name that disappears from nui.js fails here, so an extraction cannot quietly drop it.
+const UTIL_FUNCTIONS = [
+	'createElement', 'createSvgElement', 'enableDrag', 'generateId',
+	'sortByKey', 'filter', 'detectEnv', 'virtualScroll',
+	'enhanceSlideshows', 'enhanceBrokenMedia', 'enhanceNarration', 'enhancePlayers',
+	'narrationText', 'speakMarkdown', 'setMarkdownSpeech', 'resetMarkdownSpeech',
+	'hasMarkdownSpeech', 'pickSpeechVoice', 'browserSpeech',
+	'markdownToHtml', 'parseYaml', 'parseYamlReport', 'serializeYaml',
+	'parseFrontmatter', 'renderFrontmatter', 'parseBlocks', 'serializeBlocks',
+	'setMarkdownImagePolicy', 'setMarkdownMediaTrust', 'setMarkdownImageRewrite'
+];
+const UTIL_OBJECTS = ['dom', 'storage'];
+const COMPONENT_NAMESPACES = ['dialog', 'banner', 'notifications', 'dropzone', 'linkList', 'virtualScroll', 'icon'];
+
+// ── presence ─────────────────────────────────────────────────────────────────
+check('every promised util function is present', () => {
+	const missing = UTIL_FUNCTIONS.filter((n) => typeof nui.util[n] !== 'function');
+	return missing.length ? 'missing: ' + missing.join(', ') : null;
+});
+
+check('every promised util object is present', () => {
+	const missing = UTIL_OBJECTS.filter((n) => !nui.util[n] || typeof nui.util[n] !== 'object');
+	return missing.length ? 'missing: ' + missing.join(', ') : null;
+});
+
+check('every component namespace is present', () => {
+	const missing = COMPONENT_NAMESPACES.filter((n) => !nui.components[n]);
+	return missing.length ? 'missing: ' + missing.join(', ') : null;
+});
+
+check('no util member is undefined', () => {
+	const undef = Object.entries(nui.util).filter(([, v]) => v === undefined).map(([k]) => k);
+	return undef.length ? 'undefined: ' + undef.join(', ') : null;
+});
+
+// The manifest above is hand-maintained, so a NEW delegation could slip past it. Every
+// member of the markdown-derived family is discovered by name instead: if one appears on
+// util and is not in the contract list, this fails and the list gets updated.
+const MD_FAMILY = /^(setMarkdown|resetMarkdown|markdown|hasMarkdown|parse|serialize|render|enhance|narration|speak|pickSpeech|browserSpeech)/;
+check('every markdown-derived util member is in the declared contract', () => {
+	const declared = new Set(UTIL_FUNCTIONS);
+	const undeclared = Object.keys(nui.util).filter((k) => MD_FAMILY.test(k) && !declared.has(k));
+	return undeclared.length ? 'not in the contract list: ' + undeclared.join(', ') : null;
+});
+
+// ── the media hooks are REACHABLE, not merely present ────────────────────────
+// The regression: nui.js rewrote these three as delegations to ./markdown.js but never
+// imported the targets, so each wrapper existed and threw ReferenceError when called.
+// Calling them with null is the reset path — deterministic, no side effects.
+check('the three media hook wrappers can be called', () => {
+	nui.util.setMarkdownImagePolicy(null);
+	nui.util.setMarkdownMediaTrust(null);
+	nui.util.setMarkdownImageRewrite(null);
+	return null;
+});
+
+// ── they reach the module's state holder, and change rendered output ─────────
+check('setMarkdownImageRewrite through util rewrites a rendered image', () => {
+	try {
+		nui.util.setMarkdownImageRewrite((url) => '/proxied' + url);
+		const html = nui.util.markdownToHtml('![Photo](shot.jpg)');
+		if (!/src="\/proxiedshot\.jpg"/.test(html)) return 'the rewrite did not reach the renderer: ' + html;
+		return null;
+	} finally {
+		nui.util.setMarkdownImageRewrite(null);
+	}
+});
+
+check('setMarkdownImagePolicy through util refuses a rendered image', () => {
+	try {
+		nui.util.setMarkdownImagePolicy(() => false);
+		const html = nui.util.markdownToHtml('![Photo](shot.jpg)');
+		if (!/nui-md-media-rejected/.test(html)) return 'the policy did not refuse the destination: ' + html;
+		return null;
+	} finally {
+		nui.util.setMarkdownImagePolicy(null);
+	}
+});
+
+check('setMarkdownMediaTrust through util vouches for a refused drive path', () => {
+	try {
+		nui.util.setMarkdownMediaTrust(() => 'C:/trusted/photo.jpg');
+		const html = nui.util.markdownToHtml('![Photo](C:/secret/photo.jpg)');
+		if (/nui-md-media-rejected/.test(html)) return 'the destination was still refused: ' + html;
+		if (!/C:\/trusted\/photo\.jpg/.test(html)) return 'the vouched destination is missing: ' + html;
+		return null;
+	} finally {
+		nui.util.setMarkdownMediaTrust(null);
+	}
+});
+
+// ── one state holder: util and the module are the same setting ──────────────
+// Documented in documentation/components/markdown.md: an app configuring a hook in the
+// browser and a server rendering the same document share one rule.
+check('a hook set through util is visible to the module, and vice versa', () => {
+	try {
+		nui.util.setMarkdownImageRewrite((url) => '/from-util' + url);
+		const seenByModule = md.markdownToHtml('![x](a.png)');
+		if (!/from-util/.test(seenByModule)) return 'util.setMarkdownImageRewrite did not reach the module';
+
+		md.setMarkdownImageRewrite((url) => '/from-module' + url);
+		const seenByUtil = nui.util.markdownToHtml('![x](a.png)');
+		if (!/from-module/.test(seenByUtil)) return 'setMarkdownImageRewrite on the module did not reach util';
+		return null;
+	} finally {
+		nui.util.setMarkdownImageRewrite(null);
+		md.setMarkdownImageRewrite(null);
+	}
+});
+
+check('a hook resets to no-op through util', () => {
+	nui.util.setMarkdownImageRewrite((url) => '/proxied' + url);
+	nui.util.setMarkdownImageRewrite(null);
+	const html = nui.util.markdownToHtml('![x](http://example.com/a.png)');
+	return /src="http:\/\/example\.com\/a\.png"/.test(html) ? null : 'the reset did not take effect: ' + html;
+});
+
+// ── the markdown render helpers reach the module, not a stale copy ──────────
+check('the markdown data helpers through util still work', () => {
+	const doc = nui.util.parseBlocks('<!-- mb:block -->\nX\n<!-- mb:/block -->\n');
+	if (!doc || !Array.isArray(doc.mains) || doc.mains.length === 0) return 'parseBlocks returned an unexpected shape';
+	const rebuilt = nui.util.serializeBlocks(doc);
+	if (!/<!-- mb:block -->/.test(rebuilt)) return 'serializeBlocks lost the block marker';
+	const yaml = nui.util.parseYaml('a: 1');
+	if (!yaml || yaml.a !== 1) return 'parseYaml returned an unexpected shape';
+	return null;
+});
+
+// ── report ───────────────────────────────────────────────────────────────────
+const list = document.getElementById('results');
+for (const r of results) {
+	const li = document.createElement('li');
+	li.className = r.ok ? 'pass' : 'fail';
+	li.textContent = r.name + (r.detail ? ' — ' + r.detail : '');
+	list.appendChild(li);
+}
+const failed = results.filter((r) => !r.ok).length;
+const summary = document.getElementById('summary');
+summary.textContent = failed
+	? `${failed} of ${results.length} checks FAILED`
+	: `all ${results.length} checks passed`;
+summary.className = failed ? 'fail' : 'pass';
+globalThis.__regression = { total: results.length, failed, results };
+</script>
+</body>
+</html>

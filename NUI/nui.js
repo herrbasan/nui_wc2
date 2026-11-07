@@ -15,6 +15,9 @@ import {
 	parseBlocks,
 	serializeBlocks,
 	markdownToHtml,
+	setMarkdownImagePolicy,
+	setMarkdownMediaTrust,
+	setMarkdownImageRewrite,
 } from './markdown.js';
 
 const components = {};
