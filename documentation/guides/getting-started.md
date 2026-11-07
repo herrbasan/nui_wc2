@@ -9,6 +9,7 @@ NUI requires minimal setup because it works *with* the browser, not against it. 
 - **`nui-theme.css`**: The foundation. Defines all CSS custom properties (colors, spacing, borders) and base component styles. Must load before any NUI elements render.
 - **`nui.js`**: The core library. Registers custom elements, provides the `nui` API object. Load as `type="module"` to enable ES module features.
 - **`md-blocks.js`**: The MD-Blocks parser (DOM-free, zero-dependency). `nui.js` imports it, so **the whole `NUI/` folder must be copied** — copying `nui.js` alone leaves the import unresolved and the library fails to load entirely, not just markdown.
+- **`markdown.js`**: The MD-Blocks renderer, also DOM-free. Imported by `nui.js`, and importable on its own for Node or SSR — see [Using the renderer outside a browser](#using-the-renderer-outside-a-browser).
 
 ### The Loading Sequence
 
@@ -54,6 +55,25 @@ Key architectural decisions:
 
 - **App Mode** (`<nui-app>` present): Creates a desktop-application layout with a fixed header, collapsible sidebar, and scrollable content area. Uses CSS Grid with fixed positioning.
 - **Page Mode** (no `<nui-app>` present): Components flow in normal document flow. Good for content sites, documentation, blogs.
+
+### Using the renderer outside a browser
+
+`NUI/nui.js` extends `HTMLElement`, so it cannot be loaded in Node. The MD-Blocks renderer does not need the DOM, so it is a separate module — `NUI/markdown.js` — that a Node or SSR consumer can import on its own:
+
+```js
+import { markdownToHtml } from './NUI/markdown.js';
+
+const html = markdownToHtml(source);   // the same HTML the browser gets
+```
+
+It is a plain ES module with no dependencies. The app-level hooks that shape a media destination are exported too, and there is exactly one state holder — setting a hook through the module or through `nui.util` is the same setting:
+
+```js
+import { setMarkdownImageRewrite } from './NUI/markdown.js';
+setMarkdownImageRewrite((url) => '/proxy' + url);
+```
+
+The browser-side enhancement passes (the slideshow, the players, the narration controls, the broken-media markers) stay in `nui.js`: they need elements to attach to, so they run after the HTML is injected.
 
 ## Two Development Patterns
 

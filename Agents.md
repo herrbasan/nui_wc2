@@ -35,8 +35,9 @@ parser/                 # MD-Blocks parser — contract entry points + tests
 ├── md-blocks.mjs       # ESM forwarder
 └── test/               # zero-dependency runner, §10 conformance, real-world fixtures
 
-test/                   # browser-side checks
-└── md-blocks-render.html  # MD-Blocks renderer regression (open in a browser)
+test/                   # renderer checks
+├── markdown.test.mjs   # Node test — DOM-free renderer, plain node, no deps
+└── md-blocks-render.html  # browser checks — open in a browser
 ```
 
 > **The MD-Blocks parser lives in `NUI/`, beside the library it serves.** The format's contract is the
@@ -48,11 +49,16 @@ test/                   # browser-side checks
 > contract's entry points (the forwarders) and the test suite. Contract:
 > [`documentation/guides/md-blocks-parser.md`](documentation/guides/md-blocks-parser.md).
 
-> **The renderer has no Node test.** `nui.js` extends `HTMLElement`, so it cannot be imported
-> outside a browser — `parser/test/` (which runs in Node) covers the parser, not the renderer.
-> The renderer's checks live in `test/md-blocks-render.html`: open it through the dev server
-> (`http://127.0.0.1:5500/test/md-blocks-render.html`) and it reports pass/fail per assertion.
-> Extracting a DOM-free renderer is issue #71's work and would change that.
+> **The renderer is DOM-free and lives in `NUI/markdown.js`.** It used to sit inside `nui.js`,
+> which extends `HTMLElement` and cannot be imported outside a browser — so a Node or SSR
+> consumer had no way to render MD-Blocks, and the renderer had no test that could run in CI.
+> Now: `node test/markdown.test.mjs` runs it with plain Node (no deps, no framework), with
+> throwing getters on `document`, `window` and friends so any DOM access fails loudly.
+> The browser-side enhancement passes — slideshow, players, narration, broken media — stay in
+> `nui.js`, because they need elements to attach to; their checks live in
+> `test/md-blocks-render.html`, opened through the dev server
+> (`http://127.0.0.1:5500/test/md-blocks-render.html`).
+> `nui.js` keeps every `util.*` name it had, as delegations — the public API did not move.
 
 > **There is no `nui.d.ts`, and there must not be one again.** It was retired on 2026-09-26. Hand-maintained type declarations cannot stay true for a zero-build vanilla-JS library: the file reached 928 lines while knowing nothing about `nui-popover`, `nui-sortable`, `nui-form-row`, `nui-graph`, the file addons, `select-all`/`clearable` or markdown frontmatter — and it declared both `registerFeature` and `registerType` with wrong handler signatures. Nothing consumed it (no `package.json`, no `tsconfig.json`, no `.ts` file, no `@ts-check` in the repo), so it was a fourth, contradictory copy of the API — and this project has no TypeScript anywhere. The machine-readable contract is `documentation/components.json`; the prose contract is `documentation/**/*.md`. If a TypeScript consumer ever needs declarations, **generate** them from `nui.js` — never reintroduce a hand-maintained file.
 

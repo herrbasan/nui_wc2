@@ -66,6 +66,7 @@
 			├── NUI/                    # NUI library (copy the WHOLE folder or submodule it)
 │   ├── nui.js              # Core library (ES Module)
 			│   ├── md-blocks.js        # MD-Blocks parser (REQUIRED - nui.js imports it)
+			│   ├── markdown.js         # MD-Blocks renderer, DOM-free (REQUIRED - nui.js imports it)
 			│   ├── css/
 			│   │   ├── nui-theme.css           # REQUIRED - core theme
 			│   │   └── modules/                # Optional module CSS
@@ -85,7 +86,7 @@
 			        └── button.html</code></pre>
 					</nui-code>
 					<div class="demo-callout">
-						<strong>📋 Copy the whole <code>NUI/</code> folder.</strong> <code>nui.js</code> imports <code>NUI/md-blocks.js</code> — the MD-Blocks parser — so the two files have to stay together. Copying <code>nui.js</code> on its own leaves the import unresolved and the library fails to load entirely, not just markdown.
+						<strong>📋 Copy the whole <code>NUI/</code> folder.</strong> <code>nui.js</code> imports <code>NUI/md-blocks.js</code> (the MD-Blocks parser) and <code>NUI/markdown.js</code> (the renderer) — the two files have to travel with it. Copying <code>nui.js</code> on its own leaves the imports unresolved and the library fails to load entirely, not just markdown.
 					</div>
 					<div class="demo-callout">
 						<strong>📋 Component Registry:</strong> The NUI repository includes <code>documentation/components.json</code> — a machine-readable registry of all components, their events, imports, and documentation pages. MCP tools and integrations use this as the source of truth. If you're building tooling around NUI, start there.

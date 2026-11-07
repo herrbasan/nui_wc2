@@ -259,6 +259,20 @@ nui.util.parseYaml(src);         // object
 nui.util.renderFrontmatter(data);// HTML string | null
 ```
 
+### Outside a Browser
+
+The renderer does not need the DOM, so it is a separate module — `NUI/markdown.js` — that `nui.js` imports. A Node or SSR consumer can import it directly and get the same HTML:
+
+```javascript
+import { markdownToHtml } from './NUI/markdown.js';
+
+const mdHtml = markdownToHtml('# Hello\n\nParagraph');
+```
+
+It exports `markdownToHtml`, `parseBlocks`, `serializeBlocks`, the YAML and frontmatter helpers, and the three media hooks (`setMarkdownImagePolicy`, `setMarkdownMediaTrust`, `setMarkdownImageRewrite`). The hooks have one state holder: setting one through the module and through `nui.util` is the same setting, so an app that configures a hook in the browser and a server that renders the same document share one rule.
+
+The browser-side enhancement passes — the slideshow, the players, the narration controls, the broken-media markers — are not part of that module: they need elements to attach to, so they run after the HTML is injected (`nui.util.enhanceSlideshows`, `enhancePlayers`, `enhanceNarration`, `enhanceBrokenMedia`).
+
 ### Media Destinations and the App Boundary
 
 An app embedding rendered Markdown usually owns two questions the renderer cannot answer alone: *which origins are trusted*, and *how a host alias maps to a same-origin proxy path*. Both are app-level hooks, so they are set once and forgotten:
