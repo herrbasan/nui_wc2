@@ -181,7 +181,7 @@ These classes are added/removed automatically by the component. You generally sh
 | `has-sidebar` | A left `<nui-sidebar>` is present. |
 | `has-sidebar-right` | A right `<nui-sidebar>` is present. |
 | `has-footer` | `<nui-app-footer>` is present. |
-| `nui-ready` | Added after the first responsive state calculation completes. Transitions are suppressed until this class is present. |
+| `nui-ready` | Added after the first responsive state calculation completes. Transitions are suppressed until this class is present. **Readiness does not depend on an animation frame arriving**: the class is added on the next frame *or* after a 120 ms timer, whichever comes first. A host that gates the shell on `nui-app:not(.nui-ready) { display: none }` therefore cannot be left with an invisible app by an embedded pane that delivers no frames while `document.hidden` is `false` (issue #77). |
 
 ---
 

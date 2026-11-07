@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>NUI — nui-app readiness without frames</title>
+<style>
+	body { font: 14px/1.5 system-ui, sans-serif; margin: 2rem; max-width: 60rem; }
+	h1 { font-size: 1.2rem; }
+	#summary { padding: .75rem 1rem; border-radius: .5rem; margin: 1rem 0; font-weight: 600; }
+	#summary.pass { background: #e6f4ea; color: #14532d; }
+	#summary.fail { background: #fdecea; color: #7f1d1d; }
+	ol { padding-left: 1.5rem; }
+	li { margin: .35rem 0; }
+	li.pass::marker { color: #16a34a; }
+	li.fail { color: #b91c1c; }
+	code { background: #f1f3f4; padding: .1rem .3rem; border-radius: .25rem; }
+	/* The anti-FOUC gate is the HOST's rule, not the library's — Playground/index.html and
+	   nui-boilerplate/index.html each declare it. A harness that omits it cannot observe
+	   the failure at all: an unready shell would still paint. */
+	nui-app:not(.nui-ready) { display: none; }
+</style>
+</head>
+<body>
+<h1>nui-app — ready without an animation frame</h1>
+<p>The shell is gated by <code>nui-app:not(.nui-ready) { display: none }</code>, and readiness
+used to ride on <code>requestAnimationFrame</code>. An embedded pane the host never
+composites delivers no frames while <code>document.hidden</code> stays <code>false</code> —
+so the whole shell stayed invisible, with no console error (issue #77). This page stubs
+<code>requestAnimationFrame</code> out <em>before</em> the library loads and asserts the
+shell still comes up. Open through the dev server:
+<code>http://127.0.0.1:5500/test/nui-app-ready.test.html</code></p>
+<div id="summary">running…</div>
+<ol id="results"></ol>
+
+<nui-app>
+	<nui-app-header><h1>Shell</h1></nui-app-header>
+	<nui-content>
+		<nui-main>
+			<nui-page class="content-page">
+				<header><h2>Content</h2></header>
+			</nui-page>
+		</nui-main>
+	</nui-content>
+</nui-app>
+
+<script type="module">
+const results = [];
+function check(name, fn) {
+	try {
+		const problem = fn();
+		if (problem) { results.push({ name, ok: false, detail: problem }); return; }
+		results.push({ name, ok: true, detail: '' });
+	} catch (err) {
+		results.push({ name, ok: false, detail: err && err.message ? err.message : String(err) });
+	}
+}
+
+// ── construct the failing condition BEFORE the library loads ───────────────
+// An embedder that never composites: no frames are ever delivered.
+let framesDelivered = 0;
+window.requestAnimationFrame = () => { return 0; };
+window.cancelAnimationFrame = () => { };
+
+const hiddenAtStart = document.hidden;
+const { nui } = await import('../NUI/nui.js');
+
+const app = document.querySelector('nui-app');
+await new Promise((r) => setTimeout(r, 400));
+
+// ── premise ────────────────────────────────────────────────────────────────
+check('the run models the reported condition (visible page, no frames)', () => {
+	if (hiddenAtStart || document.hidden) return 'the page is hidden, so the hidden-tab path ran instead — inconclusive';
+	return framesDelivered === 0 ? null : 'a frame was delivered; the stub did not take';
+});
+
+check('the host anti-FOUC gate is in force (an unready shell is display:none)', () => {
+	// Proved on a throwaway element rather than the subject: the subject may already be
+	// ready by now, and the gate is what makes this test mean anything.
+	const probe = document.createElement('nui-app');
+	document.body.appendChild(probe);
+	const display = getComputedStyle(probe).display;
+	probe.remove();
+	return display === 'none' ? null : `an unready nui-app computes display:${display} — the premise of this test is gone`;
+});
+
+// ── the fix ────────────────────────────────────────────────────────────────
+check('the shell becomes ready with no animation frame at all', () =>
+	app.classList.contains('nui-ready') ? null : 'nui-ready was never added'
+);
+
+check('and is therefore visible', () => {
+	const display = getComputedStyle(app).display;
+	return display !== 'none' ? null : 'the shell is still display:none';
+});
+
+check('its chrome is rendered, not just the marker', () => {
+	const header = app.querySelector('nui-app-header');
+	const main = app.querySelector('nui-main');
+	if (!header || !main) return 'header or main missing';
+	const h = header.getBoundingClientRect();
+	return h.height > 0 ? null : 'the header has no height';
+});
+
+// ── readiness must not depend on a frame ever arriving ────────────────────
+const second = document.createElement('nui-app');
+second.innerHTML = '<nui-app-header><h1>Second</h1></nui-app-header><nui-content><nui-main></nui-main></nui-content>';
+document.body.appendChild(second);
+await new Promise((r) => setTimeout(r, 300));
+
+check('a late-mounted shell is not trapped either', () =>
+	second.classList.contains('nui-ready') ? null : 'a later nui-app stayed unready'
+);
+
+// ── report ─────────────────────────────────────────────────────────────────
+const list = document.getElementById('results');
+for (const r of results) {
+	const li = document.createElement('li');
+	li.className = r.ok ? 'pass' : 'fail';
+	li.textContent = r.name + (r.detail ? ' — ' + r.detail : '');
+	list.appendChild(li);
+}
+const failed = results.filter((r) => !r.ok).length;
+const summary = document.getElementById('summary');
+summary.textContent = failed
+	? `${failed} of ${results.length} checks FAILED`
+	: `all ${results.length} checks passed`;
+summary.className = failed ? 'fail' : 'pass';
+globalThis.__regression = { total: results.length, failed, results };
+</script>
+</body>
+</html>

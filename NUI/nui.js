@@ -1126,14 +1126,24 @@ registerComponent('nui-app', (element) => {
 		});
 
 		if (!element.classList.contains('nui-ready')) {
+			const markReady = () => element.classList.add('nui-ready');
+
 			if (document.hidden) {
 				// rAF never fires in hidden/background tabs, and the anti-FOUC
 				// rule (nui-app:not(.nui-ready) { display: none }) would keep the
 				// whole app invisible until focus. Timers still run (throttled);
 				// the frame wait only suppresses transitions, moot with no paint.
-				setTimeout(() => element.classList.add('nui-ready'), 0);
+				setTimeout(markReady, 0);
 			} else {
-				requestAnimationFrame(() => element.classList.add('nui-ready'));
+				requestAnimationFrame(markReady);
+				// The frame is the PREFERENCE, not the requirement. `document.hidden` is
+				// false — and still no frames arrive — when the page is embedded in a pane
+				// the host never composites (a webview behind another panel, an occluded
+				// iframe, the VS Code internal browser). Then this callback never runs and
+				// the anti-FOUC gate hides the entire shell forever, with no error to find.
+				// A timer is the floor; classList.add is idempotent, so whichever fires
+				// first wins and a painting browser keeps the frame-aligned path (issue #77).
+				setTimeout(markReady, 120);
 			}
 		}
 	}
