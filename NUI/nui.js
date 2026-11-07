@@ -38,6 +38,10 @@ const config = {
 	}
 };
 
+function sidebarIsOverlay(element, position) {
+	return getComputedStyle(element, position === 'right' ? '::after' : '::before').display !== 'none';
+}
+
 // ################################# MINIMAL EVENT DELEGATION
 
 const builtinActionHandlers = {
@@ -1248,7 +1252,7 @@ registerComponent('nui-app', (element) => {
 
 				if (!clickIsInThisSidebar && !clickIsInTopNav) {
 					if (!sidebar || !sidebar.contains(mouseDownTarget)) {
-						toggleSidebar(element, pos);
+						if (sidebarIsOverlay(element, pos)) toggleSidebar(element, pos);
 					}
 				}
 			}
@@ -1311,6 +1315,7 @@ registerComponent('nui-sidebar', (element) => {
 			const next = event.relatedTarget;
 			
 			if (!next || element.contains(next)) return;
+			if (!sidebarIsOverlay(app, pos)) return;
 			app.toggleSidebar?.(pos);
 		});
 	}
@@ -7976,7 +7981,7 @@ function setupRouter(options = {}) {
 			if (!route) return;
 
 			const app = navigation.closest('nui-app');
-			if (app && app.classList.contains('sidebar-open') && !app.classList.contains('sidebar-forced')) {
+			if (app && app.classList.contains('sidebar-open') && !app.classList.contains('sidebar-forced') && sidebarIsOverlay(app, 'left')) {
 				app.toggleSidebar();
 			}
 

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>NUI — sidebar dismissal modes</title>
+<style>
+	body { font: 14px/1.5 system-ui, sans-serif; margin: 2rem; }
+	#summary.pass { color: #14532d; }
+	#summary.fail { color: #b91c1c; }
+	#app.docked-open::before { display: none; }
+	#app.docked-open nui-content { left: var(--sidebar-width); }
+</style>
+</head>
+<body>
+<h1>Sidebar dismissal — overlay vs docked</h1>
+<div id="summary">running…</div>
+<ol id="results"></ol>
+
+<nui-app id="app" sidebar-breakpoint="none">
+	<nui-app-header><span>Fixture</span></nui-app-header>
+	<nui-sidebar><button id="inside" type="button">Inside</button></nui-sidebar>
+	<nui-content><button id="outside" type="button">Outside</button></nui-content>
+</nui-app>
+
+<script type="module">
+await import('../NUI/nui.js');
+await new Promise(resolve => setTimeout(resolve, 150));
+const app = document.getElementById('app');
+const inside = document.getElementById('inside');
+const outside = document.getElementById('outside');
+const results = [];
+
+async function check(name, fn) {
+	try {
+		const problem = await fn();
+		results.push({ name, ok: !problem, detail: problem || '' });
+	} catch (error) {
+		results.push({ name, ok: false, detail: error.message });
+	}
+}
+
+function open(mode) {
+	app.classList.remove('sidebar-open', 'sidebar-closed', 'sidebar-forced', 'docked-open');
+	app.classList.add('sidebar-open');
+	if (mode === 'docked') app.classList.add('docked-open');
+}
+
+await check('docked sidebar stays open when focus leaves it', async () => {
+	open('docked');
+	inside.dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: outside }));
+	await new Promise(requestAnimationFrame);
+	return app.classList.contains('sidebar-open') ? null : 'focus-out closed the docked sidebar';
+});
+
+await check('docked sidebar stays open when content is clicked', async () => {
+	open('docked');
+	outside.click();
+	return app.classList.contains('sidebar-open') ? null : 'content click closed the docked sidebar';
+});
+
+await check('overlay sidebar closes when focus leaves it', async () => {
+	open('overlay');
+	inside.dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: outside }));
+	await new Promise(requestAnimationFrame);
+	return app.classList.contains('sidebar-closed') ? null : 'focus-out left the overlay open';
+});
+
+await check('overlay sidebar closes when content is clicked', async () => {
+	open('overlay');
+	outside.click();
+	return app.classList.contains('sidebar-closed') ? null : 'content click left the overlay open';
+});
+
+const failed = results.filter(result => !result.ok);
+const summary = document.getElementById('summary');
+summary.textContent = failed.length ? `${failed.length} of ${results.length} checks failed` : `all ${results.length} checks passed`;
+summary.className = failed.length ? 'fail' : 'pass';
+const list = document.getElementById('results');
+for (const result of results) {
+	const item = document.createElement('li');
+	item.textContent = result.name + (result.detail ? ` — ${result.detail}` : '');
+	list.appendChild(item);
+}
+</script>
+</body>
+</html>

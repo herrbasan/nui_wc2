@@ -316,12 +316,12 @@ These delegate to the inner `<nui-link-list>` if one is present. **Call them on 
 
 ### Backdrop
 
-When a sidebar is open as an overlay (not forced), a semi-transparent backdrop appears behind it. Clicking the backdrop (anywhere outside the sidebar and header) dismisses the sidebar.
+When a sidebar is open as an overlay (not forced), a semi-transparent backdrop appears behind it. Clicking the backdrop (anywhere outside the sidebar and header) dismisses the sidebar. A docked open sidebar has no backdrop and is not dismissed by content clicks.
 
 ### Focus Management
 
 - **Focus-in on a closed sidebar** automatically opens it (so keyboard users can access navigation).
-- **Focus-out from an open, non-forced sidebar** automatically closes it.
+- **Focus-out from an open overlay** automatically closes it. A docked open sidebar (one whose backdrop is suppressed by the layout) stays open until explicitly toggled.
 - This ensures keyboard-only users can navigate sidebars without mouse interaction.
 
 ### Platform Gestures
