@@ -199,15 +199,37 @@ got the desktop layout at every width, since a viewport query cannot see a conta
   (a `nui-blocks-main` / `nui-blocks-section`) gets the `.nui-md-document` class, which is
   what carries the container.
 - **Plain Markdown never becomes a container.** `container-type: inline-size` implies
-  inline-size containment: during shrink-to-fit sizing (absolutely-positioned, floated or
-  inline-block hosts) a contained element measures *as if empty*, collapsing the host to
-  min-content — chat bubbles went narrow-tall slivers before this was gated (#52). Plain
-  documents have no `.nui-blocks-*` descendants, so no `@container doc` rule can ever
-  apply to them; they keep normal intrinsic sizing.
+  inline-size containment: during shrink-to-fit sizing a contained element measures *as if
+  empty*, collapsing the host to min-content — chat bubbles went narrow-tall slivers before
+  this was gated (#52). Plain documents have no `.nui-blocks-*` descendants, so no
+  `@container doc` rule can ever apply to them; they keep normal intrinsic sizing.
+
+- **A structured document inside a shrink-to-fit host collapses too.** The list of such
+  hosts is longer than absolutely-positioned, floated and inline-block: a **flex or grid
+  item sized to content** (a chat bubble with `max-width` and no definite `width`, a card,
+  a sidebar slot) and a `width: fit-content` wrapper all size the same way, and they are
+  the *most likely* host for a document. Measured in a 400px flex row:
+
+  | host | bubble width |
+  |---|---|
+  | plain Markdown | 288px |
+  | structured document | **0px** |
+  | structured document, `width: 100%` on the host | 340px |
+  | structured document, `min-width: 100%` on the host | 400px |
+
+  The remedy is a **definite inline size on the host**, not on the element:
+  `.chat-message:has(nui-markdown.nui-md-document) { width: 100%; }`. `max-width` alone
+  does not help — it caps a size that containment has already reduced to nothing.
+
 - **If you render the output yourself** — calling `util.markdownToHtml` and injecting the
   HTML, the way `util.enhancePlayers` is documented for — you are outside the container and
   will get the widest layout. Put `container: doc / inline-size` on your own wrapper to
   opt in.
+
+  ⚠️ **That wrapper is not a fix for a shrink-to-fit host.** Moving the container from the
+  element to a wrapper moves the collapse with it: containment on *any* ancestor makes the
+  shrink-to-fit host measure as if empty. Measured: 0px with the container on the element,
+  **0px with it moved to a wrapper**. Only a definite inline size on the host resolves it.
 
 ## Document Column Geometry
 
