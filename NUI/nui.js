@@ -9983,10 +9983,10 @@ util.enhanceBrokenMedia = (root) => mbEnhanceBrokenMedia(root);
 // a ::before (CSS content, never in textContent) and the button is excluded below.
 //
 // Verbatim does not mean `textContent`. That returns "slide,and" across a soft line
-// break (the renderer writes <br>, whose textContent is empty) and glues two
-// paragraphs into one word ("oneTwo"). A delivery function is handed the words as
-// they READ: block boundaries and <br> become line breaks, runs collapse, and only
-// then is the result trimmed. The words themselves are untouched.
+// break (the newline is in the text node, and the browser collapses it to a space) and
+// glues two paragraphs into one word ("oneTwo"). A delivery function is handed the words
+// as they READ: block boundaries and soft breaks become line breaks, runs collapse, and
+// only then is the result trimmed. The words themselves are untouched.
 const MB_NARRATION_BLOCKS = new Set(['P', 'DIV', 'LI', 'UL', 'OL', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'BLOCKQUOTE', 'PRE', 'TABLE', 'TR', 'SECTION', 'ARTICLE', 'ASIDE', 'FIGURE', 'FIGCAPTION']);
 
 function mbNarrationText(el) {
@@ -10706,7 +10706,13 @@ function markdownCore(md) {
 			if (!block) return '';
 			if (/^\uE000\d+\uE001$/.test(block)) return block;
 			if (/^<(h\d|ul|ol|pre|blockquote|table|hr|nui-code)/i.test(block)) return block;
-			return `<p>${block.replace(/\n/g, '<br>')}</p>`;
+			// CommonMark: a SOFT break is a newline the reader's width decides — HTML
+			// collapses it to a space, so a hard-wrapped paragraph reflows instead of
+			// breaking where the author typed it. A HARD break is explicit: two or more
+			// trailing spaces, or a trailing backslash. Only the paragraph path reaches
+			// here; fenced code and the other block forms returned above untouched, so
+			// their newlines stay literal.
+			return `<p>${block.replace(/(?: {2,}|\\)\n/g, '<br>')}</p>`;
 		});
 	});
 	html = htmlBlocks.join('\n');

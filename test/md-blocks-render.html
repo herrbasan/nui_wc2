@@ -29,6 +29,7 @@ one thing it expects, so a failure says what broke rather than that a string cha
 // HTMLElement), so these checks run in the browser. Open this file through the dev
 // server:  http://127.0.0.1:5500/test/md-blocks-render.html
 const { nui } = await import('../NUI/nui.js');
+globalThis.__nui = nui;
 
 const render = (md) => nui.util.markdownToHtml(md);
 const results = [];
@@ -148,6 +149,61 @@ check('a document without directives is unchanged', () => {
 	const html = render('# Title\n\nSome text.');
 	if (!has(html, /<h1[^>]*>Title<\/h1>/)) return 'the heading is missing';
 	if (has(html, /nui-blocks-main/)) return 'the document was wrapped in structure';
+	return null;
+});
+
+// ── line breaks (issue #70) ─────────────────────────────────────────────────
+// CommonMark: a soft break is a newline the width decides; a hard break is explicit
+// (two or more trailing spaces, or a trailing backslash).
+check('a soft break does not become a <br>', () => {
+	const html = render('Line one\nLine two');
+	if (has(html, /<br>/)) return 'a <br> was inserted';
+	if (!has(html, /Line one\nLine two/)) return 'the newline was not kept';
+	return null;
+});
+
+check('a hard break with two trailing spaces becomes one <br>', () => {
+	const html = render('Line one  \nLine two');
+	const count = (html.match(/<br>/g) || []).length;
+	if (count !== 1) return 'expected exactly 1 <br>, got ' + count;
+	if (has(html, /  <br>/)) return 'the trailing spaces were not stripped';
+	return null;
+});
+
+check('a hard break with a backslash becomes one <br>', () => {
+	const html = render('Line one\\\nLine two');
+	const count = (html.match(/<br>/g) || []).length;
+	if (count !== 1) return 'expected exactly 1 <br>, got ' + count;
+	if (has(html, /\\<br>/)) return 'the backslash was not stripped';
+	return null;
+});
+
+check('a fenced code block keeps its newlines and gains no <br>', () => {
+	const html = render('```js\nconst a = 1;\nconst b = 2;\n```');
+	if (has(html, /<br>/)) return 'a <br> was inserted into the code';
+	if (!has(html, /const a = 1;\nconst b = 2;/)) return 'the code newlines were lost';
+	return null;
+});
+
+check('an inline code span is untouched', () => {
+	const html = render('Text with `code` in it');
+	if (has(html, /<br>/)) return 'a <br> was inserted';
+	if (!has(html, /<code>code<\/code>/)) return 'the code span is missing';
+	return null;
+});
+
+check('narration text keeps the soft break as a line break', () => {
+	const el = document.createElement('div');
+	el.innerHTML = render('Slide one\nand the next');
+	const text = globalThis.__nui ? globalThis.__nui.util.narrationText(el) : null;
+	if (text === null) return 'the extractor was not reachable';
+	return text.includes('\n') ? null : 'the narration text has no line break: ' + JSON.stringify(text);
+});
+
+check('a single-line paragraph is unchanged', () => {
+	const html = render('Just one line.');
+	if (has(html, /<br>/)) return 'a <br> was inserted';
+	if (!has(html, /<p>Just one line\.<\/p>/)) return 'the paragraph is malformed';
 	return null;
 });
 
