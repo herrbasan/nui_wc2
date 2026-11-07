@@ -40,6 +40,7 @@ test/                   # renderer checks
 ├── md-blocks-render.html  # browser checks — open in a browser
 ├── nui-select.test.html   # browser checks — selection state of <nui-select>
 ├── nui-lightbox.test.html # browser checks — declarative open, keyboard, late images
+├── auto-load.test.html    # browser checks — no false auto-load notice for explicit imports
 └── util-surface.test.html # browser checks — the public nui.util surface is REACHABLE
 ```
 

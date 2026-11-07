@@ -8923,7 +8923,6 @@ export const nui = {
 				'nui-context-menu': { js: 'lib/modules/nui-context-menu.js', css: 'css/modules/nui-context-menu.css' },
 				'nui-rich-text':    { js: 'lib/modules/nui-rich-text.js',    css: 'css/modules/nui-rich-text.css' },
 				'nui-file-tree':    { js: 'lib/modules/nui-file-tree.js',    css: 'css/modules/nui-file-tree.css' },
-				'nui-file-icon':    { js: 'lib/modules/nui-file-icon.js',    css: 'css/modules/nui-file-icon.css' },
 				'nui-file-list':    { js: 'lib/modules/nui-file-list.js',    css: 'css/modules/nui-file-list.css' },
 				'nui-notepad':      { js: 'lib/modules/nui-notepad.js',      css: 'css/modules/nui-notepad.css' },
 			};
@@ -8960,7 +8959,28 @@ export const nui = {
 				});
 			}
 
-			checkAndAutoLoad(document);
+			// The initial scan must NOT run while this module body is executing. `nui.js` is
+			// normally the FIRST module on a page (the theme has to arrive early), and its
+			// own auto-init runs from here — but a consumer's
+			//   <script type="module" src=".../lib/modules/nui-list.js">
+			// further down the document has not executed yet, so `customElements.get`
+			// says undefined, the static <nui-list> markup matches, and a correctly
+			// configured page is told to add imports it already has — on every load
+			// (issue #64).
+			//
+			// `readyState` cannot be the test on its own: it becomes 'interactive' BEFORE
+			// deferred module scripts run, so this code sees 'interactive' with the
+			// consumer's imports still pending. 'complete' is the first unambiguous
+			// answer; otherwise DOMContentLoaded is — it fires after every deferred
+			// script. A dynamic import landing between those two events never sees
+			// DOMContentLoaded again, so 'load' is the backstop. The scan is idempotent.
+			const scanInitial = () => checkAndAutoLoad(document);
+			if (document.readyState === 'complete') {
+				scanInitial();
+			} else {
+				document.addEventListener('DOMContentLoaded', scanInitial, { once: true });
+				window.addEventListener('load', scanInitial, { once: true });
+			}
 
 			new MutationObserver((mutations) => {
 				for (const m of mutations) {

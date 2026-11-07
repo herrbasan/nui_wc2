@@ -118,6 +118,13 @@ No imports needed. Available after loading `nui.js`.
 
 These modules require loading additional JS (and often CSS). Each doc lists the exact import tags.
 
+**In development an addon you forgot is auto-loaded** and announced in the console, so a
+scratch page works without wiring. That notice is silent when the import is already
+there: the initial scan waits for `DOMContentLoaded`, because `readyState` turns
+`interactive` *before* deferred module scripts run and scanning that early reported a
+false positive on every correctly configured page (issue #64). The notice only means
+what it says — that the addon really was not imported.
+
 - [Blocks Editor](#page=experiments/blocks-editor) — Visual editor for MD-Blocks documents: sections, blocks, columns, named vars, frontmatter, and live preview.
 - [Code Editor](#page=addons/code-editor) — Editable code input with real-time syntax highlighting, auto-indent, and line numbers.
 - [Context Menu](#page=addons/context-menu) — Programmatic floating popup menus with submenus and keyboard navigation.
