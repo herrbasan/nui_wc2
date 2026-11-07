@@ -75,6 +75,19 @@ You can wrap an `<a>` tag to get button styling on links:
 | `variant` | `warning` | Yellow/orange visual style for warning actions. |
 | `variant` | `icon` | Circular or squared borderless style, mainly used when surrounding an icon. |
 | `state` | `loading` | Activates the loading spinner visual state. When set, you must also `disabled` the inner button. |
+| `size` | `small` | The compact control: 2rem tall at `--font-size-small`, matching `nui-select[size="small"]` and `nui-input[size="small"]`. Use it in dense toolbars; the default is the form-control scale (`--font-size-base` at `--nui-form-row-height`) so a button beside a select reads as the same control family. |
+
+### Sizing
+
+The default button label is `--font-size-base` — the same scale as `nui-select`, `nui-input`, `nui-textarea` and `nui-checkbox` — and inside a `nui-form-row` it takes the row's `--nui-form-row-height`, so a row mixing a select, an input and a button lines up on both text size and height.
+
+Reach for `size="small"` when the layout is genuinely dense (toolbar, card header). It is not a per-component override: it is the same compact scale the other controls expose, so a compact trio shares one height.
+
+```html
+<nui-button size="small">
+	<button type="button">Compact</button>
+</nui-button>
+```
 
 ### DOM Details & Classes
 

@@ -272,6 +272,7 @@ If you MUST apply CSS (spacing on your own wrappers, very rare theming), use ONL
 ```
 
 | Variants | `primary`, `outline`, `ghost`, `danger`/`delete`, `warning`, `icon` |
+| Size | default = form-control scale (`--font-size-base`, `--nui-form-row-height`); `size="small"` = compact 2rem at `--font-size-small`, same as `nui-select`/`nui-input` |
 | State | `state="loading"` (also disable inner button) |
 | Method | `.setLoading(bool)` — toggles loading state and disabled |
 | Inner element | `<button>` or `<a>` — always set `type="button"` unless it's a submit |
@@ -312,7 +313,7 @@ If you MUST apply CSS (spacing on your own wrappers, very rare theming), use ONL
 | Events | `nui-input`, `nui-change`, `nui-clear` (CustomEvent, bubbles) |
 | Methods | `.validate()`, `.clear()`, `.focus()` |
 
-⚠️ **Compact rows:** `<nui-form-row size="small">` puts every child — select, input, tag-input AND button — on 2rem. Declare it on the row, not per control: `nui-button` has no `size` vocabulary (2rem is its base height) while `nui-input`/`nui-select` default to 2.5rem, so per-control `size="small"` can never align a row.
+⚠️ **Compact rows:** `<nui-form-row size="small">` puts every child — select, input, tag-input AND button — on 2rem. Declare it on the row. `nui-button`, `nui-select` and `nui-input` all accept `size="small"` too, on the same compact scale (`--font-size-small` at 2rem), so a compact control trio can also be declared per control and still align. The DEFAULT is the other scale: 2.5rem at `--font-size-base`, shared by button, select, input, textarea and checkbox — a button is never the odd one out in a mixed row (issue #85).
 
 📖 **Full docs:** [`documentation/components/input.md`](documentation/components/input.md)
 
