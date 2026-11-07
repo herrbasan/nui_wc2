@@ -234,6 +234,7 @@ Items are positioned absolutely with `style.top` set to `index × itemHeight`. O
 | `setSelection(indices)` | `Number \| Number[]` | `void` | Set selection by filtered-list index. Accepts single number or array. Clears previous selection. Scrolls to first selected item. |
 | `getSelectedListIndex()` | none | `Array<Number>` | Returns filtered-list indices (not original indices) for selected items. |
 | `scrollToIndex(index)` | `Number` | `void` | Scroll the viewport so the item at the given filtered-list index is visible. |
+| `setSearch(term?)` | `term: String` = `''` | `this` | Sets the search term **synchronously** — no debounce — so `filtered`, `getSelection()`, `setSelection()` and `scrollToIndex()` are meaningful the moment it returns. Updates the visible search control, resets the scroll position (via `filter()` → `reset()`), and emits one `search_input`. Use it to point an existing list at a record (`list.setSearch('report.pdf')`) or to clear programmatically. **Throws** when the list was not configured for search — pass `search: [{ prop }]` to `loadData()`. |
 | `updateItem(idx, data?, force?)` | `Number, Object, Boolean` | `void` | Update a single item by original data index. Nullifies its DOM element to force re-render on next `update()`. |
 | `updateItems(items, force?)` | `Array<{idx, data}>` | `void` | Batch update multiple items. |
 | `updateOptions(newOptions)` | `Object` | `void` | Merge new options into existing config. Rebuilds header if search/sort/filters changed. |
@@ -247,7 +248,7 @@ Items are positioned absolutely with `style.top` set to `index × itemHeight`. O
 | `data` | `Array` | Reference to `options.data`. |
 | `clone` | `Array<{oidx, el, data, selected}>` | Working copy with element refs and selection state. |
 | `filtered` | `Array` | Current filtered + sorted subset of `clone`. |
-| `currentSearch` | `String` | Active search term. |
+| `currentSearch` | `String` | Active search term. **Set it with `setSearch()`**, not directly: `setSearch()` also updates the header control, resets the scroll and fires `search_input`. |
 | `currentSort` | `Object` | Active sort column from `options.sort`. |
 | `currentOrder` | `'up' \| 'down'` | Current sort direction. |
 | `currentFilters` | `Object` | Map of filter prop → current value. |

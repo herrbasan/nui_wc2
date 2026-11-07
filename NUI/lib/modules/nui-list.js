@@ -29,6 +29,10 @@ function createList(element, options) {
 	list.clone = [];
 	list.filtered = [];
 	list.currentSearch = '';
+	// True only while setSearch() drives the header control: the control's own handler
+	// must not treat that as a user edit (it would emit a second `search_input` and
+	// re-schedule the debounce that setSearch exists to bypass).
+	let applyingSearch = false;
 	list.currentSort = null;
 	list.currentOrder = 'up';
 	list.last_sort = null;
@@ -86,6 +90,41 @@ function createList(element, options) {
 	list.updateItem = updateItem;
 	list.updateItems = updateItems;
 	list.scrollToIndex = scrollToIndex;
+	list.setSearch = setSearch;
+
+	// Programmatic search — the header control was only ever driven by the user's own
+	// `nui-input`, so nothing could point an existing list at a record: a notification
+	// saying "report.pdf is ready" could navigate to the scope and no further (issue #63).
+	//
+	// Synchronous by contract. The header path debounces filter() by 100ms, which makes it
+	// useless as a jump target: a caller cannot know when the filtered view exists to then
+	// call setSelection()/scrollToIndex(). Here the control is updated through
+	// nui-input.setValue() and filter() runs before this returns.
+	function setSearch(term = '') {
+		if (!options.search) {
+			throw new Error('[nui-list] setSearch(): this list was not configured for search. Pass `search: [{ prop }]` to loadData() first.');
+		}
+
+		const value = term == null ? '' : String(term);
+		list.currentSearch = value;
+
+		const searchInput = list.header?.querySelector('nui-input[type="search"]');
+		if (searchInput?.setValue) {
+			applyingSearch = true;
+			try {
+				searchInput.setValue(value);
+			} finally {
+				applyingSearch = false;
+			}
+		}
+
+		// Cancel anything the user had in flight, announce once, and filter now. filter()
+		// ends with reset(), so the scroll position is back at the top of the new view.
+		clearTimeout(list.filter_timeout);
+		list.eventCallback({ target: list, type: 'search_input', value });
+		filter();
+		return list;
+	}
 	
 	// Setup event listeners
 	list.viewport.addEventListener('scroll', () => {
@@ -343,6 +382,8 @@ function createList(element, options) {
 		if (options.search) {
 			const searchInput = list.header.querySelector('nui-input[type="search"]');
 			searchInput.addEventListener('nui-input', (e) => {
+				// setSearch() owns its own event and filtering — see the guard's comment.
+				if (applyingSearch) return;
 				clearTimeout(list.filter_timeout);
 				list.currentSearch = e.detail?.value || '';
 				list.eventCallback({ target: list, type: 'search_input', value: list.currentSearch });

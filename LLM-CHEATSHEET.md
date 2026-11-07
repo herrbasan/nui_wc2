@@ -312,7 +312,7 @@ If you MUST apply CSS (spacing on your own wrappers, very rare theming), use ONL
 
 | Attributes | `type`, `size` (`"small"` = compact 2rem), `clearable`, `auto-resize`, `show-count`, `min-rows`, `max-rows` |
 | Events | `nui-input`, `nui-change`, `nui-clear` (CustomEvent, bubbles) |
-| Methods | `.validate()`, `.clear()`, `.focus()` |
+| Methods | `.validate()`, `.clear()`, `.setValue(v)`, `.focus()` |
 
 ⚠️ **Compact rows:** `<nui-form-row size="small">` puts every child — select, input, tag-input AND button — on 2rem. Declare it on the row, not per control: `nui-button` has no `size` vocabulary (2rem is its base height) while `nui-input`/`nui-select` default to 2.5rem, so per-control `size="small"` can never align a row.
 

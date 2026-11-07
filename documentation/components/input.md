@@ -46,6 +46,7 @@ Wraps `<input>` (of any text-like type) or `<textarea>`.
 | `max-rows` *(Attr)* | `<nui-textarea>` | Maximum number of lines before the textarea becomes scrollable (when `auto-resize` is enabled). |
 | `validate()` *(Method)*| Both | Triggers native form validation logic, updates UI states (`is-valid`, `is-invalid`), shows error tooltips if invalid, and returns a boolean. |
 | `clear()` *(Method)* | Both | Programmatically clears the input value and resets validation states. |
+| `setValue(value)` *(Method)* | Both | Programmatically sets the value, updates the visible state (clear button, character count, validation classes) and emits `nui-input` with the new value — the same event a user edit fires, so listeners cannot tell the two apart. `nui-select` already had a `setValue()`; this closes the asymmetry that forced owners of an input (for example `nui-list`'s search header) to reach into its inner `<input>`. |
 
 ### DOM Features
 

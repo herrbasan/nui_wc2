@@ -2909,6 +2909,24 @@ function setupInputBehavior(element, input, config = {}) {
 		dispatch('nui-clear');
 	};
 
+	// `nui-select` has setValue(); this one did not, so a component that OWNS the value —
+	// nui-list's search header — could only be driven by reaching into its DOM, which is
+	// exactly what issue #63 had to work around. Emits the same `nui-input` a user edit
+	// does, so listeners cannot tell a programmatic change from a typed one.
+	element.setValue = (value) => {
+		const next = value == null ? '' : String(value);
+		input.value = next;
+		updateState();
+		if (next === '') {
+			element.classList.remove('is-valid', 'is-invalid');
+			input.removeAttribute('aria-invalid');
+		} else {
+			validate();
+		}
+		dispatch('nui-input', { value: next, valid: input.validity.valid });
+		return next;
+	};
+
 	element.focus = () => input.focus();
 
 	updateState();
