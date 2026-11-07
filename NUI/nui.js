@@ -1570,6 +1570,27 @@ registerComponent('nui-link-list', (element) => {
 				}));
 			}
 		});
+		applyFoldDepth();
+	}
+
+	// Fold mode zeroes the nested-<ul> padding that gives tree mode its depth, and a
+	// stylesheet cannot count `.group-items` ancestors — so the depth is measured here
+	// and handed to CSS as a custom property on each row. Without it the flat `2.7rem`
+	// lived on the label span only: a child's icon stayed at the row's left edge (left of
+	// its own group's icon) and every depth indented identically (issue #62).
+	//
+	// Depth is the row's own nesting, so a group header sits at its parent's depth and
+	// its children one deeper. Run after any structural upgrade; it is idempotent and
+	// bounded by the rows the caller actually passed.
+	function applyFoldDepth() {
+		if (mode !== 'fold') return;
+		element.els('a, .group-toggle').forEach(row => {
+			let depth = 0;
+			for (let n = row.parentElement; n && n !== element; n = n.parentElement) {
+				if (n.classList && n.classList.contains('group-items')) depth++;
+			}
+			row.style.setProperty('--nui-depth', String(depth));
+		});
 	}
 
 	function upgradeAccessibility() {

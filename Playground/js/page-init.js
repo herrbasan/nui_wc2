@@ -749,6 +749,27 @@ nui.registerPage('components/link-list', {
 			if (demoTree && demoTree.loadData) {
 				demoTree.loadData(demoNavigationData);
 			}
+
+			// Nested groups, with icons on the children — the shape that used to put a
+			// child's icon flush at the row's left edge (#62).
+			const demoFoldNested = element.querySelector('#demo-fold-nested');
+			if (demoFoldNested && demoFoldNested.loadData) {
+				demoFoldNested.loadData([{
+					label: 'Collections',
+					icon: 'database',
+					items: [
+						{ label: 'Pages', href: '#pages', icon: 'description' },
+						{
+							label: 'Assets',
+							icon: 'layers',
+							items: [
+								{ label: 'Images', href: '#images', icon: 'image' },
+								{ label: 'Files', href: '#files', icon: 'folder' }
+							]
+						}
+					]
+				}]);
+			}
 			
 			const codeBlock = element.querySelector('#nav-structure-code');
 			if (codeBlock) {

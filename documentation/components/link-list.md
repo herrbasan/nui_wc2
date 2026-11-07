@@ -36,6 +36,31 @@ The `mode` option controls group behavior:
 - **fold** - Only one group open at a time (accordion style)
 - **tree** - Multiple groups can be open simultaneously
 
+### Nesting and indentation
+
+Groups nest: an item with `items` of its own is a **sub-group**, and its children indent one level further. In `fold` mode the depth is on the row (`--nui-depth`, set by the component), so an item's `icon` — if it has one — sits in the indent with its label rather than at the row's left edge, and each level steps by one icon column:
+
+```javascript
+const nested = [
+	{
+		label: 'Collections', icon: 'database',
+		items: [
+			{ label: 'Pages', href: '#pages', icon: 'description' },
+			{
+				label: 'Assets', icon: 'layers',
+				items: [{ label: 'Images', href: '#images', icon: 'image' }]
+			}
+		]
+	}
+];
+```
+
+- depth 0 — the row's own padding (a root group or leaf);
+- depth 1 — one icon column further, which is also where a child's *label* has always started;
+- each further level adds the same step.
+
+Children do not have to carry an `icon`; the indent is the same either way, so a label-only list keeps the column it had before.
+
 ## Active State Management
 
 The component automatically highlights the link matching the current URL hash. It sets `aria-current="page"` for accessibility and applies visual styling.

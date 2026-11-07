@@ -540,6 +540,12 @@ nui-link-list[mode="fold"]:first-child ul li.group-header {
 nui-link-list[mode="fold"] {
 	background-color: transparent;
 	padding: 0;
+	/* One level of nesting adds one icon column — the group's icon plus the gap — so a
+	   child's CONTENT lands under its parent group's LABEL and an icon on a child sits in
+	   that column instead of at the row's left edge. Depth 1 therefore reproduces the
+	   long-standing `2.7rem` label column exactly, and each further level steps by the
+	   same amount (issue #62). */
+	--nui-fold-step: calc(var(--icon-size) + var(--nui-space-half));
 }
 
 nui-link-list[mode="fold"] li {
@@ -641,10 +647,6 @@ nui-link-list[mode="fold"] ul.root-item > li {
 	padding-left: 0;
 }
 
-nui-link-list[mode="fold"] ul.root-item > li > a {
-	padding-left: var(--nui-space);
-}
-
 nui-link-list[mode="fold"] ul li {
 	display: flex;
 	align-items: center;
@@ -684,6 +686,9 @@ nui-link-list[mode="fold"] ul li.group-header button.group-toggle {
 	gap: var(--nui-space-half);
 	text-decoration: none;
 	color: inherit;
+	/* Depth-based indent on the ROW, not on the label span, so an icon indents with its
+	   label. `--nui-depth` is set per row by the component (see applyFoldDepth). */
+	padding-left: calc(var(--nui-space) + (var(--nui-depth, 0) * var(--nui-fold-step)));
 }
 
 nui-link-list[mode="fold"] ul li.group-header {
@@ -693,7 +698,6 @@ nui-link-list[mode="fold"] ul li.group-header {
 nui-link-list[mode="fold"] ul li.group-header button.group-toggle {
 	position: absolute;
 	inset: 0;
-	padding-left: var(--nui-space);
 }
 
 /* Row action in fold mode. Both the group toggle and the row link are stretched to fill
@@ -737,10 +741,8 @@ nui-link-list[mode="fold"] .group-header:has(button[aria-expanded="true"])+.grou
 	transition: height 0.2s ease-out, visibility 0s 0s;
 }
 
-/* Indentation for items in expanded groups - fold mode only */
-nui-link-list[mode="fold"] .group-items>li a span {
-	padding-left: 2.7rem;
-}
+/* Indentation for items in expanded groups lives on the row itself (see the
+   `--nui-depth` padding rule above) so an icon indents with its label. */
 
 /* Fold mode only - expandable states */
 nui-link-list[mode="fold"] ul li.group-header:has(button[aria-expanded="true"]) {

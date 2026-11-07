@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>NUI — nui-link-list fold indentation</title>
+<style>
+	body { font: 14px/1.5 system-ui, sans-serif; margin: 2rem; max-width: 60rem; }
+	h1 { font-size: 1.2rem; }
+	#summary { padding: .75rem 1rem; border-radius: .5rem; margin: 1rem 0; font-weight: 600; }
+	#summary.pass { background: #e6f4ea; color: #14532d; }
+	#summary.fail { background: #fdecea; color: #7f1d1d; }
+	ol { padding-left: 1.5rem; }
+	li { margin: .35rem 0; }
+	li.pass::marker { color: #16a34a; }
+	li.fail { color: #b91c1c; }
+	code { background: #f1f3f4; padding: .1rem .3rem; border-radius: .25rem; }
+	#stage { width: 320px; }
+</style>
+</head>
+<body>
+<h1>nui-link-list — fold-mode depth indentation</h1>
+<p>Fold mode removes the nested-<code>ul</code> padding that gives tree mode its depth, so
+depth has to be stated. These checks assert what the reader sees: a child's icon sits in
+the indent rather than at the row's left edge, a sub-group indents past its parent, and a
+deeper leaf indents further (issue #62). Open through the dev server:
+<code>http://127.0.0.1:5500/test/nui-link-list.test.html</code></p>
+<div id="summary">running…</div>
+<ol id="results"></ol>
+<div id="stage"></div>
+
+<script type="module">
+const { nui } = await import('../NUI/nui.js');
+
+const results = [];
+
+function check(name, fn) {
+	try {
+		const problem = fn();
+		if (problem) { results.push({ name, ok: false, detail: problem }); return; }
+		results.push({ name, ok: true, detail: '' });
+	} catch (err) {
+		results.push({ name, ok: false, detail: err && err.message ? err.message : String(err) });
+	}
+}
+
+const px = (v) => Math.round(parseFloat(v) * 10) / 10;
+
+// Mount a fold-mode list, load the data, and expand every group so the nested rows have
+// a layout box to measure (a collapsed group is height 0 by design).
+const mount = async (data) => {
+	const host = document.createElement('nui-link-list');
+	host.setAttribute('mode', 'fold');
+	document.getElementById('stage').appendChild(host);
+	host.loadData(data);
+	for (const toggle of host.els('.group-toggle')) toggle.click();
+	await new Promise((r) => setTimeout(r, 320));
+	return host;
+};
+
+const rowOf = (host, label) => [...host.els('a, .group-toggle')].find((el) => el.textContent.trim() === label);
+const originOf = (host) => host.getBoundingClientRect().left;
+const contentX = (host, el) => {
+	const icon = el.querySelector('nui-icon');
+	const span = el.querySelector('span');
+	const probe = icon || span;
+	return px(probe.getBoundingClientRect().left - originOf(host));
+};
+
+const NESTED = [{
+	label: 'Outer', icon: 'database',
+	items: [
+		{ label: 'Child', href: '#c', icon: 'folder' },
+		{ label: 'Sub', icon: 'layers', items: [{ label: 'Deep', href: '#d', icon: 'image' }] }
+	]
+}];
+
+const LABELS_ONLY = [{
+	label: 'Main Menu', icon: 'menu',
+	items: [
+		{ label: 'Dashboard', href: '#dashboard' },
+		{ label: 'Settings', href: '#settings' }
+	]
+}];
+
+// ── depth is recorded on the row ────────────────────────────────────────────
+const host = await mount(NESTED);
+
+check('each row carries its nesting depth', () => {
+	const got = ['Outer', 'Child', 'Sub', 'Deep'].map((l) => {
+		const el = rowOf(host, l);
+		return l + '=' + (el ? el.style.getPropertyValue('--nui-depth') : 'missing');
+	});
+	return got.join(' ') === 'Outer=0 Child=1 Sub=1 Deep=2' ? null : got.join(' ');
+});
+
+// ── the reported symptom: a child's icon at the row's left edge ─────────────
+check('a child icon does not sit at the row edge', () => {
+	const x = contentX(host, rowOf(host, 'Child'));
+	return x > 20 ? null : `the child's icon is at ${x}px — it is still flush at the edge`;
+});
+
+check('a child icon sits left of nothing — it is inside the indent', () => {
+	const childX = contentX(host, rowOf(host, 'Child'));
+	const groupX = contentX(host, rowOf(host, 'Outer'));
+	return childX > groupX ? null : `child ${childX}px is not right of the group's icon at ${groupX}px`;
+});
+
+check('the child label follows its own icon', () => {
+	const row = rowOf(host, 'Child');
+	const iconX = px(row.querySelector('nui-icon').getBoundingClientRect().left - originOf(host));
+	const labelX = px(row.querySelector('span').getBoundingClientRect().left - originOf(host));
+	return labelX > iconX ? null : `label ${labelX}px is not right of the icon at ${iconX}px`;
+});
+
+// ── sub-groups and deeper leaves ────────────────────────────────────────────
+check('a sub-group header indents past its parent group', () => {
+	const outer = contentX(host, rowOf(host, 'Outer'));
+	const sub = contentX(host, rowOf(host, 'Sub'));
+	return sub > outer ? null : `sub-group at ${sub}px is not past the parent at ${outer}px`;
+});
+
+check('a depth-2 leaf indents further than a depth-1 leaf', () => {
+	const one = contentX(host, rowOf(host, 'Child'));
+	const two = contentX(host, rowOf(host, 'Deep'));
+	return two > one ? null : `depth 2 at ${two}px is not past depth 1 at ${one}px`;
+});
+
+check('indent grows by one step per level', () => {
+	const pad = (l) => px(getComputedStyle(rowOf(host, l)).paddingLeft);
+	const d0 = pad('Outer'), d1 = pad('Child'), d2 = pad('Deep');
+	const stepA = Math.round((d1 - d0) * 10) / 10;
+	const stepB = Math.round((d2 - d1) * 10) / 10;
+	return Math.abs(stepA - stepB) < 0.5 ? null : `steps differ: ${stepA}px then ${stepB}px`;
+});
+
+// ── the common label-only case must not move ────────────────────────────────
+const plain = await mount(LABELS_ONLY);
+
+check('a label-only child keeps the established label column', () => {
+	const groupX = contentX(plain, rowOf(plain, 'Main Menu'));
+	const childX = contentX(plain, rowOf(plain, 'Dashboard'));
+	// The child's content column must be one indent past the group's own padding, i.e.
+	// the same place it has always been (the old 2.7rem on the span).
+	const padChild = px(getComputedStyle(rowOf(plain, 'Dashboard')).paddingLeft);
+	const padGroup = px(getComputedStyle(rowOf(plain, 'Main Menu')).paddingLeft);
+	return Math.abs((padChild - padGroup) - (childX - groupX)) < 1.5
+		? null
+		: `label drifted: group ${groupX}px pad ${padGroup}px, child ${childX}px pad ${padChild}px`;
+});
+
+check('a root row keeps the plain row padding', () => {
+	const pad = px(getComputedStyle(rowOf(plain, 'Main Menu')).paddingLeft);
+	return pad > 0 && pad < 24 ? null : `root padding is ${pad}px`;
+});
+
+// ── row actions keep their reserved strip ──────────────────────────────────
+const withAction = await mount([{
+	label: 'Outer', icon: 'database',
+	items: [{ label: 'Child', href: '#c', icon: 'folder', rowAction: 'test:run' }]
+}]);
+
+check('a row action keeps its reserved right-hand strip', () => {
+	const row = rowOf(withAction, 'Child');
+	const padRight = px(getComputedStyle(row).paddingRight);
+	return padRight > 40 ? null : `padding-right collapsed to ${padRight}px`;
+});
+
+check('the row action sits at the right edge, not the left', () => {
+	const li = rowOf(withAction, 'Child').closest('li');
+	const btn = li.querySelector('button.action');
+	if (!btn) return 'no action button rendered';
+	const right = px(li.getBoundingClientRect().right - btn.getBoundingClientRect().right);
+	return right >= 0 && right < 60 ? null : `the action is ${right}px from the right edge`;
+});
+
+// ── tree mode is untouched ─────────────────────────────────────────────────
+const tree = document.createElement('nui-link-list');
+document.getElementById('stage').appendChild(tree);
+tree.loadData(NESTED);
+for (const t of tree.els('.group-toggle')) t.click();
+await new Promise((r) => setTimeout(r, 320));
+
+check('tree mode still indents through nested lists', () => {
+	const leaf = [...tree.els('a')].find((a) => a.textContent.trim() === 'Deep');
+	return leaf && getComputedStyle(leaf).paddingLeft === '0px' ? null : 'tree mode padding changed';
+});
+
+// ── report ──────────────────────────────────────────────────────────────────
+const list = document.getElementById('results');
+for (const r of results) {
+	const li = document.createElement('li');
+	li.className = r.ok ? 'pass' : 'fail';
+	li.textContent = r.name + (r.detail ? ' — ' + r.detail : '');
+	list.appendChild(li);
+}
+const failed = results.filter((r) => !r.ok).length;
+const summary = document.getElementById('summary');
+summary.textContent = failed
+	? `${failed} of ${results.length} checks FAILED`
+	: `all ${results.length} checks passed`;
+summary.className = failed ? 'fail' : 'pass';
+globalThis.__regression = { total: results.length, failed, results };
+</script>
+</body>
+</html>

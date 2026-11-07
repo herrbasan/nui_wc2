@@ -123,6 +123,40 @@
 </section>
 
 <section>
+	<h2>Nested Groups and Icons</h2>
+	<p>Groups nest, and each level indents by one icon column. A child may carry its own
+		<code>icon</code>: it sits in the indent beside its label rather than at the row's
+		left edge, so a sub-menu reads as its own column instead of as decoration pinned to
+		the sidebar edge.</p>
+
+	<h3>Try It</h3>
+	<div class="link_list_fold_container">
+		<nui-link-list id="demo-fold-nested" mode="fold">
+			<!-- Loaded via JavaScript -->
+		</nui-link-list>
+	</div>
+
+	<nui-code>
+		<script type="example" data-lang="javascript">
+const nested = [{
+	label: 'Collections', icon: 'database',
+	items: [
+		{ label: 'Pages', href: '#pages', icon: 'description' },
+		{
+			label: 'Assets', icon: 'layers',
+			items: [
+				{ label: 'Images', href: '#images', icon: 'image' },
+				{ label: 'Files', href: '#files', icon: 'folder' }
+			]
+		}
+	]
+}];
+document.querySelector('#demo-fold-nested').loadData(nested);
+		</script>
+	</nui-code>
+</section>
+
+<section>
 	<h2>Tree Mode (Masonry Layout)</h2>
 	<p>In tree mode, all groups can be open simultaneously. The masonry layout arranges groups in columns for efficient space usage:</p>
 	<div class="link_list_column_container">
