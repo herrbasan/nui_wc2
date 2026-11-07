@@ -182,6 +182,35 @@ Right.
 2. A directive inside fenced or inline code stays literal, since directives are recognised from the Markdown block structure and never by text replacement.
 3. Blank and comment-only regions are filtered out, so file-header comments or pure chrome blocks do not produce blank leading surfaces.
 
+## Raw HTML, and documents that need a real origin
+
+`nui-markdown` renders **Markdown only**, and raw HTML inside a document is **escaped, not
+executed** — `<b>`, `<script>`, `<iframe>` and `<a href="javascript:…">` all come out as
+text. That is measured, not a policy statement: `markdownToHtml('<script>…')` returns
+`<p>&lt;script&gt;…&lt;/script&gt;</p>`. A document handed to this element therefore cannot
+run code in your page, and the element offers no path to display a stored `.html` file.
+
+If a caller must display HTML — a local-first viewer whose job is "open whatever the user
+picked" — the only safe pattern is an `<iframe sandbox="allow-scripts">` **without**
+`allow-same-origin`. That gives the frame an opaque origin, and the price is real:
+
+| Inside the sandbox | Effect |
+|---|---|
+| `localStorage`, `sessionStorage`, `indexedDB`, `document.cookie` | throw `SecurityError` |
+| `fetch()` / `XMLHttpRequest` to relative or cross-origin URLs | CORS-restricted |
+| `parent` / `top` access, `contentDocument` from the host | blocked in both directions |
+
+The consequence to state to the user is that **a stored-origin document is not that
+document any more**: a saved copy of a page that used to store state or call a local server
+renders blank or half-working, and nothing in the frame can explain why. That limit belongs
+in the caller's UI, not only in this file.
+
+The honest fallback — and the one a desktop shell would take anyway — is to open the file
+**externally**: `window.open(url)` on the web, `shell.openExternal(path)` under Electron.
+NUI deliberately ships no "render this HTML here" mode, because doing it safely means
+sandboxing it and doing it usefully means not sandboxing it; that decision belongs to the
+host that knows what it is opening.
+
 ## Responsive Behaviour
 
 For **structured MD-Blocks documents** the element is a **query container** named `doc`
