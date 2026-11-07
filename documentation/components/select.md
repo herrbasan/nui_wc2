@@ -153,9 +153,32 @@ select.hasValue(); // false → showing the prompt; true → a real option carri
 | `clear()` | Selects the none-choice if present, else the prompt, else the first selectable option (a native form reset). It never leaves `selectedIndex` at `-1`, because that state has no way back in the UI and does not even survive a browser reset. Logs a console warning when it has to fall back to the first option. |
 | `setValue('')` / `setValue(null)` | Same as `clear()`. |
 | `setValue(v)` | Selects the matching option. **Throws `RangeError`** when no option has that value, or when the option is disabled — a typo used to silently re-select the first option. |
-| `setItems(items)` | Replaces the options; the browser then selects the first selectable option (native). Items are `{ value, label }`, a plain string, or a `{ group, options }` container that renders an `<optgroup>` (see `NuiSelectGroup`). A leaf object without `value` **throws `TypeError`** instead of creating an option whose value is the literal `"undefined"` — containers are exempt, and each option inside one is checked with the same rule. `loadOptions()` hands its result straight to `setItems()`, so map your API shape to these forms inside the async function. |
+| `setItems(items)` | Replaces the options. **The selection is preserved**: a value that is still present stays selected (single-value: the matching option; multi-value: every surviving value, order irrelevant). If the value disappeared, the select falls back to the same none-state as `clear()` — the none-choice, else the prompt, else the first selectable option (with the same console warning). Items are `{ value, label }`, a plain string, or a `{ group, options }` container that renders an `<optgroup>` (see `NuiSelectGroup`). A leaf object without `value` **throws `TypeError`** instead of creating an option whose value is the literal `"undefined"` — containers are exempt, and each option inside one is checked with the same rule. `loadOptions()` hands its result straight to `setItems()`, so map your API shape to these forms inside the async function. |
 
 > **Multi-select differs:** "nothing selected" is a real, stable state there (`getValue()` returns `[]`), so `clear()` simply empties the selection.
+
+### `setItems()` Preserves the Selection
+
+Replacing the option list of a native `<select>` leaves it with no selected option, and the browser then re-selects the **first** one. So `setItems()` used to silently change the value — `setValue('gpt-5')` followed by `setItems(sameItems)` reverted to `'gpt-4'`, with no event and no error anywhere. The same reset is what made an unknown `setValue()` persist the wrong value, which is why the explicit setter throws instead.
+
+`setItems()` now captures the current selection before the rebuild and restores it afterwards:
+
+- **The value is still present** → it stays selected. Reordering the items or relabelling them does not change the selection.
+- **The value disappeared** → the select falls back to the none-state of `clear()`: the none-choice, else the prompt, else the first selectable option (with the console warning). Data churn is not a programmer error, so this does not throw.
+- **Multi-select** → every value that is still present stays selected; the ones that disappeared are dropped.
+
+To deliberately reset the selection to a specific option, call `setValue()` after `setItems()`.
+
+### `setItems()` Fires an Event Only When the Value Moved
+
+`nui-change` fires **iff the effective selected value changed**:
+
+- The selection survived → **no event**. A refresh that changed nothing must not make the app think the user picked something.
+- The value moved → **exactly one** `nui-change`, with the component's normal payload (`{ values, labels, options }`).
+
+For a single-value select, "the effective value" is `getValue()` — and note that something is *always* selected while options exist, because the browser picks the first. An empty list therefore moves the value to `''` and does fire an event. A multi-select compares the **set** of values: the same values in another order is not a change.
+
+> **The internal tag input is contained.** A multi-select's popup contains a `<nui-tag-input>`, which dispatches its own `nui-change` with the payload `{ values, tags }`. That event does **not** propagate out of the select, so a listener on the select sees only the select's own `{ values, labels, options }` — one coherent payload, never two incompatible ones on one listener. Listen on the tag input directly if you need the tag-level detail.
 
 ## The Dropdown Lives in the Top Layer
 
@@ -218,7 +241,7 @@ Because the actual form values live natively inside the underlying `<select>`, y
 
 | Method | Parameters | Description |
 |--------|------------|-------------|
-| `setItems(items)` | `Array<Object>` | Programmatically rewrites the inner `<select>` tag options. Objects require `{ value, label }` or `{ group, options: [...] }`. Throws `TypeError` on an item without a `value`. |
+| `setItems(items)` | `Array<Object>` | Programmatically rewrites the inner `<select>` tag options, **preserving the current selection** — a value that is still present stays selected; one that disappeared falls back to the none-state of `clear()`. Fires `nui-change` only when the effective value moved. Objects require `{ value, label }` or `{ group, options: [...] }`. Throws `TypeError` on an item without a `value`. |
 | `getValue()` | none | The selected value (native `select.value`). Returns `''` for both the prompt and an enabled none-choice — see [the None-State Model](#the-none-state-model). |
 | `hasValue()` | none | `true` only when a real option carries the selection (an enabled blank none-choice counts; a disabled prompt does not). Disambiguates the `''` returned by `getValue()`. |
 | `setValue(v)` | value | Selects the matching option. `null`/`undefined`/`''` behave like `clear()`. Throws `RangeError` for an unknown or disabled value. |

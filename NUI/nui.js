@@ -3426,12 +3426,19 @@ registerComponent('nui-select', (element) => {
 		tagInput = dom.create('nui-tag-input', { target: tagsSection });
 		tagInput.addEventListener('nui-tag-remove', e => {
 			const opt = Array.from(select.options).find(o => o.value === e.detail.value);
-			if (opt?.selected) { 
-				opt.selected = false; 
+			if (opt?.selected) {
+				opt.selected = false;
 				select.dispatchEvent(new Event('change', { bubbles: true }));
-				syncState(); 
+				syncState();
 			}
 		});
+		// The tag input is an internal part of the popup, not the control's value model.
+		// Its own `nui-change` (payload `{ values, tags }`) would otherwise bubble out
+		// through the popup and reach a consumer listening on the select, right next to
+		// the select's `nui-change` (payload `{ values, labels, options }`) — two
+		// incompatible payloads on one listener. The select's own event is the
+		// authoritative one; the tag input's stays inside.
+		tagInput.addEventListener('nui-change', e => e.stopPropagation());
 	}
 
 	let searchInput = null;
@@ -3951,26 +3958,35 @@ registerComponent('nui-select', (element) => {
 		}
 	};
 
+	// The none-state a single select falls back to when nothing is chosen: an enabled
+	// blank option (the real, re-selectable none-choice), then a disabled blank prompt,
+	// then the first selectable option (a native form reset). Never `selectedIndex = -1`:
+	// a -1 single-value select shows the placeholder with no user-reachable way out, and
+	// the browser re-selects the first option on any later reset, so the state is not even
+	// stable.
+	//
+	// Shared by the explicit clear() and by a data refresh that dropped the selected
+	// option, so both land on the same convention. `source` names the caller in the
+	// warning. Returns the option it settled on, or null when nothing can be selected.
+	const applyNoneState = (source) => {
+		const none = findNoneOption() || findPlaceholderOption();
+		const target = none || findFirstSelectable();
+		if (target) {
+			if (!none) {
+				console.warn(`[NUI] <nui-select> ${source}: the list has no none-option, so the first selectable option ("${target.textContent.trim()}") is selected instead. Add an enabled blank option — <option value="">— None —</option> — if this select needs a none-state.`);
+			}
+			Array.from(select.options).forEach(o => o.selected = (o === target));
+		}
+		// Nothing selectable exists (empty list, or every option disabled) — the
+		// selection stays empty, exactly as a native select behaves.
+		return target;
+	};
+
 	const clear = () => {
 		if (isMulti) {
 			Array.from(select.options).forEach(o => o.selected = false);
 		} else {
-			// Return to the "nothing chosen" representation, which is always an option —
-			// never `selectedIndex = -1`. A -1 single-value select shows the placeholder
-			// with no user-reachable way out, and the browser re-selects the first option
-			// on any later reset, so the state is not even stable. Preference:
-			// enabled blank (the real, re-selectable none-choice), then the disabled blank
-			// prompt, then the first selectable option (a native form reset).
-			const none = findNoneOption() || findPlaceholderOption();
-			const target = none || findFirstSelectable();
-			if (target) {
-				if (!none) {
-					console.warn(`[NUI] <nui-select> clear(): the list has no none-option, so the first selectable option ("${target.textContent.trim()}") is selected instead. Add an enabled blank option — <option value="">— None —</option> — if this select needs a none-state.`);
-				}
-				Array.from(select.options).forEach(o => o.selected = (o === target));
-			}
-			// Nothing selectable exists (empty list, or every option disabled) — the
-			// selection stays empty, exactly as a native select behaves.
+			applyNoneState('clear()');
 		}
 		select.dispatchEvent(new Event('change', { bubbles: true }));
 		syncState();
@@ -4046,6 +4062,13 @@ registerComponent('nui-select', (element) => {
 		// Replace all options verbatim — no placeholder special-casing.
 		// An explicit <option value="" disabled> in markup is preserved via markup,
 		// not via data; setItems is a data API and replaces everything.
+		//
+		// A data refresh must not silently choose something else. Replacing the options
+		// makes the browser re-select the FIRST option — the same reset that made an
+		// unknown setValue() persist the wrong value with no error anywhere — so the
+		// current selection is captured first and restored when it survives.
+		const previous = getValue();
+
 		mutateOptions(() => {
 			select.innerHTML = '';
 
@@ -4076,11 +4099,47 @@ registerComponent('nui-select', (element) => {
 					select.appendChild(opt);
 				}
 			});
+
+			// Restore the selection over the rebuilt options BEFORE buildOptions() runs:
+			// the rebuild syncs the rows and the tags from the current selection, so
+			// restoring afterwards would paint the stale state first.
+			//
+			// Emptying the option list leaves the select with no selected option, and the
+			// browser then re-selects the FIRST one — the same reset that made an unknown
+			// setValue() persist the wrong value with no error anywhere.
+			if (isMulti) {
+				const present = new Set(Array.from(select.options).map(o => o.value));
+				const wanted = previous.filter(v => present.has(v));
+				Array.from(select.options).forEach(o => o.selected = wanted.includes(o.value));
+			} else {
+				const survivor = previous
+					? Array.from(select.options).find(o => o.value === previous && !o.disabled)
+					: null;
+				if (survivor) {
+					Array.from(select.options).forEach(o => o.selected = (o === survivor));
+				} else {
+					// The selected option is gone — data churn, not a programmer error, so
+					// the documented none-state applies rather than a throw.
+					applyNoneState('setItems()');
+				}
+			}
+
 			buildOptions();
 		});
-		element.dispatchEvent(new CustomEvent('nui-items-replace', { 
-			bubbles: true, 
-			detail: { count: items.length } 
+
+		// Tell the consumer only when the value actually MOVED. A refresh that kept the
+		// same selection changed nothing, and a notification would make the app think
+		// the user picked something. For a multi-select the comparison is set-based:
+		// the same values in another order is not a change of value.
+		const now = getValue();
+		const moved = isMulti
+			? now.length !== previous.length || !previous.every(v => now.includes(v))
+			: now !== previous;
+		syncState(moved);
+
+		element.dispatchEvent(new CustomEvent('nui-items-replace', {
+			bubbles: true,
+			detail: { count: items.length }
 		}));
 	};
 

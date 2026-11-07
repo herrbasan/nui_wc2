@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>NUI — nui-select regression</title>
+<style>
+	body { font: 14px/1.5 system-ui, sans-serif; margin: 2rem; max-width: 60rem; }
+	h1 { font-size: 1.2rem; }
+	#summary { padding: .75rem 1rem; border-radius: .5rem; margin: 1rem 0; font-weight: 600; }
+	#summary.pass { background: #e6f4ea; color: #14532d; }
+	#summary.fail { background: #fdecea; color: #7f1d1d; }
+	ol { padding-left: 1.5rem; }
+	li { margin: .35rem 0; }
+	li.pass::marker { color: #16a34a; }
+	li.fail { color: #b91c1c; }
+	code { background: #f1f3f4; padding: .1rem .3rem; border-radius: .25rem; }
+	.detail { color: #666; font-size: .9em; }
+	#stage { position: absolute; left: -9999px; top: 0; }
+</style>
+</head>
+<body>
+<h1>nui-select — regression checks</h1>
+<p>Focused assertions on the selection state of <code>&lt;nui-select&gt;</code>. Not snapshots:
+each check states the one thing it expects, so a failure says what broke rather than that a
+string changed.</p>
+<div id="summary">running…</div>
+<ol id="results"></ol>
+<div id="stage"></div>
+
+<script type="module">
+// The component lives in NUI/nui.js and extends HTMLElement, so it cannot be imported in
+// Node — these checks run in the browser. Open through the dev server:
+//   http://127.0.0.1:5500/test/nui-select.test.html
+await import('../NUI/nui.js');
+
+const results = [];
+
+function check(name, fn) {
+	try {
+		const problem = fn();
+		if (problem) { results.push({ name, ok: false, detail: problem }); return; }
+		results.push({ name, ok: true, detail: '' });
+	} catch (err) {
+		results.push({ name, ok: false, detail: err && err.message ? err.message : String(err) });
+	}
+}
+
+// Build a select with the given inner <select> markup and return the component.
+// The markup is the zero-JS fallback form: an explicit inner <select>.
+const mount = (innerSelectHtml, attrs = '') => {
+	const stage = document.getElementById('stage');
+	const el = document.createElement('nui-select');
+	el.setAttribute('data-test', 'x');
+	el.innerHTML = `<select ${attrs}>${innerSelectHtml}</select>`;
+	stage.appendChild(el);
+	return el;
+};
+
+// Collect nui-change events on the element.
+const watch = (el) => {
+	const events = [];
+	el.addEventListener('nui-change', e => events.push(e.detail));
+	return events;
+};
+
+const plain = `<option value="a">A</option><option value="b">B</option><option value="c">C</option>`;
+
+// ── the selection survives a refresh that keeps the value ───────────────────
+// The defect: replacing the option list left the select with no selected option, and
+// the browser then re-selected the FIRST one — so a data refresh silently changed the
+// value from "b" to "a" with no event and no error.
+check('setItems() keeps the selection when the value is still present', () => {
+	const el = mount(plain);
+	const sel = el.el('select');
+	sel.value = 'b';
+	const events = watch(el);
+	el.setItems([
+		{ value: 'a', label: 'A' },
+		{ value: 'b', label: 'B' },
+		{ value: 'c', label: 'C' }
+	]);
+	if (sel.value !== 'b') return `expected "b", got "${sel.value}"`;
+	if (events.length !== 0) return `expected 0 nui-change events, got ${events.length}`;
+	return null;
+});
+
+check('setItems() keeps the selection when the options are reordered', () => {
+	const el = mount(plain);
+	const sel = el.el('select');
+	sel.value = 'c';
+	const events = watch(el);
+	el.setItems([
+		{ value: 'c', label: 'C' },
+		{ value: 'a', label: 'A' },
+		{ value: 'b', label: 'B' }
+	]);
+	if (sel.value !== 'c') return `expected "c", got "${sel.value}"`;
+	if (events.length !== 0) return `expected 0 nui-change events, got ${events.length}`;
+	return null;
+});
+
+check('setItems() keeps the selection when the labels change', () => {
+	const el = mount(plain);
+	const sel = el.el('select');
+	sel.value = 'b';
+	const events = watch(el);
+	el.setItems([
+		{ value: 'a', label: 'Alpha' },
+		{ value: 'b', label: 'Beta' },
+		{ value: 'c', label: 'Gamma' }
+	]);
+	if (sel.value !== 'b') return `expected "b", got "${sel.value}"`;
+	if (events.length !== 0) return `expected 0 nui-change events, got ${events.length}`;
+	return null;
+});
+
+// ── a value that disappeared falls back to the documented none-state ─────────
+check('setItems() falls back to the enabled blank option when the value disappears', () => {
+	const el = mount(`<option value="">— None —</option>` + plain);
+	const sel = el.el('select');
+	sel.value = 'b';
+	const events = watch(el);
+	el.setItems([
+		{ value: '', label: '— None —' },
+		{ value: 'a', label: 'A' },
+		{ value: 'c', label: 'C' }
+	]);
+	if (sel.value !== '') return `expected the blank option, got "${sel.value}"`;
+	if (events.length !== 1) return `expected 1 nui-change event, got ${events.length}`;
+	if (!events[0] || !Array.isArray(events[0].values)) return 'the event has no values payload';
+	return null;
+});
+
+check('setItems() falls back to the disabled prompt when there is no enabled blank', () => {
+	const el = mount(`<option value="" disabled>Select...</option>` + plain);
+	const sel = el.el('select');
+	sel.value = 'b';
+	const events = watch(el);
+	el.setItems([
+		{ value: '', label: 'Select...', disabled: true },
+		{ value: 'a', label: 'A' },
+		{ value: 'c', label: 'C' }
+	]);
+	if (sel.value !== '') return `expected the blank option, got "${sel.value}"`;
+	if (events.length !== 1) return `expected 1 nui-change event, got ${events.length}`;
+	return null;
+});
+
+check('setItems() falls back to the first selectable option when there is no blank', () => {
+	const el = mount(plain);
+	const sel = el.el('select');
+	sel.value = 'b';
+	const events = watch(el);
+	el.setItems([
+		{ value: 'a', label: 'A' },
+		{ value: 'c', label: 'C' }
+	]);
+	if (sel.value !== 'a') return `expected "a", got "${sel.value}"`;
+	if (events.length !== 1) return `expected 1 nui-change event, got ${events.length}`;
+	return null;
+});
+
+// ── no movement, no event ───────────────────────────────────────────────────
+// The event fires iff the EFFECTIVE value changed. A single-value select always has a
+// selection while options exist (the browser picks the first), so "nothing selected"
+// is only reachable with an empty list or with every option disabled.
+check('setItems() with an empty list fires one event when a value was selected', () => {
+	const el = mount(plain);
+	const sel = el.el('select');
+	const events = watch(el);
+	el.setItems([]);
+	if (sel.value !== '') return `expected "", got "${sel.value}"`;
+	if (events.length !== 1) return `expected 1 nui-change event, got ${events.length}`;
+	return null;
+});
+
+check('setItems() with an empty list fires no event when nothing was selected', () => {
+	const el = mount(`<option value="a" disabled>A</option>`);
+	const sel = el.el('select');
+	if (sel.value !== '') return `expected no selection, got "${sel.value}"`;
+	const events = watch(el);
+	el.setItems([]);
+	if (events.length !== 0) return `expected 0 nui-change events, got ${events.length}`;
+	return null;
+});
+
+check('repeated setItems() with the same items fires no event', () => {
+	const el = mount(plain);
+	const sel = el.el('select');
+	sel.value = 'b';
+	const events = watch(el);
+	const items = [{ value: 'a', label: 'A' }, { value: 'b', label: 'B' }, { value: 'c', label: 'C' }];
+	el.setItems(items);
+	el.setItems(items);
+	el.setItems(items);
+	if (sel.value !== 'b') return `expected "b", got "${sel.value}"`;
+	if (events.length !== 0) return `expected 0 nui-change events, got ${events.length}`;
+	return null;
+});
+
+// ── setValue() still fails loud ─────────────────────────────────────────────
+// The bulk refresh must not weaken the strict contract of the explicit setter.
+check('setValue() with an unknown value still throws', () => {
+	const el = mount(plain);
+	let threw = false;
+	try { el.setValue('nope'); } catch (err) { threw = err instanceof RangeError; }
+	return threw ? null : 'setValue("nope") did not throw a RangeError';
+});
+
+check('setValue() with a disabled option still throws', () => {
+	const el = mount(`<option value="a">A</option><option value="b" disabled>B</option>`);
+	let threw = false;
+	try { el.setValue('b'); } catch (err) { threw = err instanceof RangeError; }
+	return threw ? null : 'setValue("b") on a disabled option did not throw a RangeError';
+});
+
+// ── the multi-select keeps its selection ────────────────────────────────────
+check('a multi-select keeps the values that are still present', () => {
+	const el = mount(plain, 'multiple');
+	const sel = el.el('select');
+	sel.options[0].selected = true;
+	sel.options[2].selected = true;
+	const events = watch(el);
+	el.setItems([
+		{ value: 'a', label: 'A' },
+		{ value: 'b', label: 'B' },
+		{ value: 'c', label: 'C' }
+	]);
+	const values = Array.from(sel.selectedOptions).map(o => o.value);
+	if (values.length !== 2 || values[0] !== 'a' || values[1] !== 'c') {
+		return `expected ["a","c"], got ${JSON.stringify(values)}`;
+	}
+	if (events.length !== 0) return `expected 0 nui-change events, got ${events.length}`;
+	return null;
+});
+
+check('a multi-select drops the values that disappeared and fires one event', () => {
+	const el = mount(plain, 'multiple');
+	const sel = el.el('select');
+	sel.options[0].selected = true;
+	sel.options[2].selected = true;
+	const events = watch(el);
+	el.setItems([
+		{ value: 'a', label: 'A' },
+		{ value: 'b', label: 'B' }
+	]);
+	const values = Array.from(sel.selectedOptions).map(o => o.value);
+	if (values.length !== 1 || values[0] !== 'a') return `expected ["a"], got ${JSON.stringify(values)}`;
+	if (events.length !== 1) return `expected 1 nui-change event, got ${events.length}`;
+	return null;
+});
+
+// ── open → dismiss preserves the selection ───────────────────────────────────
+// Issue #82's acceptance criterion. Six dismissal paths: plain/searchable ×
+// Escape / outside click / trigger toggle. Each must leave the value AND the
+// visible label alone, and fire no change event.
+const DISMISS_PATHS = [
+	{ name: 'plain', attrs: '' },
+	{ name: 'searchable', attrs: 'searchable' }
+];
+
+for (const variant of DISMISS_PATHS) {
+	// Escape key
+	check(`${variant.name}: Escape preserves the value and the label`, () => {
+		const el = mount(plain, variant.attrs);
+		const sel = el.el('select');
+		el.setValue('b');
+		const events = watch(el);
+		el.open();
+		document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+		if (sel.value !== 'b') return `expected "b", got "${sel.value}"`;
+		const label = el.el('.nui-select-value')?.textContent?.trim();
+		if (label !== 'B') return `expected the label "B", got ${JSON.stringify(label)}`;
+		if (events.length !== 0) return `expected 0 nui-change events, got ${events.length}`;
+		return null;
+	});
+
+	// Outside click
+	check(`${variant.name}: an outside click preserves the value and the label`, () => {
+		const el = mount(plain, variant.attrs);
+		const sel = el.el('select');
+		el.setValue('b');
+		const events = watch(el);
+		el.open();
+		document.body.click();
+		if (sel.value !== 'b') return `expected "b", got "${sel.value}"`;
+		const label = el.el('.nui-select-value')?.textContent?.trim();
+		if (label !== 'B') return `expected the label "B", got ${JSON.stringify(label)}`;
+		if (events.length !== 0) return `expected 0 nui-change events, got ${events.length}`;
+		return null;
+	});
+
+	// Trigger toggle — clicking the control again folds the popup shut
+	check(`${variant.name}: toggling the trigger preserves the value and the label`, () => {
+		const el = mount(plain, variant.attrs);
+		const sel = el.el('select');
+		el.setValue('b');
+		const events = watch(el);
+		el.open();
+		el.el('.nui-select-control').click();
+		if (sel.value !== 'b') return `expected "b", got "${sel.value}"`;
+		const label = el.el('.nui-select-value')?.textContent?.trim();
+		if (label !== 'B') return `expected the label "B", got ${JSON.stringify(label)}`;
+		if (events.length !== 0) return `expected 0 nui-change events, got ${events.length}`;
+		return null;
+	});
+}
+
+// ── the none-state contract of clear() is unchanged ─────────────────────────
+check('clear() still returns to the none-choice', () => {
+	const el = mount(`<option value="">— None —</option>` + plain);
+	const sel = el.el('select');
+	sel.value = 'b';
+	el.clear();
+	return sel.value === '' ? null : `expected "", got "${sel.value}"`;
+});
+
+// ── report ───────────────────────────────────────────────────────────────────
+const list = document.getElementById('results');
+for (const r of results) {
+	const li = document.createElement('li');
+	li.className = r.ok ? 'pass' : 'fail';
+	li.textContent = r.name + (r.detail ? ' — ' + r.detail : '');
+	list.appendChild(li);
+}
+const failed = results.filter(r => !r.ok).length;
+const summary = document.getElementById('summary');
+summary.textContent = failed
+	? `${failed} of ${results.length} checks FAILED`
+	: `all ${results.length} checks passed`;
+summary.className = failed ? 'fail' : 'pass';
+globalThis.__regression = { total: results.length, failed, results };
+</script>
+</body>
+</html>
