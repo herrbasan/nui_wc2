@@ -46,66 +46,6 @@
 </section>
 
 <section>
-	<h2>Button Sizing</h2>
-	<p>The default button shares the form-control scale: <code>--font-size-base</code>, and inside a
-		<code>nui-form-row</code> the row's height. A row that mixes a select, an input and a button
-		therefore reads as one control family rather than three.</p>
-
-	<div class="demo-area">
-		<nui-form-row>
-			<nui-select>
-				<select name="fruit-size">
-					<option value="apple">Apple</option>
-					<option value="banana">Banana</option>
-					<option value="cherry">Cherry</option>
-				</select>
-			</nui-select>
-			<nui-input>
-				<input type="text" placeholder="Search...">
-			</nui-input>
-			<nui-button><button type="button">Search</button></nui-button>
-		</nui-form-row>
-	</div>
-
-	<p>For a genuinely dense row, <code>size="small"</code> is the compact scale shared with
-		<code>nui-select</code> and <code>nui-input</code> — it is not a per-component override:</p>
-
-	<div class="demo-area">
-		<nui-form-row size="small">
-			<nui-select size="small">
-				<select name="fruit-size-small">
-					<option value="apple">Apple</option>
-					<option value="banana">Banana</option>
-					<option value="cherry">Cherry</option>
-				</select>
-			</nui-select>
-			<nui-input size="small">
-				<input type="text" placeholder="Search...">
-			</nui-input>
-			<nui-button size="small"><button type="button">Search</button></nui-button>
-		</nui-form-row>
-	</div>
-
-	<nui-code>
-		<script type="example" data-lang="html">
-<!-- Default: the form-control scale -->
-<nui-form-row>
-	<nui-select><select>...</select></nui-select>
-	<nui-input><input type="text" placeholder="Search..."></nui-input>
-	<nui-button><button type="button">Search</button></nui-button>
-</nui-form-row>
-
-<!-- Compact: one 2rem row, one label size -->
-<nui-form-row size="small">
-	<nui-select size="small"><select>...</select></nui-select>
-	<nui-input size="small"><input type="text" placeholder="Search..."></nui-input>
-	<nui-button size="small"><button type="button">Search</button></nui-button>
-</nui-form-row>
-		</script>
-	</nui-code>
-</section>
-
-<section>
 	<h2>Button Variants</h2>
 	<p>Use the <code>type</code> or <code>variant</code> attribute on the <code>&lt;nui-button&gt;</code> element to
 		apply different visual styles:</p>

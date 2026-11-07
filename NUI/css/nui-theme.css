@@ -911,22 +911,8 @@ nui-button-container[mode="segmented"] nui-button[state="active"] button {
 /* nui-button enhancements - builds on base button styles */
 nui-button button {
 	min-width: 6rem;
+	font-size: var(--font-size-xsmall);
 	text-transform: uppercase;
-}
-
-/* Compact button — `size="small"`, the counterpart of `nui-select[size="small"]` and
-   `nui-input[size="small"]`: the same 2rem row at `--font-size-small`. The DEFAULT must
-   not come from here: it is the form-control scale (--font-size-base at
-   --nui-form-row-height), because a toolbar that puts a button beside a select is the
-   common case and the two must not read as different control families (issue #85). */
-nui-button[size="small"] {
-	--nui-form-row-height: var(--nui-space-double);
-}
-
-nui-button[size="small"] button {
-	min-height: var(--nui-space-double);
-	font-size: var(--font-size-small);
-	line-height: 1.2;
 }
 
 /* Button flash effect on click */
@@ -5207,8 +5193,8 @@ input[type="button"] {
 	min-height: var(--nui-space-double);
 	padding: var(--nui-space-quarter) var(--nui-space);
 	margin: 0;
-	font-size: var(--font-size-base);
-	line-height: 1.2;
+	font-size: var(--font-size-small);
+	line-height: 0.8rem;
 	font-family: var(--system-ui);
 	background-color: var(--color-highlight-dim);
 	color: var(--color-white);
