@@ -199,6 +199,9 @@ Examples:
 - **Shell:** PowerShell (Windows)
 - **CSS Variables:** Use existing variables from `NUI/css/nui-theme.css`. Never invent new variables.
 - **Testing:** VS Code Live Server at `http://127.0.0.1:5500/Playground/index.html`. If the server is not started and the endpoint is unreachable, ask the user to start it.
+- **Always verify in the Playground, and check for errors.** A change is not done until it has been exercised in the browser — a component that renders but throws on a later interaction is still broken. Two levels, both required:
+  1. **The affected page** — exercise the component the change touches (open it, use it, dismiss it), not just load it.
+  2. **A full sweep** — visit every page in the nav and assert **zero `console.error` and zero `pageerror`**. A change to `NUI/nui.js` or the theme CSS touches every page, so the sweep is the only check that catches collateral damage. Third-party media requests failing (`ERR_BLOCKED_BY_ORB`, `ERR_ABORTED` on external hosts) are not our errors — but a `console.error` from our own code always is.
 
 ## Accessibility
 
