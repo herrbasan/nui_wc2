@@ -2,14 +2,14 @@
 
 This folder contains build and maintenance scripts for the NUI library.
 
-## `update-docs.js`
+## `update-docs.mjs`
 
 The documentation generator. Extracts JSON-LD metadata and LLM Guides from Playground pages to generate `documentation/components.json` — the machine-readable source of truth for LLM context.
 
 ### Usage
 
 ```bash
-node scripts/update-docs.js
+node scripts/update-docs.mjs
 ```
 
 ### What It Does
@@ -47,8 +47,8 @@ Add to your CI pipeline to prevent documentation drift:
 ```yaml
 - name: Verify documentation is up to date
   run: |
-    node scripts/update-docs.js
-    git diff --exit-code documentation/components.json || (echo "Run 'node scripts/update-docs.js' and commit" && exit 1)
+    node scripts/update-docs.mjs
+    git diff --exit-code documentation/components.json || (echo "Run 'node scripts/update-docs.mjs' and commit" && exit 1)
 ```
 
 ### Adding JSON-LD to Pages
@@ -89,6 +89,6 @@ Each page should include a JSON-LD block after the opening tag:
 
 Syncs the repo documentation to the MCP storage box domain `documentation/NUI/` (`\\BADKID\Stuff\MCP_Storage`). Copies each `documentation/{components,addons,guides}/*.md` as `{component,addon,guide}_<name>.md` (hyphens -> underscores) plus `concept_*` / `reference_cheatsheet.md`, prepending fresh frontmatter (title, source path, date). Run after changing repo docs.
 
-``bash
+```bash
 node scripts/sync-storage-docs.mjs
-``
+```

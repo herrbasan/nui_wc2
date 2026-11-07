@@ -29,17 +29,20 @@ Playground/
 │   └── addons/         # Optional module demos
 └── js/main.js          # Navigation configuration
 
-parser/                 # MD-Blocks parser — DOM-free, zero-dependency, spec v1.10
-├── md-blocks.js        # UMD implementation (CJS + <script> + ESM wrapper)
-├── md-blocks.cjs       # CJS entry
-├── md-blocks.mjs       # ESM entry
+parser/                 # MD-Blocks parser — contract entry points + tests
+├── md-blocks.js        # forwarder to NUI/md-blocks.js
+├── md-blocks.cjs       # CJS forwarder
+├── md-blocks.mjs       # ESM forwarder
 └── test/               # zero-dependency runner, §10 conformance, real-world fixtures
 ```
 
-> **The MD-Blocks parser lives in `parser/`, not in `nui.js`.** The format's contract is the
+> **The MD-Blocks parser lives in `NUI/`, beside the library it serves.** The format's contract is the
 > md-blocks repo (spec v1.10, §7 validation, §8 tree, §10 conformance); this repo holds the
-> implementation. It must stay DOM-free or Node and non-browser consumers cannot use it — a
-> browser-bound parser is how the format ended up with three that disagreed. Contract:
+> implementation, in `NUI/md-blocks.js`. It must stay DOM-free or Node and non-browser consumers cannot
+> use it — a browser-bound parser is how the format ended up with three that disagreed. It lives in
+> `NUI/` because that is the folder the library ships as: a consumer who copies `NUI/` gets the
+> parser with it, and the Playground deploy publishes exactly that folder. `parser/` keeps the
+> contract's entry points (the forwarders) and the test suite. Contract:
 > [`documentation/guides/md-blocks-parser.md`](documentation/guides/md-blocks-parser.md).
 
 > **There is no `nui.d.ts`, and there must not be one again.** It was retired on 2026-09-26. Hand-maintained type declarations cannot stay true for a zero-build vanilla-JS library: the file reached 928 lines while knowing nothing about `nui-popover`, `nui-sortable`, `nui-form-row`, `nui-graph`, the file addons, `select-all`/`clearable` or markdown frontmatter — and it declared both `registerFeature` and `registerType` with wrong handler signatures. Nothing consumed it (no `package.json`, no `tsconfig.json`, no `.ts` file, no `@ts-check` in the repo), so it was a fourth, contradictory copy of the API — and this project has no TypeScript anywhere. The machine-readable contract is `documentation/components.json`; the prose contract is `documentation/**/*.md`. If a TypeScript consumer ever needs declarations, **generate** them from `nui.js` — never reintroduce a hand-maintained file.
@@ -48,7 +51,7 @@ parser/                 # MD-Blocks parser — DOM-free, zero-dependency, spec v
 
 - **`/docs`**: Internal **development documentation**. Contains notes, migration guides, component upgrade plans, and archived discussion/planning docs. Not meant for end-users.
 - **`/documentation`**: Official **front-facing documentation** and Ground Truth. Contains the main `DOCUMENTATION.md` orientation guide and the generated `components.json` registry. This is the source of truth for understanding how to use the library.
-- **`documentation/NUI/` — a second copy, in the storage box, NOT in this repo.** ~50 files at MCP-storage path `documentation/NUI/`, alongside the `LLM APIs/`, `The Project/` and `Workshop/` domains. The chat app reads this set. It is a **hand-authored, condensed quick reference — deliberately not a copy of this repo's docs, and nothing generates it** (`scripts/update-docs.js` writes only `documentation/components.json`; `scripts/sync-markdown.js` only copies demo snippets into this repo's own docs). Nothing detects when it goes stale, so it drifts silently: as of September 2026 `component_sortable.md` still documented `nui-sortable-start` / `nui-sortable-end` and `{ fromIndex, toIndex }` — **none of which exist** — three months after they were replaced by `nui-sortable-change`.
+- **`documentation/NUI/` — a second copy, in the storage box, NOT in this repo.** ~50 files at MCP-storage path `documentation/NUI/`, alongside the `LLM APIs/`, `The Project/` and `Workshop/` domains. The chat app reads this set. It is a **hand-authored, condensed quick reference — deliberately not a copy of this repo's docs, and nothing generates it** (`scripts/update-docs.mjs` writes only `documentation/components.json`; `scripts/sync-markdown.mjs` only copies demo snippets into this repo's own docs). Nothing detects when it goes stale, so it drifts silently: as of September 2026 `component_sortable.md` still documented `nui-sortable-start` / `nui-sortable-end` and `{ fromIndex, toIndex }` — **none of which exist** — three months after they were replaced by `nui-sortable-change`.
 
   **So: when you change a component, an addon or a guide here, update the matching file in `documentation/NUI/` in the same session.** Naming is `component_<name>.md`, `addon_<name>.md`, `guide_<name>.md`, `concept_<name>.md`, `reference_<name>.md`; the domain's own `Agents.md` §3 *Source Mapping* lists which repo files each class derives from. Keep it condensed — that is the point of the domain — and bump the frontmatter `date:`.
 
@@ -91,7 +94,7 @@ Anything hand-written into the sprite is erased by the next generator run. Addin
 
 ## Component Registry
 
-> **📋 Component Registry:** `documentation/components.json` is the **source of truth** for all components, their events, imports, and documentation paths. When adding or modifying components, run `node scripts/update-docs.js` to update the registry. This file contains `docPath` fields pointing to pure Markdown files that provide crucial instructions for how to use each component. Read those markdown files instead of guessing.
+> **📋 Component Registry:** `documentation/components.json` is the **source of truth** for all components, their events, imports, and documentation paths. When adding or modifying components, run `node scripts/update-docs.mjs` to update the registry. This file contains `docPath` fields pointing to pure Markdown files that provide crucial instructions for how to use each component. Read those markdown files instead of guessing.
 
 ---
 

@@ -1,23 +1,22 @@
 /*
 	ESM entry for the MD-Blocks parser.
 
-	The implementation lives in md-blocks.js, written as a UMD factory so the same file serves
+	The implementation lives in NUI/md-blocks.js, written as a UMD factory so the same file serves
 	CJS (require), a classic <script> tag, and this module — no build step, no duplication. The
 	import below evaluates that factory; every consumer then shares one instance.
+
+	Forwarder since nui_wc2#84: the implementation moved into `NUI/`, the folder the library
+	ships as. See `NUI/md-blocks.mjs`.
 */
 
-import './md-blocks.js';
-
-const api = globalThis.MDBlocks;
-if (!api) throw new Error('MD-Blocks parser failed to initialise: md-blocks.js did not publish MDBlocks');
-
-export const SPEC_VERSION = api.SPEC_VERSION;
-export const DEFAULT_EXTENSIONS = api.DEFAULT_EXTENSIONS;
-export const MDBlocksError = api.MDBlocksError;
-export const parse = api.parse;
-export const parseOrThrow = api.parseOrThrow;
-export const validate = api.validate;
-export const errorsOf = api.errorsOf;
-export const warningsOf = api.warningsOf;
-
-export default api;
+export {
+	SPEC_VERSION,
+	DEFAULT_EXTENSIONS,
+	MDBlocksError,
+	parse,
+	parseOrThrow,
+	validate,
+	errorsOf,
+	warningsOf,
+	default as default
+} from '../NUI/md-blocks.mjs';

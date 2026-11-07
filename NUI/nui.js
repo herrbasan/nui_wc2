@@ -1,5 +1,17 @@
 // ################################# CORE SYSTEMS
 
+// The MD-Blocks parser is a separate, environment-free module that ships WITH the library —
+// it lives beside this file so the `NUI/` folder stays self-contained for consumers who copy
+// it wholesale, and for the Playground deploy that publishes exactly that folder.
+//
+// It is imported for its side effect: the file is a UMD factory that publishes the API on
+// `globalThis.MDBlocks`. A `.js` import is deliberate — a `.mjs` import would make the
+// browser fetch a `.mjs`, and GitHub Pages has a documented history of serving those as
+// `text/html`, which blocks module loading and would take the WHOLE library down, not just
+// markdown. ES module evaluation order guarantees the import is evaluated before this
+// module's body runs, so the global is populated by the time anything below asks for it.
+import './md-blocks.js';
+
 const components = {};
 
 const nuiBasePath = new URL('.', import.meta.url).pathname.replace(/\/$/, '');
@@ -9415,17 +9427,17 @@ function renderFrontmatter(data, options) {
 // the spec lives here — the editor contract (§6.1 chunking, §6.2 kind stamping,
 // §7 validation, §8 round-trip) is a separate concern and is not implemented.
 //
-// This runs on the SOURCE, before markdown conversion, because directives are
-// recognised from the Markdown block structure and never by text replacement.
-// Fenced code is tracked so a directive shown as an example stays literal.
+// The PARSING half is not here either: it is the environment-free module beside
+// this file (./md-blocks.js), which implements the spec's tree (§8) and is the
+// one implementation every consumer shares. This file adapts that tree to the
+// shapes the renderer below walks, and nothing more — the renderer owns
+// presentation, the parser owns structure.
 
-const MB_DIRECTIVE_RE = /^<!--\s*mb:(\/?)([a-z]+)((?:\s[^>]*?)?)\s*-->[ \t]*$/;
-const MB_ATTR_RE = /([a-z][a-z0-9_-]*)=("[^"]*"|\[[^\]]*\]|\{[^}]*\}|[^\s]+)/g;
-const MB_STRUCTURAL = new Set(['main', 'section', 'block', 'columns', 'col', 'var']);
-const MB_IMAGE_EXT_RE = /\.(png|jpe?g|gif|webp|avif|svg|bmp)$/i;
-const MB_VIDEO_EXT_RE = /\.(mp4|webm|mov|m4v|ogv)$/i;
-const MB_AUDIO_EXT_RE = /\.(mp3|wav|ogg|oga|m4a|flac)$/i;
-const MB_EXT_RE = /\.(png|jpe?g|gif|webp|avif|svg|bmp|mp4|webm|mov|m4v|ogv|mp3|wav|ogg|oga|m4a|flac|pdf|zip)$/i;
+// The parser's API, published on the global by the UMD factory in ./md-blocks.js.
+const MDBlocks = globalThis.MDBlocks;
+if (!MDBlocks || typeof MDBlocks.parse !== 'function') {
+	throw new Error('NUI: the MD-Blocks parser (./md-blocks.js) did not publish MDBlocks');
+}
 
 // Identifier-safe preset/kind name — presets are identifiers in the format; this
 // keeps a malformed one from escaping into a class attribute.
@@ -9433,262 +9445,110 @@ function mbIdent(value) {
 	return String(value == null ? '' : value).toLowerCase().replace(/[^a-z0-9_-]/g, '');
 }
 
-function mbKindFromDest(dest) {
-	const clean = String(dest || '').split('?')[0].split('#')[0];
-	if (MB_VIDEO_EXT_RE.test(clean)) return 'video';
-	if (MB_AUDIO_EXT_RE.test(clean)) return 'audio';
-	if (MB_IMAGE_EXT_RE.test(clean)) return 'image';
+// The kind a destination implies, ignoring a stamped kind — the link class refines to
+// video | audio | file (§4.2), never to image: an image is a shape, not an extension.
+// The extension table is the parser's profile data, so it is read from there rather
+// than kept here: two tables would be two answers.
+function mbInferredKind(dest, isImage) {
+	if (isImage) return 'image';
+	const clean = String(dest || '').split('#')[0].split('?')[0];
+	const dot = clean.lastIndexOf('.');
+	const ext = dot === -1 ? '' : clean.slice(dot + 1).toLowerCase();
+	const profile = MDBlocks.DEFAULT_EXTENSIONS;
+	if (profile.video.indexOf(ext) !== -1) return 'video';
+	if (profile.audio.indexOf(ext) !== -1) return 'audio';
 	return 'file';
 }
 
-// `key=value`, one form only, on the opening line. A value starting with ", [ or {
-// is strict JSON; malformed JSON stays as authored text rather than being
-// reinterpreted as a string (the validator reports it).
-function mbParseAttrs(text) {
-	const attrs = {};
-	const src = String(text || '');
-	let i = 0;
-	while (i < src.length) {
-		while (i < src.length && /\s/.test(src[i])) i++;
-		if (i >= src.length) break;
-		const km = src.slice(i).match(/^([a-z][a-z0-9_-]*)=/);
-		if (!km) {
-			while (i < src.length && !/\s/.test(src[i])) i++;
-			continue;
-		}
-		const key = km[1];
-		i += km[0].length;
-		const start = i;
-		const c = src[i];
-		if (c === '"') {
-			i++;
-			while (i < src.length) {
-				if (src[i] === '\\') { i += 2; continue; }
-				if (src[i] === '"') { i++; break; }
-				i++;
-			}
-		} else if (c === '{' || c === '[') {
-			let depth = 0, inStr = false;
-			while (i < src.length) {
-				const ch = src[i];
-				if (inStr) {
-					if (ch === '\\') { i += 2; continue; }
-					if (ch === '"') inStr = false;
-				} else {
-					if (ch === '"') inStr = true;
-					else if (ch === '{' || ch === '[') depth++;
-					else if (ch === '}' || ch === ']') {
-						depth--;
-						if (depth === 0) { i++; break; }
-					}
-				}
-				i++;
-			}
-		} else {
-			while (i < src.length && !/\s/.test(src[i])) i++;
-		}
-		const raw = src.slice(start, i);
-		let value = raw;
-		if (c === '"' || c === '[' || c === '{') {
-			try { value = JSON.parse(raw); } catch { /* keep authored text */ }
-		}
-		attrs[key] = value;
+// Whether the destination's extension is one the profile knows as media. A link to
+// something that is not a media file — a repository, a page — is a plain link, and a
+// block holding one is not a media block even when its preset names a media family
+// (`preset=link:cta` is a call to action, not a download).
+function mbIsMediaDest(dest) {
+	const clean = String(dest || '').split('#')[0].split('?')[0];
+	const dot = clean.lastIndexOf('.');
+	const slash = Math.max(clean.lastIndexOf('/'), clean.lastIndexOf('\\'));
+	if (dot === -1 || dot < slash) return false;
+	const ext = clean.slice(dot + 1).toLowerCase();
+	const profile = MDBlocks.DEFAULT_EXTENSIONS;
+	return profile.video.indexOf(ext) !== -1 || profile.audio.indexOf(ext) !== -1 ||
+		profile.image.indexOf(ext) !== -1 || profile.file.indexOf(ext) !== -1;
+}
+
+// A markdown run becomes the renderer's md node. The parser hands over a TRIMMED
+// run (§8 may normalise whitespace around directives); the renderer only ever
+// joins these lines back together, so the trim is invisible to the output.
+function mbMarkdownNodes(markdown) {
+	return markdown ? [{ type: 'md', lines: markdown.split('\n') }] : [];
+}
+
+// Canonical node -> renderer node. The renderer walks { type:'md', lines },
+// { type:'block', nodes }, { type:'columns', cols[].nodes } and { type:'var' }.
+// The canonical tree uses { type:'markdown', markdown }, section.children,
+// block.markdown and col.children — so the mapping is structural only: no
+// parsing decision is reinterpreted here, and the canonical fields (attrs,
+// line/endLine, the media verdict) are carried through untouched.
+function mbAdaptNode(node) {
+	if (!node) return node;
+	if (node.type === 'markdown') {
+		return { ...node, type: 'md', lines: node.markdown.split('\n') };
 	}
-	return attrs;
+	if (node.type === 'block') {
+		// A block holds Markdown only (§3) — the canonical parser reports a nested
+		// block or columns as an error rather than nesting them, so the body is
+		// always one markdown run.
+		return { ...node, nodes: mbMarkdownNodes(node.markdown) };
+	}
+	if (node.type === 'columns') {
+		return {
+			...node,
+			nodes: [],
+			cols: (node.cols || []).map(col => ({
+				...col,
+				nodes: (col.children || []).map(mbAdaptNode)
+			}))
+		};
+	}
+	return node;
 }
 
-function mbFenceAt(line) {
-	const m = String(line).match(/^[ \t]*(`{3,}|~{3,})(.*)$/);
-	if (!m) return null;
-	if (m[1][0] === '`' && m[2].includes('`')) return null;
-	return { char: m[1][0], len: m[1].length, info: m[2].trim() };
+// Canonical document -> the tree the renderer walks.
+//
+// The canonical §8 tree keeps a section's vars in `vars` and its content in
+// `children`; the renderer walks one node list. A var is authored as a
+// directive in the flow, so it is spliced back into that list at the position
+// its source line gives it — otherwise a var would stop rendering where it was
+// written and drift to the end of its section.
+function mbAdaptSection(section) {
+	const entries = [
+		...(section.children || []).map((node, index) => ({ node, index })),
+		...(section.vars || []).map((node, index) => ({ node, index }))
+	];
+	const nodes = entries
+		.sort((a, b) => {
+			const lineA = a.node.line ?? Number.POSITIVE_INFINITY;
+			const lineB = b.node.line ?? Number.POSITIVE_INFINITY;
+			return (lineA - lineB) || (a.index - b.index);
+		})
+		.map(entry => mbAdaptNode(entry.node));
+	return { ...section, nodes };
 }
 
-function mbIsThematicBreak(line) {
-	return /^[ \t]*(-{3,}|\*{3,}|_{3,})[ \t]*$/.test(line);
+function mbAdaptDocument(doc) {
+	return {
+		...doc,
+		mains: (doc.mains || []).map(main => ({
+			...main,
+			sections: (main.sections || []).map(mbAdaptSection)
+		}))
+	};
 }
 
-// Source -> tree. Containers hold `nodes` (rendered children) and `buf` (markdown
-// accumulated since the last structural marker). A structural directive flushes
-// the run — the §6.1 chunking rule, so two parsers agree on boundaries.
+// The document parser. The canonical parser never throws: it reports diagnostics
+// and returns a walkable tree, and an invalid document is still rendered from
+// what it could parse.
 function parseBlocks(src) {
-	let frontmatter = null;
-	let body = String(src || '');
-	const fm = parseFrontmatter(body);
-	if (fm && fm.data) {
-		frontmatter = fm.data;
-		body = fm.content;
-	}
-	const lines = body.replace(/\r\n/g, '\n').split('\n');
-	// A document is one or more MAINS. A main is the chrome scope: the unit a
-	// renderer fragments into surfaces (slides, printed pages, one scrolling
-	// region) and the only place `repeat` chrome attaches. A document with no
-	// `mb:main` has exactly one implicit main, so plain documents need nothing.
-	const doc = { frontmatter, mains: [] };
-	let main = { attrs: {}, sections: [] };
-	doc.mains.push(main);
-	let section = { attrs: {}, vars: [], nodes: [], buf: [] };
-	main.sections.push(section);
-	let block = null, columns = null, col = null;
-	let fence = null, varFence = null, expectVar = null;
-	let prevBlank = true;
-
-	// Innermost open container wins. A block is always the innermost when open — it
-	// can sit at section level or inside a column — so it must be tested first, or a
-	// block opened inside a column would have its content land in the column instead.
-	// Plain Markdown that carries no content — blank lines, or HTML comments only
-	// (which every renderer drops, per the format's comment rule). A scope holding
-	// nothing but a comment is empty, so a file-header comment never becomes a region.
-	const blankMd = (lines) => lines.join('\n').replace(/<!--[\s\S]*?-->/g, '').trim() === '';
-	const container = () => block || col || section;
-	const flush = (c) => {
-		if (!c || !c.buf.length) return;
-		if (!blankMd(c.buf)) c.nodes.push({ type: 'md', lines: c.buf.slice() });
-		c.buf.length = 0;
-	};
-	const push = (node) => { container().nodes.push(node); };
-	const closeCol = () => {
-		if (!col) return;
-		flush(col);
-		if (columns) columns.cols.push(col);
-		col = null;
-	};
-
-	for (const line of lines) {
-		// A var's fenced payload is one lexical unit with its marker.
-		if (varFence) {
-			const f = mbFenceAt(line);
-			if (f && f.char === varFence.char && f.len >= varFence.len) {
-				const raw = varFence.body.join('\n');
-				let value = raw;
-				if (varFence.info === 'json') {
-					try { value = JSON.parse(raw || 'null'); } catch { value = raw; }
-				}
-				varFence.node.value = value;
-				varFence.node.fenced = varFence.info;
-				varFence = null;
-			} else {
-				varFence.body.push(line);
-			}
-			continue;
-		}
-
-		if (fence) {
-			container().buf.push(line);
-			const f = mbFenceAt(line);
-			if (f && f.char === fence.char && f.len >= fence.len) fence = null;
-			prevBlank = false;
-			continue;
-		}
-
-		const dm = line.match(MB_DIRECTIVE_RE);
-		if (dm && MB_STRUCTURAL.has(dm[2])) {
-			const attrs = mbParseAttrs(dm[3]);
-			const closing = dm[1] === '/';
-			if (dm[2] === 'main') {
-				// A main is a chrome scope, and the marker is a BREAK, not a container: it
-				// ends where the next one begins, or at the end of the document. So there is
-				// no closing form, and writing one is an authoring error worth saying out
-				// loud rather than quietly ending a scope the author never ended.
-				if (closing) {
-					console.warn('[nui-markdown] mb:/main is not a closing form — a main ends where the ' +
-						'next mb:main begins, or at the end of the document. The marker was ignored.');
-				} else {
-					flush(container());
-					const empty = !section.nodes.length && !section.buf.length &&
-						!Object.keys(section.attrs).length && !section.vars.length &&
-						main.sections.length === 1 && !Object.keys(main.attrs).length;
-					if (empty) {
-						// A document that opens with a marker annotates its implicit main rather
-						// than leaving an empty scope in front of it.
-						main.attrs = attrs;
-					} else {
-						main = { attrs, sections: [] };
-						doc.mains.push(main);
-						section = { attrs: {}, vars: [], nodes: [], buf: [] };
-						main.sections.push(section);
-					}
-				}
-			} else if (dm[2] === 'section') {
-				// Annotates the section it appears in. First one wins.
-				if (!Object.keys(section.attrs).length) section.attrs = attrs;
-			} else if (dm[2] === 'var') {
-				flush(section);
-				const node = { type: 'var', name: attrs.name, value: attrs.value };
-				section.vars.push(node);
-				// Also a node in the flow, so a DISPLAY renderer can show it at the position
-				// it was authored. A collection renderer reads `section.vars` and ignores
-				// the node; the node is the reference, so a later fence payload lands on it.
-				section.nodes.push(node);
-				if (attrs.name && attrs.value === undefined) expectVar = node;
-			} else if (dm[2] === 'block') {
-				if (closing) {
-					if (block) { const b = block; block = null; flush(b); push(b); }
-				} else {
-					if (block) { const b = block; block = null; flush(b); push(b); }
-					flush(container());
-					block = { type: 'block', attrs, nodes: [], buf: [] };
-				}
-			} else if (dm[2] === 'col') {
-				if (columns) {
-					closeCol();
-					col = { type: 'col', attrs, nodes: [], buf: [] };
-				}
-			} else if (dm[2] === 'columns') {
-				if (closing) {
-					closeCol();
-					if (columns) { const c = columns; columns = null; flush(c); push(c); }
-				} else {
-					if (columns) { closeCol(); const c = columns; columns = null; flush(c); push(c); }
-					flush(container());
-					columns = { type: 'columns', attrs, cols: [], nodes: [], buf: [] };
-				}
-			}
-			prevBlank = true;   // a directive is not a paragraph line
-			continue;
-		}
-
-		// A valueless var waits only for its payload fence; blank lines are legal between.
-		if (expectVar) {
-			if (line.trim() === '') continue;
-			const vf = mbFenceAt(line);
-			if (vf && (vf.info === 'json' || vf.info === 'text')) {
-				varFence = { char: vf.char, len: vf.len, info: vf.info, body: [], node: expectVar };
-				expectVar = null;
-				continue;
-			}
-			expectVar = null;
-		}
-
-		const opened = mbFenceAt(line);
-		if (opened) {
-			fence = { char: opened.char, len: opened.len };
-			container().buf.push(line);
-			prevBlank = false;
-			continue;
-		}
-
-		// A root-level thematic break starts the next section. It counts only when a
-		// blank line precedes it — otherwise CommonMark reads it as a setext H2 and it
-		// is content. A section break is structure and is never drawn.
-		if (!block && !columns && prevBlank && mbIsThematicBreak(line)) {
-			flush(section);
-			section = { attrs: {}, vars: [], nodes: [], buf: [] };
-			main.sections.push(section);
-			prevBlank = true;
-			continue;
-		}
-
-		container().buf.push(line);
-		prevBlank = line.trim() === '';
-	}
-
-	// Unterminated structure at EOF: keep every node rather than dropping content.
-	closeCol();
-	if (columns) { const c = columns; columns = null; flush(c); push(c); }
-	if (block) { const b = block; block = null; flush(b); push(b); }
-	doc.mains.forEach((m) => m.sections.forEach((s) => flush(s)));
-	return doc;
+	return mbAdaptDocument(MDBlocks.parse(src));
 }
 
 function mbFormatAttrs(attrs) {
@@ -9778,8 +9638,16 @@ function serializeBlocks(doc) {
 }
 
 // Media is recognised only when the FIRST node of a block is the media itself;
-// everything after it is the caption. `kind` is inferred when hand-authored and
-// authoritative when stamped by an editor (§6.2).
+// everything after it is the caption.
+//
+// The SHAPE is found here — which authored form the block takes, and where the media
+// ends and the caption begins. The KIND is the parser's verdict (§4.2/§6.2): the parser
+// classified the first node, and a stamped kind is authoritative when an editor wrote
+// one. So this function never decides image/video/audio/file — it asks the parser, and
+// the extension table lives in one place.
+//
+// A link to something that is not a media file is not a media block, however its preset
+// reads: `preset=link:cta` is a call to action, not a download.
 function mbDetectMedia(block) {
 	const nodes = block.nodes;
 	const first = nodes[0];
@@ -9797,28 +9665,31 @@ function mbDetectMedia(block) {
 	const LINK_ITEM = /^(?:[-*+]|\d+\.)\s+\[([^\]]+)\]\(\s*(\S+?)(?:\s+["'][^"']*["'])?\s*\)$/;
 	const LINKED_ITEM = /^(?:[-*+]|\d+\.)\s+\[!\[([^\]]*)\]\(\s*(\S+?)(?:\s+["'][^"']*["'])?\s*\)\]\(\s*(\S+?)(?:\s+["'][^"']*["'])?\s*\)$/;
 
-	let kind = null, consumed = 0, isList = false;
+	let shape = null, consumed = 0, dest = null;
 	let items = null;   // link-class only: [{ dest, text, poster }] in authored order
 	if (LINKED.test(head)) {
+		// A linked image — the poster is the image, the link is where it goes.
 		const m = head.match(LINKED);
-		kind = mbKindFromDest(m[3]);
+		shape = 'linked';
+		dest = m[3];
 		items = [{ dest: m[3], text: m[1], poster: m[2] }];
 		consumed = start + 1;
 	} else if (IMG.test(head)) {
-		kind = 'image';
+		shape = 'image';
 		consumed = start + 1;
 	} else if (ITEM.test(head)) {
 		let j = start;
 		while (j < lines.length && (!lines[j].trim() || ITEM.test(lines[j].trim()))) j++;
-		if (j > start) { kind = 'image'; consumed = j; isList = true; }
-	} else if (LINK.test(head) && MB_EXT_RE.test(head.match(LINK)[2].split('?')[0].split('#')[0])) {
+		if (j > start) { shape = 'image-list'; consumed = j; }
+	} else if (LINK.test(head) && mbIsMediaDest(head.match(LINK)[2])) {
 		const m = head.match(LINK);
-		kind = mbKindFromDest(m[2]);
+		shape = 'link';
+		dest = m[2];
 		items = [{ dest: m[2], text: m[1], poster: null }];
 		consumed = start + 1;
-	} else if (LINKED_ITEM.test(head) || (LINK_ITEM.test(head) && MB_EXT_RE.test(head.match(LINK_ITEM)[2].split('?')[0].split('#')[0]))) {
-		// Flat list of media links — one leaf in list form (§4.2), kind from the
-		// first item. The authored form is preserved: a one-item list stays a list.
+	} else if (LINKED_ITEM.test(head) || (LINK_ITEM.test(head) && mbIsMediaDest(head.match(LINK_ITEM)[2]))) {
+		// Flat list of media links — one leaf in list form (§4.2). The authored form
+		// is preserved: a one-item list stays a list.
 		let j = start;
 		items = [];
 		while (j < lines.length) {
@@ -9827,18 +9698,23 @@ function mbDetectMedia(block) {
 			const lp = t.match(LINKED_ITEM);
 			const li = t.match(LINK_ITEM);
 			if (lp) items.push({ dest: lp[3], text: lp[1], poster: lp[2] });
-			else if (li && MB_EXT_RE.test(li[2].split('?')[0].split('#')[0])) items.push({ dest: li[2], text: li[1], poster: null });
+			else if (li && mbIsMediaDest(li[2])) items.push({ dest: li[2], text: li[1], poster: null });
 			else break;
 			j++;
 		}
-		if (items.length) { kind = mbKindFromDest(items[0].dest); consumed = j; isList = true; }
+		if (items.length) { shape = 'link-list'; dest = items[0].dest; consumed = j; }
 		else items = null;
 	}
-	if (!kind) return null;
+	if (!shape) return null;
 
-	const inferred = kind;
-	// A stamped kind is authoritative — never silently reclassified.
-	if (block.attrs.kind) kind = mbIdent(block.attrs.kind);
+	const isImage = shape === 'image' || shape === 'image-list';
+	// The parser's verdict when it has one — it carries the stamped kind. A block the
+	// parser did not classify as media (a linked image whose link is not a media file,
+	// say) still renders, with the kind its destination implies.
+	const inferred = mbInferredKind(dest, isImage);
+	const kind = block.mediaClass
+		? (block.kindStamped ? mbIdent(block.kind) : block.kind)
+		: inferred;
 
 	const rest = lines.slice(consumed);
 	const captions = [];
@@ -9848,7 +9724,7 @@ function mbDetectMedia(block) {
 	return {
 		kind,
 		inferred,
-		isList,
+		isList: shape === 'image-list' || shape === 'link-list',
 		items,
 		mediaHtml: markdownCore(lines.slice(start, consumed).join('\n')),
 		captionHtml: mbRenderNodes(captions),

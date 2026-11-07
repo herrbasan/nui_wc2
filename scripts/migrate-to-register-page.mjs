@@ -1,9 +1,12 @@
 // Auto-generated migration script — run once to convert all pages to registerPage()
-// Usage: node scripts/migrate-to-register-page.js
+// Usage: node scripts/migrate-to-register-page.mjs
 // After running: delete this file, it's a one-shot tool.
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const pagesDir = path.join(__dirname, '..', 'Playground', 'pages');
 const outputFile = path.join(__dirname, '..', 'Playground', 'js', 'page-init.js');

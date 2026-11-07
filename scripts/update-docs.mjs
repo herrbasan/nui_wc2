@@ -6,11 +6,14 @@
  * then generates components.json as the machine-readable source of truth.
  * 
  * Usage:
- *   node scripts/update-docs.js
+ *   node scripts/update-docs.mjs
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Configuration
 const PAGES_DIR = path.join(__dirname, '..', 'Playground', 'pages');
@@ -143,7 +146,6 @@ function generateComponentsJson() {
 		patterns: {},
 		events: []
 	};
-	
 	// Track seen API entries to detect duplicates
 	const seenApi = {
 		root: new Set(),
@@ -287,11 +289,38 @@ function generateComponentsJson() {
 	
 	// Write output
 	console.log('[update-docs] Writing components.json...');
-	
+
 	const outputDir = path.dirname(OUTPUT_FILE);
 	if (!fs.existsSync(outputDir)) {
 		fs.mkdirSync(outputDir, { recursive: true });
 	}
+
+	// `generated` means "when this content last changed", not "when this script last ran".
+	// A no-op regeneration must produce a byte-identical file, or the CI sync check can
+	// never pass — it diffs the file, and a fresh timestamp is always a difference.
+	// So the existing stamp survives an unchanged regeneration, and a malformed or
+	// missing file simply gets the current one.
+	const withoutStamp = (value) => {
+		if (!value || typeof value !== 'object') return value;
+		const { generated, ...rest } = value;
+		return rest;
+	};
+
+	let previous = null;
+	if (fs.existsSync(OUTPUT_FILE)) {
+		try {
+			previous = JSON.parse(fs.readFileSync(OUTPUT_FILE, 'utf-8'));
+		} catch (err) {
+			console.warn(`[update-docs] Existing components.json is not valid JSON (${err.message}) — regenerating`);
+		}
+	}
+
+	if (previous && typeof previous.generated === 'string' &&
+		JSON.stringify(withoutStamp(previous)) === JSON.stringify(withoutStamp(result))) {
+		result.generated = previous.generated;
+		console.log('[update-docs] Content unchanged — keeping the existing timestamp');
+	}
+
 	fs.writeFileSync(OUTPUT_FILE, JSON.stringify(result, null, '\t'));
 	console.log(`[update-docs] Generated: ${OUTPUT_FILE}`);
 	
@@ -300,7 +329,7 @@ function generateComponentsJson() {
 }
 
 // Run if called directly
-if (require.main === module) {
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
 	try {
 		generateComponentsJson();
 	} catch (err) {
@@ -310,4 +339,4 @@ if (require.main === module) {
 	}
 }
 
-module.exports = { generateComponentsJson, extractPageData };
+export { generateComponentsJson, extractPageData };

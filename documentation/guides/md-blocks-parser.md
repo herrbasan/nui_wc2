@@ -1,8 +1,8 @@
 # MD-Blocks parser
 
 The environment-free parser for the [MD-Blocks](https://github.com/herrbasan/md-blocks) format,
-spec **v1.10**. Source: [`parser/`](../parser/) — `md-blocks.js`, with a CJS entry, an ESM entry
-and a test suite beside it.
+spec **v1.10**. Source: [`NUI/md-blocks.js`](../NUI/md-blocks.js) — with a CJS entry, an ESM entry
+and a test suite under [`parser/`](../parser/).
 
 The format's contract lives in the md-blocks repo; this is the implementation the contract points
 at. It replaces three parsers that had drifted apart — `parseBlocks()` in `NUI/nui.js`, the CJS
@@ -13,20 +13,29 @@ at. It replaces three parsers that had drifted apart — `parseBlocks()` in `NUI
 dependencies, no build step. Node loads it with `require()`, the browser with `<script>` or the ESM
 entry, and every consumer gets the same tree from the same source.
 
+**Where it lives.** The implementation sits in `NUI/` — the folder the library ships as — so a
+consumer who copies `NUI/` gets the parser with it, and the Playground deploy (which publishes
+exactly that folder) needs no extra step. `parser/` keeps the contract's entry points: the
+`parser/md-blocks.{js,cjs,mjs}` forwarders and the test suite. There is one implementation;
+the two directories are two ways in.
+
 ---
 
 ## Using it
 
 ```js
 // Node — CJS
-const { parse, parseOrThrow, validate } = require('./parser/md-blocks.js');
+const { parse, parseOrThrow, validate } = require('./NUI/md-blocks.cjs');
 
 // Node — ESM
-import { parse } from './parser/md-blocks.mjs';
+import { parse } from './NUI/md-blocks.mjs';
 
 // Browser
-import { parse } from '../parser/md-blocks.mjs';
+import { parse } from './NUI/md-blocks.mjs';
 ```
+
+The `parser/` forwarders take the same arguments and are equivalent:
+`require('./parser/md-blocks.cjs')` and `import './parser/md-blocks.mjs'`.
 
 ```js
 const doc = parse(source);                    // never throws, collects diagnostics
@@ -197,9 +206,10 @@ that the other two implementations can be brought onto it instead of drifting.
 
 1. **A link to an image extension.** §4.2 says the refinement inside the link class is `video`,
    `audio` or `file`, decided by the destination; so `[Photo](shot.jpg)` in a block reads `file`.
-   `NUI/nui.js` currently reads `.jpg` as `image`, which would put the `image` kind on a link-class
-   node. §6.2 permits profiles to disagree, but the two implementations in this repo should not.
-   **Spec decision wanted.**
+   **Decided:** the spec reading stands, and `NUI/nui.js` now matches it — the renderer takes its
+   kind from this parser, so a `.jpg` link is a `file`, not an `image`
+   ([nui_wc2#84](https://github.com/herrbasan/nui_wc2/issues/84)). §6.2 permits profiles to
+   disagree, but the two implementations in this repo do not.
 2. **`mb:section` and the flush rule.** §6.1 lists "a structural directive" among the things that
    flush the implicit Markdown run; §4.1 calls `mb:section` an annotation that "still applies to that
    section" wherever it is written. Read literally, a section marker in the middle of a section
@@ -239,10 +249,11 @@ a boolean or `null` when it looks like one. `id=1` therefore becomes the number 
 - **A serializer.** §8's invariant — `parse(serialize(parse(src))) ≡ parse(src)` — needs one, and the
   tree carries what it needs (`attrs` for authored spelling, `markdown` verbatim, `closedBy`,
   `kindStamped`). It is the next module, not this one.
-- **A renderer.** `NUI/nui.js` still renders from its own `parseBlocks()`. Switching it to this
-  parser is the consumer migration, and it is what proves the extraction: `nui-blocks`, the nui
-  editor, the nSpeech narration extractor (which becomes a read of the tree, not a parser), and
-  `md-blocks/tools/{validate,render}.js` becoming thin callers.
+- **The other consumers.** `NUI/nui.js` now renders from this parser — it adapts the tree to the
+  shapes its renderer walks, and takes the media verdict from here rather than deriving its own.
+  What is left is the migration of the consumers outside this repo: `md-blocks/tools/{validate,render}.js`
+  become thin callers, and the nSpeech narration extractor (which becomes a read of the tree, not a
+  parser).
 
 ---
 
