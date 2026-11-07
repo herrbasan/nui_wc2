@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>NUI — nui-lightbox declarative open</title>
+<style>
+	body { font: 14px/1.5 system-ui, sans-serif; margin: 2rem; max-width: 60rem; }
+	h1 { font-size: 1.2rem; }
+	#summary { padding: .75rem 1rem; border-radius: .5rem; margin: 1rem 0; font-weight: 600; }
+	#summary.pass { background: #e6f4ea; color: #14532d; }
+	#summary.fail { background: #fdecea; color: #7f1d1d; }
+	ol { padding-left: 1.5rem; }
+	li { margin: .35rem 0; }
+	li.pass::marker { color: #16a34a; }
+	li.fail { color: #b91c1c; }
+	code { background: #f1f3f4; padding: .1rem .3rem; border-radius: .25rem; }
+	.detail { color: #666; font-size: .9em; }
+	#stage { position: absolute; left: -9999px; top: 0; }
+</style>
+</head>
+<body>
+<h1>nui-lightbox — declarative open checks</h1>
+<p>The documented markup carries no script: wrap images in <code>&lt;nui-lightbox&gt;</code>
+and clicking one opens it. These checks exercise exactly that, because the component
+shipped a collector and a dialog but no click path (issues #65 / #72). Open through the
+dev server: <code>http://127.0.0.1:5500/test/nui-lightbox.test.html</code></p>
+<div id="summary">running…</div>
+<ol id="results"></ol>
+<div id="stage"></div>
+
+<script type="module">
+const { nui } = await import('../NUI/nui.js');
+await import('../NUI/lib/modules/nui-lightbox.js');
+
+const results = [];
+
+function check(name, fn) {
+	try {
+		const problem = fn();
+		if (problem) { results.push({ name, ok: false, detail: problem }); return; }
+		results.push({ name, ok: true, detail: '' });
+	} catch (err) {
+		results.push({ name, ok: false, detail: err && err.message ? err.message : String(err) });
+	}
+}
+
+const IMG = (n) => `<img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" data-lightbox-src="full${n}.jpg" alt="Photo ${n}">`;
+
+// A 1x1 transparent PNG avoids network noise; the src is irrelevant to the checks.
+const mount = (inner) => {
+	const host = document.createElement('nui-lightbox');
+	host.innerHTML = inner;
+	document.getElementById('stage').appendChild(host);
+	return host;
+};
+
+const teardown = (host) => {
+	try { host.close(); } catch (e) { /* not open */ }
+	if (host.dialog && host.dialog.open) host.dialog.close();
+	host.remove();
+};
+
+const nextFrame = () => new Promise((r) => requestAnimationFrame(() => r()));
+
+// ── the documented markup is enough ─────────────────────────────────────────
+check('clicking a wrapped image opens the lightbox', () => {
+	const host = mount(IMG(1) + IMG(2) + IMG(3));
+	const img = host.querySelectorAll('img')[1];
+	img.click();
+	const open = !!host.dialog.open;
+	teardown(host);
+	return open ? null : 'the dialog did not open';
+});
+
+check('it opens on the image that was clicked', () => {
+	const host = mount(IMG(1) + IMG(2) + IMG(3));
+	host.querySelectorAll('img')[2].click();
+	const idx = host.currentIndex;
+	const src = host.items[idx] && host.items[idx].src;
+	teardown(host);
+	return src === 'full3.jpg' ? null : `expected full3.jpg, got ${src}`;
+});
+
+check('the collected order matches the document order', () => {
+	const host = mount(IMG(1) + IMG(2));
+	host.querySelectorAll('img')[0].click();
+	const srcs = host.items.map((i) => i.src).join(',');
+	teardown(host);
+	return srcs === 'full1.jpg,full2.jpg' ? null : 'order was ' + srcs;
+});
+
+// ── the trigger is a button, so it must behave like one ─────────────────────
+check('triggers are marked role=button and focusable', () => {
+	const host = mount(IMG(1) + IMG(2));
+	const img = host.querySelector('img');
+	const ok = img.getAttribute('role') === 'button' && img.getAttribute('tabindex') === '0';
+	teardown(host);
+	return ok ? null : `role=${img.getAttribute('role')} tabindex=${img.getAttribute('tabindex')}`;
+});
+
+check('Enter on a focused trigger opens it', () => {
+	const host = mount(IMG(1) + IMG(2));
+	const img = host.querySelectorAll('img')[1];
+	img.focus();
+	img.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+	const open = !!host.dialog.open;
+	const idx = host.currentIndex;
+	teardown(host);
+	return open && idx === 1 ? null : `open=${open} index=${idx}`;
+});
+
+check('Space on a focused trigger opens it', () => {
+	const host = mount(IMG(1));
+	const img = host.querySelector('img');
+	img.focus();
+	img.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
+	const open = !!host.dialog.open;
+	teardown(host);
+	return open ? null : 'the dialog did not open';
+});
+
+// ── images that arrive later still work ─────────────────────────────────────
+// MutationObserver callbacks are microtasks: the marking lands after the insertion, so
+// the assertion has to wait one frame — the same turn a real host would observe.
+const lateHost = mount(IMG(1));
+await nextFrame();
+lateHost.insertAdjacentHTML('beforeend', IMG(2));
+await nextFrame();
+check('an image added after connect is a trigger too', () => {
+	const host = lateHost;
+	const added = host.querySelectorAll('img')[1];
+	const marked = added.getAttribute('role') === 'button';
+	added.click();
+	const open = !!host.dialog.open;
+	const src = host.items[host.currentIndex] && host.items[host.currentIndex].src;
+	teardown(host);
+	if (!marked) return 'the late image was never marked';
+	if (!open) return 'the dialog did not open';
+	return src === 'full2.jpg' ? null : `expected full2.jpg, got ${src}`;
+});
+
+// ── the component's own slides are not triggers ─────────────────────────────
+check('the dialog slides are not marked as triggers', () => {
+	const host = mount(IMG(1) + IMG(2));
+	host.querySelector('img').click();
+	const markedInsideDialog = host.dialog.querySelectorAll('[data-lightbox-trigger]').length;
+	teardown(host);
+	return markedInsideDialog === 0 ? null : `${markedInsideDialog} slide(s) were marked`;
+});
+
+check('a gallery is still complete after opening', () => {
+	const host = mount(IMG(1) + IMG(2) + IMG(3));
+	host.querySelectorAll('img')[0].click();
+	const len = host.items.length;
+	teardown(host);
+	return len === 3 ? null : `expected 3 items, got ${len}`;
+});
+
+// ── the action path, for a button or wrapper around a thumbnail ─────────────
+check('data-action="lightbox:open" opens the gallery', () => {
+	const host = mount(`<button type="button" data-action="lightbox:open">Open</button>` + IMG(1) + IMG(2));
+	host.querySelector('button').click();
+	const open = !!host.dialog.open;
+	teardown(host);
+	return open ? null : 'the dialog did not open';
+});
+
+check('data-action="lightbox:open:1" opens on that index', () => {
+	const host = mount(`<button type="button" data-action="lightbox:open:1">Second</button>` + IMG(1) + IMG(2));
+	host.querySelector('button').click();
+	const src = host.items[host.currentIndex] && host.items[host.currentIndex].src;
+	teardown(host);
+	return src === 'full2.jpg' ? null : `expected full2.jpg, got ${src}`;
+});
+
+check('a data-action trigger is not opened twice', () => {
+	const host = mount(IMG(1) + IMG(2));
+	const events = [];
+	host.addEventListener('nui-lightbox-open', () => events.push(1));
+	host.querySelector('img').setAttribute('data-action', 'lightbox:open');
+	host.querySelector('img').click();
+	teardown(host);
+	return events.length === 1 ? null : `opened ${events.length} times`;
+});
+
+// ── unrelated content stays inert ───────────────────────────────────────────
+check('a plain image inside the host does not open anything', () => {
+	const host = mount(`<img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="Decorative">`);
+	const img = host.querySelector('img');
+	const marked = img.hasAttribute('data-lightbox-trigger');
+	img.click();
+	const open = !!host.dialog.open;
+	teardown(host);
+	if (marked) return 'a plain image was marked as a trigger';
+	return open ? 'the dialog opened for a plain image' : null;
+});
+
+// ── the programmatic API is unchanged ───────────────────────────────────────
+check('nui.components.lightbox.show still works', () => {
+	const lb = nui.components.lightbox.show([{ src: 'a.jpg', title: 'A' }, { src: 'b.jpg', title: 'B' }], 1);
+	const ok = !!lb.dialog.open && lb.currentIndex === 1 && lb.items.length === 2;
+	teardown(lb);
+	return ok ? null : 'show() did not open on the requested index';
+});
+
+// ── report ──────────────────────────────────────────────────────────────────
+const list = document.getElementById('results');
+for (const r of results) {
+	const li = document.createElement('li');
+	li.className = r.ok ? 'pass' : 'fail';
+	li.textContent = r.name + (r.detail ? ' — ' + r.detail : '');
+	list.appendChild(li);
+}
+const failed = results.filter((r) => !r.ok).length;
+const summary = document.getElementById('summary');
+summary.textContent = failed
+	? `${failed} of ${results.length} checks FAILED`
+	: `all ${results.length} checks passed`;
+summary.className = failed ? 'fail' : 'pass';
+globalThis.__regression = { total: results.length, failed, results };
+</script>
+</body>
+</html>

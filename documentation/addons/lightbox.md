@@ -40,12 +40,28 @@ Wrap images in `<nui-lightbox>` for automatic grouping.
 ```
 The `data-lightbox-src` attribute specifies the full-resolution image to display.
 
+**The markup is the whole interaction — there is no script to write.** The component marks
+every image it collected as a trigger (`data-lightbox-trigger`, `role="button"`,
+`tabindex="0"`, pointer cursor), so:
+
+- clicking a thumbnail opens the gallery **on that image**;
+- `Enter` and `Space` on a focused thumbnail do the same, so the gallery is reachable by
+  keyboard without the host adding a thing;
+- images inserted **after** the element connects (a message attachment rendered per
+  message, a figure list fetched later) are marked too, and open on the right index
+  because the index is resolved from the live DOM at click time.
+
+Images that are not `img[data-lightbox]` / `[data-lightbox-src]` stay inert: no marker, no
+cursor, no handler.
+
 ### Attributes
 
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `loop` | boolean | `false` | When present, allows continuous navigation cycling from the last image to the first. |
 | `data-lightbox-src` | string | _none_ | Applies to inner `<img>` to specify the full-resolution image to display. |
+| `data-lightbox` | boolean | _none_ | Marks an inner `<img>` as a trigger that uses its own `src` as the full image. |
+| `data-lightbox-trigger` | boolean | _none_ | **Set by the component**, not by you: marks a collected thumbnail. The pointer cursor and focus ring are gated on it, so the affordance only appears where it is real. |
 
 ### Class Variants
 
@@ -77,6 +93,10 @@ nui.components.lightbox.show([
 - `lightbox:close`
 - `lightbox:prev`
 - `lightbox:next`
+- `lightbox:open` — opens the gallery (at index `0`); `lightbox:open:<index>` opens on that
+  index. For a wrapper or a button around a thumbnail, or any element outside the trigger
+  selector. An element carrying `data-action` is always handled by the action path, never
+  twice by the click delegation.
 
 ### Events
 

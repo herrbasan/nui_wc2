@@ -53,10 +53,42 @@ class NuiLightbox extends HTMLElement {
         this.caption = this.querySelector('.nui-lightbox-caption');
 
         this.setupEvents();
+
+        // A declarative gallery is CONTENT: its images come from the host's markup and
+        // often arrive after this element connects (message attachments, a figure list
+        // built per message). Marking is therefore idempotent and re-run on mutation,
+        // never a one-time pass — issue #65.
+        this.markTriggers();
+        this.triggerObserver = new MutationObserver(() => this.markTriggers());
+        this.triggerObserver.observe(this, { childList: true, subtree: true });
     }
 
     disconnectedCallback() {
         this.removeEvents();
+        if (this.triggerObserver) {
+            this.triggerObserver.disconnect();
+            this.triggerObserver = null;
+        }
+    }
+
+    // The same selector `open()` collects with, in the same document order — so an index
+    // taken here is the index `open()` will use. Dialog descendants are excluded: the
+    // slides are this component's own output, not gallery thumbnails.
+    triggerItems() {
+        return Array.from(this.querySelectorAll('img[data-lightbox], [data-lightbox-src]'))
+            .filter((el) => !el.closest('dialog'));
+    }
+
+    // The documented markup carries no script at all, so the affordance has to live
+    // here: a thumbnail that opens a dialog IS a button, and must be reachable and
+    // announced as one. Existing role/tabindex are left alone — a host that has already
+    // described its element knows better.
+    markTriggers() {
+        for (const el of this.triggerItems()) {
+            if (!el.hasAttribute('data-lightbox-trigger')) el.setAttribute('data-lightbox-trigger', '');
+            if (!el.hasAttribute('role')) el.setAttribute('role', 'button');
+            if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '0');
+        }
     }
 
     setupEvents() {
@@ -67,6 +99,40 @@ class NuiLightbox extends HTMLElement {
             if (act === 'lightbox:close') this.close();
             else if (act === 'lightbox:prev') this.navigate(-1);
             else if (act === 'lightbox:next') this.navigate(1);
+            // `lightbox:open[:index]` — for a wrapper or button around a thumbnail, i.e.
+            // anything outside the trigger selector. Bare form starts at 0.
+            else if (act === 'lightbox:open' || act.startsWith('lightbox:open:')) {
+                const raw = act.split(':')[2];
+                const index = raw === undefined ? 0 : Number(raw);
+                this.open([], Number.isFinite(index) ? index : 0);
+            }
+        };
+
+        // Declarative open — the documented markup has no script, so a click on a
+        // wrapped image is the whole interaction (issues #65 / #72). The index is
+        // resolved from the live DOM at click time, so a gallery whose images were
+        // replaced still opens on the one that was clicked.
+        this.handleTrigger = (e) => {
+            // An element carrying data-action is the action path's business, not ours.
+            if (e.target.closest('[data-action]')) return;
+            const trigger = e.target.closest('img[data-lightbox], [data-lightbox-src]');
+            if (!trigger || trigger.closest('dialog') || !this.contains(trigger)) return;
+            const index = this.triggerItems().indexOf(trigger);
+            if (index < 0) return;
+            e.preventDefault();
+            this.open([], index);
+        };
+
+        // Keyboard parity: the trigger is marked role="button", so Enter and Space must
+        // do what a click does — close/prev/next already had this.
+        this.handleTriggerKey = (e) => {
+            if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
+            const trigger = e.target.closest('img[data-lightbox], [data-lightbox-src]');
+            if (!trigger || trigger.closest('dialog') || !this.contains(trigger)) return;
+            const index = this.triggerItems().indexOf(trigger);
+            if (index < 0) return;
+            e.preventDefault();
+            this.open([], index);
         };
         
         this.handleKeydown = (e) => {
@@ -169,6 +235,8 @@ class NuiLightbox extends HTMLElement {
         };
 
         this.addEventListener('click', this.handleAction);
+        this.addEventListener('click', this.handleTrigger);
+        this.addEventListener('keydown', this.handleTriggerKey);
         this.dialog.addEventListener('click', (e) => {
             if (e.target === this.dialog) this.close(); // Backdrop click
         });
@@ -185,6 +253,8 @@ class NuiLightbox extends HTMLElement {
 
     removeEvents() {
         this.removeEventListener('click', this.handleAction);
+        this.removeEventListener('click', this.handleTrigger);
+        this.removeEventListener('keydown', this.handleTriggerKey);
         document.removeEventListener('keydown', this.handleKeydown);
         if (this.view) {
             this.view.removeEventListener('pointerdown', this.handlePointerDown);

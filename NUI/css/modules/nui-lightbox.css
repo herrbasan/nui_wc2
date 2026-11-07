@@ -3,6 +3,18 @@ nui-lightbox {
     display: contents; /* Ensure the wrapper doesn't break declarative layout flows */
 }
 
+/* A wrapped image is a button — the component marks the triggers it collected at
+   connect (and again on mutation) with data-lightbox-trigger. Gate the affordance on
+   that marker, never on the bare tag: only what can actually open gets a pointer. */
+nui-lightbox [data-lightbox-trigger] {
+    cursor: pointer;
+}
+
+nui-lightbox [data-lightbox-trigger]:focus-visible {
+    outline: 2px solid var(--color-highlight);
+    outline-offset: 2px;
+}
+
 nui-lightbox dialog {
     padding: 0;
     margin: auto;

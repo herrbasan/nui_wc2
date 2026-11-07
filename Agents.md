@@ -39,6 +39,7 @@ test/                   # renderer checks
 ├── markdown.test.mjs   # Node test — DOM-free renderer, plain node, no deps
 ├── md-blocks-render.html  # browser checks — open in a browser
 ├── nui-select.test.html   # browser checks — selection state of <nui-select>
+├── nui-lightbox.test.html # browser checks — declarative open, keyboard, late images
 └── util-surface.test.html # browser checks — the public nui.util surface is REACHABLE
 ```
 
