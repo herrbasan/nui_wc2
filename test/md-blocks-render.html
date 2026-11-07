@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>NUI — MD-Blocks renderer regression</title>
+<style>
+	body { font: 14px/1.5 system-ui, sans-serif; margin: 2rem; max-width: 60rem; }
+	h1 { font-size: 1.2rem; }
+	#summary { padding: .75rem 1rem; border-radius: .5rem; margin: 1rem 0; font-weight: 600; }
+	#summary.pass { background: #e6f4ea; color: #14532d; }
+	#summary.fail { background: #fdecea; color: #7f1d1d; }
+	ol { padding-left: 1.5rem; }
+	li { margin: .35rem 0; }
+	li.pass::marker { color: #16a34a; }
+	li.fail { color: #b91c1c; }
+	code { background: #f1f3f4; padding: .1rem .3rem; border-radius: .25rem; }
+	.detail { color: #666; font-size: .9em; }
+</style>
+</head>
+<body>
+<h1>MD-Blocks renderer — regression checks</h1>
+<p>Focused assertions on what the renderer produces. Not snapshots: each check states the
+one thing it expects, so a failure says what broke rather than that a string changed.</p>
+<div id="summary">running…</div>
+<ol id="results"></ol>
+
+<script type="module">
+// The renderer lives in NUI/nui.js, which cannot be imported in Node (it extends
+// HTMLElement), so these checks run in the browser. Open this file through the dev
+// server:  http://127.0.0.1:5500/test/md-blocks-render.html
+const { nui } = await import('../NUI/nui.js');
+
+const render = (md) => nui.util.markdownToHtml(md);
+const results = [];
+
+function check(name, fn) {
+	try {
+		const problem = fn();
+		if (problem) { results.push({ name, ok: false, detail: problem }); return; }
+		results.push({ name, ok: true, detail: '' });
+	} catch (err) {
+		results.push({ name, ok: false, detail: err && err.message ? err.message : String(err) });
+	}
+}
+
+const has = (html, re) => re.test(html);
+
+// ── an explicit mb:/col is the same boundary as the next mb:col ──────────────
+// The fork this replaced counted a closed column as a third one, which broke the
+// weights check and dropped the grid template.
+check('explicit mb:/col yields two columns, not three', () => {
+	const html = render('<!-- mb:columns weights=[1,1] -->\n<!-- mb:col -->\nA\n<!-- mb:/col -->\n<!-- mb:col -->\nB\n<!-- mb:/columns -->');
+	if (!has(html, /data-cols="2"/)) return 'expected data-cols="2", got ' + (html.match(/data-cols="(\d+)"/) || [])[1];
+	return null;
+});
+
+check('explicit mb:/col keeps the column weights', () => {
+	const html = render('<!-- mb:columns weights=[1,1] -->\n<!-- mb:col -->\nA\n<!-- mb:/col -->\n<!-- mb:col -->\nB\n<!-- mb:/columns -->');
+	if (!has(html, /grid-template-columns:1fr 1fr/)) return 'weights were dropped';
+	return null;
+});
+
+// ── a var renders where it was authored ───────────────────────────────────────
+// The canonical tree keeps vars out of the section's node list; the adapter puts
+// them back by source line, or they would drift to the end of the section.
+check('a var renders', () => {
+	const html = render('<!-- mb:var name=seconds value=20 -->');
+	if (!has(html, /class="nui-blocks-var"/)) return 'no var element';
+	if (!has(html, /data-var="seconds"/)) return 'the var name is missing';
+	return null;
+});
+
+check('a var renders before the content that follows it', () => {
+	const html = render('<!-- mb:var name=seconds value=20 -->\n\nAfter the var');
+	const varAt = html.indexOf('nui-blocks-var');
+	const textAt = html.indexOf('After the var');
+	if (varAt === -1) return 'no var element';
+	if (textAt === -1) return 'the following text is missing';
+	return varAt < textAt ? null : 'the var rendered after the text';
+});
+
+// ── a link to a page is not a media file ─────────────────────────────────────
+// The parser declares the link family from the preset; the renderer decides that
+// a destination which is not a media file gets the preset's own UI.
+check('a CTA link renders as a nav, not a media figure', () => {
+	const html = render('<!-- mb:block preset=link:cta -->\n[Explore](https://github.com/herrbasan/md-blocks)\n<!-- mb:/block -->');
+	if (!has(html, /<nav[^>]*nui-variant-cta/)) return 'no nav element';
+	if (has(html, /nui-blocks-media/)) return 'the block was rendered as a media figure';
+	return null;
+});
+
+check('a link to a PDF is a media figure', () => {
+	const html = render('<!-- mb:block preset=link:download -->\n[Spec](doc.pdf)\n<!-- mb:/block -->');
+	if (!has(html, /nui-blocks-media/)) return 'the block was not rendered as media';
+	return null;
+});
+
+// ── the link class refines to video | audio | file (§4.2) ─────────────────────
+// A .jpg link is a file, not an image. The figure's kind class carries that.
+check('a .jpg link reads as file, not image', () => {
+	const html = render('<!-- mb:block -->\n[Photo](shot.jpg)\n<!-- mb:/block -->');
+	if (!has(html, /nui-blocks-file/)) return 'no nui-blocks-file class';
+	if (has(html, /nui-blocks-image/)) return 'the block was classified as an image';
+	return null;
+});
+
+check('a .jpg link still renders as a link', () => {
+	const html = render('<!-- mb:block -->\n[Photo](shot.jpg)\n<!-- mb:/block -->');
+	if (!has(html, /<a href="shot\.jpg">Photo<\/a>/)) return 'the anchor is missing';
+	return null;
+});
+
+check('an image reads as image', () => {
+	const html = render('<!-- mb:block -->\n![Photo](shot.jpg)\n<!-- mb:/block -->');
+	if (!has(html, /nui-blocks-image/)) return 'no nui-blocks-image class';
+	return null;
+});
+
+check('a video link reads as video', () => {
+	const html = render('<!-- mb:block -->\n[Watch](clip.mp4)\n<!-- mb:/block -->');
+	if (!has(html, /nui-blocks-video/)) return 'no nui-blocks-video class';
+	return null;
+});
+
+check('an audio link reads as audio', () => {
+	const html = render('<!-- mb:block -->\n[Listen](track.mp3)\n<!-- mb:/block -->');
+	if (!has(html, /nui-blocks-audio/)) return 'no nui-blocks-audio class';
+	return null;
+});
+
+// ── the plates of a gallery ───────────────────────────────────────────────────
+check('a gallery list keeps every plate', () => {
+	const html = render('<!-- mb:block preset=gallery:row -->\n- ![a](1.jpg)\n- ![b](2.jpg)\n<!-- mb:/block -->');
+	if (!has(html, /nui-blocks-gallery/)) return 'no gallery class';
+	const count = (html.match(/<img/g) || []).length;
+	return count === 2 ? null : 'expected 2 plates, got ' + count;
+});
+
+// ── a stamped kind is authoritative ──────────────────────────────────────────
+check('a stamped kind is kept', () => {
+	const html = render('<!-- mb:block kind=video -->\n[Watch](clip.mp4)\n<!-- mb:/block -->');
+	if (!has(html, /nui-blocks-video/)) return 'the stamp was not honoured';
+	return null;
+});
+
+// ── a document with no directives renders as plain markdown ──────────────────
+check('a document without directives is unchanged', () => {
+	const html = render('# Title\n\nSome text.');
+	if (!has(html, /<h1[^>]*>Title<\/h1>/)) return 'the heading is missing';
+	if (has(html, /nui-blocks-main/)) return 'the document was wrapped in structure';
+	return null;
+});
+
+// ── report ───────────────────────────────────────────────────────────────────
+const list = document.getElementById('results');
+for (const r of results) {
+	const li = document.createElement('li');
+	li.className = r.ok ? 'pass' : 'fail';
+	li.textContent = r.name + (r.detail ? ' — ' + r.detail : '');
+	list.appendChild(li);
+}
+const failed = results.filter(r => !r.ok).length;
+const summary = document.getElementById('summary');
+summary.textContent = failed
+	? `${failed} of ${results.length} checks FAILED`
+	: `all ${results.length} checks passed`;
+summary.className = failed ? 'fail' : 'pass';
+globalThis.__regression = { total: results.length, failed, results };
+</script>
+</body>
+</html>

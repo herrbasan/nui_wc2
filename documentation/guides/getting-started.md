@@ -8,6 +8,7 @@ NUI requires minimal setup because it works *with* the browser, not against it. 
 
 - **`nui-theme.css`**: The foundation. Defines all CSS custom properties (colors, spacing, borders) and base component styles. Must load before any NUI elements render.
 - **`nui.js`**: The core library. Registers custom elements, provides the `nui` API object. Load as `type="module"` to enable ES module features.
+- **`md-blocks.js`**: The MD-Blocks parser (DOM-free, zero-dependency). `nui.js` imports it, so **the whole `NUI/` folder must be copied** — copying `nui.js` alone leaves the import unresolved and the library fails to load entirely, not just markdown.
 
 ### The Loading Sequence
 

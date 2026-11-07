@@ -16,7 +16,9 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const implementation = path.join(__dirname, 'md-blocks.js');
-const source = fs.readFileSync(implementation, 'utf8');
+// The sourceURL comment gives the evaluated code its own name in stack traces, so a
+// frame inside the parser points at md-blocks.js rather than at this entry.
+const source = fs.readFileSync(implementation, 'utf8') + `\n//# sourceURL=${implementation}\n`;
 
 const wrapper = new Function('module', 'exports', 'require', '__dirname', '__filename', source);
 const loaded = { exports: {} };
