@@ -42,6 +42,7 @@ test/                   # renderer checks
 ├── nui-lightbox.test.html # browser checks — declarative open, keyboard, late images
 ├── nui-link-list.test.html # browser checks — fold-mode depth indentation
 ├── router.test.html       # browser checks — init once, show() on a param-only change
+├── nui-syntax-highlight.test.html # browser checks — language boundary: ask, register, warn once
 ├── auto-load.test.html    # browser checks — no false auto-load notice for explicit imports
 └── util-surface.test.html # browser checks — the public nui.util surface is REACHABLE
 ```

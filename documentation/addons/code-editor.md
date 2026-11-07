@@ -28,6 +28,36 @@ This component provides an editable code input with real-time syntax highlightin
 
 None
 
+## Languages and the highlighting boundary
+
+`nui-code-editor`, `nui-code` and the block editor all highlight through one module,
+`NUI/lib/modules/nui-syntax-highlight.js`, and the five grammars it ships — **html**,
+**css**, **js**, **ts**, **json** (with `xml` → html, `javascript` → js, `typescript` → ts)
+— are a default, not a wall.
+
+Ask before assigning `data-lang`, and teach the module what it does not know:
+
+```javascript
+import { supportsLanguage, registerLanguage, LANGUAGES } from '../NUI/lib/modules/nui-syntax-highlight.js';
+
+// LANGUAGES -> ['html', 'css', 'js', 'ts', 'json']
+el.dataset.lang = supportsLanguage(ext) ? ext : '';
+
+// A tokenizer receives the ALREADY ESCAPED markup plus the raw text, and returns
+// markup using the same hl-* classes the built-ins emit, so the shipped stylesheet
+// colours it. It is the same module instance the components import lazily, so
+// registering before a page renders is enough.
+registerLanguage('ini', (escaped) =>
+	escaped.replace(/^([\w.-]+)=/gm, '<span class="hl-prop">$1</span>=')
+);
+```
+
+An unknown language renders as escaped plain text and is **announced once per language**
+in the console, naming the known set — the same shape as the renderer's "unknown preset"
+warning. Silence was the problem: a `.php` file rendered uncoloured, which reads as a
+broken component rather than a boundary (issue #69). No `data-lang` at all stays silent —
+unhighlighted code is a legitimate state, an unknown *language* is a missing capability.
+
 ## Programmatic Usage
 
 ### DOM Methods

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>NUI — syntax highlight language boundary</title>
+<style>
+	body { font: 14px/1.5 system-ui, sans-serif; margin: 2rem; max-width: 60rem; }
+	h1 { font-size: 1.2rem; }
+	#summary { padding: .75rem 1rem; border-radius: .5rem; margin: 1rem 0; font-weight: 600; }
+	#summary.pass { background: #e6f4ea; color: #14532d; }
+	#summary.fail { background: #fdecea; color: #7f1d1d; }
+	ol { padding-left: 1.5rem; }
+	li { margin: .35rem 0; }
+	li.pass::marker { color: #16a34a; }
+	li.fail { color: #b91c1c; }
+	code { background: #f1f3f4; padding: .1rem .3rem; border-radius: .25rem; }
+	#stage { border: 1px solid #ddd; padding: .5rem; }
+</style>
+</head>
+<body>
+<h1>nui-syntax-highlight — the language boundary is visible</h1>
+<p>Five grammars are the default, not a wall: a consumer must be able to ask whether a
+language is known before assigning <code>data-lang</code>, and to add its own. An unknown
+language used to render silently as plain text — indistinguishable from a broken
+component (issue #69). Open through the dev server:
+<code>http://127.0.0.1:5500/test/nui-syntax-highlight.test.html</code></p>
+<div id="summary">running…</div>
+<ol id="results"></ol>
+<div id="stage"></div>
+
+<script type="module">
+const md = await import('../NUI/lib/modules/nui-syntax-highlight.js');
+const { nui } = await import('../NUI/nui.js');
+const { highlight, supportsLanguage, registerLanguage, LANGUAGES } = md;
+
+const results = [];
+function check(name, fn) {
+	try {
+		const problem = fn();
+		if (problem) { results.push({ name, ok: false, detail: problem }); return; }
+		results.push({ name, ok: true, detail: '' });
+	} catch (err) {
+		results.push({ name, ok: false, detail: err && err.message ? err.message : String(err) });
+	}
+}
+
+// Capture warnings so the "does it say so" checks are real.
+const warnings = [];
+const originalWarn = console.warn.bind(console);
+console.warn = (...args) => {
+	warnings.push(args.map((a) => (typeof a === 'string' ? a : String(a))).join(' '));
+	originalWarn(...args);
+};
+
+// ── the predicate ───────────────────────────────────────────────────────────
+check('supportsLanguage answers for every built-in grammar', () => {
+	const missing = LANGUAGES.filter((l) => !supportsLanguage(l));
+	return missing.length ? 'not supported: ' + missing.join(', ') : null;
+});
+
+check('supportsLanguage accepts the documented aliases', () => {
+	const bad = ['javascript', 'typescript', 'xml', 'HTML', 'Json'].filter((l) => !supportsLanguage(l));
+	return bad.length ? 'rejected aliases: ' + bad.join(', ') : null;
+});
+
+check('supportsLanguage rejects a language it does not know', () => {
+	const accepted = ['php', 'ruby', 'cobol', 'htm', ''].filter((l) => supportsLanguage(l));
+	return accepted.length ? 'wrongly accepted: ' + accepted.join(', ') : null;
+});
+
+check('supportsLanguage rejects null and undefined', () => {
+	return supportsLanguage(null) || supportsLanguage(undefined) ? 'accepted a missing language' : null;
+});
+
+check('LANGUAGES is the five canonical grammars, frozen', () => {
+	if (LANGUAGES.join(',') !== 'html,css,js,ts,json') return 'got ' + LANGUAGES.join(',');
+	return Object.isFrozen(LANGUAGES) ? null : 'the list is mutable';
+});
+
+// ── the silence ─────────────────────────────────────────────────────────────
+check('an unknown language is announced once, and only once', () => {
+	warnings.length = 0;
+	highlight('<?php echo 1; ?>', 'php');
+	highlight('<?php echo 2; ?>', 'php');
+	highlight('<?php echo 3; ?>', 'php');
+	const hits = warnings.filter((w) => w.includes('unknown language "php"'));
+	return hits.length === 1 ? null : `warned ${hits.length} times for three renders`;
+});
+
+check('the warning names the known set so the reader can act', () => {
+	const w = warnings.find((x) => x.includes('unknown language "php"'));
+	if (!w) return 'no warning captured';
+	return w.includes('html, css, js, ts, json') ? null : 'the known set is missing: ' + w;
+});
+
+check('an unknown language still renders its text, escaped', () => {
+	const html = highlight('<b>hi</b>', 'php');
+	return html === '&lt;b&gt;hi&lt;/b&gt;' ? null : 'rendered ' + html;
+});
+
+check('no language given stays silent (unhighlighted code is not an error)', () => {
+	warnings.length = 0;
+	highlight('plain', '');
+	highlight('plain', null);
+	return warnings.length === 0 ? null : 'warned: ' + warnings.join(' | ');
+});
+
+// ── the extension point ─────────────────────────────────────────────────────
+check('a registered language becomes supported', () => {
+	registerLanguage('ini', (escaped) => escaped.replace(/^([\w.-]+)=/gm, '<span class="hl-prop">$1</span>='));
+	return supportsLanguage('ini') ? null : 'still reported as unsupported';
+});
+
+check('a registered language is used by highlight', () => {
+	const html = highlight('key=value', 'ini');
+	return html.includes('hl-prop') ? null : 'the tokenizer did not run: ' + html;
+});
+
+check('a registered language no longer warns', () => {
+	warnings.length = 0;
+	highlight('key=value', 'ini');
+	return warnings.length === 0 ? null : 'warned anyway: ' + warnings.join(' | ');
+});
+
+check('the tokenizer receives escaped markup, not raw text', () => {
+	let seen = null;
+	registerLanguage('probe', (escaped) => { seen = escaped; return escaped; });
+	highlight('<i>x</i>', 'probe');
+	return seen === '&lt;i&gt;x&lt;/i&gt;' ? null : 'received ' + seen;
+});
+
+check('registerLanguage rejects a missing name or tokenizer', () => {
+	const threw = [];
+	for (const args of [[undefined, () => ''], ['ok', 'not a function'], ['', () => '']]) {
+		try { registerLanguage(args[0], args[1]); } catch (e) { threw.push(e.constructor.name); }
+	}
+	return threw.length === 3 ? null : `only ${threw.length} of 3 calls threw`;
+});
+
+// ── the five built-ins still work ───────────────────────────────────────────
+check('html, css, js, ts and json still tokenize', () => {
+	const cases = [
+		['html', '<div class="x">y</div>', 'hl-tag'],
+		['css', '.a { color: red; }', 'hl-prop'],
+		['js', 'const a = 1;', 'hl-keyword'],
+		['ts', 'interface A { b: string }', 'hl-keyword'],
+		['json', '{"a": 1}', 'hl-prop']
+	];
+	const broken = cases.filter(([lang, code, cls]) => !highlight(code, lang).includes(cls));
+	return broken.length ? 'no token for: ' + broken.map((c) => c[0]).join(', ') : null;
+});
+
+check('the js/javascript alias produces identical output', () => {
+	const a = highlight('const a = 1;', 'js');
+	const b = highlight('const a = 1;', 'javascript');
+	return a === b ? null : 'alias output differs';
+});
+
+// Render a code block through the real component: the loader resolves the module
+// asynchronously, so the markup is asserted after a beat.
+const stage = document.getElementById('stage');
+const codeEl = document.createElement('nui-code');
+// The closing tag is escaped so it does not terminate this module's own <script>.
+codeEl.innerHTML = '<script type="example" data-lang="ini">key=value<\/script>';
+stage.appendChild(codeEl);
+
+await new Promise((r) => setTimeout(r, 900));
+
+check('nui-code upgrades the example script into a pre/code pair', () => {
+	const code = codeEl.querySelector('pre code');
+	return code ? null : 'nui-code never replaced the example script';
+});
+
+check('nui-code renders the registered language', () => {
+	const code = codeEl.querySelector('pre code');
+	return code && code.innerHTML.includes('hl-prop')
+		? null
+		: 'nui-code did not highlight the registered language: ' + (code && code.innerHTML);
+});
+
+// ── report ──────────────────────────────────────────────────────────────────
+const list = document.getElementById('results');
+for (const r of results) {
+	const li = document.createElement('li');
+	li.className = r.ok ? 'pass' : 'fail';
+	li.textContent = r.name + (r.detail ? ' — ' + r.detail : '');
+	list.appendChild(li);
+}
+const failed = results.filter((r) => !r.ok).length;
+const summary = document.getElementById('summary');
+summary.textContent = failed
+	? `${failed} of ${results.length} checks FAILED`
+	: `all ${results.length} checks passed`;
+summary.className = failed ? 'fail' : 'pass';
+globalThis.__regression = { total: results.length, failed, results };
+</script>
+</body>
+</html>

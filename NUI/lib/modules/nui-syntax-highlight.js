@@ -1,12 +1,78 @@
 // Minimal syntax highlighter - focused on web languages
 // Languages: HTML, CSS, JavaScript, TypeScript, JSON
 // Target: ~3KB minified
+//
+// The five languages are a DEFAULT, not a wall. A consumer can ask whether a language is
+// known (supportsLanguage) and teach the module its own (registerLanguage) instead of
+// discovering the boundary as uncoloured output — issue #69.
+
+const BUILTIN_ALIASES = {
+	html: 'html', xml: 'html',
+	css: 'css',
+	js: 'js', javascript: 'js',
+	ts: 'ts', typescript: 'ts',
+	json: 'json'
+};
+
+// The canonical grammars a caller can rely on. Aliases (js/javascript, ts/typescript,
+// html/xml) resolve to these, so `supportsLanguage('javascript')` is true.
+export const LANGUAGES = Object.freeze(['html', 'css', 'js', 'ts', 'json']);
+
+// Consumer-supplied tokenizers, keyed by the name they registered. Same ESM module
+// instance as the one `nui-code` imports lazily, so registering before a page renders is
+// enough — no load-order dance.
+const registered = new Map();
+
+function normalizeLanguage(lang) {
+	const key = String(lang == null ? '' : lang).trim().toLowerCase();
+	if (!key) return '';
+	// Known spellings resolve to the canonical grammar; anything else is returned as-is so
+	// the caller can tell "no language given" (silent) from "a language nobody knows"
+	// (worth one warning).
+	return BUILTIN_ALIASES[key] || key;
+}
+
+// Ask before assigning `data-lang`: `if (supportsLanguage(ext)) el.dataset.lang = ext;`
+export function supportsLanguage(lang) {
+	const key = normalizeLanguage(lang);
+	return !!key && (!!BUILTIN_ALIASES[key] || registered.has(key));
+}
+
+// Teach the module a language. `tokenize(escapedHtml, code)` receives the already
+// escaped markup and the raw text, and returns markup using the same `hl-*` class names
+// the built-ins emit, so the existing stylesheet colours it.
+export function registerLanguage(name, tokenize) {
+	const key = String(name == null ? '' : name).trim().toLowerCase();
+	if (!key) throw new TypeError('[nui-syntax-highlight] registerLanguage(name, fn): a language name is required');
+	if (typeof tokenize !== 'function') throw new TypeError(`[nui-syntax-highlight] registerLanguage("${key}", fn): fn must be a function`);
+	registered.set(key, tokenize);
+}
+
+// One warning per language, not one per code block: a viewer that renders a directory of
+// `.php` files would otherwise bury the console. Mirrors the "unknown preset — content
+// rendered plain" precedent in the renderer.
+const warnedUnknown = new Set();
+
+function warnUnknownLanguage(lang) {
+	const key = String(lang).trim().toLowerCase();
+	if (warnedUnknown.has(key)) return;
+	warnedUnknown.add(key);
+	console.warn(`[nui-syntax-highlight] unknown language "${key}" — rendered as plain text. Known: ${LANGUAGES.join(', ')}. Add a tokenizer with registerLanguage("${key}", fn) from NUI/lib/modules/nui-syntax-highlight.js.`);
+}
 
 export function highlight(code, lang, forceEscape = false) {
 	// Check if code is already escaped (contains &lt; etc)
 	const isEscaped = !forceEscape && /&[lg]t;/.test(code);
 	let html = isEscaped ? code : escapeHtml(code);
-	
+
+	const key = normalizeLanguage(lang);
+
+	// A registered language owns its own markup; it runs on the escaped text so it can
+	// never emit a tag that came from the input.
+	if (key && registered.has(key)) {
+		return registered.get(key)(html, code);
+	}
+
 	// Use placeholders to prevent nested replacements
 	const tokens = [];
 	let tokenId = 0;
@@ -17,7 +83,7 @@ export function highlight(code, lang, forceEscape = false) {
 		return token;
 	}
 	
-	if (lang === 'html' || lang === 'xml') {
+	if (key === 'html') {
 		// Comments first (highest priority)
 		html = html.replace(/(&lt;!--[\s\S]*?--&gt;)/g, (m) => wrap(m, 'comment'));
 		// Doctype
@@ -28,7 +94,7 @@ export function highlight(code, lang, forceEscape = false) {
 		html = html.replace(/([\w-]+)(?==)/g, (m) => wrap(m, 'attr'));
 		// Attribute values (with proper escaping)
 		html = html.replace(/=("(?:[^"\\]|\\.)*?"|'(?:[^'\\]|\\.)*?')/g, (m, p1) => '=' + wrap(p1, 'string'));
-	} else if (lang === 'css') {
+	} else if (key === 'css') {
 		// Comments
 		html = html.replace(/(\/\*[\s\S]*?\*\/)/g, (m) => wrap(m, 'comment'));
 		// Strings (before other patterns to protect content)
@@ -47,7 +113,7 @@ export function highlight(code, lang, forceEscape = false) {
 		html = html.replace(/\b([\w-]+)(?=\()/g, (m) => wrap(m, 'function'));
 		// Numbers with units
 		html = html.replace(/\b(\d+\.?\d*(?:px|em|rem|%|vh|vw|deg|s|ms)?)\b/g, (m) => wrap(m, 'number'));
-	} else if (lang === 'js' || lang === 'javascript') {
+	} else if (key === 'js') {
 		// Template literals
 		html = html.replace(/(`[^`\\]*(?:\\.[^`\\]*)*`)/g, (m) => wrap(m, 'template'));
 		// Strings
@@ -67,7 +133,7 @@ export function highlight(code, lang, forceEscape = false) {
 		html = html.replace(/\b([a-zA-Z_$][\w$]*)(?=\s*:(?!:))/g, (m) => wrap(m, 'prop'));
 		// Function calls (conservative: lowercase start, before parens)
 		html = html.replace(/\b([a-z_$][\w$]*)(?=\s*\()/g, (m) => wrap(m, 'function'));
-	} else if (lang === 'ts' || lang === 'typescript') {
+	} else if (key === 'ts') {
 		// Template literals
 		html = html.replace(/(`[^`\\]*(?:\\.[^`\\]*)*`)/g, (m) => wrap(m, 'template'));
 		// Strings
@@ -93,7 +159,7 @@ export function highlight(code, lang, forceEscape = false) {
 		html = html.replace(/\b([a-zA-Z_$][\w$]*)(?=\s*:(?!:))/g, (m) => wrap(m, 'prop'));
 		// Function calls
 		html = html.replace(/\b([a-z_$][\w$]*)(?=\s*\()/g, (m) => wrap(m, 'function'));
-	} else if (lang === 'json') {
+	} else if (key === 'json') {
 		// Every rule captures the whitespace it matched and re-emits it verbatim. The
 		// earlier form consumed `\s*` and emitted a literal space instead, which
 		// collapsed pretty-printed JSON onto one line — a highlighter must never reflow
@@ -110,6 +176,9 @@ export function highlight(code, lang, forceEscape = false) {
 		html = html.replace(/(:\s*)(-?\d+\.?\d*(?:[eE][+-]?\d+)?)/g, (m, ws, p1) => ws + wrap(p1, 'number'));
 		html = html.replace(/(\[\s*)(-?\d+\.?\d*(?:[eE][+-]?\d+)?)/g, (m, ws, p1) => ws + wrap(p1, 'number'));
 		html = html.replace(/(,\s*)(-?\d+\.?\d*(?:[eE][+-]?\d+)?)/g, (m, ws, p1) => ws + wrap(p1, 'number'));
+	} else if (key) {
+		// Known-looking but unknown: say so once instead of rendering silence.
+		warnUnknownLanguage(lang);
 	}
 	
 	// Replace all tokens with actual HTML. 
