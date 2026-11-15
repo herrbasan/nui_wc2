@@ -17,7 +17,7 @@ The component uses two rendering modes automatically:
 - **Normal mode** (<1000 items): Standard scroll-position tracking.
 - **Fixed mode** (1000+ items): Percentage-based scroll calculation for smoother performance with very large datasets.
 
-All data operations (search, sort, filter) work against a cloned internal array, preserving your original data intact.
+All data operations (search, sort, filter) work against a cloned internal array, preserving your original data intact. Search, sort, and filter changes synchronously repaint the visible rows.
 
 ## Quick Start
 

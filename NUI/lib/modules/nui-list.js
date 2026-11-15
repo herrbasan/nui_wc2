@@ -592,6 +592,8 @@ function createList(element, options) {
 		sort();
 		list.lastSelect = null;
 		reset();
+		update(true);
+		wake();
 		
 		list.eventCallback({ target: list, type: 'list', value: 'filtered' });
 		log(`Filter operation took ${Math.round(performance.now() - bench)} ms`);

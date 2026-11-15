@@ -85,6 +85,11 @@ check('setSearch() filters SYNCHRONOUSLY, with no debounce to wait out', () => {
 	return names.join(',') === 'report.pdf,report-draft.pdf' ? null : 'filtered: ' + names.join(',');
 });
 
+check('a search filter immediately repaints the matching rows', () => {
+	const names = [...list.container.querySelectorAll('.nui-list-item')].map((row) => row.textContent.trim());
+	return names.join(',') === 'report.pdf,report-draft.pdf' ? null : 'rendered: ' + names.join(',');
+});
+
 check('the visible search control is in step', () => {
 	const input = list.header.querySelector('nui-input[type="search"] input');
 	return input && input.value === 'report' ? null : 'control shows ' + (input && JSON.stringify(input.value));
@@ -151,6 +156,26 @@ check('typing in the header still filters after the debounce', () => {
 check('typing emits its own search_input', () => {
 	return events.filter((e) => e.type === 'search_input').length > 0 ? null : 'no event from the user path';
 });
+
+// ── header sorting must repaint too (issue #90) ───────────────────────────
+const sortable = makeList({
+	sort: [
+		{ label: 'Name (A-Z)', prop: 'name' },
+		{ label: 'Original order', prop: 'id', numeric: true }
+	]
+});
+await wait(50);
+const sortSelect = sortable.header.querySelector('.nui-list-sort select');
+sortSelect.value = '1';
+sortSelect.dispatchEvent(new Event('change', { bubbles: true }));
+
+check('a sort change immediately repaints rows in the new order', () => {
+	const names = [...sortable.container.querySelectorAll('.nui-list-item')].map((row) => row.textContent.trim());
+	const expected = FILES.map((item) => item.name).join(',');
+	return names.join(',') === expected ? null : `expected ${expected}; rendered ${names.join(',')}`;
+});
+sortable.cleanUp();
+sortable.parentElement?.remove();
 
 // ── nui-input.setValue, the half that was missing ─────────────────────────
 check('nui-input.setValue sets the value, steps the state, and emits nui-input', () => {
