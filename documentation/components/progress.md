@@ -70,3 +70,7 @@ const newProgress = nui.util.createElement('nui-progress', {
 
 ## When to Use
 Use linear progress bars for file uploads, form completion, or multi-step processes where the user benefits from seeing overall progress. Use circular indicators for compact contexts like buttons or cards. Use indeterminate/busy states when duration is unknown or for loading spinners.
+
+## Legacy: `nui-loading`
+
+`nui-loading` is a legacy indicator retained for compatibility. `mode="overlay"` generates an overlay spinner and loading text; `mode="bar"` generates an indeterminate loading bar. Its `active` attribute controls the active state. Prefer `nui-progress` with `type="busy"` or `type="circular-busy"` for new interfaces.

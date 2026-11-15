@@ -140,3 +140,9 @@ You can wrap an `<a>` tag to get button styling on links:
 | Event | Description |
 |-------|-------------|
 | `nui-change` | Fired when `mode` is `segmented` or `single-select` and a new button is selected. `detail.selected` is the `<nui-button>`. `detail.value` is the computed string value. |
+
+---
+
+## Legacy: `nui-icon-button`
+
+`nui-icon-button` is a layout-only wrapper retained for compatibility. It has no setup behavior or events. Prefer `nui-button` with an inner `nui-icon`; `variant="icon"` supplies the intended icon-button styling and `nui-click` behavior.

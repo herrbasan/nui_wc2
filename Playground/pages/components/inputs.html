@@ -11,6 +11,58 @@
 }
 </script>
 
+<script type="application/ld+json">
+{
+  "@context": "nui",
+  "@type": "Component",
+  "name": "nui-input-group",
+  "group": "forms",
+  "description": "Semantic form group linking a top-level label, one NUI input control, and optional description text with validation state styling.",
+  "events": [],
+  "innerElement": "<label> + NUI input control + optional description",
+  "imports": null
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "nui",
+  "@type": "Component",
+  "name": "nui-textarea",
+  "group": "forms",
+  "description": "Native textarea wrapper with validation, clearable behavior, character count, and optional auto-resizing.",
+  "events": ["nui-input", "nui-change", "nui-clear", "nui-validate"],
+  "innerElement": "<textarea>",
+  "imports": null
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "nui",
+  "@type": "Component",
+  "name": "nui-checkbox",
+  "group": "forms",
+  "description": "Native checkbox wrapper with an accessible label, generated indicator, checked property, and switch variant.",
+  "events": ["nui-change"],
+  "innerElement": "<input type=\"checkbox\"> + <label>",
+  "imports": null
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "nui",
+  "@type": "Component",
+  "name": "nui-radio",
+  "group": "forms",
+  "description": "Native radio input wrapper with an accessible label, generated indicator, and checked property.",
+  "events": ["nui-change"],
+  "innerElement": "<input type=\"radio\"> + <label>",
+  "imports": null
+}
+</script>
+
 <nui-details summary="LLM Guide - nui-input" src="../documentation/components/input.md" lazy>
 
 

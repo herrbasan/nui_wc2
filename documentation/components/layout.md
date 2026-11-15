@@ -98,3 +98,7 @@ The `nui-page` component is the recommended container for page content. It autom
     <section><!-- Constrained --></section>
 </nui-page>
 ```
+
+## Legacy: `nui-column-flow`
+
+`nui-column-flow` is the predecessor of `<nui-layout type="flow">`. It supports `columns`, `column-width`, and `sort="height"`, but new code should use `nui-layout`, which also provides responsive column clamping and `gap`.

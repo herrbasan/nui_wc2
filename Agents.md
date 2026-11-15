@@ -126,7 +126,7 @@ Anything hand-written into the sprite is erased by the next generator run. Addin
 
 ## Component Registry
 
-> **📋 Component Registry:** `documentation/components.json` is the **source of truth** for all components, their events, imports, and documentation paths. When adding or modifying components, run `node scripts/update-docs.mjs` to update the registry. This file contains `docPath` fields pointing to pure Markdown files that provide crucial instructions for how to use each component. Read those markdown files instead of guessing.
+> **📋 Component Registry:** `documentation/components.json` is the **source of truth** for all components, their events, imports, and documentation paths. When adding or modifying components, run `node scripts/update-docs.mjs` to update the registry. This file contains `docPath` fields pointing to pure Markdown files that provide crucial instructions for how to use each component. Read those markdown files instead of guessing. A demo page may declare several related components with one JSON-LD block per component. Run `node test/components-registry.test.mjs` to verify every registered core tag appears exactly once with its required metadata.
 
 ---
 

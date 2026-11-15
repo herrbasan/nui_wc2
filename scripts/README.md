@@ -30,7 +30,7 @@ node scripts/update-docs.mjs
 {
   "schemaVersion": 1,
   "generated": "2026-04-11T...",
-  "core": [...],
+  "components": [...],
   "addons": [...],
   "reference": [...],
   "setup": {...},
@@ -48,12 +48,13 @@ Add to your CI pipeline to prevent documentation drift:
 - name: Verify documentation is up to date
   run: |
     node scripts/update-docs.mjs
+    node test/components-registry.test.mjs
     git diff --exit-code documentation/components.json || (echo "Run 'node scripts/update-docs.mjs' and commit" && exit 1)
 ```
 
 ### Adding JSON-LD to Pages
 
-Each page should include a JSON-LD block after the opening tag:
+Each page should include one JSON-LD block per component. Related components may share a demo page and its `docPath`; give each component its own block, and the generator will emit separate registry entries with the same `page` and `demoPath`:
 
 ```html
 <nui-page class="page-my-component">

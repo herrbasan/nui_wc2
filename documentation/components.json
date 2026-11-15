@@ -1,6 +1,6 @@
 {
 	"schemaVersion": 1,
-	"generated": "2026-10-18T10:09:14.124Z",
+	"generated": "2026-11-15T16:55:42.758Z",
 	"source": "Playground/pages/**",
 	"components": [
 		{
@@ -47,6 +47,58 @@
 		{
 			"@context": "nui",
 			"@type": "Component",
+			"name": "nui-sidebar",
+			"group": "layout",
+			"description": "Application navigation region with responsive behavior and delegated active-item methods for an inner nui-link-list.",
+			"events": [],
+			"innerElement": "<nav> or <nui-link-list>",
+			"imports": null,
+			"page": "components/app-layout",
+			"demoPath": "Playground/pages/components/app-layout.html",
+			"docPath": "documentation/components/app.md"
+		},
+		{
+			"@context": "nui",
+			"@type": "Component",
+			"name": "nui-content",
+			"group": "layout",
+			"description": "Application content region and positioning context between the fixed app chrome regions.",
+			"events": [],
+			"innerElement": "<nui-main>",
+			"imports": null,
+			"page": "components/app-layout",
+			"demoPath": "Playground/pages/components/app-layout.html",
+			"docPath": "documentation/components/app.md"
+		},
+		{
+			"@context": "nui",
+			"@type": "Component",
+			"name": "nui-main",
+			"group": "layout",
+			"description": "Scrollable main content landmark with role=main and the default main-content id.",
+			"events": [],
+			"innerElement": null,
+			"imports": null,
+			"page": "components/app-layout",
+			"demoPath": "Playground/pages/components/app-layout.html",
+			"docPath": "documentation/components/app.md"
+		},
+		{
+			"@context": "nui",
+			"@type": "Component",
+			"name": "nui-app-footer",
+			"group": "layout",
+			"description": "Optional persistent application footer wrapping a native footer landmark.",
+			"events": [],
+			"innerElement": "<footer>",
+			"imports": null,
+			"page": "components/app-layout",
+			"demoPath": "Playground/pages/components/app-layout.html",
+			"docPath": "documentation/components/app.md"
+		},
+		{
+			"@context": "nui",
+			"@type": "Component",
 			"name": "nui-badge",
 			"group": "ui",
 			"description": "Status badges and notification indicators: variants (primary, success, danger, warning, info), a connection-status dot (status) and data-badge overlay mode.",
@@ -83,6 +135,34 @@
 				"nui-click",
 				"nui-file-selected"
 			],
+			"innerElement": "<button> or <a>",
+			"imports": null,
+			"page": "components/button",
+			"demoPath": "Playground/pages/components/button.html",
+			"docPath": "documentation/components/button.md"
+		},
+		{
+			"@context": "nui",
+			"@type": "Component",
+			"name": "nui-button-container",
+			"group": "forms",
+			"description": "Button group with alignment, spacing, direction, fill, segmented, and single-select behavior.",
+			"events": [
+				"nui-change"
+			],
+			"innerElement": "<nui-button> children",
+			"imports": null,
+			"page": "components/button",
+			"demoPath": "Playground/pages/components/button.html",
+			"docPath": "documentation/components/button.md"
+		},
+		{
+			"@context": "nui",
+			"@type": "Component",
+			"name": "nui-icon-button",
+			"group": "forms",
+			"description": "Layout-only legacy icon button wrapper; prefer nui-button with an inner nui-icon.",
+			"events": [],
 			"innerElement": "<button> or <a>",
 			"imports": null,
 			"page": "components/button",
@@ -224,9 +304,83 @@
 		{
 			"@context": "nui",
 			"@type": "Component",
+			"name": "nui-input-group",
+			"group": "forms",
+			"description": "Semantic form group linking a top-level label, one NUI input control, and optional description text with validation state styling.",
+			"events": [],
+			"innerElement": "<label> + NUI input control + optional description",
+			"imports": null,
+			"page": "components/inputs",
+			"demoPath": "Playground/pages/components/inputs.html",
+			"docPath": "documentation/components/input.md"
+		},
+		{
+			"@context": "nui",
+			"@type": "Component",
+			"name": "nui-textarea",
+			"group": "forms",
+			"description": "Native textarea wrapper with validation, clearable behavior, character count, and optional auto-resizing.",
+			"events": [
+				"nui-input",
+				"nui-change",
+				"nui-clear",
+				"nui-validate"
+			],
+			"innerElement": "<textarea>",
+			"imports": null,
+			"page": "components/inputs",
+			"demoPath": "Playground/pages/components/inputs.html",
+			"docPath": "documentation/components/input.md"
+		},
+		{
+			"@context": "nui",
+			"@type": "Component",
+			"name": "nui-checkbox",
+			"group": "forms",
+			"description": "Native checkbox wrapper with an accessible label, generated indicator, checked property, and switch variant.",
+			"events": [
+				"nui-change"
+			],
+			"innerElement": "<input type=\"checkbox\"> + <label>",
+			"imports": null,
+			"page": "components/inputs",
+			"demoPath": "Playground/pages/components/inputs.html",
+			"docPath": "documentation/components/input.md"
+		},
+		{
+			"@context": "nui",
+			"@type": "Component",
+			"name": "nui-radio",
+			"group": "forms",
+			"description": "Native radio input wrapper with an accessible label, generated indicator, and checked property.",
+			"events": [
+				"nui-change"
+			],
+			"innerElement": "<input type=\"radio\"> + <label>",
+			"imports": null,
+			"page": "components/inputs",
+			"demoPath": "Playground/pages/components/inputs.html",
+			"docPath": "documentation/components/input.md"
+		},
+		{
+			"@context": "nui",
+			"@type": "Component",
 			"name": "nui-layout",
 			"group": "layout",
 			"description": "Content grid container with responsive column progression (1/2/3 columns based on viewport).",
+			"events": [],
+			"innerElement": null,
+			"imports": null,
+			"page": "components/layout",
+			"demoPath": "Playground/pages/components/layout.html",
+			"docPath": "documentation/components/layout.md"
+		},
+		{
+			"@context": "nui",
+			"@type": "Component",
+			"name": "nui-column-flow",
+			"group": "layout",
+			"description": "Legacy CSS column-flow container with optional height sorting; superseded by nui-layout type=flow.",
 			"events": [],
 			"innerElement": null,
 			"imports": null,
@@ -339,6 +493,19 @@
 		{
 			"@context": "nui",
 			"@type": "Component",
+			"name": "nui-loading",
+			"group": "feedback",
+			"description": "Legacy loading indicator with overlay and bar modes and an active attribute proxy.",
+			"events": [],
+			"innerElement": null,
+			"imports": null,
+			"page": "components/progress",
+			"demoPath": "Playground/pages/components/progress.html",
+			"docPath": "documentation/components/progress.md"
+		},
+		{
+			"@context": "nui",
+			"@type": "Component",
 			"name": "nui-select",
 			"group": "forms",
 			"description": "Enhanced select with search, multi-select tags, option groups, async loading, and mobile bottom sheet.",
@@ -401,6 +568,19 @@
 			"events": [
 				"nui-sortable-change"
 			],
+			"innerElement": null,
+			"imports": null,
+			"page": "components/sortable",
+			"demoPath": "Playground/pages/components/sortable.html",
+			"docPath": "documentation/components/sortable.md"
+		},
+		{
+			"@context": "nui",
+			"@type": "Component",
+			"name": "nui-sortable-item",
+			"group": "interaction",
+			"description": "Draggable listitem child of nui-sortable with stable identity supplied by data-id.",
+			"events": [],
 			"innerElement": null,
 			"imports": null,
 			"page": "components/sortable",
@@ -1074,6 +1254,14 @@
 			]
 		},
 		{
+			"component": "nui-button-container",
+			"events": [
+				{
+					"name": "nui-change"
+				}
+			]
+		},
+		{
 			"component": "nui-date-range",
 			"events": [
 				{
@@ -1123,6 +1311,39 @@
 				},
 				{
 					"name": "nui-validate"
+				}
+			]
+		},
+		{
+			"component": "nui-textarea",
+			"events": [
+				{
+					"name": "nui-input"
+				},
+				{
+					"name": "nui-change"
+				},
+				{
+					"name": "nui-clear"
+				},
+				{
+					"name": "nui-validate"
+				}
+			]
+		},
+		{
+			"component": "nui-checkbox",
+			"events": [
+				{
+					"name": "nui-change"
+				}
+			]
+		},
+		{
+			"component": "nui-radio",
+			"events": [
+				{
+					"name": "nui-change"
 				}
 			]
 		},

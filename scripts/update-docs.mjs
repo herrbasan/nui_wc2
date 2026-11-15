@@ -51,31 +51,13 @@ function getFilesInDir(subdir) {
 /**
  * Extract metadata and LLM Guide from an HTML page
  */
-function extractPageData(htmlPath) {
+function extractPageEntries(htmlPath) {
 	const html = fs.readFileSync(htmlPath, 'utf-8');
 	const relativePath = path.relative(PAGES_DIR, htmlPath).replace(/\\/g, '/');
-	
-	// Extract JSON-LD
-	const jsonLdMatch = html.match(/<script type="application\/ld\+json">(.*?)<\/script>/s);
-	if (!jsonLdMatch) {
+	const jsonLdMatches = [...html.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/gs)];
+	if (jsonLdMatches.length === 0) {
 		console.warn(`[update-docs] No JSON-LD found in ${relativePath}`);
-		return null;
-	}
-	
-	let metadata;
-	try {
-		metadata = JSON.parse(jsonLdMatch[1]);
-	} catch (err) {
-		console.error(`[update-docs] Invalid JSON-LD in ${relativePath}: ${err.message}`);
-		return null;
-	}
-	
-	// Validate required fields
-	if (!metadata.name) {
-		console.warn(`[update-docs] Missing 'name' in ${relativePath}`);
-	}
-	if (!metadata['@type']) {
-		console.warn(`[update-docs] Missing '@type' in ${relativePath}`);
+		return [];
 	}
 	
 	// Check for separate matching .md file or documentation pointer
@@ -117,7 +99,29 @@ function extractPageData(htmlPath) {
 		}
 	}
 	
-	return { ...metadata, llmGuide, docPath, _sourcePath: relativePath };
+	const entries = [];
+	for (const match of jsonLdMatches) {
+		let metadata;
+		try {
+			metadata = JSON.parse(match[1]);
+		} catch (err) {
+			console.error(`[update-docs] Invalid JSON-LD in ${relativePath}: ${err.message}`);
+			continue;
+		}
+
+		if (!metadata.name) {
+			console.warn(`[update-docs] Missing 'name' in ${relativePath}`);
+		}
+		if (!metadata['@type']) {
+			console.warn(`[update-docs] Missing '@type' in ${relativePath}`);
+		}
+		entries.push({ ...metadata, llmGuide, docPath, _sourcePath: relativePath });
+	}
+	return entries;
+}
+
+function extractPageData(htmlPath) {
+	return extractPageEntries(htmlPath)[0] || null;
 }
 
 /**
@@ -164,8 +168,7 @@ function generateComponentsJson() {
 	console.log('[update-docs] Processing components...');
 	const componentFiles = getFilesInDir('components');
 	for (const file of componentFiles) {
-		const data = extractPageData(file);
-		if (!data) continue;
+		for (const data of extractPageEntries(file)) {
 		
 		const pagePath = pathToPage(file);
 		const { _sourcePath, llmGuide, docPath, ...cleanData } = data;
@@ -192,14 +195,14 @@ function generateComponentsJson() {
 		}
 		
 		console.log(`[update-docs]  ✓ ${data.name}`);
+		}
 	}
 	
 	// Process addons
 	console.log('[update-docs] Processing addons...');
 	const addonFiles = getFilesInDir('addons');
 	for (const file of addonFiles) {
-		const data = extractPageData(file);
-		if (!data) continue;
+		for (const data of extractPageEntries(file)) {
 		
 		const pagePath = pathToPage(file);
 		const { _sourcePath, llmGuide, docPath, ...cleanData } = data;
@@ -226,14 +229,14 @@ function generateComponentsJson() {
 		}
 		
 		console.log(`[update-docs]  ✓ ${data.name}`);
+		}
 	}
 	
 	// Process documentation (distributed slices)
 	console.log('[update-docs] Processing documentation pages...');
 	const docFiles = getFilesInDir('documentation');
 	for (const file of docFiles) {
-		const data = extractPageData(file);
-		if (!data) continue;
+		for (const data of extractPageEntries(file)) {
 		
 		const pagePath = pathToPage(file);
 		const { _sourcePath, llmGuide, setup, api, patterns, ...cleanData } = data;
@@ -285,6 +288,7 @@ function generateComponentsJson() {
 		}
 		
 		console.log(`[update-docs]  ✓ ${data.name}`);
+		}
 	}
 	
 	// Write output
@@ -339,4 +343,4 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
 	}
 }
 
-export { generateComponentsJson, extractPageData };
+export { generateComponentsJson, extractPageData, extractPageEntries };
