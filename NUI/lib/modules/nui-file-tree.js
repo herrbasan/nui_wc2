@@ -143,6 +143,7 @@ class NuiFileTree extends HTMLElement {
 			this.appendChild(this._nav);
 			console.info('nui-file-tree: auto-created inner <nav>. Include it explicitly for production.');
 		}
+		// An explicitly named inner landmark wins; the host is the fallback.
 		if (!this._nav.hasAttribute('aria-label')) {
 			this._nav.setAttribute('aria-label', this.getAttribute('aria-label') || 'File explorer');
 		}

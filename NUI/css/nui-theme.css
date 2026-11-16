@@ -681,6 +681,12 @@ nui-link-list[mode="fold"] ul li a,
 nui-link-list[mode="fold"] ul li.group-header button.group-toggle {
 	width: 100%;
 	height: 100%;
+	/* The row is stretched edge to edge (the `a` is absolutely positioned with
+	   inset: 0), so its padding must sit INSIDE that width. Under the default
+	   content-box sizing the padding is added to the 100% width instead, and the
+	   row then overhangs its container by exactly one padding step — 1rem at
+	   depth 0 — which the sidebar's overflow-x: hidden silently clips. */
+	box-sizing: border-box;
 	display: flex;
 	align-items: center;
 	gap: var(--nui-space-half);
@@ -1064,7 +1070,10 @@ nui-badge {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	font-size: 0.75rem;
+	/* The smallest type token — a badge below it (0.75rem / 12px) sat one
+	   perceptual step under --font-size-xsmall and was the only sub-floor text
+	   on a badge-bearing page. */
+	font-size: var(--font-size-xsmall, 0.8rem);
 	font-weight: bold;
 	line-height: 1;
 	padding: 0.25rem 0.6rem;
@@ -3391,7 +3400,9 @@ nui-input .nui-clear-btn nui-icon {
 	height: 1rem;
 }
 
-/* Input icon button (search prefix, etc.) */
+/* Input icon (search prefix, etc.) — a decorative glyph in the field's gutter.
+   pointer-events: none lets the click reach the input underneath, so the
+   magnifier never intercepts a click aimed at the field. */
 nui-input .nui-input-icon {
 	position: absolute;
 	top: 50%;
@@ -3405,7 +3416,7 @@ nui-input .nui-input-icon {
 	background: transparent;
 	border: none;
 	border-radius: var(--border-radius1);
-	cursor: pointer;
+	pointer-events: none;
 	color: var(--color-shade5);
 	transition: color 0.15s, background-color 0.15s;
 	flex-shrink: 0;

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+	<meta name="color-scheme" content="light dark">
+	<title>Aperture — Media Library</title>
+	<link rel="icon" href="data:,">
+
+	<link rel="stylesheet" href="../shared/app.css">
+	<link rel="stylesheet" href="../../NUI/css/nui-theme.css">
+	<link rel="stylesheet" href="../../NUI/css/modules/nui-file-tree.css">
+	<link rel="stylesheet" href="../../NUI/css/modules/nui-file-list.css">
+	<link rel="stylesheet" href="../../NUI/css/modules/nui-lightbox.css">
+	<link rel="stylesheet" href="../../NUI/css/modules/nui-media-player.css">
+	<link rel="stylesheet" href="../../NUI/css/modules/nui-code-editor.css">
+	<link rel="stylesheet" href="../../NUI/css/modules/nui-menu.css">
+	<link rel="stylesheet" href="../../NUI/css/modules/nui-context-menu.css">
+
+	<script type="module" src="./app.js"></script>
+</head>
+<body>
+	<nui-loading mode="bar"></nui-loading>
+
+	<nui-app content-min-width="52rem" content-width="84rem" sidebar-width="20rem">
+		<nui-skip-links></nui-skip-links>
+
+		<nui-app-header>
+			<header>
+				<div slot="left">
+					<nui-button variant="icon">
+						<button type="button" data-action="toggle-sidebar" aria-label="Toggle navigation">
+							<nui-icon name="menu"></nui-icon>
+						</button>
+					</nui-button>
+					<span class="title">Aperture</span>
+					<span class="ex-current-route" data-current-route hidden></span>
+				</div>
+
+				<div slot="center">
+					<nui-input size="small" clearable>
+						<input type="search" id="asset-search" placeholder="Search assets" aria-label="Search assets">
+					</nui-input>
+				</div>
+
+				<div slot="right">
+					<nui-button variant="icon">
+						<button type="button" data-action="upload" aria-label="Upload assets">
+							<nui-icon name="upload"></nui-icon>
+						</button>
+					</nui-button>
+					<nui-popover aria-label="View options" placement="bottom">
+						<nui-form-row size="small">
+							<nui-input-group>
+								<label>Density</label>
+								<nui-select id="view-density">
+									<select>
+										<option value="comfortable" selected>Comfortable</option>
+										<option value="compact">Compact</option>
+									</select>
+								</nui-select>
+							</nui-input-group>
+						</nui-form-row>
+						<nui-form-row size="small">
+							<nui-input-group>
+								<label>Sort</label>
+								<nui-select id="view-sort">
+									<select>
+										<option value="name" selected>Name</option>
+										<option value="size">Size</option>
+										<option value="date">Date added</option>
+									</select>
+								</nui-select>
+							</nui-input-group>
+						</nui-form-row>
+					</nui-popover>
+				</div>
+			</header>
+		</nui-app-header>
+
+		<nui-sidebar behavior="primary">
+			<nui-link-list id="asset-nav" mode="fold"></nui-link-list>
+		</nui-sidebar>
+
+		<nui-content>
+			<nui-main>
+				<nui-page>
+					<section id="library-overview">
+						<h1>Media library</h1>
+						<p class="lead">Every asset in the Aperture workspace — photography, footage and audio — with its licensing state and where it has been used.</p>
+					</section>
+
+					<section id="workspace">
+						<h2>Workspace</h2>
+						<div class="ex-split">
+							<div class="ex-panel">
+								<h3 class="ex-panel__title">Folders</h3>
+								<nui-file-tree id="asset-tree" selectable="all" density="cozy" aria-label="Asset folders">
+									<nav></nav>
+								</nui-file-tree>
+							</div>
+
+							<div class="ex-panel">
+								<h3 class="ex-panel__title">Details</h3>
+								<dl class="ex-details">
+									<dt>Name</dt>
+									<dd><span class="ex-token" id="detail-name">—</span></dd>
+									<dt>Type</dt>
+									<dd id="detail-type">—</dd>
+									<dt>Size</dt>
+									<dd id="detail-size">—</dd>
+									<dt>Licence</dt>
+									<dd id="detail-licence">—</dd>
+									<dt>Used in</dt>
+									<dd id="detail-used">—</dd>
+								</dl>
+								<nui-textarea show-count max-rows="4">
+									<textarea id="detail-notes" placeholder="Notes for this asset" aria-label="Notes for this asset"></textarea>
+								</nui-textarea>
+							</div>
+						</div>
+					</section>
+
+					<section id="uploads">
+						<h2>Recent uploads</h2>
+						<nui-file-list id="upload-list"></nui-file-list>
+					</section>
+
+					<section id="dropzone">
+						<h2>Drop new assets</h2>
+						<p>Drop photographs and footage here. The zone reports what landed; the server decides what happens next.</p>
+						<div class="ex-dropzone">
+							<nui-dropzone id="asset-dropzone">
+								<div data-drop="images">Photographs — JPG, PNG, WebP</div>
+								<div data-drop="video">Footage — MP4, MOV</div>
+							</nui-dropzone>
+						</div>
+					</section>
+
+					<section id="preview">
+						<h2>Preview</h2>
+						<p>One asset opened full size, with its file type shown alongside.</p>
+						<div class="ex-split">
+							<div class="ex-panel">
+								<h3 class="ex-panel__title">Campaign frames</h3>
+								<nui-lightbox loop>
+									<div class="ex-gallery">
+										<img src="../assets/frame-dawn.svg" data-lightbox-src="../assets/frame-dawn.svg" alt="Campaign frame at dawn">
+										<img src="../assets/frame-dusk.svg" data-lightbox-src="../assets/frame-dusk.svg" alt="Campaign frame at dusk">
+										<img src="../assets/frame-market.svg" data-lightbox-src="../assets/frame-market.svg" alt="Market frame from the timelapse">
+									</div>
+								</nui-lightbox>
+							</div>
+
+							<div class="ex-panel">
+								<h3 class="ex-panel__title">Sound bed</h3>
+								<nui-media-player pause-others>
+									<audio src="../assets/theme-bed.wav"></audio>
+								</nui-media-player>
+								<p class="ex-stat__delta">The end-card bed. Owned outright, so it ships with the cut.</p>
+							</div>
+						</div>
+					</section>
+
+					<section id="assets">
+						<h2>Assets</h2>
+						<p>Filtered by the search box in the header and the folder selected in the tree.</p>
+						<div class="ex-assets" id="asset-grid"></div>
+						<p class="ex-empty" id="asset-empty" hidden>No assets match this search.</p>
+					</section>
+
+					<section id="metadata">
+						<h2>Metadata</h2>
+						<p>The sidecar that travels with the file — the record a build script reads.</p>
+						<nui-code-editor id="metadata-editor" data-lang="js" aria-label="Asset metadata">export const metadata = {
+  id: 'ast_2291',
+  kind: 'photo',
+  licence: 'editorial',
+  width: 5472,
+  height: 3648
+};</nui-code-editor>
+
+						<h3>File types in this workspace</h3>
+						<ul class="ex-fileicons">
+							<li><nui-file-icon name="hero-dawn.jpg"></nui-file-icon><span>hero-dawn.jpg</span></li>
+							<li><nui-file-icon name="aerial-coast.mp4"></nui-file-icon><span>aerial-coast.mp4</span></li>
+							<li><nui-file-icon name="theme-bed.wav"></nui-file-icon><span>theme-bed.wav</span></li>
+							<li><nui-file-icon name="metadata.json"></nui-file-icon><span>metadata.json</span></li>
+							<li><nui-file-icon size="small" name="index.ts"></nui-file-icon><span>index.ts</span></li>
+						</ul>
+					</section>
+				</nui-page>
+			</nui-main>
+		</nui-content>
+
+		<nui-app-footer>
+			<footer>
+				<div class="ex-toolbar ex-toolbar--between">
+					<span class="ex-stat__delta" id="asset-count">—</span>
+					<span class="ex-stat__delta">Aperture Media Library · demo data</span>
+				</div>
+			</footer>
+		</nui-app-footer>
+	</nui-app>
+</body>
+</html>

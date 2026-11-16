@@ -61,7 +61,9 @@ expansion, refresh all key on it). Malformed entries throw immediately.
 
 The element wraps a native `<nav>` (auto-created in dev with an info log, like
 all NUI components). Content is populated programmatically — there is no
-declarative tree markup; use `loadData()` for static structures.
+declarative tree markup; use `loadData()` for static structures. An explicit
+`aria-label` on the inner `<nav>` takes precedence; the host's `aria-label` is
+the fallback, followed by `"File explorer"`.
 
 ## Programmatic Usage
 

@@ -318,6 +318,68 @@ If you MUST apply CSS (spacing on your own wrappers, very rare theming), use ONL
 
 📖 **Full docs:** [`documentation/components/input.md`](documentation/components/input.md)
 
+### nui-input-group
+
+Wraps a **top-level `<label>`** and one NUI control into a labelled block, with optional description text and validation state.
+
+```html
+<!-- ✅ CORRECT — a labelled text input -->
+<nui-input-group>
+  <label for="email">Email address</label>
+  <nui-input>
+    <input type="email" id="email" required>
+  </nui-input>
+  <span class="description">We never share it.</span>
+</nui-input-group>
+
+<!-- ✅ CORRECT — a labelled select (the group label becomes its accessible name) -->
+<nui-input-group>
+  <label>Data region</label>
+  <nui-select>
+    <select name="region" required>
+      <option value="" disabled selected>Choose a region</option>
+      <option value="eu">European Union (Frankfurt)</option>
+    </select>
+  </nui-select>
+</nui-input-group>
+
+<!-- ✅ CORRECT — a GROUP of radios: the top label names the group, not one radio -->
+<nui-input-group>
+  <label id="role-label">Your role</label>
+  <nui-radio>
+    <input type="radio" id="role-eng" name="role" value="engineering" checked>
+    <label for="role-eng">Engineering</label>
+  </nui-radio>
+  <nui-radio>
+    <input type="radio" id="role-ops" name="role" value="operations">
+    <label for="role-ops">Operations</label>
+  </nui-radio>
+</nui-input-group>
+```
+
+| Attribute | `role`, `aria-labelledby` — set them when the group label is the group's name |
+| Notes | A **group of checkables** gets `role="group"` (or `radiogroup` for radios) automatically, and the group label names the group. A **single** control keeps the plain label→control association. |
+| Docs | [`documentation/components/input.md`](documentation/components/input.md#3-input-groups-nui-input-group) |
+
+### nui-form-row
+
+A **layout** wrapper: it places inputs, selects, tag inputs and buttons side by side at one uniform height.
+
+```html
+<!-- ✅ CORRECT — a compact toolbar row, every child on 2rem -->
+<nui-form-row size="small">
+  <label for="site">Site</label>
+  <nui-select><select><option>All</option></select></nui-select>
+  <nui-input><input type="search" placeholder="Search"></nui-input>
+  <nui-button><button type="button">Go</button></nui-button>
+</nui-form-row>
+```
+
+| Attributes | `size` (`"small"` sets the compact 2rem row height for every child) |
+| Notes | The row does **not** bind a label to a control — use `nui-input-group` for that. Inside a `nui-date-range`, the preset `<select>` must be a **child** of the date range, not of the row. |
+| Docs | [`documentation/components/form-row.md`](documentation/components/form-row.md) |
+
+
 ### nui-date-range
 
 Paired from/to native date inputs with an optional preset `<select>`. Emits one normalized `nui-date-range-change`.
@@ -502,6 +564,12 @@ Calendar mode **hides** the two date inputs rather than replacing them, so both 
 ### nui-content / nui-main
 | Role | `nui-content` = positioning context; **`nui-main`** = scroll container, and it sets `role="main"` + `id="main-content"` itself |
 | Child | `<nui-main>` — **not** a bare `<main>`. App-mode CSS targets `nui-content > nui-main`, so a `<main>` breaks scrolling and router page styling silently |
+
+### nui-app-footer
+| Inner | `<footer>` (auto-gets `role="contentinfo"`) |
+| Use as | The last child of `<nui-app>` — the fixed bottom bar. It is optional, and it is **hidden below 768px** |
+
+📖 **Full docs:** [`documentation/components/app.md`](documentation/components/app.md)
 
 ### nui-page
 | Attributes | `breakout` (allows full-width child sections) |
@@ -831,8 +899,25 @@ nui.components.notifications.list() / unread() / markAllRead() / clear()
 <nui-icon name="close" decorative></nui-icon>
 ```
 | Attribute | `name` (Material Icons sprite name) |
+| Names | The sprite ships **128** icons. A name that is not in the sprite renders as **nothing, with no error** — check the sprite before using a name. |
 
 📖 **Full docs:** [`documentation/components/icon.md`](documentation/components/icon.md)
+
+### nui-file-icon
+
+A display component: the file-type glyph, derived from the extension.
+
+```html
+<nui-file-icon name="report.pdf"></nui-file-icon>
+<nui-file-icon type="pdf"></nui-file-icon>
+<nui-file-icon size="small" name="index.ts"></nui-file-icon>
+```
+
+| Attributes | `name` (a filename or path — the extension is derived), `type` / `extension` (wins over `name`), `size` (`"small"` = banner only, for dense rows) |
+| Notes | Core component — no import needed. It holds no data and dispatches no events. |
+
+📖 **Full docs:** [`documentation/components/file-icon.md`](documentation/components/file-icon.md)
+
 
 ### nui-markdown
 
@@ -904,6 +989,29 @@ Hover/focus help text only — **non-interactive by contract**. For a panel of c
 ```
 
 📖 **Full docs:** [`documentation/components/skip-links.md`](documentation/components/skip-links.md)
+
+---
+
+## Legacy Components (do not use in new work)
+
+These are registered and still work, but each has a documented replacement. Reach for the
+replacement; keep the legacy tag only when you must maintain an existing page.
+
+| Legacy | Use instead | Why |
+|---|---|---|
+| `nui-icon-button` | `<nui-button variant="icon">` wrapping an `<nui-icon>` | Layout-only wrapper; the button carries the variant vocabulary |
+| `nui-column-flow` | `<nui-layout type="flow">` | The layout component clamps columns responsively; the column-flow does not |
+| `nui-loading` | `<nui-progress type="busy">` / `type="circular-busy"` | The progress component is the current name for an indeterminate indicator |
+
+```html
+<!-- ❌ LEGACY -->
+<nui-icon-button><button aria-label="Star"><nui-icon name="star_rate"></nui-icon></button></nui-icon-button>
+<nui-column-flow columns="2"><nui-card>…</nui-card></nui-column-flow>
+
+<!-- ✅ CURRENT -->
+<nui-button variant="icon"><button aria-label="Star"><nui-icon name="star_rate"></nui-icon></button></nui-button>
+<nui-layout type="flow" columns="2"><nui-card>…</nui-card></nui-layout>
+```
 
 ---
 

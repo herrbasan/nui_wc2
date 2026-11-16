@@ -286,6 +286,7 @@ const navigationData = [
 				items: [
 					{ label: 'Button', href: '#page=components/button' },
 					{ label: 'Inputs', href: '#page=components/inputs' },
+					{ label: 'Form Row', href: '#page=components/form-row' },
 					{ label: 'Tag Input', href: '#page=components/tag-input' },
 					{ label: 'Select', href: '#page=components/select' },
 					{ label: 'Slider', href: '#page=components/slider' },

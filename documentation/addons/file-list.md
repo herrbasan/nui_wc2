@@ -42,7 +42,7 @@ document.getElementById('files').loadData([
 | `size` | number \| string | A byte count is formatted (`1843200` → `1.8 MB`); a string is shown verbatim. |
 | `url` | string | Where to download from. Without one, the `download` action is not rendered. |
 | `detail` | string | Extra text for the second line, before the size. Space-separated as `detail · size`. |
-| `status` | string | Rendered as a badge. `done`/`uploaded` → success, `uploading`/`pending`/`queued` → info, `failed`/`error` → danger, `paused` → warning. An unmapped value renders a neutral badge. |
+| `status` | string | Rendered as a badge in a fixed-width status column, so filenames truncate at a consistent edge across rows. `done`/`uploaded` → success, `uploading`/`pending`/`queued` → info, `failed`/`error` → danger, `paused` → warning. An unmapped value renders a neutral badge. |
 | `id` | string | Identity for reordering. Defaults to `name`. |
 
 ## Options

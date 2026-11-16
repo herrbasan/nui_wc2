@@ -135,5 +135,5 @@ Wraps any NUI input control (text, select, checkbox) along with a top-level `<la
 
 | Feature | Description |
 |---------|-------------|
-| ID Generation | If the inner `input` lacks an `id`, and the `<label>` lacks a `for`, `nui-input-group` automatically generates a matching UUID to semantically bind them for screen readers. |
-| State Tracking | The group component observes the inner input and adds classes like `is-disabled`, `is-required`, or `has-error` to the `<nui-input-group>` wrapper to style the label and description accordingly. |
+| ID Generation | If a single text inner `input` lacks an `id`, and the `<label>` lacks a `for`, `nui-input-group` automatically generates a matching UUID to semantically bind them for screen readers. Checkable groups instead receive `role="group"`/`role="radiogroup"` with `aria-labelledby`; each checkable keeps its own label. |
+| State Tracking | The group component observes the inner input and adds classes like `is-disabled`, `is-required`, or `has-error` to the `<nui-input-group>` wrapper to style the label and description accordingly. Checkable errors appear only after interaction; text controls retain the non-empty invalid-value behavior. |

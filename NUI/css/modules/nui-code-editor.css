@@ -14,7 +14,7 @@ nui-code-editor {
     border-radius: var(--border-radius1, 4px);
     overflow: hidden;
     font-family: monospace;
-    font-size: 14px;
+    font-size: var(--font-size-small, 0.9rem);
     line-height: 1.5;
     border: 1px solid var(--border-shade1, rgba(0,0,0,0.1));
 }

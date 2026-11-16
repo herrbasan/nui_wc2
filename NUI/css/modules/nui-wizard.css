@@ -32,6 +32,25 @@ nui-wizard[busy]::after {
 	gap: var(--nui-space-quarter) 0;
 	margin: 0 auto;
 	padding: var(--nui-space) var(--nui-space-double);
+	/* Four step titles do not fit a narrow viewport. The nav scrolls INSIDE the
+	   header instead of overflowing it: the circles stay aligned with their titles
+	   because both rows share the grid's columns, so the stepper reads as one
+	   moving row rather than two. `max-width` is what makes the scroll happen —
+	   the grid is sized `fit-content` inline, so without it the nav is as wide as
+	   its titles and the overflow belongs to the header, not to the nav.
+	   `min-width: 0` is what makes it a scroll container at all: a grid's automatic
+	   minimum size is its min-content width, and seven 3rem tracks are wider than
+	   any phone, so the box refused to shrink and the overflow stayed hidden. */
+	min-width: 0;
+	max-width: 100%;
+	/* `box-sizing` decides whether `max-width: 100%` includes the padding. The
+	   theme does not set border-box globally, so without this the nav's border box
+	   is 100% PLUS its own padding — and it overflowed the header by exactly that
+	   padding, which is where the clipped step strip came from. */
+	box-sizing: border-box;
+	overflow-x: auto;
+	overflow-y: hidden;
+	scrollbar-width: thin;
 }
 
 .nui-wizard-nav-row-circles,
@@ -98,7 +117,7 @@ nui-wizard[busy]::after {
 	border-radius: 50%;
 	border: 2px solid var(--border-shade3);
 	background-color: var(--color-base);
-	font-size: 0.85em;
+	font-size: var(--font-size-small);
 	font-weight: 600;
 	transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease, transform 0.15s ease;
 	color: var(--color-text-muted);
@@ -123,15 +142,20 @@ nui-wizard[busy]::after {
 .nui-wizard-nav-title {
 	grid-row: 2;
 	place-self: center;
-	font-size: var(--nui-font-size-sm, 0.8rem);
+	font-size: var(--font-size-xsmall);
 	white-space: nowrap;
 	text-align: center;
 	color: var(--color-text-muted);
 	transition: color 0.2s ease;
 }
 
+/* The active step's title is small text, and --color-highlight on the header's
+   shade2 surface measures 4.03:1 — under the 4.5 that small text needs. The
+   accent stays on the step's NUMBER (a filled circle carrying white), so the
+   active step is still the accented one; the title states it in ink. */
 .nui-wizard-nav-title.active {
-	color: var(--color-highlight);
+	color: var(--text-color);
+	font-weight: 600;
 }
 
 .nui-wizard-nav-title.completed {
@@ -175,8 +199,11 @@ footer.nui-wizard-footer {
 }
 
 .nui-wizard-step-indicator {
-	font-size: var(--nui-font-size-sm, 0.875rem);
-	color: var(--color-shade5);
+	font-size: var(--font-size-small);
+	/* --color-shade5 on the footer's shade2 surface measured 3.73:1 — the only
+	   orientation cue for the position in the flow, below the 4.5 small text
+	   needs. --text-color-dim measures 6.05:1 on the same surface. */
+	color: var(--text-color-dim);
 }
 
 /* ── Step Status Indicators ── */
@@ -239,7 +266,7 @@ footer.nui-wizard-footer {
 
 .nui-wizard-nav-step.status-warning .nui-wizard-nav-number::before {
 	content: "!";
-	font-size: 0.85rem;
+	font-size: var(--font-size-xsmall);
 	font-weight: 700;
 	font-style: normal;
 }

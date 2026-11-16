@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+	<meta name="color-scheme" content="light dark">
+	<title>Lumen — Knowledge Base</title>
+	<link rel="icon" href="data:,">
+
+	<link rel="stylesheet" href="../shared/app.css">
+	<link rel="stylesheet" href="../../NUI/css/nui-theme.css">
+	<link rel="stylesheet" href="../../NUI/css/modules/nui-menu.css">
+	<link rel="stylesheet" href="../../NUI/css/modules/nui-slides.css">
+	<link rel="stylesheet" href="../../NUI/css/modules/nui-notepad.css">
+
+	<script type="module" src="./app.js"></script>
+</head>
+<body>
+	<nui-loading mode="bar"></nui-loading>
+
+	<nui-app content-min-width="52rem" content-width="80rem" sidebar-width="18rem">
+		<nui-skip-links></nui-skip-links>
+
+		<nui-app-header>
+			<header>
+				<div slot="left">
+					<nui-button variant="icon">
+						<button type="button" data-action="toggle-sidebar" aria-label="Toggle navigation">
+							<nui-icon name="menu"></nui-icon>
+						</button>
+					</nui-button>
+					<span class="title">Lumen</span>
+					<span class="ex-current-route" data-current-route hidden></span>
+				</div>
+
+				<div slot="right">
+					<nui-button variant="icon">
+						<button type="button" data-action="toggle-theme" aria-label="Toggle color scheme">
+							<nui-icon name="brightness"></nui-icon>
+						</button>
+					</nui-button>
+				</div>
+			</header>
+		</nui-app-header>
+
+		<nui-sidebar behavior="primary">
+			<nui-link-list id="kb-nav" mode="fold"></nui-link-list>
+		</nui-sidebar>
+
+		<nui-content>
+			<nui-main>
+				<nui-page>
+					<section id="kb-overview">
+						<h1>Knowledge base</h1>
+						<p class="lead">The handbook, the runbooks and the notes that keep them true. Written for whoever reads them next.</p>
+					</section>
+
+					<section>
+						<nui-menu>
+							<nav>
+								<button>Page</button>
+								<ul>
+									<li><button data-action="kb-menu:new">New page</button></li>
+									<li><button data-action="kb-menu:duplicate">Duplicate</button></li>
+									<li class="separator"></li>
+									<li><button data-action="kb-menu:history">Version history</button></li>
+								</ul>
+								<button>Publish</button>
+								<ul>
+									<li><button data-action="kb-menu:publish">Publish now</button></li>
+									<li><button data-action="kb-menu:schedule">Schedule…</button></li>
+								</ul>
+							</nav>
+						</nui-menu>
+					</section>
+
+					<section id="reading-order">
+						<h2>Reading order</h2>
+						<p>Every page starts with who it is for and what the reader is trying to do.</p>
+						<nui-layout columns="3">
+							<nui-card>
+								<h3>Who</h3>
+								<p>Name one person. "Engineers" is not a reader.</p>
+							</nui-card>
+							<nui-card>
+								<h3>What</h3>
+								<p>Reading at 3am is not the same as reading on Monday.</p>
+							</nui-card>
+							<nui-card>
+								<h3>Next</h3>
+								<p>A page that does not lead somewhere is a dead end.</p>
+							</nui-card>
+						</nui-layout>
+					</section>
+
+					<section id="handbook">
+						<h2>Handbook</h2>
+						<p>Rendered from Markdown, with the frontmatter parsed into a metadata card.</p>
+						<nui-markdown src="./handbook.md" frontmatter="open"></nui-markdown>
+					</section>
+
+					<section id="getting-started">
+						<h2>Getting started</h2>
+						<p>Three steps, in the order the handbook expects them.</p>
+						<nui-details summary="Read the handbook first">
+							<p>It is short. It answers the three questions every other page assumes you have already answered.</p>
+						</nui-details>
+						<nui-details summary="Set up your access" lazy>
+							<p>Request the groups you need, then wait for the confirmation — access changes are reviewed weekly.</p>
+						</nui-details>
+						<nui-details summary="Write your first page" lazy>
+							<p>Copy <code>handbook.md</code>, name your reader, and answer the three questions in the opening paragraph.</p>
+						</nui-details>
+					</section>
+
+					<section id="review-board">
+						<h2>Review board</h2>
+						<p>Pages waiting for a second pair of eyes, ordered by how long they have waited.</p>
+						<nui-notepad id="kb-board" mode="list" owner="both"></nui-notepad>
+					</section>
+
+					<section id="reading-queue">
+						<h2>Reading queue</h2>
+						<p>Long reads, ordered by urgency. Drag a card to reorder it — the order is the reading order.</p>
+						<nui-sortable id="kb-sortable" aria-label="Reading queue">
+							<nui-sortable-item data-id="paging">
+								<span class="drag-handle"><nui-icon name="drag_indicator" decorative></nui-icon></span>
+								<span>Paging — what it costs when the dataset stops fitting in memory</span>
+							</nui-sortable-item>
+							<nui-sortable-item data-id="caching">
+								<span class="drag-handle"><nui-icon name="drag_indicator" decorative></nui-icon></span>
+								<span>Caching — invalidation is the hard part, not storage</span>
+							</nui-sortable-item>
+							<nui-sortable-item data-id="queues">
+								<span class="drag-handle"><nui-icon name="drag_indicator" decorative></nui-icon></span>
+								<span>Queues — backpressure is a product decision</span>
+							</nui-sortable-item>
+							<nui-sortable-item data-id="idempotency">
+								<span class="drag-handle"><nui-icon name="drag_indicator" decorative></nui-icon></span>
+								<span>Idempotency keys — retries are not an edge case</span>
+							</nui-sortable-item>
+						</nui-sortable>
+						<p class="ex-stat__delta">Current order: <span id="kb-order">paging → caching → queues → idempotency</span></p>
+					</section>
+
+					<section id="glossary">
+						<h2>Glossary</h2>
+						<nui-input-group>
+							<label for="kb-glossary-search">Filter entries</label>
+							<nui-input>
+								<input type="search" id="kb-glossary-search" placeholder="Try &quot;cache&quot;" autocomplete="off">
+							</nui-input>
+						</nui-input-group>
+						<dl class="ex-details" id="kb-glossary-body"></dl>
+					</section>
+
+					<section id="reference">
+						<h2>Reference</h2>
+						<p>The snippet below is the canonical form of a Markdown page in this handbook. The page it lands on supplies the <code>h1</code>, so the document starts at <code>h2</code> — an embedded document never opens a second top level.</p>
+						<nui-code>
+							<script type="example" data-lang="markdown">---
+title: Page title
+---
+
+<!-- mb:block repeat=header -->
+**Lumen Handbook** — Engineering Practices
+<!-- mb:/block -->
+
+## Page title
+
+One paragraph that names the reader and the task.
+</script>
+						</nui-code>
+					</section>
+
+					<section id="walkthrough">
+						<h2>Walkthrough</h2>
+						<p>The same handbook as a deck — useful when onboarding a new team in one sitting. The deck is a separate surface with its own titles: a slide states a claim, so it never repeats a section name the page already uses.</p>
+						<nui-slides toolbar base="1280x720">
+							<nui-markdown src="./deck.md"></nui-markdown>
+						</nui-slides>
+					</section>
+
+					<section id="recently-changed">
+						<h2>Recently changed</h2>
+						<p>The longest pages change most often, so the feed is virtualised: only the visible cards exist in the DOM.</p>
+						<div class="ex-vscroll">
+							<nui-virtual-scroll id="kb-vscroll" threshold="12" margin="200"></nui-virtual-scroll>
+						</div>
+					</section>
+
+					<section id="page-settings">
+						<h2>Page settings</h2>
+						<p>Options that apply to every page in the handbook.</p>
+						<div class="ex-toolbar">
+							<span class="ex-tooltip-host">
+								<nui-button variant="outline">
+									<button type="button" id="kb-defaults" data-action="kb-menu:defaults">Restore defaults</button>
+								</nui-button>
+								<nui-tooltip for="kb-defaults" position="bottom">Resets every page to the handbook template.</nui-tooltip>
+							</span>
+							<nui-badge variant="info">12 pages inherit</nui-badge>
+							<nui-button variant="outline">
+								<button type="button" data-action="banner-show@#kb-banner">Show the stale-reference warning</button>
+							</nui-button>
+						</div>
+
+						<nui-banner id="kb-banner" placement="bottom">
+							<div class="nui-banner-content">
+								<span>Three pages still reference the retired build system.</span>
+								<button type="button" data-action="banner-close:dismiss@#kb-banner">Dismiss</button>
+							</div>
+						</nui-banner>
+					</section>
+
+				</nui-page>
+			</nui-main>
+		</nui-content>
+
+		<nui-app-footer>
+			<footer>
+				<div class="ex-toolbar ex-toolbar--between">
+					<span class="ex-stat__delta" id="kb-count">—</span>
+					<span class="ex-stat__delta">Lumen Knowledge Base · demo data</span>
+				</div>
+			</footer>
+		</nui-app-footer>
+	</nui-app>
+</body>
+</html>

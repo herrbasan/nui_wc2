@@ -1,22 +1,28 @@
 // Minimal syntax highlighter - focused on web languages
-// Languages: HTML, CSS, JavaScript, TypeScript, JSON
+// Languages: HTML, CSS, JavaScript, TypeScript, JSON, Markdown
 // Target: ~3KB minified
 //
-// The five languages are a DEFAULT, not a wall. A consumer can ask whether a language is
+// The languages are a DEFAULT, not a wall. A consumer can ask whether a language is
 // known (supportsLanguage) and teach the module its own (registerLanguage) instead of
 // discovering the boundary as uncoloured output — issue #69.
+//
+// Markdown is here because it is NUI's OWN content format: the renderer emits
+// `data-lang="markdown"` for every markdown fence, and MD-Blocks rides on it. Without
+// a grammar the library warned about its own output, which is the noise issue #69
+// exists to remove.
 
 const BUILTIN_ALIASES = {
 	html: 'html', xml: 'html',
 	css: 'css',
 	js: 'js', javascript: 'js',
 	ts: 'ts', typescript: 'ts',
-	json: 'json'
+	json: 'json',
+	markdown: 'markdown', md: 'markdown'
 };
 
 // The canonical grammars a caller can rely on. Aliases (js/javascript, ts/typescript,
-// html/xml) resolve to these, so `supportsLanguage('javascript')` is true.
-export const LANGUAGES = Object.freeze(['html', 'css', 'js', 'ts', 'json']);
+// html/xml, md/markdown) resolve to these, so `supportsLanguage('javascript')` is true.
+export const LANGUAGES = Object.freeze(['html', 'css', 'js', 'ts', 'json', 'markdown']);
 
 // Consumer-supplied tokenizers, keyed by the name they registered. Same ESM module
 // instance as the one `nui-code` imports lazily, so registering before a page renders is
@@ -176,6 +182,42 @@ export function highlight(code, lang, forceEscape = false) {
 		html = html.replace(/(:\s*)(-?\d+\.?\d*(?:[eE][+-]?\d+)?)/g, (m, ws, p1) => ws + wrap(p1, 'number'));
 		html = html.replace(/(\[\s*)(-?\d+\.?\d*(?:[eE][+-]?\d+)?)/g, (m, ws, p1) => ws + wrap(p1, 'number'));
 		html = html.replace(/(,\s*)(-?\d+\.?\d*(?:[eE][+-]?\d+)?)/g, (m, ws, p1) => ws + wrap(p1, 'number'));
+	} else if (key === 'markdown') {
+		// Markdown is the library's own content format (MD-Blocks rides on it), so the
+		// renderer emits `data-lang="markdown"` for every markdown fence — including the
+		// ones a consumer writes in a .md file. Without a grammar the module warned
+		// about its own output.
+		//
+		// Every rule below re-emits the whitespace it matched. A highlighter must never
+		// reflow the text it is decorating.
+
+		// A fenced block is LITERAL: its content is code, not prose, so nothing inside
+		// it may be read as a heading, a list or emphasis. It is taken out whole first.
+		html = html.replace(/^(`{3,})([^\n]*)\n([\s\S]*?)\n(`{3,})[ \t]*$/gm, (m, open, info, body, close) =>
+			wrap(open, 'keyword') + (info ? ' ' + wrap(info, 'string') : '') + '\n'
+			+ wrap(body, 'codeblock') + '\n' + wrap(close, 'keyword')
+		);
+
+		// HTML comments next — an MD-Blocks directive IS one, and it must not be read
+		// as prose.
+		html = html.replace(/(&lt;!--[\s\S]*?--&gt;)/g, (m) => wrap(m, 'comment'));
+		// Inline code before emphasis: the markers inside a code span are literal.
+		html = html.replace(/(`[^`\n]+`)/g, (m) => wrap(m, 'code'));
+		// ATX headings.
+		html = html.replace(/^(#{1,6})(\s)/gm, (m, hashes, space) => wrap(hashes, 'keyword') + space);
+		// Thematic breaks and frontmatter fences.
+		html = html.replace(/^(-{3,})$/gm, (m) => wrap(m, 'comment'));
+		// Blockquote markers.
+		html = html.replace(/^(\s*)(&gt;)/gm, (m, ws, gt) => ws + wrap(gt, 'comment'));
+		// List markers — bullet or ordered.
+		html = html.replace(/^(\s*)([-*+]|\d+\.)(\s)/gm, (m, ws, marker, space) => ws + wrap(marker, 'keyword') + space);
+		// Bold before italic, or the `**` of a bold run is read as two empty italics.
+		html = html.replace(/\*\*([^*\n]+)\*\*/g, (m, inner) => '**' + wrap(inner, 'strong') + '**');
+		html = html.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, (m, pre, inner) => pre + '*' + wrap(inner, 'em') + '*');
+		// Underscore emphasis only where it stands alone — `snake_case` is a word.
+		html = html.replace(/(^|\s)_([^_\n]+)_/g, (m, pre, inner) => pre + '_' + wrap(inner, 'em') + '_');
+		// Links: the text is prose, the destination is the part worth colouring.
+		html = html.replace(/\[([^\]\n]*)\]\(([^)\n]*)\)/g, (m, text, url) => '[' + text + '](' + wrap(url, 'link') + ')');
 	} else if (key) {
 		// Known-looking but unknown: say so once instead of rendering silence.
 		warnUnknownLanguage(lang);

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" role="img" aria-label="Campaign frame at dawn">
+	<defs>
+		<linearGradient id="dawn" x1="0" y1="0" x2="0" y2="1">
+			<stop offset="0" stop-color="#2b3a55"/>
+			<stop offset="0.55" stop-color="#8a6a4b"/>
+			<stop offset="1" stop-color="#e0a76b"/>
+		</linearGradient>
+	</defs>
+	<rect width="640" height="400" fill="url(#dawn)"/>
+	<circle cx="170" cy="290" r="46" fill="#f2d3a3" opacity="0.85"/>
+	<path d="M0 330 L150 250 L270 320 L390 235 L520 320 L640 260 L640 400 L0 400 Z" fill="#1b2436" opacity="0.9"/>
+</svg>

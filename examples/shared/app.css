@@ -1,0 +1,451 @@
+/*
+ * Example app scaffolding.
+ *
+ * These rules style the EXAMPLES' own wrapper elements only — never a NUI
+ * component. A NUI component gets its appearance from its attributes
+ * (variant, size, fill); custom CSS on one breaks the design system.
+ *
+ * Only theme variables from NUI/css/nui-theme.css are used. No new variables.
+ */
+
+/* ---- App shell ------------------------------------------------------ */
+
+body {
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+}
+
+/* The shell is hidden until NUI has upgraded it — no flash of unstyled grid. */
+nui-app:not(.nui-ready) {
+	display: none;
+}
+
+/* ---- Page scaffolding ----------------------------------------------- */
+
+.ex-main {
+	display: flex;
+	flex-direction: column;
+	gap: var(--nui-space-double);
+}
+
+/* A row of controls that wraps rather than overflows on narrow screens. */
+.ex-toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--nui-space);
+}
+
+.ex-toolbar--end {
+	justify-content: flex-end;
+}
+
+.ex-toolbar--between {
+	justify-content: space-between;
+}
+
+/* ---- Stat tiles ------------------------------------------------------ */
+
+.ex-stats {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+	gap: var(--nui-space);
+}
+
+.ex-stat {
+	display: flex;
+	flex-direction: column;
+	gap: var(--nui-space-half);
+	padding: var(--nui-space);
+	background: var(--color-shade2);
+	border: var(--border-thickness) solid var(--border-shade1);
+	border-radius: var(--border-radius2);
+}
+
+.ex-stat__label {
+	font-size: var(--font-size-small);
+	color: var(--text-color-dim);
+}
+
+.ex-stat__value {
+	font-size: var(--font-size-large);
+	font-weight: 600;
+	line-height: 1.1;
+}
+
+.ex-stat__delta {
+	font-size: var(--font-size-small);
+	color: var(--text-color-dim);
+}
+
+/* ---- Two-column work area -------------------------------------------- */
+
+.ex-split {
+	display: grid;
+	grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+	gap: var(--nui-space-double);
+	align-items: start;
+}
+
+@media (max-width: 60rem) {
+	.ex-split {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+/* ---- Panel ----------------------------------------------------------- */
+
+.ex-panel {
+	display: flex;
+	flex-direction: column;
+	gap: var(--nui-space);
+	padding: var(--nui-space);
+	background: var(--color-shade2);
+	border: var(--border-thickness) solid var(--border-shade1);
+	border-radius: var(--border-radius2);
+}
+
+.ex-panel__title {
+	font-size: var(--font-size-medium);
+	font-weight: 600;
+	margin: 0;
+}
+
+/* A scrolling region with a definite height — nui-list and
+ * nui-virtual-scroll both fill their container, so the container
+ * needs position: relative and a real height. */
+.ex-scroll {
+	position: relative;
+	height: 22rem;
+}
+
+/* The list's own header is a two-column grid (sorting + search) that its
+ * addon collapses to one column below 768px. The list is a wide control
+ * though, so on a narrow screen it gets the full width of its column
+ * rather than sitting beside the panels. */
+@media (max-width: 48rem) {
+	.ex-scroll {
+		height: 26rem;
+	}
+}
+
+/* A table cell that shows a code-ish token (ids, hashes, names). */
+.ex-token {
+	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	font-size: var(--font-size-small);
+	color: var(--text-color-dim);
+}
+
+/* ---- List rows ------------------------------------------------------- */
+
+.ex-row {
+	display: flex;
+	align-items: center;
+	gap: var(--nui-space-half);
+	padding: var(--nui-space-half);
+	border-bottom: var(--border-thickness) solid var(--border-shade2);
+}
+
+.ex-row__main {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.ex-row__title {
+	display: block;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.ex-row__meta {
+	display: block;
+	font-size: var(--font-size-small);
+	color: var(--text-color-dim);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* The badge and the reading are fixed slots: they never compete for the width
+   the title needs. And the row never wraps — `nui-list` is a fixed-pitch
+   virtualiser (it measures the first row and spaces every row by that height),
+   so a row that grows taller than the others overlaps its neighbours. The
+   title truncates instead. */
+.ex-row > nui-badge,
+.ex-row > .ex-token {
+	flex: 0 0 auto;
+}
+
+/* ---- Section anchors -------------------------------------------------- */
+
+/* A section reached from the sidebar must clear the fixed app header, and it
+   must be focusable so the navigation can move focus to it. */
+.ex-section {
+	scroll-margin-top: var(--app-header-height);
+}
+
+.ex-section:focus {
+	outline: none;
+}
+
+.ex-section:focus-visible {
+	outline: 2px solid var(--color-highlight);
+	outline-offset: 2px;
+}
+
+/* ---- Asset grid ------------------------------------------------------ */
+
+.ex-assets {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+	gap: var(--nui-space);
+}
+
+.ex-assets[data-density="compact"] {
+	grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
+}
+
+.ex-asset {
+	display: flex;
+	flex-direction: column;
+	gap: var(--nui-space-half);
+	padding: var(--nui-space-half);
+	border: var(--border-thickness) solid var(--border-shade1);
+	border-radius: var(--border-radius2);
+	background: var(--color-shade1);
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+}
+
+.ex-asset__thumb {
+	aspect-ratio: 4 / 3;
+	width: 100%;
+	object-fit: cover;
+	border-radius: var(--border-radius1);
+	background: var(--color-shade3);
+}
+
+.ex-asset__name {
+	font-size: var(--font-size-small);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* ---- Current route indicator ----------------------------------------- */
+
+/* Shown next to the app title when the sidebar is collapsed, so the user
+ * always knows which section they are in — on a phone the sidebar is off
+ * canvas and the navigation is otherwise one unlabelled tap away. */
+.ex-current-route {
+	font-size: var(--font-size-small);
+	color: var(--text-color-dim);
+}
+
+.ex-current-route::before {
+	content: '·';
+	margin-right: var(--nui-space-half);
+}
+
+/* ---- Details list ---------------------------------------------------- */
+
+.ex-details {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr);
+	gap: var(--nui-space-half) var(--nui-space);
+	margin: 0;
+	font-size: var(--font-size-small);
+}
+
+.ex-details dt {
+	color: var(--text-color-dim);
+}
+
+.ex-details dd {
+	margin: 0;
+}
+
+/* ---- Empty state ----------------------------------------------------- */
+
+.ex-empty {
+	padding: var(--nui-space-double);
+	text-align: center;
+	color: var(--text-color-dim);
+	background: var(--color-shade2);
+	border: var(--border-thickness) dashed var(--border-shade3);
+	border-radius: var(--border-radius2);
+}
+
+/* ---- Graph host ------------------------------------------------------ */
+
+.ex-graph {
+	height: 4rem;
+	padding: var(--nui-space-quarter);
+	background: var(--color-shade3);
+	border-radius: var(--border-radius1);
+}
+
+/* ---- Timeline -------------------------------------------------------- */
+
+.ex-timeline {
+	display: flex;
+	flex-direction: column;
+	gap: var(--nui-space);
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.ex-timeline__item {
+	display: grid;
+	grid-template-columns: 6rem minmax(0, 1fr);
+	gap: var(--nui-space);
+	align-items: start;
+}
+
+.ex-timeline__time {
+	font-size: var(--font-size-small);
+	color: var(--text-color-dim);
+	font-variant-numeric: tabular-nums;
+}
+
+/* ---- Dropzone host --------------------------------------------------- */
+
+/* The dropzone overlay is absolutely positioned, so it needs a positioned
+   ancestor with a real height — otherwise it collapses to nothing and the
+   drop target is invisible. */
+.ex-dropzone {
+	position: relative;
+	min-height: 12rem;
+	border: var(--border-thickness) dashed var(--border-shade3);
+	border-radius: var(--border-radius2);
+	background: var(--color-shade2);
+}
+
+/* ---- Lightbox gallery ----------------------------------------------- */
+
+.ex-gallery {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: var(--nui-space-half);
+}
+
+.ex-gallery img {
+	width: 100%;
+	aspect-ratio: 4 / 3;
+	object-fit: cover;
+	border-radius: var(--border-radius1);
+	background: var(--color-shade3);
+}
+
+@media (max-width: 40rem) {
+	.ex-gallery {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+/* ---- File type icons ------------------------------------------------- */
+
+.ex-fileicons {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--nui-space);
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.ex-fileicons li {
+	display: flex;
+	align-items: center;
+	gap: var(--nui-space-half);
+	font-size: var(--font-size-small);
+	color: var(--text-color-dim);
+}
+
+/* ---- Feed cards (virtual scroll) ------------------------------------- */
+
+.ex-feed-card {
+	display: flex;
+	flex-direction: column;
+	gap: var(--nui-space-half);
+	margin-bottom: var(--nui-space);
+	padding: var(--nui-space);
+	background: var(--color-shade2);
+	border: var(--border-thickness) solid var(--border-shade1);
+	border-radius: var(--border-radius2);
+}
+
+.ex-feed-card h3 {
+	margin: 0;
+	font-size: var(--font-size-medium);
+}
+
+.ex-feed-card p {
+	margin: 0;
+}
+
+/* ---- Virtual scroll viewport ----------------------------------------- */
+
+/* nui-virtual-scroll fills its container, so the container needs a definite
+   height — the same contract as nui-list. */
+.ex-vscroll {
+	position: relative;
+	height: 24rem;
+}
+
+/* ---- Tooltip host ---------------------------------------------------- */
+
+/* The tooltip is absolutely positioned against its trigger, so the trigger
+   needs a positioned ancestor or the tooltip lands in the wrong place. */
+.ex-tooltip-host {
+	position: relative;
+	display: inline-block;
+}
+
+/* ---- Legacy pattern pairs -------------------------------------------- */
+
+/* A "do not copy / use this" pair: the deprecated component and its
+   replacement side by side, so the difference is visible at a glance. */
+.ex-legacy {
+	display: flex;
+	flex-direction: column;
+	gap: var(--nui-space-half);
+	padding: var(--nui-space);
+	background: var(--color-shade2);
+	border: var(--border-thickness) solid var(--border-shade1);
+	border-radius: var(--border-radius2);
+}
+
+.ex-legacy--block {
+	flex: 1 1 0;
+	min-width: 0;
+}
+
+.ex-legacy-row {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: var(--nui-space);
+}
+
+@media (max-width: 48rem) {
+	.ex-legacy-row {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+.ex-legacy__tag {
+	align-self: flex-start;
+	font-size: var(--font-size-xsmall);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--palette-alert);
+}
+
+.ex-legacy__tag--ok {
+	color: var(--color-text-dim);
+}

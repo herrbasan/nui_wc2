@@ -446,7 +446,15 @@ nui-slides:fullscreen .nui-slides-notes,
 .nui-slides-toolbar {
 	display: inline-flex;
 	align-items: center;
+	justify-content: center;
+	flex-wrap: wrap;
 	gap: var(--nui-space-half);
+	/* The toolbar is a pill on wide decks, but a pill is the wrong shape once the row
+	   wraps: the deck may sit in a narrow column on a wide viewport, so the wrap point
+	   is the container's width, not the window's. `max-width` keeps the row inside the
+	   deck at every width; the radius is dropped by the media query below, which only
+	   guesses the viewport and so decides the SHAPE, never the fit. */
+	max-width: 100%;
 	padding: var(--nui-space-quarter) var(--nui-space);
 	margin-top: var(--nui-space);
 	background: var(--color-shade2);
@@ -456,6 +464,13 @@ nui-slides:fullscreen .nui-slides-notes,
 	z-index: 10;
 	user-select: none;
 	transition: opacity 250ms ease, transform 250ms ease, background 160ms ease;
+}
+
+/* A wrapped pill reads as a blob. On a narrow viewport the row is a two-line bar. */
+@media (max-width: 30rem) {
+	.nui-slides-toolbar {
+		border-radius: var(--border-radius2);
+	}
 }
 
 /* In fullscreen mode: floats at bottom like video controls, reveals when cursor is at bottom */
@@ -496,6 +511,9 @@ nui-slides:fullscreen .nui-slides-toolbar:hover {
 	line-height: 1;
 	width: 2.25rem;
 	height: 2.25rem;
+	/* A control never shrinks below its touch target — it wraps to the next line
+	   instead. Without this the flex row squashes the icons when the deck is narrow. */
+	flex: none;
 	border-radius: 50%;
 	cursor: pointer;
 	padding: 0;
@@ -710,6 +728,16 @@ nui-slides .nui-blocks-section :is(h3) {
 nui-slides .nui-blocks-section :is(h4) {
 	font-size: 1.1em;
 	line-height: 1.3;
+}
+
+/* A slide's TITLE is its first heading, whatever level that heading is. A deck
+   embedded in a page carries its titles one level below the page's own sections —
+   otherwise the page's heading list claims the deck's slides are page sections —
+   and the title must still read as a title. Only a DIRECT first child counts: a
+   heading inside a column or a block is slide content, not the slide's name. */
+nui-slides .nui-blocks-section > h3:first-child {
+	font-size: 1.65em;
+	line-height: 1.2;
 }
 nui-slides .nui-blocks-section .nui-preset-lead p:first-of-type {
 	font-size: 1.22em;

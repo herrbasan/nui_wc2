@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+	<meta name="color-scheme" content="light dark">
+	<title>NUI — Legacy Patterns (do not copy)</title>
+	<link rel="icon" href="data:,">
+
+	<link rel="stylesheet" href="../shared/app.css">
+	<link rel="stylesheet" href="../../NUI/css/nui-theme.css">
+
+	<script type="module" src="./app.js"></script>
+</head>
+<body>
+	<nui-loading mode="bar"></nui-loading>
+
+	<nui-app content-min-width="48rem" content-width="52rem">
+		<nui-skip-links></nui-skip-links>
+
+		<nui-app-header>
+			<header>
+				<div slot="left">
+					<span class="title">Legacy patterns</span>
+				</div>
+			</header>
+		</nui-app-header>
+
+		<nui-content>
+			<nui-main>
+				<nui-page>
+					<section>
+						<h1>Legacy patterns</h1>
+						<p class="lead">These components still work, and each has a documented replacement. They live here — on a page of their own, away from the examples — so nothing copies them by accident.</p>
+						<nui-button variant="outline">
+							<button type="button" data-action="banner-show@#legacy-warning">Show the deprecation notice</button>
+						</nui-button>
+					</section>
+
+					<section>
+						<nui-banner placement="bottom" priority="alert" id="legacy-warning">
+							<div class="nui-banner-content">
+								<span>Everything on this page is superseded. Use the replacement next to it.</span>
+								<button type="button" data-action="banner-close:dismiss@#legacy-warning">Dismiss</button>
+							</div>
+						</nui-banner>
+					</section>
+
+					<section>
+						<h2>Icon button</h2>
+						<p>Superseded by the <code>icon</code> variant of <code>nui-button</code>, which carries the variant vocabulary and the accessible-name rules.</p>
+
+						<div class="ex-toolbar">
+							<span class="ex-legacy">
+								<span class="ex-legacy__tag">do not copy</span>
+								<nui-icon-button>
+									<button type="button" aria-label="Star">
+										<nui-icon name="star_rate"></nui-icon>
+									</button>
+								</nui-icon-button>
+							</span>
+
+							<span class="ex-legacy">
+								<span class="ex-legacy__tag ex-legacy__tag--ok">use this</span>
+								<nui-button variant="icon">
+									<button type="button" aria-label="Star">
+										<nui-icon name="star_rate"></nui-icon>
+									</button>
+								</nui-button>
+							</span>
+						</div>
+					</section>
+
+					<section>
+						<h2>Column flow</h2>
+						<p>Superseded by <code>nui-layout</code> with <code>type="flow"</code>, which clamps the column count responsively — the column flow does not.</p>
+
+						<div class="ex-legacy-row">
+							<div class="ex-legacy">
+								<span class="ex-legacy__tag">do not copy</span>
+								<nui-column-flow columns="2">
+									<nui-card>
+										<h3>Card one</h3>
+										<p>Short.</p>
+									</nui-card>
+									<nui-card>
+										<h3>Card two</h3>
+										<p>Also short.</p>
+									</nui-card>
+								</nui-column-flow>
+							</div>
+
+							<div class="ex-legacy">
+								<span class="ex-legacy__tag ex-legacy__tag--ok">use this</span>
+								<nui-layout type="flow" columns="2">
+									<nui-card>
+										<h3>Card one</h3>
+										<p>Short.</p>
+									</nui-card>
+									<nui-card>
+										<h3>Card two</h3>
+										<p>Also short.</p>
+									</nui-card>
+								</nui-layout>
+							</div>
+						</div>
+					</section>
+
+					<section>
+						<h2>Loading</h2>
+						<p>Superseded by <code>nui-progress</code>: <code>type="busy"</code> for a linear indeterminate bar, <code>type="circular-busy"</code> for a spinner.</p>
+
+						<div class="ex-toolbar">
+							<span class="ex-legacy">
+								<span class="ex-legacy__tag">do not copy</span>
+								<nui-loading mode="bar"></nui-loading>
+							</span>
+
+							<span class="ex-legacy">
+								<span class="ex-legacy__tag ex-legacy__tag--ok">use this</span>
+								<nui-progress type="busy"></nui-progress>
+							</span>
+						</div>
+					</section>
+				</nui-page>
+			</nui-main>
+		</nui-content>
+
+		<nui-app-footer>
+			<footer>
+				<div class="ex-toolbar ex-toolbar--between">
+					<span class="ex-stat__delta">NUI Legacy Patterns · demo data</span>
+					<span class="ex-stat__delta">Not a pattern to copy</span>
+				</div>
+			</footer>
+		</nui-app-footer>
+	</nui-app>
+</body>
+</html>

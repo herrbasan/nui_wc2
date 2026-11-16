@@ -35,6 +35,8 @@ The `mode` attribute on `<nui-wizard>` determines constraints:
 </nui-wizard>
 ```
 
+The active step receives `role="group"` and an `aria-labelledby` reference to its navigation title only when it does not already carry those attributes. Author-supplied roles and labels are preserved on both active and hidden steps.
+
 ### Attributes
 
 | Attribute | Type | Default | Description |

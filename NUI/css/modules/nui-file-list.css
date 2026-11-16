@@ -63,8 +63,13 @@ nui-file-list {
 	text-overflow: ellipsis;
 }
 
+/* The status column has a fixed width, so the name column ends at the same x in
+   every row. The badge's own text varies ("uploading" vs "failed"), and when the
+   column took its width from the badge, each row truncated its filename at a
+   different point — a ragged edge that reads as broken rather than narrow. */
 .nui-file-status {
-	flex-shrink: 0;
+	flex: 0 0 5.5rem;
+	text-align: center;
 }
 
 .nui-file-actions {

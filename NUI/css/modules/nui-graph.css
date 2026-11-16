@@ -70,7 +70,10 @@ nui-graph .graph-label {
     top: 5px;
     left: 8px;
     font-family: inherit;
-    font-size: 11px;
+    /* The in-graph label must not fall below the type floor — 11px was smaller
+       than --font-size-xsmall (0.8rem / 12.8px) and was the only sub-floor text
+       on a page using nui-graph. */
+    font-size: var(--font-size-xsmall, 0.8rem);
     font-weight: 600;
     line-height: 1;
     color: rgba(255, 255, 255, 0.45);

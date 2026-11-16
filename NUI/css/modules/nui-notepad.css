@@ -488,7 +488,12 @@ nui-notepad .np-ContextBadge {
 	font-weight: 500;
 	border-radius: 999px;
 	background: color-mix(in srgb, var(--ctx-accent) 15%, transparent);
-	color: var(--ctx-accent);
+	/* The accent hue on its own tint measured 3.86:1 — under the 4.5 a small
+	   label needs. Mixing toward the ink keeps the hue and clears the bar. */
+	color: light-dark(
+		color-mix(in srgb, var(--ctx-accent) 76%, black),
+		color-mix(in srgb, var(--ctx-accent) 88%, white)
+	);
 	white-space: nowrap;
 	box-sizing: border-box;
 }
@@ -636,6 +641,14 @@ nui-notepad .np-StepsList {
 	flex-direction: column;
 	gap: 4px;
 	margin-top: var(--nui-space-quarter);
+	/* The step rows carry a NEGATIVE side margin so their hover background bleeds
+	   past the card padding. The list gives that bleed room of its own: it is pulled
+	   out by the same margin and padded back in, so the list's BORDER box is exactly
+	   the row's width. Without this the row is wider than the list it lives in, the
+	   list reports a scroll overflow, and the step text is clipped mid-word at the
+	   card edge — the bleed was never the problem, the uncompensated margin was. */
+	margin-inline: calc(var(--nui-space-half) * -1);
+	padding-inline: var(--nui-space-half);
 }
 
 nui-notepad .np-StepRow {
@@ -670,7 +683,9 @@ nui-notepad button.np-StepToggle {
 	background: transparent;
 	color: transparent;
 	cursor: pointer;
-	font-size: 0.68rem;
+	/* The glyph has to be legible: at 0.68rem it rendered below every type
+	   floor in the theme, so the checkmark was a smudge. */
+	font-size: var(--font-size-xsmall);
 	line-height: 1;
 	font-weight: 700;
 	padding: 0;

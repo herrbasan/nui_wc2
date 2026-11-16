@@ -33,7 +33,7 @@ nui-menu {
 	border: none;
 	color: var(--color-text);
 	font-family: var(--system-ui);
-	font-size: 0.875rem;
+	font-size: var(--font-size-small);
 	cursor: pointer;
 	transition: background-color 0.15s ease;
 	white-space: nowrap;

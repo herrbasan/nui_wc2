@@ -83,9 +83,16 @@ function buildRow(element, file, options) {
 	dom.create('nui-file-icon', { attrs: { name: file.name || file.type || '' }, target: row });
 
 	const meta = dom.create('div', { class: 'nui-file-meta', target: row });
-	dom.create('span', { class: 'nui-file-name', text: file.name || '(unnamed)', target: meta });
+	// The name is truncated to whatever the row's width leaves over. Keep the full
+	// string available as supplementary hover text; assistive technology already
+	// reads the complete DOM text.
+	const nameSpan = dom.create('span', { class: 'nui-file-name', text: file.name || '(unnamed)', target: meta });
+	nameSpan.setAttribute('title', file.name || '(unnamed)');
 	const detail = describe(file);
-	if (detail) dom.create('span', { class: 'nui-file-detail', text: detail, target: meta });
+	if (detail) {
+		const detailSpan = dom.create('span', { class: 'nui-file-detail', text: detail, target: meta });
+		detailSpan.setAttribute('title', detail);
+	}
 
 	if (file.status) {
 		dom.create('nui-badge', {

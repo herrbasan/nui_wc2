@@ -10,6 +10,7 @@ class NuiWizardStep extends HTMLElement {
 	setStatus(status, message) {
 		const validStatuses = ['valid', 'invalid', 'warning', 'pending', ''];
 		if (!validStatuses.includes(status)) return;
+		const previous = this.getAttribute('status');
 		if (status) {
 			this.setAttribute('status', status);
 		} else {
@@ -21,6 +22,11 @@ class NuiWizardStep extends HTMLElement {
 			} else {
 				this.removeAttribute('data-status-message');
 			}
+		} else if (status !== previous) {
+			// A new status without a new message must not keep the OLD status's
+			// message: a step that failed with "Please fill out this field" and
+			// then passed kept that sentence as its tooltip.
+			this.removeAttribute('data-status-message');
 		}
 		const wizard = this.closest('nui-wizard');
 		if (wizard) wizard.syncNavState();
@@ -61,7 +67,7 @@ class NuiWizard extends HTMLElement {
 
 		this.buildProgressNav();
 
-		this.main = document.createElement('main');
+		this.main = document.createElement('div');
 		this.main.className = 'nui-wizard-content';
 		this.steps.forEach(step => this.main.appendChild(step));
 		this.insertBefore(this.main, this.header.nextSibling);
@@ -87,6 +93,14 @@ class NuiWizard extends HTMLElement {
 	buildProgressNav() {
 		const nav = document.createElement('nav');
 		nav.className = 'nui-wizard-nav';
+		nav.setAttribute('aria-label', 'Wizard steps');
+
+		// The nav title is the step's NAME. The step panel points at it, so the
+		// panel is announced as "Profile, group" instead of an unlabelled slab of
+		// form fields — the wizard's only orientation cue used to live in a nav
+		// the reader may never look at.
+		if (!this.id) this.id = 'nui-wizard-' + Math.random().toString(36).slice(2, 9);
+		this._titleIdBase = this.id + '-step-';
 
 		const circlesRow = document.createElement('div');
 		circlesRow.className = 'nui-wizard-nav-row-circles';
@@ -108,6 +122,10 @@ class NuiWizard extends HTMLElement {
 
 			const title = step.getAttribute('data-title') || `Step ${index + 1}`;
 			btn.innerHTML = `<span class="nui-wizard-nav-number">${index + 1}</span>`;
+			// The button's text is a bare number. A screen reader reads "1, button"
+			// with no idea what step 1 is, so the number carries the title and the
+			// position in the flow.
+			btn.setAttribute('aria-label', `Step ${index + 1} of ${this.steps.length} — ${title}`);
 
 			if (this.mode === 'free') {
 				btn.setAttribute('data-action', `wizard:goto:${index}`);
@@ -119,6 +137,7 @@ class NuiWizard extends HTMLElement {
 
 			const label = document.createElement('span');
 			label.className = 'nui-wizard-nav-title';
+			label.id = this._titleIdBase + index;
 			label.textContent = title;
 			label.style.gridColumn = (index * 2 + 1).toString();
 			labelsRow.appendChild(label);
@@ -207,9 +226,12 @@ class NuiWizard extends HTMLElement {
 
 		if (!event.detail.handled) {
 			if (this.mode === 'required') {
-				const currentStep = this.steps[this.currentIndex];
-				const form = currentStep.querySelector('form');
-				if (form && !form.reportValidity()) return;
+				// `validateStep` is `reportValidity()` plus the wizard's own status:
+				// the native bubble tells the user WHICH field is wrong, and the
+				// step's dot turns red with the message, so the nav says the same
+				// thing. A raw `reportValidity()` advanced nothing and showed a
+				// bubble that is not part of the page — the nav looked unchanged.
+				if (!this.validateStep(this.currentIndex)) return;
 			}
 		}
 
@@ -229,6 +251,10 @@ class NuiWizard extends HTMLElement {
 			if (i === index) {
 				step.removeAttribute('hidden');
 				step.setAttribute('active', '');
+				if (!step.hasAttribute('role')) step.setAttribute('role', 'group');
+				if (!step.hasAttribute('aria-labelledby')) {
+					step.setAttribute('aria-labelledby', this._titleIdBase + i);
+				}
 			} else {
 				step.setAttribute('hidden', '');
 				step.removeAttribute('active');
@@ -257,14 +283,19 @@ class NuiWizard extends HTMLElement {
 			if (i === index) {
 				btn.classList.add('active');
 				btn.disabled = false;
+				// `aria-current="step"` is how the reader knows WHICH step of the
+				// flow this is — the disabled set alone says nothing about position.
+				btn.setAttribute('aria-current', 'step');
 			} else if (i < index) {
 				btn.classList.add('completed');
 				btn.disabled = false;
+				btn.removeAttribute('aria-current');
 				if (!btn.hasAttribute('data-action')) {
 					btn.setAttribute('data-action', `wizard:goto:${i}`);
 				}
 			} else {
 				btn.disabled = (this.mode === 'required');
+				btn.removeAttribute('aria-current');
 			}
 		});
 
@@ -317,7 +348,15 @@ class NuiWizard extends HTMLElement {
 
 		const form = step.querySelector('form');
 		if (form && !form.reportValidity()) {
-			step.setStatus('invalid', form.querySelector(':invalid')?.validationMessage || 'Validation failed');
+			// The native bubble is transient, and to a screen reader it is not text
+			// at all. The control that blocked the step must also carry the state:
+			// `validate()` paints the error on the field and describes it, so the
+			// message stays after the bubble goes.
+			const invalid = form.querySelector(':invalid');
+			const wrapper = invalid ? invalid.closest('nui-input, nui-textarea, nui-select, nui-radio, nui-checkbox') : null;
+			if (wrapper && typeof wrapper.validate === 'function') wrapper.validate();
+			if (invalid && typeof invalid.focus === 'function') invalid.focus();
+			step.setStatus('invalid', invalid?.validationMessage || 'Validation failed');
 			return false;
 		}
 

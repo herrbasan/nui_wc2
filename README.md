@@ -37,6 +37,7 @@ Copy the `nui-boilerplate` folder to your project. It contains a pre-configured 
 | Resource | Description |
 |----------|-------------|
 | **[🤖 LLM Cheatsheet](LLM-CHEATSHEET.md)** | **AI-first:** exact HTML structures, all data-actions, addon imports, WRONG vs CORRECT. |
+| **[Example Apps](examples/README.md)** | **Pattern library:** six complete applications — how components go together, and the rules that make them work. |
 | **[Live Playground](https://herrbasan.github.io/nui_wc2/)** | Interactive demos for every component — the best way to explore NUI. |
 | **[Architecture Guide](documentation/DOCUMENTATION.md)** | Core philosophy, navigation tree, and reading order for the full docs. |
 | **[Component Registry](documentation/components.json)** | Machine-readable manifest of all components, events, imports, and doc paths. |

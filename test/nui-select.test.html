@@ -34,6 +34,8 @@ string changed.</p>
 await import('../NUI/nui.js');
 
 const results = [];
+const runtimeErrors = [];
+window.addEventListener('error', e => runtimeErrors.push(e.message));
 
 function check(name, fn) {
 	try {
@@ -45,12 +47,23 @@ function check(name, fn) {
 	}
 }
 
+async function checkAsync(name, fn) {
+	try {
+		const problem = await fn();
+		if (problem) { results.push({ name, ok: false, detail: problem }); return; }
+		results.push({ name, ok: true, detail: '' });
+	} catch (err) {
+		results.push({ name, ok: false, detail: err && err.message ? err.message : String(err) });
+	}
+}
+
 // Build a select with the given inner <select> markup and return the component.
 // The markup is the zero-JS fallback form: an explicit inner <select>.
-const mount = (innerSelectHtml, attrs = '') => {
+const mount = (innerSelectHtml, attrs = '', hostAttr = '') => {
 	const stage = document.getElementById('stage');
 	const el = document.createElement('nui-select');
 	el.setAttribute('data-test', 'x');
+	if (hostAttr) el.setAttribute(hostAttr, '');
 	el.innerHTML = `<select ${attrs}>${innerSelectHtml}</select>`;
 	stage.appendChild(el);
 	return el;
@@ -262,7 +275,7 @@ const DISMISS_PATHS = [
 for (const variant of DISMISS_PATHS) {
 	// Escape key
 	check(`${variant.name}: Escape preserves the value and the label`, () => {
-		const el = mount(plain, variant.attrs);
+		const el = mount(plain, '', variant.attrs);
 		const sel = el.el('select');
 		el.setValue('b');
 		const events = watch(el);
@@ -277,7 +290,7 @@ for (const variant of DISMISS_PATHS) {
 
 	// Outside click
 	check(`${variant.name}: an outside click preserves the value and the label`, () => {
-		const el = mount(plain, variant.attrs);
+		const el = mount(plain, '', variant.attrs);
 		const sel = el.el('select');
 		el.setValue('b');
 		const events = watch(el);
@@ -292,7 +305,7 @@ for (const variant of DISMISS_PATHS) {
 
 	// Trigger toggle — clicking the control again folds the popup shut
 	check(`${variant.name}: toggling the trigger preserves the value and the label`, () => {
-		const el = mount(plain, variant.attrs);
+		const el = mount(plain, '', variant.attrs);
 		const sel = el.el('select');
 		el.setValue('b');
 		const events = watch(el);
@@ -313,6 +326,80 @@ check('clear() still returns to the none-choice', () => {
 	sel.value = 'b';
 	el.clear();
 	return sel.value === '' ? null : `expected "", got "${sel.value}"`;
+});
+
+// ── external native state changes ────────────────────────────────────────────
+check('a native change repaints the visible label without a second nui-change', () => {
+	const el = mount(plain);
+	const sel = el.el('select');
+	const events = watch(el);
+	sel.value = 'b';
+	sel.dispatchEvent(new Event('change', { bubbles: true }));
+	const label = el.el('.nui-select-value')?.textContent?.trim();
+	if (label !== 'B') return `expected the label "B", got ${JSON.stringify(label)}`;
+	if (events.length !== 0) return `expected 0 nui-change events, got ${events.length}`;
+	return null;
+});
+
+await checkAsync('form.reset() restores the native value and visible label', async () => {
+	const form = document.createElement('form');
+	document.getElementById('stage').appendChild(form);
+	const el = document.createElement('nui-select');
+	el.innerHTML = `<select>${plain}</select>`;
+	form.appendChild(el);
+	const sel = el.el('select');
+	el.setValue('b');
+	const events = watch(el);
+	form.reset();
+	await new Promise(resolve => setTimeout(resolve, 0));
+	if (sel.value !== 'a') return `expected the native value "a", got "${sel.value}"`;
+	const label = el.el('.nui-select-value')?.textContent?.trim();
+	if (label !== 'A') return `expected the label "A", got ${JSON.stringify(label)}`;
+	if (events.length !== 0) return `expected 0 nui-change events, got ${events.length}`;
+	return null;
+});
+
+check('existing native accessible names are not overridden', () => {
+	const stage = document.getElementById('stage');
+	const externalLabel = document.createElement('label');
+	externalLabel.htmlFor = 'select-with-native-label';
+	externalLabel.textContent = 'Native label';
+	const labelled = document.createElement('nui-select');
+	labelled.setAttribute('placeholder', 'Choose...');
+	labelled.innerHTML = `<select id="select-with-native-label">${plain}</select>`;
+	stage.append(externalLabel, labelled);
+	const native = labelled.el('select');
+	if (native.labels.length !== 1) return 'the associated native label was not resolved';
+	if (native.hasAttribute('aria-label')) return 'the associated label was overridden by aria-label';
+
+	const ariaLabelled = document.createElement('nui-select');
+	ariaLabelled.setAttribute('placeholder', 'Choose...');
+	ariaLabelled.innerHTML = `<select aria-labelledby="select-external-name">${plain}</select>`;
+	const ariaName = document.createElement('span');
+	ariaName.id = 'select-external-name';
+	ariaName.textContent = 'ARIA label';
+	stage.append(ariaName, ariaLabelled);
+	if (ariaLabelled.el('select').hasAttribute('aria-label')) return 'aria-labelledby was overridden by aria-label';
+	return null;
+});
+
+check('a searchable select names its internal search field', () => {
+	const el = mount(plain, '', 'searchable');
+	return el.el('.nui-select-search input')?.getAttribute('aria-label') === 'Search options'
+		? null
+		: 'the popup search field has no accessible name';
+});
+
+await checkAsync('a mobile sheet survives rapid close and reopen cycles', async () => {
+	const el = mount(plain, '', 'mobile-sheet');
+	for (let i = 0; i < 3; i++) {
+		el.open();
+		el.close();
+	}
+	await new Promise(resolve => setTimeout(resolve, 300));
+	if (runtimeErrors.length) return runtimeErrors.join(' | ');
+	if (document.querySelector('.nui-modal-backdrop')) return 'the mobile backdrop survived its close timer';
+	return null;
 });
 
 // ── report ───────────────────────────────────────────────────────────────────

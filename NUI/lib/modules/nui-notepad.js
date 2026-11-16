@@ -858,6 +858,16 @@ class NuiNotepad extends HTMLElement {
 
 					const toggleBtn = el('button', 'np-StepToggle', st.done ? '✓' : '·');
 					toggleBtn.type = 'button';
+					// The glyph is a decoration: "·" and "✓" say nothing to a screen
+					// reader, and the control's job is to state what it will do. The
+					// name also carries WHICH step: three identical "Mark step done"
+					// buttons in one card are indistinguishable without it.
+					const stepName = String(st.text || '').trim().replace(/\s+/g, ' ');
+					const stepSuffix = stepName
+						? ': ' + (stepName.length > 60 ? stepName.slice(0, 60) + '…' : stepName)
+						: '';
+					toggleBtn.setAttribute('aria-label', (st.done ? 'Reopen step' : 'Mark step done') + stepSuffix);
+					toggleBtn.setAttribute('aria-pressed', String(!!st.done));
 					toggleBtn.addEventListener('click', (e) => {
 						e.stopPropagation();
 						this._toggleStep(item, idx);
@@ -1424,13 +1434,19 @@ class NuiNotepad extends HTMLElement {
 		const sortDirBtn = el('button', `np-SortDirBtn ${this._listSortDir}`);
 		sortDirBtn.type = 'button';
 		sortDirBtn.title = 'Toggle sort direction';
-		sortDirBtn.setAttribute('aria-label', 'Toggle sort direction');
+		// The name states the CURRENT direction. "Toggle sort direction" alone tells a
+		// screen-reader user that a button exists and nothing about the state it is in.
+		const sortDirLabel = () => this._listSortDir === 'up'
+			? 'Sort direction: ascending'
+			: 'Sort direction: descending';
+		sortDirBtn.setAttribute('aria-label', sortDirLabel());
 		const arrowIcon = document.createElement('nui-icon');
 		arrowIcon.setAttribute('name', 'arrow');
 		sortDirBtn.appendChild(arrowIcon);
 		sortDirBtn.addEventListener('click', () => {
 			this._listSortDir = this._listSortDir === 'up' ? 'down' : 'up';
 			sortDirBtn.className = `np-SortDirBtn ${this._listSortDir}`;
+			sortDirBtn.setAttribute('aria-label', sortDirLabel());
 			this._updateListViewItems(false);
 		});
 
@@ -1477,6 +1493,9 @@ class NuiNotepad extends HTMLElement {
 		const searchInp = document.createElement('input');
 		searchInp.type = 'search';
 		searchInp.placeholder = 'Search title, steps, notes, #context…';
+		// A placeholder is not a name — it vanishes with the first character, and
+		// it is not what a screen reader reads for the field.
+		searchInp.setAttribute('aria-label', 'Search notes');
 		searchInp.value = this._listSearch;
 		searchWrap.appendChild(searchInp);
 
@@ -1488,7 +1507,12 @@ class NuiNotepad extends HTMLElement {
 		searchWrap.addEventListener('nui-input', (e) => onSearch(e.detail?.value ?? searchInp.value));
 		searchInp.addEventListener('input', () => onSearch(searchInp.value));
 
+		// The count is the only thing that changes when a sort or a filter lands:
+		// the cards reorder, the header controls keep their labels, and nothing on
+		// screen says "the list is now sorted by urgency". A polite live region
+		// gives that change a voice without interrupting.
 		const countBadge = el('span', 'np-LaneCount', '0');
+		countBadge.setAttribute('aria-live', 'polite');
 		controlsRight.append(searchWrap, countBadge);
 
 		header.append(controlsLeft, controlsRight);

@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+	<meta name="color-scheme" content="light dark">
+	<title>Vantage — Account Setup</title>
+	<link rel="icon" href="data:,">
+
+	<link rel="stylesheet" href="../shared/app.css">
+	<link rel="stylesheet" href="../../NUI/css/nui-theme.css">
+	<link rel="stylesheet" href="../../NUI/css/modules/nui-wizard.css">
+
+	<script type="module" src="./app.js"></script>
+</head>
+<body>
+	<nui-loading mode="bar"></nui-loading>
+
+	<nui-app content-min-width="48rem" content-width="56rem">
+		<nui-skip-links></nui-skip-links>
+
+		<nui-app-header>
+			<header>
+				<div slot="left">
+					<span class="title">Vantage</span>
+				</div>
+
+				<div slot="center">
+					<nui-progress id="setup-progress" value="25" max="100" hide-text></nui-progress>
+				</div>
+
+				<div slot="right">
+					<nui-button variant="icon">
+						<button type="button" data-action="toggle-theme" aria-label="Toggle color scheme">
+							<nui-icon name="brightness"></nui-icon>
+						</button>
+					</nui-button>
+				</div>
+			</header>
+		</nui-app-header>
+
+		<nui-content>
+			<nui-main>
+				<nui-page>
+					<section>
+						<h1>Set up your account</h1>
+						<p class="lead">Four steps. Nothing is charged until the last one, and every step stays editable afterwards.</p>
+					</section>
+
+					<section>
+						<nui-wizard id="setup-wizard" mode="required">
+							<nui-wizard-step data-title="Profile">
+								<h2>Profile</h2>
+								<form>
+									<nui-input-group>
+										<label for="setup-name">Full name</label>
+										<nui-input>
+											<input type="text" id="setup-name" name="name" placeholder="Ada Lovelace" required minlength="2" autocomplete="name">
+										</nui-input>
+										<span class="description">As it should appear on invoices.</span>
+									</nui-input-group>
+
+									<nui-input-group>
+										<label for="setup-company">Organisation</label>
+										<nui-input>
+											<input type="text" id="setup-company" name="company" placeholder="Analytical Engines Ltd" autocomplete="organization">
+										</nui-input>
+									</nui-input-group>
+
+									<nui-input-group>
+										<label id="setup-role-label">Your role</label>
+										<nui-radio>
+											<input type="radio" id="role-eng" name="role" value="engineering" checked required>
+											<label for="role-eng">Engineering</label>
+										</nui-radio>
+										<nui-radio>
+											<input type="radio" id="role-ops" name="role" value="operations">
+											<label for="role-ops">Operations</label>
+										</nui-radio>
+										<nui-radio>
+											<input type="radio" id="role-research" name="role" value="research">
+											<label for="role-research">Research</label>
+										</nui-radio>
+									</nui-input-group>
+								</form>
+							</nui-wizard-step>
+
+							<nui-wizard-step data-title="Workspace">
+								<h2>Workspace</h2>
+								<form>
+									<nui-input-group>
+										<label>Data region</label>
+										<nui-select id="setup-region" searchable>
+											<select name="region" required>
+												<option value="" disabled selected>Choose a region</option>
+												<option value="eu">European Union (Frankfurt)</option>
+												<option value="uk">United Kingdom (London)</option>
+												<option value="us">United States (Virginia)</option>
+												<option value="ap">Asia Pacific (Singapore)</option>
+											</select>
+										</nui-select>
+										<span class="description">Data residency is fixed once production data exists.</span>
+									</nui-input-group>
+
+									<nui-input-group>
+										<label for="setup-start-from">Service window</label>
+										<nui-date-range id="setup-start">
+											<nui-select placeholder="Range">
+												<select>
+													<option value="" selected>Custom</option>
+													<option value="today">Today</option>
+													<option value="7d">Next 7 days</option>
+													<option value="30d">Next 30 days</option>
+												</select>
+											</nui-select>
+											<input type="date" id="setup-start-from" data-nui-date-range="from" aria-label="From">
+											<input type="date" id="setup-start-to" data-nui-date-range="to" aria-label="To">
+										</nui-date-range>
+									</nui-input-group>
+
+									<nui-input-group>
+										<label id="setup-notify-label">Notifications</label>
+										<nui-checkbox>
+											<input type="checkbox" id="setup-email" checked>
+											<label for="setup-email">Email me when a build finishes</label>
+										</nui-checkbox>
+										<nui-checkbox>
+											<input type="checkbox" id="setup-warn">
+											<label for="setup-warn">Warn me when spend passes 80% of the budget</label>
+										</nui-checkbox>
+									</nui-input-group>
+
+									<nui-input-group>
+										<!-- The label points at the RANGE, not at the wrapper. Both
+										     carried id="setup-budget", and a duplicate id means
+										     the label resolved to the wrapper — so the slider was
+										     announced as "500" (its own value) with no name. -->
+										<label for="setup-budget-input">Monthly budget (EUR)</label>
+										<nui-slider id="setup-budget">
+											<input type="range" id="setup-budget-input" name="budget" min="0" max="2000" step="50" value="500">
+										</nui-slider>
+										<span class="description">A cap, not a charge — you are only billed for what you use.</span>
+									</nui-input-group>
+								</form>
+							</nui-wizard-step>
+
+							<nui-wizard-step data-title="Team">
+								<h2>Team</h2>
+								<form>
+									<nui-input-group>
+										<label>Invite colleagues</label>
+										<nui-tag-input id="setup-team" name="invitees" editable placeholder="name@company.com"></nui-tag-input>
+										<span class="description">Invitations are sent from the address you enter and can be withdrawn.</span>
+									</nui-input-group>
+
+									<nui-input-group>
+										<label for="setup-note">Note for the team</label>
+										<nui-textarea show-count max-rows="5">
+											<textarea id="setup-note" name="note" maxlength="280" placeholder="What the team is working on"></textarea>
+										</nui-textarea>
+									</nui-input-group>
+								</form>
+							</nui-wizard-step>
+
+							<nui-wizard-step data-title="Review">
+								<h2>Review</h2>
+								<dl class="ex-details">
+									<dt>Name</dt>
+									<dd id="review-name">—</dd>
+									<dt>Organisation</dt>
+									<dd id="review-company">—</dd>
+									<dt>Role</dt>
+									<dd id="review-role">—</dd>
+									<dt>Region</dt>
+									<dd id="review-region">—</dd>
+									<dt>Service window</dt>
+									<dd id="review-start">—</dd>
+									<dt>Budget</dt>
+									<dd id="review-budget">—</dd>
+									<dt>Invited</dt>
+									<dd id="review-team">—</dd>
+									<dt>Notifications</dt>
+									<dd id="review-notify">—</dd>
+								</dl>
+							</nui-wizard-step>
+						</nui-wizard>
+					</section>
+
+					<section>
+						<h2>What happens next</h2>
+						<nui-accordion>
+							<details>
+								<summary>How billing works</summary>
+								<p>The workspace runs on the free tier until you exceed the included usage. After that, the budget you set becomes a monthly cap rather than a fixed charge.</p>
+							</details>
+							<details>
+								<summary>Can I change the region later?</summary>
+								<p>Not directly — data residency is fixed once a workspace holds production data. A new workspace can be created in another region and migrated into.</p>
+							</details>
+							<details>
+								<summary>Who can see the invited team?</summary>
+								<p>Only members of the workspace. A pending invite can be withdrawn at any time.</p>
+							</details>
+						</nui-accordion>
+					</section>
+				</nui-page>
+			</nui-main>
+		</nui-content>
+
+		<nui-app-footer>
+			<footer>
+				<div class="ex-toolbar ex-toolbar--between">
+					<span class="ex-stat__delta">Vantage Account Setup · demo data</span>
+					<span class="ex-stat__delta" id="setup-step">Step 1 of 4</span>
+				</div>
+			</footer>
+		</nui-app-footer>
+	</nui-app>
+
+	<nui-overlay id="verify-overlay" blocking>
+		<dialog>
+			<nui-progress type="busy"></nui-progress>
+			<p>Verifying your domain…</p>
+			<button type="button" data-action="overlay-close@#verify-overlay">Cancel</button>
+		</dialog>
+	</nui-overlay>
+
+	<!-- One polite channel for the results of the async work. A spinner that
+	     vanishes says nothing: the outcome needs a voice. -->
+	<p class="sr-only" role="status" id="verify-status"></p>
+</body>
+</html>

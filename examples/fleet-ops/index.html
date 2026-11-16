@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+	<meta name="color-scheme" content="light dark">
+	<title>Meridian — Fleet Operations</title>
+	<!-- An empty icon stops the browser's automatic /favicon.ico request, which
+	     would otherwise 404 on every page and drown a real missing asset. -->
+	<link rel="icon" href="data:,">
+
+	<link rel="stylesheet" href="../shared/app.css">
+	<link rel="stylesheet" href="../../NUI/css/nui-theme.css">
+	<link rel="stylesheet" href="../../NUI/css/modules/nui-list.css">
+	<link rel="stylesheet" href="../../NUI/css/modules/nui-graph.css">
+
+	<script type="module" src="./app.js"></script>
+</head>
+<body>
+	<nui-loading mode="bar"></nui-loading>
+
+	<nui-app content-min-width="52rem" content-width="76rem" sidebar-width="18rem">
+		<nui-skip-links></nui-skip-links>
+
+		<nui-app-header>
+			<header>
+				<div slot="left">
+					<nui-button variant="icon">
+						<button type="button" data-action="toggle-sidebar" aria-label="Toggle navigation">
+							<nui-icon name="menu"></nui-icon>
+						</button>
+					</nui-button>
+					<span class="title">Meridian</span>
+					<span class="ex-current-route" data-current-route hidden></span>
+				</div>
+
+				<div slot="center">
+					<nui-input size="small" clearable>
+						<input type="search" id="fleet-search" placeholder="Search vehicles, routes, drivers" aria-label="Search fleet">
+					</nui-input>
+				</div>
+				<div slot="right">
+					<nui-button variant="icon" data-notify-badge>
+						<button type="button" aria-label="Notifications">
+							<nui-icon name="notifications"></nui-icon>
+						</button>
+					</nui-button>
+					<nui-popover aria-label="Notifications" placement="bottom">
+						<nui-notification-log></nui-notification-log>
+					</nui-popover>
+					<nui-button variant="icon">
+						<button type="button" data-action="toggle-theme" aria-label="Toggle color scheme">
+							<nui-icon name="brightness"></nui-icon>
+						</button>
+					</nui-button>
+				</div>
+			</header>
+		</nui-app-header>
+
+		<nui-sidebar behavior="primary">
+			<nui-link-list id="fleet-nav" mode="fold"></nui-link-list>
+		</nui-sidebar>
+
+		<nui-content>
+			<nui-main>
+				<nui-page>
+					<section id="overview">
+						<h1>Fleet operations</h1>
+						<p class="lead">Every vehicle in the Meridian network, with live position and the open exceptions that need a dispatcher.</p>
+					</section>
+
+					<section>
+						<h2>Network at a glance</h2>
+						<div class="ex-stats">
+							<div class="ex-stat">
+								<span class="ex-stat__label">Active vehicles</span>
+								<span class="ex-stat__value">128</span>
+								<span class="ex-stat__delta">of 141 in service</span>
+							</div>
+							<div class="ex-stat">
+								<span class="ex-stat__label">On-time today</span>
+								<span class="ex-stat__value">94%</span>
+								<span class="ex-stat__delta">+2.1 pts vs. last week</span>
+							</div>
+							<div class="ex-stat">
+								<span class="ex-stat__label">Open exceptions</span>
+								<span class="ex-stat__value">7</span>
+								<span class="ex-stat__delta">2 need a dispatcher</span>
+							</div>
+							<div class="ex-stat">
+								<span class="ex-stat__label">Distance today</span>
+								<span class="ex-stat__value">18,402</span>
+								<span class="ex-stat__delta">km across the network</span>
+							</div>
+						</div>
+					</section>
+
+					<section id="exceptions">
+						<h2>Exceptions</h2>
+						<p>Two exceptions need a dispatcher. The rest are self-resolving or already acknowledged.</p>
+						<nui-table>
+							<table>
+								<thead>
+									<tr>
+										<th scope="col">Severity</th>
+										<th scope="col">Vehicle</th>
+										<th scope="col">Issue</th>
+										<th scope="col">Route</th>
+										<th scope="col">Raised</th>
+										<th scope="col">State</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr>
+										<td><nui-badge variant="danger">Critical</nui-badge></td>
+										<td><span class="ex-token">MRD-4417</span></td>
+										<td>Reefer temperature above threshold for 12 min</td>
+										<td><span class="ex-token">R-88 North</span></td>
+										<td>14 min ago</td>
+										<td><nui-badge status="connecting">Dispatching</nui-badge></td>
+									</tr>
+									<tr>
+										<td><nui-badge variant="danger">Critical</nui-badge></td>
+										<td><span class="ex-token">MRD-2209</span></td>
+										<td>Trailer coupling reported loose</td>
+										<td><span class="ex-token">R-12 East</span></td>
+										<td>31 min ago</td>
+										<td><nui-badge status="connecting">Dispatching</nui-badge></td>
+									</tr>
+									<tr>
+										<td><nui-badge variant="warning">Warning</nui-badge></td>
+										<td><span class="ex-token">MRD-7731</span></td>
+										<td>Arrived 24 min ahead of the delivery window</td>
+										<td><span class="ex-token">R-04 Harbour</span></td>
+										<td>52 min ago</td>
+										<td><nui-badge status="online">Acknowledged</nui-badge></td>
+									</tr>
+									<tr>
+										<td><nui-badge variant="warning">Warning</nui-badge></td>
+										<td><span class="ex-token">MRD-1902</span></td>
+										<td>Driver break overdue by 8 min</td>
+										<td><span class="ex-token">R-31 West</span></td>
+										<td>1 h ago</td>
+										<td><nui-badge status="online">Acknowledged</nui-badge></td>
+									</tr>
+									<tr>
+										<td><nui-badge variant="info">Info</nui-badge></td>
+										<td><span class="ex-token">MRD-5560</span></td>
+										<td>Route recalculated around road closure</td>
+										<td><span class="ex-token">R-19 Central</span></td>
+										<td>2 h ago</td>
+										<td><nui-badge status="online">Resolved</nui-badge></td>
+									</tr>
+								</tbody>
+							</table>
+						</nui-table>
+					</section>
+
+					<section class="ex-split">
+						<div class="ex-panel" id="motion">
+							<h3 class="ex-panel__title">Vehicles in motion</h3>
+							<div class="ex-scroll">
+								<nui-list id="vehicle-list"></nui-list>
+							</div>
+						</div>
+
+						<div class="ex-panel" id="utilisation">
+							<h3 class="ex-panel__title">Speedometer</h3>
+							<div class="ex-graph">
+								<nui-graph id="speed-graph" label="Network average" stroke="rgb(76, 132, 229)" fill="rgba(76, 132, 229, 0.25)" min="0" max="120" unit="km/h" capacity="60"></nui-graph>
+							</div>
+							<p class="ex-stat__delta">Rolling 60-minute average across active vehicles.</p>
+
+							<h3 class="ex-panel__title">Filters</h3>
+							<nui-form-row>
+								<nui-input-group>
+									<label>Status</label>
+									<nui-select id="fleet-status" placeholder="All statuses">
+										<select>
+											<option value="" selected>All statuses</option>
+											<option value="moving">Moving</option>
+											<option value="idle">Idle</option>
+											<option value="loading">Loading</option>
+											<option value="offline">Offline</option>
+										</select>
+									</nui-select>
+								</nui-input-group>
+							</nui-form-row>
+							<nui-form-row>
+								<nui-input-group>
+									<label>Required tags</label>
+									<nui-tag-input id="fleet-tags" editable placeholder="Add tag"></nui-tag-input>
+								</nui-input-group>
+							</nui-form-row>
+						</div>
+					</section>
+
+					<section>
+						<h2>Recent activity</h2>
+						<ul class="ex-timeline">
+							<li class="ex-timeline__item">
+								<span class="ex-timeline__time">14:02</span>
+								<span>Dispatcher <strong>A. Okafor</strong> acknowledged the reefer exception on <span class="ex-token">MRD-4417</span>.</span>
+							</li>
+							<li class="ex-timeline__item">
+								<span class="ex-timeline__time">13:47</span>
+								<span>Route <span class="ex-token">R-19 Central</span> recalculated around the A40 closure.</span>
+							</li>
+							<li class="ex-timeline__item">
+								<span class="ex-timeline__time">13:20</span>
+								<span>Vehicle <span class="ex-token">MRD-5560</span> checked in at the Harbour depot.</span>
+							</li>
+							<li class="ex-timeline__item">
+								<span class="ex-timeline__time">12:58</span>
+								<span>Six vehicles returned from the <span class="ex-token">R-31 West</span> run.</span>
+							</li>
+						</ul>
+					</section>
+				</nui-page>
+			</nui-main>
+		</nui-content>
+
+		<nui-app-footer>
+			<footer>
+				<div class="ex-toolbar ex-toolbar--between">
+					<span class="ex-stat__delta">Meridian Fleet Operations · demo data</span>
+					<span class="ex-stat__delta">Last sync 14:03</span>
+				</div>
+			</footer>
+		</nui-app-footer>
+	</nui-app>
+</body>
+</html>

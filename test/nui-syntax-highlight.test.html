@@ -19,7 +19,7 @@
 </head>
 <body>
 <h1>nui-syntax-highlight — the language boundary is visible</h1>
-<p>Five grammars are the default, not a wall: a consumer must be able to ask whether a
+<p>Six grammars are the default, not a wall: a consumer must be able to ask whether a
 language is known before assigning <code>data-lang</code>, and to add its own. An unknown
 language used to render silently as plain text — indistinguishable from a broken
 component (issue #69). Open through the dev server:
@@ -72,8 +72,8 @@ check('supportsLanguage rejects null and undefined', () => {
 	return supportsLanguage(null) || supportsLanguage(undefined) ? 'accepted a missing language' : null;
 });
 
-check('LANGUAGES is the five canonical grammars, frozen', () => {
-	if (LANGUAGES.join(',') !== 'html,css,js,ts,json') return 'got ' + LANGUAGES.join(',');
+check('LANGUAGES is the canonical grammars, frozen', () => {
+	if (LANGUAGES.join(',') !== 'html,css,js,ts,json,markdown') return 'got ' + LANGUAGES.join(',');
 	return Object.isFrozen(LANGUAGES) ? null : 'the list is mutable';
 });
 
@@ -137,17 +137,43 @@ check('registerLanguage rejects a missing name or tokenizer', () => {
 	return threw.length === 3 ? null : `only ${threw.length} of 3 calls threw`;
 });
 
-// ── the five built-ins still work ───────────────────────────────────────────
-check('html, css, js, ts and json still tokenize', () => {
+// ── the built-ins still work ───────────────────────────────────────────────
+check('html, css, js, ts, json and markdown still tokenize', () => {
 	const cases = [
 		['html', '<div class="x">y</div>', 'hl-tag'],
 		['css', '.a { color: red; }', 'hl-prop'],
 		['js', 'const a = 1;', 'hl-keyword'],
 		['ts', 'interface A { b: string }', 'hl-keyword'],
-		['json', '{"a": 1}', 'hl-prop']
+		['json', '{"a": 1}', 'hl-prop'],
+		['markdown', '# Title\n\nSome **bold** text.', 'hl-strong']
 	];
 	const broken = cases.filter(([lang, code, cls]) => !highlight(code, lang).includes(cls));
 	return broken.length ? 'no token for: ' + broken.map((c) => c[0]).join(', ') : null;
+});
+
+check('the md/markdown alias produces identical output', () => {
+	const a = highlight('# Title', 'markdown');
+	const b = highlight('# Title', 'md');
+	return a === b ? null : 'alias output differs';
+});
+
+check('markdown does not warn — the renderer emits data-lang="markdown" itself', () => {
+	warnings.length = 0;
+	highlight('# Title\n\n```js\nconst a = 1;\n```\n', 'markdown');
+	const hits = warnings.filter((w) => w.includes('unknown language "markdown"'));
+	return hits.length === 0 ? null : `warned: ${hits.join(' | ')}`;
+});
+
+check('a markdown fence body is literal — no emphasis is read inside it', () => {
+	const html = highlight('```\n**not bold**\n```', 'markdown');
+	return html.includes('hl-strong') ? 'emphasis was read inside a fenced block' : null;
+});
+
+check('markdown never reflows the text it is highlighting', () => {
+	const source = '# Title\n\n- one\n- two\n\nA line with  two  spaces.\n';
+	const html = highlight(source, 'markdown');
+	const text = html.replace(/<[^>]+>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+	return text === source ? null : 'the text changed:\n' + JSON.stringify(text);
 });
 
 check('the js/javascript alias produces identical output', () => {

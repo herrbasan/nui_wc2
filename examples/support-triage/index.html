@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+	<meta name="color-scheme" content="light dark">
+	<title>Halcyon — Support Triage</title>
+	<link rel="icon" href="data:,">
+
+	<link rel="stylesheet" href="../shared/app.css">
+	<link rel="stylesheet" href="../../NUI/css/nui-theme.css">
+	<link rel="stylesheet" href="../../NUI/css/modules/nui-list.css">
+
+	<script type="module" src="./app.js"></script>
+</head>
+<body>
+	<nui-loading mode="bar"></nui-loading>
+
+	<nui-app content-min-width="52rem" content-width="80rem" sidebar-width="19rem">
+		<nui-skip-links></nui-skip-links>
+
+		<nui-app-header>
+			<header>
+				<div slot="left">
+					<nui-button variant="icon">
+						<button type="button" data-action="toggle-sidebar" aria-label="Toggle navigation">
+							<nui-icon name="menu"></nui-icon>
+						</button>
+					</nui-button>
+					<span class="title">Halcyon</span>
+					<span class="ex-current-route" data-current-route hidden></span>
+				</div>
+
+				<div slot="center">
+					<nui-input size="small" clearable>
+						<input type="search" id="ticket-search" placeholder="Search tickets" aria-label="Search tickets">
+					</nui-input>
+				</div>
+
+				<div slot="right">
+					<nui-button variant="icon" data-notify-badge>
+						<button type="button" aria-label="Notifications">
+							<nui-icon name="notifications"></nui-icon>
+						</button>
+					</nui-button>
+					<nui-popover aria-label="Notifications" placement="bottom">
+						<nui-notification-log></nui-notification-log>
+					</nui-popover>
+					<nui-button variant="icon">
+						<button type="button" data-action="toggle-theme" aria-label="Toggle color scheme">
+							<nui-icon name="brightness"></nui-icon>
+						</button>
+					</nui-button>
+				</div>
+			</header>
+		</nui-app-header>
+
+		<nui-sidebar behavior="primary">
+			<nui-link-list id="ticket-nav" mode="fold"></nui-link-list>
+		</nui-sidebar>
+
+		<nui-content>
+			<nui-main>
+				<nui-page>
+					<section id="queue-overview">
+						<h1>Support triage</h1>
+						<p class="lead">The queue as it arrives. Triage is about deciding what a ticket is, not answering it.</p>
+					</section>
+
+					<section>
+						<div class="ex-stats">
+							<div class="ex-stat">
+								<span class="ex-stat__label">Open</span>
+								<span class="ex-stat__value">47</span>
+								<span class="ex-stat__delta">across 4 queues</span>
+							</div>
+							<div class="ex-stat">
+								<span class="ex-stat__label">Median first reply</span>
+								<span class="ex-stat__value">38m</span>
+								<span class="ex-stat__delta">target under 1h</span>
+							</div>
+							<div class="ex-stat">
+								<span class="ex-stat__label">Escalated</span>
+								<span class="ex-stat__value">6</span>
+								<span class="ex-stat__delta">2 breached SLA</span>
+							</div>
+							<div class="ex-stat">
+								<span class="ex-stat__label">CSAT this week</span>
+				<span class="ex-stat__value">94%</span>
+								<span class="ex-stat__delta">312 responses</span>
+							</div>
+						</div>
+					</section>
+
+					<section id="queue">
+						<h2>Queue</h2>
+						<p>Select a ticket to open it. The queue filters and sorts itself; the header search narrows it further.</p>
+						<div class="ex-scroll">
+							<nui-list id="ticket-list"></nui-list>
+						</div>
+					</section>
+
+					<section id="views">
+						<h2>Saved views</h2>
+						<nui-tabs>
+							<nav>
+								<button id="tab-all">All</button>
+								<button id="tab-sla">At risk</button>
+								<button id="tab-new">Untriaged</button>
+							</nav>
+							<section id="panel-all">
+								<p>Every ticket in the queue, newest first.</p>
+								<nui-table>
+									<table>
+										<thead>
+											<tr>
+												<th scope="col">Ticket</th>
+												<th scope="col">Subject</th>
+												<th scope="col">Queue</th>
+												<th scope="col">Waiting</th>
+												<th scope="col">SLA</th>
+											</tr>
+										</thead>
+										<tbody id="sla-rows"></tbody>
+									</table>
+								</nui-table>
+							</section>
+							<section id="panel-sla" hidden>
+								<p>Tickets within an hour of breaching their first-response target.</p>
+								<nui-table>
+									<table>
+										<thead>
+											<tr>
+												<th scope="col">Ticket</th>
+												<th scope="col">Subject</th>
+												<th scope="col">Waiting</th>
+												<th scope="col">SLA left</th>
+											</tr>
+										</thead>
+										<tbody id="risk-rows"></tbody>
+									</table>
+								</nui-table>
+							</section>
+							<section id="panel-new" hidden>
+								<p>Arrived but not yet classified.</p>
+								<nui-table>
+									<table>
+										<thead>
+											<tr>
+												<th scope="col">Ticket</th>
+												<th scope="col">Subject</th>
+												<th scope="col">Waiting</th>
+											</tr>
+										</thead>
+										<tbody id="new-rows"></tbody>
+									</table>
+								</nui-table>
+							</section>
+						</nui-tabs>
+					</section>
+
+					<section id="reply">
+						<h2>Reply template</h2>
+						<p>The canned response agents start from. Editing it changes what every new reply begins with.</p>
+						<nui-rich-text id="reply-template">
+							<p>Hi <strong>there</strong>,</p>
+							<p>Thanks for getting in touch about the issue you reported. Could you share the request ID from the affected service?</p>
+							<p>Kind regards,<br>Support</p>
+						</nui-rich-text>
+					</section>
+
+					<section id="policy">
+						<h2>Escalation policy</h2>
+						<nui-accordion exclusive>
+							<details>
+								<summary>Billing disputes</summary>
+								<div class="accordion-content">
+									<p>Route to the billing queue and attach the last invoice. Do not offer a credit before finance has confirmed the charge.</p>
+								</div>
+							</details>
+							<details>
+								<summary>Data loss</summary>
+								<div class="accordion-content">
+									<p>Escalate immediately, regardless of queue load. A confirmed loss opens an incident and the customer is notified by the incident lead.</p>
+								</div>
+							</details>
+							<details>
+								<summary>Feature requests</summary>
+								<div class="accordion-content">
+									<p>Close as a duplicate when the request exists in the roadmap. Otherwise tag it and let the product team pick it up weekly.</p>
+								</div>
+							</details>
+						</nui-accordion>
+					</section>
+
+					<section id="status">
+						<h2>Service status</h2>
+						<nui-details summary="Incident log — last 7 days">
+							<ul>
+								<li><strong>2026-11-12</strong> — Elevated checkout errors, resolved after 42 minutes.</li>
+								<li><strong>2026-11-09</strong> — Slow search results, mitigated by raising the index timeout.</li>
+								<li><strong>2026-11-03</strong> — Delayed webhooks, resolved by replaying the backlog.</li>
+							</ul>
+						</nui-details>
+					</section>
+				</nui-page>
+			</nui-main>
+		</nui-content>
+
+		<nui-app-footer>
+			<footer>
+				<div class="ex-toolbar ex-toolbar--between">
+					<span class="ex-stat__delta" id="queue-count">—</span>
+					<span class="ex-stat__delta">Halcyon Support Triage · demo data</span>
+				</div>
+			</footer>
+		</nui-app-footer>
+	</nui-app>
+
+	<nui-dialog id="ticket-dialog" placement="center">
+		<dialog>
+			<form method="dialog">
+				<header>
+					<h2 id="ticket-title">Ticket</h2>
+				</header>
+				<main>
+					<p id="ticket-summary" class="ex-stat__delta"></p>
+
+					<nui-form-row>
+						<nui-input-group>
+							<label>Queue</label>
+							<nui-select id="ticket-queue">
+								<select>
+									<option value="general">General</option>
+									<option value="billing">Billing</option>
+									<option value="technical">Technical</option>
+									<option value="accounts">Accounts</option>
+								</select>
+							</nui-select>
+						</nui-input-group>
+					</nui-form-row>
+
+					<nui-form-row>
+						<nui-input-group>
+							<label>Priority</label>
+							<nui-select id="ticket-priority">
+								<select>
+									<option value="low">Low</option>
+									<option value="normal" selected>Normal</option>
+									<option value="high">High</option>
+								</select>
+							</nui-select>
+						</nui-input-group>
+					</nui-form-row>
+
+					<nui-form-row>
+						<nui-input-group>
+							<label>Tags</label>
+							<nui-tag-input id="ticket-tags" editable placeholder="Add tag"></nui-tag-input>
+						</nui-input-group>
+					</nui-form-row>
+				</main>
+				<footer>
+					<nui-button-container align="end">
+						<nui-button variant="outline">
+							<button type="button" data-action="dialog-close">Cancel</button>
+						</nui-button>
+						<nui-button variant="primary">
+							<button type="button" data-action="ticket-save">Save triage</button>
+						</nui-button>
+					</nui-button-container>
+				</footer>
+			</form>
+		</dialog>
+	</nui-dialog>
+</body>
+</html>

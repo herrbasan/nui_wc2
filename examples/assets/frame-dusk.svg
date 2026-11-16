@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" role="img" aria-label="Campaign frame at dusk">
+	<defs>
+		<linearGradient id="dusk" x1="0" y1="0" x2="0" y2="1">
+			<stop offset="0" stop-color="#1d2340"/>
+			<stop offset="0.6" stop-color="#5c4a7a"/>
+			<stop offset="1" stop-color="#c96f6a"/>
+		</linearGradient>
+	</defs>
+	<rect width="640" height="400" fill="url(#dusk)"/>
+	<circle cx="470" cy="300" r="40" fill="#f0b1a3" opacity="0.8"/>
+	<path d="M0 345 L120 285 L250 340 L360 270 L500 340 L640 295 L640 400 L0 400 Z" fill="#141a2c" opacity="0.92"/>
+</svg>

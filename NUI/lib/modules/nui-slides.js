@@ -731,8 +731,7 @@ class NuiSlides extends HTMLElement {
 			nav.appendChild(sep);
 		};
 
-		const prevBtn = makeBtn('nui-slides-btn-prev', 'Previous slide', 'Previous slide (Left Arrow)', 'chevron_right');
-		prevBtn.querySelector('nui-icon').style.transform = 'rotate(180deg)';
+		const prevBtn = makeBtn('nui-slides-btn-prev', 'Previous slide', 'Previous slide (Left Arrow)', 'chevron_left');
 		prevBtn.addEventListener('click', (e) => { e.stopPropagation(); this.prev(); });
 
 		const counter = document.createElement('button');
@@ -757,7 +756,7 @@ class NuiSlides extends HTMLElement {
 			this.configure({ autoplay: !this._autoPlaying });
 		});
 
-		const narrBtn = makeBtn('nui-slides-btn-narration', 'Play narration', 'Play narration', 'record_voice_over');
+		const narrBtn = makeBtn('nui-slides-btn-narration', 'Play this slide’s narration', 'Play this slide’s narration', 'record_voice_over');
 		narrBtn.setAttribute('aria-pressed', 'false');
 		narrBtn.addEventListener('click', (e) => { e.stopPropagation(); this._toggleNarration(); });
 
@@ -855,8 +854,11 @@ class NuiSlides extends HTMLElement {
 			btn.title = playing ? labelPlaying : labelIdle;
 			btn.innerHTML = '<nui-icon name="' + (playing ? 'stop' : idleIcon) + '"></nui-icon>';
 		};
-		paint(this._notesPlay, 'play', 'Play narration', 'Stop narration');
-		paint(this._tbNarr, 'record_voice_over', 'Play narration', 'Stop narration');
+		// "this slide's" — a markdown narration block on the page carries the same
+		// action and the same plain name, so two "Play narration" buttons in one
+		// viewport are ambiguous. The deck's control speaks the CURRENT slide.
+		paint(this._notesPlay, 'play', 'Play this slide’s narration', 'Stop this slide’s narration');
+		paint(this._tbNarr, 'record_voice_over', 'Play this slide’s narration', 'Stop this slide’s narration');
 		this._updateToolbar();
 	}
 
@@ -1090,12 +1092,17 @@ class NuiSlides extends HTMLElement {
 		}
 		if (this._tbNarr) {
 			// Disabled rather than hidden: the toolbar's shape must not change with the
-			// slide, and a slide without a script is a fact about the slide.
+			// slide, and a slide without a script is a fact about the slide. The NAME
+			// carries that fact — a disabled button whose label still says "Play" reads
+			// as broken, and a title is not what a screen reader announces. The label is
+			// written in both branches, so a slide that HAS narration gets its name back.
 			const available = this.narration(cur).length > 0 && nui.util.hasMarkdownSpeech();
 			this._tbNarr.disabled = !available;
-			this._tbNarr.title = available
-				? (this._narrationStop ? 'Stop narration' : 'Play narration')
+			const label = available
+				? (this._narrationStop ? 'Stop this slide’s narration' : 'Play this slide’s narration')
 				: 'No narration on this slide';
+			this._tbNarr.title = label;
+			this._tbNarr.setAttribute('aria-label', label);
 		}
 		if (this._tbFs) {
 			const isFs = document.fullscreenElement === this;

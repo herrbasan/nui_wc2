@@ -428,7 +428,39 @@ const a11y = {
 			}
 		});
 
+		// Only a REAL navigation landmark needs a name. A <nav> whose role was
+		// overridden — role="tablist", role="menubar", role="tree" — is a different
+		// widget entirely, and naming it "Navigation" is worse than leaving it alone:
+		// it announces the wrong thing to a screen reader.
+		//
+		// The labelling is DEFERRED because the role a nav ends up with is decided by
+		// the component that owns it, and that component may not have run yet: this
+		// pass runs while <nui-content> upgrades, before <nui-tabs> has set
+		// role="tablist" on its nav and before the file-tree addon has applied the
+		// host's own label. Deciding here would stamp every nav "Navigation" and then
+		// leave the wrong name behind.
 		element.els('nav, [role="navigation"]').forEach(nav => {
+			this.labelNavWhenSettled(nav);
+		});
+	},
+
+	/**
+	 * Name a navigation landmark once the component that owns it has settled.
+	 * A microtask is the right checkpoint: the whole module graph has evaluated by
+	 * then, so every custom element — core and addon — has been defined and
+	 * upgraded, and every role and author-supplied label is in place.
+	 */
+	labelNavWhenSettled(nav) {
+		if (nav._nui_nav_label_pending) return;
+		nav._nui_nav_label_pending = true;
+
+		queueMicrotask(() => {
+			nav._nui_nav_label_pending = false;
+
+			const role = nav.getAttribute('role');
+			if (role && role !== 'navigation') return;
+			if (this.hasLabel(nav)) return;
+
 			this.ensureLandmarkLabel(nav);
 		});
 	}
@@ -1739,6 +1771,14 @@ registerComponent('nui-app-footer', (element) => {
 });
 
 registerComponent('nui-skip-links', (element) => {
+	// The href is a document fragment, while a NUI router owns the same hash for
+	// its route. Move focus and scroll explicitly without rewriting that route.
+	const jumpTo = targetEl => {
+		if (!targetEl) return;
+		targetEl.focus({ preventScroll: true });
+		targetEl.scrollIntoView({ block: 'start' });
+	};
+
 	function buildSkipLink(target, label) {
 		const targetEl = document.el(target);
 		if (!targetEl) return null;
@@ -1760,7 +1800,7 @@ registerComponent('nui-skip-links', (element) => {
 
 		link.addEventListener('click', (e) => {
 			e.preventDefault();
-			targetEl.focus();
+			jumpTo(targetEl);
 		});
 
 		return link;
@@ -1799,9 +1839,7 @@ registerComponent('nui-skip-links', (element) => {
 				e.preventDefault();
 				const targetId = link.getAttribute('href');
 				const targetEl = document.el(targetId);
-				if (targetEl) {
-					targetEl.focus();
-				}
+				jumpTo(targetEl);
 			});
 		});
 	}
@@ -1817,6 +1855,11 @@ registerComponent('nui-skip-links', (element) => {
 registerLayoutComponent('nui-icon-button');
 registerLayoutComponent('nui-badge');
 registerLayoutComponent('nui-page');
+// A form row is a pure layout wrapper — its whole behaviour is the CSS above
+// it (flex row, one shared height for every child). It needs a registration
+// so it is a known element to the registry, the debug addon and the a11y
+// pass, not an unknown tag.
+registerLayoutComponent('nui-form-row');
 
 // ################################# nui-card COMPONENT
 
@@ -2784,12 +2827,18 @@ function setupInputBehavior(element, input, config = {}) {
 
 	const isSearchInput = input.type === 'search';
 	if (isSearchInput) {
-		const searchBtn = dom.create('button', {
+		// The magnifier is a decorative glyph in the field's left gutter — the input
+		// carries the extra padding that keeps the text clear of it. It was a
+		// <button>, which put a dead control in the tab order: activating it did
+		// nothing and moved focus off the field the user was typing into.
+		// It is now non-interactive and pointer-transparent, so a click on the
+		// glyph reaches the input underneath and focuses it.
+		dom.create('span', {
 			class: 'nui-input-icon nui-input-icon-start',
-			attrs: { type: 'button', 'aria-label': 'Search' },
-			content: '<nui-icon name="search"></nui-icon>'
+			attrs: { 'aria-hidden': 'true' },
+			content: '<nui-icon name="search" decorative></nui-icon>',
+			target: element
 		});
-		element.insertBefore(searchBtn, input);
 	}
 	
 	let cachedLineHeight, cachedPadding, cachedBorder;
@@ -3002,6 +3051,25 @@ function setupCheckableBehavior(element, type) {
 		}));
 	});
 
+	// The same `validate()` the text controls expose: a component that owns a
+	// field needs one way to ask "is this good?" — a wizard asking on a blocked
+	// advance, a form asking on submit. Without it, a radio group could only be
+	// validated by reaching into its input.
+	element.validate = () => {
+		const valid = input.validity.valid;
+		element.classList.toggle('is-invalid', !valid);
+		if (valid) {
+			input.removeAttribute('aria-invalid');
+		} else {
+			input.setAttribute('aria-invalid', 'true');
+		}
+		element.dispatchEvent(new CustomEvent('nui-validate', {
+			bubbles: true,
+			detail: { valid, message: input.validationMessage }
+		}));
+		return valid;
+	};
+
 	Object.defineProperty(element, 'checked', {
 		get() { return input.checked; },
 		set(val) {
@@ -3018,24 +3086,59 @@ registerComponent('nui-input-group', (element) => {
 	const inputComponent = element.el('nui-input, nui-textarea, nui-checkbox, nui-radio');
 	const input = inputComponent?.el('input, textarea');
 
-	if (label && input && !input.id && !label.htmlFor) {
+	const checkables = element.els('nui-checkbox, nui-radio');
+	const isRadioGroup = checkables.some(c => c.el('input[type="radio"]'));
+	const primaryIsCheckable = checkables.length > 0
+		&& (inputComponent?.tagName === 'NUI-CHECKBOX' || inputComponent?.tagName === 'NUI-RADIO');
+
+	if (primaryIsCheckable) {
+		// A checkable carries its OWN label (setupCheckableBehavior binds the inner
+		// one), so the top-level label names the GROUP. Binding it with `for` to the
+		// first control would announce the group name as that control's own label —
+		// two labels on one input, and the wrong one first.
+		if (label && !label.id) label.id = generateInputId();
+		// `radiogroup` is the specific form of `group` for radios; a generic `role`
+		// left by the author is upgraded, but any other deliberate role is kept.
+		const authored = element.getAttribute('role');
+		if (!authored || authored === 'group') {
+			element.setAttribute('role', isRadioGroup ? 'radiogroup' : 'group');
+		}
+		if (label && !element.hasAttribute('aria-labelledby')) {
+			element.setAttribute('aria-labelledby', label.id);
+		}
+	} else if (label && input && !input.id && !label.htmlFor) {
 		const id = generateInputId();
 		input.id = id;
 		label.htmlFor = id;
 	}
 
 	if (input) {
+		// Required checkables start invalid even with no user interaction. Gate only
+		// those on touch; text controls retain the existing non-empty error behavior.
+		let touched = false;
+
+		const groupInputs = isRadioGroup
+			? element.els('nui-radio input[type="radio"]')
+			: [input];
+
 		const updateState = () => {
-			element.classList.toggle('has-error', !input.validity.valid && input.value !== '');
+			const invalid = groupInputs.some(i => !i.validity.valid);
+			const showError = primaryIsCheckable ? touched && invalid : invalid && input.value !== '';
+			element.classList.toggle('has-error', showError);
 			element.classList.toggle('is-disabled', input.disabled);
 			element.classList.toggle('is-required', input.required);
 		};
 
-		input.addEventListener('blur', updateState);
-		input.addEventListener('input', () => {
-			if (element.classList.contains('has-error') && input.validity.valid) {
-				element.classList.remove('has-error');
-			}
+		groupInputs.forEach(i => {
+			i.addEventListener('blur', () => {
+				touched = true;
+				updateState();
+			});
+			i.addEventListener('input', () => {
+				if (element.classList.contains('has-error') && i.validity.valid) {
+					element.classList.remove('has-error');
+				}
+			});
 		});
 
 		updateState();
@@ -3165,6 +3268,14 @@ registerComponent('nui-tag-input', (element) => {
 			attrs: { type: 'text', placeholder, autocomplete: 'off' },
 			target: element
 		});
+		// The field a person types into needs a name. A placeholder is not one:
+		// it disappears as soon as there is a value, and it is not what a screen
+		// reader reads. The label comes from the component, its `label` attribute,
+		// or the group's label — the same order `nui-select` resolves.
+		const fieldLabel = element.getAttribute('label')
+			|| element.closest('nui-input-group')?.querySelector('label')?.textContent?.trim()
+			|| placeholder;
+		if (fieldLabel) input.setAttribute('aria-label', fieldLabel);
 		input.addEventListener('keydown', e => {
 			if (e.key === 'Enter' || e.key === ',') {
 				e.preventDefault();
@@ -3328,21 +3439,40 @@ const getMobileSelectModal = () => {
 	const search = dom.create('div', { class: 'nui-select-sheet-search', target: modal });
 
 	mobileModal = {
-		backdrop, modal, content, tags, search, label, activeSelect: null,
+		backdrop, modal, content, tags, search, label,
+		activeSelect: null,
+		closeTimer: null,
+		openFrame: null,
 		open(sel) {
+			if (this.activeSelect && this.activeSelect !== sel) this.close();
+			if (this.closeTimer) {
+				clearTimeout(this.closeTimer);
+				this.closeTimer = null;
+			}
+			if (this.openFrame) cancelAnimationFrame(this.openFrame);
 			this.activeSelect = sel;
 			document.body.append(backdrop);
 			backdrop.hidden = false;
-			requestAnimationFrame(() => backdrop.classList.add('is-open'));
+			this.openFrame = requestAnimationFrame(() => {
+				this.openFrame = null;
+				backdrop.classList.add('is-open');
+			});
 		},
 		close() {
-			if (!this.activeSelect) return;
+			const sel = this.activeSelect;
+			if (!sel) return;
+			this.activeSelect = null;
+			if (this.openFrame) {
+				cancelAnimationFrame(this.openFrame);
+				this.openFrame = null;
+			}
 			backdrop.classList.remove('is-open');
-			setTimeout(() => {
+			sel.onMobileClose();
+			if (this.closeTimer) clearTimeout(this.closeTimer);
+			this.closeTimer = setTimeout(() => {
 				backdrop.hidden = true;
 				backdrop.remove();
-				this.activeSelect.onMobileClose();
-				this.activeSelect = null;
+				this.closeTimer = null;
 			}, 200);
 		}
 	};
@@ -3406,6 +3536,17 @@ registerComponent('nui-select', (element) => {
 		placeholder;
 	
 	element.dataset.label = label;
+
+	// The native <select> is the FORM control — it is what submits, what the
+	// browser validates, and what a screen reader reads when it walks the form.
+	// Naming the visible control only left the combobox itself unnamed, and a
+	// form control with no name is a control nobody can identify.
+	const selectHasName = select.hasAttribute('aria-label')
+		|| select.hasAttribute('aria-labelledby')
+		|| select.labels.length > 0;
+	if (!selectHasName && label) {
+		select.setAttribute('aria-label', label);
+	}
 
 	const rowCache = new WeakMap();
 	let isOpen = false;
@@ -3499,6 +3640,7 @@ registerComponent('nui-select', (element) => {
 		searchInput = document.createElement('input');
 		searchInput.type = 'text';
 		searchInput.placeholder = 'Search...';
+		searchInput.setAttribute('aria-label', 'Search options');
 		searchInput.autocomplete = 'off';
 		const nuiInput = dom.create('nui-input', { content: searchInput, target: searchWrap });
 		searchInput.addEventListener('input', () => filter(searchInput.value));
@@ -3769,6 +3911,24 @@ registerComponent('nui-select', (element) => {
 			}));
 		}
 	};
+
+	// A change that arrives from OUTSIDE the component must repaint the label. The
+	// internal paths (pick, setValue, select, clear) sync explicitly, but a consumer
+	// that owns the inner <select> — a form library, `form.reset()`, or an addon that
+	// writes `select.value` and dispatches `change` — changed the value while the
+	// control still showed the old one. The value and its label are one state; a change
+	// to one has to reach the other.
+	//
+	// Internal paths dispatch the native `change` FIRST and then call
+	// `syncState()` with dispatchChange enabled, so these listeners must not raise
+	// a second `nui-change` for the same pick.
+	select.addEventListener('change', () => syncState(false));
+	if (select.form) {
+		select.form.addEventListener('reset', () => {
+			// Reset listeners run before the browser restores defaultSelected values.
+			queueMicrotask(() => syncState(false));
+		});
+	}
 
 	const pick = opt => {
 		if (opt.disabled) return;
@@ -6827,7 +6987,10 @@ const bannerFactory = {
 		if (options.showCloseButton !== false) {
 			dom.create('button', {
 				class: 'nui-banner-close',
-				attrs: { type: 'button' },
+				// The glyph is a decoration, not a name: without this the button is
+				// announced as "✕" (or, once the glyph is read as punctuation, as
+				// nothing at all). A close control needs to say what it closes.
+				attrs: { type: 'button', 'aria-label': 'Dismiss notification', title: 'Dismiss' },
 				text: '✕',
 				events: { click: () => banner.close('dismiss') },
 				target: wrapper

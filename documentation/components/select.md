@@ -220,6 +220,8 @@ inner.innerHTML = '<option value="us">United States</option>';
 
 > ⚠️ **Historical trap:** the dropdown renders from component state, not from a live read of the slotted DOM. Before the mutation observer existed, `innerHTML` population left the visible dropdown stale while the DOM silently held your options — a failure with zero errors. If you maintain an old vendored copy of NUI (pre-observer), direct DOM writes fail silently: always use the programmatic API.
 
+Writing `inner.value` directly does not emit a browser event; dispatch `change` afterwards to repaint the visible value. Native `change` and `form.reset()` synchronize the component without emitting a second `nui-change`. Existing native accessible names (`aria-label`, `aria-labelledby`, or an associated `<label>`) are preserved; the component supplies its resolved label only when the native select has none. A searchable select's internal option filter is named `Search options`.
+
 > **Verifying state (LLM/test consumers):** read what the component RENDERS (open the dropdown, read the visible rows, use `.getItems()`), not the underlying slotted DOM — the two can diverge.
 
 ## Attributes

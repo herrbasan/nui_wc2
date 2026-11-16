@@ -77,7 +77,13 @@ nui-code .nui-code-copy nui-icon {
 .hl-em { font-style: italic; }
 .hl-code { background: light-dark(rgb(240, 240, 240), rgb(40, 40, 40)); padding: 0.1em 0.3em; border-radius: 3px; }
 .hl-link { color: light-dark(rgb(0, 92, 197), rgb(156, 220, 254)); text-decoration: underline; }
+/* A fenced block's BODY — literal content, not prose. Kept flat: the inline
+   .hl-code background would put a box around every line of the block. */
+.hl-codeblock { color: light-dark(rgb(60, 60, 60), rgb(190, 190, 190)); }
 
 /* Common */
 .hl-string { color: light-dark(rgb(163, 21, 21), rgb(206, 145, 120)); }
-.hl-comment { color: light-dark(rgb(106, 115, 125), rgb(98, 98, 98)); font-style: italic; }
+/* Comments are code the reader is meant to read — in a documentation sample
+   they carry the whole point. The old grey measured 2.42:1 on the code
+   surface; this clears 4.5:1 in both schemes. */
+.hl-comment { color: light-dark(rgb(76, 84, 96), rgb(150, 156, 166)); font-style: italic; }

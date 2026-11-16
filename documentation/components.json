@@ -1,6 +1,6 @@
 {
 	"schemaVersion": 1,
-	"generated": "2026-11-15T16:55:42.758Z",
+	"generated": "2026-11-15T19:30:20.973Z",
 	"source": "Playground/pages/**",
 	"components": [
 		{
@@ -269,6 +269,19 @@
 			"page": "components/file-icon",
 			"demoPath": "Playground/pages/components/file-icon.html",
 			"docPath": "documentation/components/file-icon.md"
+		},
+		{
+			"@context": "nui",
+			"@type": "Component",
+			"name": "nui-form-row",
+			"group": "forms",
+			"description": "Flex row that places inputs, selects, tag inputs and buttons side by side at one uniform height. size=\"small\" drops the whole row to 2rem.",
+			"events": [],
+			"innerElement": null,
+			"imports": null,
+			"page": "components/form-row",
+			"demoPath": "Playground/pages/components/form-row.html",
+			"docPath": "documentation/components/form-row.md"
 		},
 		{
 			"@context": "nui",

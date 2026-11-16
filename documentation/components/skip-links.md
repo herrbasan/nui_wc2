@@ -53,8 +53,7 @@ Define specific navigation paths with anchor elements:
 ## Integration Points
 
 - Adds `role="navigation"` and `aria-label="Skip links"` automatically
-- Uses `a11y.announce()` for screen reader feedback on activation
-- Handles focus management without scrolling animations
+- Moves focus and scrolls the target into view without rewriting `location.hash`, so the current route survives in hash-router applications
 
 ## When to Use
 
